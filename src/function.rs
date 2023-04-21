@@ -1,7 +1,6 @@
 use core::ops::Index;
 
 use cranelift_entity::{EntityList, ListPool, PrimaryMap};
-use smallvec::SmallVec;
 
 use crate::{
     entities::{Instruction, Operand, Region, Value},

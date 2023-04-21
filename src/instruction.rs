@@ -1,5 +1,4 @@
-use cranelift_entity::EntityList;
-use smallvec::SmallVec;
+use cranelift_entity::{EntityList, ListPool, PrimaryMap};
 
 use crate::entities::{Instruction, Operand, Region, Value};
 
@@ -14,7 +13,6 @@ pub enum Type {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ValueData {
     pub ty: Type,
-    pub uses: SmallVec<[Instruction; 2]>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -56,6 +54,10 @@ pub enum OperandData {
     },
 }
 
+pub type InstructionPool = ListPool<Instruction>;
+pub type OperandPool = ListPool<Operand>;
+pub type ValuePool = ListPool<Value>;
+
 pub type InstructionList = EntityList<Instruction>;
 pub type OperandList = EntityList<Operand>;
 pub type ValueList = EntityList<Value>;
@@ -63,9 +65,40 @@ pub type ValueList = EntityList<Value>;
 #[derive(Clone, Copy)]
 pub struct InstructionData {
     pub opcode: Opcode,
-    pub ctrl_deps: InstructionList,
     pub inputs: OperandList,
-    pub outputs: ValueList,
+    // These fields have more global invariants, so we don't allow direct access
+    pub(crate) outputs: ValueList,
+    pub(crate) ctrl_deps: InstructionList,
+}
+
+impl InstructionData {
+    pub fn ctrl_deps<'a>(&self, pool: &'a InstructionPool) -> &'a [Instruction] {
+        self.ctrl_deps.as_slice(pool)
+    }
+
+    pub fn ctrl_deps_raw(&self) -> InstructionList {
+        self.ctrl_deps
+    }
+
+    pub fn input_data<'a>(
+        &self,
+        pool: &'a OperandPool,
+        map: &'a PrimaryMap<Operand, OperandData>,
+    ) -> impl Iterator<Item = &'a OperandData> {
+        self.inputs.as_slice(pool).iter().map(|&op| &map[op])
+    }
+
+    pub fn inputs<'a>(&self, pool: &'a OperandPool) -> &'a [Operand] {
+        self.inputs.as_slice(pool)
+    }
+
+    pub fn outputs<'a>(&self, pool: &'a ValuePool) -> &'a [Value] {
+        self.outputs.as_slice(pool)
+    }
+
+    pub fn outputs_raw(&self) -> ValueList {
+        self.outputs
+    }
 }
 
 #[cfg(test)]

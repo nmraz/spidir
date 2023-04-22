@@ -7,3 +7,4 @@ pub mod function;
 pub mod instruction;
 
 mod fx;
+mod value;

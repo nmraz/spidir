@@ -15,3 +15,7 @@ entity_impl!(Region, "r");
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Value(u32);
 entity_impl!(Value, "val");
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ValueUse(u32);
+entity_impl!(ValueUse, "use");

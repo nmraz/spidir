@@ -161,6 +161,22 @@ impl<'a> DoubleEndedIterator for OutputIter<'a> {
 
 impl<'a> ExactSizeIterator for OutputIter<'a> {}
 
+pub struct UseIter<'a> {
+    graph: &'a Graph,
+    cur: Option<Use>,
+}
+
+impl<'a> Iterator for UseIter<'a> {
+    type Item = (Node, u32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let cur = self.cur?;
+        let data = self.graph.uses[cur];
+        self.cur = data.next.expand();
+        Some((data.node, data.use_index))
+    }
+}
+
 type DepValueList = EntityList<DepValue>;
 type UseList = EntityList<Use>;
 
@@ -286,6 +302,13 @@ impl Graph {
         (data.source, data.output_index)
     }
 
+    pub fn value_uses(&self, value: DepValue) -> UseIter<'_> {
+        UseIter {
+            graph: self,
+            cur: self.values[value].first_use.expand(),
+        }
+    }
+
     fn link_use(&mut self, value: DepValue, value_use: Use) {
         let use_data = self.uses[value_use];
         assert!(use_data.prev.is_none() && use_data.next.is_none());
@@ -367,6 +390,14 @@ mod tests {
             &[],
         );
 
+        assert_eq!(graph.value_def(param1), (entry, 2));
+        assert_eq!(graph.value_def(param2), (entry, 3));
         assert_eq!(Vec::from_iter(graph.node_inputs(add)), vec![param1, param2]);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(control_value)),
+            vec![(ret, 0)]
+        );
+        assert_eq!(Vec::from_iter(graph.value_uses(param1)), vec![(add, 0)]);
+        assert_eq!(Vec::from_iter(graph.value_uses(param2)), vec![(add, 1)]);
     }
 }

@@ -3,8 +3,6 @@
 extern crate alloc;
 
 pub mod entities;
-pub mod function;
-pub mod instruction;
+pub mod graph;
 
 mod fx;
-mod value;

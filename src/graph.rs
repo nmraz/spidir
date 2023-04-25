@@ -400,4 +400,30 @@ mod tests {
         assert_eq!(Vec::from_iter(graph.value_uses(param1)), vec![(add, 0)]);
         assert_eq!(Vec::from_iter(graph.value_uses(param2)), vec![(add, 1)]);
     }
+
+    #[test]
+    fn multi_use() {
+        let mut graph = Graph::new();
+        let five: Node =
+            graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
+        let five_val = graph.node_outputs(five)[0];
+        let three = graph.create_node(NodeKind::IConst(3), &[], &[DepValueKind::Value(Type::I32)]);
+        let three_val = graph.node_outputs(three)[0];
+        let add = graph.create_node(
+            NodeKind::Iadd,
+            &[five_val, five_val],
+            &[DepValueKind::Value(Type::I32)],
+        );
+        let add2 = graph.create_node(
+            NodeKind::Iadd,
+            &[five_val, three_val],
+            &[DepValueKind::Value(Type::I32)],
+        );
+
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(five_val)),
+            vec![(add2, 0), (add, 1), (add, 0)]
+        );
+        assert_eq!(Vec::from_iter(graph.value_uses(three_val)), vec![(add2, 1)]);
+    }
 }

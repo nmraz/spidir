@@ -16,7 +16,7 @@ pub enum Type {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NodeKind {
     Entry,
-    End,
+    Return,
     Region,
     Phi,
     IConst(i64),
@@ -27,7 +27,6 @@ pub enum NodeKind {
     Br,
     BrCond,
     Call,
-    Return,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

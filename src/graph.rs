@@ -335,4 +335,38 @@ mod tests {
         assert_eq!(output_kinds, vec![DepValueKind::Value(Type::I32)]);
         assert_eq!(graph.value_def(outputs[0]), (node, 0));
     }
+
+    #[test]
+    fn create_multi_node() {
+        let mut graph = Graph::new();
+        let entry = graph.create_node(
+            NodeKind::Entry,
+            &[],
+            &[
+                DepValueKind::Control,
+                DepValueKind::Effect,
+                DepValueKind::Value(Type::I32),
+                DepValueKind::Value(Type::I32),
+            ],
+        );
+        let entry_outputs = graph.node_outputs(entry);
+        let control_value = entry_outputs[0];
+        let effect_value = entry_outputs[1];
+        let param1 = entry_outputs[2];
+        let param2 = entry_outputs[3];
+
+        let add = graph.create_node(
+            NodeKind::Iadd,
+            &[param1, param2],
+            &[DepValueKind::Value(Type::I32)],
+        );
+        let add_res = graph.node_outputs(add)[0];
+        let ret = graph.create_node(
+            NodeKind::Return,
+            &[control_value, effect_value, add_res],
+            &[],
+        );
+
+        assert_eq!(Vec::from_iter(graph.node_inputs(add)), vec![param1, param2]);
+    }
 }

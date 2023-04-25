@@ -309,6 +309,11 @@ impl Graph {
         }
     }
 
+    pub fn has_one_use(&self, value: DepValue) -> bool {
+        let mut uses = self.value_uses(value);
+        uses.next().is_some() && uses.next().is_none()
+    }
+
     fn link_use(&mut self, value: DepValue, value_use: Use) {
         let use_data = self.uses[value_use];
         assert!(use_data.prev.is_none() && use_data.next.is_none());
@@ -419,6 +424,9 @@ mod tests {
             &[five_val, three_val],
             &[DepValueKind::Value(Type::I32)],
         );
+
+        assert!(!graph.has_one_use(five_val));
+        assert!(graph.has_one_use(three_val));
 
         assert_eq!(
             Vec::from_iter(graph.value_uses(five_val)),

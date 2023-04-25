@@ -1,4 +1,4 @@
-use core::ops::Index;
+use core::{ops::Index, slice};
 
 use cranelift_entity::{packed_option::PackedOption, EntityList, ListPool, PrimaryMap};
 use smallvec::SmallVec;
@@ -48,17 +48,10 @@ pub enum DepValueKind {
     PhiSelector,
 }
 
+#[derive(Clone, Copy)]
 pub struct Inputs<'a> {
     graph: &'a Graph,
     use_list: &'a [Use],
-}
-
-impl<'a> Index<usize> for Inputs<'a> {
-    type Output = DepValue;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.graph.uses[self.use_list[index]].value
-    }
 }
 
 impl<'a> Inputs<'a> {
@@ -69,25 +62,56 @@ impl<'a> Inputs<'a> {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+}
 
-    pub fn iter(&self) -> impl Iterator<Item = DepValue> + 'a {
-        let graph = self.graph;
-        self.use_list
-            .iter()
-            .map(move |&input_use| graph.uses[input_use].value)
+impl<'a> IntoIterator for Inputs<'a> {
+    type Item = DepValue;
+    type IntoIter = InputIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        InputIter {
+            graph: self.graph,
+            iter: self.use_list.iter(),
+        }
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct Outputs<'a>(&'a [DepValue]);
-
-impl<'a> Index<usize> for Outputs<'a> {
+impl<'a> Index<usize> for Inputs<'a> {
     type Output = DepValue;
 
     fn index(&self, index: usize) -> &Self::Output {
-        &self.0[index]
+        &self.graph.uses[self.use_list[index]].value
     }
 }
+
+#[derive(Clone)]
+pub struct InputIter<'a> {
+    graph: &'a Graph,
+    iter: slice::Iter<'a, Use>,
+}
+
+impl<'a> Iterator for InputIter<'a> {
+    type Item = DepValue;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.graph.uses[*self.iter.next()?].value)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
+
+impl<'a> DoubleEndedIterator for InputIter<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        Some(self.graph.uses[*self.iter.next_back()?].value)
+    }
+}
+
+impl<'a> ExactSizeIterator for InputIter<'a> {}
+
+#[derive(Clone, Copy)]
+pub struct Outputs<'a>(&'a [DepValue]);
 
 impl<'a> Outputs<'a> {
     pub fn len(&self) -> usize {
@@ -97,11 +121,46 @@ impl<'a> Outputs<'a> {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+}
 
-    pub fn iter(&self) -> impl Iterator<Item = DepValue> + 'a {
-        self.0.iter().copied()
+impl<'a> IntoIterator for Outputs<'a> {
+    type Item = DepValue;
+    type IntoIter = OutputIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        OutputIter(self.0.iter())
     }
 }
+
+impl<'a> Index<usize> for Outputs<'a> {
+    type Output = DepValue;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
+pub struct OutputIter<'a>(slice::Iter<'a, DepValue>);
+
+impl<'a> Iterator for OutputIter<'a> {
+    type Item = DepValue;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().copied()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
+
+impl<'a> DoubleEndedIterator for OutputIter<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.0.next_back().copied()
+    }
+}
+
+impl<'a> ExactSizeIterator for OutputIter<'a> {}
 
 type DepValueList = EntityList<DepValue>;
 type UseList = EntityList<Use>;
@@ -261,5 +320,20 @@ mod tests {
     #[test]
     fn use_size() {
         assert_eq!(mem::size_of::<UseData>(), 20);
+    }
+
+    #[test]
+    fn create_single_node() {
+        let mut graph = Graph::new();
+        let node = graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
+        assert_eq!(graph.node_kind(node), &NodeKind::IConst(5));
+        assert_eq!(Vec::from_iter(graph.node_inputs(node)), vec![]);
+        let outputs = graph.node_outputs(node);
+        let output_kinds: Vec<_> = outputs
+            .into_iter()
+            .map(|value| graph.value_kind(value))
+            .collect();
+        assert_eq!(output_kinds, vec![DepValueKind::Value(Type::I32)]);
+        assert_eq!(graph.value_def(outputs[0]), (node, 0));
     }
 }

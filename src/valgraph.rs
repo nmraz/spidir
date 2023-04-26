@@ -1,9 +1,21 @@
 use core::{mem, ops::Index, slice};
 
-use cranelift_entity::{packed_option::PackedOption, EntityList, ListPool, PrimaryMap};
+use cranelift_entity::{
+    entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap,
+};
 use smallvec::SmallVec;
 
-use crate::entities::{DepValue, Node, Use};
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Node(u32);
+entity_impl!(Node, "node");
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct DepValue(u32);
+entity_impl!(DepValue, "dv");
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Use(u32);
+entity_impl!(Use, "use");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {

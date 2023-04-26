@@ -1,4 +1,4 @@
-use core::{ops::Index, slice};
+use core::{mem, ops::Index, slice};
 
 use cranelift_entity::{packed_option::PackedOption, EntityList, ListPool, PrimaryMap};
 use smallvec::SmallVec;
@@ -173,7 +173,7 @@ impl<'a> Iterator for UseIter<'a> {
         let cur = self.cur?;
         let data = self.graph.uses[cur];
         self.cur = data.next.expand();
-        Some((data.node, data.use_index))
+        Some((data.user, data.use_index))
     }
 }
 
@@ -200,7 +200,7 @@ struct UseData {
     prev: PackedOption<Use>,
     next: PackedOption<Use>,
     value: DepValue,
-    node: Node,
+    user: Node,
     use_index: u32,
 }
 
@@ -250,7 +250,7 @@ impl Graph {
                     prev: None.into(),
                     next: None.into(),
                     value,
-                    node,
+                    user: node,
                     use_index: index as u32,
                 })
             })
@@ -312,6 +312,19 @@ impl Graph {
     pub fn has_one_use(&self, value: DepValue) -> bool {
         let mut uses = self.value_uses(value);
         uses.next().is_some() && uses.next().is_none()
+    }
+
+    pub fn replace_all_uses(&mut self, old: DepValue, new: DepValue) {
+        let mut cur_use = mem::replace(&mut self.values[old].first_use, None.into());
+
+        while let Some(cur) = cur_use.expand() {
+            let next = self.uses[cur].next;
+            self.uses[cur].prev = None.into();
+            self.uses[cur].next = None.into();
+            self.uses[cur].value = new;
+            self.link_use(new, cur);
+            cur_use = next;
+        }
     }
 
     fn link_use(&mut self, value: DepValue, value_use: Use) {
@@ -433,5 +446,50 @@ mod tests {
             vec![(add2, 0), (add, 1), (add, 0)]
         );
         assert_eq!(Vec::from_iter(graph.value_uses(three_val)), vec![(add2, 1)]);
+    }
+
+    #[test]
+    fn replace_all_uses() {
+        let mut graph = Graph::new();
+        let five = graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
+        let five_val = graph.node_outputs(five)[0];
+        let three = graph.create_node(NodeKind::IConst(3), &[], &[DepValueKind::Value(Type::I32)]);
+        let three_val = graph.node_outputs(three)[0];
+        let add = graph.create_node(
+            NodeKind::Iadd,
+            &[five_val, five_val],
+            &[DepValueKind::Value(Type::I32)],
+        );
+        let add2 = graph.create_node(
+            NodeKind::Iadd,
+            &[five_val, three_val],
+            &[DepValueKind::Value(Type::I32)],
+        );
+
+        let seven = graph.create_node(NodeKind::IConst(7), &[], &[DepValueKind::Value(Type::I32)]);
+        let seven_val = graph.node_outputs(seven)[0];
+        graph.replace_all_uses(five_val, seven_val);
+
+        assert_eq!(graph.value_uses(five_val).count(), 0);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(seven_val)),
+            vec![(add, 0), (add, 1), (add2, 0)]
+        );
+        assert_eq!(
+            graph
+                .node_inputs(add)
+                .into_iter()
+                .map(|input| graph.value_def(input))
+                .collect::<Vec<_>>(),
+            vec![(seven, 0), (seven, 0)]
+        );
+        assert_eq!(
+            graph
+                .node_inputs(add2)
+                .into_iter()
+                .map(|input| graph.value_def(input))
+                .collect::<Vec<_>>(),
+            vec![(seven, 0), (three, 0)]
+        );
     }
 }

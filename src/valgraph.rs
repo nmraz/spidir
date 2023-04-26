@@ -14,7 +14,7 @@ pub struct DepValue(u32);
 entity_impl!(DepValue, "dv");
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Use(u32);
+struct Use(u32);
 entity_impl!(Use, "use");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

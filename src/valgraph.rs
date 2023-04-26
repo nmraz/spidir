@@ -49,7 +49,7 @@ pub enum DepValueKind {
 
 #[derive(Clone, Copy)]
 pub struct Inputs<'a> {
-    graph: &'a Graph,
+    graph: &'a ValGraph,
     use_list: &'a [Use],
 }
 
@@ -85,7 +85,7 @@ impl<'a> Index<usize> for Inputs<'a> {
 
 #[derive(Clone)]
 pub struct InputIter<'a> {
-    graph: &'a Graph,
+    graph: &'a ValGraph,
     iter: slice::Iter<'a, Use>,
 }
 
@@ -162,7 +162,7 @@ impl<'a> DoubleEndedIterator for OutputIter<'a> {
 impl<'a> ExactSizeIterator for OutputIter<'a> {}
 
 pub struct UseIter<'a> {
-    graph: &'a Graph,
+    graph: &'a ValGraph,
     cur: Option<Use>,
 }
 
@@ -205,7 +205,7 @@ struct UseData {
 }
 
 #[derive(Clone)]
-pub struct Graph {
+pub struct ValGraph {
     nodes: PrimaryMap<Node, NodeData>,
     values: PrimaryMap<DepValue, DepValueData>,
     uses: PrimaryMap<Use, UseData>,
@@ -213,15 +213,15 @@ pub struct Graph {
     use_pool: ListPool<Use>,
 }
 
-impl Default for Graph {
+impl Default for ValGraph {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Graph {
+impl ValGraph {
     pub fn new() -> Self {
-        Graph {
+        ValGraph {
             nodes: PrimaryMap::new(),
             values: PrimaryMap::new(),
             uses: PrimaryMap::new(),
@@ -364,7 +364,7 @@ mod tests {
 
     #[test]
     fn create_single_node() {
-        let mut graph = Graph::new();
+        let mut graph = ValGraph::new();
         let node = graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
         assert_eq!(graph.node_kind(node), &NodeKind::IConst(5));
         assert_eq!(Vec::from_iter(graph.node_inputs(node)), vec![]);
@@ -379,7 +379,7 @@ mod tests {
 
     #[test]
     fn create_multi_node() {
-        let mut graph = Graph::new();
+        let mut graph = ValGraph::new();
         let entry = graph.create_node(
             NodeKind::Entry,
             &[],
@@ -421,7 +421,7 @@ mod tests {
 
     #[test]
     fn multi_use() {
-        let mut graph = Graph::new();
+        let mut graph = ValGraph::new();
         let five: Node =
             graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
@@ -450,7 +450,7 @@ mod tests {
 
     #[test]
     fn replace_all_uses() {
-        let mut graph = Graph::new();
+        let mut graph = ValGraph::new();
         let five = graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
         let three = graph.create_node(NodeKind::IConst(3), &[], &[DepValueKind::Value(Type::I32)]);

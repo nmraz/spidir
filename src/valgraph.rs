@@ -1,8 +1,6 @@
-use core::{mem, ops::Index, slice};
+use core::{ops::Index, slice};
 
-use cranelift_entity::{
-    entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap,
-};
+use cranelift_entity::{entity_impl, EntityList, ListPool, PrimaryMap};
 use smallvec::SmallVec;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -175,17 +173,17 @@ impl<'a> ExactSizeIterator for OutputIter<'a> {}
 
 pub struct UseIter<'a> {
     graph: &'a ValGraph,
-    cur: Option<Use>,
+    iter: slice::Iter<'a, Use>,
 }
 
 impl<'a> Iterator for UseIter<'a> {
     type Item = (Node, u32);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let cur = self.cur?;
-        let data = self.graph.uses[cur];
-        self.cur = data.next.expand();
-        Some((data.user, data.use_index))
+        self.iter.next().map(|&use_id| {
+            let use_data = &self.graph.uses[use_id];
+            (use_data.user, use_data.input_index)
+        })
     }
 }
 
@@ -204,16 +202,14 @@ struct DepValueData {
     kind: DepValueKind,
     source: Node,
     output_index: u32,
-    first_use: PackedOption<Use>,
+    uses: UseList,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct UseData {
-    prev: PackedOption<Use>,
-    next: PackedOption<Use>,
     value: DepValue,
     user: Node,
-    use_index: u32,
+    input_index: u32,
 }
 
 #[derive(Clone)]
@@ -259,11 +255,9 @@ impl ValGraph {
             .enumerate()
             .map(|(index, &value)| {
                 self.uses.push(UseData {
-                    prev: None.into(),
-                    next: None.into(),
                     value,
                     user: node,
-                    use_index: index as u32,
+                    input_index: index as u32,
                 })
             })
             .collect();
@@ -277,7 +271,7 @@ impl ValGraph {
                 kind,
                 source: node,
                 output_index: index as u32,
-                first_use: None.into(),
+                uses: UseList::new(),
             })
         });
 
@@ -317,7 +311,7 @@ impl ValGraph {
     pub fn value_uses(&self, value: DepValue) -> UseIter<'_> {
         UseIter {
             graph: self,
-            cur: self.values[value].first_use.expand(),
+            iter: self.values[value].uses.as_slice(&self.use_pool).iter(),
         }
     }
 
@@ -327,29 +321,29 @@ impl ValGraph {
     }
 
     pub fn replace_all_uses(&mut self, old: DepValue, new: DepValue) {
-        let mut cur_use = mem::replace(&mut self.values[old].first_use, None.into());
+        let mut old_uses = self.values[old].uses.take();
 
-        while let Some(cur) = cur_use.expand() {
-            let next = self.uses[cur].next;
-            self.uses[cur].prev = None.into();
-            self.uses[cur].next = None.into();
-            self.uses[cur].value = new;
-            self.link_use(new, cur);
-            cur_use = next;
+        for &value_use in old_uses.as_slice(&self.use_pool) {
+            self.uses[value_use].value = new;
         }
+
+        let new_uses = &mut self.values[new].uses;
+        let orig_new_use_len = new_uses.len(&self.use_pool);
+        let old_use_len = old_uses.len(&self.use_pool);
+
+        new_uses.grow_at(orig_new_use_len, old_use_len, &mut self.use_pool);
+
+        // Effectively `new_uses.extend` but without borrowing issues.
+        for i in 0..old_use_len {
+            let old_use = old_uses.as_slice(&self.use_pool)[i];
+            new_uses.as_mut_slice(&mut self.use_pool)[orig_new_use_len + i] = old_use;
+        }
+
+        old_uses.clear(&mut self.use_pool);
     }
 
     fn link_use(&mut self, value: DepValue, value_use: Use) {
-        let use_data = self.uses[value_use];
-        assert!(use_data.prev.is_none() && use_data.next.is_none());
-
-        let old_first_use = self.values[value].first_use;
-        self.uses[value_use].next = old_first_use;
-        if let Some(old_first_use) = old_first_use.expand() {
-            self.uses[old_first_use].prev = value_use.into();
-        }
-
-        self.values[value].first_use = value_use.into();
+        self.values[value].uses.push(value_use, &mut self.use_pool);
     }
 }
 
@@ -371,7 +365,7 @@ mod tests {
 
     #[test]
     fn use_size() {
-        assert_eq!(mem::size_of::<UseData>(), 20);
+        assert_eq!(mem::size_of::<UseData>(), 12);
     }
 
     #[test]
@@ -455,7 +449,7 @@ mod tests {
 
         assert_eq!(
             Vec::from_iter(graph.value_uses(five_val)),
-            vec![(add2, 0), (add, 1), (add, 0)]
+            vec![(add, 0), (add, 1), (add2, 0)]
         );
         assert_eq!(Vec::from_iter(graph.value_uses(three_val)), vec![(add2, 1)]);
     }

@@ -47,12 +47,6 @@ pub enum DepValueKind {
     /// values indicating the predecessors of the region, while every branch produces a number of
     /// control values that are then consumed by the regions to which they branch.
     Control,
-    /// A value that constrains ordering between nodes because they may have additional side
-    /// effects. Every node with potential side effects should both consume and produce an effect
-    /// value, and effect values should be passed/merged via region parameters when appropriate.
-    /// Essentially, every function should behave as if it has a single implicit "effect" variable
-    /// that is both used and defined by every effectful instruction,
-    Effect,
     /// Special value produced only by region instructions to attach their phi nodes.
     PhiSelector,
 }
@@ -391,16 +385,14 @@ mod tests {
             &[],
             &[
                 DepValueKind::Control,
-                DepValueKind::Effect,
                 DepValueKind::Value(Type::I32),
                 DepValueKind::Value(Type::I32),
             ],
         );
         let entry_outputs = graph.node_outputs(entry);
         let control_value = entry_outputs[0];
-        let effect_value = entry_outputs[1];
-        let param1 = entry_outputs[2];
-        let param2 = entry_outputs[3];
+        let param1 = entry_outputs[1];
+        let param2 = entry_outputs[2];
 
         let add = graph.create_node(
             NodeKind::Iadd,
@@ -408,14 +400,10 @@ mod tests {
             &[DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        let ret = graph.create_node(
-            NodeKind::Return,
-            &[control_value, effect_value, add_res],
-            &[],
-        );
+        let ret = graph.create_node(NodeKind::Return, &[control_value, add_res], &[]);
 
-        assert_eq!(graph.value_def(param1), (entry, 2));
-        assert_eq!(graph.value_def(param2), (entry, 3));
+        assert_eq!(graph.value_def(param1), (entry, 1));
+        assert_eq!(graph.value_def(param2), (entry, 2));
         assert_eq!(Vec::from_iter(graph.node_inputs(add)), vec![param1, param2]);
         assert_eq!(
             Vec::from_iter(graph.value_uses(control_value)),

@@ -202,6 +202,7 @@ struct DepValueData {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct UseData {
     value: DepValue,
+    use_list_index: u32,
     user: Node,
     input_index: u32,
 }
@@ -250,6 +251,7 @@ impl ValGraph {
             .map(|(index, &value)| {
                 self.uses.push(UseData {
                     value,
+                    use_list_index: 0,
                     user: node,
                     input_index: index as u32,
                 })
@@ -287,6 +289,20 @@ impl ValGraph {
             graph: self,
             use_list: self.nodes[node].inputs.as_slice(&self.use_pool),
         }
+    }
+
+    pub fn remove_node_input(&mut self, node: Node, index: u32) {
+        let index = index as usize;
+        let inputs = &mut self.nodes[node].inputs;
+        let input_use = inputs.as_slice(&self.use_pool)[index];
+
+        inputs.remove(index, &mut self.use_pool);
+        // Adjust input indices for any of the remaining inputs
+        for &input in &inputs.as_slice(&self.use_pool)[index..] {
+            self.uses[input].input_index -= 1;
+        }
+
+        self.unlink_use(input_use);
     }
 
     pub fn node_outputs(&self, node: Node) -> Outputs<'_> {
@@ -337,7 +353,25 @@ impl ValGraph {
     }
 
     fn link_use(&mut self, value: DepValue, value_use: Use) {
-        self.values[value].uses.push(value_use, &mut self.use_pool);
+        let uses = &mut self.values[value].uses;
+        let value_use_index = uses.len(&self.use_pool) as u32;
+        uses.push(value_use, &mut self.use_pool);
+        self.uses[value_use].use_list_index = value_use_index;
+    }
+
+    fn unlink_use(&mut self, value_use: Use) {
+        let value = self.uses[value_use].value;
+        let use_index = self.uses[value_use].use_list_index;
+        let use_list = &mut self.values[value].uses;
+        let use_list_len = use_list.len(&self.use_pool);
+
+        use_list.swap_remove(use_index as usize, &mut self.use_pool);
+
+        if use_index as usize != use_list_len - 1 {
+            // Patch in the correct index for the newly-moved use.
+            self.uses[use_list.as_mut_slice(&mut self.use_pool)[use_index as usize]]
+                .use_list_index = use_index;
+        }
     }
 }
 
@@ -359,7 +393,7 @@ mod tests {
 
     #[test]
     fn use_size() {
-        assert_eq!(mem::size_of::<UseData>(), 12);
+        assert_eq!(mem::size_of::<UseData>(), 16);
     }
 
     #[test]
@@ -485,5 +519,147 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![(seven, 0), (three, 0)]
         );
+    }
+
+    #[test]
+    fn remove_node_input() {
+        let mut graph = ValGraph::new();
+        let entry = graph.create_node(NodeKind::Entry, &[], &[DepValueKind::Control]);
+        let entry_control = graph.node_outputs(entry)[0];
+
+        let dead_region1 = graph.create_node(
+            NodeKind::Region,
+            &[],
+            &[DepValueKind::Control, DepValueKind::PhiSelector],
+        );
+        let dead_region1_control = graph.node_outputs(dead_region1)[0];
+        let dead_region2 = graph.create_node(
+            NodeKind::Region,
+            &[],
+            &[DepValueKind::Control, DepValueKind::PhiSelector],
+        );
+        let dead_region2_control = graph.node_outputs(dead_region2)[0];
+
+        let exit_region = graph.create_node(
+            NodeKind::Region,
+            &[entry_control, dead_region1_control, dead_region2_control],
+            &[DepValueKind::Control, DepValueKind::PhiSelector],
+        );
+
+        graph.remove_node_input(exit_region, 1);
+        assert_eq!(
+            Vec::from_iter(graph.node_inputs(exit_region)),
+            vec![entry_control, dead_region2_control]
+        );
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(entry_control)),
+            vec![(exit_region, 0)]
+        );
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(dead_region1_control)),
+            vec![]
+        );
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(dead_region2_control)),
+            vec![(exit_region, 1)]
+        );
+
+        graph.remove_node_input(exit_region, 1);
+        assert_eq!(
+            Vec::from_iter(graph.node_inputs(exit_region)),
+            vec![entry_control]
+        );
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(entry_control)),
+            vec![(exit_region, 0)]
+        );
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(dead_region1_control)),
+            vec![]
+        );
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(dead_region2_control)),
+            vec![]
+        );
+    }
+
+    #[test]
+    fn remove_node_input_multi_use() {
+        let mut graph = ValGraph::new();
+        let a = graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
+        let a_val = graph.node_outputs(a)[0];
+        let b = graph.create_node(NodeKind::IConst(7), &[], &[DepValueKind::Value(Type::I32)]);
+        let b_val = graph.node_outputs(b)[0];
+        let c = graph.create_node(NodeKind::IConst(8), &[], &[DepValueKind::Value(Type::I32)]);
+        let c_val = graph.node_outputs(c)[0];
+
+        // Not really valid add nodes, but we don't care about that in this test.
+        let ab = graph.create_node(NodeKind::Iadd, &[a_val, b_val], &[]);
+        let bc = graph.create_node(NodeKind::Iadd, &[b_val, c_val], &[]);
+        let ac = graph.create_node(NodeKind::Iadd, &[a_val, c_val], &[]);
+        let abc = graph.create_node(NodeKind::Iadd, &[a_val, b_val, c_val], &[]);
+
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(a_val)),
+            vec![(ab, 0), (ac, 0), (abc, 0)]
+        );
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(b_val)),
+            vec![(ab, 1), (bc, 0), (abc, 1)]
+        );
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(c_val)),
+            vec![(bc, 1), (ac, 1), (abc, 2)]
+        );
+
+        // Start by removing a use from the middle of the use list
+        graph.remove_node_input(ac, 0);
+        assert_eq!(Vec::from_iter(graph.node_inputs(ac)), vec![c_val]);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(a_val)),
+            vec![(ab, 0), (abc, 0)]
+        );
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(c_val)),
+            vec![(bc, 1), (ac, 0), (abc, 2)]
+        );
+
+        // Remove a use from the end of the use list
+        graph.remove_node_input(abc, 0);
+        assert_eq!(Vec::from_iter(graph.node_inputs(abc)), vec![b_val, c_val]);
+        assert_eq!(Vec::from_iter(graph.value_uses(a_val)), vec![(ab, 0)]);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(b_val)),
+            vec![(ab, 1), (bc, 0), (abc, 0)]
+        );
+
+        // Remove a use from the end of the use list
+        graph.remove_node_input(abc, 0);
+        assert_eq!(Vec::from_iter(graph.node_inputs(abc)), vec![c_val]);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(b_val)),
+            vec![(ab, 1), (bc, 0)]
+        );
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(c_val)),
+            vec![(bc, 1), (ac, 0), (abc, 0)]
+        );
+
+        // Remove a use from the beginning of the use list
+        graph.remove_node_input(ab, 1);
+        assert_eq!(Vec::from_iter(graph.node_inputs(ab)), vec![a_val]);
+        assert_eq!(Vec::from_iter(graph.value_uses(b_val)), vec![(bc, 0)]);
+    }
+
+    #[test]
+    fn remove_only_input() {
+        let mut graph = ValGraph::new();
+        let a = graph.create_node(NodeKind::Region, &[], &[DepValueKind::Control]);
+        let a_control = graph.node_outputs(a)[0];
+        let b = graph.create_node(NodeKind::Region, &[a_control], &[DepValueKind::Control]);
+        graph.remove_node_input(b, 0);
+
+        assert!(graph.node_inputs(b).is_empty());
+        assert!(graph.value_uses(a_control).count() == 0);
     }
 }

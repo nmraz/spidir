@@ -34,7 +34,6 @@ pub enum NodeKind {
     Iadd,
     Load,
     Store,
-    Br,
     BrCond,
     Call,
 }

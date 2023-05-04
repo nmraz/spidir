@@ -1,4 +1,4 @@
-use core::{ops::Index, slice};
+use core::{fmt, ops::Index, slice};
 
 use cranelift_entity::{entity_impl, EntityList, ListPool, PrimaryMap};
 use smallvec::SmallVec;
@@ -21,6 +21,17 @@ pub enum Type {
     I64,
     F64,
     Ptr,
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Type::I32 => f.write_str("i32"),
+            Type::I64 => f.write_str("i64"),
+            Type::F64 => f.write_str("f64"),
+            Type::Ptr => f.write_str("ptr"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -48,6 +59,16 @@ pub enum DepValueKind {
     Control,
     /// Special value produced only by region instructions to attach their phi nodes.
     PhiSelector,
+}
+
+impl fmt::Display for DepValueKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DepValueKind::Value(ty) => write!(f, "val({ty})"),
+            DepValueKind::Control => f.write_str("ctrl"),
+            DepValueKind::PhiSelector => f.write_str("phisel"),
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -393,6 +414,16 @@ mod tests {
     #[test]
     fn use_size() {
         assert_eq!(mem::size_of::<UseData>(), 16);
+    }
+
+    #[test]
+    fn display_value_kind() {
+        assert_eq!(DepValueKind::Value(Type::I32).to_string(), "val(i32)");
+        assert_eq!(DepValueKind::Value(Type::I64).to_string(), "val(i64)");
+        assert_eq!(DepValueKind::Value(Type::F64).to_string(), "val(f64)");
+        assert_eq!(DepValueKind::Value(Type::Ptr).to_string(), "val(ptr)");
+        assert_eq!(DepValueKind::Control.to_string(), "ctrl");
+        assert_eq!(DepValueKind::PhiSelector.to_string(), "phisel");
     }
 
     #[test]

@@ -256,8 +256,8 @@ impl ValGraph {
     pub fn create_node(
         &mut self,
         kind: NodeKind,
-        inputs: &[DepValue],
-        output_kinds: &[DepValueKind],
+        inputs: impl IntoIterator<Item = DepValue>,
+        output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node {
         let node = self.nodes.push(NodeData {
             kind,
@@ -266,9 +266,9 @@ impl ValGraph {
         });
 
         let input_uses: SmallVec<[Use; 2]> = inputs
-            .iter()
+            .into_iter()
             .enumerate()
-            .map(|(index, &value)| {
+            .map(|(index, value)| {
                 self.uses.push(UseData {
                     value,
                     use_list_index: 0,
@@ -278,11 +278,11 @@ impl ValGraph {
             })
             .collect();
 
-        for (&input, &input_use) in inputs.iter().zip(&input_uses) {
-            self.link_use(input, input_use);
+        for &input_use in &input_uses {
+            self.link_use(input_use);
         }
 
-        let outputs = output_kinds.iter().enumerate().map(|(index, &kind)| {
+        let outputs = output_kinds.into_iter().enumerate().map(|(index, kind)| {
             self.values.push(DepValueData {
                 kind,
                 source: node,
@@ -372,7 +372,8 @@ impl ValGraph {
         old_uses.clear(&mut self.use_pool);
     }
 
-    fn link_use(&mut self, value: DepValue, value_use: Use) {
+    fn link_use(&mut self, value_use: Use) {
+        let value = self.uses[value_use].value;
         let uses = &mut self.values[value].uses;
         let value_use_index = uses.len(&self.use_pool) as u32;
         uses.push(value_use, &mut self.use_pool);
@@ -429,7 +430,7 @@ mod tests {
     #[test]
     fn create_single_node() {
         let mut graph = ValGraph::new();
-        let node = graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
+        let node = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
         assert_eq!(graph.node_kind(node), &NodeKind::IConst(5));
         assert_eq!(Vec::from_iter(graph.node_inputs(node)), vec![]);
         let outputs = graph.node_outputs(node);
@@ -446,8 +447,8 @@ mod tests {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(
             NodeKind::Entry,
-            &[],
-            &[
+            [],
+            [
                 DepValueKind::Control,
                 DepValueKind::Value(Type::I32),
                 DepValueKind::Value(Type::I32),
@@ -460,11 +461,11 @@ mod tests {
 
         let add = graph.create_node(
             NodeKind::Iadd,
-            &[param1, param2],
-            &[DepValueKind::Value(Type::I32)],
+            [param1, param2],
+            [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        let ret = graph.create_node(NodeKind::Return, &[control_value, add_res], &[]);
+        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
 
         assert_eq!(graph.value_def(param1), (entry, 1));
         assert_eq!(graph.value_def(param2), (entry, 2));
@@ -481,19 +482,19 @@ mod tests {
     fn multi_use() {
         let mut graph = ValGraph::new();
         let five: Node =
-            graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
+            graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
-        let three = graph.create_node(NodeKind::IConst(3), &[], &[DepValueKind::Value(Type::I32)]);
+        let three = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Value(Type::I32)]);
         let three_val = graph.node_outputs(three)[0];
         let add = graph.create_node(
             NodeKind::Iadd,
-            &[five_val, five_val],
-            &[DepValueKind::Value(Type::I32)],
+            [five_val, five_val],
+            [DepValueKind::Value(Type::I32)],
         );
         let add2 = graph.create_node(
             NodeKind::Iadd,
-            &[five_val, three_val],
-            &[DepValueKind::Value(Type::I32)],
+            [five_val, three_val],
+            [DepValueKind::Value(Type::I32)],
         );
 
         assert!(!graph.has_one_use(five_val));
@@ -509,22 +510,22 @@ mod tests {
     #[test]
     fn replace_all_uses() {
         let mut graph = ValGraph::new();
-        let five = graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
+        let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
-        let three = graph.create_node(NodeKind::IConst(3), &[], &[DepValueKind::Value(Type::I32)]);
+        let three = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Value(Type::I32)]);
         let three_val = graph.node_outputs(three)[0];
         let add = graph.create_node(
             NodeKind::Iadd,
-            &[five_val, five_val],
-            &[DepValueKind::Value(Type::I32)],
+            [five_val, five_val],
+            [DepValueKind::Value(Type::I32)],
         );
         let add2 = graph.create_node(
             NodeKind::Iadd,
-            &[five_val, three_val],
-            &[DepValueKind::Value(Type::I32)],
+            [five_val, three_val],
+            [DepValueKind::Value(Type::I32)],
         );
 
-        let seven = graph.create_node(NodeKind::IConst(7), &[], &[DepValueKind::Value(Type::I32)]);
+        let seven = graph.create_node(NodeKind::IConst(7), [], [DepValueKind::Value(Type::I32)]);
         let seven_val = graph.node_outputs(seven)[0];
         graph.replace_all_uses(five_val, seven_val);
 
@@ -554,26 +555,26 @@ mod tests {
     #[test]
     fn remove_node_input() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(NodeKind::Entry, &[], &[DepValueKind::Control]);
+        let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
         let entry_control = graph.node_outputs(entry)[0];
 
         let dead_region1 = graph.create_node(
             NodeKind::Region,
-            &[],
-            &[DepValueKind::Control, DepValueKind::PhiSelector],
+            [],
+            [DepValueKind::Control, DepValueKind::PhiSelector],
         );
         let dead_region1_control = graph.node_outputs(dead_region1)[0];
         let dead_region2 = graph.create_node(
             NodeKind::Region,
-            &[],
-            &[DepValueKind::Control, DepValueKind::PhiSelector],
+            [],
+            [DepValueKind::Control, DepValueKind::PhiSelector],
         );
         let dead_region2_control = graph.node_outputs(dead_region2)[0];
 
         let exit_region = graph.create_node(
             NodeKind::Region,
-            &[entry_control, dead_region1_control, dead_region2_control],
-            &[DepValueKind::Control, DepValueKind::PhiSelector],
+            [entry_control, dead_region1_control, dead_region2_control],
+            [DepValueKind::Control, DepValueKind::PhiSelector],
         );
 
         graph.remove_node_input(exit_region, 1);
@@ -616,18 +617,18 @@ mod tests {
     #[test]
     fn remove_node_input_multi_use() {
         let mut graph = ValGraph::new();
-        let a = graph.create_node(NodeKind::IConst(5), &[], &[DepValueKind::Value(Type::I32)]);
+        let a = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
         let a_val = graph.node_outputs(a)[0];
-        let b = graph.create_node(NodeKind::IConst(7), &[], &[DepValueKind::Value(Type::I32)]);
+        let b = graph.create_node(NodeKind::IConst(7), [], [DepValueKind::Value(Type::I32)]);
         let b_val = graph.node_outputs(b)[0];
-        let c = graph.create_node(NodeKind::IConst(8), &[], &[DepValueKind::Value(Type::I32)]);
+        let c = graph.create_node(NodeKind::IConst(8), [], [DepValueKind::Value(Type::I32)]);
         let c_val = graph.node_outputs(c)[0];
 
         // Not really valid add nodes, but we don't care about that in this test.
-        let ab = graph.create_node(NodeKind::Iadd, &[a_val, b_val], &[]);
-        let bc = graph.create_node(NodeKind::Iadd, &[b_val, c_val], &[]);
-        let ac = graph.create_node(NodeKind::Iadd, &[a_val, c_val], &[]);
-        let abc = graph.create_node(NodeKind::Iadd, &[a_val, b_val, c_val], &[]);
+        let ab = graph.create_node(NodeKind::Iadd, [a_val, b_val], []);
+        let bc = graph.create_node(NodeKind::Iadd, [b_val, c_val], []);
+        let ac = graph.create_node(NodeKind::Iadd, [a_val, c_val], []);
+        let abc = graph.create_node(NodeKind::Iadd, [a_val, b_val, c_val], []);
 
         assert_eq!(
             Vec::from_iter(graph.value_uses(a_val)),
@@ -684,9 +685,9 @@ mod tests {
     #[test]
     fn remove_only_input() {
         let mut graph = ValGraph::new();
-        let a = graph.create_node(NodeKind::Region, &[], &[DepValueKind::Control]);
+        let a = graph.create_node(NodeKind::Region, [], [DepValueKind::Control]);
         let a_control = graph.node_outputs(a)[0];
-        let b = graph.create_node(NodeKind::Region, &[a_control], &[DepValueKind::Control]);
+        let b = graph.create_node(NodeKind::Region, [a_control], [DepValueKind::Control]);
         graph.remove_node_input(b, 0);
 
         assert!(graph.node_inputs(b).is_empty());

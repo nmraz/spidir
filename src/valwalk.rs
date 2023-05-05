@@ -26,6 +26,66 @@ pub fn compute_live_roots(graph: &ValGraph, entry: Node) -> Vec<Node> {
     live_roots
 }
 
+pub struct PostOrder<'a> {
+    graph: &'a ValGraph,
+    stack: Vec<(WalkPhase, Node)>,
+    visited: EntitySet<Node>,
+}
+
+impl<'a> PostOrder<'a> {
+    pub fn with_entry(graph: &'a ValGraph, entry: Node) -> Self {
+        Self::with_roots(graph, compute_live_roots(graph, entry))
+    }
+
+    pub fn with_roots(graph: &'a ValGraph, roots: impl IntoIterator<Item = Node>) -> Self {
+        let stack = roots
+            .into_iter()
+            .map(|node| (WalkPhase::Pre, node))
+            .collect();
+
+        Self {
+            graph,
+            stack,
+            visited: EntitySet::new(),
+        }
+    }
+}
+
+impl<'a> Iterator for PostOrder<'a> {
+    type Item = Node;
+
+    fn next(&mut self) -> Option<Node> {
+        loop {
+            let (phase, node) = loop {
+                let (phase, node) = self.stack.pop()?;
+                if phase == WalkPhase::Post || !self.visited.contains(node) {
+                    break (phase, node);
+                }
+            };
+
+            self.visited.insert(node);
+
+            match phase {
+                WalkPhase::Pre => {
+                    self.stack.push((WalkPhase::Post, node));
+                    for output in self.graph.node_outputs(node) {
+                        for (user, _) in self.graph.value_uses(output) {
+                            self.stack.push((WalkPhase::Pre, user))
+                        }
+                    }
+                }
+                WalkPhase::Post => return Some(node),
+            };
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum WalkPhase {
+    Pre,
+    Post,
+}
+
 fn live_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
     let input_succs = graph.node_inputs(node).into_iter().filter_map(|input| {
         // For inputs, anything other than control indicates that the node computing the value is live.

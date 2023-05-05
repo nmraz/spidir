@@ -2,4 +2,5 @@
 
 extern crate alloc;
 
+pub mod function;
 pub mod valgraph;

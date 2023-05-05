@@ -115,6 +115,15 @@ mod tests {
 
     use super::*;
 
+    fn check_live_roots(graph: &ValGraph, entry: Node, expected: &[Node]) {
+        assert_eq!(compute_live_roots(graph, entry), expected);
+    }
+
+    fn check_postorder(graph: &ValGraph, entry: Node, expected: &[Node]) {
+        let postorder: Vec<_> = PostOrder::with_entry(graph, entry).collect();
+        assert_eq!(postorder, expected);
+    }
+
     #[test]
     fn live_roots_add_params() {
         let mut graph = ValGraph::new();
@@ -140,7 +149,7 @@ mod tests {
         let add_res = graph.node_outputs(add)[0];
         graph.create_node(NodeKind::Return, [control_value, add_res], []);
 
-        assert_eq!(compute_live_roots(&graph, entry), vec![entry]);
+        check_live_roots(&graph, entry, &[entry]);
     }
 
     #[test]
@@ -165,7 +174,7 @@ mod tests {
         let add_res = graph.node_outputs(add)[0];
         graph.create_node(NodeKind::Return, [control_value, add_res], []);
 
-        assert_eq!(compute_live_roots(&graph, entry), vec![entry, five]);
+        check_live_roots(&graph, entry, &[entry, five]);
     }
 
     #[test]
@@ -183,7 +192,7 @@ mod tests {
         graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
         graph.create_node(NodeKind::Return, [control_value, param1], []);
 
-        assert_eq!(compute_live_roots(&graph, entry), vec![entry]);
+        check_live_roots(&graph, entry, &[entry]);
     }
 
     #[test]
@@ -213,6 +222,59 @@ mod tests {
         let exit_region_control = graph.node_outputs(exit_region)[0];
         graph.create_node(NodeKind::Return, [exit_region_control, param1], []);
 
-        assert_eq!(compute_live_roots(&graph, entry), vec![entry]);
+        check_live_roots(&graph, entry, &[entry]);
+    }
+
+    #[test]
+    fn postorder_add_params() {
+        let mut graph = ValGraph::new();
+        let entry = graph.create_node(
+            NodeKind::Entry,
+            [],
+            [
+                DepValueKind::Control,
+                DepValueKind::Value(Type::I32),
+                DepValueKind::Value(Type::I32),
+            ],
+        );
+        let entry_outputs = graph.node_outputs(entry);
+        let control_value = entry_outputs[0];
+        let param1 = entry_outputs[1];
+        let param2 = entry_outputs[2];
+
+        let add = graph.create_node(
+            NodeKind::Iadd,
+            [param1, param2],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add_res = graph.node_outputs(add)[0];
+        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
+
+        check_postorder(&graph, entry, &[ret, add, entry]);
+    }
+
+    #[test]
+    fn postorder_add_const() {
+        let mut graph = ValGraph::new();
+        let entry = graph.create_node(
+            NodeKind::Entry,
+            [],
+            [DepValueKind::Control, DepValueKind::Value(Type::I32)],
+        );
+        let entry_outputs = graph.node_outputs(entry);
+        let control_value = entry_outputs[0];
+        let param1 = entry_outputs[1];
+
+        let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+        let five_val = graph.node_outputs(five)[0];
+        let add = graph.create_node(
+            NodeKind::Iadd,
+            [param1, five_val],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add_res = graph.node_outputs(add)[0];
+        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
+
+        check_postorder(&graph, entry, &[ret, add, five, entry]);
     }
 }

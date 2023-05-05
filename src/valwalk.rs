@@ -56,17 +56,10 @@ impl<'a> Iterator for PostOrder<'a> {
 
     fn next(&mut self) -> Option<Node> {
         loop {
-            let (phase, node) = loop {
-                let (phase, node) = self.stack.pop()?;
-                if phase == WalkPhase::Post || !self.visited.contains(node) {
-                    break (phase, node);
-                }
-            };
-
-            self.visited.insert(node);
-
+            let (phase, node) = self.stack.pop()?;
             match phase {
-                WalkPhase::Pre => {
+                WalkPhase::Pre if !self.visited.contains(node) => {
+                    self.visited.insert(node);
                     self.stack.push((WalkPhase::Post, node));
                     for output in self.graph.node_outputs(node) {
                         for (user, _) in self.graph.value_uses(output) {
@@ -74,8 +67,9 @@ impl<'a> Iterator for PostOrder<'a> {
                         }
                     }
                 }
+                WalkPhase::Pre => {}
                 WalkPhase::Post => return Some(node),
-            };
+            }
         }
     }
 }

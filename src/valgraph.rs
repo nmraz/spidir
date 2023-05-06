@@ -348,6 +348,18 @@ impl ValGraph {
         }
     }
 
+    pub fn add_node_input(&mut self, node: Node, input: DepValue) {
+        let input_index = self.nodes[node].inputs.len(&self.use_pool) as u32;
+        let input_use = self.uses.push(UseData {
+            value: input,
+            use_list_index: 0,
+            user: node,
+            input_index,
+        });
+        self.nodes[node].inputs.push(input_use, &mut self.use_pool);
+        self.link_use(input_use);
+    }
+
     pub fn remove_node_input(&mut self, node: Node, index: u32) {
         let index = index as usize;
         let inputs = &mut self.nodes[node].inputs;
@@ -587,6 +599,30 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![(seven, 0), (three, 0)]
         );
+    }
+
+    #[test]
+    fn add_node_input() {
+        let mut graph = ValGraph::new();
+        let entry = graph.create_node(
+            NodeKind::Entry,
+            [],
+            [
+                DepValueKind::Control,
+                DepValueKind::Value(Type::I32),
+                DepValueKind::Value(Type::I32),
+            ],
+        );
+        let entry_outputs = graph.node_outputs(entry);
+        let param1 = entry_outputs[1];
+        let param2 = entry_outputs[2];
+
+        let add = graph.create_node(NodeKind::Iadd, [param1], [DepValueKind::Value(Type::I32)]);
+        graph.add_node_input(add, param2);
+
+        assert_eq!(Vec::from_iter(graph.node_inputs(add)), vec![param1, param2]);
+        assert_eq!(Vec::from_iter(graph.value_uses(param1)), vec![(add, 0)]);
+        assert_eq!(Vec::from_iter(graph.value_uses(param2)), vec![(add, 1)]);
     }
 
     #[test]

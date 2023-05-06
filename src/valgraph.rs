@@ -23,14 +23,49 @@ pub enum Type {
     Ptr,
 }
 
+impl Type {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Type::I32 => "i32",
+            Type::I64 => "i64",
+            Type::F64 => "f64",
+            Type::Ptr => "ptr",
+        }
+    }
+}
+
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IcmpKind {
+    Eq,
+    Ne,
+    Slt,
+    Sle,
+    Ult,
+    Ule,
+}
+
+impl IcmpKind {
+    pub fn as_str(self) -> &'static str {
         match self {
-            Type::I32 => f.write_str("i32"),
-            Type::I64 => f.write_str("i64"),
-            Type::F64 => f.write_str("f64"),
-            Type::Ptr => f.write_str("ptr"),
+            IcmpKind::Eq => "eq",
+            IcmpKind::Ne => "ne",
+            IcmpKind::Slt => "slt",
+            IcmpKind::Sle => "sle",
+            IcmpKind::Ult => "ult",
+            IcmpKind::Ule => "ule",
         }
+    }
+}
+
+impl fmt::Display for IcmpKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -43,6 +78,8 @@ pub enum NodeKind {
     IConst(i64),
     FConst(f64),
     Iadd,
+    Isub,
+    Icmp(IcmpKind),
     Load,
     Store,
     BrCond,

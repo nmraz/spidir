@@ -60,3 +60,51 @@ pub fn write_node(w: &mut dyn fmt::Write, graph: &ValGraph, node: Node) -> fmt::
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+
+    use expect_test::{expect, Expect};
+
+    use crate::valgraph::{DepValueKind, Type};
+
+    use super::*;
+
+    fn check_graph_write(graph: &ValGraph, entry: Node, expected: Expect) {
+        let mut output = String::new();
+        write_graph(&mut output, graph, entry).expect("failed to display graph");
+        expected.assert_eq(&output);
+    }
+
+    #[test]
+    fn write_add_params() {
+        let mut graph = ValGraph::new();
+        let entry = graph.create_node(
+            NodeKind::Entry,
+            [],
+            [
+                DepValueKind::Control,
+                DepValueKind::Value(Type::I32),
+                DepValueKind::Value(Type::I32),
+            ],
+        );
+        let entry_outputs = graph.node_outputs(entry);
+        let control_value = entry_outputs[0];
+        let param1 = entry_outputs[1];
+        let param2 = entry_outputs[2];
+
+        let add = graph.create_node(
+            NodeKind::Iadd,
+            [param1, param2],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add_res = graph.node_outputs(add)[0];
+        graph.create_node(NodeKind::Return, [control_value, add_res], []);
+
+        check_graph_write(&graph, entry, expect![[r#"
+            %0:ctrl, %1:val(i32), %2:val(i32) = entry
+            %3:val(i32) = iadd %1, %2
+            return %0, %3
+        "#]]);
+    }
+}

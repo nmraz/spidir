@@ -10,3 +10,6 @@ cranelift-entity = "0.95.0"
 hashbrown = { version = "0.13.2", default-features = false }
 rustc-hash = { version = "1.1.0", default-features = false }
 smallvec = { version = "1.10.0", default-features = false, features = ["const_new"] }
+
+[dev-dependencies]
+expect-test = "1.4.1"

@@ -157,7 +157,7 @@ mod tests {
 
         let indvar_phi = graph.create_node(
             NodeKind::Phi,
-            [loop_phisel, zero_val],
+            [loop_phisel, param1],
             [DepValueKind::Value(Type::I32)],
         );
         let indvar_phi_val = graph.node_outputs(indvar_phi)[0];
@@ -227,22 +227,22 @@ mod tests {
             &graph,
             entry,
             expect![[r#"
-            %0:ctrl, %1:val(i32) = entry
-            %10:val(i32) = iconst 1
-            %2:val(i32) = iconst 0
-            %3:val(i32) = icmp eq %1, %2
-            %4:ctrl, %5:ctrl = brcond %0, %3
-            %13:val(i32) = icmp eq %11, %2
-            %14:ctrl, %15:ctrl = brcond %6, %13
-            %16:ctrl, %17:phisel = region %4, %14
-            %6:ctrl, %7:phisel = region %5, %15
-            %8:val(i32) = phi %7, %2, %11
-            %11:val(i32) = isub %8, %10
-            %9:val(i32) = phi %7, %2, %12
-            %12:val(i32) = iadd %9, %8
-            %18:val(i32) = phi %17, %2, %12
-            return %16, %18
-        "#]],
+                %0:ctrl, %1:val(i32) = entry
+                %10:val(i32) = iconst 1
+                %2:val(i32) = iconst 0
+                %3:val(i32) = icmp eq %1, %2
+                %4:ctrl, %5:ctrl = brcond %0, %3
+                %13:val(i32) = icmp eq %11, %2
+                %14:ctrl, %15:ctrl = brcond %6, %13
+                %16:ctrl, %17:phisel = region %4, %14
+                %6:ctrl, %7:phisel = region %5, %15
+                %8:val(i32) = phi %7, %1, %11
+                %11:val(i32) = isub %8, %10
+                %9:val(i32) = phi %7, %2, %12
+                %12:val(i32) = iadd %9, %8
+                %18:val(i32) = phi %17, %2, %12
+                return %16, %18
+            "#]],
         );
     }
 }

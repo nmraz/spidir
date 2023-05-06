@@ -107,10 +107,10 @@ mod tests {
             &graph,
             entry,
             expect![[r#"
-            %0:ctrl, %1:val(i32), %2:val(i32) = entry
-            %3:val(i32) = iadd %1, %2
-            return %0, %3
-        "#]],
+                %0:ctrl, %1:val(i32), %2:val(i32) = entry
+                %3:val(i32) = iadd %1, %2
+                return %0, %3
+            "#]],
         );
     }
 

@@ -40,6 +40,8 @@ pub fn write_node(w: &mut dyn fmt::Write, graph: &ValGraph, node: Node) -> fmt::
         NodeKind::IConst(val) => write!(w, "iconst {val}")?,
         NodeKind::FConst(val) => write!(w, "fconst {val}")?,
         NodeKind::Iadd => w.write_str("iadd")?,
+        NodeKind::Isub => w.write_str("isub")?,
+        NodeKind::Icmp(kind) => write!(w, "icmp {kind}")?,
         NodeKind::Load => w.write_str("load")?,
         NodeKind::Store => w.write_str("store")?,
         NodeKind::BrCond => w.write_str("brcond")?,

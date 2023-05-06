@@ -172,6 +172,28 @@ mod tests {
     }
 
     #[test]
+    fn live_roots_add_consts() {
+        let mut graph = ValGraph::new();
+        let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
+        let entry_outputs = graph.node_outputs(entry);
+        let control_value = entry_outputs[0];
+
+        let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+        let five_val = graph.node_outputs(five)[0];
+        let three = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Value(Type::I32)]);
+        let three_val = graph.node_outputs(three)[0];
+        let add = graph.create_node(
+            NodeKind::Iadd,
+            [five_val, three_val],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add_res = graph.node_outputs(add)[0];
+        graph.create_node(NodeKind::Return, [control_value, add_res], []);
+
+        check_live_roots(&graph, entry, &[entry, three, five]);
+    }
+
+    #[test]
     fn live_roots_dead_value() {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(

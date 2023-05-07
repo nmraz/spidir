@@ -81,14 +81,13 @@ enum WalkPhase {
 }
 
 fn live_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
-    let input_succs = graph.node_inputs(node).into_iter().filter_map(|input| {
-        // For inputs, anything other than control indicates that the node computing the value is live.
-        if graph.value_kind(input) != DepValueKind::Control {
-            Some(graph.value_def(input).0)
-        } else {
-            None
-        }
-    });
+    // Consider all inputs as "live" so we don't cause cases where uses are traversed without their
+    // corresponding defs. Users that want to treat regions with no control inputs as dead should do
+    // so themselves.
+    let input_succs = graph
+        .node_inputs(node)
+        .into_iter()
+        .map(|input| graph.value_def(input).0);
 
     let output_succs = graph.node_outputs(node).into_iter().filter_map(|output| {
         // For outputs, a control output indicates that the node receiving control is live.
@@ -233,6 +232,42 @@ mod tests {
         let exit_region = graph.create_node(
             NodeKind::Region,
             [entry_control, dead_region_control],
+            [DepValueKind::Control, DepValueKind::PhiSelector],
+        );
+        let exit_region_control = graph.node_outputs(exit_region)[0];
+        graph.create_node(NodeKind::Return, [exit_region_control, param1], []);
+
+        check_live_roots(&graph, entry, &[entry, dead_region]);
+    }
+
+    #[test]
+    fn live_roots_detached_region() {
+        let mut graph = ValGraph::new();
+        let entry = graph.create_node(
+            NodeKind::Entry,
+            [],
+            [DepValueKind::Control, DepValueKind::Value(Type::I32)],
+        );
+        let entry_outputs = graph.node_outputs(entry);
+        let entry_control = entry_outputs[0];
+        let param1 = entry_outputs[1];
+
+        // Create a pair of completely detached regions.
+        let detached_region = graph.create_node(
+            NodeKind::Region,
+            [],
+            [DepValueKind::Control, DepValueKind::PhiSelector],
+        );
+        let detached_region_control = graph.node_outputs(detached_region)[0];
+        graph.create_node(
+            NodeKind::Region,
+            [detached_region_control],
+            [DepValueKind::Control, DepValueKind::PhiSelector],
+        );
+
+        let exit_region = graph.create_node(
+            NodeKind::Region,
+            [entry_control],
             [DepValueKind::Control, DepValueKind::PhiSelector],
         );
         let exit_region_control = graph.node_outputs(exit_region)[0];

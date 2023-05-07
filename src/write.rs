@@ -82,10 +82,55 @@ mod tests {
 
     use super::*;
 
-    fn check_graph_write(graph: &ValGraph, entry: Node, expected: Expect) {
+    fn check_write_node_kind(kind: NodeKind, expected: &str) {
+        let mut graph = ValGraph::new();
+        let node = graph.create_node(kind, [], []);
+        let mut output = String::new();
+        write_node(&mut output, &graph, node).expect("failed to write node");
+        assert_eq!(output, expected.to_owned() + "\n");
+    }
+
+    fn check_write_graph(graph: &ValGraph, entry: Node, expected: Expect) {
         let mut output = String::new();
         write_graph(&mut output, graph, entry).expect("failed to display graph");
         expected.assert_eq(&output);
+    }
+
+    #[test]
+    fn write_node_kinds() {
+        let kinds = [
+            (NodeKind::Entry, "entry"),
+            (NodeKind::Return, "return"),
+            (NodeKind::Region, "region"),
+            (NodeKind::Phi, "phi"),
+            (NodeKind::IConst(5), "iconst 5"),
+            (NodeKind::Iadd, "iadd"),
+            (NodeKind::Isub, "isub"),
+            (NodeKind::And, "and"),
+            (NodeKind::Or, "or"),
+            (NodeKind::Xor, "xor"),
+            (NodeKind::Shl, "shl"),
+            (NodeKind::Lshr, "lshr"),
+            (NodeKind::Ashr, "ashr"),
+            (NodeKind::Smul, "smul"),
+            (NodeKind::Umul, "umul"),
+            (NodeKind::Sdiv, "sdiv"),
+            (NodeKind::Udiv, "udiv"),
+            (NodeKind::Icmp(IcmpKind::Eq), "icmp eq"),
+            (NodeKind::Icmp(IcmpKind::Ne), "icmp ne"),
+            (NodeKind::Icmp(IcmpKind::Slt), "icmp slt"),
+            (NodeKind::Icmp(IcmpKind::Sle), "icmp sle"),
+            (NodeKind::Icmp(IcmpKind::Ult), "icmp ult"),
+            (NodeKind::Icmp(IcmpKind::Ule), "icmp ule"),
+            (NodeKind::FConst(2.71), "fconst 2.71"),
+            (NodeKind::Load, "load"),
+            (NodeKind::Store, "store"),
+            (NodeKind::BrCond, "brcond"),
+            (NodeKind::Call, "call"),
+        ];
+        for (kind, expected) in kinds {
+            check_write_node_kind(kind, expected);
+        }
     }
 
     #[test]
@@ -113,7 +158,7 @@ mod tests {
         let add_res = graph.node_outputs(add)[0];
         graph.create_node(NodeKind::Return, [control_value, add_res], []);
 
-        check_graph_write(
+        check_write_graph(
             &graph,
             entry,
             expect![[r#"
@@ -233,7 +278,7 @@ mod tests {
         graph.add_node_input(indvar_phi, next_indvar_val);
         graph.add_node_input(sum_phi, next_sum_val);
 
-        check_graph_write(
+        check_write_graph(
             &graph,
             entry,
             expect![[r#"

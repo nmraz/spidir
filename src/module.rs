@@ -1,4 +1,4 @@
-use alloc::vec::Vec;
+use alloc::{string::String, vec::Vec};
 use core::iter;
 use cranelift_entity::{entity_impl, PrimaryMap};
 
@@ -18,13 +18,14 @@ pub struct Signature {
 }
 
 pub struct FunctionData {
+    pub name: String,
     pub sig: Signature,
     pub valgraph: ValGraph,
     pub entry_node: Node,
 }
 
 impl FunctionData {
-    pub fn with_signature(sig: Signature) -> Self {
+    pub fn new(name: String, sig: Signature) -> Self {
         let mut valgraph = ValGraph::new();
         let entry_node = valgraph.create_node(
             NodeKind::Entry,
@@ -33,11 +34,17 @@ impl FunctionData {
                 .chain(sig.arg_types.iter().map(|&ty| DepValueKind::Value(ty))),
         );
         Self {
+            name,
             sig,
             valgraph,
             entry_node,
         }
     }
+}
+
+pub struct ExternFunctionData {
+    pub name: String,
+    pub sig: Signature,
 }
 
 pub struct Module {

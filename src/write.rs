@@ -1,12 +1,29 @@
 use alloc::vec::Vec;
 use core::fmt;
 
-use crate::module::{FunctionData, Module};
-use crate::valgraph::FunctionRef;
 use crate::{
-    valgraph::{Node, NodeKind, ValGraph},
+    module::{ExternFunctionData, FunctionData, Module},
+    valgraph::{FunctionRef, Node, NodeKind, ValGraph},
     valwalk::PostOrder,
 };
+
+pub fn write_module(w: &mut dyn fmt::Write, module: &Module) -> fmt::Result {
+    for (_, extern_func) in module.extern_functions.iter() {
+        write_extern_function(w, extern_func)?;
+    }
+    w.write_str("\n")?;
+
+    let mut first_function = true;
+    for (_, func) in module.functions.iter() {
+        if !first_function {
+            w.write_str("\n")?;
+        }
+        first_function = false;
+        write_function(w, module, func)?;
+    }
+
+    Ok(())
+}
 
 pub fn write_function(
     w: &mut dyn fmt::Write,
@@ -115,6 +132,21 @@ pub fn write_node(
     Ok(())
 }
 
+fn write_extern_function(w: &mut dyn fmt::Write, func: &ExternFunctionData) -> fmt::Result {
+    write!(w, "extfunc @{}(", func.name)?;
+
+    let mut first_arg = true;
+    for &arg_type in &func.sig.arg_types {
+        if !first_arg {
+            w.write_str(", ")?;
+        }
+        first_arg = false;
+        write!(w, "{arg_type}")?;
+    }
+
+    w.write_str(")\n")
+}
+
 fn write_func_ref(w: &mut dyn fmt::Write, module: &Module, func: FunctionRef) -> fmt::Result {
     match func {
         FunctionRef::Internal(func) => write!(w, "func @{}", module.functions[func].name),
@@ -126,11 +158,12 @@ fn write_func_ref(w: &mut dyn fmt::Write, module: &Module, func: FunctionRef) ->
 
 #[cfg(test)]
 mod tests {
-
     use expect_test::{expect, Expect};
 
-    use crate::module::{ExternFunctionData, FunctionData, Signature};
-    use crate::valgraph::{DepValueKind, IcmpKind, Type};
+    use crate::{
+        module::{ExternFunctionData, FunctionData, Signature},
+        valgraph::{DepValueKind, IcmpKind, Type},
+    };
 
     use super::*;
 
@@ -145,6 +178,12 @@ mod tests {
         let module = Module::new();
         let mut output = String::new();
         write_function(&mut output, &module, function).expect("failed to display function");
+        expected.assert_eq(&output);
+    }
+
+    fn check_write_module(module: &Module, expected: Expect) {
+        let mut output = String::new();
+        write_module(&mut output, module).expect("failed to display module");
         expected.assert_eq(&output);
     }
 
@@ -418,6 +457,57 @@ mod tests {
                     %0:ctrl, %1:val(i32), %2:val(i32) = entry
                     %3:val(i32) = iadd %1, %2
                     return %0, %3
+                }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn write_simple_module() {
+        let mut module = Module::new();
+        let func = module.functions.push(FunctionData::new(
+            "my_func".to_owned(),
+            Signature {
+                ret_type: Type::I32,
+                arg_types: vec![Type::I64],
+            },
+        ));
+        let extfunc = module.extern_functions.push(ExternFunctionData {
+            name: "my_ext_func".to_owned(),
+            sig: Signature {
+                ret_type: Type::I32,
+                arg_types: vec![Type::I64],
+            },
+        });
+
+        let func_entry = module.functions[func].entry_node;
+        let func_graph = &mut module.functions[func].valgraph;
+
+        let func_entry_outputs = func_graph.node_outputs(func_entry);
+        let func_entry_ctrl = func_entry_outputs[0];
+        let func_param1 = func_entry_outputs[1];
+
+        let call = func_graph.create_node(
+            NodeKind::Call(FunctionRef::External(extfunc)),
+            [func_entry_ctrl, func_param1],
+            [DepValueKind::Control, DepValueKind::Value(Type::I32)],
+        );
+
+        let call_outputs = func_graph.node_outputs(call);
+        let call_ctrl = call_outputs[0];
+        let call_retval = call_outputs[1];
+
+        func_graph.create_node(NodeKind::Return, [call_ctrl, call_retval], []);
+
+        check_write_module(
+            &module,
+            expect![[r#"
+                extfunc @my_ext_func(i64)
+
+                func @my_func:i32(i64) {
+                    %0:ctrl, %1:val(i64) = entry
+                    %2:ctrl, %3:val(i32) = call extfunc @my_ext_func %0, %1
+                    return %2, %3
                 }
             "#]],
         );

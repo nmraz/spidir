@@ -95,14 +95,6 @@ mod tests {
 
     use super::*;
 
-    fn check_write_node_kind(kind: NodeKind, expected: &str) {
-        let mut graph = ValGraph::new();
-        let node = graph.create_node(kind, [], []);
-        let mut output = String::new();
-        write_node(&mut output, &graph, node).expect("failed to write node");
-        assert_eq!(output, expected.to_owned() + "\n");
-    }
-
     fn check_write_graph(graph: &ValGraph, entry: Node, expected: Expect) {
         let mut output = String::new();
         write_graph(&mut output, graph, entry).expect("failed to display graph");
@@ -126,6 +118,14 @@ mod tests {
 
     #[test]
     fn write_node_kinds() {
+        fn check(kind: NodeKind, expected: &str) {
+            let mut graph = ValGraph::new();
+            let node = graph.create_node(kind, [], []);
+            let mut output = String::new();
+            write_node(&mut output, &graph, node).expect("failed to write node");
+            assert_eq!(output, expected.to_owned() + "\n");
+        }
+
         let kinds = [
             (NodeKind::Entry, "entry"),
             (NodeKind::Return, "return"),
@@ -156,8 +156,9 @@ mod tests {
             (NodeKind::BrCond, "brcond"),
             (NodeKind::Call, "call"),
         ];
+
         for (kind, expected) in kinds {
-            check_write_node_kind(kind, expected);
+            check(kind, expected);
         }
     }
 

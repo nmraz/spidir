@@ -1,24 +1,35 @@
 use alloc::vec::Vec;
 use core::fmt;
 
+use crate::module::Module;
 use crate::valgraph::GlobalRef;
 use crate::{
     valgraph::{Node, NodeKind, ValGraph},
     valwalk::PostOrder,
 };
 
-pub fn write_graph(w: &mut dyn fmt::Write, graph: &ValGraph, entry: Node) -> fmt::Result {
+pub fn write_graph(
+    w: &mut dyn fmt::Write,
+    module: &Module,
+    graph: &ValGraph,
+    entry: Node,
+) -> fmt::Result {
     let mut rpo: Vec<_> = PostOrder::with_entry(graph, entry).collect();
     rpo.reverse();
 
     for node in rpo {
-        write_node(w, graph, node)?;
+        write_node(w, module, graph, node)?;
     }
 
     Ok(())
 }
 
-pub fn write_node(w: &mut dyn fmt::Write, graph: &ValGraph, node: Node) -> fmt::Result {
+pub fn write_node(
+    w: &mut dyn fmt::Write,
+    _module: &Module,
+    graph: &ValGraph,
+    node: Node,
+) -> fmt::Result {
     let outputs = graph.node_outputs(node);
 
     if !outputs.is_empty() {
@@ -97,7 +108,8 @@ mod tests {
 
     fn check_write_graph(graph: &ValGraph, entry: Node, expected: Expect) {
         let mut output = String::new();
-        write_graph(&mut output, graph, entry).expect("failed to display graph");
+        let module = Module::new();
+        write_graph(&mut output, &module, graph, entry).expect("failed to display graph");
         expected.assert_eq(&output);
     }
 
@@ -119,10 +131,11 @@ mod tests {
     #[test]
     fn write_node_kinds() {
         fn check(kind: NodeKind, expected: &str) {
+            let module = Module::new();
             let mut graph = ValGraph::new();
             let node = graph.create_node(kind, [], []);
             let mut output = String::new();
-            write_node(&mut output, &graph, node).expect("failed to write node");
+            write_node(&mut output, &module, &graph, node).expect("failed to write node");
             assert_eq!(output, expected.to_owned() + "\n");
         }
 

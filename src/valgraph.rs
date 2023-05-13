@@ -72,9 +72,9 @@ impl fmt::Display for IcmpKind {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GlobalRef {
-    InternalFunc(Function),
-    ExternalFunc(ExternFunction),
+pub enum FunctionRef {
+    Internal(Function),
+    External(ExternFunction),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -101,8 +101,7 @@ pub enum NodeKind {
     Load,
     Store,
     BrCond,
-    GlobalAddr(GlobalRef),
-    Call,
+    Call(FunctionRef),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

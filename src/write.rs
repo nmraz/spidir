@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use core::fmt;
 
 use crate::module::{FunctionData, Module};
-use crate::valgraph::GlobalRef;
+use crate::valgraph::FunctionRef;
 use crate::{
     valgraph::{Node, NodeKind, ValGraph},
     valwalk::PostOrder,
@@ -94,11 +94,10 @@ pub fn write_node(
         NodeKind::Load => w.write_str("load")?,
         NodeKind::Store => w.write_str("store")?,
         NodeKind::BrCond => w.write_str("brcond")?,
-        NodeKind::GlobalAddr(gref) => {
-            w.write_str("globaladdr ")?;
-            write_global_ref(w, module, *gref)?;
+        NodeKind::Call(func) => {
+            w.write_str("call ")?;
+            write_func_ref(w, module, *func)?;
         }
-        NodeKind::Call => w.write_str("call")?,
     };
 
     let mut first = true;
@@ -116,10 +115,10 @@ pub fn write_node(
     Ok(())
 }
 
-fn write_global_ref(w: &mut dyn fmt::Write, module: &Module, gref: GlobalRef) -> fmt::Result {
-    match gref {
-        GlobalRef::InternalFunc(func) => write!(w, "func @{}", module.functions[func].name),
-        GlobalRef::ExternalFunc(func) => {
+fn write_func_ref(w: &mut dyn fmt::Write, module: &Module, func: FunctionRef) -> fmt::Result {
+    match func {
+        FunctionRef::Internal(func) => write!(w, "func @{}", module.functions[func].name),
+        FunctionRef::External(func) => {
             write!(w, "extfunc @{}", module.extern_functions[func].name)
         }
     }
@@ -206,14 +205,13 @@ mod tests {
             (NodeKind::Store, "store"),
             (NodeKind::BrCond, "brcond"),
             (
-                NodeKind::GlobalAddr(GlobalRef::InternalFunc(func)),
-                "globaladdr func @my_func",
+                NodeKind::Call(FunctionRef::Internal(func)),
+                "call func @my_func",
             ),
             (
-                NodeKind::GlobalAddr(GlobalRef::ExternalFunc(extfunc)),
-                "globaladdr extfunc @my_ext_func",
+                NodeKind::Call(FunctionRef::External(extfunc)),
+                "call extfunc @my_ext_func",
             ),
-            (NodeKind::Call, "call"),
         ];
 
         for (kind, expected) in kinds {

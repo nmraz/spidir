@@ -3,6 +3,8 @@ use core::{fmt, ops::Index, slice};
 use cranelift_entity::{entity_impl, EntityList, ListPool, PrimaryMap};
 use smallvec::SmallVec;
 
+use crate::module::{ExternFunction, Function};
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Node(u32);
 entity_impl!(Node, "node");
@@ -69,6 +71,12 @@ impl fmt::Display for IcmpKind {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GlobalRef {
+    InternalFunc(Function),
+    ExternalFunc(ExternFunction),
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NodeKind {
     Entry,
@@ -93,6 +101,7 @@ pub enum NodeKind {
     Load,
     Store,
     BrCond,
+    GlobalAddr(GlobalRef),
     Call,
 }
 

@@ -6,11 +6,11 @@ use crate::valgraph::{DepValueKind, Node, NodeKind, Type, ValGraph};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Function(u32);
-entity_impl!(Function, "func");
+entity_impl!(Function, "@");
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ExternFunction(u32);
-entity_impl!(ExternFunction, "extfunc");
+entity_impl!(ExternFunction, "@");
 
 pub struct Signature {
     pub ret_type: Type,

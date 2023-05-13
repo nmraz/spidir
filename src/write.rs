@@ -1,6 +1,7 @@
 use alloc::vec::Vec;
 use core::fmt;
 
+use crate::valgraph::GlobalRef;
 use crate::{
     valgraph::{Node, NodeKind, ValGraph},
     valwalk::PostOrder,
@@ -55,6 +56,10 @@ pub fn write_node(w: &mut dyn fmt::Write, graph: &ValGraph, node: Node) -> fmt::
         NodeKind::Load => w.write_str("load")?,
         NodeKind::Store => w.write_str("store")?,
         NodeKind::BrCond => w.write_str("brcond")?,
+        NodeKind::GlobalAddr(gref) => {
+            w.write_str("globaladdr ")?;
+            write_global_ref(w, *gref)?;
+        }
         NodeKind::Call => w.write_str("call")?,
     };
 
@@ -73,11 +78,19 @@ pub fn write_node(w: &mut dyn fmt::Write, graph: &ValGraph, node: Node) -> fmt::
     Ok(())
 }
 
+fn write_global_ref(w: &mut dyn fmt::Write, gref: GlobalRef) -> fmt::Result {
+    match gref {
+        GlobalRef::InternalFunc(func) => write!(w, "func {func}"),
+        GlobalRef::ExternalFunc(func) => write!(w, "extfunc {func}"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
     use expect_test::{expect, Expect};
 
+    use crate::module::{ExternFunction, Function};
     use crate::valgraph::{DepValueKind, IcmpKind, Type};
 
     use super::*;
@@ -94,6 +107,21 @@ mod tests {
         let mut output = String::new();
         write_graph(&mut output, graph, entry).expect("failed to display graph");
         expected.assert_eq(&output);
+    }
+
+    #[test]
+    fn write_global_refs() {
+        fn check(gref: GlobalRef, expected: &str) {
+            let mut output = String::new();
+            write_global_ref(&mut output, gref).expect("failed to write global ref");
+            assert_eq!(output, expected);
+        }
+
+        check(GlobalRef::InternalFunc(Function::from_u32(3)), "func @3");
+        check(
+            GlobalRef::ExternalFunc(ExternFunction::from_u32(7)),
+            "extfunc @7",
+        );
     }
 
     #[test]

@@ -11,7 +11,7 @@ entity_impl!(Node, "node");
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct DepValue(u32);
-entity_impl!(DepValue, "dv");
+entity_impl!(DepValue, "%");
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Use(u32);

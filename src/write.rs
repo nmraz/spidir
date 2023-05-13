@@ -28,7 +28,7 @@ pub fn write_node(w: &mut dyn fmt::Write, graph: &ValGraph, node: Node) -> fmt::
                 w.write_str(", ")?;
             }
             first = false;
-            write!(w, "%{}:{}", output.as_u32(), graph.value_kind(output))?;
+            write!(w, "{output}:{}", graph.value_kind(output))?;
         }
         w.write_str(" = ")?;
     }

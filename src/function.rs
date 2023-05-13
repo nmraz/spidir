@@ -3,25 +3,28 @@ use core::iter;
 
 use crate::valgraph::{DepValueKind, Node, NodeKind, Type, ValGraph};
 
-pub struct Function {
+pub struct Signature {
     pub ret_type: Type,
     pub arg_types: Vec<Type>,
+}
+
+pub struct Function {
+    pub sig: Signature,
     pub valgraph: ValGraph,
     pub entry_node: Node,
 }
 
 impl Function {
-    pub fn with_signature(ret_type: Type, arg_types: Vec<Type>) -> Self {
+    pub fn with_signature(sig: Signature) -> Self {
         let mut valgraph = ValGraph::new();
         let entry_node = valgraph.create_node(
             NodeKind::Entry,
             [],
             iter::once(DepValueKind::Control)
-                .chain(arg_types.iter().map(|&ty| DepValueKind::Value(ty))),
+                .chain(sig.arg_types.iter().map(|&ty| DepValueKind::Value(ty))),
         );
         Self {
-            ret_type,
-            arg_types,
+            sig,
             valgraph,
             entry_node,
         }

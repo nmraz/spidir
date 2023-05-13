@@ -2,7 +2,7 @@
 
 extern crate alloc;
 
-pub mod function;
+pub mod module;
 pub mod valgraph;
 pub mod valwalk;
 pub mod write;

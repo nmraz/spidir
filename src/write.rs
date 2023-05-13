@@ -1,24 +1,46 @@
 use alloc::vec::Vec;
 use core::fmt;
 
-use crate::module::Module;
+use crate::module::{FunctionData, Module};
 use crate::valgraph::GlobalRef;
 use crate::{
     valgraph::{Node, NodeKind, ValGraph},
     valwalk::PostOrder,
 };
 
+pub fn write_function(
+    w: &mut dyn fmt::Write,
+    module: &Module,
+    function: &FunctionData,
+) -> fmt::Result {
+    write!(w, "func @{}:{}(", function.name, function.sig.ret_type)?;
+
+    let mut first_arg = true;
+    for &arg_type in &function.sig.arg_types {
+        if !first_arg {
+            w.write_str(", ")?;
+        }
+        first_arg = false;
+        write!(w, "{}", arg_type)?;
+    }
+
+    w.write_str(") {\n")?;
+    write_graph(w, module, &function.valgraph, function.entry_node, 4)?;
+    w.write_str("}\n")
+}
+
 pub fn write_graph(
     w: &mut dyn fmt::Write,
     module: &Module,
     graph: &ValGraph,
     entry: Node,
+    indentation: u32,
 ) -> fmt::Result {
     let mut rpo: Vec<_> = PostOrder::with_entry(graph, entry).collect();
     rpo.reverse();
 
     for node in rpo {
-        write_node(w, module, graph, node)?;
+        write_node(w, module, graph, node, indentation)?;
     }
 
     Ok(())
@@ -29,7 +51,12 @@ pub fn write_node(
     module: &Module,
     graph: &ValGraph,
     node: Node,
+    indentation: u32,
 ) -> fmt::Result {
+    for _ in 0..indentation {
+        w.write_char(' ')?;
+    }
+
     let outputs = graph.node_outputs(node);
 
     if !outputs.is_empty() {
@@ -109,9 +136,16 @@ mod tests {
     use super::*;
 
     fn check_write_graph(graph: &ValGraph, entry: Node, expected: Expect) {
-        let mut output = String::new();
         let module = Module::new();
-        write_graph(&mut output, &module, graph, entry).expect("failed to display graph");
+        let mut output = String::new();
+        write_graph(&mut output, &module, graph, entry, 0).expect("failed to display graph");
+        expected.assert_eq(&output);
+    }
+
+    fn check_write_function(function: &FunctionData, expected: Expect) {
+        let module = Module::new();
+        let mut output = String::new();
+        write_function(&mut output, &module, function).expect("failed to display function");
         expected.assert_eq(&output);
     }
 
@@ -139,7 +173,7 @@ mod tests {
             let mut graph = ValGraph::new();
             let node = graph.create_node(kind, [], []);
             let mut output = String::new();
-            write_node(&mut output, &module, &graph, node).expect("failed to write node");
+            write_node(&mut output, &module, &graph, node, 0).expect("failed to write node");
             assert_eq!(output, expected.to_owned() + "\n");
         };
 
@@ -188,7 +222,7 @@ mod tests {
     }
 
     #[test]
-    fn write_add_params() {
+    fn write_add_params_graph() {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(
             NodeKind::Entry,
@@ -224,7 +258,7 @@ mod tests {
     }
 
     #[test]
-    fn write_loop() {
+    fn write_loop_graph() {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(
             NodeKind::Entry,
@@ -351,6 +385,42 @@ mod tests {
                 %12:val(i32) = iadd %9, %8
                 %18:val(i32) = phi %17, %2, %12
                 return %16, %18
+            "#]],
+        );
+    }
+
+    #[test]
+    fn write_add_params_func() {
+        let mut function = FunctionData::new(
+            "add_i32".to_owned(),
+            Signature {
+                ret_type: Type::I32,
+                arg_types: vec![Type::I32, Type::I32],
+            },
+        );
+        let graph = &mut function.valgraph;
+        let entry = function.entry_node;
+        let entry_outputs = graph.node_outputs(entry);
+        let control_value = entry_outputs[0];
+        let param1 = entry_outputs[1];
+        let param2 = entry_outputs[2];
+
+        let add = graph.create_node(
+            NodeKind::Iadd,
+            [param1, param2],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add_res = graph.node_outputs(add)[0];
+        graph.create_node(NodeKind::Return, [control_value, add_res], []);
+
+        check_write_function(
+            &function,
+            expect![[r#"
+                func @add_i32:i32(i32, i32) {
+                    %0:ctrl, %1:val(i32), %2:val(i32) = entry
+                    %3:val(i32) = iadd %1, %2
+                    return %0, %3
+                }
             "#]],
         );
     }

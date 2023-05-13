@@ -6,11 +6,11 @@ use crate::valgraph::{DepValueKind, Node, NodeKind, Type, ValGraph};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Function(u32);
-entity_impl!(Function, "@");
+entity_impl!(Function, "func");
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ExternFunction(u32);
-entity_impl!(ExternFunction, "@");
+entity_impl!(ExternFunction, "extfunc");
 
 pub struct Signature {
     pub ret_type: Type,
@@ -49,7 +49,7 @@ pub struct ExternFunctionData {
 
 pub struct Module {
     pub functions: PrimaryMap<Function, FunctionData>,
-    pub extern_functions: PrimaryMap<ExternFunction, Signature>,
+    pub extern_functions: PrimaryMap<ExternFunction, ExternFunctionData>,
 }
 
 impl Module {

@@ -26,7 +26,7 @@ pub fn write_graph(
 
 pub fn write_node(
     w: &mut dyn fmt::Write,
-    _module: &Module,
+    module: &Module,
     graph: &ValGraph,
     node: Node,
 ) -> fmt::Result {
@@ -69,7 +69,7 @@ pub fn write_node(
         NodeKind::BrCond => w.write_str("brcond")?,
         NodeKind::GlobalAddr(gref) => {
             w.write_str("globaladdr ")?;
-            write_global_ref(w, *gref)?;
+            write_global_ref(w, module, *gref)?;
         }
         NodeKind::Call => w.write_str("call")?,
     };
@@ -89,10 +89,12 @@ pub fn write_node(
     Ok(())
 }
 
-fn write_global_ref(w: &mut dyn fmt::Write, gref: GlobalRef) -> fmt::Result {
+fn write_global_ref(w: &mut dyn fmt::Write, module: &Module, gref: GlobalRef) -> fmt::Result {
     match gref {
-        GlobalRef::InternalFunc(func) => write!(w, "func {func}"),
-        GlobalRef::ExternalFunc(func) => write!(w, "extfunc {func}"),
+        GlobalRef::InternalFunc(func) => write!(w, "func @{}", module.functions[func].name),
+        GlobalRef::ExternalFunc(func) => {
+            write!(w, "extfunc @{}", module.extern_functions[func].name)
+        }
     }
 }
 
@@ -101,7 +103,7 @@ mod tests {
 
     use expect_test::{expect, Expect};
 
-    use crate::module::{ExternFunction, Function};
+    use crate::module::{ExternFunctionData, FunctionData, Signature};
     use crate::valgraph::{DepValueKind, IcmpKind, Type};
 
     use super::*;
@@ -114,30 +116,32 @@ mod tests {
     }
 
     #[test]
-    fn write_global_refs() {
-        fn check(gref: GlobalRef, expected: &str) {
-            let mut output = String::new();
-            write_global_ref(&mut output, gref).expect("failed to write global ref");
-            assert_eq!(output, expected);
-        }
-
-        check(GlobalRef::InternalFunc(Function::from_u32(3)), "func @3");
-        check(
-            GlobalRef::ExternalFunc(ExternFunction::from_u32(7)),
-            "extfunc @7",
-        );
-    }
-
-    #[test]
     fn write_node_kinds() {
-        fn check(kind: NodeKind, expected: &str) {
-            let module = Module::new();
+        let mut module = Module::new();
+
+        let func = module.functions.push(FunctionData::new(
+            "my_func".to_owned(),
+            Signature {
+                ret_type: Type::I32,
+                arg_types: vec![],
+            },
+        ));
+
+        let extfunc = module.extern_functions.push(ExternFunctionData {
+            name: "my_ext_func".to_owned(),
+            sig: Signature {
+                ret_type: Type::I32,
+                arg_types: vec![],
+            },
+        });
+
+        let check = |kind: NodeKind, expected: &str| {
             let mut graph = ValGraph::new();
             let node = graph.create_node(kind, [], []);
             let mut output = String::new();
             write_node(&mut output, &module, &graph, node).expect("failed to write node");
             assert_eq!(output, expected.to_owned() + "\n");
-        }
+        };
 
         let kinds = [
             (NodeKind::Entry, "entry"),
@@ -167,6 +171,14 @@ mod tests {
             (NodeKind::Load, "load"),
             (NodeKind::Store, "store"),
             (NodeKind::BrCond, "brcond"),
+            (
+                NodeKind::GlobalAddr(GlobalRef::InternalFunc(func)),
+                "globaladdr func @my_func",
+            ),
+            (
+                NodeKind::GlobalAddr(GlobalRef::ExternalFunc(extfunc)),
+                "globaladdr extfunc @my_ext_func",
+            ),
             (NodeKind::Call, "call"),
         ];
 

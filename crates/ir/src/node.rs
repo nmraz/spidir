@@ -19,6 +19,10 @@ impl Type {
             Type::Ptr => "ptr",
         }
     }
+
+    pub fn is_integer(self) -> bool {
+        matches!(self, Type::I32 | Type::I64)
+    }
 }
 
 impl fmt::Display for Type {
@@ -114,6 +118,14 @@ impl fmt::Display for DepValueKind {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn type_is_integer() {
+        assert!(Type::I32.is_integer());
+        assert!(Type::I64.is_integer());
+        assert!(!Type::F64.is_integer());
+        assert!(!Type::Ptr.is_integer());
+    }
 
     #[test]
     fn display_value_kind() {

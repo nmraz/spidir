@@ -1,8 +1,12 @@
 use alloc::{string::String, vec::Vec};
 use core::iter;
+
 use cranelift_entity::{entity_impl, PrimaryMap};
 
-use crate::valgraph::{DepValueKind, Node, NodeKind, Type, ValGraph};
+use crate::{
+    node::{DepValueKind, NodeKind, Type},
+    valgraph::{Node, ValGraph},
+};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Function(u32);

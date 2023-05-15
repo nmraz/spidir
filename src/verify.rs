@@ -1,7 +1,10 @@
 use alloc::vec::Vec;
 
-use crate::valgraph::{DepValue, DepValueKind, Node, ValGraph};
 use crate::valwalk::PostOrder;
+use crate::{
+    node::DepValueKind,
+    valgraph::{DepValue, Node, ValGraph},
+};
 
 pub enum VerifierError {
     UnusedControl(DepValue),

@@ -1,7 +1,11 @@
 use alloc::{vec, vec::Vec};
+
 use cranelift_entity::EntitySet;
 
-use crate::valgraph::{DepValueKind, Node, ValGraph};
+use crate::{
+    node::DepValueKind,
+    valgraph::{Node, ValGraph},
+};
 
 pub fn compute_live_roots(graph: &ValGraph, entry: Node) -> Vec<Node> {
     let mut stack = vec![entry];
@@ -104,7 +108,7 @@ fn live_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
 
 #[cfg(test)]
 mod tests {
-    use crate::valgraph::{NodeKind, Type};
+    use crate::node::{NodeKind, Type};
 
     use super::*;
 

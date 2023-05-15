@@ -3,7 +3,8 @@ use core::fmt;
 
 use crate::{
     module::{ExternFunctionData, FunctionData, Module},
-    valgraph::{FunctionRef, Node, NodeKind, ValGraph},
+    node::{FunctionRef, NodeKind},
+    valgraph::{Node, ValGraph},
     valwalk::PostOrder,
 };
 
@@ -162,7 +163,7 @@ mod tests {
 
     use crate::{
         module::{ExternFunctionData, FunctionData, Signature},
-        valgraph::{DepValueKind, IcmpKind, Type},
+        node::{DepValueKind, IcmpKind, Type},
     };
 
     use super::*;

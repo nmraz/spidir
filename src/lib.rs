@@ -5,4 +5,5 @@ extern crate alloc;
 pub mod module;
 pub mod valgraph;
 pub mod valwalk;
+pub mod verify;
 pub mod write;

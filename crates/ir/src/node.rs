@@ -105,6 +105,15 @@ pub enum DepValueKind {
     PhiSelector,
 }
 
+impl DepValueKind {
+    pub fn is_integer_value(self) -> bool {
+        match self {
+            DepValueKind::Value(ty) => ty.is_integer(),
+            _ => false,
+        }
+    }
+}
+
 impl fmt::Display for DepValueKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

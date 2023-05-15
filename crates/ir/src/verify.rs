@@ -1,21 +1,39 @@
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
-use crate::valwalk::PostOrder;
+use crate::{node::NodeKind, valwalk::PostOrder};
 use crate::{
-    node::DepValueKind,
+    node::{DepValueKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum VerifierError {
     UnusedControl(DepValue),
     ReusedControl(DepValue),
+    BadInputCount {
+        node: Node,
+        expected: u32,
+    },
+    BadOutputCount {
+        node: Node,
+        expected: u32,
+    },
+    BadInputKind {
+        node: Node,
+        input: u32,
+        expected: Vec<DepValueKind>,
+    },
+    BadOutputKind {
+        value: DepValue,
+        expected: Vec<DepValueKind>,
+    },
 }
 
 pub fn verify_graph(graph: &ValGraph, entry: Node) -> Result<(), Vec<VerifierError>> {
     let mut errors = Vec::new();
 
     for node in PostOrder::with_entry(graph, entry) {
+        verify_node_kind(graph, node, &mut errors);
         verify_control_outputs(graph, node, &mut errors);
     }
 
@@ -44,73 +62,78 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<Verifie
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::node::{NodeKind, Type};
+fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
+    match graph.node_kind(node) {
+        NodeKind::Entry => {}
+        NodeKind::Return => {}
+        NodeKind::Region => {}
+        NodeKind::Phi => {}
+        NodeKind::IConst(_) => {}
+        NodeKind::Iadd => {
+            let inputs = graph.node_inputs(node);
+            let outputs = graph.node_outputs(node);
 
-    use super::*;
+            if inputs.len() != 2 {
+                errors.push(VerifierError::BadInputCount { node, expected: 2 });
+                return;
+            }
 
-    #[test]
-    fn verify_add_graph() {
-        let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [
-                DepValueKind::Control,
-                DepValueKind::Value(Type::I32),
-                DepValueKind::Value(Type::I32),
-            ],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-        let param1 = entry_outputs[1];
-        let param2 = entry_outputs[2];
+            if outputs.len() != 1 {
+                errors.push(VerifierError::BadOutputCount { node, expected: 1 });
+                return;
+            }
 
-        let add = graph.create_node(
-            NodeKind::Iadd,
-            [param1, param2],
-            [DepValueKind::Value(Type::I32)],
-        );
-        let add_res = graph.node_outputs(add)[0];
-        graph.create_node(NodeKind::Return, [control_value, add_res], []);
+            let result = outputs[0];
+            let in_a = inputs[0];
+            let in_b = inputs[1];
 
-        assert_eq!(verify_graph(&graph, entry), Ok(()));
-    }
+            let result_kind = graph.value_kind(result);
+            if !result_kind.is_integer_value() {
+                errors.push(VerifierError::BadOutputKind {
+                    value: result,
+                    expected: vec![
+                        DepValueKind::Value(Type::I32),
+                        DepValueKind::Value(Type::I64),
+                    ],
+                });
+                return;
+            }
 
-    #[test]
-    fn verify_unused_control() {
-        let mut graph = ValGraph::new();
-        let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
-        let entry_control = graph.node_outputs(entry)[0];
+            if graph.value_kind(in_a) != result_kind {
+                errors.push(VerifierError::BadInputKind {
+                    node,
+                    input: 0,
+                    expected: vec![result_kind],
+                });
+            }
 
-        assert_eq!(
-            verify_graph(&graph, entry),
-            Err(vec![VerifierError::UnusedControl(entry_control)])
-        );
-    }
-
-    #[test]
-    fn verify_unused_control_dead_region() {
-        let mut graph = ValGraph::new();
-        let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
-        let entry_control = graph.node_outputs(entry)[0];
-        graph.create_node(NodeKind::Return, [entry_control], []);
-        graph.create_node(NodeKind::Region, [], [DepValueKind::Control]);
-        assert_eq!(verify_graph(&graph, entry), Ok(()));
-    }
-
-    #[test]
-    fn verify_reused_control() {
-        let mut graph = ValGraph::new();
-        let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
-        let entry_control = graph.node_outputs(entry)[0];
-        graph.create_node(NodeKind::Region, [entry_control], []);
-        graph.create_node(NodeKind::Region, [entry_control], []);
-
-        assert_eq!(
-            verify_graph(&graph, entry),
-            Err(vec![VerifierError::ReusedControl(entry_control)])
-        );
+            if graph.value_kind(in_b) != result_kind {
+                errors.push(VerifierError::BadInputKind {
+                    node,
+                    input: 1,
+                    expected: vec![result_kind],
+                });
+            }
+        }
+        NodeKind::Isub => {}
+        NodeKind::And => {}
+        NodeKind::Or => {}
+        NodeKind::Xor => {}
+        NodeKind::Shl => {}
+        NodeKind::Lshr => {}
+        NodeKind::Ashr => {}
+        NodeKind::Smul => {}
+        NodeKind::Umul => {}
+        NodeKind::Sdiv => {}
+        NodeKind::Udiv => {}
+        NodeKind::Icmp(_) => {}
+        NodeKind::FConst(_) => {}
+        NodeKind::Load => {}
+        NodeKind::Store => {}
+        NodeKind::BrCond => {}
+        NodeKind::Call(_) => {}
     }
 }
+
+#[cfg(test)]
+mod tests;

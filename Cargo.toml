@@ -1,2 +1,7 @@
 [workspace]
 members = ["crates/*"]
+
+[workspace.dependencies]
+cranelift-entity = "0.95.0"
+expect-test = "1.4.1"
+smallvec = { version = "1.10.0", default-features = false, features = ["const_new"] }

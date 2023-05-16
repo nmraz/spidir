@@ -1,3 +1,5 @@
+use core::array;
+
 use alloc::{vec, vec::Vec};
 
 use crate::{
@@ -74,9 +76,9 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
         NodeKind::And => verify_int_binop(graph, node, errors),
         NodeKind::Or => verify_int_binop(graph, node, errors),
         NodeKind::Xor => verify_int_binop(graph, node, errors),
-        NodeKind::Shl => {}
-        NodeKind::Lshr => {}
-        NodeKind::Ashr => {}
+        NodeKind::Shl => verify_shift_op(graph, node, errors),
+        NodeKind::Lshr => verify_shift_op(graph, node, errors),
+        NodeKind::Ashr => verify_shift_op(graph, node, errors),
         NodeKind::Smul => verify_int_binop(graph, node, errors),
         NodeKind::Umul => verify_int_binop(graph, node, errors),
         NodeKind::Sdiv => verify_int_binop(graph, node, errors),
@@ -91,34 +93,13 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
 }
 
 fn verify_int_binop(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
-    let inputs = graph.node_inputs(node);
-    let outputs = graph.node_outputs(node);
+    let Ok(([in_a, in_b], [result])) = verify_node_arity(graph, node, errors) else { return };
 
-    if inputs.len() != 2 {
-        errors.push(VerifierError::BadInputCount { node, expected: 2 });
+    if verify_integer_output_kind(graph, result, errors).is_err() {
         return;
     }
 
-    if outputs.len() != 1 {
-        errors.push(VerifierError::BadOutputCount { node, expected: 1 });
-        return;
-    }
-
-    let result = outputs[0];
-    let in_a = inputs[0];
-    let in_b = inputs[1];
     let result_kind = graph.value_kind(result);
-    if !result_kind.is_integer_value() {
-        errors.push(VerifierError::BadOutputKind {
-            value: result,
-            expected: vec![
-                DepValueKind::Value(Type::I32),
-                DepValueKind::Value(Type::I64),
-            ],
-        });
-        return;
-    }
-
     if graph.value_kind(in_a) != result_kind {
         errors.push(VerifierError::BadInputKind {
             node,
@@ -134,6 +115,100 @@ fn verify_int_binop(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
             expected: vec![result_kind],
         });
     }
+}
+
+fn verify_shift_op(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
+    let Ok(([shift_value, _shift_amount], [result])) = verify_node_arity(graph, node, errors) else {
+        return;
+    };
+
+    if verify_integer_output_kind(graph, result, errors).is_err()
+        || verify_integer_input_kind(graph, node, 1, errors).is_err()
+    {
+        return;
+    }
+
+    let result_kind = graph.value_kind(result);
+    if graph.value_kind(shift_value) != result_kind {
+        errors.push(VerifierError::BadInputKind {
+            node,
+            input: 0,
+            expected: vec![result_kind],
+        })
+    }
+}
+
+fn verify_node_arity<const I: usize, const O: usize>(
+    graph: &ValGraph,
+    node: Node,
+    errors: &mut Vec<VerifierError>,
+) -> Result<([DepValue; I], [DepValue; O]), ()> {
+    let inputs = graph.node_inputs(node);
+    let outputs = graph.node_outputs(node);
+
+    if inputs.len() != I {
+        errors.push(VerifierError::BadInputCount {
+            node,
+            expected: I as u32,
+        });
+        return Err(());
+    }
+
+    if outputs.len() != O {
+        errors.push(VerifierError::BadOutputCount {
+            node,
+            expected: O as u32,
+        });
+        return Err(());
+    }
+
+    Ok((
+        array::from_fn(|i| inputs[i]),
+        array::from_fn(|i| outputs[i]),
+    ))
+}
+
+fn verify_integer_input_kind(
+    graph: &ValGraph,
+    node: Node,
+    input: u32,
+    errors: &mut Vec<VerifierError>,
+) -> Result<(), ()> {
+    if !graph
+        .value_kind(graph.node_inputs(node)[input as usize])
+        .is_integer_value()
+    {
+        errors.push(VerifierError::BadInputKind {
+            node,
+            input,
+            expected: all_integer_types(),
+        });
+        return Err(());
+    }
+
+    Ok(())
+}
+
+fn verify_integer_output_kind(
+    graph: &ValGraph,
+    value: DepValue,
+    errors: &mut Vec<VerifierError>,
+) -> Result<(), ()> {
+    if !graph.value_kind(value).is_integer_value() {
+        errors.push(VerifierError::BadOutputKind {
+            value,
+            expected: all_integer_types(),
+        });
+        return Err(());
+    }
+    Ok(())
+}
+
+fn all_integer_types() -> Vec<DepValueKind> {
+    vec![
+        DepValueKind::Value(Type::I32),
+        DepValueKind::Value(Type::I64),
+    ]
 }
 
 #[cfg(test)]

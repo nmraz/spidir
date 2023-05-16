@@ -8,9 +8,9 @@ fn check_verify_graph_errors(graph: &ValGraph, entry: Node, expected_errors: &[V
 }
 
 #[track_caller]
-fn check_verify_int_binop(graph: &ValGraph, node: Node, expected_err: VerifierError) {
+fn check_verify_node_kind(graph: &ValGraph, node: Node, expected_err: VerifierError) {
     let mut errors = Vec::new();
-    verify_int_binop(graph, node, &mut errors);
+    verify_node_kind(graph, node, &mut errors);
     assert_eq!(errors, &[expected_err]);
 }
 
@@ -85,7 +85,7 @@ fn verify_iadd_bad_input_count() {
     let mut graph = ValGraph::new();
 
     let empty_iadd = graph.create_node(NodeKind::Iadd, [], [DepValueKind::Value(Type::I32)]);
-    check_verify_int_binop(
+    check_verify_node_kind(
         &graph,
         empty_iadd,
         VerifierError::BadInputCount {
@@ -102,7 +102,7 @@ fn verify_iadd_bad_input_count() {
         [five_val, five_val, five_val],
         [DepValueKind::Value(Type::I32)],
     );
-    check_verify_int_binop(
+    check_verify_node_kind(
         &graph,
         overful_iadd,
         VerifierError::BadInputCount {
@@ -125,7 +125,7 @@ fn verify_iadd_result_kind() {
         [DepValueKind::PhiSelector],
     );
     let iadd_output = graph.node_outputs(iadd)[0];
-    check_verify_int_binop(
+    check_verify_node_kind(
         &graph,
         iadd,
         VerifierError::BadOutputKind {
@@ -153,7 +153,7 @@ fn verify_iadd_input_kind() {
         [five64_val, five_val],
         [DepValueKind::Value(Type::I32)],
     );
-    check_verify_int_binop(
+    check_verify_node_kind(
         &graph,
         iadd64_32,
         VerifierError::BadInputKind {
@@ -168,13 +168,149 @@ fn verify_iadd_input_kind() {
         [five_val, five64_val],
         [DepValueKind::Value(Type::I32)],
     );
-    check_verify_int_binop(
+    check_verify_node_kind(
         &graph,
         iadd32_64,
         VerifierError::BadInputKind {
             node: iadd32_64,
             input: 1,
             expected: vec![DepValueKind::Value(Type::I32)],
+        },
+    );
+}
+
+#[test]
+fn verify_graph_shift_function_ok() {
+    for shift_input_ty in [Type::I32, Type::I64] {
+        for shift_amount_ty in [Type::I32, Type::I64] {
+            let mut graph = ValGraph::new();
+            let entry = graph.create_node(
+                NodeKind::Entry,
+                [],
+                [
+                    DepValueKind::Control,
+                    DepValueKind::Value(shift_input_ty),
+                    DepValueKind::Value(shift_amount_ty),
+                ],
+            );
+            let entry_outputs = graph.node_outputs(entry);
+            let control_value = entry_outputs[0];
+            let shift_input = entry_outputs[1];
+            let shift_amount = entry_outputs[2];
+
+            let add = graph.create_node(
+                NodeKind::Shl,
+                [shift_input, shift_amount],
+                [DepValueKind::Value(shift_input_ty)],
+            );
+            let add_res = graph.node_outputs(add)[0];
+            graph.create_node(NodeKind::Return, [control_value, add_res], []);
+
+            assert_eq!(verify_graph(&graph, entry), Ok(()));
+        }
+    }
+}
+
+#[test]
+fn verify_shl_bad_input_count() {
+    let mut graph = ValGraph::new();
+
+    let empty_shl = graph.create_node(NodeKind::Shl, [], [DepValueKind::Value(Type::I32)]);
+    check_verify_node_kind(
+        &graph,
+        empty_shl,
+        VerifierError::BadInputCount {
+            node: empty_shl,
+            expected: 2,
+        },
+    );
+
+    let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+    let five_val = graph.node_outputs(five)[0];
+
+    let overfull_shl = graph.create_node(
+        NodeKind::Shl,
+        [five_val, five_val, five_val],
+        [DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        overfull_shl,
+        VerifierError::BadInputCount {
+            node: overfull_shl,
+            expected: 2,
+        },
+    );
+}
+
+#[test]
+fn verify_shl_result_kind() {
+    let mut graph = ValGraph::new();
+
+    let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+    let five_val = graph.node_outputs(five)[0];
+
+    let shl = graph.create_node(
+        NodeKind::Shl,
+        [five_val, five_val],
+        [DepValueKind::PhiSelector],
+    );
+    let shl_output = graph.node_outputs(shl)[0];
+    check_verify_node_kind(
+        &graph,
+        shl,
+        VerifierError::BadOutputKind {
+            value: shl_output,
+            expected: vec![
+                DepValueKind::Value(Type::I32),
+                DepValueKind::Value(Type::I64),
+            ],
+        },
+    );
+}
+
+#[test]
+fn verify_shl_input_kind() {
+    let mut graph = ValGraph::new();
+
+    let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+    let five_val = graph.node_outputs(five)[0];
+
+    let five64 = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I64)]);
+    let five64_val = graph.node_outputs(five64)[0];
+
+    let shl64_32 = graph.create_node(
+        NodeKind::Shl,
+        [five64_val, five_val],
+        [DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        shl64_32,
+        VerifierError::BadInputKind {
+            node: shl64_32,
+            input: 0,
+            expected: vec![DepValueKind::Value(Type::I32)],
+        },
+    );
+
+    let region = graph.create_node(NodeKind::Region, [], [DepValueKind::Control]);
+    let non_int_val = graph.node_outputs(region)[0];
+    let shl_non_int = graph.create_node(
+        NodeKind::Shl,
+        [five_val, non_int_val],
+        [DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        shl_non_int,
+        VerifierError::BadInputKind {
+            node: shl_non_int,
+            input: 1,
+            expected: vec![
+                DepValueKind::Value(Type::I32),
+                DepValueKind::Value(Type::I64),
+            ],
         },
     );
 }

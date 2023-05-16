@@ -1,9 +1,9 @@
 use alloc::{vec, vec::Vec};
 
-use crate::{node::NodeKind, valwalk::PostOrder};
 use crate::{
-    node::{DepValueKind, Type},
+    node::{DepValueKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
+    valwalk::LiveNodeInfo,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -32,7 +32,7 @@ pub enum VerifierError {
 pub fn verify_graph(graph: &ValGraph, entry: Node) -> Result<(), Vec<VerifierError>> {
     let mut errors = Vec::new();
 
-    for node in PostOrder::with_entry(graph, entry) {
+    for node in LiveNodeInfo::compute(graph, entry).iter_live_nodes() {
         verify_node_kind(graph, node, &mut errors);
         verify_control_outputs(graph, node, &mut errors);
     }

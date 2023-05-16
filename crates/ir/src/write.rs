@@ -5,7 +5,7 @@ use crate::{
     module::{ExternFunctionData, FunctionData, Module},
     node::{FunctionRef, NodeKind},
     valgraph::{Node, ValGraph},
-    valwalk::PostOrder,
+    valwalk::LiveNodeInfo,
 };
 
 pub fn write_module(w: &mut dyn fmt::Write, module: &Module) -> fmt::Result {
@@ -54,7 +54,9 @@ pub fn write_graph(
     entry: Node,
     indentation: u32,
 ) -> fmt::Result {
-    let mut rpo: Vec<_> = PostOrder::with_entry(graph, entry).collect();
+    let mut rpo: Vec<_> = LiveNodeInfo::compute(graph, entry)
+        .postorder(graph)
+        .collect();
     rpo.reverse();
 
     for node in rpo {

@@ -7,41 +7,72 @@ use crate::{
     valgraph::{Node, ValGraph},
 };
 
-pub fn compute_live_roots(graph: &ValGraph, entry: Node) -> Vec<Node> {
-    let mut stack = vec![entry];
-    let mut visited = EntitySet::new();
-    let mut live_roots = Vec::new();
+#[derive(Debug, Clone)]
+pub struct LiveNodeInfo {
+    roots: Vec<Node>,
+    live_nodes: EntitySet<Node>,
+}
 
-    while let Some(node) = stack.pop() {
-        if visited.contains(node) {
-            continue;
+impl LiveNodeInfo {
+    pub fn compute(graph: &ValGraph, entry: Node) -> Self {
+        let mut stack = vec![entry];
+        let mut visited = EntitySet::new();
+        let mut roots = Vec::new();
+
+        while let Some(node) = stack.pop() {
+            if visited.contains(node) {
+                continue;
+            }
+
+            visited.insert(node);
+            stack.extend(live_succs(graph, node));
+
+            // This node is reachable in the liveness graph but has no inputs, so make sure it is treated
+            // as a root.
+            if graph.node_inputs(node).is_empty() {
+                roots.push(node);
+            }
         }
 
-        visited.insert(node);
-        stack.extend(live_succs(graph, node));
-
-        // This node is reachable in the liveness graph but has no inputs, so make sure it is treated
-        // as a root.
-        if graph.node_inputs(node).is_empty() {
-            live_roots.push(node);
+        Self {
+            roots,
+            live_nodes: visited,
         }
     }
 
-    live_roots
+    pub fn roots(&self) -> &[Node] {
+        &self.roots
+    }
+
+    pub fn live_nodes(&self) -> &EntitySet<Node> {
+        &self.live_nodes
+    }
+
+    pub fn iter_live_nodes(&self) -> impl Iterator<Item = Node> + '_ {
+        // Somewhat unbelievably, there is no easy way to just iterate over an `EntitySet`.
+        self.live_nodes
+            .keys()
+            .filter(|&node| self.live_nodes.contains(node))
+    }
+
+    pub fn postorder<'a>(&'a self, graph: &'a ValGraph) -> PostOrder<'a> {
+        PostOrder::new(graph, self.roots.iter().copied(), &self.live_nodes)
+    }
 }
 
 pub struct PostOrder<'a> {
     graph: &'a ValGraph,
+    live_nodes: &'a EntitySet<Node>,
     stack: Vec<(WalkPhase, Node)>,
     visited: EntitySet<Node>,
 }
 
 impl<'a> PostOrder<'a> {
-    pub fn with_entry(graph: &'a ValGraph, entry: Node) -> Self {
-        Self::with_roots(graph, compute_live_roots(graph, entry))
-    }
-
-    pub fn with_roots(graph: &'a ValGraph, roots: impl IntoIterator<Item = Node>) -> Self {
+    pub fn new(
+        graph: &'a ValGraph,
+        roots: impl IntoIterator<Item = Node>,
+        live_nodes: &'a EntitySet<Node>,
+    ) -> Self {
         let stack = roots
             .into_iter()
             .map(|node| (WalkPhase::Pre, node))
@@ -49,6 +80,7 @@ impl<'a> PostOrder<'a> {
 
         Self {
             graph,
+            live_nodes,
             stack,
             visited: EntitySet::new(),
         }
@@ -62,7 +94,9 @@ impl<'a> Iterator for PostOrder<'a> {
         loop {
             let (phase, node) = self.stack.pop()?;
             match phase {
-                WalkPhase::Pre if !self.visited.contains(node) => {
+                WalkPhase::Pre
+                    if !self.visited.contains(node) && self.live_nodes.contains(node) =>
+                {
                     self.visited.insert(node);
                     self.stack.push((WalkPhase::Post, node));
                     for output in self.graph.node_outputs(node) {
@@ -113,11 +147,14 @@ mod tests {
     use super::*;
 
     fn check_live_roots(graph: &ValGraph, entry: Node, expected: &[Node]) {
-        assert_eq!(compute_live_roots(graph, entry), expected);
+        let live_info = LiveNodeInfo::compute(graph, entry);
+        assert_eq!(live_info.roots(), expected);
     }
 
     fn check_postorder(graph: &ValGraph, entry: Node, expected: &[Node]) {
-        let postorder: Vec<_> = PostOrder::with_entry(graph, entry).collect();
+        let postorder: Vec<_> = LiveNodeInfo::compute(graph, entry)
+            .postorder(graph)
+            .collect();
         assert_eq!(postorder, expected);
     }
 

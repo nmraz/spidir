@@ -142,7 +142,7 @@ fn live_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
+    use fx_utils::FxHashSet;
 
     use crate::node::{NodeKind, Type};
 
@@ -158,8 +158,8 @@ mod tests {
         let live_info = LiveNodeInfo::compute(graph, entry);
         assert_eq!(live_info.roots(), expected_roots);
 
-        let expected_live_nodes: HashSet<_> = expected_live_nodes.iter().copied().collect();
-        let actual_live_nodes: HashSet<_> = live_info.iter_live_nodes().collect();
+        let expected_live_nodes: FxHashSet<_> = expected_live_nodes.iter().copied().collect();
+        let actual_live_nodes: FxHashSet<_> = live_info.iter_live_nodes().collect();
 
         assert_eq!(actual_live_nodes, expected_live_nodes);
     }

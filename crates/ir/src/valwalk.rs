@@ -142,15 +142,29 @@ fn live_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use crate::node::{NodeKind, Type};
 
     use super::*;
 
-    fn check_live_roots(graph: &ValGraph, entry: Node, expected: &[Node]) {
+    #[track_caller]
+    fn check_live_info(
+        graph: &ValGraph,
+        entry: Node,
+        expected_roots: &[Node],
+        expected_live_nodes: &[Node],
+    ) {
         let live_info = LiveNodeInfo::compute(graph, entry);
-        assert_eq!(live_info.roots(), expected);
+        assert_eq!(live_info.roots(), expected_roots);
+
+        let expected_live_nodes: HashSet<_> = expected_live_nodes.iter().copied().collect();
+        let actual_live_nodes: HashSet<_> = live_info.iter_live_nodes().collect();
+
+        assert_eq!(actual_live_nodes, expected_live_nodes);
     }
 
+    #[track_caller]
     fn check_postorder(graph: &ValGraph, entry: Node, expected: &[Node]) {
         let postorder: Vec<_> = LiveNodeInfo::compute(graph, entry)
             .postorder(graph)
@@ -159,7 +173,7 @@ mod tests {
     }
 
     #[test]
-    fn live_roots_add_params() {
+    fn live_info_add_params() {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(
             NodeKind::Entry,
@@ -181,13 +195,13 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
 
-        check_live_roots(&graph, entry, &[entry]);
+        check_live_info(&graph, entry, &[entry], &[entry, add, ret]);
     }
 
     #[test]
-    fn live_roots_add_const() {
+    fn live_info_add_const() {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(
             NodeKind::Entry,
@@ -206,13 +220,13 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
 
-        check_live_roots(&graph, entry, &[entry, five]);
+        check_live_info(&graph, entry, &[entry, five], &[entry, five, add, ret]);
     }
 
     #[test]
-    fn live_roots_add_consts() {
+    fn live_info_add_consts() {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
         let entry_outputs = graph.node_outputs(entry);
@@ -228,13 +242,18 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
 
-        check_live_roots(&graph, entry, &[entry, three, five]);
+        check_live_info(
+            &graph,
+            entry,
+            &[entry, three, five],
+            &[entry, three, five, add, ret],
+        );
     }
 
     #[test]
-    fn live_roots_dead_value() {
+    fn live_info_dead_value() {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(
             NodeKind::Entry,
@@ -246,13 +265,13 @@ mod tests {
         let param1 = entry_outputs[1];
 
         graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
-        graph.create_node(NodeKind::Return, [control_value, param1], []);
+        let ret = graph.create_node(NodeKind::Return, [control_value, param1], []);
 
-        check_live_roots(&graph, entry, &[entry]);
+        check_live_info(&graph, entry, &[entry], &[entry, ret]);
     }
 
     #[test]
-    fn live_roots_dead_region() {
+    fn live_info_dead_region() {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(
             NodeKind::Entry,
@@ -276,13 +295,18 @@ mod tests {
             [DepValueKind::Control, DepValueKind::PhiSelector],
         );
         let exit_region_control = graph.node_outputs(exit_region)[0];
-        graph.create_node(NodeKind::Return, [exit_region_control, param1], []);
+        let ret = graph.create_node(NodeKind::Return, [exit_region_control, param1], []);
 
-        check_live_roots(&graph, entry, &[entry, dead_region]);
+        check_live_info(
+            &graph,
+            entry,
+            &[entry, dead_region],
+            &[entry, dead_region, exit_region, ret],
+        );
     }
 
     #[test]
-    fn live_roots_detached_region() {
+    fn live_info_detached_region() {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(
             NodeKind::Entry,
@@ -312,9 +336,9 @@ mod tests {
             [DepValueKind::Control, DepValueKind::PhiSelector],
         );
         let exit_region_control = graph.node_outputs(exit_region)[0];
-        graph.create_node(NodeKind::Return, [exit_region_control, param1], []);
+        let ret = graph.create_node(NodeKind::Return, [exit_region_control, param1], []);
 
-        check_live_roots(&graph, entry, &[entry]);
+        check_live_info(&graph, entry, &[entry], &[entry, exit_region, ret]);
     }
 
     #[test]

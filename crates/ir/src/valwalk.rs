@@ -342,6 +342,35 @@ mod tests {
     }
 
     #[test]
+    fn live_info_reused_const() {
+        let mut graph = ValGraph::new();
+
+        let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
+        let control_value = graph.node_outputs(entry)[0];
+
+        let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+        let five_val = graph.node_outputs(five)[0];
+
+        let add1 = graph.create_node(
+            NodeKind::Iadd,
+            [five_val, five_val],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add_res = graph.node_outputs(add1)[0];
+
+        // Create a dead add using the same constant input as the live one.
+        graph.create_node(
+            NodeKind::Iadd,
+            [five_val, five_val],
+            [DepValueKind::Value(Type::I32)],
+        );
+
+        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
+
+        check_live_info(&graph, entry, &[entry, five], &[entry, five, add1, ret]);
+    }
+
+    #[test]
     fn postorder_add_params() {
         let mut graph = ValGraph::new();
         let entry = graph.create_node(

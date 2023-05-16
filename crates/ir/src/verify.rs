@@ -83,7 +83,7 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
         NodeKind::Umul => verify_int_binop(graph, node, errors),
         NodeKind::Sdiv => verify_int_binop(graph, node, errors),
         NodeKind::Udiv => verify_int_binop(graph, node, errors),
-        NodeKind::Icmp(_) => {}
+        NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
         NodeKind::FConst(_) => {}
         NodeKind::Load => {}
         NodeKind::Store => {}
@@ -93,34 +93,19 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
 }
 
 fn verify_int_binop(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
-    let Ok(([in_a, in_b], [result])) = verify_node_arity(graph, node, errors) else { return };
+    let Ok([result]) = verify_node_arity(graph, node, 2, errors) else { return };
 
     if verify_integer_output_kind(graph, result, errors).is_err() {
         return;
     }
 
     let result_kind = graph.value_kind(result);
-    if graph.value_kind(in_a) != result_kind {
-        errors.push(VerifierError::BadInputKind {
-            node,
-            input: 0,
-            expected: vec![result_kind],
-        });
-    }
-
-    if graph.value_kind(in_b) != result_kind {
-        errors.push(VerifierError::BadInputKind {
-            node,
-            input: 1,
-            expected: vec![result_kind],
-        });
-    }
+    let _ = verify_input_kind(graph, node, 0, result_kind, errors);
+    let _ = verify_input_kind(graph, node, 1, result_kind, errors);
 }
 
 fn verify_shift_op(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
-    let Ok(([shift_value, _shift_amount], [result])) = verify_node_arity(graph, node, errors) else {
-        return;
-    };
+    let Ok([result]) = verify_node_arity(graph, node, 2, errors) else { return };
 
     if verify_integer_output_kind(graph, result, errors).is_err()
         || verify_integer_input_kind(graph, node, 1, errors).is_err()
@@ -129,27 +114,35 @@ fn verify_shift_op(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>
     }
 
     let result_kind = graph.value_kind(result);
-    if graph.value_kind(shift_value) != result_kind {
-        errors.push(VerifierError::BadInputKind {
-            node,
-            input: 0,
-            expected: vec![result_kind],
-        })
-    }
+    let _ = verify_input_kind(graph, node, 0, result_kind, errors);
 }
 
-fn verify_node_arity<const I: usize, const O: usize>(
+fn verify_icmp(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 2, errors) else { return };
+    let _ = verify_integer_output_kind(graph, result, errors);
+    let _ = verify_integer_input_kind(graph, node, 0, errors);
+    let _ = verify_input_kind(
+        graph,
+        node,
+        1,
+        graph.value_kind(graph.node_inputs(node)[0]),
+        errors,
+    );
+}
+
+fn verify_node_arity<const O: usize>(
     graph: &ValGraph,
     node: Node,
+    input_count: u32,
     errors: &mut Vec<VerifierError>,
-) -> Result<([DepValue; I], [DepValue; O]), ()> {
+) -> Result<[DepValue; O], ()> {
     let inputs = graph.node_inputs(node);
     let outputs = graph.node_outputs(node);
 
-    if inputs.len() != I {
+    if inputs.len() != input_count as usize {
         errors.push(VerifierError::BadInputCount {
             node,
-            expected: I as u32,
+            expected: input_count,
         });
         return Err(());
     }
@@ -162,10 +155,26 @@ fn verify_node_arity<const I: usize, const O: usize>(
         return Err(());
     }
 
-    Ok((
-        array::from_fn(|i| inputs[i]),
-        array::from_fn(|i| outputs[i]),
-    ))
+    Ok(array::from_fn(|i| outputs[i]))
+}
+
+fn verify_input_kind(
+    graph: &ValGraph,
+    node: Node,
+    input: u32,
+    expected_kind: DepValueKind,
+    errors: &mut Vec<VerifierError>,
+) -> Result<(), ()> {
+    if graph.value_kind(graph.node_inputs(node)[input as usize]) != expected_kind {
+        errors.push(VerifierError::BadInputKind {
+            node,
+            input,
+            expected: vec![expected_kind],
+        });
+        return Err(());
+    }
+
+    Ok(())
 }
 
 fn verify_integer_input_kind(

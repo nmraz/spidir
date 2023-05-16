@@ -120,3 +120,42 @@ fn verify_iadd_result_kind() {
         }])
     );
 }
+
+#[test]
+fn verify_iadd_input_kind() {
+    let mut graph = ValGraph::new();
+
+    let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+    let five_val = graph.node_outputs(five)[0];
+
+    let five64 = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I64)]);
+    let five64_val = graph.node_outputs(five64)[0];
+
+    let iadd64_32 = graph.create_node(
+        NodeKind::Iadd,
+        [five64_val, five_val],
+        [DepValueKind::Value(Type::I32)],
+    );
+    assert_eq!(
+        verify_graph(&graph, iadd64_32),
+        Err(vec![VerifierError::BadInputKind {
+            node: iadd64_32,
+            input: 0,
+            expected: vec![DepValueKind::Value(Type::I32)]
+        }])
+    );
+
+    let iadd32_64 = graph.create_node(
+        NodeKind::Iadd,
+        [five_val, five64_val],
+        [DepValueKind::Value(Type::I32)],
+    );
+    assert_eq!(
+        verify_graph(&graph, iadd32_64),
+        Err(vec![VerifierError::BadInputKind {
+            node: iadd32_64,
+            input: 1,
+            expected: vec![DepValueKind::Value(Type::I32)]
+        }])
+    );
+}

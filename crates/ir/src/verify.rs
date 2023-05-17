@@ -69,7 +69,7 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
     match graph.node_kind(node) {
         NodeKind::Entry => {}
         NodeKind::Return => {}
-        NodeKind::Region => {}
+        NodeKind::Region => verify_region(graph, node, errors),
         NodeKind::Phi => verify_phi(graph, node, errors),
         NodeKind::IConst(val) => verify_iconst(graph, node, *val, errors),
         NodeKind::Iadd => verify_int_binop(graph, node, errors),
@@ -90,6 +90,16 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
         NodeKind::Store => {}
         NodeKind::BrCond => {}
         NodeKind::Call(_) => {}
+    }
+}
+
+fn verify_region(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
+    let Ok([ctrl, phisel]) = verify_outputs(graph, node, errors) else { return };
+    let _ = verify_output_kind(graph, ctrl, &[DepValueKind::Control], errors);
+    let _ = verify_output_kind(graph, phisel, &[DepValueKind::PhiSelector], errors);
+
+    for input in 0..graph.node_inputs(node).len() as u32 {
+        let _ = verify_input_kind(graph, node, input, &[DepValueKind::Control], errors);
     }
 }
 

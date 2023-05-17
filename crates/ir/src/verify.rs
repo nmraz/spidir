@@ -29,6 +29,7 @@ pub enum VerifierError {
         value: DepValue,
         expected: Vec<DepValueKind>,
     },
+    ConstantOutOfRange(Node),
 }
 
 pub fn verify_graph(graph: &ValGraph, entry: Node) -> Result<(), Vec<VerifierError>> {
@@ -70,7 +71,7 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
         NodeKind::Return => {}
         NodeKind::Region => {}
         NodeKind::Phi => {}
-        NodeKind::IConst(_) => {}
+        NodeKind::IConst(val) => verify_iconst(graph, node, *val, errors),
         NodeKind::Iadd => verify_int_binop(graph, node, errors),
         NodeKind::Isub => verify_int_binop(graph, node, errors),
         NodeKind::And => verify_int_binop(graph, node, errors),
@@ -89,6 +90,26 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
         NodeKind::Store => {}
         NodeKind::BrCond => {}
         NodeKind::Call(_) => {}
+    }
+}
+
+fn verify_iconst(graph: &ValGraph, node: Node, val: u64, errors: &mut Vec<VerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 0, errors) else { return };
+    if verify_integer_output_kind(graph, result, errors).is_err() {
+        return;
+    }
+
+    let result_type = graph.value_kind(result).as_value().expect("type verified");
+    match result_type {
+        Type::I32 => {
+            if val > u32::MAX as u64 {
+                errors.push(VerifierError::ConstantOutOfRange(node));
+            }
+        }
+        Type::I64 => {
+            // Value is already a `u64`
+        }
+        _ => panic!("type should have been verified here"),
     }
 }
 

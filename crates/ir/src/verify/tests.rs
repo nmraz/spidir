@@ -438,3 +438,58 @@ fn verify_icmp_output_kind() {
         },
     );
 }
+
+#[test]
+fn verify_iconst_input_count() {
+    let mut graph = ValGraph::new();
+    let const_val = create_const32(&mut graph);
+    let iconst = graph.create_node(
+        NodeKind::IConst(3),
+        [const_val],
+        [DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        iconst,
+        VerifierError::BadInputCount {
+            node: iconst,
+            expected: 0,
+        },
+    );
+}
+
+#[test]
+fn verify_iconst_output_kind() {
+    let mut graph = ValGraph::new();
+
+    let iconst_ctrl = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Control]);
+    check_verify_node_kind(
+        &graph,
+        iconst_ctrl,
+        VerifierError::BadOutputKind {
+            value: graph.node_outputs(iconst_ctrl)[0],
+            expected: all_integer_types(),
+        },
+    );
+
+    let iconst_ptr = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Value(Type::Ptr)]);
+    check_verify_node_kind(
+        &graph,
+        iconst_ptr,
+        VerifierError::BadOutputKind {
+            value: graph.node_outputs(iconst_ptr)[0],
+            expected: all_integer_types(),
+        },
+    );
+}
+
+#[test]
+fn verify_iconst_range() {
+    let mut graph = ValGraph::new();
+    let not_u32 = graph.create_node(
+        NodeKind::IConst(u32::MAX as u64 + 1),
+        [],
+        [DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(&graph, not_u32, VerifierError::ConstantOutOfRange(not_u32));
+}

@@ -106,10 +106,10 @@ pub enum DepValueKind {
 }
 
 impl DepValueKind {
-    pub fn is_integer_value(self) -> bool {
+    pub fn as_value(self) -> Option<Type> {
         match self {
-            DepValueKind::Value(ty) => ty.is_integer(),
-            _ => false,
+            Self::Value(v) => Some(v),
+            _ => None,
         }
     }
 }

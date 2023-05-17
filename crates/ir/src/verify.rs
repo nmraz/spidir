@@ -85,7 +85,7 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
         NodeKind::Sdiv => verify_int_binop(graph, node, errors),
         NodeKind::Udiv => verify_int_binop(graph, node, errors),
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
-        NodeKind::FConst(_) => {}
+        NodeKind::FConst(_) => verify_fconst(graph, node, errors),
         NodeKind::Load => {}
         NodeKind::Store => {}
         NodeKind::BrCond => {}
@@ -111,6 +111,11 @@ fn verify_iconst(graph: &ValGraph, node: Node, val: u64, errors: &mut Vec<Verifi
         }
         _ => panic!("type should have been verified here"),
     }
+}
+
+fn verify_fconst(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 0, errors) else { return };
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::F64)], errors);
 }
 
 fn verify_int_binop(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {

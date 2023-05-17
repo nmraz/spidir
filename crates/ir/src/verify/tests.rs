@@ -493,3 +493,37 @@ fn verify_iconst_range() {
     );
     check_verify_node_kind(&graph, not_u32, VerifierError::ConstantOutOfRange(not_u32));
 }
+
+#[test]
+fn verify_fconst_input_count() {
+    let mut graph = ValGraph::new();
+    let const_val = create_const32(&mut graph);
+    let fconst = graph.create_node(
+        NodeKind::FConst(3.0),
+        [const_val],
+        [DepValueKind::Value(Type::F64)],
+    );
+    check_verify_node_kind(
+        &graph,
+        fconst,
+        VerifierError::BadInputCount {
+            node: fconst,
+            expected: 0,
+        },
+    );
+}
+
+#[test]
+fn verify_fconst_output_kind() {
+    let mut graph = ValGraph::new();
+
+    let fconst_ctrl = graph.create_node(NodeKind::FConst(3.0), [], [DepValueKind::Control]);
+    check_verify_node_kind(
+        &graph,
+        fconst_ctrl,
+        VerifierError::BadOutputKind {
+            value: graph.node_outputs(fconst_ctrl)[0],
+            expected: vec![DepValueKind::Value(Type::F64)],
+        },
+    );
+}

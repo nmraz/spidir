@@ -1,6 +1,6 @@
 use core::array;
 
-use alloc::{vec, vec::Vec};
+use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::{
     node::{DepValueKind, NodeKind, Type},
@@ -100,8 +100,8 @@ fn verify_int_binop(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
     }
 
     let result_kind = graph.value_kind(result);
-    let _ = verify_input_kind(graph, node, 0, result_kind, errors);
-    let _ = verify_input_kind(graph, node, 1, result_kind, errors);
+    let _ = verify_input_kind(graph, node, 0, &[result_kind], errors);
+    let _ = verify_input_kind(graph, node, 1, &[result_kind], errors);
 }
 
 fn verify_shift_op(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
@@ -114,18 +114,31 @@ fn verify_shift_op(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>
     }
 
     let result_kind = graph.value_kind(result);
-    let _ = verify_input_kind(graph, node, 0, result_kind, errors);
+    let _ = verify_input_kind(graph, node, 0, &[result_kind], errors);
 }
 
 fn verify_icmp(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
     let Ok([result]) = verify_node_arity(graph, node, 2, errors) else { return };
+
     let _ = verify_integer_output_kind(graph, result, errors);
-    let _ = verify_integer_input_kind(graph, node, 0, errors);
+
+    if verify_input_kind(
+        graph,
+        node,
+        0,
+        &[Type::I32, Type::I64, Type::Ptr].map(DepValueKind::Value),
+        errors,
+    )
+    .is_err()
+    {
+        return;
+    }
+
     let _ = verify_input_kind(
         graph,
         node,
         1,
-        graph.value_kind(graph.node_inputs(node)[0]),
+        &[graph.value_kind(graph.node_inputs(node)[0])],
         errors,
     );
 }
@@ -158,44 +171,13 @@ fn verify_node_arity<const O: usize>(
     Ok(array::from_fn(|i| outputs[i]))
 }
 
-fn verify_input_kind(
-    graph: &ValGraph,
-    node: Node,
-    input: u32,
-    expected_kind: DepValueKind,
-    errors: &mut Vec<VerifierError>,
-) -> Result<(), ()> {
-    if graph.value_kind(graph.node_inputs(node)[input as usize]) != expected_kind {
-        errors.push(VerifierError::BadInputKind {
-            node,
-            input,
-            expected: vec![expected_kind],
-        });
-        return Err(());
-    }
-
-    Ok(())
-}
-
 fn verify_integer_input_kind(
     graph: &ValGraph,
     node: Node,
     input: u32,
     errors: &mut Vec<VerifierError>,
 ) -> Result<(), ()> {
-    if !graph
-        .value_kind(graph.node_inputs(node)[input as usize])
-        .is_integer_value()
-    {
-        errors.push(VerifierError::BadInputKind {
-            node,
-            input,
-            expected: all_integer_types(),
-        });
-        return Err(());
-    }
-
-    Ok(())
+    verify_input_kind(graph, node, input, INTEGER_TYPES, errors)
 }
 
 fn verify_integer_output_kind(
@@ -203,22 +185,48 @@ fn verify_integer_output_kind(
     value: DepValue,
     errors: &mut Vec<VerifierError>,
 ) -> Result<(), ()> {
-    if !graph.value_kind(value).is_integer_value() {
+    verify_output_kind(graph, value, INTEGER_TYPES, errors)
+}
+
+fn verify_input_kind(
+    graph: &ValGraph,
+    node: Node,
+    input: u32,
+    expected_kinds: &[DepValueKind],
+    errors: &mut Vec<VerifierError>,
+) -> Result<(), ()> {
+    if !expected_kinds.contains(&graph.value_kind(graph.node_inputs(node)[input as usize])) {
+        errors.push(VerifierError::BadInputKind {
+            node,
+            input,
+            expected: expected_kinds.to_owned(),
+        });
+        return Err(());
+    }
+
+    Ok(())
+}
+
+fn verify_output_kind(
+    graph: &ValGraph,
+    value: DepValue,
+    expected_kinds: &[DepValueKind],
+    errors: &mut Vec<VerifierError>,
+) -> Result<(), ()> {
+    if !expected_kinds.contains(&graph.value_kind(value)) {
         errors.push(VerifierError::BadOutputKind {
             value,
-            expected: all_integer_types(),
+            expected: expected_kinds.to_owned(),
         });
         return Err(());
     }
     Ok(())
 }
 
-fn all_integer_types() -> Vec<DepValueKind> {
-    vec![
-        DepValueKind::Value(Type::I32),
-        DepValueKind::Value(Type::I64),
-    ]
-}
+const INTEGER_TYPES: &[DepValueKind] = &[
+    DepValueKind::Value(Type::I32),
+    DepValueKind::Value(Type::I64),
+];
 
 #[cfg(test)]
 mod tests;

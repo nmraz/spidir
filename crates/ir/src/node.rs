@@ -72,7 +72,7 @@ pub enum NodeKind {
     Return,
     Region,
     Phi,
-    IConst(i64),
+    IConst(u64),
     Iadd,
     Isub,
     And,

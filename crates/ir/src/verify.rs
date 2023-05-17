@@ -70,7 +70,7 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
         NodeKind::Entry => {}
         NodeKind::Return => {}
         NodeKind::Region => {}
-        NodeKind::Phi => {}
+        NodeKind::Phi => verify_phi(graph, node, errors),
         NodeKind::IConst(val) => verify_iconst(graph, node, *val, errors),
         NodeKind::Iadd => verify_int_binop(graph, node, errors),
         NodeKind::Isub => verify_int_binop(graph, node, errors),
@@ -90,6 +90,41 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
         NodeKind::Store => {}
         NodeKind::BrCond => {}
         NodeKind::Call(_) => {}
+    }
+}
+
+fn verify_phi(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
+    let Ok([result]) = verify_outputs(graph, node, errors) else { return };
+
+    let inputs = graph.node_inputs(node);
+    if inputs.is_empty() {
+        errors.push(VerifierError::BadInputCount { node, expected: 1 });
+        return;
+    }
+
+    if verify_input_kind(graph, node, 0, &[DepValueKind::PhiSelector], errors).is_err() {
+        return;
+    }
+
+    let phisel = inputs[0];
+    let phi_region = graph.value_def(phisel).0;
+
+    let expected_input_count = graph.node_inputs(phi_region).len() + 1;
+    if inputs.len() != expected_input_count {
+        errors.push(VerifierError::BadInputCount {
+            node,
+            expected: expected_input_count as u32,
+        });
+        return;
+    }
+
+    if verify_output_kind(graph, result, ALL_VALUE_TYPES, errors).is_err() {
+        return;
+    }
+
+    let result_kind = graph.value_kind(result);
+    for input in 1..inputs.len() as u32 {
+        let _ = verify_input_kind(graph, node, input, &[result_kind], errors);
     }
 }
 
@@ -176,7 +211,6 @@ fn verify_node_arity<const O: usize>(
     errors: &mut Vec<VerifierError>,
 ) -> Result<[DepValue; O], ()> {
     let inputs = graph.node_inputs(node);
-    let outputs = graph.node_outputs(node);
 
     if inputs.len() != input_count as usize {
         errors.push(VerifierError::BadInputCount {
@@ -186,6 +220,15 @@ fn verify_node_arity<const O: usize>(
         return Err(());
     }
 
+    verify_outputs(graph, node, errors)
+}
+
+fn verify_outputs<const O: usize>(
+    graph: &ValGraph,
+    node: Node,
+    errors: &mut Vec<VerifierError>,
+) -> Result<[DepValue; O], ()> {
+    let outputs = graph.node_outputs(node);
     if outputs.len() != O {
         errors.push(VerifierError::BadOutputCount {
             node,
@@ -203,7 +246,7 @@ fn verify_integer_input_kind(
     input: u32,
     errors: &mut Vec<VerifierError>,
 ) -> Result<(), ()> {
-    verify_input_kind(graph, node, input, INTEGER_TYPES, errors)
+    verify_input_kind(graph, node, input, ALL_INTEGER_TYPES, errors)
 }
 
 fn verify_integer_output_kind(
@@ -211,7 +254,7 @@ fn verify_integer_output_kind(
     value: DepValue,
     errors: &mut Vec<VerifierError>,
 ) -> Result<(), ()> {
-    verify_output_kind(graph, value, INTEGER_TYPES, errors)
+    verify_output_kind(graph, value, ALL_INTEGER_TYPES, errors)
 }
 
 fn verify_input_kind(
@@ -249,7 +292,14 @@ fn verify_output_kind(
     Ok(())
 }
 
-const INTEGER_TYPES: &[DepValueKind] = &[
+const ALL_VALUE_TYPES: &[DepValueKind] = &[
+    DepValueKind::Value(Type::I32),
+    DepValueKind::Value(Type::I64),
+    DepValueKind::Value(Type::F64),
+    DepValueKind::Value(Type::Ptr),
+];
+
+const ALL_INTEGER_TYPES: &[DepValueKind] = &[
     DepValueKind::Value(Type::I32),
     DepValueKind::Value(Type::I64),
 ];

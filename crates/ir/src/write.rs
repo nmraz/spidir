@@ -166,7 +166,7 @@ mod tests {
     use crate::{
         module::{ExternFunctionData, FunctionData, Signature},
         node::{DepValueKind, IcmpKind, Type},
-        test_utils::create_loop_graph,
+        test_utils::{create_loop_graph, create_return},
     };
 
     use super::*;
@@ -285,7 +285,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        create_return(&mut graph, [control_value, add_res]);
 
         check_write_graph(
             &graph,
@@ -347,7 +347,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        create_return(graph, [control_value, add_res]);
 
         check_write_function(
             &function,
@@ -396,7 +396,7 @@ mod tests {
         let call_ctrl = call_outputs[0];
         let call_retval = call_outputs[1];
 
-        func_graph.create_node(NodeKind::Return, [call_ctrl, call_retval], []);
+        create_return(func_graph, [call_ctrl, call_retval]);
 
         check_write_module(
             &module,

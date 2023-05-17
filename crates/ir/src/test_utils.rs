@@ -25,6 +25,10 @@ pub fn create_region<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]
     graph.node_outputs(region)[0]
 }
 
+pub fn create_return<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]) {
+    graph.create_node(NodeKind::Return, inputs, []);
+}
+
 pub fn create_loop_graph() -> (ValGraph, Node) {
     let mut graph = ValGraph::new();
     let entry = graph.create_node(

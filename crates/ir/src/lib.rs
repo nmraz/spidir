@@ -8,3 +8,6 @@ pub mod valgraph;
 pub mod valwalk;
 pub mod verify;
 pub mod write;
+
+#[cfg(test)]
+mod test_utils;

@@ -1,7 +1,29 @@
 use crate::{
     node::{DepValueKind, IcmpKind, NodeKind, Type},
-    valgraph::{Node, ValGraph},
+    valgraph::{DepValue, Node, ValGraph},
 };
+
+pub fn create_const_typed(graph: &mut ValGraph, ty: Type) -> DepValue {
+    let const_node = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(ty)]);
+    graph.node_outputs(const_node)[0]
+}
+
+pub fn create_const32(graph: &mut ValGraph) -> DepValue {
+    create_const_typed(graph, Type::I32)
+}
+
+pub fn create_const64(graph: &mut ValGraph) -> DepValue {
+    create_const_typed(graph, Type::I64)
+}
+
+pub fn create_region<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]) -> DepValue {
+    let region = graph.create_node(
+        NodeKind::Region,
+        inputs,
+        [DepValueKind::Control, DepValueKind::PhiSelector],
+    );
+    graph.node_outputs(region)[0]
+}
 
 pub fn create_loop_graph() -> (ValGraph, Node) {
     let mut graph = ValGraph::new();

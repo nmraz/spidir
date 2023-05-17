@@ -1,4 +1,7 @@
-use crate::node::{IcmpKind, NodeKind, Type};
+use crate::{
+    node::{IcmpKind, NodeKind, Type},
+    test_utils::{create_const32, create_const64, create_region},
+};
 
 use super::*;
 
@@ -19,28 +22,6 @@ fn all_integer_types() -> Vec<DepValueKind> {
         DepValueKind::Value(Type::I32),
         DepValueKind::Value(Type::I64),
     ]
-}
-
-fn create_const_typed(graph: &mut ValGraph, ty: Type) -> DepValue {
-    let const_node = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(ty)]);
-    graph.node_outputs(const_node)[0]
-}
-
-fn create_const32(graph: &mut ValGraph) -> DepValue {
-    create_const_typed(graph, Type::I32)
-}
-
-fn create_const64(graph: &mut ValGraph) -> DepValue {
-    create_const_typed(graph, Type::I64)
-}
-
-fn create_region<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]) -> DepValue {
-    let region = graph.create_node(
-        NodeKind::Region,
-        inputs,
-        [DepValueKind::Control, DepValueKind::PhiSelector],
-    );
-    graph.node_outputs(region)[0]
 }
 
 #[test]

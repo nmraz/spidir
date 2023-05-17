@@ -1,6 +1,6 @@
 use crate::{
     node::{IcmpKind, NodeKind, Type},
-    test_utils::{create_const32, create_const64, create_region},
+    test_utils::{create_const32, create_const64, create_loop_graph, create_region},
 };
 
 use super::*;
@@ -49,6 +49,12 @@ fn verify_graph_add_function() {
     let add_res = graph.node_outputs(add)[0];
     graph.create_node(NodeKind::Return, [control_value, add_res], []);
 
+    assert_eq!(verify_graph(&graph, entry), Ok(()));
+}
+
+#[test]
+fn verify_graph_loop_function() {
+    let (graph, entry) = create_loop_graph();
     assert_eq!(verify_graph(&graph, entry), Ok(()));
 }
 

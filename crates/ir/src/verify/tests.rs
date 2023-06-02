@@ -1,6 +1,6 @@
 use crate::{
     node::{IcmpKind, NodeKind, Type},
-    test_utils::{create_const32, create_const64, create_loop_graph, create_region},
+    test_utils::{create_const32, create_const64, create_entry, create_loop_graph, create_region},
 };
 
 use super::*;
@@ -332,12 +332,12 @@ fn verify_graph_icmp_function_ok() {
             let param1 = entry_outputs[1];
             let param2 = entry_outputs[2];
 
-            let add = graph.create_node(
+            let icmp = graph.create_node(
                 NodeKind::Icmp(IcmpKind::Eq),
                 [param1, param2],
                 [DepValueKind::Value(output_ty)],
             );
-            let icmp_res = graph.node_outputs(add)[0];
+            let icmp_res = graph.node_outputs(icmp)[0];
             graph.create_node(NodeKind::Return, [control_value, icmp_res], []);
 
             assert_eq!(verify_graph(&graph, entry), Ok(()));
@@ -511,6 +511,117 @@ fn verify_fconst_output_kind() {
         VerifierError::BadOutputKind {
             value: graph.node_outputs(fconst_ctrl)[0],
             expected: vec![DepValueKind::Value(Type::F64)],
+        },
+    );
+}
+
+#[test]
+fn verify_load_function_ok() {
+    for output_ty in [Type::I32, Type::I64, Type::Ptr] {
+        let mut graph = ValGraph::new();
+        let entry = graph.create_node(
+            NodeKind::Entry,
+            [],
+            [DepValueKind::Control, DepValueKind::Value(Type::Ptr)],
+        );
+        let entry_outputs = graph.node_outputs(entry);
+        let control_value = entry_outputs[0];
+        let param1 = entry_outputs[1];
+
+        let add = graph.create_node(
+            NodeKind::Load,
+            [control_value, param1],
+            [DepValueKind::Control, DepValueKind::Value(output_ty)],
+        );
+        let load_control = graph.node_outputs(add)[0];
+        let load_res = graph.node_outputs(add)[1];
+        graph.create_node(NodeKind::Return, [load_control, load_res], []);
+        assert_eq!(verify_graph(&graph, entry), Ok(()));
+    }
+}
+
+#[test]
+fn verify_load_input_count() {
+    let mut graph = ValGraph::new();
+
+    let control_val = create_region(&mut graph, []);
+    let load = graph.create_node(
+        NodeKind::Load,
+        [control_val],
+        [DepValueKind::Control, DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        load,
+        VerifierError::BadInputCount {
+            node: load,
+            expected: 2,
+        },
+    );
+}
+
+#[test]
+fn verify_load_output_count() {
+    let mut graph = ValGraph::new();
+
+    let (_, control_val, [ptr_val]) = create_entry(&mut graph, [Type::Ptr]);
+    let load = graph.create_node(
+        NodeKind::Load,
+        [control_val, ptr_val],
+        [DepValueKind::Control],
+    );
+    check_verify_node_kind(
+        &graph,
+        load,
+        VerifierError::BadOutputCount {
+            node: load,
+            expected: 2,
+        },
+    );
+}
+
+#[test]
+fn verify_load_input_kinds() {
+    let mut graph = ValGraph::new();
+
+    let (_, control_val, [ptr_val]) = create_entry(&mut graph, [Type::I32]);
+    let load = graph.create_node(
+        NodeKind::Load,
+        [control_val, ptr_val],
+        [DepValueKind::Control, DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        load,
+        VerifierError::BadInputKind {
+            node: load,
+            input: 1,
+            expected: vec![DepValueKind::Value(Type::Ptr)],
+        },
+    );
+}
+
+#[test]
+fn verify_load_output_kinds() {
+    let mut graph = ValGraph::new();
+
+    let (_, control_val, [ptr_val]) = create_entry(&mut graph, [Type::Ptr]);
+    let load = graph.create_node(
+        NodeKind::Load,
+        [control_val, ptr_val],
+        [DepValueKind::Control, DepValueKind::Control],
+    );
+    check_verify_node_kind(
+        &graph,
+        load,
+        VerifierError::BadOutputKind {
+            value: graph.node_outputs(load)[1],
+            expected: vec![
+                DepValueKind::Value(Type::I32),
+                DepValueKind::Value(Type::I64),
+                DepValueKind::Value(Type::F64),
+                DepValueKind::Value(Type::Ptr),
+            ],
         },
     );
 }

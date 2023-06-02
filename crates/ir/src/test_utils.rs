@@ -1,3 +1,5 @@
+use core::{array, iter};
+
 use crate::{
     node::{DepValueKind, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
@@ -14,6 +16,24 @@ pub fn create_const32(graph: &mut ValGraph) -> DepValue {
 
 pub fn create_const64(graph: &mut ValGraph) -> DepValue {
     create_const_typed(graph, Type::I64)
+}
+
+pub fn create_entry<const N: usize>(
+    graph: &mut ValGraph,
+    input_types: [Type; N],
+) -> (Node, DepValue, [DepValue; N]) {
+    let entry = graph.create_node(
+        NodeKind::Entry,
+        [],
+        iter::once(DepValueKind::Control).chain(input_types.into_iter().map(DepValueKind::Value)),
+    );
+    let entry_outputs = graph.node_outputs(entry);
+
+    (
+        entry,
+        entry_outputs[0],
+        array::from_fn(|i| entry_outputs[i + 1]),
+    )
 }
 
 pub fn create_region<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]) -> DepValue {

@@ -142,7 +142,7 @@ fn verify_iadd_result_kind() {
 }
 
 #[test]
-fn verify_iadd_input_kind() {
+fn verify_iadd_input_kinds() {
     let mut graph = ValGraph::new();
 
     let const_val = create_const32(&mut graph);
@@ -188,12 +188,12 @@ fn verify_graph_shift_function_ok() {
             let (entry, control_value, [shift_input, shift_amount]) =
                 create_entry(&mut graph, [shift_input_ty, shift_amount_ty]);
 
-            let add = graph.create_node(
+            let shl = graph.create_node(
                 NodeKind::Shl,
                 [shift_input, shift_amount],
                 [DepValueKind::Value(shift_input_ty)],
             );
-            let shl_res = graph.node_outputs(add)[0];
+            let shl_res = graph.node_outputs(shl)[0];
             create_return(&mut graph, [control_value, shl_res]);
 
             assert_eq!(verify_graph(&graph, entry), Ok(()));
@@ -254,7 +254,7 @@ fn verify_shl_result_kind() {
 }
 
 #[test]
-fn verify_shl_input_kind() {
+fn verify_shl_input_kinds() {
     let mut graph = ValGraph::new();
 
     let const_val = create_const32(&mut graph);
@@ -288,6 +288,139 @@ fn verify_shl_input_kind() {
             node: shl_non_int,
             input: 1,
             expected: all_integer_types(),
+        },
+    );
+}
+
+#[test]
+fn verify_graph_div_function_ok() {
+    for kind in [NodeKind::Sdiv, NodeKind::Udiv] {
+        for ty in [Type::I32, Type::I64] {
+            let mut graph = ValGraph::new();
+
+            let (entry, control_value, [shift_input, shift_amount]) =
+                create_entry(&mut graph, [ty, ty]);
+
+            let div = graph.create_node(
+                kind,
+                [control_value, shift_input, shift_amount],
+                [DepValueKind::Control, DepValueKind::Value(ty)],
+            );
+            let div_outputs = graph.node_outputs(div);
+            let div_control = div_outputs[0];
+            let div_res = div_outputs[1];
+            create_return(&mut graph, [div_control, div_res]);
+
+            assert_eq!(verify_graph(&graph, entry), Ok(()));
+        }
+    }
+}
+
+#[test]
+fn verify_div_input_count() {
+    let mut graph = ValGraph::new();
+    let div = graph.create_node(
+        NodeKind::Sdiv,
+        [],
+        [DepValueKind::Control, DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        div,
+        VerifierError::BadInputCount {
+            node: div,
+            expected: 3,
+        },
+    );
+}
+
+#[test]
+fn verify_div_output_count() {
+    let mut graph = ValGraph::new();
+    let (_, entry_control, [param1, param2]) = create_entry(&mut graph, [Type::I32, Type::I64]);
+    let div = graph.create_node(NodeKind::Sdiv, [entry_control, param1, param2], []);
+    check_verify_node_kind(
+        &graph,
+        div,
+        VerifierError::BadOutputCount {
+            node: div,
+            expected: 2,
+        },
+    );
+}
+
+#[test]
+fn verify_div_input_kinds() {
+    let mut graph = ValGraph::new();
+    let (_, entry_control, [val32, val64]) = create_entry(&mut graph, [Type::I32, Type::I64]);
+
+    let mistyped_div = graph.create_node(
+        NodeKind::Sdiv,
+        [entry_control, val32, val64],
+        [DepValueKind::Control, DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        mistyped_div,
+        VerifierError::BadInputKind {
+            node: mistyped_div,
+            input: 2,
+            expected: vec![DepValueKind::Value(Type::I32)],
+        },
+    );
+
+    let non_ctrl_div = graph.create_node(
+        NodeKind::Sdiv,
+        [val64, val32, val32],
+        [DepValueKind::Control, DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        non_ctrl_div,
+        VerifierError::BadInputKind {
+            node: non_ctrl_div,
+            input: 0,
+            expected: vec![DepValueKind::Control],
+        },
+    );
+}
+
+#[test]
+fn verify_div_output_kinds() {
+    let mut graph = ValGraph::new();
+    let (_, entry_control, [param]) = create_entry(&mut graph, [Type::I32]);
+
+    let non_int_div = graph.create_node(
+        NodeKind::Sdiv,
+        [entry_control, param, param],
+        [DepValueKind::Control, DepValueKind::Value(Type::Ptr)],
+    );
+    check_verify_node_kind(
+        &graph,
+        non_int_div,
+        VerifierError::BadOutputKind {
+            value: graph.node_outputs(non_int_div)[1],
+            expected: vec![
+                DepValueKind::Value(Type::I32),
+                DepValueKind::Value(Type::I64),
+            ],
+        },
+    );
+
+    let non_ctrl_div = graph.create_node(
+        NodeKind::Sdiv,
+        [entry_control, param, param],
+        [
+            DepValueKind::Value(Type::I32),
+            DepValueKind::Value(Type::I32),
+        ],
+    );
+    check_verify_node_kind(
+        &graph,
+        non_ctrl_div,
+        VerifierError::BadOutputKind {
+            value: graph.node_outputs(non_ctrl_div)[0],
+            expected: vec![DepValueKind::Control],
         },
     );
 }
@@ -332,7 +465,7 @@ fn verify_icmp_input_count() {
 }
 
 #[test]
-fn verify_icmp_input_kind() {
+fn verify_icmp_input_kinds() {
     let mut graph = ValGraph::new();
 
     let non_int_val = create_region(&mut graph, []);
@@ -375,7 +508,7 @@ fn verify_icmp_input_kind() {
 }
 
 #[test]
-fn verify_icmp_output_kind() {
+fn verify_icmp_output_kinds() {
     let mut graph = ValGraph::new();
     let const_val = create_const32(&mut graph);
 
@@ -414,7 +547,7 @@ fn verify_iconst_input_count() {
 }
 
 #[test]
-fn verify_iconst_output_kind() {
+fn verify_iconst_output_kinds() {
     let mut graph = ValGraph::new();
 
     let iconst_ctrl = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Control]);
@@ -469,7 +602,7 @@ fn verify_fconst_input_count() {
 }
 
 #[test]
-fn verify_fconst_output_kind() {
+fn verify_fconst_output_kinds() {
     let mut graph = ValGraph::new();
 
     let fconst_ctrl = graph.create_node(NodeKind::FConst(3.0), [], [DepValueKind::Control]);
@@ -484,7 +617,7 @@ fn verify_fconst_output_kind() {
 }
 
 #[test]
-fn verify_load_function_ok() {
+fn verify_graph_load_function_ok() {
     for output_ty in [Type::I32, Type::I64, Type::Ptr] {
         let mut graph = ValGraph::new();
 

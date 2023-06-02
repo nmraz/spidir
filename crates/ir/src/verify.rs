@@ -81,8 +81,8 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
         NodeKind::Lshr => verify_shift_op(graph, node, errors),
         NodeKind::Ashr => verify_shift_op(graph, node, errors),
         NodeKind::Imul => verify_int_binop(graph, node, errors),
-        NodeKind::Sdiv => verify_int_binop(graph, node, errors),
-        NodeKind::Udiv => verify_int_binop(graph, node, errors),
+        NodeKind::Sdiv => verify_div_op(graph, node, errors),
+        NodeKind::Udiv => verify_div_op(graph, node, errors),
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
         NodeKind::FConst(_) => verify_fconst(graph, node, errors),
         NodeKind::Load => verify_load(graph, node, errors),
@@ -185,6 +185,20 @@ fn verify_shift_op(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>
 
     let result_kind = graph.value_kind(result);
     let _ = verify_input_kind(graph, node, 0, &[result_kind], errors);
+}
+
+fn verify_div_op(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
+    let Ok([out_ctrl, result]) = verify_node_arity(graph, node, 3, errors) else { return };
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
+    let _ = verify_output_kind(graph, out_ctrl, &[DepValueKind::Control], errors);
+
+    if verify_integer_output_kind(graph, result, errors).is_err() {
+        return;
+    }
+
+    let result_kind = graph.value_kind(result);
+    let _ = verify_input_kind(graph, node, 1, &[result_kind], errors);
+    let _ = verify_input_kind(graph, node, 2, &[result_kind], errors);
 }
 
 fn verify_icmp(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {

@@ -680,19 +680,35 @@ fn verify_load_output_count() {
 fn verify_load_input_kinds() {
     let mut graph = ValGraph::new();
 
-    let (_, control_val, [ptr_val]) = create_entry(&mut graph, [Type::I32]);
-    let load = graph.create_node(
+    let (_, control_val, [val32, ptr_val]) = create_entry(&mut graph, [Type::I32, Type::Ptr]);
+
+    let non_ptr_load = graph.create_node(
         NodeKind::Load,
-        [control_val, ptr_val],
+        [control_val, val32],
         [DepValueKind::Control, DepValueKind::Value(Type::I32)],
     );
     check_verify_node_kind(
         &graph,
-        load,
+        non_ptr_load,
         VerifierError::BadInputKind {
-            node: load,
+            node: non_ptr_load,
             input: 1,
             expected: vec![DepValueKind::Value(Type::Ptr)],
+        },
+    );
+
+    let non_ctrl_load = graph.create_node(
+        NodeKind::Load,
+        [val32, ptr_val],
+        [DepValueKind::Control, DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        non_ctrl_load,
+        VerifierError::BadInputKind {
+            node: non_ctrl_load,
+            input: 0,
+            expected: vec![DepValueKind::Control],
         },
     );
 }
@@ -702,22 +718,40 @@ fn verify_load_output_kinds() {
     let mut graph = ValGraph::new();
 
     let (_, control_val, [ptr_val]) = create_entry(&mut graph, [Type::Ptr]);
-    let load = graph.create_node(
+
+    let non_value_load = graph.create_node(
         NodeKind::Load,
         [control_val, ptr_val],
         [DepValueKind::Control, DepValueKind::Control],
     );
     check_verify_node_kind(
         &graph,
-        load,
+        non_value_load,
         VerifierError::BadOutputKind {
-            value: graph.node_outputs(load)[1],
+            value: graph.node_outputs(non_value_load)[1],
             expected: vec![
                 DepValueKind::Value(Type::I32),
                 DepValueKind::Value(Type::I64),
                 DepValueKind::Value(Type::F64),
                 DepValueKind::Value(Type::Ptr),
             ],
+        },
+    );
+
+    let non_value_load = graph.create_node(
+        NodeKind::Load,
+        [control_val, ptr_val],
+        [
+            DepValueKind::Value(Type::I32),
+            DepValueKind::Value(Type::I32),
+        ],
+    );
+    check_verify_node_kind(
+        &graph,
+        non_value_load,
+        VerifierError::BadOutputKind {
+            value: graph.node_outputs(non_value_load)[0],
+            expected: vec![DepValueKind::Control],
         },
     );
 }

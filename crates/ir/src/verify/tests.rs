@@ -1,6 +1,9 @@
 use crate::{
     node::{IcmpKind, NodeKind, Type},
-    test_utils::{create_const32, create_const64, create_entry, create_loop_graph, create_region},
+    test_utils::{
+        create_const32, create_const64, create_entry, create_loop_graph, create_region,
+        create_return,
+    },
 };
 
 use super::*;
@@ -27,19 +30,8 @@ fn all_integer_types() -> Vec<DepValueKind> {
 #[test]
 fn verify_graph_add_function() {
     let mut graph = ValGraph::new();
-    let entry = graph.create_node(
-        NodeKind::Entry,
-        [],
-        [
-            DepValueKind::Control,
-            DepValueKind::Value(Type::I32),
-            DepValueKind::Value(Type::I32),
-        ],
-    );
-    let entry_outputs = graph.node_outputs(entry);
-    let control_value = entry_outputs[0];
-    let param1 = entry_outputs[1];
-    let param2 = entry_outputs[2];
+
+    let (entry, control_value, [param1, param2]) = create_entry(&mut graph, [Type::I32, Type::I32]);
 
     let add = graph.create_node(
         NodeKind::Iadd,
@@ -47,7 +39,7 @@ fn verify_graph_add_function() {
         [DepValueKind::Value(Type::I32)],
     );
     let add_res = graph.node_outputs(add)[0];
-    graph.create_node(NodeKind::Return, [control_value, add_res], []);
+    create_return(&mut graph, [control_value, add_res]);
 
     assert_eq!(verify_graph(&graph, entry), Ok(()));
 }
@@ -61,8 +53,7 @@ fn verify_graph_loop_function() {
 #[test]
 fn verify_graph_unused_control() {
     let mut graph = ValGraph::new();
-    let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
-    let entry_control = graph.node_outputs(entry)[0];
+    let (entry, entry_control, []) = create_entry(&mut graph, []);
 
     check_verify_graph_errors(
         &graph,
@@ -74,9 +65,8 @@ fn verify_graph_unused_control() {
 #[test]
 fn verify_graph_unused_control_dead_region() {
     let mut graph = ValGraph::new();
-    let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
-    let entry_control = graph.node_outputs(entry)[0];
-    graph.create_node(NodeKind::Return, [entry_control], []);
+    let (entry, entry_control, []) = create_entry(&mut graph, []);
+    create_return(&mut graph, [entry_control]);
     create_region(&mut graph, []);
     assert_eq!(verify_graph(&graph, entry), Ok(()));
 }
@@ -84,14 +74,13 @@ fn verify_graph_unused_control_dead_region() {
 #[test]
 fn verify_graph_reused_control() {
     let mut graph = ValGraph::new();
-    let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
-    let entry_control = graph.node_outputs(entry)[0];
+    let (entry, entry_control, []) = create_entry(&mut graph, []);
 
     let region1 = create_region(&mut graph, [entry_control]);
     let region2 = create_region(&mut graph, [entry_control]);
 
-    graph.create_node(NodeKind::Return, [region1], []);
-    graph.create_node(NodeKind::Return, [region2], []);
+    create_return(&mut graph, [region1]);
+    create_return(&mut graph, [region2]);
 
     check_verify_graph_errors(
         &graph,
@@ -195,19 +184,9 @@ fn verify_graph_shift_function_ok() {
     for shift_input_ty in [Type::I32, Type::I64] {
         for shift_amount_ty in [Type::I32, Type::I64] {
             let mut graph = ValGraph::new();
-            let entry = graph.create_node(
-                NodeKind::Entry,
-                [],
-                [
-                    DepValueKind::Control,
-                    DepValueKind::Value(shift_input_ty),
-                    DepValueKind::Value(shift_amount_ty),
-                ],
-            );
-            let entry_outputs = graph.node_outputs(entry);
-            let control_value = entry_outputs[0];
-            let shift_input = entry_outputs[1];
-            let shift_amount = entry_outputs[2];
+
+            let (entry, control_value, [shift_input, shift_amount]) =
+                create_entry(&mut graph, [shift_input_ty, shift_amount_ty]);
 
             let add = graph.create_node(
                 NodeKind::Shl,
@@ -215,7 +194,7 @@ fn verify_graph_shift_function_ok() {
                 [DepValueKind::Value(shift_input_ty)],
             );
             let shl_res = graph.node_outputs(add)[0];
-            graph.create_node(NodeKind::Return, [control_value, shl_res], []);
+            create_return(&mut graph, [control_value, shl_res]);
 
             assert_eq!(verify_graph(&graph, entry), Ok(()));
         }
@@ -318,19 +297,8 @@ fn verify_graph_icmp_function_ok() {
     for input_ty in [Type::I32, Type::I64, Type::Ptr] {
         for output_ty in [Type::I32, Type::I64] {
             let mut graph = ValGraph::new();
-            let entry = graph.create_node(
-                NodeKind::Entry,
-                [],
-                [
-                    DepValueKind::Control,
-                    DepValueKind::Value(input_ty),
-                    DepValueKind::Value(input_ty),
-                ],
-            );
-            let entry_outputs = graph.node_outputs(entry);
-            let control_value = entry_outputs[0];
-            let param1 = entry_outputs[1];
-            let param2 = entry_outputs[2];
+            let (entry, control_value, [param1, param2]) =
+                create_entry(&mut graph, [input_ty, input_ty]);
 
             let icmp = graph.create_node(
                 NodeKind::Icmp(IcmpKind::Eq),
@@ -338,7 +306,7 @@ fn verify_graph_icmp_function_ok() {
                 [DepValueKind::Value(output_ty)],
             );
             let icmp_res = graph.node_outputs(icmp)[0];
-            graph.create_node(NodeKind::Return, [control_value, icmp_res], []);
+            create_return(&mut graph, [control_value, icmp_res]);
 
             assert_eq!(verify_graph(&graph, entry), Ok(()));
         }
@@ -519,23 +487,18 @@ fn verify_fconst_output_kind() {
 fn verify_load_function_ok() {
     for output_ty in [Type::I32, Type::I64, Type::Ptr] {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [DepValueKind::Control, DepValueKind::Value(Type::Ptr)],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-        let param1 = entry_outputs[1];
 
-        let add = graph.create_node(
+        let (entry, control_value, [param1]) = create_entry(&mut graph, [Type::Ptr]);
+
+        let load = graph.create_node(
             NodeKind::Load,
             [control_value, param1],
             [DepValueKind::Control, DepValueKind::Value(output_ty)],
         );
-        let load_control = graph.node_outputs(add)[0];
-        let load_res = graph.node_outputs(add)[1];
-        graph.create_node(NodeKind::Return, [load_control, load_res], []);
+        let load_control = graph.node_outputs(load)[0];
+
+        let load_res = graph.node_outputs(load)[1];
+        create_return(&mut graph, [load_control, load_res]);
         assert_eq!(verify_graph(&graph, entry), Ok(()));
     }
 }

@@ -144,7 +144,10 @@ fn live_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
 mod tests {
     use fx_utils::FxHashSet;
 
-    use crate::node::{NodeKind, Type};
+    use crate::{
+        node::{NodeKind, Type},
+        test_utils::create_entry,
+    };
 
     use super::*;
 
@@ -175,19 +178,9 @@ mod tests {
     #[test]
     fn live_info_add_params() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [
-                DepValueKind::Control,
-                DepValueKind::Value(Type::I32),
-                DepValueKind::Value(Type::I32),
-            ],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-        let param1 = entry_outputs[1];
-        let param2 = entry_outputs[2];
+
+        let (entry, control_value, [param1, param2]) =
+            create_entry(&mut graph, [Type::I32, Type::I32]);
 
         let add = graph.create_node(
             NodeKind::Iadd,
@@ -195,7 +188,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        let ret = crate::test_utils::create_return(&mut graph, [control_value, add_res]);
 
         check_live_info(&graph, entry, &[entry], &[entry, add, ret]);
     }
@@ -203,14 +196,7 @@ mod tests {
     #[test]
     fn live_info_add_const() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [DepValueKind::Control, DepValueKind::Value(Type::I32)],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-        let param1 = entry_outputs[1];
+        let (entry, control_value, [param1]) = create_entry(&mut graph, [Type::I32]);
 
         let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
@@ -220,7 +206,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        let ret = crate::test_utils::create_return(&mut graph, [control_value, add_res]);
 
         check_live_info(&graph, entry, &[entry, five], &[entry, five, add, ret]);
     }
@@ -228,10 +214,7 @@ mod tests {
     #[test]
     fn live_info_add_consts() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-
+        let (entry, control_value, []) = create_entry(&mut graph, []);
         let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
         let three = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Value(Type::I32)]);
@@ -242,7 +225,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        let ret = crate::test_utils::create_return(&mut graph, [control_value, add_res]);
 
         check_live_info(
             &graph,
@@ -255,17 +238,9 @@ mod tests {
     #[test]
     fn live_info_dead_value() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [DepValueKind::Control, DepValueKind::Value(Type::I32)],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-        let param1 = entry_outputs[1];
-
+        let (entry, control_value, [param1]) = create_entry(&mut graph, [Type::I32]);
         graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
-        let ret = graph.create_node(NodeKind::Return, [control_value, param1], []);
+        let ret = crate::test_utils::create_return(&mut graph, [control_value, param1]);
 
         check_live_info(&graph, entry, &[entry], &[entry, ret]);
     }
@@ -273,14 +248,8 @@ mod tests {
     #[test]
     fn live_info_dead_region() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [DepValueKind::Control, DepValueKind::Value(Type::I32)],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let entry_control = entry_outputs[0];
-        let param1 = entry_outputs[1];
+
+        let (entry, entry_control, [param1]) = create_entry(&mut graph, [Type::I32]);
 
         let dead_region = graph.create_node(
             NodeKind::Region,
@@ -295,7 +264,7 @@ mod tests {
             [DepValueKind::Control, DepValueKind::PhiSelector],
         );
         let exit_region_control = graph.node_outputs(exit_region)[0];
-        let ret = graph.create_node(NodeKind::Return, [exit_region_control, param1], []);
+        let ret = crate::test_utils::create_return(&mut graph, [exit_region_control, param1]);
 
         check_live_info(
             &graph,
@@ -308,14 +277,7 @@ mod tests {
     #[test]
     fn live_info_detached_region() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [DepValueKind::Control, DepValueKind::Value(Type::I32)],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let entry_control = entry_outputs[0];
-        let param1 = entry_outputs[1];
+        let (entry, entry_control, [param1]) = create_entry(&mut graph, [Type::I32]);
 
         // Create a pair of completely detached regions.
         let detached_region = graph.create_node(
@@ -336,7 +298,7 @@ mod tests {
             [DepValueKind::Control, DepValueKind::PhiSelector],
         );
         let exit_region_control = graph.node_outputs(exit_region)[0];
-        let ret = graph.create_node(NodeKind::Return, [exit_region_control, param1], []);
+        let ret = crate::test_utils::create_return(&mut graph, [exit_region_control, param1]);
 
         check_live_info(&graph, entry, &[entry], &[entry, exit_region, ret]);
     }
@@ -345,9 +307,7 @@ mod tests {
     fn live_info_reused_const() {
         let mut graph = ValGraph::new();
 
-        let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
-        let control_value = graph.node_outputs(entry)[0];
-
+        let (entry, control_value, []) = create_entry(&mut graph, []);
         let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
 
@@ -365,7 +325,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
 
-        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        let ret = crate::test_utils::create_return(&mut graph, [control_value, add_res]);
 
         check_live_info(&graph, entry, &[entry, five], &[entry, five, add1, ret]);
     }
@@ -373,19 +333,9 @@ mod tests {
     #[test]
     fn postorder_add_params() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [
-                DepValueKind::Control,
-                DepValueKind::Value(Type::I32),
-                DepValueKind::Value(Type::I32),
-            ],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-        let param1 = entry_outputs[1];
-        let param2 = entry_outputs[2];
+
+        let (entry, control_value, [param1, param2]) =
+            create_entry(&mut graph, [Type::I32, Type::I32]);
 
         let add = graph.create_node(
             NodeKind::Iadd,
@@ -393,7 +343,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        let ret = crate::test_utils::create_return(&mut graph, [control_value, add_res]);
 
         check_postorder(&graph, entry, &[ret, add, entry]);
     }
@@ -401,14 +351,7 @@ mod tests {
     #[test]
     fn postorder_add_const() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [DepValueKind::Control, DepValueKind::Value(Type::I32)],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-        let param1 = entry_outputs[1];
+        let (entry, control_value, [param1]) = create_entry(&mut graph, [Type::I32]);
 
         let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
@@ -418,7 +361,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        let ret = crate::test_utils::create_return(&mut graph, [control_value, add_res]);
 
         check_postorder(&graph, entry, &[ret, add, five, entry]);
     }

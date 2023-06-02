@@ -45,20 +45,13 @@ pub fn create_region<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]
     graph.node_outputs(region)[0]
 }
 
-pub fn create_return<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]) {
-    graph.create_node(NodeKind::Return, inputs, []);
+pub fn create_return<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]) -> Node {
+    graph.create_node(NodeKind::Return, inputs, [])
 }
 
 pub fn create_loop_graph() -> (ValGraph, Node) {
     let mut graph = ValGraph::new();
-    let entry = graph.create_node(
-        NodeKind::Entry,
-        [],
-        [DepValueKind::Control, DepValueKind::Value(Type::I32)],
-    );
-    let entry_outputs = graph.node_outputs(entry);
-    let entry_control = entry_outputs[0];
-    let param1 = entry_outputs[1];
+    let (entry, entry_control, [param1]) = create_entry(&mut graph, [Type::I32]);
 
     // Loop preheader: skip loop if value is 0
     let zero = graph.create_node(NodeKind::IConst(0), [], [DepValueKind::Value(Type::I32)]);
@@ -150,7 +143,7 @@ pub fn create_loop_graph() -> (ValGraph, Node) {
         [DepValueKind::Value(Type::I32)],
     );
     let ret_phi_val = graph.node_outputs(ret_phi)[0];
-    graph.create_node(NodeKind::Return, [exit_region_ctrl, ret_phi_val], []);
+    create_return(&mut graph, [exit_region_ctrl, ret_phi_val]);
 
     // Hook up the backedge/phis
     graph.add_node_input(loop_header, loop_backedge_ctrl);

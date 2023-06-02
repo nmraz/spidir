@@ -165,7 +165,7 @@ mod tests {
     use crate::{
         module::{ExternFunctionData, FunctionData, Signature},
         node::{DepValueKind, IcmpKind, Type},
-        test_utils::{create_loop_graph, create_return},
+        test_utils::{create_entry, create_loop_graph, create_return},
     };
 
     use super::*;
@@ -263,19 +263,9 @@ mod tests {
     #[test]
     fn write_add_params_graph() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [
-                DepValueKind::Control,
-                DepValueKind::Value(Type::I32),
-                DepValueKind::Value(Type::I32),
-            ],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-        let param1 = entry_outputs[1];
-        let param2 = entry_outputs[2];
+
+        let (entry, control_value, [param1, param2]) =
+            create_entry(&mut graph, [Type::I32, Type::I32]);
 
         let add = graph.create_node(
             NodeKind::Iadd,

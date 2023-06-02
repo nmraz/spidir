@@ -360,7 +360,7 @@ mod tests {
 
     use crate::{
         node::Type,
-        test_utils::{create_const32, create_region},
+        test_utils::{create_const32, create_entry, create_region, create_return},
     };
 
     use super::*;
@@ -398,19 +398,9 @@ mod tests {
     #[test]
     fn create_multi_node() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [
-                DepValueKind::Control,
-                DepValueKind::Value(Type::I32),
-                DepValueKind::Value(Type::I32),
-            ],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-        let param1 = entry_outputs[1];
-        let param2 = entry_outputs[2];
+
+        let (entry, control_value, [param1, param2]) =
+            create_entry(&mut graph, [Type::I32, Type::I32]);
 
         let add = graph.create_node(
             NodeKind::Iadd,
@@ -418,7 +408,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         let add_res = graph.node_outputs(add)[0];
-        let ret = graph.create_node(NodeKind::Return, [control_value, add_res], []);
+        let ret = create_return(&mut graph, [control_value, add_res]);
 
         assert_eq!(graph.value_def(param1), (entry, 1));
         assert_eq!(graph.value_def(param2), (entry, 2));
@@ -510,18 +500,7 @@ mod tests {
     #[test]
     fn add_node_input() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(
-            NodeKind::Entry,
-            [],
-            [
-                DepValueKind::Control,
-                DepValueKind::Value(Type::I32),
-                DepValueKind::Value(Type::I32),
-            ],
-        );
-        let entry_outputs = graph.node_outputs(entry);
-        let param1 = entry_outputs[1];
-        let param2 = entry_outputs[2];
+        let (_, _, [param1, param2]) = create_entry(&mut graph, [Type::I32, Type::I32]);
 
         let add = graph.create_node(NodeKind::Iadd, [param1], [DepValueKind::Value(Type::I32)]);
         graph.add_node_input(add, param2);
@@ -534,8 +513,7 @@ mod tests {
     #[test]
     fn remove_node_input() {
         let mut graph = ValGraph::new();
-        let entry = graph.create_node(NodeKind::Entry, [], [DepValueKind::Control]);
-        let entry_control = graph.node_outputs(entry)[0];
+        let (_, entry_control, []) = create_entry(&mut graph, []);
 
         let dead_region1_control = create_region(&mut graph, []);
         let dead_region2_control = create_region(&mut graph, []);

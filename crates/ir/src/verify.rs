@@ -86,7 +86,7 @@ fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
         NodeKind::FConst(_) => verify_fconst(graph, node, errors),
         NodeKind::Load => verify_load(graph, node, errors),
-        NodeKind::Store => {}
+        NodeKind::Store => verify_store(graph, node, errors),
         NodeKind::BrCond => {}
         NodeKind::Call(_) => {}
     }
@@ -233,6 +233,14 @@ fn verify_load(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
     let _ = verify_output_kind(graph, result, ALL_VALUE_TYPES, errors);
     let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
     let _ = verify_input_kind(graph, node, 1, &[DepValueKind::Value(Type::Ptr)], errors);
+}
+
+fn verify_store(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
+    let Ok([out_ctrl]) = verify_node_arity(graph, node, 3, errors) else { return };
+    let _ = verify_output_kind(graph, out_ctrl, &[DepValueKind::Control], errors);
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
+    let _ = verify_input_kind(graph, node, 1, ALL_VALUE_TYPES, errors);
+    let _ = verify_input_kind(graph, node, 2, &[DepValueKind::Value(Type::Ptr)], errors);
 }
 
 fn verify_node_arity<const O: usize>(

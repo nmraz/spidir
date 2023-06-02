@@ -755,3 +755,127 @@ fn verify_load_output_kinds() {
         },
     );
 }
+
+#[test]
+fn verify_graph_store_function_ok() {
+    for input_ty in [Type::I32, Type::I64, Type::Ptr, Type::F64] {
+        let mut graph = ValGraph::new();
+
+        let (entry, control_value, [ptr, value]) = create_entry(&mut graph, [Type::Ptr, input_ty]);
+
+        let store = graph.create_node(
+            NodeKind::Store,
+            [control_value, value, ptr],
+            [DepValueKind::Control],
+        );
+        let store_control = graph.node_outputs(store)[0];
+
+        create_return(&mut graph, [store_control]);
+        assert_eq!(verify_graph(&graph, entry), Ok(()));
+    }
+}
+
+#[test]
+fn verify_store_input_count() {
+    let mut graph = ValGraph::new();
+    let store = graph.create_node(NodeKind::Store, [], [DepValueKind::Control]);
+    check_verify_node_kind(
+        &graph,
+        store,
+        VerifierError::BadInputCount {
+            node: store,
+            expected: 3,
+        },
+    );
+}
+
+#[test]
+fn verify_store_output_count() {
+    let mut graph = ValGraph::new();
+    let (_, entry_control, [value, ptr]) = create_entry(&mut graph, [Type::I32, Type::Ptr]);
+    let store = graph.create_node(NodeKind::Store, [entry_control, value, ptr], []);
+    check_verify_node_kind(
+        &graph,
+        store,
+        VerifierError::BadOutputCount {
+            node: store,
+            expected: 1,
+        },
+    );
+}
+
+#[test]
+fn verify_store_input_kinds() {
+    let mut graph = ValGraph::new();
+    let (_, entry_ctrl, [value, ptr]) = create_entry(&mut graph, [Type::I32, Type::Ptr]);
+
+    let non_ctrl_store = graph.create_node(
+        NodeKind::Store,
+        [value, value, ptr],
+        [DepValueKind::Control],
+    );
+    check_verify_node_kind(
+        &graph,
+        non_ctrl_store,
+        VerifierError::BadInputKind {
+            node: non_ctrl_store,
+            input: 0,
+            expected: vec![DepValueKind::Control],
+        },
+    );
+
+    let non_value_store = graph.create_node(
+        NodeKind::Store,
+        [entry_ctrl, entry_ctrl, ptr],
+        [DepValueKind::Control],
+    );
+    check_verify_node_kind(
+        &graph,
+        non_value_store,
+        VerifierError::BadInputKind {
+            node: non_value_store,
+            input: 1,
+            expected: vec![
+                DepValueKind::Value(Type::I32),
+                DepValueKind::Value(Type::I64),
+                DepValueKind::Value(Type::F64),
+                DepValueKind::Value(Type::Ptr),
+            ],
+        },
+    );
+
+    let non_ptr_store = graph.create_node(
+        NodeKind::Store,
+        [entry_ctrl, value, value],
+        [DepValueKind::Control],
+    );
+    check_verify_node_kind(
+        &graph,
+        non_ptr_store,
+        VerifierError::BadInputKind {
+            node: non_ptr_store,
+            input: 2,
+            expected: vec![DepValueKind::Value(Type::Ptr)],
+        },
+    );
+}
+
+#[test]
+fn verify_store_output_kinds() {
+    let mut graph = ValGraph::new();
+    let (_, entry_ctrl, [value, ptr]) = create_entry(&mut graph, [Type::I32, Type::Ptr]);
+
+    let non_ctrl_store = graph.create_node(
+        NodeKind::Store,
+        [entry_ctrl, value, ptr],
+        [DepValueKind::Value(Type::I32)],
+    );
+    check_verify_node_kind(
+        &graph,
+        non_ctrl_store,
+        VerifierError::BadOutputKind {
+            value: graph.node_outputs(non_ctrl_store)[0],
+            expected: vec![DepValueKind::Control],
+        },
+    );
+}

@@ -346,6 +346,29 @@ mod tests {
     }
 
     #[test]
+    fn write_void_func() {
+        let mut function = FunctionData::new(
+            "nop".to_owned(),
+            Signature {
+                ret_type: None,
+                arg_types: vec![Type::I32],
+            },
+        );
+        let graph = &mut function.valgraph;
+        let control_value = graph.node_outputs(function.entry_node)[0];
+        create_return(graph, [control_value]);
+        check_write_function(
+            &function,
+            expect![[r#"
+                func @nop(i32) {
+                    %0:ctrl, %1:val(i32) = entry
+                    return %0
+                }
+            "#]],
+        );
+    }
+
+    #[test]
     fn write_simple_module() {
         let mut module = Module::new();
         let func = module.functions.push(FunctionData::new(

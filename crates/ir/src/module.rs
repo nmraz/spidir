@@ -17,7 +17,7 @@ pub struct ExternFunction(u32);
 entity_impl!(ExternFunction, "extfunc");
 
 pub struct Signature {
-    pub ret_type: Type,
+    pub ret_type: Option<Type>,
     pub arg_types: Vec<Type>,
 }
 

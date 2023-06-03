@@ -31,7 +31,13 @@ pub fn write_function(
     module: &Module,
     function: &FunctionData,
 ) -> fmt::Result {
-    write!(w, "func @{}:{}(", function.name, function.sig.ret_type)?;
+    write!(w, "func @{}", function.name)?;
+
+    if let Some(ret_type) = function.sig.ret_type {
+        write!(w, ":{}", ret_type)?;
+    }
+
+    w.write_str("(")?;
 
     let mut first_arg = true;
     for &arg_type in &function.sig.arg_types {
@@ -197,7 +203,7 @@ mod tests {
         let func = module.functions.push(FunctionData::new(
             "my_func".to_owned(),
             Signature {
-                ret_type: Type::I32,
+                ret_type: Some(Type::I32),
                 arg_types: vec![],
             },
         ));
@@ -205,7 +211,7 @@ mod tests {
         let extfunc = module.extern_functions.push(ExternFunctionData {
             name: "my_ext_func".to_owned(),
             sig: Signature {
-                ret_type: Type::I32,
+                ret_type: Some(Type::I32),
                 arg_types: vec![],
             },
         });
@@ -318,7 +324,7 @@ mod tests {
         let mut function = FunctionData::new(
             "add_i32".to_owned(),
             Signature {
-                ret_type: Type::I32,
+                ret_type: Some(Type::I32),
                 arg_types: vec![Type::I32, Type::I32],
             },
         );
@@ -355,14 +361,14 @@ mod tests {
         let func = module.functions.push(FunctionData::new(
             "my_func".to_owned(),
             Signature {
-                ret_type: Type::I32,
+                ret_type: Some(Type::I32),
                 arg_types: vec![Type::I64],
             },
         ));
         let extfunc = module.extern_functions.push(ExternFunctionData {
             name: "my_ext_func".to_owned(),
             sig: Signature {
-                ret_type: Type::I32,
+                ret_type: Some(Type::I32),
                 arg_types: vec![Type::I64],
             },
         });

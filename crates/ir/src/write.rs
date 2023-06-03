@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use core::fmt;
 
 use crate::{
-    module::{ExternFunctionData, FunctionData, Module},
+    module::{ExternFunctionData, FunctionData, Module, Signature},
     node::{FunctionRef, NodeKind},
     valgraph::{Node, ValGraph},
     valwalk::LiveNodeInfo,
@@ -26,30 +26,11 @@ pub fn write_module(w: &mut dyn fmt::Write, module: &Module) -> fmt::Result {
     Ok(())
 }
 
-pub fn write_function(
-    w: &mut dyn fmt::Write,
-    module: &Module,
-    function: &FunctionData,
-) -> fmt::Result {
-    write!(w, "func @{}", function.name)?;
-
-    if let Some(ret_type) = function.sig.ret_type {
-        write!(w, ":{}", ret_type)?;
-    }
-
-    w.write_str("(")?;
-
-    let mut first_arg = true;
-    for &arg_type in &function.sig.arg_types {
-        if !first_arg {
-            w.write_str(", ")?;
-        }
-        first_arg = false;
-        write!(w, "{}", arg_type)?;
-    }
-
-    w.write_str(") {\n")?;
-    write_graph(w, module, &function.valgraph, function.entry_node, 4)?;
+pub fn write_function(w: &mut dyn fmt::Write, module: &Module, func: &FunctionData) -> fmt::Result {
+    write!(w, "func @{}", func.name)?;
+    write_signature(w, &func.sig)?;
+    w.write_str(" {\n")?;
+    write_graph(w, module, &func.valgraph, func.entry_node, 4)?;
     w.write_str("}\n")
 }
 
@@ -141,18 +122,27 @@ pub fn write_node(
 }
 
 fn write_extern_function(w: &mut dyn fmt::Write, func: &ExternFunctionData) -> fmt::Result {
-    write!(w, "extfunc @{}(", func.name)?;
+    write!(w, "extfunc @{}", func.name)?;
+    write_signature(w, &func.sig)
+}
+
+fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
+    if let Some(ret_type) = sig.ret_type {
+        write!(w, ":{}", ret_type)?;
+    }
+
+    w.write_str("(")?;
 
     let mut first_arg = true;
-    for &arg_type in &func.sig.arg_types {
+    for &arg_type in &sig.arg_types {
         if !first_arg {
             w.write_str(", ")?;
         }
         first_arg = false;
-        write!(w, "{arg_type}")?;
+        write!(w, "{}", arg_type)?;
     }
 
-    w.write_str(")\n")
+    w.write_str(")")
 }
 
 fn write_func_ref(w: &mut dyn fmt::Write, module: &Module, func: FunctionRef) -> fmt::Result {
@@ -395,8 +385,7 @@ mod tests {
         check_write_module(
             &module,
             expect![[r#"
-                extfunc @my_ext_func(i64)
-
+                extfunc @my_ext_func:i32(i64)
                 func @my_func:i32(i64) {
                     %0:ctrl, %1:val(i64) = entry
                     %2:ctrl, %3:val(i32) = call extfunc @my_ext_func %0, %1

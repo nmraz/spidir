@@ -3,13 +3,19 @@ use core::array;
 use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::{
+    module::Signature,
     node::{DepValueKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
 use super::VerifierError;
 
-pub fn verify_node_kind(graph: &ValGraph, node: Node, errors: &mut Vec<VerifierError>) {
+pub fn verify_node_kind(
+    graph: &ValGraph,
+    _signature: &Signature,
+    node: Node,
+    errors: &mut Vec<VerifierError>,
+) {
     match graph.node_kind(node) {
         NodeKind::Entry => {}
         NodeKind::Return => {}

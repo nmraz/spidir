@@ -9,8 +9,27 @@ use super::*;
 #[track_caller]
 fn check_verify_node_kind(graph: &ValGraph, node: Node, expected_err: VerifierError) {
     let mut errors = Vec::new();
-    verify_node_kind(graph, node, &mut errors);
+    // Dummy signature since we usually don't care about it.
+    let signature = Signature {
+        ret_type: None,
+        arg_types: vec![],
+    };
+    verify_node_kind(graph, &signature, node, &mut errors);
     assert_eq!(errors, &[expected_err]);
+}
+
+#[track_caller]
+fn check_verify_graph_ok(
+    graph: &ValGraph,
+    entry: Node,
+    arg_types: &[Type],
+    ret_type: Option<Type>,
+) {
+    let signature = Signature {
+        ret_type,
+        arg_types: arg_types.to_owned(),
+    };
+    assert_eq!(verify_graph(graph, &signature, entry), Ok(()));
 }
 
 fn all_integer_types() -> Vec<DepValueKind> {
@@ -34,7 +53,7 @@ fn verify_graph_add_function() {
     let add_res = graph.node_outputs(add)[0];
     create_return(&mut graph, [control_value, add_res]);
 
-    assert_eq!(verify_graph(&graph, entry), Ok(()));
+    check_verify_graph_ok(&graph, entry, &[Type::I32, Type::I32], Some(Type::I32));
 }
 
 #[test]
@@ -144,7 +163,12 @@ fn verify_graph_shift_function_ok() {
             let shl_res = graph.node_outputs(shl)[0];
             create_return(&mut graph, [control_value, shl_res]);
 
-            assert_eq!(verify_graph(&graph, entry), Ok(()));
+            check_verify_graph_ok(
+                &graph,
+                entry,
+                &[shift_input_ty, shift_amount_ty],
+                Some(shift_input_ty),
+            );
         }
     }
 }
@@ -259,7 +283,7 @@ fn verify_graph_div_function_ok() {
             let div_res = div_outputs[1];
             create_return(&mut graph, [div_control, div_res]);
 
-            assert_eq!(verify_graph(&graph, entry), Ok(()));
+            check_verify_graph_ok(&graph, entry, &[ty, ty], Some(ty));
         }
     }
 }
@@ -389,7 +413,7 @@ fn verify_graph_icmp_function_ok() {
             let icmp_res = graph.node_outputs(icmp)[0];
             create_return(&mut graph, [control_value, icmp_res]);
 
-            assert_eq!(verify_graph(&graph, entry), Ok(()));
+            check_verify_graph_ok(&graph, entry, &[input_ty, input_ty], Some(output_ty));
         }
     }
 }
@@ -580,7 +604,7 @@ fn verify_graph_load_function_ok() {
 
         let load_res = graph.node_outputs(load)[1];
         create_return(&mut graph, [load_control, load_res]);
-        assert_eq!(verify_graph(&graph, entry), Ok(()));
+        check_verify_graph_ok(&graph, entry, &[Type::Ptr], Some(output_ty));
     }
 }
 
@@ -719,7 +743,7 @@ fn verify_graph_store_function_ok() {
         let store_control = graph.node_outputs(store)[0];
 
         create_return(&mut graph, [store_control]);
-        assert_eq!(verify_graph(&graph, entry), Ok(()));
+        check_verify_graph_ok(&graph, entry, &[Type::Ptr, input_ty], None);
     }
 }
 

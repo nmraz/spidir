@@ -1,6 +1,7 @@
 use alloc::vec::Vec;
 
 use crate::{
+    module::Signature,
     node::DepValueKind,
     valgraph::{DepValue, Node, ValGraph},
     valwalk::LiveNodeInfo,
@@ -34,11 +35,15 @@ pub enum VerifierError {
     ConstantOutOfRange(Node),
 }
 
-pub fn verify_graph(graph: &ValGraph, entry: Node) -> Result<(), Vec<VerifierError>> {
+pub fn verify_graph(
+    graph: &ValGraph,
+    signature: &Signature,
+    entry: Node,
+) -> Result<(), Vec<VerifierError>> {
     let mut errors = Vec::new();
 
     for node in LiveNodeInfo::compute(graph, entry).iter_live_nodes() {
-        verify_node_kind(graph, node, &mut errors);
+        verify_node_kind(graph, signature, node, &mut errors);
         verify_control_outputs(graph, node, &mut errors);
     }
 

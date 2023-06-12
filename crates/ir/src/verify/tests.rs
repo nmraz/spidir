@@ -1,16 +1,30 @@
-use crate::test_utils::{create_entry, create_loop_graph, create_region, create_return};
+use crate::{
+    node::Type,
+    test_utils::{create_entry, create_loop_graph, create_region, create_return},
+};
 
 use super::*;
 
 #[track_caller]
 fn check_verify_graph_errors(graph: &ValGraph, entry: Node, expected_errors: &[VerifierError]) {
-    assert_eq!(verify_graph(graph, entry).unwrap_err(), expected_errors);
+    let signature = Signature {
+        ret_type: None,
+        arg_types: vec![],
+    };
+    assert_eq!(
+        verify_graph(graph, &signature, entry).unwrap_err(),
+        expected_errors
+    );
 }
 
 #[test]
 fn verify_graph_loop_function() {
     let (graph, entry) = create_loop_graph();
-    assert_eq!(verify_graph(&graph, entry), Ok(()));
+    let signature = Signature {
+        ret_type: Some(Type::I32),
+        arg_types: vec![Type::I32],
+    };
+    assert_eq!(verify_graph(&graph, &signature, entry), Ok(()));
 }
 
 #[test]
@@ -31,7 +45,11 @@ fn verify_graph_unused_control_dead_region() {
     let (entry, entry_control, []) = create_entry(&mut graph, []);
     create_return(&mut graph, [entry_control]);
     create_region(&mut graph, []);
-    assert_eq!(verify_graph(&graph, entry), Ok(()));
+    let signature = Signature {
+        ret_type: None,
+        arg_types: vec![],
+    };
+    assert_eq!(verify_graph(&graph, &signature, entry), Ok(()));
 }
 
 #[test]

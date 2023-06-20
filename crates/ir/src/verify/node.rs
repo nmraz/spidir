@@ -12,13 +12,13 @@ use super::VerifierError;
 
 pub fn verify_node_kind(
     graph: &ValGraph,
-    _signature: &Signature,
+    signature: &Signature,
     node: Node,
     errors: &mut Vec<VerifierError>,
 ) {
     match graph.node_kind(node) {
-        NodeKind::Entry => {}
-        NodeKind::Return => {}
+        NodeKind::Entry => verify_entry(graph, signature, node, errors),
+        NodeKind::Return => verify_return(graph, signature, node, errors),
         NodeKind::Region => verify_region(graph, node, errors),
         NodeKind::Phi => verify_phi(graph, node, errors),
         NodeKind::IConst(val) => verify_iconst(graph, node, *val, errors),
@@ -39,6 +39,47 @@ pub fn verify_node_kind(
         NodeKind::Store => verify_store(graph, node, errors),
         NodeKind::BrCond => verify_brcond(graph, node, errors),
         NodeKind::Call(_) => {}
+    }
+}
+
+fn verify_entry(
+    graph: &ValGraph,
+    signature: &Signature,
+    node: Node,
+    errors: &mut Vec<VerifierError>,
+) {
+    let expected_output_count = signature.arg_types.len() + 1;
+    let outputs = graph.node_outputs(node);
+    if outputs.len() != expected_output_count {
+        errors.push(VerifierError::BadOutputCount {
+            node,
+            expected: expected_output_count as u32,
+        });
+        return;
+    }
+
+    let _ = verify_output_kind(graph, outputs[0], &[DepValueKind::Control], errors);
+    for (output, &expected_ty) in outputs.into_iter().skip(1).zip(&signature.arg_types) {
+        let _ = verify_output_kind(graph, output, &[DepValueKind::Value(expected_ty)], errors);
+    }
+}
+
+fn verify_return(
+    graph: &ValGraph,
+    signature: &Signature,
+    node: Node,
+    errors: &mut Vec<VerifierError>,
+) {
+    match signature.ret_type {
+        Some(ret_type) => {
+            let Ok([]) = verify_node_arity(graph, node, 2, errors) else { return };
+            let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
+            let _ = verify_input_kind(graph, node, 1, &[DepValueKind::Value(ret_type)], errors);
+        }
+        None => {
+            let Ok([]) = verify_node_arity(graph, node, 1, errors) else { return };
+            let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
+        }
     }
 }
 

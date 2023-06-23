@@ -14,7 +14,8 @@ fn check_verify_node_kind(graph: &ValGraph, node: Node, expected_err: VerifierEr
         ret_type: None,
         arg_types: vec![],
     };
-    verify_node_kind(graph, &signature, node, &mut errors);
+    // Dummy entry node since we usually don't care about it.
+    verify_node_kind(graph, &signature, node, node, &mut errors);
     assert_eq!(errors, &[expected_err]);
 }
 

@@ -13,11 +13,12 @@ use super::VerifierError;
 pub fn verify_node_kind(
     graph: &ValGraph,
     signature: &Signature,
+    entry: Node,
     node: Node,
     errors: &mut Vec<VerifierError>,
 ) {
     match graph.node_kind(node) {
-        NodeKind::Entry => verify_entry(graph, signature, node, errors),
+        NodeKind::Entry => verify_entry(graph, signature, entry, node, errors),
         NodeKind::Return => verify_return(graph, signature, node, errors),
         NodeKind::Region => verify_region(graph, node, errors),
         NodeKind::Phi => verify_phi(graph, node, errors),
@@ -45,9 +46,15 @@ pub fn verify_node_kind(
 fn verify_entry(
     graph: &ValGraph,
     signature: &Signature,
+    entry: Node,
     node: Node,
     errors: &mut Vec<VerifierError>,
 ) {
+    if node != entry {
+        errors.push(VerifierError::MisplacedEntry(node));
+        return;
+    }
+
     let expected_output_count = signature.arg_types.len() + 1;
     let outputs = graph.node_outputs(node);
     if outputs.len() != expected_output_count {

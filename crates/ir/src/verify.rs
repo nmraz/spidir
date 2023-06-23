@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 
 use crate::{
     module::Signature,
-    node::DepValueKind,
+    node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::LiveNodeInfo,
 };
@@ -32,6 +32,8 @@ pub enum VerifierError {
         value: DepValue,
         expected: Vec<DepValueKind>,
     },
+    BadEntry(Node),
+    MisplacedEntry(Node),
     ConstantOutOfRange(Node),
 }
 
@@ -42,8 +44,12 @@ pub fn verify_graph(
 ) -> Result<(), Vec<VerifierError>> {
     let mut errors = Vec::new();
 
+    if graph.node_kind(entry) != &NodeKind::Entry {
+        errors.push(VerifierError::BadEntry(entry));
+    }
+
     for node in LiveNodeInfo::compute(graph, entry).iter_live_nodes() {
-        verify_node_kind(graph, signature, node, &mut errors);
+        verify_node_kind(graph, signature, entry, node, &mut errors);
         verify_control_outputs(graph, node, &mut errors);
     }
 

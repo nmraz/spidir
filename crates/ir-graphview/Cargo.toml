@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 ir = { workspace = true }
+
+[dev-dependencies]
+expect-test = { workspace = true }

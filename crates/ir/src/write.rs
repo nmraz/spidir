@@ -72,7 +72,29 @@ pub fn write_node(
         w.write_str(" = ")?;
     }
 
-    match graph.node_kind(node) {
+    write_node_kind(w, module, graph.node_kind(node))?;
+
+    let mut first = true;
+    for input in graph.node_inputs(node) {
+        if first {
+            w.write_str(" ")?;
+        } else {
+            w.write_str(", ")?;
+        }
+        first = false;
+        write!(w, "%{}", input.as_u32())?;
+    }
+    writeln!(w)?;
+
+    Ok(())
+}
+
+pub fn write_node_kind(
+    w: &mut dyn fmt::Write,
+    module: &Module,
+    node_kind: &NodeKind,
+) -> fmt::Result {
+    match node_kind {
         NodeKind::Entry => w.write_str("entry")?,
         NodeKind::Return => w.write_str("return")?,
         NodeKind::Region => w.write_str("region")?,
@@ -99,19 +121,6 @@ pub fn write_node(
             write_func_ref(w, module, *func)?;
         }
     };
-
-    let mut first = true;
-    for input in graph.node_inputs(node) {
-        if first {
-            w.write_str(" ")?;
-        } else {
-            w.write_str(", ")?;
-        }
-        first = false;
-        write!(w, "%{}", input.as_u32())?;
-    }
-    writeln!(w)?;
-
     Ok(())
 }
 

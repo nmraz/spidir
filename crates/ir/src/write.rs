@@ -1,4 +1,3 @@
-use alloc::vec::Vec;
 use core::fmt;
 
 use crate::{
@@ -41,12 +40,7 @@ pub fn write_graph(
     entry: Node,
     indentation: u32,
 ) -> fmt::Result {
-    let mut rpo: Vec<_> = LiveNodeInfo::compute(graph, entry)
-        .postorder(graph)
-        .collect();
-    rpo.reverse();
-
-    for node in rpo {
+    for node in LiveNodeInfo::compute(graph, entry).reverse_postorder(graph) {
         write_node(w, module, graph, node, indentation)?;
     }
 

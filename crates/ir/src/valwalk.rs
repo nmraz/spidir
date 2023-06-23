@@ -58,6 +58,12 @@ impl LiveNodeInfo {
     pub fn postorder<'a>(&'a self, graph: &'a ValGraph) -> PostOrder<'a> {
         PostOrder::new(graph, self.roots.iter().copied(), &self.live_nodes)
     }
+
+    pub fn reverse_postorder(&self, graph: &ValGraph) -> Vec<Node> {
+        let mut rpo: Vec<_> = self.postorder(graph).collect();
+        rpo.reverse();
+        rpo
+    }
 }
 
 pub struct PostOrder<'a> {

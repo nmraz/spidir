@@ -24,7 +24,7 @@ fn verify_graph_loop_function() {
         ret_type: Some(Type::I32),
         arg_types: vec![Type::I32],
     };
-    assert_eq!(verify_graph(&graph, &signature, entry), Ok(()));
+    verify_graph(&graph, &signature, entry).expect("expected a valid graph");
 }
 
 #[test]
@@ -49,7 +49,7 @@ fn verify_graph_unused_control_dead_region() {
         ret_type: None,
         arg_types: vec![],
     };
-    assert_eq!(verify_graph(&graph, &signature, entry), Ok(()));
+    verify_graph(&graph, &signature, entry).expect("expected a valid graph");
 }
 
 #[test]

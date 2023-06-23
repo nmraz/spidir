@@ -30,7 +30,7 @@ fn check_verify_graph_ok(
         ret_type,
         arg_types: arg_types.to_owned(),
     };
-    assert_eq!(verify_graph(graph, &signature, entry), Ok(()));
+    verify_graph(graph, &signature, entry).expect("expected a valid graph");
 }
 
 fn all_integer_types() -> Vec<DepValueKind> {

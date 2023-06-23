@@ -1,0 +1,66 @@
+WHITESPACE = _{ " " | "\t" }
+
+line_end = _{ ("#" ~ (!"\n" ~ ANY)* ~ "\n") | "\n" }
+
+ident   = @{ ("_" | ASCII_ALPHA) ~ ("_" | ASCII_ALPHANUMERIC)* }
+integer = @{ "-"? ~ ASCII_DIGIT+ }
+float   = @{
+    "-"? ~ ((ASCII_DIGIT+ ~ ("." ~ (ASCII_DIGIT*))?) | ("." ~ ASCII_DIGIT+))
+}
+
+valname  = @{ "%" ~ ASCII_ALPHANUMERIC+ }
+funcname = @{ "@" ~ ident }
+
+type = { "i32" | "i64" | "f64" | "ptr" }
+
+signature = { funcname ~ ":" ~ type ~ "(" ~ (type ~ ("," ~ type)*)? ~ ")" }
+extfunc   = { "extfunc" ~ signature }
+
+valkind = { "ctrl" | "phisel" | ("val" ~ "(" ~ type ~ ")") }
+
+funcref  = { ("func" | "extfunc") ~ funcname }
+icmpkind = { "eq" | "ne" | "slt" | "sle" | "ult" | "ule" }
+nodekind = {
+    "entry"
+  | "return"
+  | "region"
+  | "phi"
+  | "iconst" ~ integer
+  | "fconst" ~ float
+  | "iadd"
+  | "isub"
+  | "and"
+  | "or"
+  | "xor"
+  | "shl"
+  | "lshr"
+  | "ashr"
+  | "imul"
+  | "sdiv"
+  | "udiv"
+  | "icmp" ~ icmpkind
+  | "load"
+  | "store"
+  | "brcond"
+  | "call" ~ funcref
+}
+
+valdef = {
+    valname ~ ":" ~ valkind
+}
+
+node = {
+    (valdef ~ ("," ~ valdef)* ~ "=")? ~ nodekind ~ (valname ~ ("," ~ valname)*)?
+}
+
+graph = { ((node ~ line_end) | line_end)* }
+
+func = {
+    "func" ~ signature ~ "{" ~ line_end ~ graph ~ "}"
+}
+
+module_item = { extfunc | func }
+
+module = {
+    SOI ~ line_end* ~ (module_item ~ (line_end+ ~ module_item)*)? ~ line_end* ~ EOI
+}

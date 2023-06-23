@@ -3,6 +3,7 @@ members = ["crates/*"]
 
 [workspace.dependencies]
 fx-utils = { path = "crates/fx-utils" }
+ir = { path = "crates/ir" }
 
 cranelift-entity = "0.95.0"
 expect-test = "1.4.1"

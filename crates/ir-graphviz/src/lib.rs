@@ -21,14 +21,40 @@ pub fn write_graphviz(
 
     // First pass: write all nodes.
     for &node in &rpo {
-        write!(w, r#"    {node} [shape=Mrecord, ordering=in, label="<l> "#)?;
-        write_node_kind(w, module, graph.node_kind(node))?;
+        write!(w, r#"    {node} [shape=Mrecord, ordering=in, label="{{"#)?;
 
-        for (i, val) in graph.node_outputs(node).into_iter().enumerate() {
-            write!(w, " | <v{i}> {}", graph.value_kind(val))?;
+        let inputs = graph.node_inputs(node);
+        let outputs = graph.node_outputs(node);
+
+        if !inputs.is_empty() {
+            write!(w, "{{")?;
+            let mut first = true;
+            for i in 0..inputs.len() {
+                if !first {
+                    write!(w, " | ")?;
+                }
+                first = false;
+                write!(w, "<i{i}>")?;
+            }
+            write!(w, "}} | ")?;
         }
 
-        writeln!(w, r#""]"#)?;
+        write_node_kind(w, module, graph.node_kind(node))?;
+
+        if !outputs.is_empty() {
+            write!(w, " | {{")?;
+            let mut first = true;
+            for (i, val) in outputs.into_iter().enumerate() {
+                if !first {
+                    write!(w, " | ")?;
+                }
+                first = false;
+                write!(w, "<o{i}> {}", graph.value_kind(val))?;
+            }
+            write!(w, "}}")?;
+        }
+
+        writeln!(w, r#"}}"]"#)?;
     }
 
     // Second pass: add edges.
@@ -36,9 +62,9 @@ pub fn write_graphviz(
         // Note: the edges must be printed in input order in the actual graph, so that the
         // `ordering=in` attribute specified on all the nodes can actually guarantee that input
         // edges show up in the right order.
-        for input in graph.node_inputs(node) {
+        for (input_idx, input) in graph.node_inputs(node).into_iter().enumerate() {
             let (def_node, def_idx) = graph.value_def(input);
-            writeln!(w, "    {def_node}:v{def_idx} -> {node}:l")?;
+            writeln!(w, "    {def_node}:o{def_idx} -> {node}:i{input_idx}")?;
         }
     }
 
@@ -107,13 +133,13 @@ mod tests {
             func_entry,
             expect![[r#"
                 digraph {
-                    node0 [shape=Mrecord, ordering=in, label="<l> entry | <v0> ctrl | <v1> val(i64)"]
-                    node1 [shape=Mrecord, ordering=in, label="<l> call extfunc @my_ext_func | <v0> ctrl | <v1> val(i32)"]
-                    node2 [shape=Mrecord, ordering=in, label="<l> return"]
-                    node0:v0 -> node1:l
-                    node0:v1 -> node1:l
-                    node1:v0 -> node2:l
-                    node1:v1 -> node2:l
+                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> val(i64)}}"]
+                    node1 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | call extfunc @my_ext_func | {<o0> ctrl | <o1> val(i32)}}"]
+                    node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | return}"]
+                    node0:o0 -> node1:i0
+                    node0:o1 -> node1:i1
+                    node1:o0 -> node2:i0
+                    node1:o1 -> node2:i1
                 }
             "#]],
         );

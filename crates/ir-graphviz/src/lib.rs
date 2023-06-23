@@ -9,7 +9,7 @@ use ir::{
     write::write_node_kind,
 };
 
-pub fn dump_ir_graphviz(
+pub fn write_graphviz(
     w: &mut dyn fmt::Write,
     module: &Module,
     graph: &ValGraph,
@@ -60,7 +60,7 @@ mod tests {
     #[track_caller]
     fn check_dump_graphviz(module: &Module, graph: &ValGraph, entry: Node, expected: Expect) {
         let mut graphviz = String::new();
-        dump_ir_graphviz(&mut graphviz, module, graph, entry).expect("failed to format IR graph");
+        write_graphviz(&mut graphviz, module, graph, entry).expect("failed to format IR graph");
         expected.assert_eq(&graphviz);
     }
 

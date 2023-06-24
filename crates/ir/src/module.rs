@@ -1,11 +1,12 @@
 use alloc::{string::String, vec::Vec};
-use core::iter;
+use core::{fmt, iter};
 
 use cranelift_entity::{entity_impl, PrimaryMap};
 
 use crate::{
     node::{DepValueKind, NodeKind, Type},
     valgraph::{Node, ValGraph},
+    write::write_module,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -62,6 +63,12 @@ impl Module {
             functions: PrimaryMap::new(),
             extern_functions: PrimaryMap::new(),
         }
+    }
+}
+
+impl fmt::Display for Module {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_module(f, self)
     }
 }
 

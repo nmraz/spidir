@@ -184,9 +184,7 @@ mod tests {
     }
 
     fn check_write_module(module: &Module, expected: Expect) {
-        let mut output = String::new();
-        write_module(&mut output, module).expect("failed to display module");
-        expected.assert_eq(&output);
+        expected.assert_eq(&module.to_string());
     }
 
     #[test]

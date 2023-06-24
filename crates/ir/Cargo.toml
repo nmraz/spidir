@@ -6,10 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fx-utils = { workspace = true }
+fx-utils.workspace = true
 
-cranelift-entity = { workspace = true }
-smallvec = { workspace = true }
+cranelift-entity.workspace = true
+smallvec.workspace = true
 
 [dev-dependencies]
-expect-test = { workspace = true }
+expect-test.workspace = true

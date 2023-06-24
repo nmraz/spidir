@@ -92,19 +92,37 @@ fn extract_type(type_pair: Pair<'_, Rule>) -> Type {
 
 #[cfg(test)]
 mod tests {
-    use crate::parse_module;
+    use expect_test::{expect, Expect};
+
+    use super::*;
+
+    #[track_caller]
+    fn check_module(module: &Module, expected: Expect) {
+        expected.assert_eq(&module.to_string());
+    }
 
     #[test]
-    fn parse_simple_module() {
-        parse_module(
+    fn parse_extfunc_signature() {
+        let module = parse_module(
             "
-            extfunc @my_ext_func:i32(i64)
-            func @my_func:i32(i64) {
-                %0:ctrl, %1:val(i64) = entry
-                %2:ctrl, %3:val(i32) = call extfunc @my_ext_func %0, %1
-                return %2, %3
-            }",
+            extfunc @func1:i32(i64)
+            extfunc @func2(i64, ptr, f64)
+            extfunc @func3()
+            extfunc @func4:ptr()
+            extfunc @func5:i32(i32, i64)",
         )
         .expect("failed to parse module");
+
+        check_module(
+            &module,
+            expect![[r#"
+                extfunc @func1:i32(i64)
+                extfunc @func2(i64, ptr, f64)
+                extfunc @func3()
+                extfunc @func4:ptr()
+                extfunc @func5:i32(i32, i64)
+
+            "#]],
+        );
     }
 }

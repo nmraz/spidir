@@ -8,5 +8,7 @@ edition = "2021"
 [dependencies]
 ir.workspace = true
 
+expect-test.workspace = true
+
 pest = { version = "2.7.0", default-features = false }
 pest_derive = { version = "2.7.0", default-features = false }

@@ -55,7 +55,7 @@ fn verify_entry(
         return;
     }
 
-    let expected_output_count = signature.arg_types.len() + 1;
+    let expected_output_count = signature.param_types.len() + 1;
     let outputs = graph.node_outputs(node);
     if outputs.len() != expected_output_count {
         errors.push(VerifierError::BadOutputCount {
@@ -66,7 +66,7 @@ fn verify_entry(
     }
 
     let _ = verify_output_kind(graph, outputs[0], &[DepValueKind::Control], errors);
-    for (output, &expected_ty) in outputs.into_iter().skip(1).zip(&signature.arg_types) {
+    for (output, &expected_ty) in outputs.into_iter().skip(1).zip(&signature.param_types) {
         let _ = verify_output_kind(graph, output, &[DepValueKind::Value(expected_ty)], errors);
     }
 }

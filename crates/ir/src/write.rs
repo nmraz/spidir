@@ -137,7 +137,7 @@ fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
     w.write_str("(")?;
 
     let mut first_arg = true;
-    for &arg_type in &sig.arg_types {
+    for &arg_type in &sig.param_types {
         if !first_arg {
             w.write_str(", ")?;
         }
@@ -197,7 +197,7 @@ mod tests {
             "my_func".to_owned(),
             Signature {
                 ret_type: Some(Type::I32),
-                arg_types: vec![],
+                param_types: vec![],
             },
         ));
 
@@ -205,7 +205,7 @@ mod tests {
             name: "my_ext_func".to_owned(),
             sig: Signature {
                 ret_type: Some(Type::I32),
-                arg_types: vec![],
+                param_types: vec![],
             },
         });
 
@@ -318,7 +318,7 @@ mod tests {
             "add_i32".to_owned(),
             Signature {
                 ret_type: Some(Type::I32),
-                arg_types: vec![Type::I32, Type::I32],
+                param_types: vec![Type::I32, Type::I32],
             },
         );
         let graph = &mut function.valgraph;
@@ -354,7 +354,7 @@ mod tests {
             "nop".to_owned(),
             Signature {
                 ret_type: None,
-                arg_types: vec![Type::I32],
+                param_types: vec![Type::I32],
             },
         );
         let graph = &mut function.valgraph;
@@ -378,14 +378,14 @@ mod tests {
             "my_func".to_owned(),
             Signature {
                 ret_type: Some(Type::I32),
-                arg_types: vec![Type::I64],
+                param_types: vec![Type::I64],
             },
         ));
         let extfunc = module.extern_functions.push(ExternFunctionData {
             name: "my_ext_func".to_owned(),
             sig: Signature {
                 ret_type: Some(Type::I32),
-                arg_types: vec![Type::I64],
+                param_types: vec![Type::I64],
             },
         });
 

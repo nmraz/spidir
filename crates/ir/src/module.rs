@@ -18,7 +18,7 @@ entity_impl!(ExternFunction, "extfunc");
 
 pub struct Signature {
     pub ret_type: Option<Type>,
-    pub arg_types: Vec<Type>,
+    pub param_types: Vec<Type>,
 }
 
 pub struct FunctionData {
@@ -35,7 +35,7 @@ impl FunctionData {
             NodeKind::Entry,
             [],
             iter::once(DepValueKind::Control)
-                .chain(sig.arg_types.iter().map(|&ty| DepValueKind::Value(ty))),
+                .chain(sig.param_types.iter().map(|&ty| DepValueKind::Value(ty))),
         );
         Self {
             name,

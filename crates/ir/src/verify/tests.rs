@@ -9,7 +9,7 @@ use super::*;
 fn check_verify_graph_errors(graph: &ValGraph, entry: Node, expected_errors: &[VerifierError]) {
     let signature = Signature {
         ret_type: None,
-        arg_types: vec![],
+        param_types: vec![],
     };
     assert_eq!(
         verify_graph(graph, &signature, entry).unwrap_err(),
@@ -22,7 +22,7 @@ fn verify_graph_loop_function() {
     let (graph, entry) = create_loop_graph();
     let signature = Signature {
         ret_type: Some(Type::I32),
-        arg_types: vec![Type::I32],
+        param_types: vec![Type::I32],
     };
     verify_graph(&graph, &signature, entry).expect("expected a valid graph");
 }
@@ -47,7 +47,7 @@ fn verify_graph_unused_control_dead_region() {
     create_region(&mut graph, []);
     let signature = Signature {
         ret_type: None,
-        arg_types: vec![],
+        param_types: vec![],
     };
     verify_graph(&graph, &signature, entry).expect("expected a valid graph");
 }

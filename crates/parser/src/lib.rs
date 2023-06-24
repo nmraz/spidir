@@ -74,7 +74,7 @@ fn extract_name_signature(sig_pair: Pair<'_, Rule>) -> (&str, Signature) {
         name,
         Signature {
             ret_type,
-            arg_types: param_types,
+            param_types,
         },
     )
 }

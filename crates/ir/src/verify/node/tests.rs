@@ -12,7 +12,7 @@ fn check_verify_node_kind(graph: &ValGraph, node: Node, expected_err: VerifierEr
     // Dummy signature since we usually don't care about it.
     let signature = Signature {
         ret_type: None,
-        arg_types: vec![],
+        param_types: vec![],
     };
     // Dummy entry node since we usually don't care about it.
     verify_node_kind(graph, &signature, node, node, &mut errors);
@@ -23,12 +23,12 @@ fn check_verify_node_kind(graph: &ValGraph, node: Node, expected_err: VerifierEr
 fn check_verify_graph_ok(
     graph: &ValGraph,
     entry: Node,
-    arg_types: &[Type],
+    param_types: &[Type],
     ret_type: Option<Type>,
 ) {
     let signature = Signature {
         ret_type,
-        arg_types: arg_types.to_owned(),
+        param_types: param_types.to_owned(),
     };
     verify_graph(graph, &signature, entry).expect("expected a valid graph");
 }

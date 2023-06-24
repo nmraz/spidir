@@ -97,14 +97,14 @@ mod tests {
             "my_func".to_owned(),
             Signature {
                 ret_type: Some(Type::I32),
-                arg_types: vec![Type::I64],
+                param_types: vec![Type::I64],
             },
         ));
         let extfunc = module.extern_functions.push(ExternFunctionData {
             name: "my_ext_func".to_owned(),
             sig: Signature {
                 ret_type: Some(Type::I32),
-                arg_types: vec![Type::I64],
+                param_types: vec![Type::I64],
             },
         });
 

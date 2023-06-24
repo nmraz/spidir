@@ -2,21 +2,92 @@
 
 extern crate alloc;
 
-use alloc::boxed::Box;
+use alloc::{borrow::ToOwned, boxed::Box, vec::Vec};
 
-use pest::{error::Error, Parser};
+use ir::{
+    module::{ExternFunctionData, Module, Signature},
+    node::Type,
+};
+use pest::{error::Error, iterators::Pair, Parser};
 use pest_derive::Parser;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
 struct IrParser;
 
-pub fn parse_module(input: &str) -> Result<(), Box<Error<Rule>>> {
+pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
     let parsed = IrParser::parse(Rule::module, input)?
         .next()
         .expect("expected top-level module node");
 
-    Ok(())
+    let mut module = Module::new();
+
+    for item in parsed.into_inner() {
+        match item.as_rule() {
+            Rule::extfunc => {
+                let (name, sig) = extract_name_signature(
+                    item.into_inner()
+                        .next()
+                        .expect("external function should contain signature"),
+                );
+                module.extern_functions.push(ExternFunctionData {
+                    name: name.to_owned(),
+                    sig,
+                });
+            }
+            Rule::func => {}
+            Rule::EOI => {}
+            _ => unreachable!("expected a top-level module item"),
+        }
+    }
+
+    Ok(module)
+}
+
+fn extract_name_signature(sig_pair: Pair<'_, Rule>) -> (&str, Signature) {
+    let mut inner = sig_pair.into_inner();
+
+    let name_pair = inner.next().expect("parsed signature should have name");
+    assert!(name_pair.as_rule() == Rule::funcname);
+    // The first character here is the '@'.
+    let name = &name_pair.as_str()[1..];
+
+    let (ret_type_pair, param_type_pair) = {
+        let next = inner.next().expect("expected return type or parameters");
+        match next.as_rule() {
+            Rule::r#type => {
+                let param_type_pair = inner.next().expect("expected parameter types");
+                assert!(param_type_pair.as_rule() == Rule::param_types);
+                (Some(next), param_type_pair)
+            }
+            Rule::param_types => (None, next),
+            rule => {
+                unreachable!("unexpected rule in function signature: {rule:?}")
+            }
+        }
+    };
+
+    let ret_type = ret_type_pair.map(extract_type);
+    let param_types: Vec<_> = param_type_pair.into_inner().map(extract_type).collect();
+
+    (
+        name,
+        Signature {
+            ret_type,
+            arg_types: param_types,
+        },
+    )
+}
+
+fn extract_type(type_pair: Pair<'_, Rule>) -> Type {
+    assert!(type_pair.as_rule() == Rule::r#type);
+    match type_pair.as_str() {
+        "i32" => Type::I32,
+        "i64" => Type::I64,
+        "f64" => Type::F64,
+        "ptr" => Type::Ptr,
+        _ => unreachable!("unexpected type name"),
+    }
 }
 
 #[cfg(test)]

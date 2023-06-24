@@ -13,8 +13,10 @@ funcname = @{ "@" ~ ident }
 
 type = { "i32" | "i64" | "f64" | "ptr" }
 
-signature = { funcname ~ ":" ~ type ~ "(" ~ (type ~ ("," ~ type)*)? ~ ")" }
-extfunc   = { "extfunc" ~ signature }
+param_types = { (type ~ ("," ~ type)*)? }
+signature   = { funcname ~ (":" ~ type)? ~ "(" ~ param_types ~ ")" }
+
+extfunc = { "extfunc" ~ signature }
 
 valkind = { "ctrl" | "phisel" | ("val" ~ "(" ~ type ~ ")") }
 
@@ -59,7 +61,7 @@ func = {
     "func" ~ signature ~ "{" ~ line_end ~ graph ~ "}"
 }
 
-module_item = { extfunc | func }
+module_item = _{ extfunc | func }
 
 module = {
     SOI ~ line_end* ~ (module_item ~ (line_end+ ~ module_item)*)? ~ line_end* ~ EOI

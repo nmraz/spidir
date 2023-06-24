@@ -126,7 +126,8 @@ pub fn write_node_kind(
 
 fn write_extern_function(w: &mut dyn fmt::Write, func: &ExternFunctionData) -> fmt::Result {
     write!(w, "extfunc @{}", func.name)?;
-    write_signature(w, &func.sig)
+    write_signature(w, &func.sig)?;
+    writeln!(w)
 }
 
 fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
@@ -410,11 +411,48 @@ mod tests {
             &module,
             expect![[r#"
                 extfunc @my_ext_func:i32(i64)
+
                 func @my_func:i32(i64) {
                     %0:ctrl, %1:val(i64) = entry
                     %2:ctrl, %3:val(i32) = call extfunc @my_ext_func %0, %1
                     return %2, %3
                 }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn write_multi_extfunc_module() {
+        let mut module = Module::new();
+        module.extern_functions.push(ExternFunctionData {
+            name: "func1".to_owned(),
+            sig: Signature {
+                ret_type: Some(Type::I32),
+                param_types: vec![Type::I64],
+            },
+        });
+        module.extern_functions.push(ExternFunctionData {
+            name: "func2".to_owned(),
+            sig: Signature {
+                ret_type: None,
+                param_types: vec![Type::I64, Type::Ptr],
+            },
+        });
+        module.extern_functions.push(ExternFunctionData {
+            name: "func3".to_owned(),
+            sig: Signature {
+                ret_type: None,
+                param_types: vec![],
+            },
+        });
+
+        check_write_module(
+            &module,
+            expect![[r#"
+                extfunc @func1:i32(i64)
+                extfunc @func2(i64, ptr)
+                extfunc @func3()
+
             "#]],
         );
     }

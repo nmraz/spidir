@@ -6,9 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+fx-utils.workspace = true
 ir.workspace = true
 
 expect-test.workspace = true
 
 pest = { version = "2.7.0", default-features = false }
 pest_derive = { version = "2.7.0", default-features = false }
+itertools = { version = "0.11.0", default-features = false }

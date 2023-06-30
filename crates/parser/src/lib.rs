@@ -110,8 +110,8 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
 
     for func in pending_functions {
         let func_data = &mut module.functions[func.id];
-        let entry = extract_graph(func.graph_pair, &mut func_data.valgraph)?;
-        func_data.entry_node = entry;
+        func_data.entry_node =
+            extract_graph(func.graph_pair, &function_names, &mut func_data.valgraph)?;
     }
 
     Ok(module)
@@ -134,6 +134,7 @@ fn extract_function(func_pair: Pair<'_, Rule>) -> ParsedFunction<'_> {
 
 fn extract_graph(
     graph_pair: Pair<'_, Rule>,
+    function_names: &FxHashMap<&str, FunctionRef>,
     graph: &mut ValGraph,
 ) -> Result<Node, Box<Error<Rule>>> {
     let mut value_map = FxHashMap::<&str, DepValue>::default();
@@ -141,7 +142,7 @@ fn extract_graph(
     let graph_start = graph_pair.as_span().start_pos();
     let node_listings = graph_pair
         .into_inner()
-        .map(extract_node)
+        .map(|pair| extract_node(pair, function_names))
         .collect::<Result<Vec<_>, _>>()?;
     let mut nodes = Vec::new();
 
@@ -204,14 +205,17 @@ fn extract_graph(
     Ok(*nodes.first().expect("nodes should be nonempty"))
 }
 
-fn extract_node(node_pair: Pair<'_, Rule>) -> Result<NodeListing<'_>, Box<Error<Rule>>> {
+fn extract_node<'a>(
+    node_pair: Pair<'a, Rule>,
+    function_names: &FxHashMap<&str, FunctionRef>,
+) -> Result<NodeListing<'a>, Box<Error<Rule>>> {
     let mut inner = node_pair.into_inner().peekable();
     let defs = inner
         .peeking_take_while(|pair| pair.as_rule() == Rule::valdef)
         .map(extract_valdef)
         .collect();
 
-    let kind = extract_node_kind(inner.next().expect("node should have kind"))?;
+    let kind = extract_node_kind(inner.next().expect("node should have kind"), function_names)?;
 
     let uses = inner
         .map(|pair| {
@@ -223,7 +227,10 @@ fn extract_node(node_pair: Pair<'_, Rule>) -> Result<NodeListing<'_>, Box<Error<
     Ok(NodeListing { kind, defs, uses })
 }
 
-fn extract_node_kind(node_kind_pair: Pair<'_, Rule>) -> Result<NodeKind, Box<Error<Rule>>> {
+fn extract_node_kind(
+    node_kind_pair: Pair<'_, Rule>,
+    function_names: &FxHashMap<&str, FunctionRef>,
+) -> Result<NodeKind, Box<Error<Rule>>> {
     match node_kind_pair.as_str() {
         "entry" => Ok(NodeKind::Entry),
         "return" => Ok(NodeKind::Return),
@@ -243,11 +250,14 @@ fn extract_node_kind(node_kind_pair: Pair<'_, Rule>) -> Result<NodeKind, Box<Err
         "load" => Ok(NodeKind::Load),
         "store" => Ok(NodeKind::Store),
         "brcond" => Ok(NodeKind::BrCond),
-        _ => extract_special_node_kind(node_kind_pair),
+        _ => extract_special_node_kind(node_kind_pair, function_names),
     }
 }
 
-fn extract_special_node_kind(node_kind_pair: Pair<'_, Rule>) -> Result<NodeKind, Box<Error<Rule>>> {
+fn extract_special_node_kind(
+    node_kind_pair: Pair<'_, Rule>,
+    function_names: &FxHashMap<&str, FunctionRef>,
+) -> Result<NodeKind, Box<Error<Rule>>> {
     let special_pair = node_kind_pair
         .into_inner()
         .next()
@@ -282,7 +292,19 @@ fn extract_special_node_kind(node_kind_pair: Pair<'_, Rule>) -> Result<NodeKind,
             NodeKind::FConst(value)
         }
         Rule::icmp_nodekind => NodeKind::Icmp(extract_icmpkind(inner_pair)),
-        Rule::call_nodekind => todo!(),
+        Rule::call_nodekind => {
+            let name_span = inner_pair.as_span();
+            let name = name_from_span(&name_span);
+            let func_ref = *function_names.get(name).ok_or_else(|| {
+                Box::new(Error::new_from_span(
+                    ErrorVariant::CustomError {
+                        message: "undefined function".to_owned(),
+                    },
+                    name_span,
+                ))
+            })?;
+            NodeKind::Call(func_ref)
+        }
         _ => unreachable!("unknown special node kind {rule:?}"),
     };
 
@@ -676,6 +698,131 @@ mod tests {
     }
 
     #[test]
+    fn parse_extern_call() {
+        let module = parse_module(
+            "
+            extfunc @f:i32(i32)
+
+            func @caller:i32() {
+                %0:ctrl = entry
+                %1:i32 = iconst 5
+                %2:ctrl, %3:i32 = call @f %0, %1
+                return %2, %3
+            }",
+        )
+        .unwrap();
+        check_module(
+            &module,
+            expect![[r#"
+                extfunc @f:i32(i32)
+
+                func @caller:i32() {
+                    %0:ctrl = entry
+                    %1:i32 = iconst 5
+                    %2:ctrl, %3:i32 = call @f %0, %1
+                    return %2, %3
+                }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn parse_intern_call() {
+        let module = parse_module(
+            "
+            func @f:i32(i32) {
+                %0:ctrl, %1:i32 = entry
+                %2:i32 = iconst 1
+                %3:i32 = iadd %1, %2
+                return %0, %3
+            }
+
+            func @caller:i32() {
+                %0:ctrl = entry
+                %1:i32 = iconst 5
+                %2:ctrl, %3:i32 = call @f %0, %1
+                return %2, %3
+            }",
+        )
+        .unwrap();
+        check_module(
+            &module,
+            expect![[r#"
+
+                func @f:i32(i32) {
+                    %0:ctrl, %1:i32 = entry
+                    %2:i32 = iconst 1
+                    %3:i32 = iadd %1, %2
+                    return %0, %3
+                }
+
+                func @caller:i32() {
+                    %0:ctrl = entry
+                    %1:i32 = iconst 5
+                    %2:ctrl, %3:i32 = call @f %0, %1
+                    return %2, %3
+                }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn parse_mutual_calls() {
+        let module = parse_module(
+            "
+            func @f:i32(i32) {
+                %entry:ctrl, %p1:i32 = entry
+                %zero:i32 = iconst 0
+                %cmp:i32 = icmp eq %p1, %zero
+                %is_zero:ctrl, %is_nonzero:ctrl = brcond %entry, %cmp
+                return %is_zero, %zero
+                %call_ctrl:ctrl, %call_val:i32 = call @g %is_nonzero, %p1
+                return %call_ctrl, %call_val
+            }
+
+            func @g:i32(i32) {
+                %entry:ctrl, %p1:i32 = entry
+                %zero:i32 = iconst 0
+                %cmp:i32 = icmp eq %p1, %zero
+                %is_zero:ctrl, %is_nonzero:ctrl = brcond %entry, %cmp
+                return %is_zero, %zero
+                %one:i32 = iconst 1
+                %sub:i32 = isub %p1, %one
+                %call_ctrl:ctrl, %call_val:i32 = call @f %is_nonzero, %sub
+                return %call_ctrl, %call_val
+            }",
+        )
+        .unwrap();
+        check_module(
+            &module,
+            expect![[r#"
+
+                func @f:i32(i32) {
+                    %0:ctrl, %1:i32 = entry
+                    %2:i32 = iconst 0
+                    %3:i32 = icmp eq %1, %2
+                    %4:ctrl, %5:ctrl = brcond %0, %3
+                    %6:ctrl, %7:i32 = call @g %5, %1
+                    return %6, %7
+                    return %4, %2
+                }
+
+                func @g:i32(i32) {
+                    %0:ctrl, %1:i32 = entry
+                    %6:i32 = iconst 1
+                    %7:i32 = isub %1, %6
+                    %2:i32 = iconst 0
+                    %3:i32 = icmp eq %1, %2
+                    %4:ctrl, %5:ctrl = brcond %0, %3
+                    %8:ctrl, %9:i32 = call @f %5, %7
+                    return %8, %9
+                    return %4, %2
+                }
+            "#]],
+        );
+    }
+
+    #[test]
     fn parse_empty_graph() {
         check_parse_error(
             "
@@ -803,6 +950,25 @@ mod tests {
                   |                  ^---^
                   |
                   = function redefined"#]],
+        );
+    }
+
+    #[test]
+    fn parse_undefined_function() {
+        check_parse_error(
+            "
+            func @func:i32() {
+                %0:ctrl = entry
+                %1:ctrl, %2:i32 = call @myotherfunc %0
+                return %1, %2
+            }",
+            expect![[r#"
+                 --> 4:40
+                  |
+                4 |                 %1:ctrl, %2:i32 = call @myotherfunc %0
+                  |                                        ^----------^
+                  |
+                  = undefined function"#]],
         );
     }
 }

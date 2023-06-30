@@ -7,7 +7,7 @@ use alloc::{borrow::ToOwned, boxed::Box, vec::Vec};
 use fx_utils::FxHashMap;
 use ir::{
     module::{ExternFunctionData, Function, FunctionData, Module, Signature},
-    node::{DepValueKind, IcmpKind, NodeKind, Type},
+    node::{DepValueKind, FunctionRef, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 use itertools::Itertools;
@@ -34,7 +34,7 @@ struct NodeListing<'a> {
 }
 
 struct ParsedFunction<'a> {
-    name: &'a str,
+    name_span: Span<'a>,
     sig: Signature,
     graph_pair: Pair<'a, Rule>,
 }
@@ -51,29 +51,53 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
 
     let mut module = Module::new();
     let mut pending_functions = Vec::new();
+    let mut function_names = FxHashMap::default();
 
     for item in parsed.into_inner() {
         match item.as_rule() {
             Rule::extfunc => {
-                let (name, sig) = extract_name_signature(
+                let (name_span, sig) = extract_name_signature(
                     item.into_inner()
                         .next()
                         .expect("external function should contain signature"),
                 );
-                module.extern_functions.push(ExternFunctionData {
+                let name = name_from_span(&name_span);
+                if function_names.contains_key(name) {
+                    return Err(Box::new(Error::new_from_span(
+                        ErrorVariant::CustomError {
+                            message: "function redefined".to_owned(),
+                        },
+                        name_span,
+                    )));
+                }
+
+                let function = module.extern_functions.push(ExternFunctionData {
                     name: name.to_owned(),
                     sig,
                 });
+                function_names.insert(name, FunctionRef::External(function));
             }
             Rule::func => {
                 let parsed = extract_function(item);
+                let name = name_from_span(&parsed.name_span);
+                if function_names.contains_key(name) {
+                    return Err(Box::new(Error::new_from_span(
+                        ErrorVariant::CustomError {
+                            message: "function redefined".to_owned(),
+                        },
+                        parsed.name_span,
+                    )));
+                }
+
                 let function = module.functions.push(FunctionData {
-                    name: parsed.name.to_owned(),
+                    name: name.to_owned(),
                     sig: parsed.sig,
                     valgraph: ValGraph::new(),
                     // This is cheating, but we promise not to inspect the graph until we fill it in later.
                     entry_node: Node::from_u32(0),
                 });
+
+                function_names.insert(name, FunctionRef::Internal(function));
                 pending_functions.push(PendingFunction {
                     id: function,
                     graph_pair: parsed.graph_pair,
@@ -102,7 +126,7 @@ fn extract_function(func_pair: Pair<'_, Rule>) -> ParsedFunction<'_> {
     let graph_pair = inner.next().expect("function should have graph");
 
     ParsedFunction {
-        name,
+        name_span: name,
         sig,
         graph_pair,
     }
@@ -146,7 +170,7 @@ fn extract_graph(
             .map(|def_listing| def_listing.span)
             .zip(outputs)
         {
-            let name = &name_span.as_str()[1..];
+            let name = name_from_span(&name_span);
             if value_map.contains_key(&name) {
                 return Err(Box::new(Error::new_from_span(
                     ErrorVariant::CustomError {
@@ -163,7 +187,7 @@ fn extract_graph(
     // Pass 2: link inputs
     for (node, node_listing) in nodes.iter().zip(&node_listings) {
         for input_span in &node_listing.uses {
-            let input_name = &input_span.as_str()[1..];
+            let input_name = name_from_span(input_span);
             let input = *value_map.get(&input_name).ok_or_else(|| {
                 Box::new(Error::new_from_span(
                     ErrorVariant::CustomError {
@@ -293,13 +317,12 @@ fn extract_valdef(valdef_pair: Pair<'_, Rule>) -> DefListing<'_> {
     }
 }
 
-fn extract_name_signature(sig_pair: Pair<'_, Rule>) -> (&str, Signature) {
+fn extract_name_signature(sig_pair: Pair<'_, Rule>) -> (Span<'_>, Signature) {
     let mut inner = sig_pair.into_inner();
 
     let name_pair = inner.next().expect("parsed signature should have name");
     assert!(name_pair.as_rule() == Rule::funcname);
-    // The first character here is the '@'.
-    let name = &name_pair.as_str()[1..];
+    let name = name_pair.as_span();
 
     let (ret_type_pair, param_type_pair) = {
         let next = inner.next().expect("expected return type or parameters");
@@ -326,6 +349,10 @@ fn extract_name_signature(sig_pair: Pair<'_, Rule>) -> (&str, Signature) {
             param_types,
         },
     )
+}
+
+fn name_from_span<'a>(span: &Span<'a>) -> &'a str {
+    &span.as_str()[1..]
 }
 
 fn extract_value_kind(kind_pair: Pair<'_, Rule>) -> DepValueKind {
@@ -716,6 +743,66 @@ mod tests {
                   |                                 ^-------------------------^
                   |
                   = invalid integer literal"#]],
+        );
+    }
+
+    #[test]
+    fn parse_duplicate_extern_functions() {
+        check_parse_error(
+            "
+            extfunc @func()
+            extfunc @func:i32()",
+            expect![[r#"
+                 --> 3:21
+                  |
+                3 |             extfunc @func:i32()
+                  |                     ^---^
+                  |
+                  = function redefined"#]],
+        );
+    }
+
+    #[test]
+    fn parse_duplicate_extern_intern_functions() {
+        check_parse_error(
+            "
+            extfunc @func()
+            func @func:i32() {
+                %0:ctrl = entry
+                %1:i32 = iconst 1
+                return %0, %1
+            }",
+            expect![[r#"
+                 --> 3:18
+                  |
+                3 |             func @func:i32() {
+                  |                  ^---^
+                  |
+                  = function redefined"#]],
+        );
+    }
+
+    #[test]
+    fn parse_duplicate_intern_functions() {
+        check_parse_error(
+            "
+            func @func:i32() {
+                %0:ctrl = entry
+                %1:i32 = iconst 1
+                return %0, %1
+            }
+            func @func:i32() {
+                %0:ctrl = entry
+                %1:i32 = iconst 1
+                return %0, %1
+            }",
+            expect![[r#"
+                 --> 7:18
+                  |
+                7 |             func @func:i32() {
+                  |                  ^---^
+                  |
+                  = function redefined"#]],
         );
     }
 }

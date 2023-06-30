@@ -8,7 +8,7 @@ float   = @{
     "-"? ~ ((ASCII_DIGIT+ ~ ("." ~ (ASCII_DIGIT*))?) | ("." ~ ASCII_DIGIT+))
 }
 
-valname  = @{ "%" ~ ASCII_ALPHANUMERIC+ }
+valname  = @{ "%" ~ ("_" | ASCII_ALPHANUMERIC)+ }
 funcname = @{ "@" ~ ident }
 
 type = { "i32" | "i64" | "f64" | "ptr" }

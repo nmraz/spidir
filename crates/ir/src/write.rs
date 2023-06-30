@@ -277,8 +277,8 @@ mod tests {
             &graph,
             entry,
             expect![[r#"
-                %0:ctrl, %1:val(i32), %2:val(i32) = entry
-                %3:val(i32) = iadd %1, %2
+                %0:ctrl, %1:i32, %2:i32 = entry
+                %3:i32 = iadd %1, %2
                 return %0, %3
             "#]],
         );
@@ -292,20 +292,20 @@ mod tests {
             &graph,
             entry,
             expect![[r#"
-                %0:ctrl, %1:val(i32) = entry
-                %10:val(i32) = iconst 1
-                %2:val(i32) = iconst 0
-                %3:val(i32) = icmp eq %1, %2
+                %0:ctrl, %1:i32 = entry
+                %10:i32 = iconst 1
+                %2:i32 = iconst 0
+                %3:i32 = icmp eq %1, %2
                 %4:ctrl, %5:ctrl = brcond %0, %3
-                %13:val(i32) = icmp eq %11, %2
+                %13:i32 = icmp eq %11, %2
                 %14:ctrl, %15:ctrl = brcond %6, %13
                 %16:ctrl, %17:phisel = region %4, %14
                 %6:ctrl, %7:phisel = region %5, %15
-                %8:val(i32) = phi %7, %1, %11
-                %11:val(i32) = isub %8, %10
-                %9:val(i32) = phi %7, %2, %12
-                %12:val(i32) = iadd %9, %8
-                %18:val(i32) = phi %17, %2, %12
+                %8:i32 = phi %7, %1, %11
+                %11:i32 = isub %8, %10
+                %9:i32 = phi %7, %2, %12
+                %12:i32 = iadd %9, %8
+                %18:i32 = phi %17, %2, %12
                 return %16, %18
             "#]],
         );
@@ -339,8 +339,8 @@ mod tests {
             &function,
             expect![[r#"
                 func @add_i32:i32(i32, i32) {
-                    %0:ctrl, %1:val(i32), %2:val(i32) = entry
-                    %3:val(i32) = iadd %1, %2
+                    %0:ctrl, %1:i32, %2:i32 = entry
+                    %3:i32 = iadd %1, %2
                     return %0, %3
                 }
             "#]],
@@ -363,7 +363,7 @@ mod tests {
             &function,
             expect![[r#"
                 func @nop(i32) {
-                    %0:ctrl, %1:val(i32) = entry
+                    %0:ctrl, %1:i32 = entry
                     return %0
                 }
             "#]],
@@ -413,8 +413,8 @@ mod tests {
                 extfunc @my_ext_func:i32(i64)
 
                 func @my_func:i32(i64) {
-                    %0:ctrl, %1:val(i64) = entry
-                    %2:ctrl, %3:val(i32) = call extfunc @my_ext_func %0, %1
+                    %0:ctrl, %1:i64 = entry
+                    %2:ctrl, %3:i32 = call extfunc @my_ext_func %0, %1
                     return %2, %3
                 }
             "#]],

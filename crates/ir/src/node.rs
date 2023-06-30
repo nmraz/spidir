@@ -116,7 +116,7 @@ impl DepValueKind {
 impl fmt::Display for DepValueKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            DepValueKind::Value(ty) => write!(f, "val({ty})"),
+            DepValueKind::Value(ty) => write!(f, "{ty}"),
             DepValueKind::Control => f.write_str("ctrl"),
             DepValueKind::PhiSelector => f.write_str("phisel"),
         }
@@ -137,10 +137,10 @@ mod tests {
 
     #[test]
     fn display_value_kind() {
-        assert_eq!(DepValueKind::Value(Type::I32).to_string(), "val(i32)");
-        assert_eq!(DepValueKind::Value(Type::I64).to_string(), "val(i64)");
-        assert_eq!(DepValueKind::Value(Type::F64).to_string(), "val(f64)");
-        assert_eq!(DepValueKind::Value(Type::Ptr).to_string(), "val(ptr)");
+        assert_eq!(DepValueKind::Value(Type::I32).to_string(), "i32");
+        assert_eq!(DepValueKind::Value(Type::I64).to_string(), "i64");
+        assert_eq!(DepValueKind::Value(Type::F64).to_string(), "f64");
+        assert_eq!(DepValueKind::Value(Type::Ptr).to_string(), "ptr");
         assert_eq!(DepValueKind::Control.to_string(), "ctrl");
         assert_eq!(DepValueKind::PhiSelector.to_string(), "phisel");
     }

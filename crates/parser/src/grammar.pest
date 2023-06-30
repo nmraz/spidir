@@ -18,7 +18,7 @@ signature   = { funcname ~ (":" ~ type)? ~ "(" ~ param_types ~ ")" }
 
 extfunc = { "extfunc" ~ signature }
 
-valkind = { "ctrl" | "phisel" | ("val" ~ "(" ~ type ~ ")") }
+valkind = { "ctrl" | "phisel" | type }
 
 funcref  = { ("func" | "extfunc") ~ funcname }
 icmpkind = { "eq" | "ne" | "slt" | "sle" | "ult" | "ule" }

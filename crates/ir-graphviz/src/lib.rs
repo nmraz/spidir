@@ -133,8 +133,8 @@ mod tests {
             func_entry,
             expect![[r#"
                 digraph {
-                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> val(i64)}}"]
-                    node1 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | call extfunc @my_ext_func | {<o0> ctrl | <o1> val(i32)}}"]
+                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> i64}}"]
+                    node1 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | call extfunc @my_ext_func | {<o0> ctrl | <o1> i32}}"]
                     node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | return}"]
                     node0:o0 -> node1:i0
                     node0:o1 -> node1:i1

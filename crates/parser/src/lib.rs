@@ -376,7 +376,7 @@ mod tests {
         let module = parse_module(
             "
             func @func1(i32) {
-                %0:ctrl, %1:val(i32) = entry
+                %0:ctrl, %1:i32 = entry
             }
 
             func @func2() {
@@ -384,7 +384,7 @@ mod tests {
             }
 
             func @func3:ptr(i64, ptr, f64) {
-                %0:ctrl, %1:val(i64), %2:val(ptr), %3:val(f64) = entry
+                %0:ctrl, %1:i64, %2:ptr, %3:f64 = entry
                 return %0, %2
             }",
         )
@@ -395,7 +395,7 @@ mod tests {
             expect![[r#"
 
                 func @func1(i32) {
-                    %0:ctrl, %1:val(i32) = entry
+                    %0:ctrl, %1:i32 = entry
                 }
 
                 func @func2() {
@@ -403,7 +403,7 @@ mod tests {
                 }
 
                 func @func3:ptr(i64, ptr, f64) {
-                    %0:ctrl, %1:val(i64), %2:val(ptr), %3:val(f64) = entry
+                    %0:ctrl, %1:i64, %2:ptr, %3:f64 = entry
                     return %0, %2
                 }
             "#]],
@@ -415,7 +415,7 @@ mod tests {
         let module = parse_module(
             "
             func @func:i32(i32) {
-                %0:ctrl, %1:val(i32) = entry
+                %0:ctrl, %1:i32 = entry
                 return %0, %1
             }",
         )
@@ -425,7 +425,7 @@ mod tests {
             expect![[r#"
 
             func @func:i32(i32) {
-                %0:ctrl, %1:val(i32) = entry
+                %0:ctrl, %1:i32 = entry
                 return %0, %1
             }
         "#]],
@@ -478,29 +478,29 @@ mod tests {
         let module = parse_module(
             "
             func @func:i32(ptr, i32) {
-                %0:ctrl, %1:val(ptr), %2:val(i32) = entry
+                %0:ctrl, %1:ptr, %2:i32 = entry
                 %3:ctrl, %4:phisel = region %0
-                %5:val(i32) = phi %4, %2
-                %6:val(i32) = iconst 1324
-                %7:val(i32) = iadd %5, %6
-                %8:val(i32) = isub %7, %6
-                %9:val(i32) = and %8, %6
-                %10:val(i32) = or %9, %6
-                %11:val(i32) = xor %10, %6
-                %12:val(i32) = shl %11, %6
-                %13:val(i32) = lshr %12, %6
-                %14:val(i32) = ashr %13, %6
-                %15:val(i32) = imul %14, %6
-                %16:ctrl, %17:val(i32) = sdiv %3, %15, %6
-                %18:ctrl, %19:val(i32) = udiv %16, %17, %6
-                %20:val(i32) = icmp eq %19, %6
-                %21:val(i32) = icmp ne %20, %6
-                %22:val(i32) = icmp slt %21, %6
-                %23:val(i32) = icmp sle %22, %6
-                %24:val(i32) = icmp ult %23, %6
-                %25:val(i32) = icmp ule %24, %6
-                %26:val(f64) = fconst 3.1415
-                %27:ctrl, %28:val(f64) = load %18, %1
+                %5:i32 = phi %4, %2
+                %6:i32 = iconst 1324
+                %7:i32 = iadd %5, %6
+                %8:i32 = isub %7, %6
+                %9:i32 = and %8, %6
+                %10:i32 = or %9, %6
+                %11:i32 = xor %10, %6
+                %12:i32 = shl %11, %6
+                %13:i32 = lshr %12, %6
+                %14:i32 = ashr %13, %6
+                %15:i32 = imul %14, %6
+                %16:ctrl, %17:i32 = sdiv %3, %15, %6
+                %18:ctrl, %19:i32 = udiv %16, %17, %6
+                %20:i32 = icmp eq %19, %6
+                %21:i32 = icmp ne %20, %6
+                %22:i32 = icmp slt %21, %6
+                %23:i32 = icmp sle %22, %6
+                %24:i32 = icmp ult %23, %6
+                %25:i32 = icmp ule %24, %6
+                %26:f64 = fconst 3.1415
+                %27:ctrl, %28:f64 = load %18, %1
                 %29:ctrl = store %27, %26, %1
                 %30:ctrl, %31:ctrl = brcond %29, %25
                 return %30, %25
@@ -514,29 +514,29 @@ mod tests {
             expect![[r#"
 
                 func @func:i32(ptr, i32) {
-                    %0:ctrl, %1:val(ptr), %2:val(i32) = entry
+                    %0:ctrl, %1:ptr, %2:i32 = entry
                     %3:ctrl, %4:phisel = region %0
-                    %5:val(i32) = phi %4, %2
-                    %6:val(i32) = iconst 1324
-                    %7:val(i32) = iadd %5, %6
-                    %8:val(i32) = isub %7, %6
-                    %9:val(i32) = and %8, %6
-                    %10:val(i32) = or %9, %6
-                    %11:val(i32) = xor %10, %6
-                    %12:val(i32) = shl %11, %6
-                    %13:val(i32) = lshr %12, %6
-                    %14:val(i32) = ashr %13, %6
-                    %15:val(i32) = imul %14, %6
-                    %16:ctrl, %17:val(i32) = sdiv %3, %15, %6
-                    %18:ctrl, %19:val(i32) = udiv %16, %17, %6
-                    %27:ctrl, %28:val(f64) = load %18, %1
-                    %20:val(i32) = icmp eq %19, %6
-                    %21:val(i32) = icmp ne %20, %6
-                    %22:val(i32) = icmp slt %21, %6
-                    %23:val(i32) = icmp sle %22, %6
-                    %24:val(i32) = icmp ult %23, %6
-                    %25:val(i32) = icmp ule %24, %6
-                    %26:val(f64) = fconst 3.1415
+                    %5:i32 = phi %4, %2
+                    %6:i32 = iconst 1324
+                    %7:i32 = iadd %5, %6
+                    %8:i32 = isub %7, %6
+                    %9:i32 = and %8, %6
+                    %10:i32 = or %9, %6
+                    %11:i32 = xor %10, %6
+                    %12:i32 = shl %11, %6
+                    %13:i32 = lshr %12, %6
+                    %14:i32 = ashr %13, %6
+                    %15:i32 = imul %14, %6
+                    %16:ctrl, %17:i32 = sdiv %3, %15, %6
+                    %18:ctrl, %19:i32 = udiv %16, %17, %6
+                    %27:ctrl, %28:f64 = load %18, %1
+                    %20:i32 = icmp eq %19, %6
+                    %21:i32 = icmp ne %20, %6
+                    %22:i32 = icmp slt %21, %6
+                    %23:i32 = icmp sle %22, %6
+                    %24:i32 = icmp ult %23, %6
+                    %25:i32 = icmp ule %24, %6
+                    %26:f64 = fconst 3.1415
                     %29:ctrl = store %27, %26, %1
                     %30:ctrl, %31:ctrl = brcond %29, %25
                     return %30, %25
@@ -551,9 +551,9 @@ mod tests {
         let module = parse_module(
             "
             func @add:i32(i32, i32) {
-                %0:ctrl, %1:val(i32), %2:val(i32) = entry
+                %0:ctrl, %1:i32, %2:i32 = entry
                 return %0, %3
-                %3:val(i32) = iadd %1, %2
+                %3:i32 = iadd %1, %2
             }",
         )
         .unwrap();
@@ -562,8 +562,8 @@ mod tests {
             expect![[r#"
 
             func @add:i32(i32, i32) {
-                %0:ctrl, %1:val(i32), %2:val(i32) = entry
-                %3:val(i32) = iadd %1, %2
+                %0:ctrl, %1:i32, %2:i32 = entry
+                %3:i32 = iadd %1, %2
                 return %0, %3
             }
         "#]],
@@ -575,20 +575,20 @@ mod tests {
         let module = parse_module(
             "
             func @sum_to_n:i32(i32) {
-                %0:ctrl, %1:val(i32) = entry
-                %10:val(i32) = iconst 1
-                %2:val(i32) = iconst 0
-                %3:val(i32) = icmp eq %1, %2
+                %0:ctrl, %1:i32 = entry
+                %10:i32 = iconst 1
+                %2:i32 = iconst 0
+                %3:i32 = icmp eq %1, %2
                 %4:ctrl, %5:ctrl = brcond %0, %3
-                %13:val(i32) = icmp eq %11, %2
+                %13:i32 = icmp eq %11, %2
                 %14:ctrl, %15:ctrl = brcond %6, %13
                 %16:ctrl, %17:phisel = region %4, %14
                 %6:ctrl, %7:phisel = region %5, %15
-                %8:val(i32) = phi %7, %1, %11
-                %11:val(i32) = isub %8, %10
-                %9:val(i32) = phi %7, %2, %12
-                %12:val(i32) = iadd %9, %8
-                %18:val(i32) = phi %17, %2, %12
+                %8:i32 = phi %7, %1, %11
+                %11:i32 = isub %8, %10
+                %9:i32 = phi %7, %2, %12
+                %12:i32 = iadd %9, %8
+                %18:i32 = phi %17, %2, %12
                 return %16, %18
             }",
         )
@@ -599,20 +599,20 @@ mod tests {
             expect![[r#"
 
             func @sum_to_n:i32(i32) {
-                %0:ctrl, %1:val(i32) = entry
-                %2:val(i32) = iconst 1
-                %3:val(i32) = iconst 0
-                %4:val(i32) = icmp eq %1, %3
+                %0:ctrl, %1:i32 = entry
+                %2:i32 = iconst 1
+                %3:i32 = iconst 0
+                %4:i32 = icmp eq %1, %3
                 %5:ctrl, %6:ctrl = brcond %0, %4
-                %7:val(i32) = icmp eq %15, %3
+                %7:i32 = icmp eq %15, %3
                 %8:ctrl, %9:ctrl = brcond %12, %7
                 %10:ctrl, %11:phisel = region %5, %8
                 %12:ctrl, %13:phisel = region %6, %9
-                %14:val(i32) = phi %13, %1, %15
-                %15:val(i32) = isub %14, %2
-                %16:val(i32) = phi %13, %3, %17
-                %17:val(i32) = iadd %16, %14
-                %18:val(i32) = phi %11, %3, %17
+                %14:i32 = phi %13, %1, %15
+                %15:i32 = isub %14, %2
+                %16:i32 = phi %13, %3, %17
+                %17:i32 = iadd %16, %14
+                %18:i32 = phi %11, %3, %17
                 return %10, %18
             }
         "#]],
@@ -640,13 +640,13 @@ mod tests {
         check_parse_error(
             "
             func @func(i32) {
-                %0:ctrl, %1:val(i32) = entry
-                %1:val(i32) = iconst 5
+                %0:ctrl, %1:i32 = entry
+                %1:i32 = iconst 5
             }",
             expect![[r#"
                  --> 4:17
                   |
-                4 |                 %1:val(i32) = iconst 5
+                4 |                 %1:i32 = iconst 5
                   |                 ^^
                   |
                   = value redefined"#]],
@@ -677,14 +677,14 @@ mod tests {
             "
             func @func:i32() {
                 %0:ctrl = entry
-                %1:val(i32) = iconst 123456789123456789123456789
+                %1:i32 = iconst 123456789123456789123456789
                 return %0, %1
             }",
             expect![[r#"
-                 --> 4:38
+                 --> 4:33
                   |
-                4 |                 %1:val(i32) = iconst 123456789123456789123456789
-                  |                                      ^-------------------------^
+                4 |                 %1:i32 = iconst 123456789123456789123456789
+                  |                                 ^-------------------------^
                   |
                   = invalid integer literal"#]],
         );

@@ -7,7 +7,7 @@ use crate::{
 use super::*;
 
 #[track_caller]
-fn check_verify_node_kind(graph: &ValGraph, node: Node, expected_err: VerifierError) {
+fn check_verify_node_kind(graph: &ValGraph, node: Node, expected_err: GraphVerifierError) {
     let mut errors = Vec::new();
     // Dummy signature since we usually don't care about it.
     let signature = Signature {
@@ -65,7 +65,7 @@ fn verify_iadd_bad_input_count() {
     check_verify_node_kind(
         &graph,
         empty_iadd,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: empty_iadd,
             expected: 2,
         },
@@ -81,7 +81,7 @@ fn verify_iadd_bad_input_count() {
     check_verify_node_kind(
         &graph,
         overfull_iadd,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: overfull_iadd,
             expected: 2,
         },
@@ -102,7 +102,7 @@ fn verify_iadd_result_kind() {
     check_verify_node_kind(
         &graph,
         iadd,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: iadd_output,
             expected: all_integer_types(),
         },
@@ -124,7 +124,7 @@ fn verify_iadd_input_kinds() {
     check_verify_node_kind(
         &graph,
         iadd64_32,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: iadd64_32,
             input: 0,
             expected: vec![DepValueKind::Value(Type::I32)],
@@ -139,7 +139,7 @@ fn verify_iadd_input_kinds() {
     check_verify_node_kind(
         &graph,
         iadd32_64,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: iadd32_64,
             input: 1,
             expected: vec![DepValueKind::Value(Type::I32)],
@@ -182,7 +182,7 @@ fn verify_shl_bad_input_count() {
     check_verify_node_kind(
         &graph,
         empty_shl,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: empty_shl,
             expected: 2,
         },
@@ -198,7 +198,7 @@ fn verify_shl_bad_input_count() {
     check_verify_node_kind(
         &graph,
         overfull_shl,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: overfull_shl,
             expected: 2,
         },
@@ -219,7 +219,7 @@ fn verify_shl_result_kind() {
     check_verify_node_kind(
         &graph,
         shl,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: shl_output,
             expected: all_integer_types(),
         },
@@ -241,7 +241,7 @@ fn verify_shl_input_kinds() {
     check_verify_node_kind(
         &graph,
         shl64_32,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: shl64_32,
             input: 0,
             expected: vec![DepValueKind::Value(Type::I32)],
@@ -257,7 +257,7 @@ fn verify_shl_input_kinds() {
     check_verify_node_kind(
         &graph,
         shl_non_int,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: shl_non_int,
             input: 1,
             expected: all_integer_types(),
@@ -300,7 +300,7 @@ fn verify_div_input_count() {
     check_verify_node_kind(
         &graph,
         div,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: div,
             expected: 3,
         },
@@ -315,7 +315,7 @@ fn verify_div_output_count() {
     check_verify_node_kind(
         &graph,
         div,
-        VerifierError::BadOutputCount {
+        GraphVerifierError::BadOutputCount {
             node: div,
             expected: 2,
         },
@@ -335,7 +335,7 @@ fn verify_div_input_kinds() {
     check_verify_node_kind(
         &graph,
         mistyped_div,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: mistyped_div,
             input: 2,
             expected: vec![DepValueKind::Value(Type::I32)],
@@ -350,7 +350,7 @@ fn verify_div_input_kinds() {
     check_verify_node_kind(
         &graph,
         non_ctrl_div,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: non_ctrl_div,
             input: 0,
             expected: vec![DepValueKind::Control],
@@ -371,7 +371,7 @@ fn verify_div_output_kinds() {
     check_verify_node_kind(
         &graph,
         non_int_div,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(non_int_div)[1],
             expected: vec![
                 DepValueKind::Value(Type::I32),
@@ -391,7 +391,7 @@ fn verify_div_output_kinds() {
     check_verify_node_kind(
         &graph,
         non_ctrl_div,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(non_ctrl_div)[0],
             expected: vec![DepValueKind::Control],
         },
@@ -430,7 +430,7 @@ fn verify_icmp_input_count() {
     check_verify_node_kind(
         &graph,
         empty_icmp,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: empty_icmp,
             expected: 2,
         },
@@ -453,7 +453,7 @@ fn verify_icmp_input_kinds() {
     check_verify_node_kind(
         &graph,
         non_int_icmp,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: non_int_icmp,
             input: 0,
             expected: vec![
@@ -472,7 +472,7 @@ fn verify_icmp_input_kinds() {
     check_verify_node_kind(
         &graph,
         mismatched_icmp,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: mismatched_icmp,
             input: 1,
             expected: vec![DepValueKind::Value(Type::I32)],
@@ -493,7 +493,7 @@ fn verify_icmp_output_kinds() {
     check_verify_node_kind(
         &graph,
         icmp,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(icmp)[0],
             expected: all_integer_types(),
         },
@@ -512,7 +512,7 @@ fn verify_iconst_input_count() {
     check_verify_node_kind(
         &graph,
         iconst,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: iconst,
             expected: 0,
         },
@@ -527,7 +527,7 @@ fn verify_iconst_output_kinds() {
     check_verify_node_kind(
         &graph,
         iconst_ctrl,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(iconst_ctrl)[0],
             expected: all_integer_types(),
         },
@@ -537,7 +537,7 @@ fn verify_iconst_output_kinds() {
     check_verify_node_kind(
         &graph,
         iconst_ptr,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(iconst_ptr)[0],
             expected: all_integer_types(),
         },
@@ -552,7 +552,11 @@ fn verify_iconst_range() {
         [],
         [DepValueKind::Value(Type::I32)],
     );
-    check_verify_node_kind(&graph, not_u32, VerifierError::ConstantOutOfRange(not_u32));
+    check_verify_node_kind(
+        &graph,
+        not_u32,
+        GraphVerifierError::ConstantOutOfRange(not_u32),
+    );
 }
 
 #[test]
@@ -567,7 +571,7 @@ fn verify_fconst_input_count() {
     check_verify_node_kind(
         &graph,
         fconst,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: fconst,
             expected: 0,
         },
@@ -582,7 +586,7 @@ fn verify_fconst_output_kinds() {
     check_verify_node_kind(
         &graph,
         fconst_ctrl,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(fconst_ctrl)[0],
             expected: vec![DepValueKind::Value(Type::F64)],
         },
@@ -622,7 +626,7 @@ fn verify_load_input_count() {
     check_verify_node_kind(
         &graph,
         load,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: load,
             expected: 2,
         },
@@ -642,7 +646,7 @@ fn verify_load_output_count() {
     check_verify_node_kind(
         &graph,
         load,
-        VerifierError::BadOutputCount {
+        GraphVerifierError::BadOutputCount {
             node: load,
             expected: 2,
         },
@@ -663,7 +667,7 @@ fn verify_load_input_kinds() {
     check_verify_node_kind(
         &graph,
         non_ptr_load,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: non_ptr_load,
             input: 1,
             expected: vec![DepValueKind::Value(Type::Ptr)],
@@ -678,7 +682,7 @@ fn verify_load_input_kinds() {
     check_verify_node_kind(
         &graph,
         non_ctrl_load,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: non_ctrl_load,
             input: 0,
             expected: vec![DepValueKind::Control],
@@ -700,7 +704,7 @@ fn verify_load_output_kinds() {
     check_verify_node_kind(
         &graph,
         non_value_load,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(non_value_load)[1],
             expected: vec![
                 DepValueKind::Value(Type::I32),
@@ -722,7 +726,7 @@ fn verify_load_output_kinds() {
     check_verify_node_kind(
         &graph,
         non_value_load,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(non_value_load)[0],
             expected: vec![DepValueKind::Control],
         },
@@ -755,7 +759,7 @@ fn verify_store_input_count() {
     check_verify_node_kind(
         &graph,
         store,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: store,
             expected: 3,
         },
@@ -770,7 +774,7 @@ fn verify_store_output_count() {
     check_verify_node_kind(
         &graph,
         store,
-        VerifierError::BadOutputCount {
+        GraphVerifierError::BadOutputCount {
             node: store,
             expected: 1,
         },
@@ -790,7 +794,7 @@ fn verify_store_input_kinds() {
     check_verify_node_kind(
         &graph,
         non_ctrl_store,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: non_ctrl_store,
             input: 0,
             expected: vec![DepValueKind::Control],
@@ -805,7 +809,7 @@ fn verify_store_input_kinds() {
     check_verify_node_kind(
         &graph,
         non_value_store,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: non_value_store,
             input: 1,
             expected: vec![
@@ -825,7 +829,7 @@ fn verify_store_input_kinds() {
     check_verify_node_kind(
         &graph,
         non_ptr_store,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: non_ptr_store,
             input: 2,
             expected: vec![DepValueKind::Value(Type::Ptr)],
@@ -846,7 +850,7 @@ fn verify_store_output_kinds() {
     check_verify_node_kind(
         &graph,
         non_ctrl_store,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(non_ctrl_store)[0],
             expected: vec![DepValueKind::Control],
         },
@@ -864,7 +868,7 @@ fn verify_brcond_input_count() {
     check_verify_node_kind(
         &graph,
         brcond,
-        VerifierError::BadInputCount {
+        GraphVerifierError::BadInputCount {
             node: brcond,
             expected: 2,
         },
@@ -879,7 +883,7 @@ fn verify_brcond_output_count() {
     check_verify_node_kind(
         &graph,
         brcond,
-        VerifierError::BadOutputCount {
+        GraphVerifierError::BadOutputCount {
             node: brcond,
             expected: 2,
         },
@@ -899,7 +903,7 @@ fn verify_brcond_input_kinds() {
     check_verify_node_kind(
         &graph,
         non_ctrl_brcond,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: non_ctrl_brcond,
             input: 0,
             expected: vec![DepValueKind::Control],
@@ -914,7 +918,7 @@ fn verify_brcond_input_kinds() {
     check_verify_node_kind(
         &graph,
         non_int_brcond,
-        VerifierError::BadInputKind {
+        GraphVerifierError::BadInputKind {
             node: non_int_brcond,
             input: 1,
             expected: vec![
@@ -938,7 +942,7 @@ fn verify_brcond_output_kinds() {
     check_verify_node_kind(
         &graph,
         non_ctrl1_brcond,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(non_ctrl1_brcond)[0],
             expected: vec![DepValueKind::Control],
         },
@@ -952,7 +956,7 @@ fn verify_brcond_output_kinds() {
     check_verify_node_kind(
         &graph,
         non_ctrl1_brcond,
-        VerifierError::BadOutputKind {
+        GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(non_ctrl1_brcond)[1],
             expected: vec![DepValueKind::Control],
         },

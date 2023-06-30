@@ -1,4 +1,5 @@
 use crate::{
+    module::FunctionData,
     node::Type,
     test_utils::{create_const32, create_entry, create_loop_graph, create_region, create_return},
 };
@@ -6,7 +7,11 @@ use crate::{
 use super::*;
 
 #[track_caller]
-fn check_verify_graph_errors(graph: &ValGraph, entry: Node, expected_errors: &[VerifierError]) {
+fn check_verify_graph_errors(
+    graph: &ValGraph,
+    entry: Node,
+    expected_errors: &[GraphVerifierError],
+) {
     let signature = Signature {
         ret_type: None,
         param_types: vec![],
@@ -35,7 +40,7 @@ fn verify_graph_unused_control() {
     check_verify_graph_errors(
         &graph,
         entry,
-        &[VerifierError::UnusedControl(entry_control)],
+        &[GraphVerifierError::UnusedControl(entry_control)],
     );
 }
 
@@ -66,7 +71,7 @@ fn verify_graph_reused_control() {
     check_verify_graph_errors(
         &graph,
         entry,
-        &[VerifierError::ReusedControl(entry_control)],
+        &[GraphVerifierError::ReusedControl(entry_control)],
     );
 }
 
@@ -80,7 +85,7 @@ fn verify_graph_bad_entry() {
     );
     let region_ctrl = graph.node_outputs(region)[0];
     create_return(&mut graph, [region_ctrl]);
-    check_verify_graph_errors(&graph, region, &[VerifierError::BadEntry(region)]);
+    check_verify_graph_errors(&graph, region, &[GraphVerifierError::BadEntry(region)]);
 }
 
 #[test]
@@ -99,8 +104,8 @@ fn verify_graph_bad_entry_multi_err() {
         &graph,
         region,
         &[
-            VerifierError::BadEntry(region),
-            VerifierError::BadInputCount {
+            GraphVerifierError::BadEntry(region),
+            GraphVerifierError::BadInputCount {
                 node: ret,
                 expected: 1,
             },
@@ -115,5 +120,26 @@ fn verify_graph_misplaced_entry() {
     let (entry2, entry2_ctrl, []) = create_entry(&mut graph, []);
     let region_ctrl = create_region(&mut graph, [entry1_ctrl, entry2_ctrl]);
     create_return(&mut graph, [region_ctrl]);
-    check_verify_graph_errors(&graph, entry1, &[VerifierError::MisplacedEntry(entry2)]);
+    check_verify_graph_errors(
+        &graph,
+        entry1,
+        &[GraphVerifierError::MisplacedEntry(entry2)],
+    );
+}
+
+#[test]
+fn verify_module_loop_function() {
+    let mut module = Module::new();
+    let (graph, entry) = create_loop_graph();
+    let sig = Signature {
+        ret_type: Some(Type::I32),
+        param_types: vec![Type::I32],
+    };
+    module.functions.push(FunctionData {
+        name: "sum_to_n".to_owned(),
+        sig,
+        valgraph: graph,
+        entry_node: entry,
+    });
+    verify_module(&module).expect("expected a valid module");
 }

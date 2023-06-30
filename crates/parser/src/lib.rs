@@ -6,7 +6,7 @@ use alloc::{borrow::ToOwned, boxed::Box, vec::Vec};
 
 use fx_utils::FxHashMap;
 use ir::{
-    module::{ExternFunctionData, FunctionData, Module, Signature},
+    module::{ExternFunctionData, Function, FunctionData, Module, Signature},
     node::{DepValueKind, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -22,12 +22,35 @@ use pest_derive::Parser;
 #[grammar = "grammar.pest"]
 struct IrParser;
 
+struct DefListing<'a> {
+    span: Span<'a>,
+    kind: DepValueKind,
+}
+
+struct NodeListing<'a> {
+    kind: NodeKind,
+    defs: Vec<DefListing<'a>>,
+    uses: Vec<Span<'a>>,
+}
+
+struct ParsedFunction<'a> {
+    name: &'a str,
+    sig: Signature,
+    graph_pair: Pair<'a, Rule>,
+}
+
+struct PendingFunction<'a> {
+    id: Function,
+    graph_pair: Pair<'a, Rule>,
+}
+
 pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
     let parsed = IrParser::parse(Rule::module, input)?
         .next()
         .expect("expected top-level module node");
 
     let mut module = Module::new();
+    let mut pending_functions = Vec::new();
 
     for item in parsed.into_inner() {
         match item.as_rule() {
@@ -43,46 +66,52 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 });
             }
             Rule::func => {
-                module.functions.push(extract_function(item)?);
+                let parsed = extract_function(item);
+                let function = module.functions.push(FunctionData {
+                    name: parsed.name.to_owned(),
+                    sig: parsed.sig,
+                    valgraph: ValGraph::new(),
+                    // This is cheating, but we promise not to inspect the graph until we fill it in later.
+                    entry_node: Node::from_u32(0),
+                });
+                pending_functions.push(PendingFunction {
+                    id: function,
+                    graph_pair: parsed.graph_pair,
+                });
             }
             Rule::EOI => {}
             _ => unreachable!("expected a top-level module item"),
         }
     }
 
+    for func in pending_functions {
+        let func_data = &mut module.functions[func.id];
+        let entry = extract_graph(func.graph_pair, &mut func_data.valgraph)?;
+        func_data.entry_node = entry;
+    }
+
     Ok(module)
 }
 
-struct DefListing<'a> {
-    span: Span<'a>,
-    kind: DepValueKind,
-}
-
-struct NodeListing<'a> {
-    kind: NodeKind,
-    defs: Vec<DefListing<'a>>,
-    uses: Vec<Span<'a>>,
-}
-
-fn extract_function(func_pair: Pair<'_, Rule>) -> Result<FunctionData, Box<Error<Rule>>> {
+fn extract_function(func_pair: Pair<'_, Rule>) -> ParsedFunction<'_> {
     let mut inner = func_pair.into_inner();
     let sig_pair = inner.next().expect("function should have signature");
     assert!(sig_pair.as_rule() == Rule::signature);
 
     let (name, sig) = extract_name_signature(sig_pair);
     let graph_pair = inner.next().expect("function should have graph");
-    let (graph, entry) = extract_graph(graph_pair)?;
 
-    Ok(FunctionData {
-        name: name.to_owned(),
+    ParsedFunction {
+        name,
         sig,
-        valgraph: graph,
-        entry_node: entry,
-    })
+        graph_pair,
+    }
 }
 
-fn extract_graph(graph_pair: Pair<'_, Rule>) -> Result<(ValGraph, Node), Box<Error<Rule>>> {
-    let mut graph = ValGraph::new();
+fn extract_graph(
+    graph_pair: Pair<'_, Rule>,
+    graph: &mut ValGraph,
+) -> Result<Node, Box<Error<Rule>>> {
     let mut value_map = FxHashMap::<&str, DepValue>::default();
 
     let graph_start = graph_pair.as_span().start_pos();
@@ -148,7 +177,7 @@ fn extract_graph(graph_pair: Pair<'_, Rule>) -> Result<(ValGraph, Node), Box<Err
         }
     }
 
-    Ok((graph, *nodes.first().expect("nodes should be nonempty")))
+    Ok(*nodes.first().expect("nodes should be nonempty"))
 }
 
 fn extract_node(node_pair: Pair<'_, Rule>) -> Result<NodeListing<'_>, Box<Error<Rule>>> {

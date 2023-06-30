@@ -151,9 +151,9 @@ fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
 
 fn write_func_ref(w: &mut dyn fmt::Write, module: &Module, func: FunctionRef) -> fmt::Result {
     match func {
-        FunctionRef::Internal(func) => write!(w, "func @{}", module.functions[func].name),
+        FunctionRef::Internal(func) => write!(w, "@{}", module.functions[func].name),
         FunctionRef::External(func) => {
-            write!(w, "extfunc @{}", module.extern_functions[func].name)
+            write!(w, "@{}", module.extern_functions[func].name)
         }
     }
 }
@@ -243,13 +243,10 @@ mod tests {
             (NodeKind::Load, "load"),
             (NodeKind::Store, "store"),
             (NodeKind::BrCond, "brcond"),
-            (
-                NodeKind::Call(FunctionRef::Internal(func)),
-                "call func @my_func",
-            ),
+            (NodeKind::Call(FunctionRef::Internal(func)), "call @my_func"),
             (
                 NodeKind::Call(FunctionRef::External(extfunc)),
-                "call extfunc @my_ext_func",
+                "call @my_ext_func",
             ),
         ];
 
@@ -414,7 +411,7 @@ mod tests {
 
                 func @my_func:i32(i64) {
                     %0:ctrl, %1:i64 = entry
-                    %2:ctrl, %3:i32 = call extfunc @my_ext_func %0, %1
+                    %2:ctrl, %3:i32 = call @my_ext_func %0, %1
                     return %2, %3
                 }
             "#]],

@@ -20,13 +20,12 @@ extfunc = { "extfunc" ~ signature }
 
 valkind = { "ctrl" | "phisel" | type }
 
-funcref  = { ("func" | "extfunc") ~ funcname }
 icmpkind = { "eq" | "ne" | "slt" | "sle" | "ult" | "ule" }
 
 iconst_nodekind = { "iconst" ~ integer }
 fconst_nodekind = { "fconst" ~ float }
 icmp_nodekind   = { "icmp" ~ icmpkind }
-call_nodekind   = { "call" ~ funcref }
+call_nodekind   = { "call" ~ funcname }
 nodekind        = {
     "entry"
   | "return"

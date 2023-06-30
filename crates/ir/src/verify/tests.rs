@@ -1,5 +1,5 @@
 use crate::{
-    module::FunctionData,
+    module::{ExternFunctionData, FunctionData},
     node::Type,
     test_utils::{create_const32, create_entry, create_loop_graph, create_region, create_return},
 };
@@ -20,6 +20,11 @@ fn check_verify_graph_errors(
         verify_graph(graph, &signature, entry).unwrap_err(),
         expected_errors
     );
+}
+
+#[track_caller]
+fn check_verify_module_errors(module: &Module, expected_errors: &[ModuleVerifierError]) {
+    assert_eq!(verify_module(module).unwrap_err(), expected_errors);
 }
 
 #[test]
@@ -142,4 +147,145 @@ fn verify_module_loop_function() {
         entry_node: entry,
     });
     verify_module(&module).expect("expected a valid module");
+}
+
+#[test]
+fn verify_module_propagate_graph_error() {
+    let mut module = Module::new();
+
+    let func = module.functions.push(FunctionData::new(
+        "broken".to_owned(),
+        Signature {
+            ret_type: None,
+            param_types: vec![],
+        },
+    ));
+    let func_data = &module.functions[func];
+    let entry_ctrl = func_data.valgraph.node_outputs(func_data.entry_node)[0];
+
+    check_verify_module_errors(
+        &module,
+        &[ModuleVerifierError::Graph {
+            function: func,
+            error: GraphVerifierError::UnusedControl(entry_ctrl),
+        }],
+    );
+}
+
+#[test]
+fn verify_module_duplicate_extern_names() {
+    let mut module = Module::new();
+    module.extern_functions.push(ExternFunctionData {
+        name: "func".to_owned(),
+        sig: Signature {
+            ret_type: None,
+            param_types: vec![],
+        },
+    });
+    module.extern_functions.push(ExternFunctionData {
+        name: "func".to_owned(),
+        sig: Signature {
+            ret_type: Some(Type::I32),
+            param_types: vec![],
+        },
+    });
+
+    check_verify_module_errors(
+        &module,
+        &[ModuleVerifierError::ReusedFunctionName("func".to_owned())],
+    );
+}
+
+#[test]
+fn verify_module_duplicate_intern_extern_names() {
+    let mut module = Module::new();
+    module.extern_functions.push(ExternFunctionData {
+        name: "func".to_owned(),
+        sig: Signature {
+            ret_type: None,
+            param_types: vec![],
+        },
+    });
+
+    let f = module.functions.push(FunctionData::new(
+        "func".to_owned(),
+        Signature {
+            ret_type: None,
+            param_types: vec![],
+        },
+    ));
+    let f = &mut module.functions[f];
+    let graph = &mut f.valgraph;
+    let entry_ctrl = graph.node_outputs(f.entry_node)[0];
+    create_return(graph, [entry_ctrl]);
+
+    check_verify_module_errors(
+        &module,
+        &[ModuleVerifierError::ReusedFunctionName("func".to_owned())],
+    );
+}
+
+#[test]
+fn verify_module_duplicate_intern_names() {
+    let mut module = Module::new();
+
+    let f = module.functions.push(FunctionData::new(
+        "func".to_owned(),
+        Signature {
+            ret_type: None,
+            param_types: vec![],
+        },
+    ));
+    let f = &mut module.functions[f];
+    let graph = &mut f.valgraph;
+    let entry_ctrl = graph.node_outputs(f.entry_node)[0];
+    create_return(graph, [entry_ctrl]);
+
+    let f = module.functions.push(FunctionData::new(
+        "func".to_owned(),
+        Signature {
+            ret_type: None,
+            param_types: vec![],
+        },
+    ));
+    let f = &mut module.functions[f];
+    let graph = &mut f.valgraph;
+    let entry_ctrl = graph.node_outputs(f.entry_node)[0];
+    create_return(graph, [entry_ctrl]);
+
+    check_verify_module_errors(
+        &module,
+        &[ModuleVerifierError::ReusedFunctionName("func".to_owned())],
+    );
+}
+
+#[test]
+fn verify_module_many_duplicate_names() {
+    let mut module = Module::new();
+    module.extern_functions.push(ExternFunctionData {
+        name: "func".to_owned(),
+        sig: Signature {
+            ret_type: None,
+            param_types: vec![],
+        },
+    });
+    module.extern_functions.push(ExternFunctionData {
+        name: "func".to_owned(),
+        sig: Signature {
+            ret_type: Some(Type::I32),
+            param_types: vec![],
+        },
+    });
+    module.extern_functions.push(ExternFunctionData {
+        name: "func".to_owned(),
+        sig: Signature {
+            ret_type: Some(Type::I32),
+            param_types: vec![],
+        },
+    });
+
+    check_verify_module_errors(
+        &module,
+        &[ModuleVerifierError::ReusedFunctionName("func".to_owned())],
+    );
 }

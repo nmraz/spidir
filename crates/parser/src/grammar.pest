@@ -22,13 +22,18 @@ valkind = { "ctrl" | "phisel" | ("val" ~ "(" ~ type ~ ")") }
 
 funcref  = { ("func" | "extfunc") ~ funcname }
 icmpkind = { "eq" | "ne" | "slt" | "sle" | "ult" | "ule" }
-nodekind = {
+
+iconst_nodekind = { "iconst" ~ integer }
+fconst_nodekind = { "fconst" ~ float }
+icmp_nodekind   = { "icmp" ~ icmpkind }
+call_nodekind   = { "call" ~ funcref }
+nodekind        = {
     "entry"
   | "return"
   | "region"
   | "phi"
-  | "iconst" ~ integer
-  | "fconst" ~ float
+  | iconst_nodekind
+  | fconst_nodekind
   | "iadd"
   | "isub"
   | "and"
@@ -40,11 +45,11 @@ nodekind = {
   | "imul"
   | "sdiv"
   | "udiv"
-  | "icmp" ~ icmpkind
+  | icmp_nodekind
   | "load"
   | "store"
   | "brcond"
-  | "call" ~ funcref
+  | call_nodekind
 }
 
 valdef = {

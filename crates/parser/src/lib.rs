@@ -7,7 +7,7 @@ use alloc::{borrow::ToOwned, boxed::Box, vec::Vec};
 use fx_utils::FxHashMap;
 use ir::{
     module::{ExternFunctionData, FunctionData, Module, Signature},
-    node::{DepValueKind, NodeKind, Type},
+    node::{DepValueKind, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 use itertools::Itertools;
@@ -86,7 +86,10 @@ fn extract_graph(graph_pair: Pair<'_, Rule>) -> Result<(ValGraph, Node), Box<Err
     let mut value_map = FxHashMap::<&str, DepValue>::default();
 
     let graph_start = graph_pair.as_span().start_pos();
-    let node_listings: Vec<_> = graph_pair.into_inner().map(extract_node).collect();
+    let node_listings = graph_pair
+        .into_inner()
+        .map(extract_node)
+        .collect::<Result<Vec<_>, _>>()?;
     let mut nodes = Vec::new();
 
     if node_listings.is_empty() {
@@ -148,14 +151,14 @@ fn extract_graph(graph_pair: Pair<'_, Rule>) -> Result<(ValGraph, Node), Box<Err
     Ok((graph, *nodes.first().expect("nodes should be nonempty")))
 }
 
-fn extract_node(node_pair: Pair<'_, Rule>) -> NodeListing<'_> {
+fn extract_node(node_pair: Pair<'_, Rule>) -> Result<NodeListing<'_>, Box<Error<Rule>>> {
     let mut inner = node_pair.into_inner().peekable();
     let defs = inner
         .peeking_take_while(|pair| pair.as_rule() == Rule::valdef)
         .map(extract_valdef)
         .collect();
 
-    let kind = extract_node_kind(inner.next().expect("node should have kind"));
+    let kind = extract_node_kind(inner.next().expect("node should have kind"))?;
 
     let uses = inner
         .map(|pair| {
@@ -164,11 +167,85 @@ fn extract_node(node_pair: Pair<'_, Rule>) -> NodeListing<'_> {
         })
         .collect();
 
-    NodeListing { kind, defs, uses }
+    Ok(NodeListing { kind, defs, uses })
 }
 
-fn extract_node_kind(node_kind_pair: Pair<'_, Rule>) -> NodeKind {
-    todo!()
+fn extract_node_kind(node_kind_pair: Pair<'_, Rule>) -> Result<NodeKind, Box<Error<Rule>>> {
+    match node_kind_pair.as_str() {
+        "entry" => Ok(NodeKind::Entry),
+        "return" => Ok(NodeKind::Return),
+        "region" => Ok(NodeKind::Region),
+        "phi" => Ok(NodeKind::Phi),
+        "iadd" => Ok(NodeKind::Iadd),
+        "isub" => Ok(NodeKind::Isub),
+        "and" => Ok(NodeKind::And),
+        "or" => Ok(NodeKind::Or),
+        "xor" => Ok(NodeKind::Xor),
+        "shl" => Ok(NodeKind::Shl),
+        "lshr" => Ok(NodeKind::Lshr),
+        "ashr" => Ok(NodeKind::Ashr),
+        "imul" => Ok(NodeKind::Imul),
+        "sdiv" => Ok(NodeKind::Sdiv),
+        "udiv" => Ok(NodeKind::Udiv),
+        "load" => Ok(NodeKind::Load),
+        "store" => Ok(NodeKind::Store),
+        "brcond" => Ok(NodeKind::BrCond),
+        _ => extract_special_node_kind(node_kind_pair),
+    }
+}
+
+fn extract_special_node_kind(node_kind_pair: Pair<'_, Rule>) -> Result<NodeKind, Box<Error<Rule>>> {
+    let special_pair = node_kind_pair
+        .into_inner()
+        .next()
+        .expect("expected special node rule");
+    let rule = special_pair.as_rule();
+    let inner_pair = special_pair
+        .into_inner()
+        .next()
+        .expect("special node kind should have inner operand");
+
+    let kind = match rule {
+        Rule::iconst_nodekind => {
+            let value = inner_pair.as_str().parse().map_err(|_| {
+                Box::new(Error::new_from_span(
+                    ErrorVariant::CustomError {
+                        message: "invalid integer literal".to_owned(),
+                    },
+                    inner_pair.as_span(),
+                ))
+            })?;
+            NodeKind::IConst(value)
+        }
+        Rule::fconst_nodekind => {
+            let value = inner_pair.as_str().parse().map_err(|_| {
+                Box::new(Error::new_from_span(
+                    ErrorVariant::CustomError {
+                        message: "invalid floating-point literal".to_owned(),
+                    },
+                    inner_pair.as_span(),
+                ))
+            })?;
+            NodeKind::FConst(value)
+        }
+        Rule::icmp_nodekind => NodeKind::Icmp(extract_icmpkind(inner_pair)),
+        Rule::call_nodekind => todo!(),
+        _ => unreachable!("unknown special node kind {rule:?}"),
+    };
+
+    Ok(kind)
+}
+
+fn extract_icmpkind(icmpkind_pair: Pair<'_, Rule>) -> IcmpKind {
+    match icmpkind_pair.as_str() {
+        "eq" => IcmpKind::Eq,
+        "ne" => IcmpKind::Ne,
+        "slt" => IcmpKind::Slt,
+        "sle" => IcmpKind::Sle,
+        "ult" => IcmpKind::Ult,
+        "ule" => IcmpKind::Ule,
+        _ => unreachable!(),
+    }
 }
 
 fn extract_valdef(valdef_pair: Pair<'_, Rule>) -> DefListing<'_> {
@@ -281,6 +358,55 @@ mod tests {
                 extfunc @func5:i32(i32, i64)
 
             "#]],
+        );
+    }
+
+    #[test]
+    fn parse_loop_graph() {
+        let module = parse_module(
+            "
+            func @sum_to_n:i32(i32) {
+                %0:ctrl, %1:val(i32) = entry
+                %10:val(i32) = iconst 1
+                %2:val(i32) = iconst 0
+                %3:val(i32) = icmp eq %1, %2
+                %4:ctrl, %5:ctrl = brcond %0, %3
+                %13:val(i32) = icmp eq %11, %2
+                %14:ctrl, %15:ctrl = brcond %6, %13
+                %16:ctrl, %17:phisel = region %4, %14
+                %6:ctrl, %7:phisel = region %5, %15
+                %8:val(i32) = phi %7, %1, %11
+                %11:val(i32) = isub %8, %10
+                %9:val(i32) = phi %7, %2, %12
+                %12:val(i32) = iadd %9, %8
+                %18:val(i32) = phi %17, %2, %12
+                return %16, %18
+            }",
+        )
+        .expect("failed to parse module");
+
+        check_module(
+            &module,
+            expect![[r#"
+
+            func @sum_to_n:i32(i32) {
+                %0:ctrl, %1:val(i32) = entry
+                %2:val(i32) = iconst 1
+                %3:val(i32) = iconst 0
+                %4:val(i32) = icmp eq %1, %3
+                %5:ctrl, %6:ctrl = brcond %0, %4
+                %7:val(i32) = icmp eq %15, %3
+                %8:ctrl, %9:ctrl = brcond %12, %7
+                %10:ctrl, %11:phisel = region %5, %8
+                %12:ctrl, %13:phisel = region %6, %9
+                %14:val(i32) = phi %13, %1, %15
+                %15:val(i32) = isub %14, %2
+                %16:val(i32) = phi %13, %3, %17
+                %17:val(i32) = iadd %16, %14
+                %18:val(i32) = phi %11, %3, %17
+                return %10, %18
+            }
+        "#]],
         );
     }
 }

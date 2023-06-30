@@ -356,7 +356,7 @@ mod tests {
             extfunc @func4:ptr()
             extfunc @func5:i32(i32, i64)",
         )
-        .expect("failed to parse module");
+        .unwrap();
 
         check_module(
             &module,
@@ -388,7 +388,7 @@ mod tests {
                 return %0, %2
             }",
         )
-        .expect("failed to parse module");
+        .unwrap();
 
         check_module(
             &module,
@@ -419,7 +419,7 @@ mod tests {
                 return %0, %1
             }",
         )
-        .expect("failed to parse module");
+        .unwrap();
         check_module(
             &module,
             expect![[r#"
@@ -433,7 +433,48 @@ mod tests {
     }
 
     #[test]
-    fn parse_node_kinds() {
+    fn node_kind_roundtrip() {
+        let node_strs = [
+            "entry",
+            "return",
+            "region",
+            "phi",
+            "iconst 5",
+            "iadd",
+            "isub",
+            "and",
+            "or",
+            "xor",
+            "shl",
+            "lshr",
+            "ashr",
+            "imul",
+            "sdiv",
+            "icmp eq",
+            "icmp ne",
+            "icmp slt",
+            "icmp sle",
+            "icmp ult",
+            "icmp ule",
+            "fconst 2.71828",
+            "load",
+            "store",
+            "brcond",
+        ];
+
+        for node_str in node_strs {
+            let module_str = format!(
+                "func @func() {{
+                    {node_str}
+                }}"
+            );
+            let roundtripped = parse_module(&module_str).unwrap().to_string();
+            assert!(roundtripped.contains(node_str));
+        }
+    }
+
+    #[test]
+    fn parse_mixed_node_kinds() {
         let module = parse_module(
             "
             func @func:i32(ptr, i32) {
@@ -466,7 +507,7 @@ mod tests {
                 return %31, %2
             }",
         )
-        .expect("failed to parse module");
+        .unwrap();
 
         check_module(
             &module,
@@ -515,7 +556,7 @@ mod tests {
                 %3:val(i32) = iadd %1, %2
             }",
         )
-        .expect("failed to parse module");
+        .unwrap();
         check_module(
             &module,
             expect![[r#"
@@ -551,7 +592,7 @@ mod tests {
                 return %16, %18
             }",
         )
-        .expect("failed to parse module");
+        .unwrap();
 
         check_module(
             &module,
@@ -609,6 +650,43 @@ mod tests {
                   |                 ^^
                   |
                   = value redefined"#]],
+        );
+    }
+
+    #[test]
+    fn parse_undefined_value() {
+        check_parse_error(
+            "
+            func @func:i32() {
+                %0:ctrl = entry
+                return %0, %1
+            }",
+            expect![[r#"
+                 --> 4:28
+                  |
+                4 |                 return %0, %1
+                  |                            ^^
+                  |
+                  = undefined value"#]],
+        );
+    }
+
+    #[test]
+    fn parse_iconst_out_of_range() {
+        check_parse_error(
+            "
+            func @func:i32() {
+                %0:ctrl = entry
+                %1:val(i32) = iconst 123456789123456789123456789
+                return %0, %1
+            }",
+            expect![[r#"
+                 --> 4:38
+                  |
+                4 |                 %1:val(i32) = iconst 123456789123456789123456789
+                  |                                      ^-------------------------^
+                  |
+                  = invalid integer literal"#]],
         );
     }
 }

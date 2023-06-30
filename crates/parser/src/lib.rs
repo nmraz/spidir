@@ -336,6 +336,16 @@ mod tests {
         expected.assert_eq(&module.to_string());
     }
 
+    #[track_caller]
+    fn check_parse_error(input: &str, expected: Expect) {
+        let error = match parse_module(input) {
+            Err(error) => error,
+            Ok(_) => panic!("expected parse error"),
+        };
+
+        expected.assert_eq(&error.to_string());
+    }
+
     #[test]
     fn parse_extfunc_signature() {
         let module = parse_module(
@@ -358,6 +368,164 @@ mod tests {
                 extfunc @func5:i32(i32, i64)
 
             "#]],
+        );
+    }
+
+    #[test]
+    fn parse_func_signature() {
+        let module = parse_module(
+            "
+            func @func1(i32) {
+                %0:ctrl, %1:val(i32) = entry
+            }
+
+            func @func2() {
+                %0:ctrl = entry
+            }
+
+            func @func3:ptr(i64, ptr, f64) {
+                %0:ctrl, %1:val(i64), %2:val(ptr), %3:val(f64) = entry
+                return %0, %2
+            }",
+        )
+        .expect("failed to parse module");
+
+        check_module(
+            &module,
+            expect![[r#"
+
+                func @func1(i32) {
+                    %0:ctrl, %1:val(i32) = entry
+                }
+
+                func @func2() {
+                    %0:ctrl = entry
+                }
+
+                func @func3:ptr(i64, ptr, f64) {
+                    %0:ctrl, %1:val(i64), %2:val(ptr), %3:val(f64) = entry
+                    return %0, %2
+                }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn parse_simple_function() {
+        let module = parse_module(
+            "
+            func @func:i32(i32) {
+                %0:ctrl, %1:val(i32) = entry
+                return %0, %1
+            }",
+        )
+        .expect("failed to parse module");
+        check_module(
+            &module,
+            expect![[r#"
+
+            func @func:i32(i32) {
+                %0:ctrl, %1:val(i32) = entry
+                return %0, %1
+            }
+        "#]],
+        );
+    }
+
+    #[test]
+    fn parse_node_kinds() {
+        let module = parse_module(
+            "
+            func @func:i32(ptr, i32) {
+                %0:ctrl, %1:val(ptr), %2:val(i32) = entry
+                %3:ctrl, %4:phisel = region %0
+                %5:val(i32) = phi %4, %2
+                %6:val(i32) = iconst 1324
+                %7:val(i32) = iadd %5, %6
+                %8:val(i32) = isub %7, %6
+                %9:val(i32) = and %8, %6
+                %10:val(i32) = or %9, %6
+                %11:val(i32) = xor %10, %6
+                %12:val(i32) = shl %11, %6
+                %13:val(i32) = lshr %12, %6
+                %14:val(i32) = ashr %13, %6
+                %15:val(i32) = imul %14, %6
+                %16:ctrl, %17:val(i32) = sdiv %3, %15, %6
+                %18:ctrl, %19:val(i32) = udiv %16, %17, %6
+                %20:val(i32) = icmp eq %19, %6
+                %21:val(i32) = icmp ne %20, %6
+                %22:val(i32) = icmp slt %21, %6
+                %23:val(i32) = icmp sle %22, %6
+                %24:val(i32) = icmp ult %23, %6
+                %25:val(i32) = icmp ule %24, %6
+                %26:val(f64) = fconst 3.1415
+                %27:ctrl, %28:val(f64) = load %18, %1
+                %29:ctrl = store %27, %26, %1
+                %30:ctrl, %31:ctrl = brcond %29, %25
+                return %30, %25
+                return %31, %2
+            }",
+        )
+        .expect("failed to parse module");
+
+        check_module(
+            &module,
+            expect![[r#"
+
+                func @func:i32(ptr, i32) {
+                    %0:ctrl, %1:val(ptr), %2:val(i32) = entry
+                    %3:ctrl, %4:phisel = region %0
+                    %5:val(i32) = phi %4, %2
+                    %6:val(i32) = iconst 1324
+                    %7:val(i32) = iadd %5, %6
+                    %8:val(i32) = isub %7, %6
+                    %9:val(i32) = and %8, %6
+                    %10:val(i32) = or %9, %6
+                    %11:val(i32) = xor %10, %6
+                    %12:val(i32) = shl %11, %6
+                    %13:val(i32) = lshr %12, %6
+                    %14:val(i32) = ashr %13, %6
+                    %15:val(i32) = imul %14, %6
+                    %16:ctrl, %17:val(i32) = sdiv %3, %15, %6
+                    %18:ctrl, %19:val(i32) = udiv %16, %17, %6
+                    %27:ctrl, %28:val(f64) = load %18, %1
+                    %20:val(i32) = icmp eq %19, %6
+                    %21:val(i32) = icmp ne %20, %6
+                    %22:val(i32) = icmp slt %21, %6
+                    %23:val(i32) = icmp sle %22, %6
+                    %24:val(i32) = icmp ult %23, %6
+                    %25:val(i32) = icmp ule %24, %6
+                    %26:val(f64) = fconst 3.1415
+                    %29:ctrl = store %27, %26, %1
+                    %30:ctrl, %31:ctrl = brcond %29, %25
+                    return %30, %25
+                    return %31, %2
+                }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn parse_function_out_of_order() {
+        let module = parse_module(
+            "
+            func @add:i32(i32, i32) {
+                %0:ctrl, %1:val(i32), %2:val(i32) = entry
+                return %0, %3
+                %3:val(i32) = iadd %1, %2
+            }",
+        )
+        .expect("failed to parse module");
+        check_module(
+            &module,
+            expect![[r#"
+
+            func @add:i32(i32, i32) {
+                %0:ctrl, %1:val(i32), %2:val(i32) = entry
+                %3:val(i32) = iadd %1, %2
+                return %0, %3
+            }
+        "#]],
         );
     }
 
@@ -407,6 +575,40 @@ mod tests {
                 return %10, %18
             }
         "#]],
+        );
+    }
+
+    #[test]
+    fn parse_empty_graph() {
+        check_parse_error(
+            "
+        func @func() {
+        }",
+            expect![[r#"
+                 --> 3:9
+                  |
+                3 |         }
+                  |         ^---
+                  |
+                  = no nodes in graph"#]],
+        );
+    }
+
+    #[test]
+    fn parse_redefined_value() {
+        check_parse_error(
+            "
+            func @func(i32) {
+                %0:ctrl, %1:val(i32) = entry
+                %1:val(i32) = iconst 5
+            }",
+            expect![[r#"
+                 --> 4:17
+                  |
+                4 |                 %1:val(i32) = iconst 5
+                  |                 ^^
+                  |
+                  = value redefined"#]],
         );
     }
 }

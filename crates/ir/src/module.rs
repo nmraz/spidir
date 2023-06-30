@@ -25,14 +25,14 @@ pub struct Signature {
 pub struct FunctionData {
     pub name: String,
     pub sig: Signature,
-    pub valgraph: ValGraph,
-    pub entry_node: Node,
+    pub graph: ValGraph,
+    pub entry: Node,
 }
 
 impl FunctionData {
     pub fn new(name: String, sig: Signature) -> Self {
-        let mut valgraph = ValGraph::new();
-        let entry_node = valgraph.create_node(
+        let mut graph = ValGraph::new();
+        let entry_node = graph.create_node(
             NodeKind::Entry,
             [],
             iter::once(DepValueKind::Control)
@@ -41,8 +41,8 @@ impl FunctionData {
         Self {
             name,
             sig,
-            valgraph,
-            entry_node,
+            graph,
+            entry: entry_node,
         }
     }
 }

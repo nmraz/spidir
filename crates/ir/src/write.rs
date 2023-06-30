@@ -29,7 +29,7 @@ pub fn write_function(w: &mut dyn fmt::Write, module: &Module, func: &FunctionDa
     write!(w, "func @{}", func.name)?;
     write_signature(w, &func.sig)?;
     w.write_str(" {\n")?;
-    write_graph(w, module, &func.valgraph, func.entry_node, 4)?;
+    write_graph(w, module, &func.graph, func.entry, 4)?;
     w.write_str("}\n")
 }
 
@@ -317,8 +317,8 @@ mod tests {
                 param_types: vec![Type::I32, Type::I32],
             },
         );
-        let graph = &mut function.valgraph;
-        let entry = function.entry_node;
+        let graph = &mut function.graph;
+        let entry = function.entry;
         let entry_outputs = graph.node_outputs(entry);
         let control_value = entry_outputs[0];
         let param1 = entry_outputs[1];
@@ -353,8 +353,8 @@ mod tests {
                 param_types: vec![Type::I32],
             },
         );
-        let graph = &mut function.valgraph;
-        let control_value = graph.node_outputs(function.entry_node)[0];
+        let graph = &mut function.graph;
+        let control_value = graph.node_outputs(function.entry)[0];
         create_return(graph, [control_value]);
         check_write_function(
             &function,
@@ -385,8 +385,8 @@ mod tests {
             },
         });
 
-        let func_entry = module.functions[func].entry_node;
-        let func_graph = &mut module.functions[func].valgraph;
+        let func_entry = module.functions[func].entry;
+        let func_graph = &mut module.functions[func].graph;
 
         let func_entry_outputs = func_graph.node_outputs(func_entry);
         let func_entry_ctrl = func_entry_outputs[0];

@@ -143,8 +143,8 @@ fn verify_module_loop_function() {
     module.functions.push(FunctionData {
         name: "sum_to_n".to_owned(),
         sig,
-        valgraph: graph,
-        entry_node: entry,
+        graph,
+        entry,
     });
     verify_module(&module).expect("expected a valid module");
 }
@@ -161,7 +161,7 @@ fn verify_module_propagate_graph_error() {
         },
     ));
     let func_data = &module.functions[func];
-    let entry_ctrl = func_data.valgraph.node_outputs(func_data.entry_node)[0];
+    let entry_ctrl = func_data.graph.node_outputs(func_data.entry)[0];
 
     check_verify_module_errors(
         &module,
@@ -215,8 +215,8 @@ fn verify_module_duplicate_intern_extern_names() {
         },
     ));
     let f = &mut module.functions[f];
-    let graph = &mut f.valgraph;
-    let entry_ctrl = graph.node_outputs(f.entry_node)[0];
+    let graph = &mut f.graph;
+    let entry_ctrl = graph.node_outputs(f.entry)[0];
     create_return(graph, [entry_ctrl]);
 
     check_verify_module_errors(
@@ -237,8 +237,8 @@ fn verify_module_duplicate_intern_names() {
         },
     ));
     let f = &mut module.functions[f];
-    let graph = &mut f.valgraph;
-    let entry_ctrl = graph.node_outputs(f.entry_node)[0];
+    let graph = &mut f.graph;
+    let entry_ctrl = graph.node_outputs(f.entry)[0];
     create_return(graph, [entry_ctrl]);
 
     let f = module.functions.push(FunctionData::new(
@@ -249,8 +249,8 @@ fn verify_module_duplicate_intern_names() {
         },
     ));
     let f = &mut module.functions[f];
-    let graph = &mut f.valgraph;
-    let entry_ctrl = graph.node_outputs(f.entry_node)[0];
+    let graph = &mut f.graph;
+    let entry_ctrl = graph.node_outputs(f.entry)[0];
     create_return(graph, [entry_ctrl]);
 
     check_verify_module_errors(

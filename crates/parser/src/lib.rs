@@ -92,9 +92,9 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 let function = module.functions.push(FunctionData {
                     name: name.to_owned(),
                     sig: parsed.sig,
-                    valgraph: ValGraph::new(),
+                    graph: ValGraph::new(),
                     // This is cheating, but we promise not to inspect the graph until we fill it in later.
-                    entry_node: Node::from_u32(0),
+                    entry: Node::from_u32(0),
                 });
 
                 function_names.insert(name, FunctionRef::Internal(function));
@@ -110,8 +110,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
 
     for func in pending_functions {
         let func_data = &mut module.functions[func.id];
-        func_data.entry_node =
-            extract_graph(func.graph_pair, &function_names, &mut func_data.valgraph)?;
+        func_data.entry = extract_graph(func.graph_pair, &function_names, &mut func_data.graph)?;
     }
 
     Ok(module)

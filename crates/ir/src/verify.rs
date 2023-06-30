@@ -70,9 +70,9 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
     for (function, function_data) in &module.functions {
         check_name(&function_data.name, &mut errors);
         if let Err(graph_errors) = verify_graph(
-            &function_data.valgraph,
+            &function_data.graph,
             &function_data.sig,
-            function_data.entry_node,
+            function_data.entry,
         ) {
             errors.extend(
                 graph_errors

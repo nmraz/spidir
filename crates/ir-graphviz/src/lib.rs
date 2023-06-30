@@ -108,8 +108,8 @@ mod tests {
             },
         });
 
-        let func_entry = module.functions[func].entry_node;
-        let func_graph = &mut module.functions[func].valgraph;
+        let func_entry = module.functions[func].entry;
+        let func_graph = &mut module.functions[func].graph;
 
         let func_entry_outputs = func_graph.node_outputs(func_entry);
         let func_entry_ctrl = func_entry_outputs[0];
@@ -129,7 +129,7 @@ mod tests {
 
         check_dump_graphviz(
             &module,
-            &module.functions[func].valgraph,
+            &module.functions[func].graph,
             func_entry,
             expect![[r#"
                 digraph {

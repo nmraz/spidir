@@ -4,7 +4,7 @@ use core::{fmt, iter};
 use cranelift_entity::{entity_impl, PrimaryMap};
 
 use crate::{
-    node::{DepValueKind, NodeKind, Type},
+    node::{DepValueKind, FunctionRef, NodeKind, Type},
     valgraph::{Node, ValGraph},
     write::write_module,
 };
@@ -52,6 +52,11 @@ pub struct ExternFunctionData {
     pub sig: Signature,
 }
 
+pub struct FunctionMetadata<'a> {
+    pub name: &'a str,
+    pub sig: &'a Signature,
+}
+
 pub struct Module {
     pub functions: PrimaryMap<Function, FunctionData>,
     pub extern_functions: PrimaryMap<ExternFunction, ExternFunctionData>,
@@ -62,6 +67,25 @@ impl Module {
         Self {
             functions: PrimaryMap::new(),
             extern_functions: PrimaryMap::new(),
+        }
+    }
+
+    pub fn resolve_funcref(&self, funcref: FunctionRef) -> FunctionMetadata<'_> {
+        match funcref {
+            FunctionRef::Internal(func) => {
+                let func = &self.functions[func];
+                FunctionMetadata {
+                    name: &func.name,
+                    sig: &func.sig,
+                }
+            }
+            FunctionRef::External(func) => {
+                let func = &self.extern_functions[func];
+                FunctionMetadata {
+                    name: &func.name,
+                    sig: &func.sig,
+                }
+            }
         }
     }
 }

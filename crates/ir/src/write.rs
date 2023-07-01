@@ -150,12 +150,7 @@ fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
 }
 
 fn write_func_ref(w: &mut dyn fmt::Write, module: &Module, func: FunctionRef) -> fmt::Result {
-    match func {
-        FunctionRef::Internal(func) => write!(w, "@{}", module.functions[func].name),
-        FunctionRef::External(func) => {
-            write!(w, "@{}", module.extern_functions[func].name)
-        }
-    }
+    write!(w, "@{}", module.resolve_funcref(func).name)
 }
 
 #[cfg(test)]

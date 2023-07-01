@@ -294,7 +294,7 @@ fn extract_special_node_kind(
         Rule::call_nodekind => {
             let name_span = inner_pair.as_span();
             let name = name_from_span(&name_span);
-            let func_ref = *function_names.get(name).ok_or_else(|| {
+            let funcref = *function_names.get(name).ok_or_else(|| {
                 Box::new(Error::new_from_span(
                     ErrorVariant::CustomError {
                         message: "undefined function".to_owned(),
@@ -302,7 +302,7 @@ fn extract_special_node_kind(
                     name_span,
                 ))
             })?;
-            NodeKind::Call(func_ref)
+            NodeKind::Call(funcref)
         }
         _ => unreachable!("unknown special node kind {rule:?}"),
     };

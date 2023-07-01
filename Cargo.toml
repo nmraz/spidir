@@ -4,7 +4,11 @@ members = ["crates/*"]
 [workspace.dependencies]
 fx-utils = { path = "crates/fx-utils" }
 ir = { path = "crates/ir" }
+parser = { path = "crates/parser" }
+ir-graphviz = { path = "crates/ir-graphviz" }
 
 cranelift-entity = "0.95.0"
 expect-test = "1.4.1"
-smallvec = { version = "1.10.0", default-features = false, features = ["const_new"] }
+smallvec = { version = "1.10.0", default-features = false, features = [
+    "const_new",
+] }

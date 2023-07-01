@@ -1,13 +1,13 @@
 use core::array;
 
 use crate::{
-    builder::{build_entry, build_iconst, build_region},
+    builder::NodeFactoryExt,
     node::{DepValueKind, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
 pub fn create_const_typed(graph: &mut ValGraph, ty: Type) -> DepValue {
-    build_iconst(graph, ty, 5)
+    graph.build_iconst(ty, 5)
 }
 
 pub fn create_const32(graph: &mut ValGraph) -> DepValue {
@@ -22,7 +22,7 @@ pub fn create_entry<const N: usize>(
     graph: &mut ValGraph,
     input_types: [Type; N],
 ) -> (Node, DepValue, [DepValue; N]) {
-    let built_entry = build_entry(graph, &input_types);
+    let built_entry = graph.build_entry(&input_types);
     let entry_outputs = graph.node_outputs(built_entry.node);
 
     (
@@ -33,7 +33,7 @@ pub fn create_entry<const N: usize>(
 }
 
 pub fn create_region<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]) -> DepValue {
-    build_region(graph, &inputs).ctrl
+    graph.build_region(&inputs).ctrl
 }
 
 pub fn create_return<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]) -> Node {

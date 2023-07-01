@@ -9,4 +9,6 @@ edition = "2021"
 ir.workspace = true
 
 [dev-dependencies]
+parser.workspace = true
+
 expect-test.workspace = true

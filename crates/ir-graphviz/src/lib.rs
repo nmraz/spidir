@@ -76,61 +76,30 @@ pub fn write_graphviz(
 #[cfg(test)]
 mod tests {
     use expect_test::{expect, Expect};
-    use ir::{
-        module::{ExternFunctionData, FunctionData, Signature},
-        node::{DepValueKind, FunctionRef, NodeKind, Type},
-    };
+    use parser::parse_module;
 
     use super::*;
 
     #[track_caller]
-    fn check_dump_graphviz(module: &Module, graph: &ValGraph, entry: Node, expected: Expect) {
+    fn check_dump_graphviz(input: &str, expected: Expect) {
+        let module = parse_module(input).unwrap();
+        let func = module.functions.values().next().unwrap();
         let mut graphviz = String::new();
-        write_graphviz(&mut graphviz, module, graph, entry).expect("failed to format IR graph");
+        write_graphviz(&mut graphviz, &module, &func.graph, func.entry)
+            .expect("failed to format IR graph");
         expected.assert_eq(&graphviz);
     }
 
     #[test]
     fn dump_simple_graph() {
-        let mut module = Module::new();
-        let func = module.functions.push(FunctionData::new(
-            "my_func".to_owned(),
-            Signature {
-                ret_type: Some(Type::I32),
-                param_types: vec![Type::I64],
-            },
-        ));
-        let extfunc = module.extern_functions.push(ExternFunctionData {
-            name: "my_ext_func".to_owned(),
-            sig: Signature {
-                ret_type: Some(Type::I32),
-                param_types: vec![Type::I64],
-            },
-        });
-
-        let func_entry = module.functions[func].entry;
-        let func_graph = &mut module.functions[func].graph;
-
-        let func_entry_outputs = func_graph.node_outputs(func_entry);
-        let func_entry_ctrl = func_entry_outputs[0];
-        let func_param1 = func_entry_outputs[1];
-
-        let call = func_graph.create_node(
-            NodeKind::Call(FunctionRef::External(extfunc)),
-            [func_entry_ctrl, func_param1],
-            [DepValueKind::Control, DepValueKind::Value(Type::I32)],
-        );
-
-        let call_outputs = func_graph.node_outputs(call);
-        let call_ctrl = call_outputs[0];
-        let call_retval = call_outputs[1];
-
-        func_graph.create_node(NodeKind::Return, [call_ctrl, call_retval], []);
-
         check_dump_graphviz(
-            &module,
-            &module.functions[func].graph,
-            func_entry,
+            "
+            extfunc @my_ext_func:i32(i64)
+            func @my_func:i32(i64) {
+                %0:ctrl, %1:i64 = entry
+                %2:ctrl, %3:i32 = call @my_ext_func %0, %1
+                return %2, %3
+            }",
             expect![[r#"
                 digraph {
                     node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> i64}}"]
@@ -143,5 +112,76 @@ mod tests {
                 }
             "#]],
         );
+    }
+
+    #[test]
+    fn dump_iota_graph() {
+        check_dump_graphviz(
+            "
+        func @iota(ptr, i64) {
+            %entry_ctrl:ctrl, %arr:ptr, %n:i64 = entry
+            %zero:i64 = iconst 0
+            %zerocmp:i32 = icmp eq %n, %zero
+            %iszero:ctrl, %isnonzero:ctrl = brcond %entry_ctrl, %zerocmp
+            %loopbody:ctrl, %loopphi:phisel = region %isnonzero, %looplatch
+            %i:i64 = phi %loopphi, %zero, %inext
+            %three:i64 = iconst 3
+            %off:i64 = shl %i, %three
+            %ptr:ptr = ptroff %arr, %off
+            %poststore:ctrl = store %loopbody, %i, %ptr
+            %one:i64 = iconst 1
+            %inext:i64 = iadd %i, %one
+            %donecmp:i32 = icmp eq %inext, %n
+            %loopdone:ctrl, %looplatch:ctrl = brcond %poststore, %donecmp
+            %exit:ctrl, %exitphi:phisel = region %iszero, %loopdone
+            return %exit
+        }
+        ",
+            expect![[r#"
+                digraph {
+                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> ptr | <o2> i64}}"]
+                    node10 [shape=Mrecord, ordering=in, label="{iconst 1 | {<o0> i64}}"]
+                    node1 [shape=Mrecord, ordering=in, label="{iconst 0 | {<o0> i64}}"]
+                    node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}"]
+                    node3 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}"]
+                    node6 [shape=Mrecord, ordering=in, label="{iconst 3 | {<o0> i64}}"]
+                    node7 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | shl | {<o0> i64}}"]
+                    node8 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}"]
+                    node9 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}"]
+                    node13 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}"]
+                    node14 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
+                    node15 [shape=Mrecord, ordering=in, label="{{<i0>} | return}"]
+                    node4 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
+                    node5 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | phi | {<o0> i64}}"]
+                    node11 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | iadd | {<o0> i64}}"]
+                    node12 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}"]
+                    node0:o2 -> node2:i0
+                    node1:o0 -> node2:i1
+                    node0:o0 -> node3:i0
+                    node2:o0 -> node3:i1
+                    node5:o0 -> node7:i0
+                    node6:o0 -> node7:i1
+                    node0:o1 -> node8:i0
+                    node7:o0 -> node8:i1
+                    node4:o0 -> node9:i0
+                    node5:o0 -> node9:i1
+                    node8:o0 -> node9:i2
+                    node9:o0 -> node13:i0
+                    node12:o0 -> node13:i1
+                    node3:o0 -> node14:i0
+                    node13:o0 -> node14:i1
+                    node14:o0 -> node15:i0
+                    node3:o1 -> node4:i0
+                    node13:o1 -> node4:i1
+                    node4:o1 -> node5:i0
+                    node1:o0 -> node5:i1
+                    node11:o0 -> node5:i2
+                    node5:o0 -> node11:i0
+                    node10:o0 -> node11:i1
+                    node11:o0 -> node12:i0
+                    node0:o2 -> node12:i1
+                }
+            "#]],
+        )
     }
 }

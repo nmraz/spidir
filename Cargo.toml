@@ -9,6 +9,7 @@ ir-graphviz = { path = "crates/ir-graphviz" }
 
 cranelift-entity = "0.95.0"
 expect-test = "1.4.1"
+itertools = { version = "0.11.0", default-features = false }
 smallvec = { version = "1.10.0", default-features = false, features = [
     "const_new",
 ] }

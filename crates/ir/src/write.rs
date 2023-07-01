@@ -42,6 +42,7 @@ pub fn write_graph(
 ) -> fmt::Result {
     for node in LiveNodeInfo::compute(graph, entry).reverse_postorder(graph) {
         write_node(w, module, graph, node, indentation)?;
+        writeln!(w)?;
     }
 
     Ok(())
@@ -84,7 +85,6 @@ pub fn write_node(
         first = false;
         write!(w, "%{}", input.as_u32())?;
     }
-    writeln!(w)?;
 
     Ok(())
 }
@@ -208,7 +208,7 @@ mod tests {
             let node = graph.create_node(kind, [], []);
             let mut output = String::new();
             write_node(&mut output, &module, &graph, node, 0).expect("failed to write node");
-            assert_eq!(output, expected.to_owned() + "\n");
+            assert_eq!(output, expected.to_owned());
         };
 
         let kinds = [

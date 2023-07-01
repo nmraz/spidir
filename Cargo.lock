@@ -489,6 +489,7 @@ dependencies = [
  "clap",
  "ir",
  "ir-graphviz",
+ "itertools",
  "parser",
  "tempfile",
 ]

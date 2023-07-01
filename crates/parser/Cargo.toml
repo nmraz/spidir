@@ -10,7 +10,7 @@ fx-utils.workspace = true
 ir.workspace = true
 
 expect-test.workspace = true
+itertools.workspace = true
 
 pest = { version = "2.7.0", default-features = false }
 pest_derive = { version = "2.7.0", default-features = false }
-itertools = { version = "0.11.0", default-features = false }

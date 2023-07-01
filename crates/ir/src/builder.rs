@@ -195,8 +195,8 @@ pub trait NodeFactoryExt: NodeFactory {
         build_int_div(self, NodeKind::Udiv, ctrl, a, b, ty)
     }
 
-    fn build_ptroff(&mut self, a: DepValue, b: DepValue) -> DepValue {
-        build_single_output_pure(self, NodeKind::PtrOff, [a, b], Type::Ptr)
+    fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::PtrOff, [ptr, off], Type::Ptr)
     }
 
     fn build_load(&mut self, ty: Type, ctrl: DepValue, ptr: DepValue) -> BuiltEffectful {

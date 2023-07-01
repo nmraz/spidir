@@ -231,6 +231,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "frontend"
+version = "0.1.0"
+dependencies = [
+ "cranelift-entity",
+ "fx-utils",
+ "ir",
+]
+
+[[package]]
 name = "fx-utils"
 version = "0.1.0"
 dependencies = [

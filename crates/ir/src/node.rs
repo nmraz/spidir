@@ -86,6 +86,7 @@ pub enum NodeKind {
     Udiv,
     Icmp(IcmpKind),
     FConst(f64),
+    PtrOff,
     Load,
     Store,
     BrCond,

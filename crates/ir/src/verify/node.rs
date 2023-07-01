@@ -36,6 +36,7 @@ pub fn verify_node_kind(
         NodeKind::Udiv => verify_int_div(graph, node, errors),
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
         NodeKind::FConst(_) => verify_fconst(graph, node, errors),
+        NodeKind::PtrOff => verify_ptroff(graph, node, errors),
         NodeKind::Load => verify_load(graph, node, errors),
         NodeKind::Store => verify_store(graph, node, errors),
         NodeKind::BrCond => verify_brcond(graph, node, errors),
@@ -223,6 +224,13 @@ fn verify_icmp(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError
         &[graph.value_kind(graph.node_inputs(node)[0])],
         errors,
     );
+}
+
+fn verify_ptroff(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 2, errors) else { return };
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::Ptr)], errors);
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::Ptr)], errors);
+    let _ = verify_integer_input_kind(graph, node, 1, errors);
 }
 
 fn verify_load(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {

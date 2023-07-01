@@ -45,6 +45,7 @@ nodekind        = {
   | "sdiv"
   | "udiv"
   | icmp_nodekind
+  | "ptroff"
   | "load"
   | "store"
   | "brcond"

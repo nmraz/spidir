@@ -12,3 +12,4 @@ ir-graphviz.workspace = true
 
 clap = { version = "4.3.10", features = ["derive"] }
 anyhow = "1.0.71"
+tempfile = "3.6.0"

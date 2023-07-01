@@ -3,18 +3,20 @@ use std::{
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
+    process::Command,
 };
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 use ir::module::{FunctionData, Module};
 use ir_graphviz::write_graphviz;
 use parser::parse_module;
+use tempfile::NamedTempFile;
 
 #[derive(Parser)]
 struct Cli {
     #[command(subcommand)]
-    subcommand: Command,
+    subcommand: ToolCommand,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -35,7 +37,7 @@ impl GraphFormat {
 }
 
 #[derive(Subcommand)]
-enum Command {
+enum ToolCommand {
     /// Display the specified function as a graphviz graph
     Graph {
         /// The input IR file
@@ -64,7 +66,7 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.subcommand {
-        Command::Graph {
+        ToolCommand::Graph {
             input_file,
             function: function_name,
             output_file,
@@ -89,17 +91,44 @@ fn main() -> Result<()> {
                 .values()
                 .find(|func| func.name == function_name)
                 .ok_or_else(|| anyhow!("function `{}` not found in module", function_name))?;
+
             match format {
                 GraphFormat::Dot => {
                     let mut output_file =
-                        File::create(output_file).context("failed to create output file")?;
+                        File::create(&output_file).context("failed to create output file")?;
                     output_dot_file(&mut output_file, &module, func)?;
                 }
-                GraphFormat::Svg => todo!(),
+                GraphFormat::Svg => {
+                    let mut dotfile =
+                        NamedTempFile::new().context("failed to create temporary dot file")?;
+                    output_dot_file(dotfile.as_file_mut(), &module, func)?;
+
+                    run_command(
+                        Command::new("dot")
+                            .arg("-Tsvg")
+                            .arg(dotfile.path())
+                            .arg("-o")
+                            .arg(&output_file),
+                    )
+                    .context("failed to run `dot`")?;
+                }
+            }
+
+            if !no_open {
+                run_command(Command::new("xdg-open").arg(&output_file))
+                    .context("failed to run `xdg-open`")?;
             }
         }
     }
 
+    Ok(())
+}
+
+fn run_command(command: &mut Command) -> Result<()> {
+    let status = command.spawn()?.wait()?;
+    if !status.success() {
+        bail!("command failed with exit code {status}");
+    }
     Ok(())
 }
 

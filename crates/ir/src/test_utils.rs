@@ -1,13 +1,13 @@
-use core::{array, iter};
+use core::array;
 
 use crate::{
+    builder::{build_entry, build_iconst, build_region},
     node::{DepValueKind, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
 pub fn create_const_typed(graph: &mut ValGraph, ty: Type) -> DepValue {
-    let const_node = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(ty)]);
-    graph.node_outputs(const_node)[0]
+    build_iconst(graph, ty, 5)
 }
 
 pub fn create_const32(graph: &mut ValGraph) -> DepValue {
@@ -22,27 +22,18 @@ pub fn create_entry<const N: usize>(
     graph: &mut ValGraph,
     input_types: [Type; N],
 ) -> (Node, DepValue, [DepValue; N]) {
-    let entry = graph.create_node(
-        NodeKind::Entry,
-        [],
-        iter::once(DepValueKind::Control).chain(input_types.into_iter().map(DepValueKind::Value)),
-    );
-    let entry_outputs = graph.node_outputs(entry);
+    let built_entry = build_entry(graph, &input_types);
+    let entry_outputs = graph.node_outputs(built_entry.node);
 
     (
-        entry,
-        entry_outputs[0],
+        built_entry.node,
+        built_entry.ctrl,
         array::from_fn(|i| entry_outputs[i + 1]),
     )
 }
 
 pub fn create_region<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]) -> DepValue {
-    let region = graph.create_node(
-        NodeKind::Region,
-        inputs,
-        [DepValueKind::Control, DepValueKind::PhiSelector],
-    );
-    graph.node_outputs(region)[0]
+    build_region(graph, &inputs).ctrl
 }
 
 pub fn create_return<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]) -> Node {

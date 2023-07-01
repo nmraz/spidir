@@ -1,10 +1,11 @@
 use alloc::{string::String, vec::Vec};
-use core::{fmt, iter};
+use core::fmt;
 
 use cranelift_entity::{entity_impl, PrimaryMap};
 
 use crate::{
-    node::{DepValueKind, FunctionRef, NodeKind, Type},
+    builder::build_entry,
+    node::{FunctionRef, Type},
     valgraph::{Node, ValGraph},
     write::write_module,
 };
@@ -32,17 +33,12 @@ pub struct FunctionData {
 impl FunctionData {
     pub fn new(name: String, sig: Signature) -> Self {
         let mut graph = ValGraph::new();
-        let entry_node = graph.create_node(
-            NodeKind::Entry,
-            [],
-            iter::once(DepValueKind::Control)
-                .chain(sig.param_types.iter().map(|&ty| DepValueKind::Value(ty))),
-        );
+        let entry = build_entry(&mut graph, &sig.param_types);
         Self {
             name,
             sig,
             graph,
-            entry: entry_node,
+            entry: entry.node,
         }
     }
 }

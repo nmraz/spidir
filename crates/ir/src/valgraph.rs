@@ -31,6 +31,10 @@ impl<'a> Inputs<'a> {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
+    pub fn get(&self, index: usize) -> Option<&DepValue> {
+        Some(&self.graph.uses[*self.use_list.get(index)?].value)
+    }
 }
 
 impl<'a> IntoIterator for Inputs<'a> {
@@ -49,7 +53,7 @@ impl<'a> Index<usize> for Inputs<'a> {
     type Output = DepValue;
 
     fn index(&self, index: usize) -> &Self::Output {
-        &self.graph.uses[self.use_list[index]].value
+        self.get(index).expect("input index out of bounds")
     }
 }
 
@@ -89,6 +93,10 @@ impl<'a> Outputs<'a> {
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    pub fn get(&self, index: usize) -> Option<&DepValue> {
+        self.0.get(index)
     }
 }
 

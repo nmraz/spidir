@@ -14,6 +14,7 @@ entity_impl!(Block);
 pub struct PhiHandle(Node);
 
 struct BlockData {
+    terminated: bool,
     region: Node,
     last_ctrl: DepValue,
 }
@@ -44,6 +45,7 @@ impl<'a> FunctionBuilder<'a> {
     pub fn create_block(&mut self) -> Block {
         let region = self.func.graph.build_region(&[]);
         self.blocks.push(BlockData {
+            terminated: false,
             region: region.node,
             last_ctrl: region.ctrl,
         })
@@ -75,18 +77,19 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub fn build_return(&mut self, value: Option<DepValue>) {
-        self.func.graph.build_return(self.cur_block_ctrl(), value);
+        let ctrl = self.terminate_cur_block();
+        self.func.graph.build_return(ctrl, value);
     }
 
     pub fn build_branch(&mut self, dest: Block) {
-        let cur_ctrl = self.cur_block_ctrl();
+        let cur_ctrl = self.terminate_cur_block();
         self.func
             .graph
             .add_node_input(self.blocks[dest].region, cur_ctrl);
     }
 
     pub fn build_brcond(&mut self, cond: DepValue, true_dest: Block, false_dest: Block) {
-        let cur_ctrl = self.cur_block_ctrl();
+        let cur_ctrl = self.terminate_cur_block();
         let built = self.func.graph.build_brcond(cur_ctrl, cond);
         self.func
             .graph
@@ -198,11 +201,23 @@ impl<'a> FunctionBuilder<'a> {
         self.blocks[block].last_ctrl = ctrl;
     }
 
+    fn terminate_cur_block(&mut self) -> DepValue {
+        let cur_block = self.require_cur_block();
+        let ctrl = self.blocks[cur_block].last_ctrl;
+        self.blocks[cur_block].terminated = true;
+        ctrl
+    }
+
     fn cur_block_ctrl(&self) -> DepValue {
         self.blocks[self.require_cur_block()].last_ctrl
     }
 
     fn require_cur_block(&self) -> Block {
-        self.cur_block.expect("current block not set")
+        let block = self.cur_block.expect("current block not set");
+        assert!(
+            !self.blocks[block].terminated,
+            "attempted to insert into terminated block"
+        );
+        block
     }
 }

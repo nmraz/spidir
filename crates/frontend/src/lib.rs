@@ -295,4 +295,62 @@ mod tests {
                 }"#]],
         );
     }
+
+    #[test]
+    fn build_phi_with_backedges() {
+        check_built_function(
+            Some(Type::I64),
+            &[Type::I64],
+            |builder| {
+                let entry_block = builder.create_block();
+                builder.set_entry_block(entry_block);
+                builder.set_block(entry_block);
+
+                let n = builder.build_param_ref(0);
+
+                let zero = builder.build_iconst(Type::I64, 0);
+                let zero_cmp = builder.build_icmp(IcmpKind::Eq, Type::I32, n, zero);
+
+                let exit_block = builder.create_block();
+                let loop_body = builder.create_block();
+
+                builder.build_brcond(zero_cmp, exit_block, loop_body);
+
+                builder.set_block(loop_body);
+                let (indvar_n_phi, indvar_n_val) = builder.build_phi(Type::I64, &[n]);
+                let (sum_phi, sum_val) = builder.build_phi(Type::I64, &[zero]);
+                let next_sum = builder.build_iadd(Type::I64, sum_val, indvar_n_val);
+                let one = builder.build_iconst(Type::I64, 1);
+                let next_indvar_n = builder.build_isub(Type::I64, indvar_n_val, one);
+                let exit_cmp = builder.build_icmp(IcmpKind::Eq, Type::I32, next_indvar_n, zero);
+
+                builder.build_brcond(exit_cmp, exit_block, loop_body);
+                builder.add_phi_input(indvar_n_phi, next_indvar_n);
+                builder.add_phi_input(sum_phi, next_sum);
+
+                builder.set_block(exit_block);
+                let (_, exit_sum) = builder.build_phi(Type::I64, &[zero, next_sum]);
+                builder.build_return(Some(exit_sum));
+            },
+            expect![[r#"
+                func @func:i64(i64) {
+                    %0:ctrl, %1:i64 = entry
+                    %2:ctrl, %3:phisel = region %0
+                    %15:i64 = iconst 1
+                    %4:i64 = iconst 0
+                    %5:i32 = icmp eq %1, %4
+                    %10:ctrl, %11:ctrl = brcond %2, %5
+                    %17:i32 = icmp eq %16, %4
+                    %18:ctrl, %19:ctrl = brcond %8, %17
+                    %6:ctrl, %7:phisel = region %10, %18
+                    %8:ctrl, %9:phisel = region %11, %19
+                    %12:i64 = phi %9, %1, %16
+                    %16:i64 = isub %12, %15
+                    %13:i64 = phi %9, %4, %14
+                    %14:i64 = iadd %13, %12
+                    %20:i64 = phi %7, %4, %14
+                    return %6, %20
+                }"#]],
+        );
+    }
 }

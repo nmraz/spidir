@@ -10,3 +10,6 @@ fx-utils.workspace = true
 ir.workspace = true
 
 cranelift-entity.workspace = true
+
+[dev-dependencies]
+expect-test.workspace = true

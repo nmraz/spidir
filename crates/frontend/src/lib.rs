@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), no_std)]
+
 use cranelift_entity::{entity_impl, PrimaryMap};
 use ir::{
     builder::NodeFactoryExt,
@@ -219,5 +221,78 @@ impl<'a> FunctionBuilder<'a> {
             "attempted to insert into terminated block"
         );
         block
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::{expect, Expect};
+    use ir::{
+        module::{FunctionData, Module, Signature},
+        node::Type,
+    };
+
+    use super::*;
+
+    fn check_built_function(
+        ret_type: Option<Type>,
+        params: &[Type],
+        build: impl FnOnce(&mut FunctionBuilder<'_>),
+        expected: Expect,
+    ) {
+        let mut module = Module::new();
+        let func = module.functions.push(FunctionData::new(
+            "func".to_owned(),
+            Signature {
+                ret_type,
+                param_types: params.to_owned(),
+            },
+        ));
+        build(&mut FunctionBuilder::new(&mut module.functions[func]));
+        expected.assert_eq(module.to_string().trim());
+    }
+
+    #[test]
+    fn build_simple_function() {
+        check_built_function(
+            Some(Type::I32),
+            &[Type::I32, Type::I32, Type::I32],
+            |builder| {
+                // Add or multiply second and third parameters, depending on whether first parameter
+                // is truthy.
+
+                let entry_block = builder.create_block();
+                builder.set_entry_block(entry_block);
+                builder.set_block(entry_block);
+
+                let add_block = builder.create_block();
+                let mul_block = builder.create_block();
+
+                let cond = builder.build_param_ref(0);
+                let a = builder.build_param_ref(1);
+                let b = builder.build_param_ref(2);
+
+                builder.build_brcond(cond, add_block, mul_block);
+                builder.set_block(add_block);
+                let add_res = builder.build_iadd(Type::I32, a, b);
+                builder.build_return(Some(add_res));
+
+                builder.set_block(mul_block);
+                let mul_res = builder.build_imul(Type::I32, a, b);
+                builder.build_return(Some(mul_res));
+            },
+            expect![[r#"
+                func @func:i32(i32, i32, i32) {
+                    %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
+                    %4:ctrl, %5:phisel = region %0
+                    %10:ctrl, %11:ctrl = brcond %4, %1
+                    %6:ctrl, %7:phisel = region %10
+                    %8:ctrl, %9:phisel = region %11
+                    %12:i32 = iadd %2, %3
+                    return %6, %12
+                    %13:i32 = imul %2, %3
+                    return %8, %13
+                }"#]],
+        );
     }
 }

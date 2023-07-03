@@ -18,11 +18,13 @@ entity_impl!(Function, "func");
 pub struct ExternFunction(u32);
 entity_impl!(ExternFunction, "extfunc");
 
+#[derive(Debug, Clone)]
 pub struct Signature {
     pub ret_type: Option<Type>,
     pub param_types: Vec<Type>,
 }
 
+#[derive(Clone)]
 pub struct FunctionData {
     pub name: String,
     pub sig: Signature,
@@ -43,16 +45,19 @@ impl FunctionData {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ExternFunctionData {
     pub name: String,
     pub sig: Signature,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct FunctionMetadata<'a> {
     pub name: &'a str,
     pub sig: &'a Signature,
 }
 
+#[derive(Clone)]
 pub struct Module {
     pub functions: PrimaryMap<Function, FunctionData>,
     pub extern_functions: PrimaryMap<ExternFunction, ExternFunctionData>,

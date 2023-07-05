@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::{
-    module::{ExternFunctionData, FunctionData, Module, Signature},
+    module::{ExternFunctionData, FunctionData, Module, Signature, StackSlots},
     node::{FunctionRef, NodeKind},
     valgraph::{Node, ValGraph},
     valwalk::LiveNodeInfo,
@@ -29,8 +29,28 @@ pub fn write_function(w: &mut dyn fmt::Write, module: &Module, func: &FunctionDa
     write!(w, "func @{}", func.name)?;
     write_signature(w, &func.sig)?;
     w.write_str(" {\n")?;
+    write_stack_slots(w, &func.stack_slots, 4)?;
     write_graph(w, module, &func.graph, func.entry, 4)?;
     w.write_str("}\n")
+}
+
+pub fn write_stack_slots(
+    w: &mut dyn fmt::Write,
+    stack_slots: &StackSlots,
+    indentation: u32,
+) -> fmt::Result {
+    for (slot, data) in stack_slots {
+        write_indendation(w, indentation)?;
+        writeln!(
+            w,
+            "stackslot ${}: size {}, align {}",
+            slot.as_u32(),
+            data.size,
+            data.align
+        )?;
+    }
+
+    Ok(())
 }
 
 pub fn write_graph(
@@ -55,9 +75,7 @@ pub fn write_node(
     node: Node,
     indentation: u32,
 ) -> fmt::Result {
-    for _ in 0..indentation {
-        w.write_char(' ')?;
-    }
+    write_indendation(w, indentation)?;
 
     let outputs = graph.node_outputs(node);
 
@@ -86,6 +104,13 @@ pub fn write_node(
         write!(w, "%{}", input.as_u32())?;
     }
 
+    Ok(())
+}
+
+fn write_indendation(w: &mut dyn fmt::Write, indentation: u32) -> fmt::Result {
+    for _ in 0..indentation {
+        w.write_char(' ')?;
+    }
     Ok(())
 }
 
@@ -160,6 +185,7 @@ mod tests {
     use expect_test::{expect, Expect};
 
     use crate::{
+        builder::NodeFactoryExt,
         module::{ExternFunctionData, FunctionData, Signature, StackSlotData},
         node::{DepValueKind, IcmpKind, Type},
         test_utils::{create_entry, create_loop_graph, create_return},
@@ -365,6 +391,48 @@ mod tests {
                 func @nop(i32) {
                     %0:ctrl, %1:i32 = entry
                     return %0
+                }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn write_stack_slot_func() {
+        let mut function = FunctionData::new(
+            "with_slots".to_owned(),
+            Signature {
+                ret_type: None,
+                param_types: vec![Type::I32, Type::F64],
+            },
+        );
+        let graph = &mut function.graph;
+        let entry_outputs = graph.node_outputs(function.entry);
+        let entry_ctrl = entry_outputs[0];
+        let param32 = entry_outputs[1];
+        let param64 = entry_outputs[2];
+
+        let slot32 = function.stack_slots.push(StackSlotData::new(4, 4));
+        let slot64 = function.stack_slots.push(StackSlotData::new(8, 8));
+
+        let addr32 = graph.build_stackaddr(slot32);
+        let addr64 = graph.build_stackaddr(slot64);
+
+        let store32_ctrl = graph.build_store(entry_ctrl, param32, addr32);
+        let store64_ctrl = graph.build_store(store32_ctrl, param64, addr64);
+        graph.build_return(store64_ctrl, None);
+
+        check_write_function(
+            &function,
+            expect![[r#"
+                func @with_slots(i32, f64) {
+                    stackslot $0: size 4, align 4
+                    stackslot $1: size 8, align 8
+                    %0:ctrl, %1:i32, %2:f64 = entry
+                    %4:ptr = stackaddr $1
+                    %3:ptr = stackaddr $0
+                    %5:ctrl = store %0, %1, %3
+                    %6:ctrl = store %5, %2, %4
+                    return %6
                 }
             "#]],
         );

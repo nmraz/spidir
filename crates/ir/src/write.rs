@@ -116,6 +116,7 @@ pub fn write_node_kind(
         NodeKind::PtrOff => w.write_str("ptroff")?,
         NodeKind::Load => w.write_str("load")?,
         NodeKind::Store => w.write_str("store")?,
+        NodeKind::StackAddr(slot) => write!(w, "stackaddr ${}", slot.as_u32())?,
         NodeKind::BrCond => w.write_str("brcond")?,
         NodeKind::Call(func) => {
             w.write_str("call ")?;
@@ -159,7 +160,7 @@ mod tests {
     use expect_test::{expect, Expect};
 
     use crate::{
-        module::{ExternFunctionData, FunctionData, Signature},
+        module::{ExternFunctionData, FunctionData, Signature, StackSlotData},
         node::{DepValueKind, IcmpKind, Type},
         test_utils::{create_entry, create_loop_graph, create_return},
     };
@@ -195,6 +196,10 @@ mod tests {
                 param_types: vec![],
             },
         ));
+
+        let stack_slot = module.functions[func]
+            .stack_slots
+            .push(StackSlotData::new(4, 4));
 
         let extfunc = module.extern_functions.push(ExternFunctionData {
             name: "my_ext_func".to_owned(),
@@ -239,6 +244,7 @@ mod tests {
             (NodeKind::PtrOff, "ptroff"),
             (NodeKind::Load, "load"),
             (NodeKind::Store, "store"),
+            (NodeKind::StackAddr(stack_slot), "stackaddr $0"),
             (NodeKind::BrCond, "brcond"),
             (NodeKind::Call(FunctionRef::Internal(func)), "call @my_func"),
             (

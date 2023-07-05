@@ -34,6 +34,12 @@ pub struct StackSlotData {
     pub align: u32,
 }
 
+impl StackSlotData {
+    pub fn new(size: u32, align: u32) -> Self {
+        Self { size, align }
+    }
+}
+
 pub type StackSlots = PrimaryMap<StackSlot, StackSlotData>;
 
 #[derive(Clone)]

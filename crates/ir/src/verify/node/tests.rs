@@ -1,4 +1,5 @@
 use crate::{
+    module::{StackSlotData, StackSlots},
     node::{IcmpKind, NodeKind, Type},
     test_utils::{create_const32, create_const64, create_entry, create_region, create_return},
     verify::verify_graph,
@@ -925,6 +926,51 @@ fn verify_store_output_kinds() {
         GraphVerifierError::BadOutputKind {
             value: graph.node_outputs(non_ctrl_store)[0],
             expected: vec![DepValueKind::Control],
+        },
+    );
+}
+
+#[test]
+fn verify_graph_stack_slot_function_ok() {
+    let mut graph = ValGraph::new();
+    let mut stack_slots = StackSlots::new();
+    let slot = stack_slots.push(StackSlotData::new(4, 4));
+
+    let (entry, entry_ctrl, [input]) = create_entry(&mut graph, [Type::I32]);
+    let slot_addr_node = graph.create_node(
+        NodeKind::StackAddr(slot),
+        [],
+        [DepValueKind::Value(Type::Ptr)],
+    );
+    let slot_addr = graph.node_outputs(slot_addr_node)[0];
+    let store = graph.create_node(
+        NodeKind::Store,
+        [entry_ctrl, input, slot_addr],
+        [DepValueKind::Control],
+    );
+    let store_ctrl = graph.node_outputs(store)[0];
+    create_return(&mut graph, [store_ctrl]);
+    check_verify_graph_ok(&graph, entry, &[Type::I32], None);
+}
+
+#[test]
+fn verify_stack_slot_output_kinds() {
+    let mut graph = ValGraph::new();
+    let mut stack_slots = StackSlots::new();
+    let slot = stack_slots.push(StackSlotData::new(4, 4));
+
+    let slot_addr_node = graph.create_node(
+        NodeKind::StackAddr(slot),
+        [],
+        [DepValueKind::Value(Type::F64)],
+    );
+    let slot_addr = graph.node_outputs(slot_addr_node)[0];
+    check_verify_node_kind(
+        &graph,
+        slot_addr_node,
+        GraphVerifierError::BadOutputKind {
+            value: slot_addr,
+            expected: vec![DepValueKind::Value(Type::Ptr)],
         },
     );
 }

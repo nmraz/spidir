@@ -1,6 +1,7 @@
 use core::iter;
 
 use crate::{
+    module::StackSlot,
     node::{DepValueKind, FunctionRef, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -214,6 +215,15 @@ pub trait NodeFactoryExt: NodeFactory {
     fn build_store(&mut self, ctrl: DepValue, data: DepValue, ptr: DepValue) -> DepValue {
         let store = self.create_node(NodeKind::Store, [ctrl, data, ptr], [DepValueKind::Control]);
         self.graph().node_outputs(store)[0]
+    }
+
+    fn build_stackaddr(&mut self, slot: StackSlot) -> DepValue {
+        let addr = self.create_node(
+            NodeKind::StackAddr(slot),
+            [],
+            [DepValueKind::Value(Type::Ptr)],
+        );
+        self.graph().node_outputs(addr)[0]
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::{
-    module::{ExternFunctionData, FunctionData},
+    module::{ExternFunctionData, FunctionData, StackSlots},
     node::Type,
     test_utils::{create_const32, create_entry, create_loop_graph, create_region, create_return},
 };
@@ -143,6 +143,7 @@ fn verify_module_loop_function() {
     module.functions.push(FunctionData {
         name: "sum_to_n".to_owned(),
         sig,
+        stack_slots: StackSlots::new(),
         graph,
         entry,
     });

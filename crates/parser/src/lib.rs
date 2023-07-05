@@ -6,7 +6,7 @@ use alloc::{borrow::ToOwned, boxed::Box, vec::Vec};
 
 use fx_utils::FxHashMap;
 use ir::{
-    module::{ExternFunctionData, Function, FunctionData, Module, Signature},
+    module::{ExternFunctionData, Function, FunctionData, Module, Signature, StackSlots},
     node::{DepValueKind, FunctionRef, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -92,6 +92,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 let function = module.functions.push(FunctionData {
                     name: name.to_owned(),
                     sig: parsed.sig,
+                    stack_slots: StackSlots::new(),
                     graph: ValGraph::new(),
                     // This is cheating, but we promise not to inspect the graph until we fill it in later.
                     entry: Node::from_u32(0),

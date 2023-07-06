@@ -9,6 +9,7 @@ float   = @{
 }
 
 valname  = @{ "%" ~ ("_" | ASCII_ALPHANUMERIC)+ }
+slotname = @{ "$" ~ ("_" | ASCII_ALPHANUMERIC)+ }
 funcname = @{ "@" ~ ident }
 
 type = { "i32" | "i64" | "f64" | "ptr" }
@@ -22,11 +23,12 @@ valkind = { "ctrl" | "phisel" | type }
 
 icmpkind = { "eq" | "ne" | "slt" | "sle" | "ult" | "ule" }
 
-iconst_nodekind = { "iconst" ~ integer }
-fconst_nodekind = { "fconst" ~ float }
-icmp_nodekind   = { "icmp" ~ icmpkind }
-call_nodekind   = { "call" ~ funcname }
-nodekind        = {
+iconst_nodekind    = { "iconst" ~ integer }
+fconst_nodekind    = { "fconst" ~ float }
+icmp_nodekind      = { "icmp" ~ icmpkind }
+stackaddr_nodekind = { "stackaddr" ~ slotname }
+call_nodekind      = { "call" ~ funcname }
+nodekind           = {
     "entry"
   | "return"
   | "region"
@@ -48,6 +50,7 @@ nodekind        = {
   | "ptroff"
   | "load"
   | "store"
+  | stackaddr_nodekind
   | "brcond"
   | call_nodekind
 }
@@ -62,8 +65,11 @@ node = {
 
 graph = { ((node ~ line_end) | line_end)* }
 
+stackslot  = { "stackslot" ~ slotname ~ ":" ~ "size" ~ integer ~ "," ~ "align" ~ integer }
+stackslots = { ((stackslot ~ line_end) | line_end)* }
+
 func = {
-    "func" ~ signature ~ "{" ~ line_end ~ graph ~ "}"
+    "func" ~ signature ~ "{" ~ line_end ~ stackslots ~ graph ~ "}"
 }
 
 module_item = _{ extfunc | func }

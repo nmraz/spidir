@@ -2,11 +2,16 @@
 
 extern crate alloc;
 
+use core::str::FromStr;
+
 use alloc::{borrow::ToOwned, boxed::Box, vec::Vec};
 
 use fx_utils::FxHashMap;
 use ir::{
-    module::{ExternFunctionData, Function, FunctionData, Module, Signature, StackSlots},
+    module::{
+        ExternFunctionData, Function, FunctionData, Module, Signature, StackSlot, StackSlotData,
+        StackSlots,
+    },
     node::{DepValueKind, FunctionRef, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -36,11 +41,17 @@ struct NodeListing<'a> {
 struct ParsedFunction<'a> {
     name_span: Span<'a>,
     sig: Signature,
+    stack_slots: StackSlots,
+    stack_slot_names: StackSlotNames<'a>,
     graph_pair: Pair<'a, Rule>,
 }
 
+type StackSlotNames<'a> = FxHashMap<&'a str, StackSlot>;
+type FunctionNames<'a> = FxHashMap<&'a str, FunctionRef>;
+
 struct PendingFunction<'a> {
     id: Function,
+    stack_slot_names: StackSlotNames<'a>,
     graph_pair: Pair<'a, Rule>,
 }
 
@@ -51,7 +62,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
 
     let mut module = Module::new();
     let mut pending_functions = Vec::new();
-    let mut function_names = FxHashMap::default();
+    let mut function_names = FunctionNames::default();
 
     for item in parsed.into_inner() {
         match item.as_rule() {
@@ -78,7 +89,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 function_names.insert(name, FunctionRef::External(function));
             }
             Rule::func => {
-                let parsed = extract_function(item);
+                let parsed = extract_function(item)?;
                 let name = name_from_span(&parsed.name_span);
                 if function_names.contains_key(name) {
                     return Err(Box::new(Error::new_from_span(
@@ -92,7 +103,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 let function = module.functions.push(FunctionData {
                     name: name.to_owned(),
                     sig: parsed.sig,
-                    stack_slots: StackSlots::new(),
+                    stack_slots: parsed.stack_slots,
                     graph: ValGraph::new(),
                     // This is cheating, but we promise not to inspect the graph until we fill it in later.
                     entry: Node::from_u32(0),
@@ -101,6 +112,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 function_names.insert(name, FunctionRef::Internal(function));
                 pending_functions.push(PendingFunction {
                     id: function,
+                    stack_slot_names: parsed.stack_slot_names,
                     graph_pair: parsed.graph_pair,
                 });
             }
@@ -111,30 +123,73 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
 
     for func in pending_functions {
         let func_data = &mut module.functions[func.id];
-        func_data.entry = extract_graph(func.graph_pair, &function_names, &mut func_data.graph)?;
+        func_data.entry = extract_graph(
+            func.graph_pair,
+            &func.stack_slot_names,
+            &function_names,
+            &mut func_data.graph,
+        )?;
     }
 
     Ok(module)
 }
 
-fn extract_function(func_pair: Pair<'_, Rule>) -> ParsedFunction<'_> {
+fn extract_function(func_pair: Pair<'_, Rule>) -> Result<ParsedFunction<'_>, Box<Error<Rule>>> {
     let mut inner = func_pair.into_inner();
     let sig_pair = inner.next().expect("function should have signature");
     assert!(sig_pair.as_rule() == Rule::signature);
 
     let (name, sig) = extract_name_signature(sig_pair);
+    let stack_slot_pair = inner.next().expect("function should have stack slots");
+    let (stack_slots, stack_slot_names) = extract_stack_slots(stack_slot_pair)?;
     let graph_pair = inner.next().expect("function should have graph");
 
-    ParsedFunction {
+    Ok(ParsedFunction {
         name_span: name,
         sig,
+        stack_slots,
+        stack_slot_names,
         graph_pair,
+    })
+}
+
+fn extract_stack_slots(
+    stack_slots_pair: Pair<'_, Rule>,
+) -> Result<(StackSlots, StackSlotNames<'_>), Box<Error<Rule>>> {
+    let mut slots = StackSlots::new();
+    let mut names = StackSlotNames::default();
+
+    for stack_slot_pair in stack_slots_pair.into_inner() {
+        let mut inner = stack_slot_pair.into_inner();
+        let name = inner.next().expect("stack slot should have name");
+        let size = inner.next().expect("stack slot should have size");
+        let align = inner.next().expect("stack slot should have align");
+
+        let name_span = name.as_span();
+        let name = name_from_span(&name_span);
+        if names.contains_key(name) {
+            return Err(Box::new(Error::new_from_span(
+                ErrorVariant::CustomError {
+                    message: "stack slot redefined".to_owned(),
+                },
+                name_span,
+            )));
+        }
+
+        let size = parse_from_str(&size, "invalid stack slot size")?;
+        let align = parse_from_str(&align, "invalid stack slot align")?;
+
+        let slot = slots.push(StackSlotData::new(size, align));
+        names.insert(name, slot);
     }
+
+    Ok((slots, names))
 }
 
 fn extract_graph(
     graph_pair: Pair<'_, Rule>,
-    function_names: &FxHashMap<&str, FunctionRef>,
+    stack_slot_names: &StackSlotNames<'_>,
+    function_names: &FunctionNames<'_>,
     graph: &mut ValGraph,
 ) -> Result<Node, Box<Error<Rule>>> {
     let mut value_map = FxHashMap::<&str, DepValue>::default();
@@ -142,7 +197,7 @@ fn extract_graph(
     let graph_start = graph_pair.as_span().start_pos();
     let node_listings = graph_pair
         .into_inner()
-        .map(|pair| extract_node(pair, function_names))
+        .map(|pair| extract_node(pair, stack_slot_names, function_names))
         .collect::<Result<Vec<_>, _>>()?;
     let mut nodes = Vec::new();
 
@@ -207,7 +262,8 @@ fn extract_graph(
 
 fn extract_node<'a>(
     node_pair: Pair<'a, Rule>,
-    function_names: &FxHashMap<&str, FunctionRef>,
+    stack_slot_names: &StackSlotNames<'_>,
+    function_names: &FunctionNames<'_>,
 ) -> Result<NodeListing<'a>, Box<Error<Rule>>> {
     let mut inner = node_pair.into_inner().peekable();
     let defs = inner
@@ -215,7 +271,11 @@ fn extract_node<'a>(
         .map(extract_valdef)
         .collect();
 
-    let kind = extract_node_kind(inner.next().expect("node should have kind"), function_names)?;
+    let kind = extract_node_kind(
+        inner.next().expect("node should have kind"),
+        stack_slot_names,
+        function_names,
+    )?;
 
     let uses = inner
         .map(|pair| {
@@ -229,7 +289,8 @@ fn extract_node<'a>(
 
 fn extract_node_kind(
     node_kind_pair: Pair<'_, Rule>,
-    function_names: &FxHashMap<&str, FunctionRef>,
+    stack_slot_names: &StackSlotNames<'_>,
+    function_names: &FunctionNames<'_>,
 ) -> Result<NodeKind, Box<Error<Rule>>> {
     match node_kind_pair.as_str() {
         "entry" => Ok(NodeKind::Entry),
@@ -251,13 +312,14 @@ fn extract_node_kind(
         "ptroff" => Ok(NodeKind::PtrOff),
         "store" => Ok(NodeKind::Store),
         "brcond" => Ok(NodeKind::BrCond),
-        _ => extract_special_node_kind(node_kind_pair, function_names),
+        _ => extract_special_node_kind(node_kind_pair, stack_slot_names, function_names),
     }
 }
 
 fn extract_special_node_kind(
     node_kind_pair: Pair<'_, Rule>,
-    function_names: &FxHashMap<&str, FunctionRef>,
+    stack_slot_names: &StackSlotNames<'_>,
+    function_names: &FunctionNames<'_>,
 ) -> Result<NodeKind, Box<Error<Rule>>> {
     let special_pair = node_kind_pair
         .into_inner()
@@ -271,28 +333,26 @@ fn extract_special_node_kind(
 
     let kind = match rule {
         Rule::iconst_nodekind => {
-            let value = inner_pair.as_str().parse().map_err(|_| {
-                Box::new(Error::new_from_span(
-                    ErrorVariant::CustomError {
-                        message: "invalid integer literal".to_owned(),
-                    },
-                    inner_pair.as_span(),
-                ))
-            })?;
-            NodeKind::IConst(value)
+            NodeKind::IConst(parse_from_str(&inner_pair, "invalid integer literal")?)
         }
-        Rule::fconst_nodekind => {
-            let value = inner_pair.as_str().parse().map_err(|_| {
-                Box::new(Error::new_from_span(
-                    ErrorVariant::CustomError {
-                        message: "invalid floating-point literal".to_owned(),
-                    },
-                    inner_pair.as_span(),
-                ))
-            })?;
-            NodeKind::FConst(value)
-        }
+        Rule::fconst_nodekind => NodeKind::FConst(parse_from_str(
+            &inner_pair,
+            "invalid floating-point literal",
+        )?),
         Rule::icmp_nodekind => NodeKind::Icmp(extract_icmpkind(inner_pair)),
+        Rule::stackaddr_nodekind => {
+            let name_span = inner_pair.as_span();
+            let name = name_from_span(&name_span);
+            let slot = *stack_slot_names.get(name).ok_or_else(|| {
+                Box::new(Error::new_from_span(
+                    ErrorVariant::CustomError {
+                        message: "undefined stack slot".to_owned(),
+                    },
+                    name_span,
+                ))
+            })?;
+            NodeKind::StackAddr(slot)
+        }
         Rule::call_nodekind => {
             let name_span = inner_pair.as_span();
             let name = name_from_span(&name_span);
@@ -402,6 +462,17 @@ fn extract_type(type_pair: Pair<'_, Rule>) -> Type {
         "ptr" => Type::Ptr,
         _ => unreachable!("unexpected type name"),
     }
+}
+
+fn parse_from_str<T: FromStr>(pair: &Pair<'_, Rule>, message: &str) -> Result<T, Box<Error<Rule>>> {
+    pair.as_str().parse().map_err(|_| {
+        Box::new(Error::new_from_span(
+            ErrorVariant::CustomError {
+                message: message.to_owned(),
+            },
+            pair.as_span(),
+        ))
+    })
 }
 
 #[cfg(test)]
@@ -821,6 +892,122 @@ mod tests {
                     return %4, %2
                 }
             "#]],
+        );
+    }
+
+    #[test]
+    fn parse_stack_slots() {
+        let module = parse_module(
+            "
+            func @with_slots(i32, f64) {
+                stackslot $slot32: size 4, align 4
+                stackslot $slot64: size 8, align 8
+                %0:ctrl, %1:i32, %2:f64 = entry
+                %4:ptr = stackaddr $slot64
+                %3:ptr = stackaddr $slot32
+                %5:ctrl = store %0, %1, %3
+                %6:ctrl = store %5, %2, %4
+                return %6
+            }",
+        )
+        .unwrap();
+
+        check_module(
+            &module,
+            expect![[r#"
+
+                func @with_slots(i32, f64) {
+                    stackslot $0: size 4, align 4
+                    stackslot $1: size 8, align 8
+                    %0:ctrl, %1:i32, %2:f64 = entry
+                    %3:ptr = stackaddr $1
+                    %4:ptr = stackaddr $0
+                    %5:ctrl = store %0, %1, %4
+                    %6:ctrl = store %5, %2, %3
+                    return %6
+                }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn parse_redefined_stack_slot() {
+        check_parse_error(
+            "
+            func @with_slots(i32, f64) {
+                stackslot $0: size 4, align 4
+                stackslot $0: size 8, align 8
+                %0:ctrl, %1:i32, %2:f64 = entry
+                %4:ptr = stackaddr $0
+                %3:ptr = stackaddr $0
+                %5:ctrl = store %0, %1, %3
+                %6:ctrl = store %5, %2, %4
+                return %6
+            }",
+            expect![[r#"
+                 --> 4:27
+                  |
+                4 |                 stackslot $0: size 8, align 8
+                  |                           ^^
+                  |
+                  = stack slot redefined"#]],
+        );
+    }
+
+    #[test]
+    fn parse_stack_slot_size_out_of_range() {
+        check_parse_error(
+            "
+            func @with_slots(i32, f64) {
+                stackslot $0: size 123456789123456789123456789, align 4
+            }",
+            expect![[r#"
+                 --> 3:36
+                  |
+                3 |                 stackslot $0: size 123456789123456789123456789, align 4
+                  |                                    ^-------------------------^
+                  |
+                  = invalid stack slot size"#]],
+        );
+    }
+
+    #[test]
+    fn parse_stack_slot_align_out_of_range() {
+        check_parse_error(
+            "
+            func @with_slots(i32, f64) {
+                stackslot $0: size 4, align 123456789123456789123456789
+            }",
+            expect![[r#"
+                 --> 3:45
+                  |
+                3 |                 stackslot $0: size 4, align 123456789123456789123456789
+                  |                                             ^-------------------------^
+                  |
+                  = invalid stack slot align"#]],
+        );
+    }
+
+    #[test]
+    fn parse_undefined_stack_slot() {
+        check_parse_error(
+            "
+            func @with_slots(i32, f64) {
+                stackslot $0: size 4, align 4
+                %0:ctrl, %1:i32, %2:f64 = entry
+                %4:ptr = stackaddr $0
+                %3:ptr = stackaddr $1
+                %5:ctrl = store %0, %1, %3
+                %6:ctrl = store %5, %2, %4
+                return %6
+            }",
+            expect![[r#"
+                 --> 6:36
+                  |
+                6 |                 %3:ptr = stackaddr $1
+                  |                                    ^^
+                  |
+                  = undefined stack slot"#]],
         );
     }
 

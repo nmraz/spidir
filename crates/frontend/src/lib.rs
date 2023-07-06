@@ -3,7 +3,7 @@
 use cranelift_entity::{entity_impl, PrimaryMap};
 use ir::{
     builder::NodeFactoryExt,
-    module::FunctionData,
+    module::{FunctionData, StackSlot, StackSlotData},
     node::{FunctionRef, IcmpKind, Type},
     valgraph::{DepValue, Node},
 };
@@ -51,6 +51,10 @@ impl<'a> FunctionBuilder<'a> {
             region: region.node,
             last_ctrl: region.ctrl,
         })
+    }
+
+    pub fn create_stack_slot(&mut self, size: u32, align: u32) -> StackSlot {
+        self.func.stack_slots.push(StackSlotData::new(size, align))
     }
 
     pub fn set_entry_block(&mut self, block: Block) {
@@ -196,6 +200,10 @@ impl<'a> FunctionBuilder<'a> {
             .graph
             .build_store(self.cur_block_ctrl(), data, ptr);
         self.advance_cur_block_ctrl(ctrl);
+    }
+
+    pub fn build_stackaddr(&mut self, slot: StackSlot) -> DepValue {
+        self.func.graph.build_stackaddr(slot)
     }
 
     fn advance_cur_block_ctrl(&mut self, ctrl: DepValue) {
@@ -350,6 +358,45 @@ mod tests {
                     %14:i64 = iadd %13, %12
                     %20:i64 = phi %7, %4, %14
                     return %6, %20
+                }"#]],
+        );
+    }
+
+    #[test]
+    fn build_stack_slots() {
+        check_built_function(
+            None,
+            &[Type::I32, Type::F64],
+            |builder| {
+                let slot32 = builder.create_stack_slot(4, 4);
+                let slot64 = builder.create_stack_slot(8, 8);
+
+                let entry_block = builder.create_block();
+                builder.set_entry_block(entry_block);
+                builder.set_block(entry_block);
+
+                let val32 = builder.build_param_ref(0);
+                let val64 = builder.build_param_ref(1);
+
+                let addr32 = builder.build_stackaddr(slot32);
+                builder.build_store(val32, addr32);
+
+                let addr64 = builder.build_stackaddr(slot64);
+                builder.build_store(val64, addr64);
+
+                builder.build_return(None);
+            },
+            expect![[r#"
+                func @func(i32, f64) {
+                    stackslot $0: size 4, align 4
+                    stackslot $1: size 8, align 8
+                    %0:ctrl, %1:i32, %2:f64 = entry
+                    %3:ctrl, %4:phisel = region %0
+                    %7:ptr = stackaddr $1
+                    %5:ptr = stackaddr $0
+                    %6:ctrl = store %3, %1, %5
+                    %8:ctrl = store %6, %2, %7
+                    return %8
                 }"#]],
         );
     }

@@ -43,11 +43,9 @@ fn do_panic(message: &str) -> ! {
 
 #[panic_handler]
 fn handle_panic(info: &PanicInfo<'_>) -> ! {
-    unsafe {
-        if PANICKING.swap(true, Ordering::Relaxed) {
-            do_panic("nested panic");
-        }
-
-        do_panic(&info.to_string());
+    if PANICKING.swap(true, Ordering::Relaxed) {
+        do_panic("nested panic");
     }
+
+    do_panic(&info.to_string());
 }

@@ -50,3 +50,12 @@ jobs:
       - run: cargo clippy -p c-api --all-features
         env:
           RUSTFLAGS: -C panic=abort
+
+  test-c-api:
+    name: C API Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - run: mkdir c-api-test/build && cmake -S c-api-test -B c-api-test/build
+      - run: cmake --build c-api-test/build

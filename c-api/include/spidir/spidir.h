@@ -21,10 +21,6 @@ typedef struct spidir_block {
     uint32_t id;
 } spidir_block_t;
 
-typedef struct spidir_stack_slot {
-    uint32_t id;
-} spidir_stack_slot_t;
-
 typedef struct spidir_value {
     uint32_t id;
 } spidir_value_t;
@@ -88,10 +84,6 @@ void spidir_module_dump(spidir_module_handle_t module,
                         spidir_dump_callback_t callback, void* ctx);
 
 spidir_block_t spidir_builder_create_block(spidir_builder_handle_t builder);
-
-spidir_stack_slot_t
-spidir_builder_create_stack_slot(spidir_builder_handle_t builder, uint32_t size,
-                                 uint32_t align);
 
 void spidir_builder_set_block(spidir_builder_handle_t builder,
                               spidir_block_t block);
@@ -186,7 +178,7 @@ spidir_value_t spidir_builder_build_store(spidir_builder_handle_t builder,
                                           spidir_value_t data,
                                           spidir_value_t ptr);
 
-spidir_value_t spidir_builder_build_stackaddr(spidir_builder_handle_t builder,
-                                              spidir_stack_slot_t slot);
+spidir_value_t spidir_builder_build_stackslot(spidir_builder_handle_t builder,
+                                              uint32_t size, uint32_t align);
 
 #endif

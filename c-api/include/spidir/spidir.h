@@ -4,8 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <cstdint>
-
 typedef struct spidir_module* spidir_module_handle_t;
 typedef struct spidir_builder* spidir_builder_handle_t;
 

@@ -36,14 +36,6 @@ impl<'a> FunctionBuilder<'a> {
         }
     }
 
-    pub fn cur_block(&self) -> Option<Block> {
-        self.cur_block
-    }
-
-    pub fn set_block(&mut self, block: Block) {
-        self.cur_block = Some(block);
-    }
-
     pub fn create_block(&mut self) -> Block {
         let region = self.func.graph.build_region(&[]);
         self.blocks.push(BlockData {
@@ -55,6 +47,14 @@ impl<'a> FunctionBuilder<'a> {
 
     pub fn create_stack_slot(&mut self, size: u32, align: u32) -> StackSlot {
         self.func.stack_slots.push(StackSlotData::new(size, align))
+    }
+
+    pub fn cur_block(&self) -> Option<Block> {
+        self.cur_block
+    }
+
+    pub fn set_block(&mut self, block: Block) {
+        self.cur_block = Some(block);
     }
 
     pub fn set_entry_block(&mut self, block: Block) {

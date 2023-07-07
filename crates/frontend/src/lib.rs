@@ -15,6 +15,16 @@ entity_impl!(Block);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PhiHandle(Node);
 
+impl PhiHandle {
+    pub fn as_u32(self) -> u32 {
+        self.0.as_u32()
+    }
+
+    pub fn from_u32(x: u32) -> Self {
+        Self(Node::from_u32(x))
+    }
+}
+
 struct BlockData {
     terminated: bool,
     region: Node,

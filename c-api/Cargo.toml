@@ -12,3 +12,6 @@ crate-type = ["staticlib"]
 [dependencies]
 frontend.workspace = true
 ir.workspace = true
+paste = "1.0.13"
+
+smallvec.workspace = true

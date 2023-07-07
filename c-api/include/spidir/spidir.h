@@ -42,11 +42,11 @@ typedef uint8_t spidir_icmp_kind_t;
 
 enum spidir_icmp_kind {
     SPIDIR_ICMP_EQ = 0,
-    SPIDIR_ICMP_NE = 0,
-    SPIDIR_ICMP_SLT = 0,
-    SPIDIR_ICMP_SLE = 0,
-    SPIDIR_ICMP_ULT = 0,
-    SPIDIR_ICMP_ULE = 0,
+    SPIDIR_ICMP_NE = 1,
+    SPIDIR_ICMP_SLT = 2,
+    SPIDIR_ICMP_SLE = 3,
+    SPIDIR_ICMP_ULT = 4,
+    SPIDIR_ICMP_ULE = 5,
 };
 
 typedef uint8_t spidir_dump_status_t;
@@ -93,15 +93,17 @@ void spidir_builder_set_entry_block(spidir_builder_handle_t builder,
 spidir_value_t spidir_builder_build_param_ref(spidir_builder_handle_t builder,
                                               uint32_t index);
 
-spidir_value_t spidir_builder_build_call(spidir_builder_handle_t builder,
-                                         const spidir_value_type_t* ret_type,
-                                         spidir_function_t func,
-                                         size_t arg_count,
-                                         const spidir_value_t* args);
+void spidir_builder_build_call(spidir_builder_handle_t builder,
+                               const spidir_value_type_t* ret_type,
+                               spidir_function_t func, size_t arg_count,
+                               const spidir_value_t* args,
+                               spidir_value_t* out_ret_value);
 
-spidir_value_t spidir_builder_build_extern_call(
-    spidir_builder_handle_t builder, const spidir_value_type_t* ret_type,
-    spidir_function_t func, size_t arg_count, const spidir_value_t* args);
+void spidir_builder_build_extern_call(spidir_builder_handle_t builder,
+                                      const spidir_value_type_t* ret_type,
+                                      spidir_function_t func, size_t arg_count,
+                                      const spidir_value_t* args,
+                                      spidir_value_t* out_ret_value);
 
 void spidir_builder_build_return(spidir_builder_handle_t builder,
                                  const spidir_value_t* value);

@@ -8,7 +8,7 @@ use core::{
     slice, str,
 };
 
-use alloc::{borrow::ToOwned, boxed::Box};
+use alloc::{borrow::ToOwned, boxed::Box, string::String};
 use frontend::FunctionBuilder;
 use ir::{
     module::{ExternFunctionData, Function, FunctionData, Module, Signature},
@@ -20,18 +20,24 @@ mod builder;
 #[cfg(not(test))]
 mod handlers;
 
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 struct ApiFunction(u32);
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 struct ApiExternFunction(u32);
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 struct ApiBlock(u32);
-#[repr(C)]
-struct ApiStackSlot(u32);
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 struct ApiValue(u32);
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 struct ApiPhi(u32);
+
+type ApiType = u8;
+type ApiIcmpKind = u8;
 
 type BuildFunctionCallback = extern "C" fn(*mut FunctionBuilder, *mut ());
 type DumpCallback = extern "C" fn(*const c_char, usize, *mut ()) -> u8;
@@ -42,11 +48,11 @@ const SPIDIR_TYPE_F64: u8 = 2;
 const SPIDIR_TYPE_PTR: u8 = 3;
 
 const SPIDIR_ICMP_EQ: u8 = 0;
-const SPIDIR_ICMP_NE: u8 = 0;
-const SPIDIR_ICMP_SLT: u8 = 0;
-const SPIDIR_ICMP_SLE: u8 = 0;
-const SPIDIR_ICMP_ULT: u8 = 0;
-const SPIDIR_ICMP_ULE: u8 = 0;
+const SPIDIR_ICMP_NE: u8 = 1;
+const SPIDIR_ICMP_SLT: u8 = 2;
+const SPIDIR_ICMP_SLE: u8 = 3;
+const SPIDIR_ICMP_ULT: u8 = 4;
+const SPIDIR_ICMP_ULE: u8 = 5;
 
 const SPIDIR_DUMP_CONTINUE: u8 = 0;
 
@@ -67,19 +73,15 @@ unsafe extern "C" fn spidir_module_destroy(module: *mut Module) {
 unsafe extern "C" fn spidir_module_create_function(
     module: *mut Module,
     name: *const c_char,
-    ret_type: *const u8,
+    ret_type: *const ApiType,
     param_count: usize,
-    param_types: *const u8,
+    param_types: *const ApiType,
 ) -> ApiFunction {
     unsafe {
         let module = &mut *module;
 
-        let (name, sig) = get_name_signature(name, ret_type, param_count, param_types);
-
-        let func = module
-            .functions
-            .push(FunctionData::new(name.to_owned(), sig));
-
+        let (name, sig) = name_signature_from_api(name, ret_type, param_count, param_types);
+        let func = module.functions.push(FunctionData::new(name, sig));
         ApiFunction(func.as_u32())
     }
 }
@@ -88,20 +90,17 @@ unsafe extern "C" fn spidir_module_create_function(
 unsafe extern "C" fn spidir_module_create_extern_function(
     module: *mut Module,
     name: *const c_char,
-    ret_type: *const u8,
+    ret_type: *const ApiType,
     param_count: usize,
-    param_types: *const u8,
+    param_types: *const ApiType,
 ) -> ApiExternFunction {
     unsafe {
         let module = &mut *module;
 
-        let (name, sig) = get_name_signature(name, ret_type, param_count, param_types);
-
-        let func = module.extern_functions.push(ExternFunctionData {
-            name: name.to_owned(),
-            sig,
-        });
-
+        let (name, sig) = name_signature_from_api(name, ret_type, param_count, param_types);
+        let func = module
+            .extern_functions
+            .push(ExternFunctionData { name, sig });
         ApiExternFunction(func.as_u32())
     }
 }
@@ -148,28 +147,35 @@ impl Write for DumpWriteAdapter {
     }
 }
 
-unsafe fn get_name_signature(
+unsafe fn name_signature_from_api(
     name: *const c_char,
-    ret_type: *const u8,
+    ret_type: *const ApiType,
     param_count: usize,
-    param_types: *const u8,
-) -> (&'static str, Signature) {
+    param_types: *const ApiType,
+) -> (String, Signature) {
     unsafe {
         let name = CStr::from_ptr(name);
         let params = slice::from_raw_parts(param_types, param_count);
 
-        let ret_type = if ret_type.is_null() {
-            None
-        } else {
-            Some(type_from_api(*ret_type))
-        };
+        let ret_type = opt_type_from_api(ret_type);
 
         let sig = Signature {
             ret_type,
             param_types: params.iter().map(|&ty| type_from_api(ty)).collect(),
         };
 
-        (name.to_str().expect("function name not utf-8"), sig)
+        (
+            name.to_str().expect("function name not utf-8").to_owned(),
+            sig,
+        )
+    }
+}
+
+unsafe fn opt_type_from_api(opt_type: *const ApiType) -> Option<Type> {
+    if opt_type.is_null() {
+        None
+    } else {
+        Some(type_from_api(unsafe { *opt_type }))
     }
 }
 
@@ -177,7 +183,7 @@ fn func_from_api(func: ApiFunction) -> Function {
     Function::from_u32(func.0)
 }
 
-fn type_from_api(api_type: u8) -> Type {
+fn type_from_api(api_type: ApiType) -> Type {
     match api_type {
         SPIDIR_TYPE_I32 => Type::I32,
         SPIDIR_TYPE_I64 => Type::I64,

@@ -2,8 +2,10 @@ use core::{
     alloc::{GlobalAlloc, Layout},
     ffi::c_char,
     panic::PanicInfo,
-    ptr,
+    sync::atomic::{AtomicBool, Ordering},
 };
+
+use alloc::string::ToString;
 
 extern "C" {
     fn spidir_alloc(size: usize, align: usize) -> *mut u8;
@@ -31,10 +33,21 @@ unsafe impl GlobalAlloc for Allocator {
 #[global_allocator]
 static ALLOC: Allocator = Allocator;
 
+static PANICKING: AtomicBool = AtomicBool::new(false);
+
+fn do_panic(message: &str) -> ! {
+    unsafe {
+        spidir_panic(message.as_ptr() as *const c_char, message.len());
+    }
+}
+
 #[panic_handler]
 fn handle_panic(info: &PanicInfo<'_>) -> ! {
     unsafe {
-        // TODO
-        spidir_panic(ptr::null(), 0);
+        if PANICKING.swap(true, Ordering::Relaxed) {
+            do_panic("nested panic");
+        }
+
+        do_panic(&info.to_string());
     }
 }

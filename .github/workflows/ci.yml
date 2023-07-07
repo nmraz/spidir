@@ -38,3 +38,15 @@ jobs:
         with:
           components: "clippy"
       - run: cargo clippy --all-features
+
+  clippy-c-api:
+    name: Clippy (C API)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: "clippy"
+      - run: cargo clippy -p c-api --all-features
+        env:
+          RUSTFLAGS: -C panic=abort

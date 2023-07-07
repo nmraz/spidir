@@ -39,7 +39,7 @@ pub fn verify_node_kind(
         NodeKind::PtrOff => verify_ptroff(graph, node, errors),
         NodeKind::Load => verify_load(graph, node, errors),
         NodeKind::Store => verify_store(graph, node, errors),
-        NodeKind::StackAddr(_) => verify_stack_slot(graph, node, errors),
+        NodeKind::StackSlot { .. } => verify_stack_slot(graph, node, errors),
         NodeKind::BrCond => verify_brcond(graph, node, errors),
         NodeKind::Call(_) => {}
     }

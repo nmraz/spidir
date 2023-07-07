@@ -1,5 +1,4 @@
 use crate::{
-    module::{StackSlotData, StackSlots},
     node::{IcmpKind, NodeKind, Type},
     test_utils::{create_const32, create_const64, create_entry, create_region, create_return},
     verify::verify_graph,
@@ -933,12 +932,10 @@ fn verify_store_output_kinds() {
 #[test]
 fn verify_graph_stack_slot_function_ok() {
     let mut graph = ValGraph::new();
-    let mut stack_slots = StackSlots::new();
-    let slot = stack_slots.push(StackSlotData::new(4, 4));
 
     let (entry, entry_ctrl, [input]) = create_entry(&mut graph, [Type::I32]);
     let slot_addr_node = graph.create_node(
-        NodeKind::StackAddr(slot),
+        NodeKind::StackSlot { size: 4, align: 4 },
         [],
         [DepValueKind::Value(Type::Ptr)],
     );
@@ -956,11 +953,9 @@ fn verify_graph_stack_slot_function_ok() {
 #[test]
 fn verify_stack_slot_output_kinds() {
     let mut graph = ValGraph::new();
-    let mut stack_slots = StackSlots::new();
-    let slot = stack_slots.push(StackSlotData::new(4, 4));
 
     let slot_addr_node = graph.create_node(
-        NodeKind::StackAddr(slot),
+        NodeKind::StackSlot { size: 4, align: 4 },
         [],
         [DepValueKind::Value(Type::F64)],
     );

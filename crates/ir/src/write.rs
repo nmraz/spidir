@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::{
-    module::{ExternFunctionData, FunctionData, Module, Signature, StackSlots},
+    module::{ExternFunctionData, FunctionData, Module, Signature},
     node::{FunctionRef, NodeKind},
     valgraph::{Node, ValGraph},
     valwalk::LiveNodeInfo,
@@ -29,28 +29,8 @@ pub fn write_function(w: &mut dyn fmt::Write, module: &Module, func: &FunctionDa
     write!(w, "func @{}", func.name)?;
     write_signature(w, &func.sig)?;
     w.write_str(" {\n")?;
-    write_stack_slots(w, &func.stack_slots, 4)?;
     write_graph(w, module, &func.graph, func.entry, 4)?;
     w.write_str("}\n")
-}
-
-pub fn write_stack_slots(
-    w: &mut dyn fmt::Write,
-    stack_slots: &StackSlots,
-    indentation: u32,
-) -> fmt::Result {
-    for (slot, data) in stack_slots {
-        write_indendation(w, indentation)?;
-        writeln!(
-            w,
-            "stackslot ${}: size {}, align {}",
-            slot.as_u32(),
-            data.size,
-            data.align
-        )?;
-    }
-
-    Ok(())
 }
 
 pub fn write_graph(
@@ -141,7 +121,7 @@ pub fn write_node_kind(
         NodeKind::PtrOff => w.write_str("ptroff")?,
         NodeKind::Load => w.write_str("load")?,
         NodeKind::Store => w.write_str("store")?,
-        NodeKind::StackAddr(slot) => write!(w, "stackaddr ${}", slot.as_u32())?,
+        NodeKind::StackSlot { size, align } => write!(w, "stackslot {size}:{align}")?,
         NodeKind::BrCond => w.write_str("brcond")?,
         NodeKind::Call(func) => {
             w.write_str("call ")?;
@@ -186,7 +166,7 @@ mod tests {
 
     use crate::{
         builder::NodeFactoryExt,
-        module::{ExternFunctionData, FunctionData, Signature, StackSlotData},
+        module::{ExternFunctionData, FunctionData, Signature},
         node::{DepValueKind, IcmpKind, Type},
         test_utils::{create_entry, create_loop_graph, create_return},
     };
@@ -222,10 +202,6 @@ mod tests {
                 param_types: vec![],
             },
         ));
-
-        let stack_slot = module.functions[func]
-            .stack_slots
-            .push(StackSlotData::new(4, 4));
 
         let extfunc = module.extern_functions.push(ExternFunctionData {
             name: "my_ext_func".to_owned(),
@@ -270,7 +246,7 @@ mod tests {
             (NodeKind::PtrOff, "ptroff"),
             (NodeKind::Load, "load"),
             (NodeKind::Store, "store"),
-            (NodeKind::StackAddr(stack_slot), "stackaddr $0"),
+            (NodeKind::StackSlot { size: 8, align: 4 }, "stackslot 8:4"),
             (NodeKind::BrCond, "brcond"),
             (NodeKind::Call(FunctionRef::Internal(func)), "call @my_func"),
             (
@@ -411,11 +387,8 @@ mod tests {
         let param32 = entry_outputs[1];
         let param64 = entry_outputs[2];
 
-        let slot32 = function.stack_slots.push(StackSlotData::new(4, 4));
-        let slot64 = function.stack_slots.push(StackSlotData::new(8, 8));
-
-        let addr32 = graph.build_stackaddr(slot32);
-        let addr64 = graph.build_stackaddr(slot64);
+        let addr32 = graph.build_stackslot(4, 4);
+        let addr64 = graph.build_stackslot(8, 8);
 
         let store32_ctrl = graph.build_store(entry_ctrl, param32, addr32);
         let store64_ctrl = graph.build_store(store32_ctrl, param64, addr64);
@@ -425,11 +398,9 @@ mod tests {
             &function,
             expect![[r#"
                 func @with_slots(i32, f64) {
-                    stackslot $0: size 4, align 4
-                    stackslot $1: size 8, align 8
                     %0:ctrl, %1:i32, %2:f64 = entry
-                    %4:ptr = stackaddr $1
-                    %3:ptr = stackaddr $0
+                    %4:ptr = stackslot 8:8
+                    %3:ptr = stackslot 4:4
                     %5:ctrl = store %0, %1, %3
                     %6:ctrl = store %5, %2, %4
                     return %6

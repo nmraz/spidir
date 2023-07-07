@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::module::{ExternFunction, Function, StackSlot};
+use crate::module::{ExternFunction, Function};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
@@ -89,7 +89,7 @@ pub enum NodeKind {
     PtrOff,
     Load,
     Store,
-    StackAddr(StackSlot),
+    StackSlot { size: u32, align: u32 },
     BrCond,
     Call(FunctionRef),
 }

@@ -18,35 +18,16 @@ entity_impl!(Function, "func");
 pub struct ExternFunction(u32);
 entity_impl!(ExternFunction, "extfunc");
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct StackSlot(u32);
-entity_impl!(StackSlot);
-
 #[derive(Debug, Clone)]
 pub struct Signature {
     pub ret_type: Option<Type>,
     pub param_types: Vec<Type>,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct StackSlotData {
-    pub size: u32,
-    pub align: u32,
-}
-
-impl StackSlotData {
-    pub fn new(size: u32, align: u32) -> Self {
-        Self { size, align }
-    }
-}
-
-pub type StackSlots = PrimaryMap<StackSlot, StackSlotData>;
-
 #[derive(Clone)]
 pub struct FunctionData {
     pub name: String,
     pub sig: Signature,
-    pub stack_slots: StackSlots,
     pub graph: ValGraph,
     pub entry: Node,
 }
@@ -57,7 +38,6 @@ impl FunctionData {
         let entry = graph.build_entry(&sig.param_types);
         Self {
             name,
-            stack_slots: StackSlots::new(),
             sig,
             graph,
             entry: entry.node,

@@ -9,7 +9,6 @@ float   = @{
 }
 
 valname  = @{ "%" ~ ("_" | ASCII_ALPHANUMERIC)+ }
-slotname = @{ "$" ~ ("_" | ASCII_ALPHANUMERIC)+ }
 funcname = @{ "@" ~ ident }
 
 type = { "i32" | "i64" | "f64" | "ptr" }
@@ -26,7 +25,7 @@ icmpkind = { "eq" | "ne" | "slt" | "sle" | "ult" | "ule" }
 iconst_nodekind    = { "iconst" ~ integer }
 fconst_nodekind    = { "fconst" ~ float }
 icmp_nodekind      = { "icmp" ~ icmpkind }
-stackaddr_nodekind = { "stackaddr" ~ slotname }
+stackslot_nodekind = { "stackslot" ~ integer ~ ":" ~ integer }
 call_nodekind      = { "call" ~ funcname }
 nodekind           = {
     "entry"
@@ -50,7 +49,7 @@ nodekind           = {
   | "ptroff"
   | "load"
   | "store"
-  | stackaddr_nodekind
+  | stackslot_nodekind
   | "brcond"
   | call_nodekind
 }
@@ -65,11 +64,8 @@ node = {
 
 graph = { ((node ~ line_end) | line_end)* }
 
-stackslot  = { "stackslot" ~ slotname ~ ":" ~ "size" ~ integer ~ "," ~ "align" ~ integer }
-stackslots = { ((stackslot ~ line_end) | line_end)* }
-
 func = {
-    "func" ~ signature ~ "{" ~ line_end ~ stackslots ~ graph ~ "}"
+    "func" ~ signature ~ "{" ~ line_end ~ graph ~ "}"
 }
 
 module_item = _{ extfunc | func }

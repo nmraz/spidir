@@ -1,9 +1,11 @@
 [workspace]
-members = ["crates/*"]
+members = ["crates/*", "c-api"]
+default-members = ["crates/*"]
 
 [workspace.dependencies]
 fx-utils = { path = "crates/fx-utils" }
 ir = { path = "crates/ir" }
+frontend = { path = "crates/frontend" }
 parser = { path = "crates/parser" }
 ir-graphviz = { path = "crates/ir-graphviz" }
 

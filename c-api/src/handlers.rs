@@ -49,3 +49,7 @@ fn handle_panic(info: &PanicInfo<'_>) -> ! {
 
     do_panic(&info.to_string());
 }
+
+// TODO: liballoc still brings in unwind info referencing `rust_eh_personality`?
+#[no_mangle]
+fn rust_eh_personality() {}

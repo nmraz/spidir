@@ -6,10 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 
-// TODO: liballoc still manages to bring in unwind info?
-void rust_eh_personality(void) {
-}
-
 void* spidir_alloc(size_t size, size_t align) {
     if (align <= alignof(max_align_t)) {
         return malloc(size);

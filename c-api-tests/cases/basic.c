@@ -6,45 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-void* spidir_alloc(size_t size, size_t align) {
-    if (align <= alignof(max_align_t)) {
-        return malloc(size);
-    } else {
-        return aligned_alloc(align, size);
-    }
-}
-
-void spidir_free(void* ptr, size_t size, size_t align) {
-    free(ptr);
-}
-
-void* spidir_realloc(void* ptr, size_t old_size, size_t align,
-                     size_t new_size) {
-    if (align <= alignof(max_align_t)) {
-        return realloc(ptr, new_size);
-    } else {
-        void* new_ptr = aligned_alloc(align, new_size);
-        if (!new_ptr) {
-            return NULL;
-        }
-        memcpy(new_ptr, ptr, old_size);
-        free(ptr);
-        return new_ptr;
-    }
-}
-
-noreturn void spidir_panic(const char* message, size_t message_len) {
-    write(2, message, message_len);
-    write(2, "\n", 1);
-    abort();
-}
-
-spidir_dump_status_t stdout_dump_callback(const char* s, size_t size,
-                                          void* ctx) {
-    (void) ctx;
-    write(1, s, size);
-    return SPIDIR_DUMP_CONTINUE;
-}
+#include "utils.h"
 
 void builder_callback(spidir_builder_handle_t builder, void* ctx) {
     (void) ctx;
@@ -107,7 +69,7 @@ int main(void) {
     spidir_function_t func =
         spidir_module_create_function(module, "sum", &type, 1, params);
     spidir_module_build_function(module, func, builder_callback, NULL);
-    spidir_module_dump(module, stdout_dump_callback, NULL);
+    dump_module_to_stdout(module);
     spidir_module_destroy(module);
 
     return 0;

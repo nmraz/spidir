@@ -37,7 +37,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - run: cargo clippy --all-features
+      - run: cargo clippy --all-features -- -D warnings
 
   clippy-c-api:
     name: Clippy (C API)
@@ -48,7 +48,7 @@ jobs:
         with:
           components: clippy
           targets: x86_64-unknown-none
-      - run: cargo clippy -p c-api --target x86_64-unknown-none --all-features
+      - run: cargo clippy -p c-api --target x86_64-unknown-none -- -D warnings
 
   test-c-api:
     name: C API Tests

@@ -1,18 +1,14 @@
-use core::slice;
-
-use frontend::{Block, FunctionBuilder, PhiHandle};
+use frontend::{FunctionBuilder, PhiHandle};
 use ir::{
     module::{ExternFunction, Function},
-    node::{FunctionRef, IcmpKind, Type},
-    valgraph::DepValue,
+    node::{FunctionRef, Type},
 };
 use paste::paste;
-use smallvec::SmallVec;
 
-use crate::{
-    opt_type_from_api, type_from_api, ApiBlock, ApiExternFunction, ApiFunction, ApiIcmpKind,
-    ApiPhi, ApiType, ApiValue, SPIDIR_ICMP_EQ, SPIDIR_ICMP_NE, SPIDIR_ICMP_SLE, SPIDIR_ICMP_SLT,
-    SPIDIR_ICMP_ULE, SPIDIR_ICMP_ULT,
+use crate::types::{
+    block_from_api, icmp_kind_from_api, opt_type_from_api, opt_value_from_api, opt_value_to_api,
+    type_from_api, value_from_api, value_list_from_api, value_to_api, ApiBlock, ApiExternFunction,
+    ApiFunction, ApiIcmpKind, ApiPhi, ApiType, ApiValue,
 };
 
 #[no_mangle]
@@ -294,57 +290,4 @@ unsafe extern "C" fn spidir_builder_build_stackslot(
         let builder = &mut *builder;
         value_to_api(builder.build_stackslot(size, align))
     }
-}
-
-unsafe fn value_list_from_api(arg_count: usize, args: *const ApiValue) -> SmallVec<[DepValue; 4]> {
-    unsafe {
-        let args = slice::from_raw_parts(args, arg_count);
-        args.iter().map(|&arg| value_from_api(arg)).collect()
-    }
-}
-
-unsafe fn opt_value_to_api(value: Option<DepValue>, api: *mut ApiValue) {
-    if !api.is_null() {
-        unsafe {
-            if let Some(value) = value {
-                *api = value_to_api(value);
-            } else {
-                *api = ApiValue(u32::MAX);
-            }
-        }
-    }
-}
-
-unsafe fn opt_value_from_api(value: *const ApiValue) -> Option<DepValue> {
-    unsafe {
-        if value.is_null() {
-            None
-        } else {
-            Some(value_from_api(*value))
-        }
-    }
-}
-
-fn icmp_kind_from_api(kind: ApiIcmpKind) -> IcmpKind {
-    match kind {
-        SPIDIR_ICMP_EQ => IcmpKind::Eq,
-        SPIDIR_ICMP_NE => IcmpKind::Ne,
-        SPIDIR_ICMP_SLT => IcmpKind::Slt,
-        SPIDIR_ICMP_SLE => IcmpKind::Sle,
-        SPIDIR_ICMP_ULT => IcmpKind::Ult,
-        SPIDIR_ICMP_ULE => IcmpKind::Ule,
-        _ => panic!("unexpected icmp kind {kind}"),
-    }
-}
-
-fn value_to_api(value: DepValue) -> ApiValue {
-    ApiValue(value.as_u32())
-}
-
-fn value_from_api(value: ApiValue) -> DepValue {
-    DepValue::from_u32(value.0)
-}
-
-fn block_from_api(block: ApiBlock) -> Block {
-    Block::from_u32(block.0)
 }

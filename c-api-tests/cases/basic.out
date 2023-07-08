@@ -1,0 +1,26 @@
+
+func @sum:i32(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:phisel = region %0
+    %5:ptr = stackslot 4:4
+    %4:ptr = stackslot 4:4
+    %6:ctrl = store %2, %1, %4
+    %25:i32 = iconst 1
+    %11:i32 = iconst 0
+    %7:i32 = iconst 0
+    %8:ctrl = store %6, %7, %5
+    %9:ctrl, %10:phisel = region %8, %29
+    %12:ctrl, %13:i32 = load %9, %4
+    %14:i32 = icmp eq %13, %11
+    %19:ctrl, %20:ctrl = brcond %12, %14
+    %15:ctrl, %16:phisel = region %19
+    %30:ctrl, %31:i32 = load %15, %5
+    return %30, %31
+    %17:ctrl, %18:phisel = region %20
+    %21:ctrl, %22:i32 = load %17, %4
+    %23:ctrl, %24:i32 = load %21, %5
+    %26:i32 = isub %22, %25
+    %28:ctrl = store %23, %26, %4
+    %27:i32 = iadd %24, %22
+    %29:ctrl = store %28, %27, %5
+}

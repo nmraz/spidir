@@ -51,12 +51,11 @@ jobs:
       - run: cargo clippy -p c-api --target x86_64-unknown-none --all-features
 
   test-c-api:
-    name: C API Test
+    name: C API Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-unknown-none
-      - run: mkdir c-api-test/build && cmake -S c-api-test -B c-api-test/build
-      - run: cmake --build c-api-test/build
+      - run: c-api-tests/run.sh

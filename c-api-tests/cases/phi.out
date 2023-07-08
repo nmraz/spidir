@@ -1,0 +1,9 @@
+
+func @select_phi_prebuilt:i32(i32, i32, i32) {
+    %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
+    %4:ctrl, %5:phisel = region %0
+    %8:ctrl, %9:ctrl = brcond %4, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}

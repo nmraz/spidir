@@ -15,3 +15,5 @@ function(spidir_test_case CASE_NAME)
 endfunction()
 
 spidir_test_case(basic)
+spidir_test_case(arith)
+spidir_test_case(phi)

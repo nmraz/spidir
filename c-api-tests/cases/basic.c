@@ -1,10 +1,5 @@
-#include <spidir/handlers.h>
 #include <spidir/spidir.h>
-#include <stdalign.h>
 #include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "utils.h"
 

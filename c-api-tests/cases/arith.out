@@ -1,0 +1,23 @@
+
+func @arith_stuff:i32(i32, i32) {
+    %0:ctrl, %1:i32, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    %5:i32 = iadd %1, %1
+    %6:i32 = isub %5, %1
+    %7:i32 = and %6, %1
+    %8:i32 = or %7, %1
+    %9:i32 = xor %8, %1
+    %10:i32 = shl %9, %1
+    %11:i32 = lshr %10, %1
+    %12:i32 = ashr %11, %1
+    %13:i32 = imul %12, %1
+    %14:ctrl, %15:i32 = sdiv %3, %13, %1
+    %16:ctrl, %17:i32 = udiv %14, %15, %1
+    %18:i32 = icmp eq %17, %1
+    %19:i32 = icmp ne %18, %1
+    %20:i32 = icmp slt %19, %1
+    %21:i32 = icmp sle %20, %1
+    %22:i32 = icmp ult %21, %1
+    %23:i32 = icmp ule %22, %1
+    return %16, %23
+}

@@ -8,25 +8,30 @@ use core::{
 use alloc::string::ToString;
 
 extern "C" {
-    fn spidir_alloc(size: usize, align: usize) -> *mut u8;
-    fn spidir_free(ptr: *mut u8, size: usize, align: usize);
-    fn spidir_realloc(ptr: *mut u8, old_size: usize, align: usize, new_size: usize) -> *mut u8;
-    fn spidir_panic(message: *const c_char, message_len: usize) -> !;
+    fn spidir_platform_alloc(size: usize, align: usize) -> *mut u8;
+    fn spidir_platform_free(ptr: *mut u8, size: usize, align: usize);
+    fn spidir_platform_realloc(
+        ptr: *mut u8,
+        old_size: usize,
+        align: usize,
+        new_size: usize,
+    ) -> *mut u8;
+    fn spidir_platform_panic(message: *const c_char, message_len: usize) -> !;
 }
 
 struct Allocator;
 
 unsafe impl GlobalAlloc for Allocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        unsafe { spidir_alloc(layout.size(), layout.align()) }
+        unsafe { spidir_platform_alloc(layout.size(), layout.align()) }
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        unsafe { spidir_free(ptr, layout.size(), layout.align()) }
+        unsafe { spidir_platform_free(ptr, layout.size(), layout.align()) }
     }
 
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
-        unsafe { spidir_realloc(ptr, layout.size(), layout.align(), new_size) }
+        unsafe { spidir_platform_realloc(ptr, layout.size(), layout.align(), new_size) }
     }
 }
 
@@ -37,7 +42,7 @@ static PANICKING: AtomicBool = AtomicBool::new(false);
 
 fn do_panic(message: &str) -> ! {
     unsafe {
-        spidir_panic(message.as_ptr() as *const c_char, message.len());
+        spidir_platform_panic(message.as_ptr() as *const c_char, message.len());
     }
 }
 

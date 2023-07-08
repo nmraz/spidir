@@ -7,4 +7,4 @@ mod module;
 mod types;
 
 #[cfg(not(test))]
-mod handlers;
+mod platform;

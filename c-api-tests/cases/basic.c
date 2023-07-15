@@ -40,10 +40,10 @@ void builder_callback(spidir_builder_handle_t builder, void* ctx) {
         spidir_builder_build_load(builder, SPIDIR_TYPE_I32, sum_slot);
 
     spidir_value_t next_i_val = spidir_builder_build_isub(
-        builder, SPIDIR_TYPE_I32, i_val,
+        builder, i_val,
         spidir_builder_build_iconst(builder, SPIDIR_TYPE_I32, 1));
     spidir_value_t next_sum_val =
-        spidir_builder_build_iadd(builder, SPIDIR_TYPE_I32, sum_val, i_val);
+        spidir_builder_build_iadd(builder, sum_val, i_val);
 
     spidir_builder_build_store(builder, next_i_val, i_slot);
     spidir_builder_build_store(builder, next_sum_val, sum_slot);

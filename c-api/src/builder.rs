@@ -1,7 +1,7 @@
 use frontend::{FunctionBuilder, PhiHandle};
 use ir::{
     module::{ExternFunction, Function},
-    node::{FunctionRef, Type},
+    node::FunctionRef,
 };
 use paste::paste;
 
@@ -188,7 +188,7 @@ unsafe extern "C" fn spidir_builder_build_fconst(
 ) -> ApiValue {
     unsafe {
         let builder = &mut *builder;
-        value_to_api(builder.build_fconst(Type::F64, value))
+        value_to_api(builder.build_fconst(value))
     }
 }
 
@@ -198,14 +198,13 @@ macro_rules! impl_builder_binop {
             #[no_mangle]
             unsafe extern "C" fn [<spidir_builder_build_ $binop>](
                 builder: *mut FunctionBuilder<'_>,
-                ty: ApiType,
-                a: ApiValue,
-                b: ApiValue
+                lhs: ApiValue,
+                rhs: ApiValue
             ) -> ApiValue {
                 unsafe {
                     let builder = &mut *builder;
                     value_to_api(
-                        builder.[<build_ $binop>](type_from_api(ty), value_from_api(a), value_from_api(b))
+                        builder.[<build_ $binop>](value_from_api(lhs), value_from_api(rhs))
                     )
                 }
             }

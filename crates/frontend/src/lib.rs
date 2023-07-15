@@ -128,54 +128,54 @@ impl<'a> FunctionBuilder<'a> {
         self.func.graph.build_iconst(ty, value)
     }
 
-    pub fn build_fconst(&mut self, ty: Type, value: f64) -> DepValue {
-        self.func.graph.build_fconst(ty, value)
+    pub fn build_fconst(&mut self, value: f64) -> DepValue {
+        self.func.graph.build_fconst(value)
     }
 
-    pub fn build_iadd(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        self.func.graph.build_iadd(ty, a, b)
+    pub fn build_iadd(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.func.graph.build_iadd(lhs, rhs)
     }
 
-    pub fn build_isub(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        self.func.graph.build_isub(ty, a, b)
+    pub fn build_isub(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.func.graph.build_isub(lhs, rhs)
     }
 
-    pub fn build_and(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        self.func.graph.build_and(ty, a, b)
+    pub fn build_and(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.func.graph.build_and(lhs, rhs)
     }
 
-    pub fn build_or(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        self.func.graph.build_or(ty, a, b)
+    pub fn build_or(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.func.graph.build_or(lhs, rhs)
     }
 
-    pub fn build_xor(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        self.func.graph.build_xor(ty, a, b)
+    pub fn build_xor(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.func.graph.build_xor(lhs, rhs)
     }
 
-    pub fn build_shl(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        self.func.graph.build_shl(ty, a, b)
+    pub fn build_shl(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.func.graph.build_shl(lhs, rhs)
     }
 
-    pub fn build_lshr(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        self.func.graph.build_lshr(ty, a, b)
+    pub fn build_lshr(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.func.graph.build_lshr(lhs, rhs)
     }
 
-    pub fn build_ashr(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        self.func.graph.build_ashr(ty, a, b)
+    pub fn build_ashr(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.func.graph.build_ashr(lhs, rhs)
     }
 
-    pub fn build_imul(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        self.func.graph.build_imul(ty, a, b)
+    pub fn build_imul(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.func.graph.build_imul(lhs, rhs)
     }
 
-    pub fn build_sdiv(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        let built = self.func.graph.build_sdiv(ty, self.cur_block_ctrl(), a, b);
+    pub fn build_sdiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        let built = self.func.graph.build_sdiv(self.cur_block_ctrl(), lhs, rhs);
         self.advance_cur_block_ctrl(built.ctrl);
         built.output
     }
 
-    pub fn build_udiv(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        let built = self.func.graph.build_udiv(ty, self.cur_block_ctrl(), a, b);
+    pub fn build_udiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        let built = self.func.graph.build_udiv(self.cur_block_ctrl(), lhs, rhs);
         self.advance_cur_block_ctrl(built.ctrl);
         built.output
     }
@@ -184,10 +184,10 @@ impl<'a> FunctionBuilder<'a> {
         &mut self,
         kind: IcmpKind,
         output_ty: Type,
-        a: DepValue,
-        b: DepValue,
+        lhs: DepValue,
+        rhs: DepValue,
     ) -> DepValue {
-        self.func.graph.build_icmp(kind, output_ty, a, b)
+        self.func.graph.build_icmp(kind, output_ty, lhs, rhs)
     }
 
     pub fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {
@@ -288,11 +288,11 @@ mod tests {
 
                 builder.build_brcond(cond, add_block, mul_block);
                 builder.set_block(add_block);
-                let add_res = builder.build_iadd(Type::I32, a, b);
+                let add_res = builder.build_iadd(a, b);
                 builder.build_return(Some(add_res));
 
                 builder.set_block(mul_block);
-                let mul_res = builder.build_imul(Type::I32, a, b);
+                let mul_res = builder.build_imul(a, b);
                 builder.build_return(Some(mul_res));
             },
             expect![[r#"
@@ -333,9 +333,9 @@ mod tests {
                 builder.set_block(loop_body);
                 let (indvar_n_phi, indvar_n_val) = builder.build_phi(Type::I64, &[n]);
                 let (sum_phi, sum_val) = builder.build_phi(Type::I64, &[zero]);
-                let next_sum = builder.build_iadd(Type::I64, sum_val, indvar_n_val);
+                let next_sum = builder.build_iadd(sum_val, indvar_n_val);
                 let one = builder.build_iconst(Type::I64, 1);
-                let next_indvar_n = builder.build_isub(Type::I64, indvar_n_val, one);
+                let next_indvar_n = builder.build_isub(indvar_n_val, one);
                 let exit_cmp = builder.build_icmp(IcmpKind::Eq, Type::I32, next_indvar_n, zero);
 
                 builder.build_brcond(exit_cmp, exit_block, loop_body);

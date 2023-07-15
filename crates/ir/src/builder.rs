@@ -147,52 +147,53 @@ pub trait NodeFactoryExt: NodeFactory {
     fn build_iconst(&mut self, ty: Type, value: u64) -> DepValue {
         build_single_output_pure(self, NodeKind::IConst(value), [], ty)
     }
-    fn build_fconst(&mut self, ty: Type, value: f64) -> DepValue {
-        build_single_output_pure(self, NodeKind::FConst(value), [], ty)
+    fn build_fconst(&mut self, value: f64) -> DepValue {
+        build_single_output_pure(self, NodeKind::FConst(value), [], Type::F64)
     }
 
-    fn build_iadd(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        build_single_output_pure(self, NodeKind::Iadd, [a, b], ty)
+    fn build_iadd(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Iadd, lhs, rhs)
     }
-    fn build_isub(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        build_single_output_pure(self, NodeKind::Isub, [a, b], ty)
+    fn build_isub(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Isub, lhs, rhs)
     }
-    fn build_and(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        build_single_output_pure(self, NodeKind::And, [a, b], ty)
+    fn build_and(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::And, lhs, rhs)
     }
-    fn build_or(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        build_single_output_pure(self, NodeKind::Or, [a, b], ty)
+    fn build_or(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Or, lhs, rhs)
     }
-    fn build_xor(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        build_single_output_pure(self, NodeKind::Xor, [a, b], ty)
+    fn build_xor(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Xor, lhs, rhs)
     }
-    fn build_shl(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        build_single_output_pure(self, NodeKind::Shl, [a, b], ty)
+    fn build_shl(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Shl, lhs, rhs)
     }
-    fn build_lshr(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        build_single_output_pure(self, NodeKind::Lshr, [a, b], ty)
+    fn build_lshr(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Lshr, lhs, rhs)
     }
-    fn build_ashr(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        build_single_output_pure(self, NodeKind::Ashr, [a, b], ty)
+    fn build_ashr(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Ashr, lhs, rhs)
     }
-    fn build_imul(&mut self, ty: Type, a: DepValue, b: DepValue) -> DepValue {
-        build_single_output_pure(self, NodeKind::Imul, [a, b], ty)
+    fn build_imul(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Imul, lhs, rhs)
     }
+
     fn build_icmp(
         &mut self,
         kind: IcmpKind,
         output_ty: Type,
-        a: DepValue,
-        b: DepValue,
+        lhs: DepValue,
+        rhs: DepValue,
     ) -> DepValue {
-        build_single_output_pure(self, NodeKind::Icmp(kind), [a, b], output_ty)
+        build_single_output_pure(self, NodeKind::Icmp(kind), [lhs, rhs], output_ty)
     }
 
-    fn build_sdiv(&mut self, ty: Type, ctrl: DepValue, a: DepValue, b: DepValue) -> BuiltEffectful {
-        build_int_div(self, NodeKind::Sdiv, ctrl, a, b, ty)
+    fn build_sdiv(&mut self, ctrl: DepValue, lhs: DepValue, rhs: DepValue) -> BuiltEffectful {
+        build_int_div(self, NodeKind::Sdiv, ctrl, lhs, rhs)
     }
-    fn build_udiv(&mut self, ty: Type, ctrl: DepValue, a: DepValue, b: DepValue) -> BuiltEffectful {
-        build_int_div(self, NodeKind::Udiv, ctrl, a, b, ty)
+    fn build_udiv(&mut self, ctrl: DepValue, lhs: DepValue, rhs: DepValue) -> BuiltEffectful {
+        build_int_div(self, NodeKind::Udiv, ctrl, lhs, rhs)
     }
 
     fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {
@@ -232,20 +233,30 @@ fn build_int_div(
     factory: &mut (impl NodeFactory + ?Sized),
     kind: NodeKind,
     ctrl: DepValue,
-    a: DepValue,
-    b: DepValue,
-    output_ty: Type,
+    lhs: DepValue,
+    rhs: DepValue,
 ) -> BuiltEffectful {
+    let ty = binop_input_ty(factory, lhs);
     let node = factory.create_node(
         kind,
-        [ctrl, a, b],
-        [DepValueKind::Control, DepValueKind::Value(output_ty)],
+        [ctrl, lhs, rhs],
+        [DepValueKind::Control, DepValueKind::Value(ty)],
     );
     let outputs = factory.graph().node_outputs(node);
     BuiltEffectful {
         ctrl: outputs[0],
         output: outputs[1],
     }
+}
+
+fn build_binop_with_lhs_type(
+    factory: &mut (impl NodeFactory + ?Sized),
+    kind: NodeKind,
+    lhs: DepValue,
+    rhs: DepValue,
+) -> DepValue {
+    let ty = binop_input_ty(factory, lhs);
+    build_single_output_pure(factory, kind, [lhs, rhs], ty)
 }
 
 fn build_single_output_pure(
@@ -256,4 +267,13 @@ fn build_single_output_pure(
 ) -> DepValue {
     let node = factory.create_node(kind, inputs, [DepValueKind::Value(output_ty)]);
     factory.graph().node_outputs(node)[0]
+}
+
+fn binop_input_ty(factory: &mut (impl NodeFactory + ?Sized), lhs: DepValue) -> Type {
+    let ty = factory
+        .graph()
+        .value_kind(lhs)
+        .as_value()
+        .expect("binop input should be a value");
+    ty
 }

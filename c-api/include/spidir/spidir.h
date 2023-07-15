@@ -446,201 +446,170 @@ spidir_value_t spidir_builder_build_fconst(spidir_builder_handle_t builder,
 /// Builds an integer add operation at the current insertion point. This
 /// operation can be used for both signed and unsigned additions.
 ///
-/// The values `a` and `b` must both be integers, and should both have the type
-/// specified by `type`.
+/// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a` and `b`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs       The left-hand input value.
+/// @param[in] rhs       The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_iadd(spidir_builder_handle_t builder,
-                                         spidir_value_type_t type,
-                                         spidir_value_t a, spidir_value_t b);
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
 
 /// Builds an integer subtract operation at the current insertion point. This
 /// operation can be used for both signed and unsigned subtractions.
 ///
-/// The values `a` and `b` must both be integers, and should both have the type
-/// specified by `type`.
+/// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a` and `b`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs       The left-hand input value.
+/// @param[in] rhs       The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_isub(spidir_builder_handle_t builder,
-                                         spidir_value_type_t type,
-                                         spidir_value_t a, spidir_value_t b);
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
 
 /// Builds a bitwise and operation at the current insertion point.
 ///
-/// The values `a` and `b` must both be integers, and should both have the type
-/// specified by `type`.
+/// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a` and `b`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs       The left-hand input value.
+/// @param[in] rhs       The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_and(spidir_builder_handle_t builder,
-                                        spidir_value_type_t type,
-                                        spidir_value_t a, spidir_value_t b);
+                                        spidir_value_t lhs, spidir_value_t rhs);
 
 /// Builds a bitwise or operation at the current insertion point.
 ///
-/// The values `a` and `b` must both be integers, and should both have the type
-/// specified by `type`.
+/// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a` and `b`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs       The left-hand input value.
+/// @param[in] rhs       The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_or(spidir_builder_handle_t builder,
-                                       spidir_value_type_t type,
-                                       spidir_value_t a, spidir_value_t b);
+                                       spidir_value_t lhs, spidir_value_t rhs);
 
 /// Builds a bitwise xor operation at the current insertion point.
 ///
-/// The values `a` and `b` must both be integers, and should both have the type
-/// specified by `type`.
+/// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a` and `b`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs       The left-hand input value.
+/// @param[in] rhs       The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_xor(spidir_builder_handle_t builder,
-                                        spidir_value_type_t type,
-                                        spidir_value_t a, spidir_value_t b);
+                                        spidir_value_t lhs, spidir_value_t rhs);
 
 /// Builds a left shift operation at the current insertion point. This
 /// operation can be used for both arithmetic and logical shifts.
 ///
-/// The values `a` and `b` must both be integers, but they need not have the
-/// same type. The shifted value (`a`) should have the same type as the output.
+/// The values `lhs` and `rhs` must both be integers, but they need not have the
+/// same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs`.
 spidir_value_t spidir_builder_build_shl(spidir_builder_handle_t builder,
-                                        spidir_value_type_t type,
-                                        spidir_value_t a, spidir_value_t b);
+                                        spidir_value_t lhs, spidir_value_t rhs);
 
 /// Builds a logical right shift operation at the current insertion point.
 ///
-/// The values `a` and `b` must both be integers, but they need not have the
-/// same type. The shifted value (`a`) should have the same type as the output.
+/// The values `lhs` and `rhs` must both be integers, but they need not have the
+/// same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs`.
 spidir_value_t spidir_builder_build_lshr(spidir_builder_handle_t builder,
-                                         spidir_value_type_t type,
-                                         spidir_value_t a, spidir_value_t b);
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
 
 /// Builds an arithmetic right shift operation at the current insertion point.
 ///
-/// The values `a` and `b` must both be integers, but they need not have the
-/// same type. The shifted value (`a`) should have the same type as the output.
+/// The values `lhs` and `rhs` must both be integers, but they need not have the
+/// same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs`.
 spidir_value_t spidir_builder_build_ashr(spidir_builder_handle_t builder,
-                                         spidir_value_type_t type,
-                                         spidir_value_t a, spidir_value_t b);
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
 
 /// Builds an integer multiply operation at the current insertion point. This
 /// operation can be used for both signed and unsigned multiplication.
 ///
-/// The values `a` and `b` must both be integers, and should both have the type
-/// specified by `type`.
+/// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a` and `b`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs       The left-hand input value.
+/// @param[in] rhs       The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_imul(spidir_builder_handle_t builder,
-                                         spidir_value_type_t type,
-                                         spidir_value_t a, spidir_value_t b);
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
 
 /// Builds a signed division operation at the current insertion point.
 ///
-/// The values `a` and `b` must both be integers, and should both have the type
-/// specified by `type`.
+/// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a` and `b`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs       The left-hand input value.
+/// @param[in] rhs       The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_sdiv(spidir_builder_handle_t builder,
-                                         spidir_value_type_t type,
-                                         spidir_value_t a, spidir_value_t b);
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
 
 /// Builds an unsigned division operation at the current insertion point.
 ///
-/// The values `a` and `b` must both be integers, and should both have the type
-/// specified by `type`.
+/// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The desired output type. This must be an integer type,
-///                    and must be the type of `a` and `b`.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] lhs       The left-hand input value.
+/// @param[in] rhs       The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_udiv(spidir_builder_handle_t builder,
-                                         spidir_value_type_t type,
-                                         spidir_value_t a, spidir_value_t b);
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
 
 /// Builds an integer compare operation at the current insertion point. This
 /// operation can be used to compare either integers or pointers.
 ///
-/// The values `a` and `b` must both have the same type, which should be either
-/// an integer or pointer type.
+/// The values `lhs` and `rhs` must both have the same type, which should be
+/// either an integer or pointer type.
 ///
-/// @param[in] builder A handle to the function builder.
-/// @param[in] kind    The kind of comparison to perform. See the `SPIDIR_ICMP_`
-///                    constants for the allowed operation kinds.
-/// @param[in] type    The desired output type. This must be an integer type.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] builder     A handle to the function builder.
+/// @param[in] kind        The kind of comparison to perform. See the
+///                        `SPIDIR_ICMP_` constants for the allowed operation
+///                        kinds.
+/// @param[in] output_type The desired output type. This must be an integer
+///                        type.
+/// @param[in] lhs         The left-hand input value.
+/// @param[in] rhs         The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
-///         will have the type `type`.
+///         will have the type `output_type`.
 spidir_value_t spidir_builder_build_icmp(spidir_builder_handle_t builder,
                                          spidir_icmp_kind_t icmp_kind,
-                                         spidir_value_type_t type,
-                                         spidir_value_t a, spidir_value_t b);
+                                         spidir_value_type_t output_type,
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
 
 /// Builds a pointer offset operation at the current insertion point. This
 /// operation adds an integer byte offset to an existing pointer to produce a
@@ -650,8 +619,8 @@ spidir_value_t spidir_builder_build_icmp(spidir_builder_handle_t builder,
 /// @param[in] kind    The kind of comparison to perform. See the `SPIDIR_ICMP_`
 ///                    constants for the allowed operation kinds.
 /// @param[in] type    The desired output type. This must be an integer type.
-/// @param[in] a       The left-hand input value.
-/// @param[in] b       The right-hand input value.
+/// @param[in] ptr     The pointer value to offset.
+/// @param[in] off     The byte offset to add to the pointer.
 /// @return An SSA value representing the result of the operation. This value
 ///         will have the type `type`.
 spidir_value_t spidir_builder_build_ptroff(spidir_builder_handle_t builder,

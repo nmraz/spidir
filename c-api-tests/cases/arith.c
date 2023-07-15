@@ -3,8 +3,7 @@
 
 #include "utils.h"
 
-#define BUILD_BINOP(op)                                                        \
-    a = spidir_builder_build_##op(builder, SPIDIR_TYPE_I32, a, b)
+#define BUILD_BINOP(op) a = spidir_builder_build_##op(builder, a, b)
 
 #define BUILD_ICMP(kind)                                                       \
     a = spidir_builder_build_icmp(builder, SPIDIR_ICMP_##kind,                 \

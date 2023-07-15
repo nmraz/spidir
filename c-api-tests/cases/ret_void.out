@@ -1,0 +1,6 @@
+
+func @func() {
+    %0:ctrl = entry
+    %1:ctrl, %2:phisel = region %0
+    return %1
+}

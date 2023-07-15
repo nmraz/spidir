@@ -4,7 +4,7 @@ use core::fmt;
 use cranelift_entity::{entity_impl, PrimaryMap};
 
 use crate::{
-    builder::BuilderExt,
+    builder::{BuilderExt, SimpleBuilder},
     node::{FunctionRef, Type},
     valgraph::{Node, ValGraph},
     write::write_module,
@@ -35,7 +35,7 @@ pub struct FunctionData {
 impl FunctionData {
     pub fn new(name: String, sig: Signature) -> Self {
         let mut graph = ValGraph::new();
-        let entry = graph.build_entry(&sig.param_types);
+        let entry = SimpleBuilder(&mut graph).build_entry(&sig.param_types);
         Self {
             name,
             sig,

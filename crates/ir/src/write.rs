@@ -165,7 +165,7 @@ mod tests {
     use expect_test::{expect, Expect};
 
     use crate::{
-        builder::BuilderExt,
+        builder::{Builder, BuilderExt, SimpleBuilder},
         module::{ExternFunctionData, FunctionData, Signature},
         node::{BitwiseF64, DepValueKind, IcmpKind, Type},
         test_utils::{create_entry, create_loop_graph, create_return},
@@ -381,18 +381,18 @@ mod tests {
                 param_types: vec![Type::I32, Type::F64],
             },
         );
-        let graph = &mut function.graph;
-        let entry_outputs = graph.node_outputs(function.entry);
+        let mut builder = SimpleBuilder(&mut function.graph);
+        let entry_outputs = builder.graph().node_outputs(function.entry);
         let entry_ctrl = entry_outputs[0];
         let param32 = entry_outputs[1];
         let param64 = entry_outputs[2];
 
-        let addr32 = graph.build_stackslot(4, 4);
-        let addr64 = graph.build_stackslot(8, 8);
+        let addr32 = builder.build_stackslot(4, 4);
+        let addr64 = builder.build_stackslot(8, 8);
 
-        let store32_ctrl = graph.build_store(entry_ctrl, param32, addr32);
-        let store64_ctrl = graph.build_store(store32_ctrl, param64, addr64);
-        graph.build_return(store64_ctrl, None);
+        let store32_ctrl = builder.build_store(entry_ctrl, param32, addr32);
+        let store64_ctrl = builder.build_store(store32_ctrl, param64, addr64);
+        builder.build_return(store64_ctrl, None);
 
         check_write_function(
             &function,

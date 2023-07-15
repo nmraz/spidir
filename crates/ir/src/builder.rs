@@ -46,18 +46,20 @@ pub trait Builder {
     fn graph(&self) -> &ValGraph;
 }
 
-impl Builder for ValGraph {
+pub struct SimpleBuilder<'a>(pub &'a mut ValGraph);
+
+impl<'a> Builder for SimpleBuilder<'a> {
     fn create_node(
         &mut self,
         kind: NodeKind,
         inputs: impl IntoIterator<Item = DepValue>,
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node {
-        self.create_node(kind, inputs, output_kinds)
+        self.0.create_node(kind, inputs, output_kinds)
     }
 
     fn graph(&self) -> &ValGraph {
-        self
+        self.0
     }
 }
 

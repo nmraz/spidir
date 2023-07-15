@@ -2,7 +2,7 @@
 
 use cranelift_entity::{entity_impl, PrimaryMap};
 use ir::{
-    builder::BuilderExt,
+    builder::{Builder, BuilderExt, SimpleBuilder},
     module::FunctionData,
     node::{FunctionRef, IcmpKind, Type},
     valgraph::{DepValue, Node},
@@ -47,7 +47,7 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub fn create_block(&mut self) -> Block {
-        let region = self.func.graph.build_region(&[]);
+        let region = self.builder().build_region(&[]);
         self.blocks.push(BlockData {
             terminated: false,
             region: region.node,
@@ -80,17 +80,15 @@ impl<'a> FunctionBuilder<'a> {
         func: FunctionRef,
         args: &[DepValue],
     ) -> Option<DepValue> {
-        let built = self
-            .func
-            .graph
-            .build_call(ret_ty, func, self.cur_block_ctrl(), args);
+        let ctrl = self.cur_block_ctrl();
+        let built = self.builder().build_call(ret_ty, func, ctrl, args);
         self.advance_cur_block_ctrl(built.ctrl);
         built.retval
     }
 
     pub fn build_return(&mut self, value: Option<DepValue>) {
         let ctrl = self.terminate_cur_block();
-        self.func.graph.build_return(ctrl, value);
+        self.builder().build_return(ctrl, value);
     }
 
     pub fn build_branch(&mut self, dest: Block) {
@@ -102,7 +100,7 @@ impl<'a> FunctionBuilder<'a> {
 
     pub fn build_brcond(&mut self, cond: DepValue, true_dest: Block, false_dest: Block) {
         let cur_ctrl = self.terminate_cur_block();
-        let built = self.func.graph.build_brcond(cur_ctrl, cond);
+        let built = self.builder().build_brcond(cur_ctrl, cond);
         self.func
             .graph
             .add_node_input(self.blocks[true_dest].region, built.true_ctrl);
@@ -116,7 +114,7 @@ impl<'a> FunctionBuilder<'a> {
             .func
             .graph
             .node_outputs(self.blocks[self.require_cur_block()].region)[1];
-        let built = self.func.graph.build_phi(ty, selector, incoming_values);
+        let built = self.builder().build_phi(ty, selector, incoming_values);
         (PhiHandle(built.node), built.output)
     }
 
@@ -125,57 +123,59 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub fn build_iconst(&mut self, ty: Type, value: u64) -> DepValue {
-        self.func.graph.build_iconst(ty, value)
+        self.builder().build_iconst(ty, value)
     }
 
     pub fn build_fconst(&mut self, value: f64) -> DepValue {
-        self.func.graph.build_fconst(value)
+        self.builder().build_fconst(value)
     }
 
     pub fn build_iadd(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        self.func.graph.build_iadd(lhs, rhs)
+        self.builder().build_iadd(lhs, rhs)
     }
 
     pub fn build_isub(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        self.func.graph.build_isub(lhs, rhs)
+        self.builder().build_isub(lhs, rhs)
     }
 
     pub fn build_and(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        self.func.graph.build_and(lhs, rhs)
+        self.builder().build_and(lhs, rhs)
     }
 
     pub fn build_or(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        self.func.graph.build_or(lhs, rhs)
+        self.builder().build_or(lhs, rhs)
     }
 
     pub fn build_xor(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        self.func.graph.build_xor(lhs, rhs)
+        self.builder().build_xor(lhs, rhs)
     }
 
     pub fn build_shl(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        self.func.graph.build_shl(lhs, rhs)
+        self.builder().build_shl(lhs, rhs)
     }
 
     pub fn build_lshr(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        self.func.graph.build_lshr(lhs, rhs)
+        self.builder().build_lshr(lhs, rhs)
     }
 
     pub fn build_ashr(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        self.func.graph.build_ashr(lhs, rhs)
+        self.builder().build_ashr(lhs, rhs)
     }
 
     pub fn build_imul(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        self.func.graph.build_imul(lhs, rhs)
+        self.builder().build_imul(lhs, rhs)
     }
 
     pub fn build_sdiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        let built = self.func.graph.build_sdiv(self.cur_block_ctrl(), lhs, rhs);
+        let ctrl = self.cur_block_ctrl();
+        let built = self.builder().build_sdiv(ctrl, lhs, rhs);
         self.advance_cur_block_ctrl(built.ctrl);
         built.output
     }
 
     pub fn build_udiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        let built = self.func.graph.build_udiv(self.cur_block_ctrl(), lhs, rhs);
+        let ctrl = self.cur_block_ctrl();
+        let built = self.builder().build_udiv(ctrl, lhs, rhs);
         self.advance_cur_block_ctrl(built.ctrl);
         built.output
     }
@@ -187,29 +187,28 @@ impl<'a> FunctionBuilder<'a> {
         lhs: DepValue,
         rhs: DepValue,
     ) -> DepValue {
-        self.func.graph.build_icmp(kind, output_ty, lhs, rhs)
+        self.builder().build_icmp(kind, output_ty, lhs, rhs)
     }
 
     pub fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {
-        self.func.graph.build_ptroff(ptr, off)
+        self.builder().build_ptroff(ptr, off)
     }
 
     pub fn build_load(&mut self, ty: Type, ptr: DepValue) -> DepValue {
-        let built = self.func.graph.build_load(ty, self.cur_block_ctrl(), ptr);
+        let ctrl = self.cur_block_ctrl();
+        let built = self.builder().build_load(ty, ctrl, ptr);
         self.advance_cur_block_ctrl(built.ctrl);
         built.output
     }
 
     pub fn build_store(&mut self, data: DepValue, ptr: DepValue) {
-        let ctrl = self
-            .func
-            .graph
-            .build_store(self.cur_block_ctrl(), data, ptr);
+        let ctrl = self.cur_block_ctrl();
+        let ctrl = self.builder().build_store(ctrl, data, ptr);
         self.advance_cur_block_ctrl(ctrl);
     }
 
     pub fn build_stackslot(&mut self, size: u32, align: u32) -> DepValue {
-        self.func.graph.build_stackslot(size, align)
+        self.builder().build_stackslot(size, align)
     }
 
     fn advance_cur_block_ctrl(&mut self, ctrl: DepValue) {
@@ -222,6 +221,10 @@ impl<'a> FunctionBuilder<'a> {
         let ctrl = self.blocks[cur_block].last_ctrl;
         self.blocks[cur_block].terminated = true;
         ctrl
+    }
+
+    fn builder(&mut self) -> impl Builder + '_ {
+        SimpleBuilder(&mut self.func.graph)
     }
 
     fn cur_block_ctrl(&self) -> DepValue {

@@ -1,5 +1,5 @@
 use crate::{
-    node::{IcmpKind, NodeKind, Type},
+    node::{BitwiseF64, IcmpKind, NodeKind, Type},
     test_utils::{create_const32, create_const64, create_entry, create_region, create_return},
     verify::verify_graph,
 };
@@ -564,7 +564,7 @@ fn verify_fconst_input_count() {
     let mut graph = ValGraph::new();
     let const_val = create_const32(&mut graph);
     let fconst = graph.create_node(
-        NodeKind::FConst(3.0),
+        NodeKind::FConst(BitwiseF64(3.0)),
         [const_val],
         [DepValueKind::Value(Type::F64)],
     );
@@ -582,7 +582,11 @@ fn verify_fconst_input_count() {
 fn verify_fconst_output_kinds() {
     let mut graph = ValGraph::new();
 
-    let fconst_ctrl = graph.create_node(NodeKind::FConst(3.0), [], [DepValueKind::Control]);
+    let fconst_ctrl = graph.create_node(
+        NodeKind::FConst(BitwiseF64(3.0)),
+        [],
+        [DepValueKind::Control],
+    );
     check_verify_node_kind(
         &graph,
         fconst_ctrl,

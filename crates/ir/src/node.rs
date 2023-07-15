@@ -1,4 +1,7 @@
-use core::fmt;
+use core::{
+    fmt,
+    hash::{Hash, Hasher},
+};
 
 use crate::module::{ExternFunction, Function};
 
@@ -31,7 +34,7 @@ impl fmt::Display for Type {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum IcmpKind {
     Eq,
     Ne,
@@ -60,13 +63,36 @@ impl fmt::Display for IcmpKind {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FunctionRef {
     Internal(Function),
     External(ExternFunction),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy)]
+pub struct BitwiseF64(pub f64);
+
+impl PartialEq for BitwiseF64 {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.to_bits() == other.0.to_bits()
+    }
+}
+
+impl Eq for BitwiseF64 {}
+
+impl Hash for BitwiseF64 {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.to_bits().hash(state)
+    }
+}
+
+impl fmt::Display for BitwiseF64 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash)]
 pub enum NodeKind {
     Entry,
     Return,
@@ -85,7 +111,7 @@ pub enum NodeKind {
     Sdiv,
     Udiv,
     Icmp(IcmpKind),
-    FConst(f64),
+    FConst(BitwiseF64),
     PtrOff,
     Load,
     Store,

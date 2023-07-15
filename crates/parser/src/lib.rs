@@ -9,7 +9,7 @@ use alloc::{borrow::ToOwned, boxed::Box, vec::Vec};
 use fx_utils::FxHashMap;
 use ir::{
     module::{ExternFunctionData, Function, FunctionData, Module, Signature},
-    node::{DepValueKind, FunctionRef, IcmpKind, NodeKind, Type},
+    node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 use itertools::Itertools;
@@ -274,10 +274,10 @@ fn extract_special_node_kind(
             &inner.next().unwrap(),
             "invalid integer literal",
         )?),
-        Rule::fconst_nodekind => NodeKind::FConst(parse_from_str(
+        Rule::fconst_nodekind => NodeKind::FConst(BitwiseF64(parse_from_str(
             &inner.next().unwrap(),
             "invalid floating-point literal",
-        )?),
+        )?)),
         Rule::icmp_nodekind => NodeKind::Icmp(extract_icmpkind(inner.next().unwrap())),
         Rule::stackslot_nodekind => {
             let size = parse_from_str(&inner.next().unwrap(), "invalid stack slot size")?;

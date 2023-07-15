@@ -167,7 +167,7 @@ mod tests {
     use crate::{
         builder::BuilderExt,
         module::{ExternFunctionData, FunctionData, Signature},
-        node::{DepValueKind, IcmpKind, Type},
+        node::{BitwiseF64, DepValueKind, IcmpKind, Type},
         test_utils::{create_entry, create_loop_graph, create_return},
     };
 
@@ -242,7 +242,7 @@ mod tests {
             (NodeKind::Icmp(IcmpKind::Sle), "icmp sle"),
             (NodeKind::Icmp(IcmpKind::Ult), "icmp ult"),
             (NodeKind::Icmp(IcmpKind::Ule), "icmp ule"),
-            (NodeKind::FConst(2.71), "fconst 2.71"),
+            (NodeKind::FConst(BitwiseF64(2.71)), "fconst 2.71"),
             (NodeKind::PtrOff, "ptroff"),
             (NodeKind::Load, "load"),
             (NodeKind::Store, "store"),

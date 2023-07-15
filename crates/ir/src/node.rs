@@ -5,7 +5,7 @@ use core::{
 
 use crate::module::{ExternFunction, Function};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Type {
     I32,
     I64,
@@ -92,7 +92,7 @@ impl fmt::Display for BitwiseF64 {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NodeKind {
     Entry,
     Return,
@@ -120,7 +120,30 @@ pub enum NodeKind {
     Call(FunctionRef),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+impl NodeKind {
+    pub fn has_identity(&self) -> bool {
+        // Distinct stack slot nodes must always return distinct stack locations - the identity of
+        // the stack location is tied to the node itself.
+        matches!(self, Self::StackSlot { .. })
+    }
+
+    pub fn has_control_flow(&self) -> bool {
+        matches!(
+            self,
+            Self::Entry
+                | Self::Return
+                | Self::Region
+                | Self::Sdiv
+                | Self::Udiv
+                | Self::Load
+                | Self::Store
+                | Self::BrCond
+                | Self::Call(..)
+        )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DepValueKind {
     /// An "ordinary" value representing a computation.
     Value(Type),

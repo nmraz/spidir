@@ -3,6 +3,7 @@
 extern crate alloc;
 
 pub mod builder;
+pub mod cons_builder;
 pub mod module;
 pub mod node;
 pub mod valgraph;

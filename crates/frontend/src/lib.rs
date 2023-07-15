@@ -2,7 +2,7 @@
 
 use cranelift_entity::{entity_impl, PrimaryMap};
 use ir::{
-    builder::NodeFactoryExt,
+    builder::BuilderExt,
     module::FunctionData,
     node::{FunctionRef, IcmpKind, Type},
     valgraph::{DepValue, Node},

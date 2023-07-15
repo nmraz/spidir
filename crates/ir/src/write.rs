@@ -165,7 +165,7 @@ mod tests {
     use expect_test::{expect, Expect};
 
     use crate::{
-        builder::NodeFactoryExt,
+        builder::BuilderExt,
         module::{ExternFunctionData, FunctionData, Signature},
         node::{DepValueKind, IcmpKind, Type},
         test_utils::{create_entry, create_loop_graph, create_return},

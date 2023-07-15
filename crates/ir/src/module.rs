@@ -4,7 +4,7 @@ use core::fmt;
 use cranelift_entity::{entity_impl, PrimaryMap};
 
 use crate::{
-    builder::NodeFactoryExt,
+    builder::BuilderExt,
     node::{FunctionRef, Type},
     valgraph::{Node, ValGraph},
     write::write_module,

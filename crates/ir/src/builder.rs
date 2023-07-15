@@ -36,7 +36,7 @@ pub struct BuiltEffectful {
     pub output: DepValue,
 }
 
-pub trait NodeFactory {
+pub trait Builder {
     fn create_node(
         &mut self,
         kind: NodeKind,
@@ -46,7 +46,7 @@ pub trait NodeFactory {
     fn graph(&self) -> &ValGraph;
 }
 
-impl NodeFactory for ValGraph {
+impl Builder for ValGraph {
     fn create_node(
         &mut self,
         kind: NodeKind,
@@ -61,7 +61,7 @@ impl NodeFactory for ValGraph {
     }
 }
 
-pub trait NodeFactoryExt: NodeFactory {
+pub trait BuilderExt: Builder {
     fn build_entry(&mut self, types: &[Type]) -> BuiltEntry {
         let entry = self.create_node(
             NodeKind::Entry,
@@ -227,10 +227,10 @@ pub trait NodeFactoryExt: NodeFactory {
     }
 }
 
-impl<F: NodeFactory> NodeFactoryExt for F {}
+impl<F: Builder> BuilderExt for F {}
 
 fn build_int_div(
-    factory: &mut (impl NodeFactory + ?Sized),
+    factory: &mut (impl Builder + ?Sized),
     kind: NodeKind,
     ctrl: DepValue,
     lhs: DepValue,
@@ -250,7 +250,7 @@ fn build_int_div(
 }
 
 fn build_binop_with_lhs_type(
-    factory: &mut (impl NodeFactory + ?Sized),
+    factory: &mut (impl Builder + ?Sized),
     kind: NodeKind,
     lhs: DepValue,
     rhs: DepValue,
@@ -260,7 +260,7 @@ fn build_binop_with_lhs_type(
 }
 
 fn build_single_output_pure(
-    factory: &mut (impl NodeFactory + ?Sized),
+    factory: &mut (impl Builder + ?Sized),
     kind: NodeKind,
     inputs: impl IntoIterator<Item = DepValue>,
     output_ty: Type,
@@ -269,7 +269,7 @@ fn build_single_output_pure(
     factory.graph().node_outputs(node)[0]
 }
 
-fn binop_input_ty(factory: &mut (impl NodeFactory + ?Sized), lhs: DepValue) -> Type {
+fn binop_input_ty(factory: &mut (impl Builder + ?Sized), lhs: DepValue) -> Type {
     let ty = factory
         .graph()
         .value_kind(lhs)

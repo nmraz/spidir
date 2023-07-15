@@ -1,7 +1,7 @@
 use core::array;
 
 use crate::{
-    builder::NodeFactoryExt,
+    builder::BuilderExt,
     node::{DepValueKind, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };

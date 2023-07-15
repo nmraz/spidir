@@ -1,7 +1,7 @@
 use core::hash::{Hash, Hasher};
 
 use fx_utils::FxHasher;
-use hashbrown::{hash_map::RawEntryMut, HashMap};
+use hashbrown::raw::RawTable;
 use smallvec::SmallVec;
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
 };
 
 #[derive(Default, Clone)]
-pub struct Cache(HashMap<Node, (), ()>);
+pub struct Cache(RawTable<Node>);
 
 impl Cache {
     pub fn new() -> Self {
@@ -45,15 +45,15 @@ impl<'a> Builder for ConsBuilder<'a> {
         let output_kinds: SmallVec<[_; 4]> = output_kinds.into_iter().collect();
 
         let hash = hash_node(&kind, inputs.iter().copied(), output_kinds.iter().copied());
-        let entry = self.cache.0.raw_entry_mut().from_hash(hash, |&node| {
+        let entry = self.cache.0.get(hash, |&node| {
             existing_node_equal(self.graph, node, &kind, &inputs, &output_kinds)
         });
 
         match entry {
-            RawEntryMut::Occupied(entry) => *entry.key(),
-            RawEntryMut::Vacant(entry) => {
+            Some(node) => *node,
+            None => {
                 let node = self.graph.create_node(kind, inputs, output_kinds);
-                entry.insert_with_hasher(hash, node, (), |&existing_node| {
+                self.cache.0.insert(hash, node, |&existing_node| {
                     hash_existing_node(self.graph, existing_node)
                 });
                 node

@@ -314,6 +314,40 @@ mod tests {
     }
 
     #[test]
+    fn duplicated_nodes() {
+        check_built_function(
+            Some(Type::I32),
+            &[Type::I32],
+            |builder| {
+                let entry_block = builder.create_block();
+                builder.set_block(entry_block);
+                builder.set_entry_block(entry_block);
+
+                let param = builder.build_param_ref(0);
+                let one = builder.build_iconst(Type::I32, 1);
+                let x_inc1 = builder.build_iadd(param, one);
+
+                let one = builder.build_iconst(Type::I32, 1);
+                let x_inc2 = builder.build_iadd(param, one);
+
+                let product = builder.build_imul(x_inc1, x_inc2);
+                builder.build_return(Some(product));
+            },
+            expect![[r#"
+                func @func:i32(i32) {
+                    %0:ctrl, %1:i32 = entry
+                    %2:ctrl, %3:phisel = region %0
+                    %6:i32 = iconst 1
+                    %7:i32 = iadd %1, %6
+                    %4:i32 = iconst 1
+                    %5:i32 = iadd %1, %4
+                    %8:i32 = imul %5, %7
+                    return %2, %8
+                }"#]],
+        );
+    }
+
+    #[test]
     fn build_phi_with_backedges() {
         check_built_function(
             Some(Type::I64),

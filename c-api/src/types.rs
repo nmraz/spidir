@@ -82,15 +82,10 @@ pub unsafe fn name_signature_from_api(
     }
 }
 
-pub unsafe fn opt_value_to_api(value: Option<DepValue>, api: *mut ApiValue) {
-    if !api.is_null() {
-        unsafe {
-            if let Some(value) = value {
-                *api = value_to_api(value);
-            } else {
-                *api = ApiValue(u32::MAX);
-            }
-        }
+pub fn opt_value_to_api(value: Option<DepValue>) -> ApiValue {
+    match value {
+        Some(value) => value_to_api(value),
+        None => ApiValue(u32::MAX),
     }
 }
 

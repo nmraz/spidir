@@ -57,20 +57,16 @@ unsafe extern "C" fn spidir_builder_build_call(
     func: ApiFunction,
     arg_count: usize,
     args: *const ApiValue,
-    out_ret_value: *mut ApiValue,
-) {
+) -> ApiValue {
     unsafe {
         let builder = &mut *builder;
         let args = value_list_from_api(arg_count, args);
         let ret_type = opt_type_from_api(ret_type);
-        opt_value_to_api(
-            builder.build_call(
-                ret_type,
-                FunctionRef::Internal(Function::from_u32(func.0)),
-                &args,
-            ),
-            out_ret_value,
-        );
+        opt_value_to_api(builder.build_call(
+            ret_type,
+            FunctionRef::Internal(Function::from_u32(func.0)),
+            &args,
+        ))
     }
 }
 
@@ -81,20 +77,16 @@ unsafe extern "C" fn spidir_builder_build_extern_call(
     func: ApiExternFunction,
     arg_count: usize,
     args: *const ApiValue,
-    out_ret_value: *mut ApiValue,
-) {
+) -> ApiValue {
     unsafe {
         let builder = &mut *builder;
         let args = value_list_from_api(arg_count, args);
         let ret_type = opt_type_from_api(ret_type);
-        opt_value_to_api(
-            builder.build_call(
-                ret_type,
-                FunctionRef::External(ExternFunction::from_u32(func.0)),
-                &args,
-            ),
-            out_ret_value,
-        );
+        opt_value_to_api(builder.build_call(
+            ret_type,
+            FunctionRef::External(ExternFunction::from_u32(func.0)),
+            &args,
+        ))
     }
 }
 

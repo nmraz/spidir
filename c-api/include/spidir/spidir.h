@@ -287,11 +287,15 @@ spidir_value_t spidir_builder_build_param_ref(spidir_builder_handle_t builder,
 /// @param[in] args      A pointer to an array of `arg_count` values, each
 ///                      representing an argument to pass. This parameter may be
 ///                      null if `arg_count` is 0.
-void spidir_builder_build_call(spidir_builder_handle_t builder,
-                               const spidir_value_type_t* ret_type,
-                               spidir_function_t func, size_t arg_count,
-                               const spidir_value_t* args,
-                               spidir_value_t* out_ret_value);
+/// @return An SSA value containing the return value of the function. If
+/// `ret_type` was null (indicating a call to a function with no return value),
+/// the returned value will be a special sentinel; attempting to pass this
+/// sentinel to other spidir APIs will cause a panic.
+spidir_value_t spidir_builder_build_call(spidir_builder_handle_t builder,
+                                         const spidir_value_type_t* ret_type,
+                                         spidir_function_t func,
+                                         size_t arg_count,
+                                         const spidir_value_t* args);
 
 /// Builds an instruction calling the external function `func` at the current
 /// insertion point.
@@ -312,11 +316,13 @@ void spidir_builder_build_call(spidir_builder_handle_t builder,
 /// @param[in] args      A pointer to an array of `arg_count` values, each
 ///                      representing an argument to pass. This parameter may be
 ///                      null if `arg_count` is 0.
-void spidir_builder_build_extern_call(spidir_builder_handle_t builder,
-                                      const spidir_value_type_t* ret_type,
-                                      spidir_function_t func, size_t arg_count,
-                                      const spidir_value_t* args,
-                                      spidir_value_t* out_ret_value);
+/// @return An SSA value containing the return value of the function. If
+/// `ret_type` was null (indicating a call to a function with no return value),
+/// the returned value will be a special sentinel; attempting to pass this
+/// sentinel to other spidir APIs will cause a panic.
+spidir_value_t spidir_builder_build_extern_call(
+    spidir_builder_handle_t builder, const spidir_value_type_t* ret_type,
+    spidir_function_t func, size_t arg_count, const spidir_value_t* args);
 
 /// Builds a return instruction at the current insertion point.
 ///

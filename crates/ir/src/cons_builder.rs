@@ -11,10 +11,7 @@ use crate::{
 };
 
 #[derive(Default, Clone)]
-struct DummyHashBuilder;
-
-#[derive(Default, Clone)]
-pub struct Cache(HashMap<Node, (), DummyHashBuilder>);
+pub struct Cache(HashMap<Node, (), ()>);
 
 impl Cache {
     pub fn new() -> Self {

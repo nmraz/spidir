@@ -37,7 +37,7 @@ void builder_callback(spidir_builder_handle_t builder, void* ctx) {
     BUILD_ICMP(ULT);
     BUILD_ICMP(ULE);
 
-    spidir_builder_build_return(builder, &a);
+    spidir_builder_build_return(builder, a);
 }
 
 int main(void) {
@@ -46,7 +46,7 @@ int main(void) {
     spidir_value_type_t ret_type = SPIDIR_TYPE_I32;
     spidir_value_type_t param_types[] = {SPIDIR_TYPE_I32, SPIDIR_TYPE_I32};
     spidir_function_t func = spidir_module_create_function(
-        module, "arith_stuff", &ret_type, 2, param_types);
+        module, "arith_stuff", ret_type, 2, param_types);
     spidir_module_build_function(module, func, builder_callback, NULL);
 
     dump_module_to_stdout(module);

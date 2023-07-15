@@ -53,7 +53,7 @@ void builder_callback(spidir_builder_handle_t builder, void* ctx) {
     spidir_builder_set_block(builder, exit_block);
     spidir_value_t retval =
         spidir_builder_build_load(builder, SPIDIR_TYPE_I32, sum_slot);
-    spidir_builder_build_return(builder, &retval);
+    spidir_builder_build_return(builder, retval);
 }
 
 int main(void) {
@@ -62,7 +62,7 @@ int main(void) {
     spidir_value_type_t type = SPIDIR_TYPE_I32;
     spidir_value_type_t params[] = {SPIDIR_TYPE_I32};
     spidir_function_t func =
-        spidir_module_create_function(module, "sum", &type, 1, params);
+        spidir_module_create_function(module, "sum", type, 1, params);
     spidir_module_build_function(module, func, builder_callback, NULL);
     dump_module_to_stdout(module);
     spidir_module_destroy(module);

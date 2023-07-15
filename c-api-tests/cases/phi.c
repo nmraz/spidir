@@ -19,7 +19,7 @@ void select_phi_prebuilt_callback(spidir_builder_handle_t builder, void* ctx) {
     spidir_value_t phi_inputs[] = {a, b};
     spidir_value_t val =
         spidir_builder_build_phi(builder, SPIDIR_TYPE_I32, 2, phi_inputs, NULL);
-    spidir_builder_build_return(builder, &val);
+    spidir_builder_build_return(builder, val);
 }
 
 void select_phi_handle_callback(spidir_builder_handle_t builder, void* ctx) {
@@ -43,7 +43,7 @@ void select_phi_handle_callback(spidir_builder_handle_t builder, void* ctx) {
     spidir_builder_add_phi_input(builder, phi, a);
     spidir_builder_add_phi_input(builder, phi, b);
 
-    spidir_builder_build_return(builder, &val);
+    spidir_builder_build_return(builder, val);
 }
 
 int main(void) {
@@ -54,12 +54,12 @@ int main(void) {
                                          SPIDIR_TYPE_I32};
 
     spidir_function_t phi_prebuilt_func = spidir_module_create_function(
-        module, "select_phi_prebuilt", &ret_type, 3, param_types);
+        module, "select_phi_prebuilt", ret_type, 3, param_types);
     spidir_module_build_function(module, phi_prebuilt_func,
                                  select_phi_prebuilt_callback, NULL);
 
     spidir_function_t phi_handle_func = spidir_module_create_function(
-        module, "select_phi_handle", &ret_type, 3, param_types);
+        module, "select_phi_handle", ret_type, 3, param_types);
     spidir_module_build_function(module, phi_handle_func,
                                  select_phi_handle_callback, NULL);
 

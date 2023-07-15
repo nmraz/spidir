@@ -29,7 +29,7 @@ unsafe extern "C" fn spidir_module_destroy(module: *mut Module) {
 unsafe extern "C" fn spidir_module_create_function(
     module: *mut Module,
     name: *const c_char,
-    ret_type: *const ApiType,
+    ret_type: ApiType,
     param_count: usize,
     param_types: *const ApiType,
 ) -> ApiFunction {
@@ -46,7 +46,7 @@ unsafe extern "C" fn spidir_module_create_function(
 unsafe extern "C" fn spidir_module_create_extern_function(
     module: *mut Module,
     name: *const c_char,
-    ret_type: *const ApiType,
+    ret_type: ApiType,
     param_count: usize,
     param_types: *const ApiType,
 ) -> ApiExternFunction {

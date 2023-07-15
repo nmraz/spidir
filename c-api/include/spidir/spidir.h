@@ -7,6 +7,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/// A sentinel representing the absence of a `spidir_value_t`.
+/// Unless otherwise specified, functions accepting a value will panic if they
+/// are passed this value.
+#define SPIDIR_VALUE_INVALID ((spidir_value_t){UINT32_MAX})
+
 /// An opaque type representing a spidir module.
 ///
 /// Modules are the high-level container for all spidir context, and can contain
@@ -64,6 +69,10 @@ enum spidir_value_type {
     SPIDIR_TYPE_F64 = 2,
     /// A pointer that can be used with load and store instructions.
     SPIDIR_TYPE_PTR = 3,
+    /// A sentinel value representing the absence of a type.
+    /// Unless otherwise specified, functions accepting a type will panic if
+    /// they are passed this value.
+    SPIDIR_TYPE_NONE = UINT8_MAX,
 };
 
 /// Represents a type of integer comparison operation.
@@ -144,7 +153,8 @@ void spidir_module_destroy(spidir_module_handle_t module);
 ///                        collide with names given to other functions and
 ///                        external functions in the module.
 /// @param[in] ret_type    The type to be returned by the function. If this
-///                        value is null, the function will have no return type.
+///                        value is `SPIDIR_TYPE_NONE`, the function will have
+///                        no return type.
 /// @param[in] param_count The number of parameters to be received by the
 ///                        function.
 /// @param[in] param_types A pointer to an array of `param_count` types,
@@ -154,8 +164,7 @@ void spidir_module_destroy(spidir_module_handle_t module);
 /// @return A value identifying the newly-created function.
 spidir_function_t
 spidir_module_create_function(spidir_module_handle_t module, const char* name,
-                              const spidir_value_type_t* ret_type,
-                              size_t param_count,
+                              spidir_value_type_t ret_type, size_t param_count,
                               const spidir_value_type_t* param_types);
 
 /// Adds a new external function with the specified parameters to the module.
@@ -168,7 +177,8 @@ spidir_module_create_function(spidir_module_handle_t module, const char* name,
 ///                        collide with names given to other functions and
 ///                        external functions in the module.
 /// @param[in] ret_type    The type to be returned by the function. If this
-///                        value is null, the function will have no return type.
+///                        value is `SPIDIR_TYPE_NONE`, the function will have
+///                        no return type.
 /// @param[in] param_count The number of parameters to be received by the
 ///                        function.
 /// @param[in] param_types A pointer to an array of `param_count` types,
@@ -178,7 +188,7 @@ spidir_module_create_function(spidir_module_handle_t module, const char* name,
 /// @return A value identifying the newly-created external function.
 spidir_extern_function_t spidir_module_create_extern_function(
     spidir_module_handle_t module, const char* name,
-    const spidir_value_type_t* ret_type, size_t param_count,
+    spidir_value_type_t ret_type, size_t param_count,
     const spidir_value_type_t* param_types);
 
 /// Creates a builder object for adding code to `func` and invokes `callback` on
@@ -277,9 +287,9 @@ spidir_value_t spidir_builder_build_param_ref(spidir_builder_handle_t builder,
 ///
 /// @param[in] builder   A handle to the function builder.
 /// @param[in] ret_type  The return type to use for the call. If this parameter
-///                      is null, the call will be treated as returning no
-///                      value. This type should match the return type specified
-///                      when the function was created.
+///                      is `SPIDIR_TYPE_NONE`, the call will be treated as
+///                      returning no value. This type should match the return
+///                      type specified when the function was created.
 /// @param[in] func      The function to call.
 /// @param[in] arg_count The number of arguments to pass to the function. This
 ///                      value should match the parameter count specified when
@@ -289,10 +299,9 @@ spidir_value_t spidir_builder_build_param_ref(spidir_builder_handle_t builder,
 ///                      null if `arg_count` is 0.
 /// @return An SSA value containing the return value of the function. If
 /// `ret_type` was null (indicating a call to a function with no return value),
-/// the returned value will be a special sentinel; attempting to pass this
-/// sentinel to other spidir APIs will cause a panic.
+/// the returned value will be `SPIDIR_VALUE_INVALID`.
 spidir_value_t spidir_builder_build_call(spidir_builder_handle_t builder,
-                                         const spidir_value_type_t* ret_type,
+                                         spidir_value_type_t ret_type,
                                          spidir_function_t func,
                                          size_t arg_count,
                                          const spidir_value_t* args);
@@ -306,9 +315,9 @@ spidir_value_t spidir_builder_build_call(spidir_builder_handle_t builder,
 ///
 /// @param[in] builder   A handle to the function builder.
 /// @param[in] ret_type  The return type to use for the call. If this parameter
-///                      is null, the call will be treated as returning no
-///                      value. This type should match the return type specified
-///                      when the function was created.
+///                      is `SPIDIR_TYPE_NONE`, the call will be treated as
+///                      returning no value. This type should match the return
+///                      type specified when the function was created.
 /// @param[in] func      The function to call.
 /// @param[in] arg_count The number of arguments to pass to the function. This
 ///                      value should match the parameter count specified when
@@ -318,11 +327,12 @@ spidir_value_t spidir_builder_build_call(spidir_builder_handle_t builder,
 ///                      null if `arg_count` is 0.
 /// @return An SSA value containing the return value of the function. If
 /// `ret_type` was null (indicating a call to a function with no return value),
-/// the returned value will be a special sentinel; attempting to pass this
-/// sentinel to other spidir APIs will cause a panic.
-spidir_value_t spidir_builder_build_extern_call(
-    spidir_builder_handle_t builder, const spidir_value_type_t* ret_type,
-    spidir_function_t func, size_t arg_count, const spidir_value_t* args);
+/// the returned value will be `SPIDIR_VALUE_INVALID`.
+spidir_value_t spidir_builder_build_extern_call(spidir_builder_handle_t builder,
+                                                spidir_value_type_t ret_type,
+                                                spidir_function_t func,
+                                                size_t arg_count,
+                                                const spidir_value_t* args);
 
 /// Builds a return instruction at the current insertion point.
 ///
@@ -335,10 +345,10 @@ spidir_value_t spidir_builder_build_extern_call(
 ///
 /// @param[in] builder A handle to the function builder.
 /// @param[in] value   The value to pass to the return instruction. If this
-///                    parameter is null, the return instruction will not return
-///                    a value.
+///                    parameter is `SPIDIR_VALUE_INVALID`, the return
+///                    instruction will not return a value.
 void spidir_builder_build_return(spidir_builder_handle_t builder,
-                                 const spidir_value_t* value);
+                                 spidir_value_t value);
 
 /// Builds a branch instruction to the specified destination at the current
 /// insertion point.

@@ -53,7 +53,7 @@ unsafe extern "C" fn spidir_builder_build_param_ref(
 #[no_mangle]
 unsafe extern "C" fn spidir_builder_build_call(
     builder: *mut FunctionBuilder<'_>,
-    ret_type: *const ApiType,
+    ret_type: ApiType,
     func: ApiFunction,
     arg_count: usize,
     args: *const ApiValue,
@@ -73,7 +73,7 @@ unsafe extern "C" fn spidir_builder_build_call(
 #[no_mangle]
 unsafe extern "C" fn spidir_builder_build_extern_call(
     builder: *mut FunctionBuilder<'_>,
-    ret_type: *const ApiType,
+    ret_type: ApiType,
     func: ApiExternFunction,
     arg_count: usize,
     args: *const ApiValue,
@@ -93,7 +93,7 @@ unsafe extern "C" fn spidir_builder_build_extern_call(
 #[no_mangle]
 unsafe extern "C" fn spidir_builder_build_return(
     builder: *mut FunctionBuilder<'_>,
-    value: *const ApiValue,
+    value: ApiValue,
 ) {
     unsafe {
         let builder = &mut *builder;

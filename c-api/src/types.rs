@@ -12,19 +12,19 @@ use ir::{
 };
 use smallvec::SmallVec;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ApiFunction(pub u32);
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ApiExternFunction(pub u32);
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ApiBlock(pub u32);
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ApiValue(pub u32);
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ApiPhi(pub u32);
 
@@ -34,10 +34,13 @@ pub type ApiIcmpKind = u8;
 pub type BuildFunctionCallback = extern "C" fn(*mut FunctionBuilder, *mut ());
 pub type DumpCallback = extern "C" fn(*const c_char, usize, *mut ()) -> u8;
 
+const SPIDIR_VALUE_INVALID: ApiValue = ApiValue(u32::MAX);
+
 pub const SPIDIR_TYPE_I32: u8 = 0;
 pub const SPIDIR_TYPE_I64: u8 = 1;
 pub const SPIDIR_TYPE_F64: u8 = 2;
 pub const SPIDIR_TYPE_PTR: u8 = 3;
+pub const SPIDIR_TYPE_NONE: u8 = u8::MAX;
 
 pub const SPIDIR_ICMP_EQ: u8 = 0;
 pub const SPIDIR_ICMP_NE: u8 = 1;
@@ -58,9 +61,10 @@ pub unsafe fn value_list_from_api(
     }
 }
 
+#[track_caller]
 pub unsafe fn name_signature_from_api(
     name: *const c_char,
-    ret_type: *const ApiType,
+    ret_type: ApiType,
     param_count: usize,
     param_types: *const ApiType,
 ) -> (String, Signature) {
@@ -83,25 +87,24 @@ pub unsafe fn name_signature_from_api(
 }
 
 pub fn opt_value_to_api(value: Option<DepValue>) -> ApiValue {
-    match value {
-        Some(value) => value_to_api(value),
-        None => ApiValue(u32::MAX),
+    value.map_or(SPIDIR_VALUE_INVALID, value_to_api)
+}
+
+#[track_caller]
+pub fn opt_value_from_api(value: ApiValue) -> Option<DepValue> {
+    if value == SPIDIR_VALUE_INVALID {
+        None
+    } else {
+        Some(value_from_api(value))
     }
 }
 
-pub unsafe fn opt_value_from_api(value: *const ApiValue) -> Option<DepValue> {
-    if value.is_null() {
+#[track_caller]
+pub fn opt_type_from_api(opt_type: ApiType) -> Option<Type> {
+    if opt_type == SPIDIR_TYPE_NONE {
         None
     } else {
-        Some(value_from_api(unsafe { *value }))
-    }
-}
-
-pub unsafe fn opt_type_from_api(opt_type: *const ApiType) -> Option<Type> {
-    if opt_type.is_null() {
-        None
-    } else {
-        Some(type_from_api(unsafe { *opt_type }))
+        Some(type_from_api(opt_type))
     }
 }
 
@@ -113,7 +116,12 @@ pub fn value_to_api(value: DepValue) -> ApiValue {
     ApiValue(value.as_u32())
 }
 
+#[track_caller]
 pub fn value_from_api(value: ApiValue) -> DepValue {
+    assert!(
+        value != SPIDIR_VALUE_INVALID,
+        "value parameter is required here"
+    );
     DepValue::from_u32(value.0)
 }
 
@@ -121,16 +129,19 @@ pub fn block_from_api(block: ApiBlock) -> Block {
     Block::from_u32(block.0)
 }
 
+#[track_caller]
 pub fn type_from_api(api_type: ApiType) -> Type {
     match api_type {
         SPIDIR_TYPE_I32 => Type::I32,
         SPIDIR_TYPE_I64 => Type::I64,
         SPIDIR_TYPE_F64 => Type::F64,
         SPIDIR_TYPE_PTR => Type::Ptr,
+        SPIDIR_TYPE_NONE => panic!("type parameter is required here"),
         _ => panic!("unexpected type {api_type}"),
     }
 }
 
+#[track_caller]
 pub fn icmp_kind_from_api(kind: ApiIcmpKind) -> IcmpKind {
     match kind {
         SPIDIR_ICMP_EQ => IcmpKind::Eq,

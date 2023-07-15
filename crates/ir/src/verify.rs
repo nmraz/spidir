@@ -1,11 +1,15 @@
+use core::fmt;
+
 use alloc::{borrow::ToOwned, string::String, vec::Vec};
 use fx_utils::FxHashSet;
+use itertools::Itertools;
 
 use crate::{
-    module::{Function, Module, Signature},
+    module::{Function, FunctionData, Module, Signature},
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::LiveNodeInfo,
+    write::write_node,
 };
 
 use self::node::verify_node_kind;
@@ -19,6 +23,44 @@ pub enum ModuleVerifierError {
         error: GraphVerifierError,
     },
     ReusedFunctionName(String),
+}
+
+impl ModuleVerifierError {
+    pub fn node<'a>(&self, module: &'a Module) -> Option<(&'a FunctionData, Node)> {
+        match self {
+            Self::Graph { function, error } => {
+                let function = &module.functions[*function];
+                match error {
+                    GraphVerifierError::UnusedControl(value)
+                    | GraphVerifierError::ReusedControl(value)
+                    | GraphVerifierError::BadOutputKind { value, .. } => {
+                        Some((function, function.graph.value_def(*value).0))
+                    }
+                    GraphVerifierError::BadInputCount { node, .. }
+                    | GraphVerifierError::BadOutputCount { node, .. }
+                    | GraphVerifierError::BadInputKind { node, .. }
+                    | GraphVerifierError::BadEntry(node)
+                    | GraphVerifierError::MisplacedEntry(node)
+                    | GraphVerifierError::ConstantOutOfRange(node) => Some((function, *node)),
+                }
+            }
+            _ => None,
+        }
+    }
+
+    pub fn display<'a>(&'a self, module: &'a Module) -> DisplayError<'a> {
+        DisplayError {
+            module,
+            error: self,
+        }
+    }
+
+    pub fn display_with_context<'a>(&'a self, module: &'a Module) -> DisplayErrorWithContext<'a> {
+        DisplayErrorWithContext {
+            module,
+            error: self,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,6 +87,94 @@ pub enum GraphVerifierError {
     BadEntry(Node),
     MisplacedEntry(Node),
     ConstantOutOfRange(Node),
+}
+
+#[derive(Clone, Copy)]
+pub struct DisplayError<'a> {
+    module: &'a Module,
+    error: &'a ModuleVerifierError,
+}
+
+impl fmt::Display for DisplayError<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.error {
+            ModuleVerifierError::Graph { function, error } => {
+                let function = &self.module.functions[*function];
+                let graph = &function.graph;
+                match error {
+                    GraphVerifierError::UnusedControl(value) => {
+                        let (_, output_idx) = graph.value_def(*value);
+                        write!(f, "control output {output_idx} unused")?;
+                    }
+                    GraphVerifierError::ReusedControl(value) => {
+                        let (_, output_idx) = graph.value_def(*value);
+                        write!(f, "control output {output_idx} reused")?;
+                    }
+                    GraphVerifierError::BadInputCount { expected, .. } => {
+                        write!(f, "bad input count, expected {expected}")?;
+                    }
+                    GraphVerifierError::BadOutputCount { expected, .. } => {
+                        write!(f, "bad output count, expected {expected}")?;
+                    }
+                    GraphVerifierError::BadInputKind {
+                        node,
+                        input,
+                        expected,
+                    } => {
+                        write!(
+                            f,
+                            "bad value kind for input {input}, expected one of {}, got `{}`",
+                            display_expected_kinds(expected),
+                            graph.value_kind(graph.node_inputs(*node)[*input as usize])
+                        )?;
+                    }
+                    GraphVerifierError::BadOutputKind { value, expected } => {
+                        let (_, output_idx) = graph.value_def(*value);
+                        write!(
+                            f,
+                            "bad value kind for output {output_idx}, expected one of {}, got `{}`",
+                            display_expected_kinds(expected),
+                            graph.value_kind(*value)
+                        )?;
+                    }
+                    GraphVerifierError::BadEntry(_) => {
+                        write!(f, "bad entry node")?;
+                    }
+                    GraphVerifierError::MisplacedEntry(_) => {
+                        write!(f, "misplaced entry node")?;
+                    }
+                    GraphVerifierError::ConstantOutOfRange(_) => {
+                        write!(f, "constant value out of range")?;
+                    }
+                }
+            }
+            ModuleVerifierError::ReusedFunctionName(name) => {
+                write!(f, "function name `{name}` reused")?;
+            }
+        }
+        Ok(())
+    }
+}
+
+pub struct DisplayErrorWithContext<'a> {
+    module: &'a Module,
+    error: &'a ModuleVerifierError,
+}
+
+impl<'a> fmt::Display for DisplayErrorWithContext<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some((function, node)) = self.error.node(self.module) {
+            write!(
+                f,
+                "in function `{}`: `{}`: {}",
+                function.name,
+                display_node(self.module, &function.graph, node),
+                self.error.display(self.module)
+            )?;
+        }
+
+        Ok(())
+    }
 }
 
 pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierError>> {
@@ -128,6 +258,18 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVe
             errors.push(GraphVerifierError::ReusedControl(output));
         }
     }
+}
+
+fn display_expected_kinds(kinds: &[DepValueKind]) -> impl fmt::Display + '_ {
+    kinds
+        .iter()
+        .format_with(", ", |kind, f| f(&format_args!("`{kind}`")))
+}
+
+fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {
+    let mut s = String::new();
+    write_node(&mut s, module, graph, node, 0).unwrap();
+    s
 }
 
 #[cfg(test)]

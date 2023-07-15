@@ -1,6 +1,5 @@
 use std::{
     ffi::OsStr,
-    fmt::Display,
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
@@ -11,13 +10,9 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 use ir::{
     module::{FunctionData, Module},
-    node::DepValueKind,
-    valgraph::{Node, ValGraph},
-    verify::{verify_module, GraphVerifierError, ModuleVerifierError},
-    write::write_node,
+    verify::verify_module,
 };
 use ir_graphviz::write_graphviz;
-use itertools::Itertools;
 use parser::parse_module;
 use tempfile::NamedTempFile;
 
@@ -138,7 +133,7 @@ fn main() -> Result<()> {
                 Ok(_) => eprintln!("Module valid"),
                 Err(errors) => {
                     for error in errors {
-                        report_verifier_error(&module, &error);
+                        eprintln!("error: {}", error.display_with_context(&module));
                     }
                     bail!("module contained errors")
                 }
@@ -147,94 +142,6 @@ fn main() -> Result<()> {
     }
 
     Ok(())
-}
-
-fn report_verifier_error(module: &Module, error: &ModuleVerifierError) {
-    eprint!("error: ");
-    match error {
-        ModuleVerifierError::Graph { function, error } => {
-            let function = &module.functions[*function];
-            let graph = &function.graph;
-            eprint!("in function `{}`: ", function.name);
-            match error {
-                GraphVerifierError::UnusedControl(value) => {
-                    let (node, output_idx) = graph.value_def(*value);
-                    eprintln!(
-                        "`{}`: control output {output_idx} unused",
-                        display_node(module, graph, node)
-                    );
-                }
-                GraphVerifierError::ReusedControl(value) => {
-                    let (node, output_idx) = graph.value_def(*value);
-                    eprintln!(
-                        "`{}`: control output {output_idx} reused",
-                        display_node(module, graph, node)
-                    );
-                }
-                GraphVerifierError::BadInputCount { node, expected } => {
-                    eprintln!(
-                        "`{}`: bad input count, expected {expected}",
-                        display_node(module, graph, *node)
-                    );
-                }
-                GraphVerifierError::BadOutputCount { node, expected } => {
-                    eprintln!(
-                        "`{}`: bad output count, expected {expected}",
-                        display_node(module, graph, *node)
-                    );
-                }
-                GraphVerifierError::BadInputKind {
-                    node,
-                    input,
-                    expected,
-                } => {
-                    eprintln!(
-                        "`{}`: bad value kind for input {input}, expected one of {}, got `{}`",
-                        display_node(module, graph, *node),
-                        display_expected_kinds(expected),
-                        graph.value_kind(graph.node_inputs(*node)[*input as usize])
-                    );
-                }
-                GraphVerifierError::BadOutputKind { value, expected } => {
-                    let (node, output_idx) = graph.value_def(*value);
-                    eprintln!(
-                        "`{}`: bad value kind for output {output_idx}, expected one of {}, got `{}`",
-                        display_node(module, graph, node),
-                        display_expected_kinds(expected),
-                        graph.value_kind(*value)
-                    );
-                }
-                GraphVerifierError::BadEntry(node) => {
-                    eprintln!("`{}`: bad entry node", display_node(module, graph, *node));
-                }
-                GraphVerifierError::MisplacedEntry(node) => {
-                    eprintln!(
-                        "`{}`: misplaced entry node",
-                        display_node(module, graph, *node)
-                    );
-                }
-                GraphVerifierError::ConstantOutOfRange(node) => {
-                    eprintln!(
-                        "`{}`: constant value out of range",
-                        display_node(module, graph, *node)
-                    );
-                }
-            }
-        }
-        ModuleVerifierError::ReusedFunctionName(name) => eprintln!("function name `{name}` reused"),
-    }
-}
-
-fn display_expected_kinds(kinds: &[DepValueKind]) -> impl Display + '_ {
-    kinds
-        .iter()
-        .format_with(", ", |kind, f| f(&format_args!("`{kind}`")))
-}
-
-fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {
-    let mut s = String::new();
-    write_node(&mut s, module, graph, node, 0).unwrap();
-    s
 }
 
 fn run_command(command: &mut Command) -> Result<()> {

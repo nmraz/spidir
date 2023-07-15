@@ -16,6 +16,8 @@ void* spidir_platform_alloc(size_t size, size_t align) {
 }
 
 void spidir_platform_free(void* ptr, size_t size, size_t align) {
+    (void) size;
+    (void) align;
     free(ptr);
 }
 

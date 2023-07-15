@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 project(spidir-c-tests)
 enable_testing()
 
+add_compile_options(-Wall -Wextra -Werror)
+
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../c-api spidir)
 add_subdirectory(utils)
 

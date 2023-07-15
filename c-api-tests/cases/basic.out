@@ -5,22 +5,21 @@ func @sum:i32(i32) {
     %5:ptr = stackslot 4:4
     %4:ptr = stackslot 4:4
     %6:ctrl = store %2, %1, %4
-    %25:i32 = iconst 1
-    %11:i32 = iconst 0
+    %24:i32 = iconst 1
     %7:i32 = iconst 0
     %8:ctrl = store %6, %7, %5
-    %9:ctrl, %10:phisel = region %8, %29
-    %12:ctrl, %13:i32 = load %9, %4
-    %14:i32 = icmp eq %13, %11
-    %19:ctrl, %20:ctrl = brcond %12, %14
-    %15:ctrl, %16:phisel = region %19
-    %30:ctrl, %31:i32 = load %15, %5
-    return %30, %31
-    %17:ctrl, %18:phisel = region %20
-    %21:ctrl, %22:i32 = load %17, %4
-    %23:ctrl, %24:i32 = load %21, %5
-    %26:i32 = isub %22, %25
-    %28:ctrl = store %23, %26, %4
-    %27:i32 = iadd %24, %22
-    %29:ctrl = store %28, %27, %5
+    %13:i32 = icmp eq %12, %7
+    %18:ctrl, %19:ctrl = brcond %11, %13
+    %14:ctrl, %15:phisel = region %18
+    %29:ctrl, %30:i32 = load %14, %5
+    return %29, %30
+    %16:ctrl, %17:phisel = region %19
+    %20:ctrl, %21:i32 = load %16, %4
+    %22:ctrl, %23:i32 = load %20, %5
+    %25:i32 = isub %21, %24
+    %27:ctrl = store %22, %25, %4
+    %26:i32 = iadd %23, %21
+    %28:ctrl = store %27, %26, %5
+    %9:ctrl, %10:phisel = region %8, %28
+    %11:ctrl, %12:i32 = load %9, %4
 }

@@ -2,7 +2,8 @@
 
 use cranelift_entity::{entity_impl, PrimaryMap};
 use ir::{
-    builder::{Builder, BuilderExt, SimpleBuilder},
+    builder::{Builder, BuilderExt},
+    cons_builder::{Cache, ConsBuilder},
     module::FunctionData,
     node::{FunctionRef, IcmpKind, Type},
     valgraph::{DepValue, Node},
@@ -35,6 +36,7 @@ pub struct FunctionBuilder<'a> {
     func: &'a mut FunctionData,
     blocks: PrimaryMap<Block, BlockData>,
     cur_block: Option<Block>,
+    node_cache: Cache,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -43,6 +45,7 @@ impl<'a> FunctionBuilder<'a> {
             func,
             blocks: PrimaryMap::new(),
             cur_block: None,
+            node_cache: Cache::new(),
         }
     }
 
@@ -224,7 +227,7 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn builder(&mut self) -> impl Builder + '_ {
-        SimpleBuilder(&mut self.func.graph)
+        ConsBuilder::new(&mut self.func.graph, &mut self.node_cache)
     }
 
     fn cur_block_ctrl(&self) -> DepValue {
@@ -337,12 +340,10 @@ mod tests {
                 func @func:i32(i32) {
                     %0:ctrl, %1:i32 = entry
                     %2:ctrl, %3:phisel = region %0
-                    %6:i32 = iconst 1
-                    %7:i32 = iadd %1, %6
                     %4:i32 = iconst 1
                     %5:i32 = iadd %1, %4
-                    %8:i32 = imul %5, %7
-                    return %2, %8
+                    %6:i32 = imul %5, %5
+                    return %2, %6
                 }"#]],
         );
     }

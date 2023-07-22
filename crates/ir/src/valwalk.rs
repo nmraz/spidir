@@ -1,3 +1,5 @@
+use core::iter;
+
 use alloc::{vec, vec::Vec};
 
 use cranelift_entity::EntitySet;
@@ -7,6 +9,169 @@ use crate::{
     valgraph::{Node, ValGraph},
 };
 
+pub trait Succs {
+    fn successors(&self, node: Node, f: impl FnMut(Node));
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum WalkPhase {
+    Pre,
+    Post,
+}
+
+pub struct PreOrder<S> {
+    pub visited: EntitySet<Node>,
+    succs: S,
+    stack: Vec<Node>,
+}
+
+impl<S> PreOrder<S> {
+    pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
+        let stack = roots.into_iter().collect();
+        Self {
+            visited: EntitySet::new(),
+            succs,
+            stack,
+        }
+    }
+}
+
+impl<S: Succs> Iterator for PreOrder<S> {
+    type Item = Node;
+
+    fn next(&mut self) -> Option<Node> {
+        let node = loop {
+            let node = self.stack.pop()?;
+            if !self.visited.contains(node) {
+                break node;
+            }
+        };
+
+        self.visited.insert(node);
+
+        self.succs.successors(node, |succ| {
+            // This extra check here is an optimization to avoid needlessly placing
+            // an obviously-visited node on to the stack. Even if the node is not
+            // visited now, it may be by the time it is popped off the stack later.
+            if !self.visited.contains(succ) {
+                self.stack.push(succ);
+            }
+        });
+
+        Some(node)
+    }
+}
+
+pub struct PostOrder<S> {
+    pub visited: EntitySet<Node>,
+    succs: S,
+    stack: Vec<(WalkPhase, Node)>,
+}
+
+impl<S> PostOrder<S> {
+    pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
+        // Note: push the roots onto the stack in source order so that this order is preserved in
+        // any RPO. Some clients depend on this: for example, the live-node RPO of a function graph
+        // should always start with its entry node.
+        let stack = roots
+            .into_iter()
+            .map(|node| (WalkPhase::Pre, node))
+            .collect();
+
+        Self {
+            visited: EntitySet::new(),
+            succs,
+            stack,
+        }
+    }
+}
+
+impl<S: Succs> Iterator for PostOrder<S> {
+    type Item = Node;
+
+    fn next(&mut self) -> Option<Node> {
+        loop {
+            let (phase, node) = self.stack.pop()?;
+            match phase {
+                WalkPhase::Pre => {
+                    if !self.visited.contains(node) {
+                        self.visited.insert(node);
+                        self.stack.push((WalkPhase::Post, node));
+                        self.succs.successors(node, |succ| {
+                            // This extra check here is an optimization to avoid needlessly placing
+                            // an obviously-visited node on to the stack. Even if the node is not
+                            // visited now, it may be by the time it is popped off the stack later.
+                            if !self.visited.contains(succ) {
+                                self.stack.push((WalkPhase::Pre, succ));
+                            }
+                        });
+                    }
+                }
+                WalkPhase::Post => return Some(node),
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct LiveNodeSuccs<'a>(&'a ValGraph);
+
+impl<'a> Succs for LiveNodeSuccs<'a> {
+    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
+        // Consider all inputs as "live" so we don't cause cases where uses are traversed without their
+        // corresponding defs. Users that want to treat regions with no control inputs as dead should do
+        // so themselves.
+        for input in self.0.node_inputs(node) {
+            f(self.0.value_def(input).0);
+        }
+
+        for output in self.0.node_outputs(node) {
+            // For outputs, a control output indicates that the node receiving control is live.
+            if self.0.value_kind(output) == DepValueKind::Control {
+                // Note: we only take the first output because a control value should be used at most once.
+                if let Some((next_node, _)) = self.0.value_uses(output).next() {
+                    f(next_node);
+                }
+            }
+        }
+    }
+}
+
+pub type LiveNodeWalk<'a> = PreOrder<LiveNodeSuccs<'a>>;
+
+/// Walks the nodes currently live in `graph` given `entry` in an unspecified order.
+///
+/// `entry` is guaranteed to be the first node returned.
+pub fn walk_live_nodes(graph: &ValGraph, entry: Node) -> LiveNodeWalk<'_> {
+    PreOrder::new(LiveNodeSuccs(graph), iter::once(entry))
+}
+
+#[derive(Clone, Copy)]
+pub struct DefUseSuccs<'a> {
+    graph: &'a ValGraph,
+    live_nodes: &'a EntitySet<Node>,
+}
+
+impl<'a> DefUseSuccs<'a> {
+    pub fn new(graph: &'a ValGraph, live_nodes: &'a EntitySet<Node>) -> Self {
+        Self { graph, live_nodes }
+    }
+}
+
+impl<'a> Succs for DefUseSuccs<'a> {
+    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
+        for output in self.graph.node_outputs(node) {
+            for (user, _) in self.graph.value_uses(output) {
+                if self.live_nodes.contains(user) {
+                    f(user);
+                }
+            }
+        }
+    }
+}
+
+pub type DefUsePostorder<'a> = PostOrder<DefUseSuccs<'a>>;
+
 #[derive(Debug, Clone)]
 pub struct LiveNodeInfo {
     roots: Vec<Node>,
@@ -15,20 +180,9 @@ pub struct LiveNodeInfo {
 
 impl LiveNodeInfo {
     pub fn compute(graph: &ValGraph, entry: Node) -> Self {
-        let mut stack = vec![entry];
-        let mut visited = EntitySet::new();
-        let mut roots = Vec::new();
-
-        while let Some(node) = stack.pop() {
-            if visited.contains(node) {
-                continue;
-            }
-
-            visited.insert(node);
-            stack.extend(live_succs(graph, node));
-
-            // This node is reachable in the liveness graph but has no inputs, so make sure it is treated
-            // as a root.
+        let mut walk = walk_live_nodes(graph, entry);
+        let mut roots = vec![];
+        for node in walk.by_ref() {
             if graph.node_inputs(node).is_empty() {
                 roots.push(node);
             }
@@ -36,7 +190,7 @@ impl LiveNodeInfo {
 
         Self {
             roots,
-            live_nodes: visited,
+            live_nodes: walk.visited,
         }
     }
 
@@ -55,8 +209,11 @@ impl LiveNodeInfo {
             .filter(|&node| self.live_nodes.contains(node))
     }
 
-    pub fn postorder<'a>(&'a self, graph: &'a ValGraph) -> PostOrder<'a> {
-        PostOrder::new(graph, self.roots.iter().copied(), &self.live_nodes)
+    pub fn postorder<'a>(&'a self, graph: &'a ValGraph) -> DefUsePostorder<'a> {
+        PostOrder::new(
+            DefUseSuccs::new(graph, &self.live_nodes),
+            self.roots.iter().copied(),
+        )
     }
 
     pub fn reverse_postorder(&self, graph: &ValGraph) -> Vec<Node> {
@@ -64,86 +221,6 @@ impl LiveNodeInfo {
         rpo.reverse();
         rpo
     }
-}
-
-pub struct PostOrder<'a> {
-    graph: &'a ValGraph,
-    live_nodes: &'a EntitySet<Node>,
-    stack: Vec<(WalkPhase, Node)>,
-    visited: EntitySet<Node>,
-}
-
-impl<'a> PostOrder<'a> {
-    pub fn new(
-        graph: &'a ValGraph,
-        roots: impl IntoIterator<Item = Node>,
-        live_nodes: &'a EntitySet<Node>,
-    ) -> Self {
-        let stack = roots
-            .into_iter()
-            .map(|node| (WalkPhase::Pre, node))
-            .collect();
-
-        Self {
-            graph,
-            live_nodes,
-            stack,
-            visited: EntitySet::new(),
-        }
-    }
-}
-
-impl<'a> Iterator for PostOrder<'a> {
-    type Item = Node;
-
-    fn next(&mut self) -> Option<Node> {
-        loop {
-            let (phase, node) = self.stack.pop()?;
-            match phase {
-                WalkPhase::Pre
-                    if !self.visited.contains(node) && self.live_nodes.contains(node) =>
-                {
-                    self.visited.insert(node);
-                    self.stack.push((WalkPhase::Post, node));
-                    for output in self.graph.node_outputs(node) {
-                        for (user, _) in self.graph.value_uses(output) {
-                            self.stack.push((WalkPhase::Pre, user))
-                        }
-                    }
-                }
-                WalkPhase::Pre => {}
-                WalkPhase::Post => return Some(node),
-            }
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum WalkPhase {
-    Pre,
-    Post,
-}
-
-fn live_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
-    // Consider all inputs as "live" so we don't cause cases where uses are traversed without their
-    // corresponding defs. Users that want to treat regions with no control inputs as dead should do
-    // so themselves.
-    let input_succs = graph
-        .node_inputs(node)
-        .into_iter()
-        .map(|input| graph.value_def(input).0);
-
-    let output_succs = graph.node_outputs(node).into_iter().filter_map(|output| {
-        // For outputs, a control output indicates that the node receiving control is live.
-        if graph.value_kind(output) == DepValueKind::Control {
-            // Note: we only take the first output because a control value should be used at most once.
-            graph.value_uses(output).next().map(|(node, _)| node)
-        } else {
-            None
-        }
-    });
-
-    input_succs.chain(output_succs)
 }
 
 #[cfg(test)]

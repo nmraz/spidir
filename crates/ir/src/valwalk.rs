@@ -116,6 +116,12 @@ impl<S: Succs> Iterator for PostOrder<S> {
 #[derive(Clone, Copy)]
 pub struct LiveNodeSuccs<'a>(&'a ValGraph);
 
+impl<'a> LiveNodeSuccs<'a> {
+    pub fn new(graph: &'a ValGraph) -> Self {
+        Self(graph)
+    }
+}
+
 impl<'a> Succs for LiveNodeSuccs<'a> {
     fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
         // Consider all inputs as "live" so we don't cause cases where uses are traversed without their
@@ -143,7 +149,7 @@ pub type LiveNodeWalk<'a> = PreOrder<LiveNodeSuccs<'a>>;
 ///
 /// `entry` is guaranteed to be the first node returned.
 pub fn walk_live_nodes(graph: &ValGraph, entry: Node) -> LiveNodeWalk<'_> {
-    PreOrder::new(LiveNodeSuccs(graph), iter::once(entry))
+    PreOrder::new(LiveNodeSuccs::new(graph), iter::once(entry))
 }
 
 #[derive(Clone, Copy)]

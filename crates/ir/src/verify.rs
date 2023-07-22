@@ -8,7 +8,7 @@ use crate::{
     module::{Function, FunctionData, Module, Signature},
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::LiveNodeInfo,
+    valwalk::walk_live_nodes,
     write::write_node,
 };
 
@@ -230,7 +230,7 @@ pub fn verify_graph(
         errors.push(GraphVerifierError::BadEntry(entry));
     }
 
-    for node in LiveNodeInfo::compute(graph, entry).iter_live_nodes() {
+    for node in walk_live_nodes(graph, entry) {
         verify_node_kind(graph, signature, entry, node, &mut errors);
         verify_control_outputs(graph, node, &mut errors);
     }

@@ -135,6 +135,8 @@ impl<'a> Succs for LiveNodeSuccs<'a> {
             // For outputs, a control output indicates that the node receiving control is live.
             if self.0.value_kind(output) == DepValueKind::Control {
                 // Note: we only take the first output because a control value should be used at most once.
+                // We also explicitly cope with malformed unused control values here as this
+                // traversal is used in the verifier itself.
                 if let Some((next_node, _)) = self.0.value_uses(output).next() {
                     f(next_node);
                 }

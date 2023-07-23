@@ -208,13 +208,6 @@ impl LiveNodeInfo {
         &self.live_nodes
     }
 
-    pub fn iter_live_nodes(&self) -> impl Iterator<Item = Node> + '_ {
-        // Somewhat unbelievably, there is no easy way to just iterate over an `EntitySet`.
-        self.live_nodes
-            .keys()
-            .filter(|&node| self.live_nodes.contains(node))
-    }
-
     pub fn postorder<'a>(&'a self, graph: &'a ValGraph) -> DefUsePostorder<'a> {
         PostOrder::new(
             DefUseSuccs::new(graph, &self.live_nodes),
@@ -250,8 +243,12 @@ mod tests {
         let live_info = LiveNodeInfo::compute(graph, entry);
         assert_eq!(live_info.roots(), expected_roots);
 
+        let live_node_set = live_info.live_nodes();
         let expected_live_nodes: FxHashSet<_> = expected_live_nodes.iter().copied().collect();
-        let actual_live_nodes: FxHashSet<_> = live_info.iter_live_nodes().collect();
+        let actual_live_nodes: FxHashSet<_> = live_node_set
+            .keys()
+            .filter(|&node| live_node_set.contains(node))
+            .collect();
 
         assert_eq!(actual_live_nodes, expected_live_nodes);
     }

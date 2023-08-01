@@ -312,8 +312,11 @@ impl ValGraph {
     }
 
     pub fn has_one_use(&self, value: DepValue) -> bool {
-        let mut uses = self.value_uses(value);
-        uses.next().is_some() && uses.next().is_none()
+        self.use_count(value) == 1
+    }
+
+    pub fn use_count(&self, value: DepValue) -> u32 {
+        self.values[value].uses.len(&self.use_pool) as u32
     }
 
     pub fn replace_all_uses(&mut self, old: DepValue, new: DepValue) {
@@ -447,6 +450,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
 
+        assert_eq!(graph.use_count(const1), 3);
         assert!(!graph.has_one_use(const1));
         assert!(graph.has_one_use(const2));
 
@@ -482,7 +486,7 @@ mod tests {
         let seven_val = graph.node_outputs(seven)[0];
         graph.replace_all_uses(old_const_val, seven_val);
 
-        assert_eq!(graph.value_uses(old_const_val).count(), 0);
+        assert_eq!(graph.use_count(old_const_val), 0);
         assert_eq!(
             Vec::from_iter(graph.value_uses(seven_val)),
             vec![(add, 0), (add, 1), (add2, 0)]

@@ -320,15 +320,19 @@ impl ValGraph {
     }
 
     pub fn replace_all_uses(&mut self, old: DepValue, new: DepValue) {
+        // Note: empty out `self.values[old].uses` before we start updating `self.values[new].uses`,
+        // so that nothing bad happens if `old == new`.
         let mut old_uses = self.values[old].uses.take();
-
-        for &value_use in old_uses.as_slice(&self.use_pool) {
-            self.uses[value_use].value = new;
-        }
+        let old_use_len = old_uses.len(&self.use_pool);
 
         let new_uses = &mut self.values[new].uses;
         let orig_new_use_len = new_uses.len(&self.use_pool);
-        let old_use_len = old_uses.len(&self.use_pool);
+
+        // Move all existing use objects to the new value and location in the use list.
+        for &value_use in old_uses.as_slice(&self.use_pool) {
+            self.uses[value_use].value = new;
+            self.uses[value_use].use_list_index += orig_new_use_len as u32;
+        }
 
         new_uses.grow_at(orig_new_use_len, old_use_len, &mut self.use_pool);
 
@@ -506,6 +510,87 @@ mod tests {
                 .map(|input| graph.value_def(input))
                 .collect::<Vec<_>>(),
             vec![(seven, 0), (new_const, 0)]
+        );
+    }
+
+    #[test]
+    fn remove_node_input_after_replace_all_uses() {
+        let mut graph = ValGraph::new();
+
+        let const1 = create_const32(&mut graph);
+        let const2 = create_const32(&mut graph);
+        let const3 = create_const32(&mut graph);
+        let const4 = create_const32(&mut graph);
+
+        let add1 = graph.create_node(
+            NodeKind::Iadd,
+            [const1, const2],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add2 = graph.create_node(
+            NodeKind::Iadd,
+            [const1, const3],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add3 = graph.create_node(
+            NodeKind::Iadd,
+            [const2, const3],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add4 = graph.create_node(
+            NodeKind::Iadd,
+            [const1, const4],
+            [DepValueKind::Value(Type::I32)],
+        );
+
+        graph.replace_all_uses(const1, const2);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(const2)),
+            vec![(add1, 1), (add3, 0), (add1, 0), (add2, 0), (add4, 0)]
+        );
+
+        graph.remove_node_input(add2, 0);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(const2)),
+            vec![(add1, 1), (add3, 0), (add1, 0), (add4, 0)]
+        );
+    }
+
+    #[test]
+    fn replace_all_uses_with_self() {
+        let mut graph = ValGraph::new();
+
+        let const1 = create_const32(&mut graph);
+        let const2 = create_const32(&mut graph);
+        let const3 = create_const32(&mut graph);
+        let const4 = create_const32(&mut graph);
+
+        let add1 = graph.create_node(
+            NodeKind::Iadd,
+            [const1, const2],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add2 = graph.create_node(
+            NodeKind::Iadd,
+            [const1, const3],
+            [DepValueKind::Value(Type::I32)],
+        );
+        let add3 = graph.create_node(
+            NodeKind::Iadd,
+            [const4, const1],
+            [DepValueKind::Value(Type::I32)],
+        );
+
+        graph.replace_all_uses(const1, const1);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(const1)),
+            vec![(add1, 0), (add2, 0), (add3, 1)]
+        );
+
+        graph.remove_node_input(add1, 0);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(const1)),
+            vec![(add3, 1), (add2, 0)]
         );
     }
 

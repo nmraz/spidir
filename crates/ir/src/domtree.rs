@@ -147,6 +147,7 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
 
         // Compute semidominators of `node` based on CFG predecessors, using the equivalent
         // defintion of semidominators proven in Theorem 4 of the LT paper.
+        //
         // This only works because we are traversing in reverse preorder, which means that the
         // semidominators for any nodes with a higher preorder number are already correct.
         for pred in cfg_preds(graph, node) {
@@ -156,11 +157,28 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
                 continue;
             }
 
+            // Apply Theorem 4.
+            //
+            // Note that we're somewhat cheekily relying on the fact that `eval` and the `sdom`
+            // field can mean one of several different things depending on the relation depending on
+            // the relation between `node` and `pred`:
+            //
+            // 1. If `pred < node`, `pred` has not yet been linked and so `eval(pred) == pred`.
+            //    We also have `info[pred].sdom == pred` as it has not yet been computed, so
+            //    `pred_ancestor_sdom` ends up just being a roundabout way of naming `pred`.
+            //
+            // 2. If `pred == node`, `eval(pred) == pred` and the computation has no effect.
+            //
+            // 3. If `pred > node`, `eval(pred)` is an ancestor of `pred` in the link-eval forest
+            //    (and thus in the DFS tree). Since all ancestors of `pred` in the forest must be
+            //    greater than `node` at this point (nothing less than or equal to `node` has been
+            //    linked), `info[eval(pred)].sdom` will be its true semidominator.
+            //
+            // Cases (1) and (3) exactly cover the disjoint union presented in Theorem 4.
+
             let pred_ancestor = eval(graph, &mut node_info, i + 1, pred);
             let pred_ancestor_sdom = node_info[&pred_ancestor].sdom;
 
-            // Apply Theorem 4.
-            // Note that we're somewhat cheekily relying on
             let info = node_info.get_mut(&node).unwrap();
             info.sdom = cmp::min(info.sdom, pred_ancestor_sdom);
         }
@@ -185,6 +203,8 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
                 .or_default()
                 .push(node);
         }
+
+        // Implicit: We now consider `node` to be linked to its parent in the link-eval forest.
     }
 
     // Pass 2: Fill in immediate dominators for nodes marked as `SameAs` by traversing the DFS tree

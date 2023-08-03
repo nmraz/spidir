@@ -61,7 +61,7 @@ struct NodeInfo {
     /// If this node is a tree root in the link-eval forest, points to the node itself.
     /// Otherwise, contains a node `w` with minimal `info.sdom` such that
     ///
-    ///     r -+-> w -*-> node
+    /// r -+-> w -*-> node
     ///
     /// in the link-eval forest, where `r` is the root of the tree containing `node`.
     ///

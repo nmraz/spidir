@@ -34,9 +34,11 @@ impl DomTree {
     }
 }
 
+type PreorderKey = u32;
+
 struct DfsFrame {
     node: Node,
-    parent: Option<Node>,
+    parent: Option<PreorderKey>,
 }
 
 enum IdomState {
@@ -45,33 +47,45 @@ enum IdomState {
     Done,
     /// The immediate dominator has not been computed, but it is known to be equal to the immediate
     /// dominator of a different, earlier node.
-    SameAs(Node),
+    SameAs(PreorderKey),
 }
 
 struct NodeInfo {
-    /// The numbering of the node in a preorder DFS traversal of the CFG, starting at 0 for the
-    /// entry.
-    _preorder_num: u32,
-    /// The parent of the node in the DFS tree if it has not yet been linked in the link-eval
-    /// forest, or some ancestor of the node in the forest otherwise.
-    ancestor: Option<Node>,
-    /// The preorder number of the semidominator of this node if it has been computed, or that of
-    /// the node itself otherwise.
-    sdom: u32,
+    /// The node in the graph corresponding to this entry.
+    node: Node,
+
+    /// The preorder number of the parent of the node in the DFS tree if it has not yet been linked
+    /// in the link-eval forest, or some ancestor of the node in the forest otherwise.
+    ancestor: Option<PreorderKey>,
+
+    /// If this node is a tree root in the link-eval forest, points to the node itself.
+    /// Otherwise, contains a node `w` with minimal `info.sdom` such that
+    ///
+    ///     r -+-> w -*-> node
+    ///
+    /// in the link-eval forest, where `r` is the root of the tree containing `node`.
+    ///
+    /// This value is updated lazily whenever it is requested, if new ancestors have
+    /// been added to the tree since the last time it was queried.
+    ///
+    /// If `ancestor` is a tree root in the link-eval forest, this value is guaranteed to be
+    /// correct; otherwise, it is a node with minimal semidominator along the path to `ancestor`.
+    label: PreorderKey,
+
+    /// The semidominator of this node if it has been computed, or the node itself otherwise.
+    sdom: PreorderKey,
     /// The computation state of the immediate dominator of this node.
     idom_state: IdomState,
 }
 
-type Buckets = SmallVec<[Node; 8]>;
+type Preorder = Vec<NodeInfo>;
+
+type Bucket = SmallVec<[PreorderKey; 2]>;
 
 pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
-    let mut preorder = Vec::new();
+    let mut preorder_by_node = CfgMap::default();
+    let mut preorder = Preorder::new();
 
-    let mut idoms = CfgMap::default();
-
-    // Maps each node to the nodes it semi-dominates.
-    let mut buckets = CfgMap::<Buckets>::default();
-    let mut node_info = CfgMap::default();
     let mut dfs_stack = vec![DfsFrame {
         node: entry,
         parent: None,
@@ -79,30 +93,34 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
 
     while let Some(frame) = dfs_stack.pop() {
         let node = frame.node;
-        match node_info.entry(node) {
+        match preorder_by_node.entry(node) {
             Entry::Vacant(entry) => {
-                let preorder_num = preorder.len() as u32;
-                preorder.push(node);
-                entry.insert(NodeInfo {
-                    _preorder_num: preorder_num,
+                let key = preorder.len() as PreorderKey;
+                preorder.push(NodeInfo {
+                    node,
                     // The ancestor starts as a plain DFS parent.
                     ancestor: frame.parent,
+                    // The link-eval forest is currently a bunch of single-node trees, so every node
+                    // is its own label as there are no other nodes on the path.
+                    label: key,
                     // We haven't yet computed the semidominator of `node`, so it should be set to
                     // `node` itself.
-                    sdom: preorder_num,
+                    sdom: key,
                     // Somewhat counter-intuitively, we start by marking all immediate dominators as
                     // "done". Later on, if we notice that the immediate dominator is not equal to
                     // the semidominator, we mark the immediate dominator as needing further
                     // computation.
                     idom_state: IdomState::Done,
                 });
+                entry.insert(key);
+
                 for succ in cfg_succs(graph, node) {
                     // Optimization: avoid placing the node on the stack at all if it has already
                     // been visited.
-                    if !node_info.contains_key(&succ) {
+                    if !preorder_by_node.contains_key(&succ) {
                         dfs_stack.push(DfsFrame {
                             node: succ,
-                            parent: Some(node),
+                            parent: Some(key),
                         });
                     }
                 }
@@ -113,36 +131,45 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
         }
     }
 
+    // Maps each node to the nodes it semi-dominates, based on preorder numbering.
+    let mut buckets = vec![Bucket::new(); preorder.len()];
+    // Maps each `ValGraph` node to its immediate dominator.
+    let mut idoms = CfgMap::default();
+
     // Pass 1: Compute semidominators for all nodes other than `entry` by traversing the DFS tree in
     // reverse preorder, and find all nodes whose immediate dominator can be known immediately based
     // on Theorem 2.
-    for i in (1..preorder.len() as u32).rev() {
-        let node = preorder[i as usize];
+    for node in (1..preorder.len() as PreorderKey).rev() {
+        // This is the lowest-numbered node with a parent in the link-eval forest, since every loop
+        // iteration ends by linking the current node to its DFS parent.
+        // Note that this value is still correct when processing highest-numbered node in the graph;
+        // it just means that all nodes in the graph will be considered as tree roots, which is
+        // exactly what we want.
+        let lowest_linked = node + 1;
 
         // Try to identify any new nodes `u` for which we can prove `idom(u) = sdom(u)` based on
         // Theorem 2, and record those immediate dominators.
-        if let Some(bucket) = buckets.get(&node) {
-            for &semi_dominee in bucket {
-                let ancestor = eval(graph, &mut node_info, i + 1, semi_dominee);
+        for &semi_dominee in &buckets[node as usize] {
+            let ancestor = eval(&mut preorder, lowest_linked, semi_dominee);
 
-                // Note: we are guaranteed that `sdom(semi_dominee) < ancestor <= semi_dominee` in
-                // the preorder, but `sdom(semi_dominee) == node`, so the semidominator of ancestor
-                // must have already been computed and
-                // `node_info[&ancestor].sdom == sdom(ancestor)`.
-                let ancestor_sdom = node_info[&ancestor].sdom;
+            // Note: we are guaranteed that `sdom(semi_dominee) < ancestor <= semi_dominee` in
+            // the preorder, but `sdom(semi_dominee) == node`, so the semidominator of ancestor
+            // must have already been computed and `preorder[ancestor].sdom == sdom(ancestor)`.
+            let ancestor_sdom = preorder[ancestor as usize].sdom;
 
-                // Apply Corollary 1
-                if ancestor_sdom == i {
-                    idoms.insert(semi_dominee, node);
-                } else {
-                    // We don't know the immediate dominator yet, but we do know that
-                    // `idom(semi_dominee) == idom(ancestor)` because `ancestor` has minimal
-                    // `sdom(ancestor)` among all nodes on the tree path from `parent` to
-                    // `semi_dominee`.
-                    node_info.get_mut(&semi_dominee).unwrap().idom_state =
-                        IdomState::SameAs(ancestor);
-                };
-            }
+            // Apply Corollary 1
+            if ancestor_sdom == node {
+                idoms.insert(
+                    preorder[semi_dominee as usize].node,
+                    preorder[node as usize].node,
+                );
+            } else {
+                // We don't know the immediate dominator yet, but we do know that
+                // `idom(semi_dominee) == idom(ancestor)` because `ancestor` has minimal
+                // `sdom(ancestor)` among all nodes on the tree path from `parent` to
+                // `semi_dominee`.
+                preorder[node as usize].idom_state = IdomState::SameAs(ancestor);
+            };
         }
 
         // Compute semidominators of `node` based on CFG predecessors, using the equivalent
@@ -150,12 +177,12 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
         //
         // This only works because we are traversing in reverse preorder, which means that the
         // semidominators for any nodes with a higher preorder number are already correct.
-        for pred in cfg_preds(graph, node) {
-            if !node_info.contains_key(&pred) {
+        for pred in cfg_preds(graph, preorder[node as usize].node) {
+            let Some(&pred) = preorder_by_node.get(&pred) else {
                 // This predecessor isn't reachable in the CFG, so it can (and should) be completely
                 // ignored.
                 continue;
-            }
+            };
 
             // Apply Theorem 4.
             //
@@ -176,58 +203,109 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
             //
             // Cases (1) and (3) exactly cover the disjoint union presented in Theorem 4.
 
-            let pred_ancestor = eval(graph, &mut node_info, i + 1, pred);
-            let pred_ancestor_sdom = node_info[&pred_ancestor].sdom;
+            let pred_ancestor = eval(&mut preorder, lowest_linked, pred);
+            let pred_ancestor_sdom = preorder[pred_ancestor as usize].sdom;
 
-            let info = node_info.get_mut(&node).unwrap();
+            let info = &mut preorder[node as usize];
             info.sdom = cmp::min(info.sdom, pred_ancestor_sdom);
         }
 
-        let sdom = node_info[&node].sdom;
+        let sdom = preorder[node as usize].sdom;
 
         // Note: the `ancestor` is still guaranteed to be the parent at this point because the
-        // lowest node linked is `i + 1`.
-        let parent = node_info[&node].ancestor.expect("node should not be root");
+        // lowest node linked is `node + 1`.
+        let parent = preorder[node as usize]
+            .ancestor
+            .expect("node should not be root");
 
-        if preorder[sdom as usize] == parent {
+        if sdom == parent {
             // Optimization: if the semidominator is the parent, it must be the immediate dominator
             // as a rather trivial corollary of Theorem 2. This case is very common in our
             // sea-of-nodes representation because "ordinary" basic blocks are actually long chains
             // of nodes that all have a single control input/output.
             // Avoid the ceremony and just say we've found the immediate dominator now.
-            idoms.insert(node, parent);
+            idoms.insert(preorder[node as usize].node, preorder[parent as usize].node);
         } else {
             // Place `node` in the bucket of its semidominator for processing later.
-            buckets
-                .entry(preorder[sdom as usize])
-                .or_default()
-                .push(node);
+            buckets[sdom as usize].push(node);
         }
 
-        // Implicit: We now consider `node` to be linked to its parent in the link-eval forest.
+        // Implicit: we now consider `node` to be linked to its parent in the link-eval forest;
+        // it will be `lowest_linked` at the next iteration.
     }
 
     // Pass 2: Fill in immediate dominators for nodes marked as `SameAs` by traversing the DFS tree
     // in preorder.
-    for &node in preorder.iter().skip(1) {
-        if let IdomState::SameAs(prev) = node_info[&node].idom_state {
+    for info in preorder.iter().skip(1) {
+        if let IdomState::SameAs(prev) = info.idom_state {
             let idom = *idoms
-                .get(&prev)
+                .get(&preorder[prev as usize].node)
                 .expect("immediate dominator should already have been computed for previous node");
-            idoms.insert(node, idom);
+            idoms.insert(info.node, idom);
         }
     }
 
     DomTree { idoms }
 }
 
-fn eval(
-    _graph: &ValGraph,
-    _node_info: &mut CfgMap<NodeInfo>,
-    _lowest_linked: u32,
-    _node: Node,
-) -> Node {
-    todo!()
+fn eval(preorder: &mut Preorder, lowest_linked: PreorderKey, node: PreorderKey) -> PreorderKey {
+    debug_assert!(
+        lowest_linked > 0,
+        "entry node should never be linked in link-eval forest"
+    );
+
+    let mut ancestor = preorder[node as usize]
+        .ancestor
+        .expect("node should not be root");
+
+    if ancestor < lowest_linked {
+        // `ancestor` is already the root of a tree, so either we are a root as well (and `ancestor`
+        // is still just our DFS parent) or the path is already as compressed as can be. In either
+        // case, return the label we already have.
+        return preorder[node as usize].label;
+    }
+
+    // Compress the path from `node` to its tree root to exactly one edge and update labels along
+    // the way.
+
+    let mut path = SmallVec::<[_; 8]>::new();
+
+    // Walk up to the root of the containing tree, gathering all nodes whose ancestor is still a
+    // strict descendant of the root. These nodes will have their ancestors compressed directly to
+    // the root.
+    let mut cur_node = node;
+    while ancestor >= lowest_linked {
+        path.push(cur_node);
+        cur_node = ancestor;
+        // Note: the ancestor should always have a well-defined ancestor, as `lowest_linked` is
+        // always nonzero.
+        ancestor = preorder[ancestor as usize]
+            .ancestor
+            .expect("linked ancestor cannot be entry node");
+    }
+
+    // At this point, `cur_node` is a direct descendant of the tree root containing `node`, and
+    // `path` contains all nodes *after* `cur_node` on the path to `node`.
+    // We now want to walk down the path to `node` and update children based on information from
+    // their parents.
+    let root = ancestor;
+    let mut parent = cur_node;
+
+    for &node in path.iter().rev() {
+        // Compress all paths directly to the root.
+        preorder[node as usize].ancestor = Some(root);
+        // We know that `preorder[node as usize].label` was the correct minimum at least along the
+        // path to parent, so to get it all the way to `root` just combine it with the
+        // already-correct value of the parent.
+        preorder[node as usize].label = cmp::min(
+            preorder[node as usize].label,
+            preorder[parent as usize].label,
+        );
+        parent = node;
+    }
+
+    // The label is valid now.
+    preorder[node as usize].label
 }
 
 fn cfg_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {

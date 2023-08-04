@@ -44,14 +44,14 @@ struct DfsFrame {
     parent: Option<PreorderNum>,
 }
 
-enum IdomState {
+enum DomState {
     /// The immediate dominator has not yet been computed or does not exist.
     Unknown,
     /// The immediate dominator has been computed to an exact node value.
-    Computed(PreorderNum),
+    Immediate(PreorderNum),
     /// The immediate dominator has not been computed, but it is known to be equal to the immediate
     /// dominator of a different, earlier node.
-    SameAs(PreorderNum),
+    Relative(PreorderNum),
 }
 
 struct NodeInfo {
@@ -79,7 +79,7 @@ struct NodeInfo {
     /// The semidominator of this node if it has been computed, or the node itself otherwise.
     sdom: PreorderNum,
     /// The computation state of the immediate dominator of this node.
-    idom_state: IdomState,
+    dom_state: DomState,
 }
 
 struct Preorder(Vec<NodeInfo>);
@@ -111,6 +111,22 @@ impl IndexMut<PreorderNum> for Preorder {
 type Bucket = SmallVec<[PreorderNum; 2]>;
 
 pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
+    // Setup: Perform the DFS and initialize per-node data structures used in the remainder of the
+    // algorithm.
+    let (mut preorder, preorder_by_node) = do_dfs(graph, entry);
+
+    // Pass 1: Compute semidominators and use Theorem 2 to find either relative or immediate
+    // dominators for each node.
+    compute_reldoms(graph, &mut preorder, preorder_by_node);
+
+    // Pass 2: Fill in all immediate dominators by walking down the DFS tree and applying the
+    // information recorded in the previous pass.
+    let idoms = compute_idoms_from_reldoms(&mut preorder);
+
+    DomTree { idoms }
+}
+
+fn do_dfs(graph: &ValGraph, entry: Node) -> (Preorder, CfgMap<PreorderNum>) {
     let mut preorder_by_node = CfgMap::default();
     let mut preorder = Preorder::new();
 
@@ -123,20 +139,20 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
         let node = frame.node;
         match preorder_by_node.entry(node) {
             Entry::Vacant(entry) => {
-                let key = preorder.next_num();
+                let num = preorder.next_num();
                 preorder.0.push(NodeInfo {
                     node,
                     // The ancestor starts as a plain DFS parent.
                     ancestor: frame.parent,
                     // The link-eval forest is currently a bunch of single-node trees, so every node
                     // is its own label as there are no other nodes on the path.
-                    label: key,
+                    label: num,
                     // We haven't yet computed the semidominator of `node`, so it should be set to
                     // `node` itself.
-                    sdom: key,
-                    idom_state: IdomState::Unknown,
+                    sdom: num,
+                    dom_state: DomState::Unknown,
                 });
-                entry.insert(key);
+                entry.insert(num);
 
                 for succ in cfg_succs(graph, node) {
                     // Optimization: avoid placing the node on the stack at all if it has already
@@ -144,7 +160,7 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
                     if !preorder_by_node.contains_key(&succ) {
                         dfs_stack.push(DfsFrame {
                             node: succ,
-                            parent: Some(key),
+                            parent: Some(num),
                         });
                     }
                 }
@@ -155,12 +171,20 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
         }
     }
 
+    (preorder, preorder_by_node)
+}
+
+fn compute_reldoms(
+    graph: &ValGraph,
+    preorder: &mut Preorder,
+    preorder_by_node: CfgMap<PreorderNum>,
+) {
     // Maps each node to the nodes it semi-dominates, based on preorder numbering.
     let mut buckets = vec![Bucket::new(); preorder.0.len()];
     let mut eval_ctx = EvalContext::new();
 
-    // Pass 1: Compute semidominators for all nodes other than `entry` by traversing the DFS tree in
-    // reverse preorder, and find all nodes whose immediate dominator can be known immediately based
+    // Compute semidominators for all nodes other than `entry` by traversing the DFS tree in reverse
+    // preorder, and find all nodes whose immediate dominator can be known immediately based
     // on Theorem 2.
     for node in (1..preorder.next_num()).rev() {
         // This is the lowest-numbered node with a parent in the link-eval forest, since every loop
@@ -173,7 +197,7 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
         // Try to identify any new nodes `u` for which we can prove `idom(u) = sdom(u)` based on
         // Theorem 2, and record those immediate dominators.
         for &semi_dominee in &buckets[node as usize] {
-            let ancestor = eval_ctx.eval(&mut preorder, lowest_linked, semi_dominee);
+            let ancestor = eval_ctx.eval(preorder, lowest_linked, semi_dominee);
 
             // Note: we are guaranteed that
             // `sdom(semi_dominee) == node < lowest_linked <= ancestor <= semi_dominee`
@@ -184,14 +208,14 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
             let ancestor_sdom = preorder[ancestor].sdom;
 
             // Apply Corollary 1
-            if ancestor_sdom == node {
-                preorder[semi_dominee].idom_state = IdomState::Computed(node);
+            preorder[semi_dominee].dom_state = if ancestor_sdom == node {
+                DomState::Immediate(node)
             } else {
                 // We don't know the immediate dominator yet, but we do know that
                 // `idom(semi_dominee) == idom(ancestor)` because `ancestor` has minimal
                 // `sdom(ancestor)` among all nodes on the tree path from `parent` to
                 // `semi_dominee`.
-                preorder[semi_dominee].idom_state = IdomState::SameAs(ancestor);
+                DomState::Relative(ancestor)
             };
         }
 
@@ -228,7 +252,7 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
             // (3) covers all cases in the second set because every node greater than `node` is
             // already linked in the link-eval forest.
 
-            let pred_ancestor = eval_ctx.eval(&mut preorder, lowest_linked, pred);
+            let pred_ancestor = eval_ctx.eval(preorder, lowest_linked, pred);
             let pred_ancestor_sdom = preorder[pred_ancestor].sdom;
 
             let info = &mut preorder[node];
@@ -247,7 +271,7 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
             // sea-of-nodes representation because "ordinary" basic blocks are actually long chains
             // of nodes that all have a single control input/output.
             // Avoid the ceremony and just say we've found the immediate dominator now.
-            preorder[node].idom_state = IdomState::Computed(parent);
+            preorder[node].dom_state = DomState::Immediate(parent);
         } else {
             // Place `node` in the bucket of its semidominator for processing later.
             buckets[sdom as usize].push(node);
@@ -256,30 +280,32 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
         // Implicit: we now consider `node` to be linked to its parent in the link-eval forest;
         // it will be `lowest_linked` at the next iteration.
     }
+}
 
+fn compute_idoms_from_reldoms(preorder: &mut Preorder) -> CfgMap<Node> {
     // Maps each `ValGraph` node to its immediate dominator.
     let mut idoms = CfgMap::default();
 
-    // Pass 2: Fill in immediate dominators for all nodes based on their `idom_state`, by traversing
-    // the DFS tree in preorder.
+    // Fill in immediate dominators for all nodes based on their `idom_state`, by traversing the
+    // DFS tree in preorder.
     for node in 1..preorder.next_num() {
-        match preorder[node].idom_state {
-            IdomState::Computed(idom) => {
+        match preorder[node].dom_state {
+            DomState::Immediate(idom) => {
                 idoms.insert(preorder[node].node, preorder[idom].node);
             }
-            IdomState::SameAs(ancestor) => {
-                let IdomState::Computed(idom) = preorder[ancestor].idom_state else {
+            DomState::Relative(ancestor) => {
+                let DomState::Immediate(idom) = preorder[ancestor].dom_state else {
                     panic!("immediate dominator for ancestor should already be computed")
                 };
 
-                preorder[node].idom_state = IdomState::Computed(idom);
+                preorder[node].dom_state = DomState::Immediate(idom);
                 idoms.insert(preorder[node].node, preorder[idom].node);
             }
-            IdomState::Unknown => panic!("immediate dominator state should be known at this point"),
+            DomState::Unknown => panic!("immediate dominator state should be known at this point"),
         }
     }
 
-    DomTree { idoms }
+    idoms
 }
 
 struct EvalContext {

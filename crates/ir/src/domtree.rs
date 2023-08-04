@@ -180,9 +180,12 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
         for &semi_dominee in &buckets[node as usize] {
             let ancestor = eval_ctx.eval(&mut preorder, lowest_linked, semi_dominee);
 
-            // Note: we are guaranteed that `sdom(semi_dominee) < ancestor <= semi_dominee` in
-            // the preorder, but `sdom(semi_dominee) == node`, so the semidominator of ancestor
-            // must have already been computed and `preorder[ancestor].sdom == sdom(ancestor)`.
+            // Note: we are guaranteed that
+            // `sdom(semi_dominee) == node < lowest_linked <= ancestor <= semi_dominee`
+            // in the preorder, so the semidominator of ancestor must have already been computed and
+            // `preorder[ancestor].sdom == sdom(ancestor)`.
+            // This means that `ancestor` really has minimal `sdom(ancestor)` on the DFS tree path
+            // `node -+-> ancestor -*-> semi_dominee`.
             let ancestor_sdom = preorder[ancestor].sdom;
 
             // Apply Corollary 1
@@ -227,6 +230,8 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
             //    linked), `info[eval(pred)].sdom` will be its true semidominator.
             //
             // Cases (1) and (3) exactly cover the disjoint union presented in Theorem 4.
+            // (3) covers all cases in the second set because every node greater than `node` is
+            // already linked in the link-eval forest.
 
             let pred_ancestor = eval_ctx.eval(&mut preorder, lowest_linked, pred);
             let pred_ancestor_sdom = preorder[pred_ancestor].sdom;
@@ -332,9 +337,9 @@ impl EvalContext {
         for &node in self.path.iter().rev() {
             // Compress all paths directly to the root.
             preorder[node].ancestor = Some(root);
-            // We know that `preorder[node].label` was the correct minimum at least along the path to
-            // `parent`, so to get it all the way to `root` just combine it with the already-correct
-            // value of the parent.
+            // We know that `preorder[node].label` was the correct minimum at least along the path
+            // from `node` to `parent`, so to get it all the way to `root` just combine it with the
+            // already-correct value of the parent.
             preorder[node].label = cmp::min(preorder[node].label, preorder[parent].label);
             parent = node;
         }

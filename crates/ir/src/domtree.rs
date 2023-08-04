@@ -44,16 +44,6 @@ struct DfsFrame {
     parent: Option<PreorderNum>,
 }
 
-enum DomState {
-    /// The immediate dominator has not yet been computed or does not exist.
-    Unknown,
-    /// The immediate dominator has been computed to an exact node value.
-    Immediate(PreorderNum),
-    /// The immediate dominator has not been computed, but it is known to be equal to the immediate
-    /// dominator of a different, earlier node.
-    Relative(PreorderNum),
-}
-
 struct NodeInfo {
     /// The node in the graph corresponding to this entry.
     node: Node,
@@ -78,8 +68,12 @@ struct NodeInfo {
 
     /// The semidominator of this node if it has been computed, or the node itself otherwise.
     sdom: PreorderNum,
-    /// The computation state of the immediate dominator of this node.
-    dom_state: DomState,
+
+    /// Once this node's semidominator has been visited:
+    /// * If the immediate dominator is the semidominator itself, holds the immediate dominator.
+    /// * Otherwise, holds the relative dominator (a node with the same immediate dominator as this
+    ///   one).
+    dom: PreorderNum,
 }
 
 struct Preorder(Vec<NodeInfo>);
@@ -150,7 +144,8 @@ fn do_dfs(graph: &ValGraph, entry: Node) -> (Preorder, CfgMap<PreorderNum>) {
                     // We haven't yet computed the semidominator of `node`, so it should be set to
                     // `node` itself.
                     sdom: num,
-                    dom_state: DomState::Unknown,
+                    // This will be filled in later once the node's semidominator is visited.
+                    dom: 0,
                 });
                 entry.insert(num);
 
@@ -197,25 +192,25 @@ fn compute_reldoms(
         // Try to identify any new nodes `u` for which we can prove `idom(u) = sdom(u)` based on
         // Theorem 2, and record those immediate dominators.
         for &semi_dominee in &buckets[node as usize] {
-            let ancestor = eval_ctx.eval(preorder, lowest_linked, semi_dominee);
+            let reldom = eval_ctx.eval(preorder, lowest_linked, semi_dominee);
 
             // Note: we are guaranteed that
-            // `sdom(semi_dominee) == node < lowest_linked <= ancestor <= semi_dominee`
-            // in the preorder, so the semidominator of ancestor must have already been computed and
-            // `preorder[ancestor].sdom == sdom(ancestor)`.
-            // This means that `ancestor` really has minimal `sdom(ancestor)` on the DFS tree path
-            // `node -+-> ancestor -*-> semi_dominee`.
-            let ancestor_sdom = preorder[ancestor].sdom;
+            // `sdom(semi_dominee) == node < lowest_linked <= reldom <= semi_dominee`
+            // in the preorder, so the semidominator of reldom must have already been computed and
+            // `preorder[reldom].sdom == sdom(reldom)`.
+            // This means that `reldom` really has minimal `sdom(reldom)` on the DFS tree path
+            // `node -+-> reldom -*-> semi_dominee`.
+            let reldom_sdom = preorder[reldom].sdom;
 
             // Apply Corollary 1
-            preorder[semi_dominee].dom_state = if ancestor_sdom == node {
-                DomState::Immediate(node)
+            preorder[semi_dominee].dom = if reldom_sdom == node {
+                // The semidominator is the immediate dominator in this case.
+                node
             } else {
                 // We don't know the immediate dominator yet, but we do know that
-                // `idom(semi_dominee) == idom(ancestor)` because `ancestor` has minimal
-                // `sdom(ancestor)` among all nodes on the tree path from `parent` to
-                // `semi_dominee`.
-                DomState::Relative(ancestor)
+                // `idom(semi_dominee) == idom(reldom)` because `reldom` has minimal `sdom(reldom)`
+                // among all nodes on the tree path from `parent` to `semi_dominee`.
+                reldom
             };
         }
 
@@ -271,7 +266,7 @@ fn compute_reldoms(
             // sea-of-nodes representation because "ordinary" basic blocks are actually long chains
             // of nodes that all have a single control input/output.
             // Avoid the ceremony and just say we've found the immediate dominator now.
-            preorder[node].dom_state = DomState::Immediate(parent);
+            preorder[node].dom = parent;
         } else {
             // Place `node` in the bucket of its semidominator for processing later.
             buckets[sdom as usize].push(node);
@@ -289,20 +284,14 @@ fn compute_idoms_from_reldoms(preorder: &mut Preorder) -> CfgMap<Node> {
     // Fill in immediate dominators for all nodes based on their `idom_state`, by traversing the
     // DFS tree in preorder.
     for node in 1..preorder.next_num() {
-        match preorder[node].dom_state {
-            DomState::Immediate(idom) => {
-                idoms.insert(preorder[node].node, preorder[idom].node);
-            }
-            DomState::Relative(ancestor) => {
-                let DomState::Immediate(idom) = preorder[ancestor].dom_state else {
-                    panic!("immediate dominator for ancestor should already be computed")
-                };
-
-                preorder[node].dom_state = DomState::Immediate(idom);
-                idoms.insert(preorder[node].node, preorder[idom].node);
-            }
-            DomState::Unknown => panic!("immediate dominator state should be known at this point"),
+        // If the recorded dominator is not the same as the semidominator, it is actually a relative
+        // dominator and not the immediate dominator. In that case, grab the immediate dominator of
+        // the relative dominator, using the fact that it will have already been computed in a
+        // previous iteration.
+        if preorder[node].dom != preorder[node].sdom {
+            preorder[node].dom = preorder[preorder[node].dom].dom;
         }
+        idoms.insert(preorder[node].node, preorder[preorder[node].dom].node);
     }
 
     idoms

@@ -162,6 +162,7 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
     let mut buckets = vec![Bucket::new(); preorder.0.len()];
     // Maps each `ValGraph` node to its immediate dominator.
     let mut idoms = CfgMap::default();
+    let mut eval_ctx = EvalContext::new();
 
     // Pass 1: Compute semidominators for all nodes other than `entry` by traversing the DFS tree in
     // reverse preorder, and find all nodes whose immediate dominator can be known immediately based
@@ -177,7 +178,7 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
         // Try to identify any new nodes `u` for which we can prove `idom(u) = sdom(u)` based on
         // Theorem 2, and record those immediate dominators.
         for &semi_dominee in &buckets[node as usize] {
-            let ancestor = eval(&mut preorder, lowest_linked, semi_dominee);
+            let ancestor = eval_ctx.eval(&mut preorder, lowest_linked, semi_dominee);
 
             // Note: we are guaranteed that `sdom(semi_dominee) < ancestor <= semi_dominee` in
             // the preorder, but `sdom(semi_dominee) == node`, so the semidominator of ancestor
@@ -227,7 +228,7 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
             //
             // Cases (1) and (3) exactly cover the disjoint union presented in Theorem 4.
 
-            let pred_ancestor = eval(&mut preorder, lowest_linked, pred);
+            let pred_ancestor = eval_ctx.eval(&mut preorder, lowest_linked, pred);
             let pred_ancestor_sdom = preorder[pred_ancestor].sdom;
 
             let info = &mut preorder[node];
@@ -270,59 +271,77 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
     DomTree { idoms }
 }
 
-fn eval(preorder: &mut Preorder, lowest_linked: PreorderNum, node: PreorderNum) -> PreorderNum {
-    debug_assert!(
-        lowest_linked > 0,
-        "entry node should never be linked in link-eval forest"
-    );
+struct EvalContext {
+    // Keep a container ready for whenever we need to compute paths to save allocations.
+    path: SmallVec<[PreorderNum; 8]>,
+}
 
-    let mut ancestor = preorder[node].ancestor.expect("node should not be root");
-
-    if ancestor < lowest_linked {
-        // `ancestor` is already the root of a tree, so either we are a root as well (and `ancestor`
-        // is still just our DFS parent) or the path is already as compressed as can be. In either
-        // case, return the label we already have.
-        return preorder[node].label;
+impl EvalContext {
+    fn new() -> Self {
+        Self {
+            path: SmallVec::new(),
+        }
     }
 
-    // Compress the path from `node` to its tree root to exactly one edge and update labels along
-    // the way.
+    fn eval(
+        &mut self,
+        preorder: &mut Preorder,
+        lowest_linked: PreorderNum,
+        node: PreorderNum,
+    ) -> PreorderNum {
+        debug_assert!(
+            lowest_linked > 0,
+            "entry node should never be linked in link-eval forest"
+        );
 
-    let mut path = SmallVec::<[_; 8]>::new();
+        let mut ancestor = preorder[node].ancestor.expect("node should not be root");
 
-    // Walk up to the root of the containing tree, gathering all nodes whose ancestor is still a
-    // strict descendant of the root. These nodes will have their ancestors compressed directly to
-    // the root.
-    let mut cur_node = node;
-    while ancestor >= lowest_linked {
-        path.push(cur_node);
-        cur_node = ancestor;
-        // Note: the ancestor should always have a well-defined ancestor, as `lowest_linked` is
-        // always nonzero.
-        ancestor = preorder[ancestor]
-            .ancestor
-            .expect("linked ancestor cannot be entry node");
+        if ancestor < lowest_linked {
+            // `ancestor` is already the root of a tree, so either we are a root as well (and `ancestor`
+            // is still just our DFS parent) or the path is already as compressed as can be. In either
+            // case, return the label we already have.
+            return preorder[node].label;
+        }
+
+        // Compress the path from `node` to its tree root to exactly one edge and update labels along
+        // the way.
+
+        self.path.clear();
+
+        // Walk up to the root of the containing tree, gathering all nodes whose ancestor is still a
+        // strict descendant of the root. These nodes will have their ancestors compressed directly to
+        // the root.
+        let mut cur_node = node;
+        while ancestor >= lowest_linked {
+            self.path.push(cur_node);
+            cur_node = ancestor;
+            // Note: the ancestor should always have a well-defined ancestor, as `lowest_linked` is
+            // always nonzero.
+            ancestor = preorder[ancestor]
+                .ancestor
+                .expect("linked ancestor cannot be entry node");
+        }
+
+        // At this point, `cur_node` is a direct descendant of the tree root containing `node`, and
+        // `path` contains all nodes *after* `cur_node` on the path to `node`.
+        // We now want to walk down the path to `node` and update children based on information from
+        // their parents.
+        let root = ancestor;
+        let mut parent = cur_node;
+
+        for &node in self.path.iter().rev() {
+            // Compress all paths directly to the root.
+            preorder[node].ancestor = Some(root);
+            // We know that `preorder[node].label` was the correct minimum at least along the path to
+            // `parent`, so to get it all the way to `root` just combine it with the already-correct
+            // value of the parent.
+            preorder[node].label = cmp::min(preorder[node].label, preorder[parent].label);
+            parent = node;
+        }
+
+        // The label is valid now.
+        preorder[node].label
     }
-
-    // At this point, `cur_node` is a direct descendant of the tree root containing `node`, and
-    // `path` contains all nodes *after* `cur_node` on the path to `node`.
-    // We now want to walk down the path to `node` and update children based on information from
-    // their parents.
-    let root = ancestor;
-    let mut parent = cur_node;
-
-    for &node in path.iter().rev() {
-        // Compress all paths directly to the root.
-        preorder[node].ancestor = Some(root);
-        // We know that `preorder[node].label` was the correct minimum at least along the path to
-        // `parent`, so to get it all the way to `root` just combine it with the already-correct
-        // value of the parent.
-        preorder[node].label = cmp::min(preorder[node].label, preorder[parent].label);
-        parent = node;
-    }
-
-    // The label is valid now.
-    preorder[node].label
 }
 
 fn cfg_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {

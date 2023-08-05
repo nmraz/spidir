@@ -317,10 +317,13 @@ impl EvalContext {
     ) -> PreorderNum {
         debug_assert!(
             lowest_linked > 0,
-            "entry node should never be linked in link-eval forest"
+            "root node should never be linked in link-eval forest"
         );
 
-        let mut ancestor = preorder[node].ancestor.expect("node should not be root");
+        let Some(mut ancestor) = preorder[node].ancestor else {
+            // The DFS root is never linked, so its `eval` always ends up returning itself.
+            return node;
+        };
 
         if ancestor < lowest_linked {
             // `ancestor` is already the root of a tree, so either we are a root as well (and `ancestor`

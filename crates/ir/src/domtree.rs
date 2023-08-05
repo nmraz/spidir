@@ -281,8 +281,8 @@ fn compute_idoms_from_reldoms(preorder: &mut Preorder) -> CfgMap<Node> {
     // Maps each `ValGraph` node to its immediate dominator.
     let mut idoms = CfgMap::default();
 
-    // Fill in immediate dominators for all nodes based on their `idom_state`, by traversing the
-    // DFS tree in preorder.
+    // Fill in immediate dominators for all nodes based on their `dom`, by traversing the DFS tree
+    // in preorder.
     for node in 1..preorder.next_num() {
         // If the recorded dominator is not the same as the semidominator, it is actually a relative
         // dominator and not the immediate dominator. In that case, grab the immediate dominator of

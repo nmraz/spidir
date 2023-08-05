@@ -268,7 +268,7 @@ fn display_expected_kinds(kinds: &[DepValueKind]) -> impl fmt::Display + '_ {
 
 fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {
     let mut s = String::new();
-    write_node(&mut s, module, graph, node, 0).unwrap();
+    write_node(&mut s, module, graph, node).unwrap();
     s
 }
 

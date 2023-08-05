@@ -1,35 +1,113 @@
 use core::fmt;
 
 use crate::{
-    module::{ExternFunctionData, FunctionData, Module, Signature},
+    module::{ExternFunction, ExternFunctionData, Function, FunctionData, Module, Signature},
     node::{FunctionRef, NodeKind},
-    valgraph::{Node, ValGraph},
+    valgraph::{DepValue, Node, ValGraph},
     valwalk::LiveNodeInfo,
 };
 
+pub trait AnnotateGraph<W: fmt::Write + ?Sized> {
+    fn write_node(
+        &mut self,
+        w: &mut W,
+        module: &Module,
+        graph: &ValGraph,
+        node: Node,
+    ) -> fmt::Result {
+        write_annotated_node(w, self, module, graph, node)
+    }
+
+    fn write_node_output(&mut self, w: &mut W, graph: &ValGraph, output: DepValue) -> fmt::Result {
+        write_value_def(w, graph, output)
+    }
+
+    fn write_node_kind(
+        &mut self,
+        mut w: &mut W,
+        module: &Module,
+        node_kind: &NodeKind,
+    ) -> fmt::Result {
+        // This is a little ugly because it can cause double-vtables if `W` is already
+        // `dyn fmt::Write`, but there isn't a way to let this trait know the concrete type `W` (and
+        // allow it to be unsized) and have `write_node_kind` accept type-erased writers without the
+        // extra indirection.
+        write_node_kind(&mut w, module, node_kind)
+    }
+
+    fn write_node_input(
+        &mut self,
+        w: &mut W,
+        graph: &ValGraph,
+        node: Node,
+        input: usize,
+    ) -> fmt::Result {
+        write_value_use(w, graph.node_inputs(node)[input])
+    }
+}
+
+pub trait AnnotateModule<W: fmt::Write + ?Sized>: AnnotateGraph<W> {
+    fn write_function(&mut self, w: &mut W, module: &Module, func: Function) -> fmt::Result {
+        write_annotated_function(w, self, module, &module.functions[func])
+    }
+
+    fn write_extern_function(
+        &mut self,
+        mut w: &mut W,
+        module: &Module,
+        func: ExternFunction,
+    ) -> fmt::Result {
+        // As above, we need the extra indirection to allow the type `W` to be unsized but allow
+        // `write_extern_function` to operate on type-erased writers.
+        write_extern_function(&mut w, &module.extern_functions[func])
+    }
+}
+
+struct DefaultAnnotator;
+
+impl<'a> AnnotateGraph<dyn fmt::Write + 'a> for DefaultAnnotator {}
+impl<'a> AnnotateModule<dyn fmt::Write + 'a> for DefaultAnnotator {}
+
 pub fn write_module(w: &mut dyn fmt::Write, module: &Module) -> fmt::Result {
-    for (_, extern_func) in module.extern_functions.iter() {
-        write_extern_function(w, extern_func)?;
+    write_annotated_module(w, &mut DefaultAnnotator, module)
+}
+
+pub fn write_annotated_module<W: fmt::Write + ?Sized>(
+    w: &mut W,
+    annotator: &mut (impl AnnotateModule<W> + ?Sized),
+    module: &Module,
+) -> fmt::Result {
+    for extern_func in module.extern_functions.keys() {
+        annotator.write_extern_function(w, module, extern_func)?;
     }
     w.write_str("\n")?;
 
     let mut first_function = true;
-    for (_, func) in module.functions.iter() {
+    for func in module.functions.keys() {
         if !first_function {
             w.write_str("\n")?;
         }
         first_function = false;
-        write_function(w, module, func)?;
+        annotator.write_function(w, module, func)?;
     }
 
     Ok(())
 }
 
 pub fn write_function(w: &mut dyn fmt::Write, module: &Module, func: &FunctionData) -> fmt::Result {
+    write_annotated_function(w, &mut DefaultAnnotator, module, func)
+}
+
+pub fn write_annotated_function<W: fmt::Write + ?Sized>(
+    mut w: &mut W,
+    annotator: &mut (impl AnnotateGraph<W> + ?Sized),
+    module: &Module,
+    func: &FunctionData,
+) -> fmt::Result {
     write!(w, "func @{}", func.name)?;
-    write_signature(w, &func.sig)?;
+    write_signature(&mut w, &func.sig)?;
     w.write_str(" {\n")?;
-    write_graph(w, module, &func.graph, func.entry, 4)?;
+    write_annotated_graph(w, annotator, module, &func.graph, func.entry, 4)?;
     w.write_str("}\n")
 }
 
@@ -40,8 +118,20 @@ pub fn write_graph(
     entry: Node,
     indentation: u32,
 ) -> fmt::Result {
+    write_annotated_graph(w, &mut DefaultAnnotator, module, graph, entry, indentation)
+}
+
+pub fn write_annotated_graph<W: fmt::Write + ?Sized>(
+    w: &mut W,
+    annotator: &mut (impl AnnotateGraph<W> + ?Sized),
+    module: &Module,
+    graph: &ValGraph,
+    entry: Node,
+    indentation: u32,
+) -> fmt::Result {
     for node in LiveNodeInfo::compute(graph, entry).reverse_postorder(graph) {
-        write_node(w, module, graph, node, indentation)?;
+        write_indendation(w, indentation)?;
+        annotator.write_node(w, module, graph, node)?;
         writeln!(w)?;
     }
 
@@ -53,10 +143,17 @@ pub fn write_node(
     module: &Module,
     graph: &ValGraph,
     node: Node,
-    indentation: u32,
 ) -> fmt::Result {
-    write_indendation(w, indentation)?;
+    write_annotated_node(w, &mut DefaultAnnotator, module, graph, node)
+}
 
+pub fn write_annotated_node<W: fmt::Write + ?Sized>(
+    w: &mut W,
+    annotator: &mut (impl AnnotateGraph<W> + ?Sized),
+    module: &Module,
+    graph: &ValGraph,
+    node: Node,
+) -> fmt::Result {
     let outputs = graph.node_outputs(node);
 
     if !outputs.is_empty() {
@@ -66,32 +163,44 @@ pub fn write_node(
                 w.write_str(", ")?;
             }
             first = false;
-            write!(w, "{output}:{}", graph.value_kind(output))?;
+            annotator.write_node_output(w, graph, output)?;
         }
         w.write_str(" = ")?;
     }
 
-    write_node_kind(w, module, graph.node_kind(node))?;
+    annotator.write_node_kind(w, module, graph.node_kind(node))?;
 
-    let mut first = true;
-    for input in graph.node_inputs(node) {
-        if first {
+    for input in 0..graph.node_inputs(node).len() {
+        if input == 0 {
             w.write_str(" ")?;
         } else {
             w.write_str(", ")?;
         }
-        first = false;
-        write!(w, "%{}", input.as_u32())?;
+        annotator.write_node_input(w, graph, node, input)?;
     }
 
     Ok(())
 }
 
-fn write_indendation(w: &mut dyn fmt::Write, indentation: u32) -> fmt::Result {
+fn write_indendation(w: &mut (impl fmt::Write + ?Sized), indentation: u32) -> fmt::Result {
     for _ in 0..indentation {
         w.write_char(' ')?;
     }
     Ok(())
+}
+
+#[inline]
+pub fn write_value_def(
+    w: &mut (impl fmt::Write + ?Sized),
+    graph: &ValGraph,
+    output: DepValue,
+) -> fmt::Result {
+    write!(w, "{output}:{}", graph.value_kind(output))
+}
+
+#[inline]
+pub fn write_value_use(w: &mut (impl fmt::Write + ?Sized), input: DepValue) -> fmt::Result {
+    write!(w, "%{}", input.as_u32())
 }
 
 pub fn write_node_kind(
@@ -131,7 +240,7 @@ pub fn write_node_kind(
     Ok(())
 }
 
-fn write_extern_function(w: &mut dyn fmt::Write, func: &ExternFunctionData) -> fmt::Result {
+pub fn write_extern_function(w: &mut dyn fmt::Write, func: &ExternFunctionData) -> fmt::Result {
     write!(w, "extfunc @{}", func.name)?;
     write_signature(w, &func.sig)?;
     writeln!(w)
@@ -215,7 +324,7 @@ mod tests {
             let mut graph = ValGraph::new();
             let node = graph.create_node(kind, [], []);
             let mut output = String::new();
-            write_node(&mut output, &module, &graph, node, 0).expect("failed to write node");
+            write_node(&mut output, &module, &graph, node).expect("failed to write node");
             assert_eq!(output, expected.to_owned());
         };
 

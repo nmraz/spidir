@@ -389,3 +389,6 @@ fn cfg_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
         .filter(|&input| graph.value_kind(input) == DepValueKind::Control)
         .map(|input| graph.value_def(input).0)
 }
+
+#[cfg(test)]
+mod tests;

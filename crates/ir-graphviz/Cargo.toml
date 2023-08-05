@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 ir.workspace = true
 
+itertools.workspace = true
+
 [dev-dependencies]
 parser.workspace = true
 

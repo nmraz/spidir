@@ -1,6 +1,11 @@
 #![cfg_attr(not(test), no_std)]
 
+extern crate alloc;
+
+use alloc::{string::String, vec::Vec};
 use core::fmt;
+
+use itertools::Itertools;
 
 use ir::{
     module::Module,
@@ -9,8 +14,34 @@ use ir::{
     write::write_node_kind,
 };
 
+pub struct DotAttribute {
+    pub name: String,
+    pub value: String,
+}
+
+pub type DotAttributes = Vec<DotAttribute>;
+
+pub trait Annotate {
+    fn annotate_node(&mut self, _graph: &ValGraph, _node: Node) -> DotAttributes {
+        DotAttributes::default()
+    }
+
+    fn annotate_edge(
+        &mut self,
+        _graph: &ValGraph,
+        _node: Node,
+        _input_idx: usize,
+    ) -> DotAttributes {
+        DotAttributes::default()
+    }
+}
+
+pub struct PlainAnnotator;
+impl Annotate for PlainAnnotator {}
+
 pub fn write_graphviz(
     w: &mut dyn fmt::Write,
+    annotator: &mut dyn Annotate,
     module: &Module,
     graph: &ValGraph,
     entry: Node,
@@ -54,7 +85,14 @@ pub fn write_graphviz(
             write!(w, "}}")?;
         }
 
-        writeln!(w, r#"}}"]"#)?;
+        write!(w, r#"}}""#)?;
+
+        let attrs = annotator.annotate_node(graph, node);
+        if !attrs.is_empty() {
+            write!(w, ", {}", format_dot_attributes(attrs))?;
+        }
+
+        writeln!(w, "]")?;
     }
 
     // Second pass: add edges.
@@ -64,13 +102,35 @@ pub fn write_graphviz(
         // edges show up in the right order.
         for (input_idx, input) in graph.node_inputs(node).into_iter().enumerate() {
             let (def_node, def_idx) = graph.value_def(input);
-            writeln!(w, "    {def_node}:o{def_idx} -> {node}:i{input_idx}")?;
+            write!(w, "    {def_node}:o{def_idx} -> {node}:i{input_idx}")?;
+
+            let attrs = annotator.annotate_edge(graph, node, input_idx);
+            if !attrs.is_empty() {
+                write!(w, " [{}]", format_dot_attributes(attrs))?;
+            }
+
+            writeln!(w)?;
         }
     }
 
     writeln!(w, "}}")?;
 
     Ok(())
+}
+
+fn format_dot_attributes(attrs: DotAttributes) -> impl fmt::Display {
+    attrs.into_iter().format_with(", ", |attr, f| {
+        f(&format_args!(
+            r#"{}="{}""#,
+            attr.name,
+            escape_dot_attr_value(&attr.value)
+        ))
+    })
+}
+
+fn escape_dot_attr_value(value: &str) -> String {
+    // In DOT attributes, everything else (including a plain `\`) is treated verbatim.
+    value.replace('\"', "\\\"")
 }
 
 #[cfg(test)]
@@ -85,8 +145,14 @@ mod tests {
         let module = parse_module(input).unwrap();
         let func = module.functions.values().next().unwrap();
         let mut graphviz = String::new();
-        write_graphviz(&mut graphviz, &module, &func.graph, func.entry)
-            .expect("failed to format IR graph");
+        write_graphviz(
+            &mut graphviz,
+            &mut PlainAnnotator,
+            &module,
+            &func.graph,
+            func.entry,
+        )
+        .expect("failed to format IR graph");
         expected.assert_eq(&graphviz);
     }
 

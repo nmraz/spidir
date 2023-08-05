@@ -12,7 +12,7 @@ use ir::{
     module::{FunctionData, Module},
     verify::verify_module,
 };
-use ir_graphviz::{write_graphviz, PlainAnnotator};
+use ir_graphviz::{write_graphviz, ColoredAnnotator};
 use parser::parse_module;
 use tempfile::NamedTempFile;
 
@@ -154,8 +154,14 @@ fn run_command(command: &mut Command) -> Result<()> {
 
 fn output_dot_file(file: &mut File, module: &Module, func: &FunctionData) -> Result<()> {
     let mut s = String::new();
-    write_graphviz(&mut s, &mut PlainAnnotator, module, &func.graph, func.entry)
-        .context("failed to format dot graph")?;
+    write_graphviz(
+        &mut s,
+        &mut ColoredAnnotator,
+        module,
+        &func.graph,
+        func.entry,
+    )
+    .context("failed to format dot graph")?;
     file.write_all(s.as_bytes())
         .context("failed to write dot file")?;
     Ok(())

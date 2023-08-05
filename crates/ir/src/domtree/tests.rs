@@ -108,3 +108,29 @@ fn diamond_idoms() {
         "#]],
     );
 }
+
+#[test]
+fn loop_idoms() {
+    let (graph, entry) = create_loop_graph();
+    check_idoms(
+        &graph,
+        entry,
+        expect![[r#"
+            %0:ctrl, %1:i32 = entry                # 0
+            %10:i32 = iconst 1                     # 1
+            %2:i32 = iconst 0                      # 2
+            %3:i32 = icmp eq %1, %2                # 3
+            %4:ctrl, %5:ctrl = brcond %0, %3       # 4, idom 0
+            %13:i32 = icmp eq %11, %2              # 5
+            %14:ctrl, %15:ctrl = brcond %6, %13    # 6, idom 8
+            %16:ctrl, %17:phisel = region %4, %14  # 7, idom 4
+            %6:ctrl, %7:phisel = region %5, %15    # 8, idom 4
+            %8:i32 = phi %7, %1, %11               # 9
+            %11:i32 = isub %8, %10                 # 10
+            %9:i32 = phi %7, %2, %12               # 11
+            %12:i32 = iadd %9, %8                  # 12
+            %18:i32 = phi %17, %2, %12             # 13
+            return %16, %18                        # 14, idom 7
+        "#]],
+    );
+}

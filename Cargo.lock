@@ -323,6 +323,7 @@ name = "ir-graphviz"
 version = "0.1.0"
 dependencies = [
  "expect-test",
+ "fx-utils",
  "ir",
  "itertools",
  "parser",

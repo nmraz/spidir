@@ -2,8 +2,9 @@
 
 extern crate alloc;
 
-use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
+use alloc::{borrow::ToOwned, string::String};
 use core::fmt;
+use fx_utils::FxHashMap;
 
 use itertools::Itertools;
 
@@ -15,37 +16,24 @@ use ir::{
     write::write_node_kind,
 };
 
-pub struct DotAttribute {
-    pub name: String,
-    pub value: String,
-}
+pub type DotAttributes = FxHashMap<String, String>;
 
-pub type DotAttributes = Vec<DotAttribute>;
-
-pub fn colored_edge_attrs(graph: &ValGraph, node: Node, input_idx: usize) -> Vec<DotAttribute> {
+pub fn colored_edge_attrs(graph: &ValGraph, node: Node, input_idx: usize) -> DotAttributes {
     match graph.value_kind(graph.node_inputs(node)[input_idx]) {
-        DepValueKind::Control => vec![
-            DotAttribute {
-                name: "penwidth".to_owned(),
-                value: "2".to_owned(),
-            },
-            DotAttribute {
-                name: "color".to_owned(),
-                value: "#0000ff".to_owned(),
-            },
-        ],
-        DepValueKind::Value(_) => vec![DotAttribute {
-            name: "color".to_owned(),
-            value: "#d36805".to_owned(),
-        }],
-        DepValueKind::PhiSelector => vec![DotAttribute {
-            name: "color".to_owned(),
-            value: "#4e4e4e".to_owned(),
-        }],
+        DepValueKind::Control => DotAttributes::from_iter([
+            ("penwidth".to_owned(), "2".to_owned()),
+            ("color".to_owned(), "#0000ff".to_owned()),
+        ]),
+        DepValueKind::Value(_) => {
+            DotAttributes::from_iter([("color".to_owned(), "#d36805".to_owned())])
+        }
+        DepValueKind::PhiSelector => {
+            DotAttributes::from_iter([("color".to_owned(), "#4e4e4e".to_owned())])
+        }
     }
 }
 
-pub fn colored_node_attrs(graph: &ValGraph, node: Node) -> Vec<DotAttribute> {
+pub fn colored_node_attrs(graph: &ValGraph, node: Node) -> DotAttributes {
     let value_kinds = &mut graph
         .node_inputs(node)
         .into_iter()
@@ -76,16 +64,10 @@ pub fn colored_node_attrs(graph: &ValGraph, node: Node) -> Vec<DotAttribute> {
         "#ffee9b"
     };
 
-    vec![
-        DotAttribute {
-            name: "style".to_owned(),
-            value: "filled".to_owned(),
-        },
-        DotAttribute {
-            name: "fillcolor".to_owned(),
-            value: fill_color.to_owned(),
-        },
-    ]
+    DotAttributes::from_iter([
+        ("style".to_owned(), "filled".to_owned()),
+        ("fillcolor".to_owned(), fill_color.to_owned()),
+    ])
 }
 
 pub trait Annotate {
@@ -197,11 +179,11 @@ pub fn write_graphviz(
 }
 
 fn format_dot_attributes(attrs: DotAttributes) -> impl fmt::Display {
-    attrs.into_iter().format_with(", ", |attr, f| {
+    attrs.into_iter().format_with(", ", |(name, value), f| {
         f(&format_args!(
             r#"{}="{}""#,
-            attr.name,
-            escape_dot_attr_value(&attr.value)
+            name,
+            escape_dot_attr_value(&value)
         ))
     })
 }
@@ -264,12 +246,12 @@ mod tests {
             "#]],
             expect![[r##"
                 digraph {
-                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> i64}}", style="filled", fillcolor="#ffd3e4"]
-                    node1 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | call @my_ext_func | {<o0> ctrl | <o1> i32}}", style="filled", fillcolor="#ffd3e4"]
-                    node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | return}", style="filled", fillcolor="#ffd3e4"]
-                    node0:o0 -> node1:i0 [penwidth="2", color="#0000ff"]
+                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> i64}}", fillcolor="#ffd3e4", style="filled"]
+                    node1 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | call @my_ext_func | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                    node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | return}", fillcolor="#ffd3e4", style="filled"]
+                    node0:o0 -> node1:i0 [color="#0000ff", penwidth="2"]
                     node0:o1 -> node1:i1 [color="#d36805"]
-                    node1:o0 -> node2:i0 [penwidth="2", color="#0000ff"]
+                    node1:o0 -> node2:i0 [color="#0000ff", penwidth="2"]
                     node1:o1 -> node2:i1 [color="#d36805"]
                 }
             "##]],
@@ -346,40 +328,40 @@ mod tests {
             "#]],
             expect![[r##"
                 digraph {
-                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> ptr | <o2> i64}}", style="filled", fillcolor="#ffd3e4"]
-                    node10 [shape=Mrecord, ordering=in, label="{iconst 1 | {<o0> i64}}", style="filled", fillcolor="#ffee9b"]
-                    node1 [shape=Mrecord, ordering=in, label="{iconst 0 | {<o0> i64}}", style="filled", fillcolor="#ffee9b"]
-                    node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", style="filled", fillcolor="#ffee9b"]
-                    node3 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", style="filled", fillcolor="#ffd3e4"]
-                    node6 [shape=Mrecord, ordering=in, label="{iconst 3 | {<o0> i64}}", style="filled", fillcolor="#ffee9b"]
-                    node7 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | shl | {<o0> i64}}", style="filled", fillcolor="#ffee9b"]
-                    node8 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}", style="filled", fillcolor="#ffee9b"]
-                    node9 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", style="filled", fillcolor="#ffd3e4"]
-                    node13 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", style="filled", fillcolor="#ffd3e4"]
-                    node14 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", style="filled", fillcolor="#c2c2ff"]
-                    node15 [shape=Mrecord, ordering=in, label="{{<i0>} | return}", style="filled", fillcolor="#c2c2ff"]
-                    node4 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", style="filled", fillcolor="#c2c2ff"]
-                    node5 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | phi | {<o0> i64}}", style="filled", fillcolor="#dbdbdb"]
-                    node11 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | iadd | {<o0> i64}}", style="filled", fillcolor="#ffee9b"]
-                    node12 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", style="filled", fillcolor="#ffee9b"]
+                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> ptr | <o2> i64}}", fillcolor="#ffd3e4", style="filled"]
+                    node10 [shape=Mrecord, ordering=in, label="{iconst 1 | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
+                    node1 [shape=Mrecord, ordering=in, label="{iconst 0 | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
+                    node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
+                    node3 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                    node6 [shape=Mrecord, ordering=in, label="{iconst 3 | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
+                    node7 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | shl | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
+                    node8 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}", fillcolor="#ffee9b", style="filled"]
+                    node9 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                    node13 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                    node14 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
+                    node15 [shape=Mrecord, ordering=in, label="{{<i0>} | return}", fillcolor="#c2c2ff", style="filled"]
+                    node4 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
+                    node5 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | phi | {<o0> i64}}", fillcolor="#dbdbdb", style="filled"]
+                    node11 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | iadd | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
+                    node12 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
                     node0:o2 -> node2:i0 [color="#d36805"]
                     node1:o0 -> node2:i1 [color="#d36805"]
-                    node0:o0 -> node3:i0 [penwidth="2", color="#0000ff"]
+                    node0:o0 -> node3:i0 [color="#0000ff", penwidth="2"]
                     node2:o0 -> node3:i1 [color="#d36805"]
                     node5:o0 -> node7:i0 [color="#d36805"]
                     node6:o0 -> node7:i1 [color="#d36805"]
                     node0:o1 -> node8:i0 [color="#d36805"]
                     node7:o0 -> node8:i1 [color="#d36805"]
-                    node4:o0 -> node9:i0 [penwidth="2", color="#0000ff"]
+                    node4:o0 -> node9:i0 [color="#0000ff", penwidth="2"]
                     node5:o0 -> node9:i1 [color="#d36805"]
                     node8:o0 -> node9:i2 [color="#d36805"]
-                    node9:o0 -> node13:i0 [penwidth="2", color="#0000ff"]
+                    node9:o0 -> node13:i0 [color="#0000ff", penwidth="2"]
                     node12:o0 -> node13:i1 [color="#d36805"]
-                    node3:o0 -> node14:i0 [penwidth="2", color="#0000ff"]
-                    node13:o0 -> node14:i1 [penwidth="2", color="#0000ff"]
-                    node14:o0 -> node15:i0 [penwidth="2", color="#0000ff"]
-                    node3:o1 -> node4:i0 [penwidth="2", color="#0000ff"]
-                    node13:o1 -> node4:i1 [penwidth="2", color="#0000ff"]
+                    node3:o0 -> node14:i0 [color="#0000ff", penwidth="2"]
+                    node13:o0 -> node14:i1 [color="#0000ff", penwidth="2"]
+                    node14:o0 -> node15:i0 [color="#0000ff", penwidth="2"]
+                    node3:o1 -> node4:i0 [color="#0000ff", penwidth="2"]
+                    node13:o1 -> node4:i1 [color="#0000ff", penwidth="2"]
                     node4:o1 -> node5:i0 [color="#4e4e4e"]
                     node1:o0 -> node5:i1 [color="#d36805"]
                     node11:o0 -> node5:i2 [color="#d36805"]

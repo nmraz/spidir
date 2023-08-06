@@ -18,6 +18,30 @@ use ir::{
 
 pub type DotAttributes = FxHashMap<String, String>;
 
+pub struct StructuralEdge {
+    pub from: Node,
+    pub to: Node,
+    pub attrs: DotAttributes,
+}
+
+pub trait Annotate {
+    fn annotate_node(&mut self, _graph: &ValGraph, _node: Node) -> DotAttributes {
+        Default::default()
+    }
+
+    fn annotate_edge(
+        &mut self,
+        _graph: &ValGraph,
+        _node: Node,
+        _input_idx: usize,
+    ) -> DotAttributes {
+        Default::default()
+    }
+}
+
+pub struct PlainAnnotator;
+impl Annotate for PlainAnnotator {}
+
 pub fn colored_edge_attrs(graph: &ValGraph, node: Node, input_idx: usize) -> DotAttributes {
     match graph.value_kind(graph.node_inputs(node)[input_idx]) {
         DepValueKind::Control => DotAttributes::from_iter([
@@ -70,24 +94,6 @@ pub fn colored_node_attrs(graph: &ValGraph, node: Node) -> DotAttributes {
     ])
 }
 
-pub trait Annotate {
-    fn annotate_node(&mut self, _graph: &ValGraph, _node: Node) -> DotAttributes {
-        Default::default()
-    }
-
-    fn annotate_edge(
-        &mut self,
-        _graph: &ValGraph,
-        _node: Node,
-        _input_idx: usize,
-    ) -> DotAttributes {
-        Default::default()
-    }
-}
-
-pub struct PlainAnnotator;
-impl Annotate for PlainAnnotator {}
-
 pub struct ColoredAnnotator;
 impl Annotate for ColoredAnnotator {
     fn annotate_node(&mut self, graph: &ValGraph, node: Node) -> DotAttributes {
@@ -105,8 +111,10 @@ pub fn write_graphviz(
     module: &Module,
     graph: &ValGraph,
     entry: Node,
+    structural_edges: &[StructuralEdge],
 ) -> fmt::Result {
-    let rpo = LiveNodeInfo::compute(graph, entry).reverse_postorder(graph);
+    let live_info = &LiveNodeInfo::compute(graph, entry);
+    let rpo = live_info.reverse_postorder(graph);
 
     writeln!(w, "digraph {{")?;
 
@@ -149,7 +157,7 @@ pub fn write_graphviz(
 
         let attrs = annotator.annotate_node(graph, node);
         if !attrs.is_empty() {
-            write!(w, ", {}", format_dot_attributes(attrs))?;
+            write!(w, ", {}", format_dot_attributes(&attrs))?;
         }
 
         writeln!(w, "]")?;
@@ -166,10 +174,17 @@ pub fn write_graphviz(
 
             let attrs = annotator.annotate_edge(graph, node, input_idx);
             if !attrs.is_empty() {
-                write!(w, " [{}]", format_dot_attributes(attrs))?;
+                write!(w, " [{}]", format_dot_attributes(&attrs))?;
             }
 
             writeln!(w)?;
+        }
+    }
+
+    for structural_edge in structural_edges {
+        write!(w, "    {} -> {}", structural_edge.from, structural_edge.to)?;
+        if !structural_edge.attrs.is_empty() {
+            write!(w, "[{}]", format_dot_attributes(&structural_edge.attrs))?;
         }
     }
 
@@ -178,12 +193,12 @@ pub fn write_graphviz(
     Ok(())
 }
 
-fn format_dot_attributes(attrs: DotAttributes) -> impl fmt::Display {
-    attrs.into_iter().format_with(", ", |(name, value), f| {
+fn format_dot_attributes(attrs: &DotAttributes) -> impl fmt::Display + '_ {
+    attrs.iter().format_with(", ", |(name, value), f| {
         f(&format_args!(
             r#"{}="{}""#,
             name,
-            escape_dot_attr_value(&value)
+            escape_dot_attr_value(value)
         ))
     })
 }
@@ -207,7 +222,15 @@ mod tests {
         func: &FunctionData,
     ) -> String {
         let mut graphviz = String::new();
-        write_graphviz(&mut graphviz, annotator, module, &func.graph, func.entry).unwrap();
+        write_graphviz(
+            &mut graphviz,
+            annotator,
+            module,
+            &func.graph,
+            func.entry,
+            &[],
+        )
+        .unwrap();
         graphviz
     }
 

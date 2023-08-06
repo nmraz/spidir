@@ -10,9 +10,10 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 use ir::{
     module::{FunctionData, Module},
+    valwalk::walk_live_nodes,
     verify::verify_module,
 };
-use ir_graphviz::{write_graphviz, ColoredAnnotator};
+use ir_graphviz::{write_graphviz, ColoredAnnotator, DotAttributes, StructuralEdge};
 use parser::parse_module;
 use tempfile::NamedTempFile;
 
@@ -48,6 +49,10 @@ enum ToolCommand {
         /// The function to graph
         function: String,
 
+        /// Show dominance edges in the graph
+        #[arg(long)]
+        domtree: bool,
+
         /// The output file to use
         ///
         /// A name derived from the input file and function name will be used if this parameter is
@@ -77,6 +82,7 @@ fn main() -> Result<()> {
         ToolCommand::Graph {
             input_file,
             function: function_name,
+            domtree,
             output_file,
             format,
             no_open,
@@ -104,12 +110,12 @@ fn main() -> Result<()> {
                 GraphFormat::Dot => {
                     let mut output_file =
                         File::create(&output_file).context("failed to create output file")?;
-                    output_dot_file(&mut output_file, &module, func)?;
+                    output_dot_file(&mut output_file, domtree, &module, func)?;
                 }
                 GraphFormat::Svg => {
                     let mut dotfile =
                         NamedTempFile::new().context("failed to create temporary dot file")?;
-                    output_dot_file(dotfile.as_file_mut(), &module, func)?;
+                    output_dot_file(dotfile.as_file_mut(), domtree, &module, func)?;
 
                     run_command(
                         Command::new("dot")
@@ -152,7 +158,18 @@ fn run_command(command: &mut Command) -> Result<()> {
     Ok(())
 }
 
-fn output_dot_file(file: &mut File, module: &Module, func: &FunctionData) -> Result<()> {
+fn output_dot_file(
+    file: &mut File,
+    domtree: bool,
+    module: &Module,
+    func: &FunctionData,
+) -> Result<()> {
+    let domtree_edges = if domtree {
+        get_domtree_edges(func)
+    } else {
+        Vec::new()
+    };
+
     let mut s = String::new();
     write_graphviz(
         &mut s,
@@ -160,11 +177,32 @@ fn output_dot_file(file: &mut File, module: &Module, func: &FunctionData) -> Res
         module,
         &func.graph,
         func.entry,
+        &domtree_edges,
     )
     .context("failed to format dot graph")?;
     file.write_all(s.as_bytes())
         .context("failed to write dot file")?;
     Ok(())
+}
+
+fn get_domtree_edges(func: &FunctionData) -> Vec<StructuralEdge> {
+    let domtree = ir::domtree::compute(&func.graph, func.entry);
+
+    let mut idom_edges = Vec::new();
+    for node in walk_live_nodes(&func.graph, func.entry) {
+        if let Some(idom) = domtree.idom(node) {
+            idom_edges.push(StructuralEdge {
+                from: idom,
+                to: node,
+                attrs: DotAttributes::from_iter([
+                    ("penwidth".to_owned(), "2".to_owned()),
+                    ("style".to_owned(), "dashed".to_owned()),
+                    ("color".to_owned(), "#a1a1a1".to_owned()),
+                ]),
+            });
+        }
+    }
+    idom_edges
 }
 
 fn read_module(input_file: &Path) -> Result<Module> {

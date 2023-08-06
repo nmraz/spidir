@@ -110,6 +110,31 @@ fn diamond_idoms() {
 }
 
 #[test]
+fn sdom_not_idom() {
+    let (mut graph, entry, ctrl) = create_graph();
+    let (actrl, bctrl) = create_brcond(&mut graph, ctrl);
+    let (cctrl, dctrl) = create_brcond(&mut graph, actrl);
+    let ectrl = create_region(&mut graph, [bctrl, dctrl]);
+    let fctrl = create_region(&mut graph, [cctrl, ectrl]);
+    create_return(&mut graph, [fctrl]);
+
+    check_idoms(
+        &graph,
+        entry,
+        expect![[r#"
+            %0:ctrl = entry                      # 0
+            %4:i32 = iconst 5                    # 1
+            %1:i32 = iconst 5                    # 2
+            %2:ctrl, %3:ctrl = brcond %0, %1     # 3, idom 0
+            %5:ctrl, %6:ctrl = brcond %2, %4     # 4, idom 3
+            %7:ctrl, %8:phisel = region %3, %6   # 5, idom 3
+            %9:ctrl, %10:phisel = region %5, %7  # 6, idom 3
+            return %9                            # 7, idom 6
+        "#]],
+    );
+}
+
+#[test]
 fn loop_idoms() {
     let (graph, entry) = create_loop_graph();
     check_idoms(

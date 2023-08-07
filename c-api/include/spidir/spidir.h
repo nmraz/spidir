@@ -611,6 +611,9 @@ spidir_value_t spidir_builder_build_udiv(spidir_builder_handle_t builder,
 /// The values `lhs` and `rhs` must both have the same type, which should be
 /// either an integer or pointer type.
 ///
+/// The value returned by this operation will be 1 if the comparison holds and
+/// 0 otherwise.
+///
 /// @param[in] builder     A handle to the function builder.
 /// @param[in] kind        The kind of comparison to perform. See the
 ///                        `SPIDIR_ICMP_` constants for the allowed operation

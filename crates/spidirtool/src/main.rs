@@ -11,10 +11,10 @@ use clap::{Parser, Subcommand, ValueEnum};
 use ir::{
     module::{FunctionData, Module},
     valwalk::walk_live_nodes,
-    verify::verify_module,
+    verify::{verify_graph, verify_module},
 };
 use ir_graphviz::{
-    annotate::{ColoredAnnotator, DotAttributes},
+    annotate::{Annotate, ColoredAnnotator, DotAttributes, ErrorAnnotator},
     write_graphviz, StructuralEdge,
 };
 use parser::parse_module;
@@ -52,6 +52,10 @@ enum ToolCommand {
         /// The function to graph
         function: String,
 
+        /// Verify the function and display any errors in the graph
+        #[arg(long)]
+        verify: bool,
+
         /// Show dominance edges in the graph
         #[arg(long)]
         domtree: bool,
@@ -85,6 +89,7 @@ fn main() -> Result<()> {
         ToolCommand::Graph {
             input_file,
             function: function_name,
+            verify,
             domtree,
             output_file,
             format,
@@ -113,12 +118,12 @@ fn main() -> Result<()> {
                 GraphFormat::Dot => {
                     let mut output_file =
                         File::create(&output_file).context("failed to create output file")?;
-                    output_dot_file(&mut output_file, domtree, &module, func)?;
+                    output_dot_file(&mut output_file, verify, domtree, &module, func)?;
                 }
                 GraphFormat::Svg => {
                     let mut dotfile =
                         NamedTempFile::new().context("failed to create temporary dot file")?;
-                    output_dot_file(dotfile.as_file_mut(), domtree, &module, func)?;
+                    output_dot_file(dotfile.as_file_mut(), verify, domtree, &module, func)?;
 
                     run_command(
                         Command::new("dot")
@@ -163,10 +168,43 @@ fn run_command(command: &mut Command) -> Result<()> {
 
 fn output_dot_file(
     file: &mut File,
+    verify: bool,
     domtree: bool,
     module: &Module,
     func: &FunctionData,
 ) -> Result<()> {
+    let mut colored_annotator = ColoredAnnotator;
+
+    let errors;
+    let mut error_annotator;
+
+    let annotator = if verify {
+        match verify_graph(&func.graph, &func.sig, func.entry) {
+            Ok(()) => &mut colored_annotator,
+            Err(inner_errors) => {
+                errors = inner_errors;
+                error_annotator = ErrorAnnotator::new(&func.graph, &errors);
+                &mut error_annotator as &mut dyn Annotate
+            }
+        }
+    } else {
+        &mut colored_annotator
+    };
+
+    let s = get_graphviz_str(domtree, annotator, module, func)?;
+
+    file.write_all(s.as_bytes())
+        .context("failed to write dot file")?;
+
+    Ok(())
+}
+
+fn get_graphviz_str(
+    domtree: bool,
+    annotator: &mut dyn Annotate,
+    module: &Module,
+    func: &FunctionData,
+) -> Result<String, anyhow::Error> {
     let domtree_edges = if domtree {
         get_domtree_edges(func)
     } else {
@@ -176,16 +214,15 @@ fn output_dot_file(
     let mut s = String::new();
     write_graphviz(
         &mut s,
-        &mut ColoredAnnotator,
+        annotator,
         module,
         &func.graph,
         func.entry,
         &domtree_edges,
     )
     .context("failed to format dot graph")?;
-    file.write_all(s.as_bytes())
-        .context("failed to write dot file")?;
-    Ok(())
+
+    Ok(s)
 }
 
 fn get_domtree_edges(func: &FunctionData) -> Vec<StructuralEdge> {

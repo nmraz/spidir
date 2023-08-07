@@ -170,10 +170,10 @@ impl<'a> fmt::Display for DisplayErrorWithContext<'a> {
                 function.name,
                 display_node(self.module, &function.graph, node),
                 self.error.display(self.module)
-            )?;
+            )
+        } else {
+            write!(f, "{}", self.error.display(self.module))
         }
-
-        Ok(())
     }
 }
 

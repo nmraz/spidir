@@ -97,3 +97,61 @@ impl Annotate for ColoredAnnotator {
         colored_edge_attrs(graph, node, input_idx)
     }
 }
+
+pub struct ErrorAnnotator<'a> {
+    pub(crate) node_errors: FxHashMap<Node, Vec<&'a GraphVerifierError>>,
+    pub(crate) edge_errors: FxHashMap<(Node, u32), Vec<&'a GraphVerifierError>>,
+}
+
+impl<'a> ErrorAnnotator<'a> {
+    pub fn new(graph: &ValGraph, errors: &'a [GraphVerifierError]) -> Self {
+        let mut node_errors: FxHashMap<_, Vec<_>> = FxHashMap::default();
+        let mut edge_errors: FxHashMap<_, Vec<_>> = FxHashMap::default();
+
+        for error in errors {
+            if let Some(edge) = error.node_input() {
+                edge_errors.entry(edge).or_default().push(error);
+            } else {
+                node_errors
+                    .entry(error.node(graph))
+                    .or_default()
+                    .push(error);
+            }
+        }
+
+        Self {
+            node_errors,
+            edge_errors,
+        }
+    }
+}
+
+impl<'a> Annotate for ErrorAnnotator<'a> {
+    fn annotate_node(&mut self, graph: &ValGraph, node: Node) -> DotAttributes {
+        let mut attrs = colored_node_attrs(graph, node);
+        if let Some(errors) = self.node_errors.get(&node) {
+            add_error_attrs(&mut attrs, errors, graph);
+        }
+        attrs
+    }
+
+    fn annotate_edge(&mut self, graph: &ValGraph, node: Node, input_idx: usize) -> DotAttributes {
+        let mut attrs = colored_edge_attrs(graph, node, input_idx);
+        if let Some(errors) = self.edge_errors.get(&(node, input_idx as u32)) {
+            add_error_attrs(&mut attrs, errors, graph);
+        }
+        attrs
+    }
+}
+
+fn add_error_attrs(attrs: &mut DotAttributes, errors: &[&GraphVerifierError], graph: &ValGraph) {
+    attrs.insert("color".to_owned(), "#ff0000".to_owned());
+    attrs.insert("tooltip".to_owned(), format_verifier_errors(errors, graph));
+}
+
+fn format_verifier_errors(errors: &[&GraphVerifierError], graph: &ValGraph) -> String {
+    errors
+        .iter()
+        .format_with("&#10;", |error, f| f(&error.display(graph)))
+        .to_string()
+}

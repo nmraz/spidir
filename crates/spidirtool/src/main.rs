@@ -13,7 +13,10 @@ use ir::{
     valwalk::walk_live_nodes,
     verify::verify_module,
 };
-use ir_graphviz::{write_graphviz, ColoredAnnotator, DotAttributes, StructuralEdge};
+use ir_graphviz::{
+    annotate::{ColoredAnnotator, DotAttributes},
+    write_graphviz, StructuralEdge,
+};
 use parser::parse_module;
 use tempfile::NamedTempFile;
 

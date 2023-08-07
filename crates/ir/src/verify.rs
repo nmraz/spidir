@@ -17,53 +17,6 @@ use self::node::verify_node_kind;
 mod node;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ModuleVerifierError {
-    Graph {
-        function: Function,
-        error: GraphVerifierError,
-    },
-    ReusedFunctionName(String),
-}
-
-impl ModuleVerifierError {
-    pub fn node<'a>(&self, module: &'a Module) -> Option<(&'a FunctionData, Node)> {
-        match self {
-            Self::Graph { function, error } => {
-                let function = &module.functions[*function];
-                match error {
-                    GraphVerifierError::UnusedControl(value)
-                    | GraphVerifierError::ReusedControl(value)
-                    | GraphVerifierError::BadOutputKind { value, .. } => {
-                        Some((function, function.graph.value_def(*value).0))
-                    }
-                    GraphVerifierError::BadInputCount { node, .. }
-                    | GraphVerifierError::BadOutputCount { node, .. }
-                    | GraphVerifierError::BadInputKind { node, .. }
-                    | GraphVerifierError::BadEntry(node)
-                    | GraphVerifierError::MisplacedEntry(node)
-                    | GraphVerifierError::ConstantOutOfRange(node) => Some((function, *node)),
-                }
-            }
-            _ => None,
-        }
-    }
-
-    pub fn display<'a>(&'a self, module: &'a Module) -> DisplayError<'a> {
-        DisplayError {
-            module,
-            error: self,
-        }
-    }
-
-    pub fn display_with_context<'a>(&'a self, module: &'a Module) -> DisplayErrorWithContext<'a> {
-        DisplayErrorWithContext {
-            module,
-            error: self,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GraphVerifierError {
     UnusedControl(DepValue),
     ReusedControl(DepValue),
@@ -89,6 +42,127 @@ pub enum GraphVerifierError {
     ConstantOutOfRange(Node),
 }
 
+impl GraphVerifierError {
+    pub fn node(&self, graph: &ValGraph) -> Node {
+        match self {
+            Self::UnusedControl(value)
+            | Self::ReusedControl(value)
+            | Self::BadOutputKind { value, .. } => graph.value_def(*value).0,
+            Self::BadInputCount { node, .. }
+            | Self::BadOutputCount { node, .. }
+            | Self::BadInputKind { node, .. }
+            | Self::BadEntry(node)
+            | Self::MisplacedEntry(node)
+            | Self::ConstantOutOfRange(node) => *node,
+        }
+    }
+
+    pub fn node_input(&self) -> Option<(Node, u32)> {
+        match self {
+            &Self::BadInputKind { node, input, .. } => Some((node, input)),
+            _ => None,
+        }
+    }
+
+    pub fn display<'a>(&'a self, graph: &'a ValGraph) -> DisplayGraphVerifierError<'a> {
+        DisplayGraphVerifierError { graph, error: self }
+    }
+}
+
+pub struct DisplayGraphVerifierError<'a> {
+    graph: &'a ValGraph,
+    error: &'a GraphVerifierError,
+}
+
+impl fmt::Display for DisplayGraphVerifierError<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.error {
+            GraphVerifierError::UnusedControl(value) => {
+                let (_, output_idx) = self.graph.value_def(*value);
+                write!(f, "control output {output_idx} unused")?;
+            }
+            GraphVerifierError::ReusedControl(value) => {
+                let (_, output_idx) = self.graph.value_def(*value);
+                write!(f, "control output {output_idx} reused")?;
+            }
+            GraphVerifierError::BadInputCount { expected, .. } => {
+                write!(f, "bad input count, expected {expected}")?;
+            }
+            GraphVerifierError::BadOutputCount { expected, .. } => {
+                write!(f, "bad output count, expected {expected}")?;
+            }
+            GraphVerifierError::BadInputKind {
+                node,
+                input,
+                expected,
+            } => {
+                write!(
+                    f,
+                    "bad value kind for input {input}, expected one of {}, got `{}`",
+                    display_expected_kinds(expected),
+                    self.graph
+                        .value_kind(self.graph.node_inputs(*node)[*input as usize])
+                )?;
+            }
+            GraphVerifierError::BadOutputKind { value, expected } => {
+                let (_, output_idx) = self.graph.value_def(*value);
+                write!(
+                    f,
+                    "bad value kind for output {output_idx}, expected one of {}, got `{}`",
+                    display_expected_kinds(expected),
+                    self.graph.value_kind(*value)
+                )?;
+            }
+            GraphVerifierError::BadEntry(_) => {
+                write!(f, "bad entry node")?;
+            }
+            GraphVerifierError::MisplacedEntry(_) => {
+                write!(f, "misplaced entry node")?;
+            }
+            GraphVerifierError::ConstantOutOfRange(_) => {
+                write!(f, "constant value out of range")?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ModuleVerifierError {
+    Graph {
+        function: Function,
+        error: GraphVerifierError,
+    },
+    ReusedFunctionName(String),
+}
+
+impl ModuleVerifierError {
+    pub fn node<'a>(&self, module: &'a Module) -> Option<(&'a FunctionData, Node)> {
+        match self {
+            Self::Graph { function, error } => {
+                let function = &module.functions[*function];
+                Some((function, error.node(&function.graph)))
+            }
+            _ => None,
+        }
+    }
+
+    pub fn display<'a>(&'a self, module: &'a Module) -> DisplayError<'a> {
+        DisplayError {
+            module,
+            error: self,
+        }
+    }
+
+    pub fn display_with_context<'a>(&'a self, module: &'a Module) -> DisplayErrorWithContext<'a> {
+        DisplayErrorWithContext {
+            module,
+            error: self,
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct DisplayError<'a> {
     module: &'a Module,
@@ -100,59 +174,12 @@ impl fmt::Display for DisplayError<'_> {
         match self.error {
             ModuleVerifierError::Graph { function, error } => {
                 let function = &self.module.functions[*function];
-                let graph = &function.graph;
-                match error {
-                    GraphVerifierError::UnusedControl(value) => {
-                        let (_, output_idx) = graph.value_def(*value);
-                        write!(f, "control output {output_idx} unused")?;
-                    }
-                    GraphVerifierError::ReusedControl(value) => {
-                        let (_, output_idx) = graph.value_def(*value);
-                        write!(f, "control output {output_idx} reused")?;
-                    }
-                    GraphVerifierError::BadInputCount { expected, .. } => {
-                        write!(f, "bad input count, expected {expected}")?;
-                    }
-                    GraphVerifierError::BadOutputCount { expected, .. } => {
-                        write!(f, "bad output count, expected {expected}")?;
-                    }
-                    GraphVerifierError::BadInputKind {
-                        node,
-                        input,
-                        expected,
-                    } => {
-                        write!(
-                            f,
-                            "bad value kind for input {input}, expected one of {}, got `{}`",
-                            display_expected_kinds(expected),
-                            graph.value_kind(graph.node_inputs(*node)[*input as usize])
-                        )?;
-                    }
-                    GraphVerifierError::BadOutputKind { value, expected } => {
-                        let (_, output_idx) = graph.value_def(*value);
-                        write!(
-                            f,
-                            "bad value kind for output {output_idx}, expected one of {}, got `{}`",
-                            display_expected_kinds(expected),
-                            graph.value_kind(*value)
-                        )?;
-                    }
-                    GraphVerifierError::BadEntry(_) => {
-                        write!(f, "bad entry node")?;
-                    }
-                    GraphVerifierError::MisplacedEntry(_) => {
-                        write!(f, "misplaced entry node")?;
-                    }
-                    GraphVerifierError::ConstantOutOfRange(_) => {
-                        write!(f, "constant value out of range")?;
-                    }
-                }
+                write!(f, "{}", error.display(&function.graph))
             }
             ModuleVerifierError::ReusedFunctionName(name) => {
-                write!(f, "function name `{name}` reused")?;
+                write!(f, "function name `{name}` reused")
             }
         }
-        Ok(())
     }
 }
 

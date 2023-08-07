@@ -146,6 +146,7 @@ impl<'a> Annotate for ErrorAnnotator<'a> {
 
 fn add_error_attrs(attrs: &mut DotAttributes, errors: &[&GraphVerifierError], graph: &ValGraph) {
     attrs.insert("color".to_owned(), "#ff0000".to_owned());
+    attrs.insert("penwidth".to_owned(), "2".to_owned());
     attrs.insert("tooltip".to_owned(), format_verifier_errors(errors, graph));
 }
 

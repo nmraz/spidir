@@ -330,7 +330,7 @@ spidir_value_t spidir_builder_build_call(spidir_builder_handle_t builder,
 /// the returned value will be `SPIDIR_VALUE_INVALID`.
 spidir_value_t spidir_builder_build_extern_call(spidir_builder_handle_t builder,
                                                 spidir_value_type_t ret_type,
-                                                spidir_function_t func,
+                                                spidir_extern_function_t func,
                                                 size_t arg_count,
                                                 const spidir_value_t* args);
 

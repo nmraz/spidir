@@ -6,18 +6,15 @@ use core::{
 use alloc::{borrow::ToOwned, string::String};
 use frontend::{Block, FunctionBuilder};
 use ir::{
-    module::{Function, Signature},
-    node::{IcmpKind, Type},
+    module::{ExternFunction, Function, Signature},
+    node::{FunctionRef, IcmpKind, Type},
     valgraph::DepValue,
 };
 use smallvec::SmallVec;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
-pub struct ApiFunction(pub u32);
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(C)]
-pub struct ApiExternFunction(pub u32);
+pub struct ApiFunction(pub u64);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ApiBlock(pub u32);
@@ -35,6 +32,7 @@ pub type BuildFunctionCallback = extern "C" fn(*mut FunctionBuilder, *mut ());
 pub type DumpCallback = extern "C" fn(*const c_char, usize, *mut ()) -> u8;
 
 const SPIDIR_VALUE_INVALID: ApiValue = ApiValue(u32::MAX);
+const EXTERN_FUNCTION_BIT: u64 = 1 << 63;
 
 pub const SPIDIR_TYPE_I32: u8 = 0;
 pub const SPIDIR_TYPE_I64: u8 = 1;
@@ -108,8 +106,21 @@ pub fn opt_type_from_api(opt_type: ApiType) -> Option<Type> {
     }
 }
 
-pub fn func_from_api(func: ApiFunction) -> Function {
-    Function::from_u32(func.0)
+pub fn funcref_from_api(func: ApiFunction) -> FunctionRef {
+    let val = func.0;
+    if val & EXTERN_FUNCTION_BIT != 0 {
+        FunctionRef::External(ExternFunction::from_u32(val as u32))
+    } else {
+        FunctionRef::Internal(Function::from_u32(val as u32))
+    }
+}
+
+pub fn funcref_to_api(func: FunctionRef) -> ApiFunction {
+    let val = match func {
+        FunctionRef::Internal(func) => func.as_u32() as u64,
+        FunctionRef::External(func) => (func.as_u32() as u64) | EXTERN_FUNCTION_BIT,
+    };
+    ApiFunction(val)
 }
 
 pub fn value_to_api(value: DepValue) -> ApiValue {

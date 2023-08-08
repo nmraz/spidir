@@ -1,13 +1,10 @@
 use frontend::{FunctionBuilder, PhiHandle};
-use ir::{
-    module::{ExternFunction, Function},
-    node::FunctionRef,
-};
+
 use paste::paste;
 
 use crate::types::{
-    block_from_api, icmp_kind_from_api, opt_type_from_api, opt_value_from_api, opt_value_to_api,
-    type_from_api, value_from_api, value_list_from_api, value_to_api, ApiBlock, ApiExternFunction,
+    block_from_api, funcref_from_api, icmp_kind_from_api, opt_type_from_api, opt_value_from_api,
+    opt_value_to_api, type_from_api, value_from_api, value_list_from_api, value_to_api, ApiBlock,
     ApiFunction, ApiIcmpKind, ApiPhi, ApiType, ApiValue,
 };
 
@@ -62,31 +59,7 @@ unsafe extern "C" fn spidir_builder_build_call(
         let builder = &mut *builder;
         let args = value_list_from_api(arg_count, args);
         let ret_type = opt_type_from_api(ret_type);
-        opt_value_to_api(builder.build_call(
-            ret_type,
-            FunctionRef::Internal(Function::from_u32(func.0)),
-            &args,
-        ))
-    }
-}
-
-#[no_mangle]
-unsafe extern "C" fn spidir_builder_build_extern_call(
-    builder: *mut FunctionBuilder<'_>,
-    ret_type: ApiType,
-    func: ApiExternFunction,
-    arg_count: usize,
-    args: *const ApiValue,
-) -> ApiValue {
-    unsafe {
-        let builder = &mut *builder;
-        let args = value_list_from_api(arg_count, args);
-        let ret_type = opt_type_from_api(ret_type);
-        opt_value_to_api(builder.build_call(
-            ret_type,
-            FunctionRef::External(ExternFunction::from_u32(func.0)),
-            &args,
-        ))
+        opt_value_to_api(builder.build_call(ret_type, funcref_from_api(func), &args))
     }
 }
 

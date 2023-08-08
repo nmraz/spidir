@@ -23,21 +23,14 @@ typedef struct spidir_module* spidir_module_handle_t;
 /// See `spidir_module_build_function` for more information.
 typedef struct spidir_builder* spidir_builder_handle_t;
 
-/// An identifier representing a function within a module.
+/// An identifier representing a function (either external or internal) within a
+/// module.
 ///
 /// Values of this type are only guaranteed to be unique within the context of a
 /// module, and should not be mixed across different modules.
 typedef struct spidir_function {
-    uint32_t id;
+    uint64_t id;
 } spidir_function_t;
-
-/// An identifier representing an external function within a module.
-///
-/// Values of this type are only guaranteed to be unique within the context of a
-/// module, and should not be mixed across different modules.
-typedef struct spidir_extern_function {
-    uint32_t id;
-} spidir_extern_function_t;
 
 /// An identifier representing a basic block during function construction.
 typedef struct spidir_block {
@@ -186,13 +179,15 @@ spidir_module_create_function(spidir_module_handle_t module, const char* name,
 ///                        the function. This parameter may be null if
 ///                        `param_count` is 0.
 /// @return A value identifying the newly-created external function.
-spidir_extern_function_t spidir_module_create_extern_function(
+spidir_function_t spidir_module_create_extern_function(
     spidir_module_handle_t module, const char* name,
     spidir_value_type_t ret_type, size_t param_count,
     const spidir_value_type_t* param_types);
 
 /// Creates a builder object for adding code to `func` and invokes `callback` on
 /// it.
+///
+/// `func` must not be an external function.
 ///
 /// The builder can be used to add basic blocks and instructions to the
 /// function. The callback should, at the very least, call
@@ -277,8 +272,8 @@ void spidir_builder_set_entry_block(spidir_builder_handle_t builder,
 spidir_value_t spidir_builder_build_param_ref(spidir_builder_handle_t builder,
                                               uint32_t index);
 
-/// Builds an instruction calling the internal function `func` at the current
-/// insertion point.
+/// Builds an instruction calling the function `func` at the current insertion
+/// point.
 ///
 /// This function can only build calls to internal functions (functions that
 /// reside in the current module, created by `spidir_module_create_function`).
@@ -305,34 +300,6 @@ spidir_value_t spidir_builder_build_call(spidir_builder_handle_t builder,
                                          spidir_function_t func,
                                          size_t arg_count,
                                          const spidir_value_t* args);
-
-/// Builds an instruction calling the external function `func` at the current
-/// insertion point.
-///
-/// This function can only build calls to external functions (functions created
-/// by `spidir_module_create_extern_function`). To build a call to an internal
-/// function, use `spidir_builder_build_call`.
-///
-/// @param[in] builder   A handle to the function builder.
-/// @param[in] ret_type  The return type to use for the call. If this parameter
-///                      is `SPIDIR_TYPE_NONE`, the call will be treated as
-///                      returning no value. This type should match the return
-///                      type specified when the function was created.
-/// @param[in] func      The function to call.
-/// @param[in] arg_count The number of arguments to pass to the function. This
-///                      value should match the parameter count specified when
-///                      the function was created.
-/// @param[in] args      A pointer to an array of `arg_count` values, each
-///                      representing an argument to pass. This parameter may be
-///                      null if `arg_count` is 0.
-/// @return An SSA value containing the return value of the function. If
-/// `ret_type` was null (indicating a call to a function with no return value),
-/// the returned value will be `SPIDIR_VALUE_INVALID`.
-spidir_value_t spidir_builder_build_extern_call(spidir_builder_handle_t builder,
-                                                spidir_value_type_t ret_type,
-                                                spidir_extern_function_t func,
-                                                size_t arg_count,
-                                                const spidir_value_t* args);
 
 /// Builds a return instruction at the current insertion point.
 ///

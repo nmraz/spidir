@@ -3,8 +3,8 @@
 #include "utils.h"
 
 typedef struct {
-    spidir_extern_function_t extfunc;
-    spidir_extern_function_t extfunc2;
+    spidir_function_t extfunc;
+    spidir_function_t extfunc2;
     spidir_function_t infunc;
     spidir_function_t infunc2;
 } func_context_t;
@@ -38,9 +38,9 @@ void caller_builder_callback(spidir_builder_handle_t builder, void* ctx) {
 
     spidir_value_t args[] = {ptr, ival};
 
-    spidir_builder_build_extern_call(builder, SPIDIR_TYPE_NONE,
-                                     func_ctx->extfunc, 2, args);
-    spidir_value_t ext_ret = spidir_builder_build_extern_call(
+    spidir_builder_build_call(builder, SPIDIR_TYPE_NONE, func_ctx->extfunc, 2,
+                              args);
+    spidir_value_t ext_ret = spidir_builder_build_call(
         builder, SPIDIR_TYPE_I32, func_ctx->extfunc2, 2, args);
     spidir_builder_build_call(builder, SPIDIR_TYPE_NONE, func_ctx->infunc, 2,
                               args);
@@ -59,9 +59,9 @@ int main(void) {
         SPIDIR_TYPE_I32,
     };
 
-    spidir_extern_function_t extfunc = spidir_module_create_extern_function(
+    spidir_function_t extfunc = spidir_module_create_extern_function(
         module, "extfunc", SPIDIR_TYPE_NONE, 2, param_types);
-    spidir_extern_function_t extfunc2 = spidir_module_create_extern_function(
+    spidir_function_t extfunc2 = spidir_module_create_extern_function(
         module, "extfunc2", SPIDIR_TYPE_I32, 2, param_types);
 
     spidir_function_t infunc = spidir_module_create_function(

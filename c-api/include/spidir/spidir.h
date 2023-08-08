@@ -440,6 +440,9 @@ void spidir_builder_add_phi_input(spidir_builder_handle_t builder,
 
 /// Builds an integer constant value at the current insertion point.
 ///
+/// @note The value must be in range for the specified value type. For example,
+/// an `iconst` of type `SPIDIR_TYPE_I32` should fit in 32 bits.
+///
 /// @param[in] builder A handle to the function builder.
 /// @param[in] type    The type of the integer value to build. This should be
 ///                    either `SPIDIR_TYPE_I32` or `SPIDIR_TYPE_I64`.

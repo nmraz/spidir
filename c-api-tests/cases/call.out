@@ -1,0 +1,25 @@
+extfunc @extfunc(ptr, i32)
+extfunc @extfunc2:i32(ptr, i32)
+
+func @infunc(ptr, i32) {
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    return %3
+}
+
+func @infunc2:i32(ptr, i32) {
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    return %3, %2
+}
+
+func @caller:i32(ptr, i32) {
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    %5:ctrl = call @extfunc %3, %1, %2
+    %6:ctrl, %7:i32 = call @extfunc2 %5, %1, %2
+    %8:ctrl = call @infunc %6, %1, %2
+    %9:ctrl, %10:i32 = call @infunc2 %8, %1, %2
+    %11:i32 = iadd %7, %10
+    return %9, %11
+}

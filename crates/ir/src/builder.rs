@@ -120,7 +120,7 @@ pub trait BuilderExt: Builder {
         let call = self.create_node(
             NodeKind::Call(func),
             iter::once(ctrl).chain(args.iter().copied()),
-            ret_ty.into_iter().map(DepValueKind::Value),
+            iter::once(DepValueKind::Control).chain(ret_ty.into_iter().map(DepValueKind::Value)),
         );
         let outputs = self.graph().node_outputs(call);
         BuiltCall {

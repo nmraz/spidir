@@ -39,7 +39,7 @@ pub fn write_graphviz(
 
     // First pass: write all nodes.
     for &node in &rpo {
-        write!(w, r#"    {node} [shape=Mrecord, ordering=in, label="{{"#)?;
+        write!(w, r#"    {node} [shape=Mrecord, label="{{"#)?;
 
         let inputs = graph.node_inputs(node);
         let outputs = graph.node_outputs(node);

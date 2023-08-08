@@ -59,27 +59,27 @@ fn dump_simple_graph() {
                 return %2, %3
             }",
         expect![[r#"
-                digraph {
-                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> i64}}"]
-                    node1 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | call @my_ext_func | {<o0> ctrl | <o1> i32}}"]
-                    node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | return}"]
-                    node0:o0 -> node1:i0
-                    node0:o1 -> node1:i1
-                    node1:o0 -> node2:i0
-                    node1:o1 -> node2:i1
-                }
-            "#]],
+            digraph {
+                node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> i64}}"]
+                node1 [shape=Mrecord, label="{{<i0> | <i1>} | call @my_ext_func | {<o0> ctrl | <o1> i32}}"]
+                node2 [shape=Mrecord, label="{{<i0> | <i1>} | return}"]
+                node0:o0 -> node1:i0
+                node0:o1 -> node1:i1
+                node1:o0 -> node2:i0
+                node1:o1 -> node2:i1
+            }
+        "#]],
         expect![[r##"
-                digraph {
-                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> i64}}", fillcolor="#ffd3e4", style="filled"]
-                    node1 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | call @my_ext_func | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
-                    node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | return}", fillcolor="#ffd3e4", style="filled"]
-                    node0:o0 -> node1:i0 [color="#0000ff", penwidth="2"]
-                    node0:o1 -> node1:i1 [color="#d36805"]
-                    node1:o0 -> node2:i0 [color="#0000ff", penwidth="2"]
-                    node1:o1 -> node2:i1 [color="#d36805"]
-                }
-            "##]],
+            digraph {
+                node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> i64}}", fillcolor="#ffd3e4", style="filled"]
+                node1 [shape=Mrecord, label="{{<i0> | <i1>} | call @my_ext_func | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                node2 [shape=Mrecord, label="{{<i0> | <i1>} | return}", fillcolor="#ffd3e4", style="filled"]
+                node0:o0 -> node1:i0 [color="#0000ff", penwidth="2"]
+                node0:o1 -> node1:i1 [color="#d36805"]
+                node1:o0 -> node2:i0 [color="#0000ff", penwidth="2"]
+                node1:o1 -> node2:i1 [color="#d36805"]
+            }
+        "##]],
     );
 }
 
@@ -107,95 +107,95 @@ fn dump_iota_graph() {
         }
         ",
         expect![[r#"
-                digraph {
-                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> ptr | <o2> i64}}"]
-                    node10 [shape=Mrecord, ordering=in, label="{iconst 1 | {<o0> i64}}"]
-                    node1 [shape=Mrecord, ordering=in, label="{iconst 0 | {<o0> i64}}"]
-                    node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}"]
-                    node3 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}"]
-                    node6 [shape=Mrecord, ordering=in, label="{iconst 3 | {<o0> i64}}"]
-                    node7 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | shl | {<o0> i64}}"]
-                    node8 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}"]
-                    node9 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}"]
-                    node13 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}"]
-                    node14 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
-                    node15 [shape=Mrecord, ordering=in, label="{{<i0>} | return}"]
-                    node4 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
-                    node5 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | phi | {<o0> i64}}"]
-                    node11 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | iadd | {<o0> i64}}"]
-                    node12 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}"]
-                    node0:o2 -> node2:i0
-                    node1:o0 -> node2:i1
-                    node0:o0 -> node3:i0
-                    node2:o0 -> node3:i1
-                    node5:o0 -> node7:i0
-                    node6:o0 -> node7:i1
-                    node0:o1 -> node8:i0
-                    node7:o0 -> node8:i1
-                    node4:o0 -> node9:i0
-                    node5:o0 -> node9:i1
-                    node8:o0 -> node9:i2
-                    node9:o0 -> node13:i0
-                    node12:o0 -> node13:i1
-                    node3:o0 -> node14:i0
-                    node13:o0 -> node14:i1
-                    node14:o0 -> node15:i0
-                    node3:o1 -> node4:i0
-                    node13:o1 -> node4:i1
-                    node4:o1 -> node5:i0
-                    node1:o0 -> node5:i1
-                    node11:o0 -> node5:i2
-                    node5:o0 -> node11:i0
-                    node10:o0 -> node11:i1
-                    node11:o0 -> node12:i0
-                    node0:o2 -> node12:i1
-                }
-            "#]],
+            digraph {
+                node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> ptr | <o2> i64}}"]
+                node10 [shape=Mrecord, label="{iconst 1 | {<o0> i64}}"]
+                node1 [shape=Mrecord, label="{iconst 0 | {<o0> i64}}"]
+                node2 [shape=Mrecord, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}"]
+                node3 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}"]
+                node6 [shape=Mrecord, label="{iconst 3 | {<o0> i64}}"]
+                node7 [shape=Mrecord, label="{{<i0> | <i1>} | shl | {<o0> i64}}"]
+                node8 [shape=Mrecord, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}"]
+                node9 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}"]
+                node13 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}"]
+                node14 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
+                node15 [shape=Mrecord, label="{{<i0>} | return}"]
+                node4 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
+                node5 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | phi | {<o0> i64}}"]
+                node11 [shape=Mrecord, label="{{<i0> | <i1>} | iadd | {<o0> i64}}"]
+                node12 [shape=Mrecord, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}"]
+                node0:o2 -> node2:i0
+                node1:o0 -> node2:i1
+                node0:o0 -> node3:i0
+                node2:o0 -> node3:i1
+                node5:o0 -> node7:i0
+                node6:o0 -> node7:i1
+                node0:o1 -> node8:i0
+                node7:o0 -> node8:i1
+                node4:o0 -> node9:i0
+                node5:o0 -> node9:i1
+                node8:o0 -> node9:i2
+                node9:o0 -> node13:i0
+                node12:o0 -> node13:i1
+                node3:o0 -> node14:i0
+                node13:o0 -> node14:i1
+                node14:o0 -> node15:i0
+                node3:o1 -> node4:i0
+                node13:o1 -> node4:i1
+                node4:o1 -> node5:i0
+                node1:o0 -> node5:i1
+                node11:o0 -> node5:i2
+                node5:o0 -> node11:i0
+                node10:o0 -> node11:i1
+                node11:o0 -> node12:i0
+                node0:o2 -> node12:i1
+            }
+        "#]],
         expect![[r##"
-                digraph {
-                    node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> ptr | <o2> i64}}", fillcolor="#ffd3e4", style="filled"]
-                    node10 [shape=Mrecord, ordering=in, label="{iconst 1 | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
-                    node1 [shape=Mrecord, ordering=in, label="{iconst 0 | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
-                    node2 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
-                    node3 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", fillcolor="#ffd3e4", style="filled"]
-                    node6 [shape=Mrecord, ordering=in, label="{iconst 3 | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
-                    node7 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | shl | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
-                    node8 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}", fillcolor="#ffee9b", style="filled"]
-                    node9 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
-                    node13 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", fillcolor="#ffd3e4", style="filled"]
-                    node14 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
-                    node15 [shape=Mrecord, ordering=in, label="{{<i0>} | return}", fillcolor="#c2c2ff", style="filled"]
-                    node4 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
-                    node5 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | phi | {<o0> i64}}", fillcolor="#dbdbdb", style="filled"]
-                    node11 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | iadd | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
-                    node12 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
-                    node0:o2 -> node2:i0 [color="#d36805"]
-                    node1:o0 -> node2:i1 [color="#d36805"]
-                    node0:o0 -> node3:i0 [color="#0000ff", penwidth="2"]
-                    node2:o0 -> node3:i1 [color="#d36805"]
-                    node5:o0 -> node7:i0 [color="#d36805"]
-                    node6:o0 -> node7:i1 [color="#d36805"]
-                    node0:o1 -> node8:i0 [color="#d36805"]
-                    node7:o0 -> node8:i1 [color="#d36805"]
-                    node4:o0 -> node9:i0 [color="#0000ff", penwidth="2"]
-                    node5:o0 -> node9:i1 [color="#d36805"]
-                    node8:o0 -> node9:i2 [color="#d36805"]
-                    node9:o0 -> node13:i0 [color="#0000ff", penwidth="2"]
-                    node12:o0 -> node13:i1 [color="#d36805"]
-                    node3:o0 -> node14:i0 [color="#0000ff", penwidth="2"]
-                    node13:o0 -> node14:i1 [color="#0000ff", penwidth="2"]
-                    node14:o0 -> node15:i0 [color="#0000ff", penwidth="2"]
-                    node3:o1 -> node4:i0 [color="#0000ff", penwidth="2"]
-                    node13:o1 -> node4:i1 [color="#0000ff", penwidth="2"]
-                    node4:o1 -> node5:i0 [color="#4e4e4e"]
-                    node1:o0 -> node5:i1 [color="#d36805"]
-                    node11:o0 -> node5:i2 [color="#d36805"]
-                    node5:o0 -> node11:i0 [color="#d36805"]
-                    node10:o0 -> node11:i1 [color="#d36805"]
-                    node11:o0 -> node12:i0 [color="#d36805"]
-                    node0:o2 -> node12:i1 [color="#d36805"]
-                }
-            "##]],
+            digraph {
+                node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> ptr | <o2> i64}}", fillcolor="#ffd3e4", style="filled"]
+                node10 [shape=Mrecord, label="{iconst 1 | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
+                node1 [shape=Mrecord, label="{iconst 0 | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
+                node2 [shape=Mrecord, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
+                node3 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node6 [shape=Mrecord, label="{iconst 3 | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
+                node7 [shape=Mrecord, label="{{<i0> | <i1>} | shl | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
+                node8 [shape=Mrecord, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}", fillcolor="#ffee9b", style="filled"]
+                node9 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node13 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node14 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
+                node15 [shape=Mrecord, label="{{<i0>} | return}", fillcolor="#c2c2ff", style="filled"]
+                node4 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
+                node5 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | phi | {<o0> i64}}", fillcolor="#dbdbdb", style="filled"]
+                node11 [shape=Mrecord, label="{{<i0> | <i1>} | iadd | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
+                node12 [shape=Mrecord, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
+                node0:o2 -> node2:i0 [color="#d36805"]
+                node1:o0 -> node2:i1 [color="#d36805"]
+                node0:o0 -> node3:i0 [color="#0000ff", penwidth="2"]
+                node2:o0 -> node3:i1 [color="#d36805"]
+                node5:o0 -> node7:i0 [color="#d36805"]
+                node6:o0 -> node7:i1 [color="#d36805"]
+                node0:o1 -> node8:i0 [color="#d36805"]
+                node7:o0 -> node8:i1 [color="#d36805"]
+                node4:o0 -> node9:i0 [color="#0000ff", penwidth="2"]
+                node5:o0 -> node9:i1 [color="#d36805"]
+                node8:o0 -> node9:i2 [color="#d36805"]
+                node9:o0 -> node13:i0 [color="#0000ff", penwidth="2"]
+                node12:o0 -> node13:i1 [color="#d36805"]
+                node3:o0 -> node14:i0 [color="#0000ff", penwidth="2"]
+                node13:o0 -> node14:i1 [color="#0000ff", penwidth="2"]
+                node14:o0 -> node15:i0 [color="#0000ff", penwidth="2"]
+                node3:o1 -> node4:i0 [color="#0000ff", penwidth="2"]
+                node13:o1 -> node4:i1 [color="#0000ff", penwidth="2"]
+                node4:o1 -> node5:i0 [color="#4e4e4e"]
+                node1:o0 -> node5:i1 [color="#d36805"]
+                node11:o0 -> node5:i2 [color="#d36805"]
+                node5:o0 -> node11:i0 [color="#d36805"]
+                node10:o0 -> node11:i1 [color="#d36805"]
+                node11:o0 -> node12:i0 [color="#d36805"]
+                node0:o2 -> node12:i1 [color="#d36805"]
+            }
+        "##]],
     )
 }
 
@@ -230,27 +230,27 @@ fn dump_verifier_errors() {
         "#,
         expect![[r##"
             digraph {
-                node0 [shape=Mrecord, ordering=in, label="{entry | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
-                node1 [shape=Mrecord, ordering=in, label="{{<i0>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
-                node2 [shape=Mrecord, ordering=in, label="{stackslot 4:4 | {<o0> ptr}}", fillcolor="#ffee9b", style="filled"]
-                node3 [shape=Mrecord, ordering=in, label="{stackslot 4:4 | {<o0> ptr}}", fillcolor="#ffee9b", style="filled"]
-                node4 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2> | <i3>} | store | {<o0> ctrl}}", tooltip="bad input count, expected 3&#10;control output 0 reused", color="#ff0000", penwidth="2", fillcolor="#ffd3e4", style="filled"]
-                node11 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
-                node12 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | return}", fillcolor="#ffd3e4", style="filled"]
-                node6 [shape=Mrecord, ordering=in, label="{iconst 0 | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
-                node7 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
-                node8 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
-                node9 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", fillcolor="#ffd3e4", style="filled"]
-                node10 [shape=Mrecord, ordering=in, label="{{<i0>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="control output 0 unused", color="#ff0000", penwidth="2", fillcolor="#c2c2ff", style="filled"]
-                node13 [shape=Mrecord, ordering=in, label="{{<i0>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
-                node14 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
-                node15 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
-                node16 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | isub | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
-                node17 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
-                node18 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | iadd | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
-                node19 [shape=Mrecord, ordering=in, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
-                node20 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
-                node21 [shape=Mrecord, ordering=in, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                node1 [shape=Mrecord, label="{{<i0>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
+                node2 [shape=Mrecord, label="{stackslot 4:4 | {<o0> ptr}}", fillcolor="#ffee9b", style="filled"]
+                node3 [shape=Mrecord, label="{stackslot 4:4 | {<o0> ptr}}", fillcolor="#ffee9b", style="filled"]
+                node4 [shape=Mrecord, label="{{<i0> | <i1> | <i2> | <i3>} | store | {<o0> ctrl}}", tooltip="bad input count, expected 3&#10;control output 0 reused", color="#ff0000", penwidth="2", fillcolor="#ffd3e4", style="filled"]
+                node11 [shape=Mrecord, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                node12 [shape=Mrecord, label="{{<i0> | <i1>} | return}", fillcolor="#ffd3e4", style="filled"]
+                node6 [shape=Mrecord, label="{iconst 0 | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
+                node7 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node8 [shape=Mrecord, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
+                node9 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node10 [shape=Mrecord, label="{{<i0>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="control output 0 unused", color="#ff0000", penwidth="2", fillcolor="#c2c2ff", style="filled"]
+                node13 [shape=Mrecord, label="{{<i0>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
+                node14 [shape=Mrecord, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                node15 [shape=Mrecord, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                node16 [shape=Mrecord, label="{{<i0> | <i1>} | isub | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
+                node17 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node18 [shape=Mrecord, label="{{<i0> | <i1>} | iadd | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
+                node19 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node20 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
+                node21 [shape=Mrecord, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
                 node0:o0 -> node1:i0 [color="#0000ff", penwidth="2"]
                 node1:o0 -> node4:i0 [color="#0000ff", penwidth="2"]
                 node0:o1 -> node4:i1 [color="#d36805"]

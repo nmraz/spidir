@@ -64,7 +64,7 @@ impl TestProducer for VerifyTest {
         output
     }
 
-    fn update(&self, module: &Module, input_str: &str, output_str: &str) {
+    fn update(&self, _module: &Module, _input_str: &str, _output_str: &str) {
         todo!()
     }
 }

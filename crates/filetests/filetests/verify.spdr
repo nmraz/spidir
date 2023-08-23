@@ -1,10 +1,6 @@
 # run: verify
-
-# regex: val=%\d+
-
 func @test(ptr, i32) {
-    # check: function `test`:
-    # nextln: `$val:ctrl, $val:i32, $val:ptr = entry`: bad value kind for output 1, expected one of `ptr`, got `i32`
+    # check: function sjklf:
     %0:ctrl, %2:i32, %1:ptr = entry
     return %0
 }

@@ -12,6 +12,13 @@ use ir::{
 use parser::parse_module;
 use regex::Regex;
 
+macro_rules! regex {
+    ($val:literal) => {{
+        static REGEX: OnceLock<Regex> = OnceLock::new();
+        REGEX.get_or_init(|| Regex::new($val).unwrap())
+    }};
+}
+
 pub trait TestProducer {
     fn output_for(&self, module: &Module) -> String;
     fn update(&self, module: &Module, input_lines: &mut Vec<String>, output_str: &str);
@@ -37,13 +44,13 @@ impl TestProducer for VerifyTest {
         }
 
         let mut output = String::new();
+        writeln!(output, "global:").unwrap();
         if !global_errors.is_empty() {
-            writeln!(output, "global:").unwrap();
             for error in global_errors {
                 writeln!(output, "{}", error.display(module)).unwrap();
             }
-            writeln!(output).unwrap();
         }
+        writeln!(output).unwrap();
 
         for (func, func_data) in &module.functions {
             writeln!(output, "function `{}`:", func_data.name).unwrap();
@@ -58,17 +65,81 @@ impl TestProducer for VerifyTest {
                     )
                     .unwrap();
                 }
-                writeln!(output).unwrap();
             }
+            writeln!(output).unwrap();
         }
 
         output
     }
 
-    fn update(&self, _module: &Module, input_lines: &mut Vec<String>, _output_str: &str) {
-        eprintln!("lines: {}", input_lines.join("\n"));
-        todo!()
+    fn update(&self, _module: &Module, input_lines: &mut Vec<String>, output_str: &str) {
+        let (run_line_pos, _) = find_run_line(input_lines.iter().map(|a| a.as_str())).unwrap();
+
+        let prefix_lines = [r"# regex: val=%\d+", "", "# check: global:"];
+        insert_lines_after(input_lines, run_line_pos, prefix_lines);
+
+        let mut output_lines = output_str.lines();
+        assert!(output_lines.next().unwrap() == "global:");
+
+        let func_regex = regex!(r#"^function `(.+)`:"#);
+        let val_regex = regex!(r"%\d+");
+
+        let mut input_line = run_line_pos + prefix_lines.len();
+        let mut in_func = false;
+        let mut output_run: Vec<String> = Vec::new();
+
+        for output_line in output_lines {
+            if output_line.is_empty() {
+                continue;
+            }
+
+            if let Some(new_func) = func_regex.captures(output_line) {
+                insert_lines_after(input_lines, input_line, output_run.iter().map(|s| &**s));
+                insert_lines_after(input_lines, input_line + output_run.len(), [""]);
+                output_run.clear();
+
+                let name = &new_func[1];
+                input_line += input_lines[input_line..]
+                    .iter()
+                    .position(|line| line.contains(&format!("func @{name}(")))
+                    .expect("function not found in source");
+
+                insert_lines_after(
+                    input_lines,
+                    input_line,
+                    [&*format!("    # check: function `{name}`:")],
+                );
+                input_line += 1;
+                in_func = true;
+            } else {
+                output_run.push(format!(
+                    "{:1$}# nextln: {2}",
+                    "",
+                    if in_func { 4 } else { 0 },
+                    val_regex.replace_all(output_line, "$$val")
+                ));
+            }
+        }
+
+        insert_lines_after(input_lines, input_line, output_run.iter().map(|s| &**s));
+        insert_lines_after(input_lines, input_line + output_run.len(), [""]);
     }
+}
+
+fn insert_lines_after<'a>(
+    lines: &mut Vec<String>,
+    i: usize,
+    new_lines: impl IntoIterator<Item = &'a str>,
+) {
+    insert_lines_before(lines, i + 1, new_lines);
+}
+
+fn insert_lines_before<'a>(
+    lines: &mut Vec<String>,
+    i: usize,
+    new_lines: impl IntoIterator<Item = &'a str>,
+) {
+    lines.splice(i..i, new_lines.into_iter().map(|line| line.to_owned()));
 }
 
 fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {
@@ -78,19 +149,22 @@ fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {
 }
 
 pub fn select_test_producer(input: &str) -> Box<dyn TestProducer> {
-    let run_regex = {
-        static RUN_REGEX: OnceLock<Regex> = OnceLock::new();
-        RUN_REGEX.get_or_init(|| Regex::new(r#"^run:\s*(.+)"#).unwrap())
-    };
-
-    let run_command = &comments(input)
-        .find_map(|comment| run_regex.captures(comment))
-        .expect("no run line in test file")[1];
-
+    let (_, run_command) = find_run_line(input.lines()).expect("no run line in test file");
     match run_command {
         "verify" => Box::new(VerifyTest),
         _ => panic!("unknown run command '{run_command}'"),
     }
+}
+
+fn find_run_line<'a>(lines: impl Iterator<Item = &'a str>) -> Option<(usize, &'a str)> {
+    let run_regex = regex!(r#"^run:\s*(.+)"#);
+
+    lines.enumerate().find_map(|(i, line)| {
+        let comment_start = find_comment_start(line)?;
+        let comment = line[comment_start + 1..].trim();
+        let captures = run_regex.captures(comment)?;
+        Some((i, captures.get(1).unwrap().as_str()))
+    })
 }
 
 pub fn run_test(producer: &dyn TestProducer, input: &str, update_if_failed: bool) {
@@ -103,17 +177,12 @@ pub fn run_test(producer: &dyn TestProducer, input: &str, update_if_failed: bool
     if !ok {
         if update_if_failed {
             producer.update(&module, &mut lines, &output);
+            eprintln!("{}", lines.join("\n"));
         } else {
             eprintln!("{}", explanation);
             panic!("checks failed");
         }
     }
-}
-
-fn comments(input: &str) -> impl Iterator<Item = &str> {
-    input.lines().filter_map(|line| {
-        find_comment_start(line).map(|comment_start| line[comment_start + 1..].trim())
-    })
 }
 
 fn build_checker_and_lines(input: &str) -> (Checker, Vec<String>) {

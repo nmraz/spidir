@@ -17,16 +17,16 @@ pub fn select_test_provider_from_input(input: &str) -> Box<dyn TestProvider> {
     select_test_provider(run_command)
 }
 
-pub fn run_test(producer: &dyn TestProvider, input: &str, update_if_failed: bool) {
+pub fn run_test(provider: &dyn TestProvider, input: &str, update_if_failed: bool) {
     let (checker, mut lines) = build_checker_and_lines(input);
     let module = parse_module(input).expect("failed to parse module");
-    let output = producer.output_for(&module);
+    let output = provider.output_for(&module);
     let (ok, explanation) = checker
         .explain(&output, filecheck::NO_VARIABLES)
         .expect("bad filecheck directive");
     if !ok {
         if update_if_failed {
-            producer.update(&module, &mut lines, &output);
+            provider.update(&module, &mut lines, &output);
             eprintln!("{}", lines.join("\n"));
         } else {
             eprintln!("{}", explanation);

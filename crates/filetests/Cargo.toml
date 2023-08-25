@@ -11,6 +11,7 @@ parser = { workspace = true, features = ["std"] }
 fx-utils.workspace = true
 
 anyhow.workspace = true
+clap.workspace = true
 cranelift-entity.workspace = true
 expect-test.workspace = true
 

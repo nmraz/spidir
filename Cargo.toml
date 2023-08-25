@@ -11,7 +11,7 @@ parser = { path = "crates/parser" }
 ir-graphviz = { path = "crates/ir-graphviz" }
 
 anyhow = "1.0.71"
-clap = { version = "4.3.10", features = ["derive"] }
+clap = { version = "4.3.10", features = ["derive", "wrap_help"] }
 cranelift-entity = "0.95.0"
 expect-test = "1.4.1"
 hashbrown = { version = "0.13.2", default-features = false }

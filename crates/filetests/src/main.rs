@@ -5,13 +5,57 @@ use std::{
 };
 
 use anyhow::Result;
+use clap::{Parser, ValueEnum};
 use filetests::{run_file_test, TestOutcome, UpdateMode};
 
 const OK: &str = "\x1b[32mok\x1b[0m";
 const UPDATED: &str = "\x1b[34mupdated\x1b[0m";
 const FAILED: &str = "\x1b[31mfailed\x1b[0m";
 
+#[derive(Clone, Copy, ValueEnum)]
+enum CliUpdateMode {
+    Never,
+    Failed,
+    Always,
+}
+
+impl CliUpdateMode {
+    fn to_update_mode(self) -> UpdateMode {
+        match self {
+            CliUpdateMode::Never => UpdateMode::Never,
+            CliUpdateMode::Failed => UpdateMode::IfFailed,
+            CliUpdateMode::Always => UpdateMode::Always,
+        }
+    }
+}
+
+#[derive(Parser)]
+#[command(max_term_width(100))]
+struct Cli {
+    /// How test files should be updated
+    ///
+    /// When set to `never`, tests that do not pass filecheck will be marked as failed and cause the
+    /// run to fail.
+    ///
+    /// When set to `failed`, tests that do not pass filecheck will be updated with the correct
+    /// directives (any old directives will be deleted).
+    ///
+    /// When set to `always`, all test files will be updated, deleting any existing directives.
+    ///
+    /// If this argument is not specified, the update mode will be inferred from the `UPDATE_EXPECT`
+    /// environment variable. If this variable is *not* set, no tests will be updated (as if
+    /// `never` had been specified); otherwise, failing tests will be updated, as if `failed` had
+    /// been specified.
+    #[arg(long)]
+    update_mode: Option<CliUpdateMode>,
+}
+
 fn main() -> Result<()> {
+    let cli = Cli::parse();
+    let update_mode = cli
+        .update_mode
+        .map_or_else(update_mode_from_env, CliUpdateMode::to_update_mode);
+
     let case_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("cases");
     let cases = {
         let mut cases = Vec::new();
@@ -23,7 +67,6 @@ fn main() -> Result<()> {
     let mut failures = Vec::new();
     let mut updated = 0;
 
-    let update_mode = update_mode_from_env();
     eprintln!("\nrunning {} tests", cases.len());
     for case_path in &cases {
         let case_name = case_path.strip_prefix(&case_dir).unwrap_or(case_path);

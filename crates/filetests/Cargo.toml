@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 ir.workspace = true
 parser.workspace = true
+fx-utils.workspace = true
 
 cranelift-entity.workspace = true
 expect-test.workspace = true

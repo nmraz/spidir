@@ -29,8 +29,8 @@ pub fn run_test(provider: &dyn TestProvider, input: &str, update_if_failed: bool
         .expect("bad filecheck directive");
     if !ok {
         if update_if_failed {
-            let mut lines = get_non_directive_lines(input);
-            let mut updater = Updater::new(&mut lines);
+            let lines = get_non_directive_lines(input);
+            let mut updater = Updater::new(&lines);
             updater.advance_to_after(|line| parse_run_line(line).is_some());
             provider.update(&module, &mut updater, &output);
             eprint!("{}", updater.output());
@@ -54,7 +54,7 @@ fn build_checker(input: &str) -> Checker {
     checker
 }
 
-fn get_non_directive_lines(input: &str) -> Vec<String> {
+fn get_non_directive_lines(input: &str) -> Vec<&str> {
     let mut other_lines = Vec::new();
     let mut builder = CheckerBuilder::new();
     let mut empty_line_run = 0;
@@ -85,13 +85,13 @@ fn get_non_directive_lines(input: &str) -> Vec<String> {
                 // This was a directive-only line, so delete any empty lines that came before it.
                 post_directive_only = was_directive;
             } else {
-                other_lines.extend(iter::repeat(String::new()).take(empty_line_run));
-                other_lines.push(pre_line.to_owned());
+                other_lines.extend(iter::repeat("").take(empty_line_run));
+                other_lines.push(pre_line);
                 post_directive_only = false;
             }
         } else {
-            other_lines.extend(iter::repeat(String::new()).take(empty_line_run));
-            other_lines.push(line.to_owned());
+            other_lines.extend(iter::repeat("").take(empty_line_run));
+            other_lines.push(line);
             post_directive_only = false;
         }
 

@@ -266,6 +266,7 @@ dependencies = [
  "cranelift-entity",
  "expect-test",
  "filecheck",
+ "fx-utils",
  "ir",
  "parser",
  "regex",

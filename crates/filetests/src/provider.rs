@@ -1,3 +1,6 @@
+use std::fmt::Write;
+
+use fx_utils::FxHashMap;
 use ir::module::Module;
 
 use self::verify::VerifyProvider;
@@ -5,21 +8,27 @@ use self::verify::VerifyProvider;
 mod verify;
 
 pub struct Updater<'a> {
-    lines: &'a mut Vec<String>,
+    lines: &'a [&'a str],
+    new_lines: FxHashMap<usize, Vec<String>>,
     insertion_point: usize,
 }
 
 impl<'a> Updater<'a> {
-    pub fn new(lines: &'a mut Vec<String>) -> Self {
+    pub fn new(lines: &'a [&'a str]) -> Self {
         Self {
             lines,
+            new_lines: FxHashMap::default(),
             insertion_point: 0,
         }
     }
 
     pub fn output(&self) -> String {
-        let mut output = self.lines.join("\n");
-        output.push('\n');
+        let mut output = String::new();
+        for (i, line) in self.lines.iter().enumerate() {
+            self.append_new_lines(&mut output, i);
+            writeln!(output, "{line}").unwrap();
+        }
+        self.append_new_lines(&mut output, self.lines.len());
         output
     }
 
@@ -44,8 +53,18 @@ impl<'a> Updater<'a> {
     }
 
     fn insert(&mut self, line: String) {
-        self.lines.insert(self.insertion_point, line);
-        self.insertion_point += 1;
+        self.new_lines
+            .entry(self.insertion_point)
+            .or_default()
+            .push(line);
+    }
+
+    fn append_new_lines(&self, output: &mut String, line_num: usize) {
+        if let Some(new_lines) = self.new_lines.get(&line_num) {
+            for new_line in new_lines {
+                writeln!(output, "{new_line}").unwrap();
+            }
+        }
     }
 }
 

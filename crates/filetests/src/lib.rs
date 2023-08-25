@@ -1,4 +1,5 @@
 use core::iter;
+use std::{fs, path::Path};
 
 use anyhow::{anyhow, bail, Context, Ok, Result};
 use filecheck::{Checker, CheckerBuilder, NO_VARIABLES};
@@ -24,10 +25,22 @@ pub enum UpdateMode {
     Always,
 }
 
-#[derive(Debug, Clone)]
-pub enum TestOutcome {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TestOutcome<U> {
     Ok,
-    Update(String),
+    Update(U),
+}
+
+pub fn run_file_test(path: &Path, update_mode: UpdateMode) -> Result<TestOutcome<()>> {
+    let input = fs::read_to_string(path).context("failed to read file")?;
+    let provider =
+        select_test_provider_from_input(&input).context("failed to select test provider")?;
+    let outcome = run_test(&*provider, &input, update_mode)?;
+    if let TestOutcome::Update(new_contents) = outcome {
+        fs::write(path, new_contents).context("failed to update file")?;
+        return Ok(TestOutcome::Update(()));
+    }
+    Ok(TestOutcome::Ok)
 }
 
 pub fn select_test_provider_from_input(input: &str) -> Result<Box<dyn TestProvider>> {
@@ -40,7 +53,7 @@ pub fn run_test(
     provider: &dyn TestProvider,
     input: &str,
     update_mode: UpdateMode,
-) -> Result<TestOutcome> {
+) -> Result<TestOutcome<String>> {
     let module = parse_module(input).context("failed to parse module")?;
     let output = provider.output_for(&module)?;
 

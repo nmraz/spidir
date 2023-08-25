@@ -10,6 +10,7 @@ ir.workspace = true
 ir-graphviz.workspace = true
 parser = { workspace = true, features = ["std"] }
 
-clap = { version = "4.3.10", features = ["derive"] }
-anyhow = "1.0.71"
+clap.workspace = true
+anyhow.workspace = true
+
 tempfile = "3.6.0"

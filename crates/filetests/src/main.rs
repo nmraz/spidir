@@ -4,9 +4,10 @@ use std::{
     process,
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
 use filetests::{run_file_test, TestOutcome, UpdateMode};
+use glob::Pattern;
 
 const OK: &str = "\x1b[32mok\x1b[0m";
 const UPDATED: &str = "\x1b[34mupdated\x1b[0m";
@@ -48,6 +49,11 @@ struct Cli {
     /// been specified.
     #[arg(long)]
     update_mode: Option<CliUpdateMode>,
+
+    /// One or more glob patterns indicating which tests to run
+    ///
+    /// If no patterns are specified, all tests will be run.
+    cases: Option<Vec<String>>,
 }
 
 fn main() -> Result<()> {
@@ -57,11 +63,7 @@ fn main() -> Result<()> {
         .map_or_else(update_mode_from_env, CliUpdateMode::to_update_mode);
 
     let case_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("cases");
-    let cases = {
-        let mut cases = Vec::new();
-        walk_dir(&case_dir, &mut cases)?;
-        cases
-    };
+    let (cases, filtered) = collect_test_cases(&case_dir, cli.cases)?;
 
     let mut passed = 0;
     let mut failures = Vec::new();
@@ -69,7 +71,7 @@ fn main() -> Result<()> {
 
     eprintln!("\nrunning {} tests", cases.len());
     for case_path in &cases {
-        let case_name = case_path.strip_prefix(&case_dir).unwrap_or(case_path);
+        let case_name = case_path.strip_prefix(&case_dir)?;
         eprint!("test {} ... ", case_name.display());
         match run_file_test(case_path, update_mode) {
             Ok(TestOutcome::Ok) => {
@@ -99,7 +101,7 @@ fn main() -> Result<()> {
     }
 
     let status = if failed > 0 { FAILED } else { OK };
-    eprintln!("test result: {status}. {passed} passed; {failed} failed; {updated} updated\n");
+    eprintln!("test result: {status}. {passed} passed; {failed} failed; {updated} updated; {filtered} filtered out\n");
 
     if failed > 0 {
         process::exit(1);
@@ -116,15 +118,62 @@ fn update_mode_from_env() -> UpdateMode {
     }
 }
 
-fn walk_dir(path: &Path, results: &mut Vec<PathBuf>) -> Result<()> {
+fn collect_test_cases(
+    case_dir: &Path,
+    case_patterns: Option<Vec<String>>,
+) -> Result<(Vec<PathBuf>, usize)> {
+    let case_patterns = case_patterns
+        .map(|case_patterns| {
+            case_patterns
+                .into_iter()
+                .map(|case| {
+                    Pattern::new(&case).with_context(|| format!("invalid glob pattern '{case}'"))
+                })
+                .collect::<Result<Vec<_>, _>>()
+        })
+        .transpose()?;
+
+    let mut cases = Vec::new();
+    let mut filtered = 0;
+    walk_dir(
+        case_dir,
+        case_dir,
+        case_patterns.as_deref(),
+        &mut cases,
+        &mut filtered,
+    )?;
+    Ok((cases, filtered))
+}
+
+fn walk_dir(
+    base_path: &Path,
+    path: &Path,
+    patterns: Option<&[Pattern]>,
+    results: &mut Vec<PathBuf>,
+    filtered: &mut usize,
+) -> Result<()> {
     for entry in fs::read_dir(path)? {
         let entry = entry?;
         let entry_path = entry.path();
         if entry.file_type()?.is_dir() {
-            walk_dir(&entry_path, results)?;
+            walk_dir(base_path, &entry_path, patterns, results, filtered)?;
         } else {
-            results.push(entry_path);
+            let entry_relpath = entry_path.strip_prefix(base_path)?;
+            if matches_patterns(entry_relpath, patterns) {
+                results.push(entry_path);
+            } else {
+                (*filtered) += 1;
+            }
         }
     }
+
     Ok(())
+}
+
+fn matches_patterns(path: &Path, patterns: Option<&[Pattern]>) -> bool {
+    match patterns {
+        Some(patterns) => patterns.iter().any(|pat| pat.matches_path(path)),
+        // All tests should be run if no patterns are specified
+        None => true,
+    }
 }

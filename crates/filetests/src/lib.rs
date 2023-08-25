@@ -32,7 +32,7 @@ pub fn run_test(provider: &dyn TestProvider, input: &str, update_if_failed: bool
             let lines = get_non_directive_lines(input);
             let mut updater = Updater::new(&lines);
             updater.advance_to_after(|line| parse_run_line(line).is_some());
-            provider.update(&module, &mut updater, &output);
+            provider.update(&mut updater, &module, &output);
             eprint!("{}", updater.output());
         } else {
             eprintln!("{}", explanation);

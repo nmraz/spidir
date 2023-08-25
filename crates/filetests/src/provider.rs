@@ -70,7 +70,7 @@ impl<'a> Updater<'a> {
 
 pub trait TestProvider {
     fn output_for(&self, module: &Module) -> String;
-    fn update(&self, module: &Module, updater: &mut Updater<'_>, output_str: &str);
+    fn update(&self, updater: &mut Updater<'_>, module: &Module, output_str: &str);
 }
 
 pub fn select_test_provider(run_command: &str) -> Box<dyn TestProvider> {

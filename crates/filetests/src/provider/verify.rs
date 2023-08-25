@@ -59,7 +59,7 @@ impl TestProvider for VerifyProvider {
         output
     }
 
-    fn update(&self, _module: &Module, updater: &mut Updater, output_str: &str) {
+    fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) {
         updater.directive(0, "regex", r"val=%\d+");
         updater.blank_line();
         updater.directive(0, "check", "global:");

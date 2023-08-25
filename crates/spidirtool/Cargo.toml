@@ -7,8 +7,8 @@ edition = "2021"
 
 [dependencies]
 ir.workspace = true
-parser.workspace = true
 ir-graphviz.workspace = true
+parser = { workspace = true, features = ["std"] }
 
 clap = { version = "4.3.10", features = ["derive"] }
 anyhow = "1.0.71"

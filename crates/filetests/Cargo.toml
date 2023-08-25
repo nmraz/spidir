@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 ir.workspace = true
-parser.workspace = true
+parser = { workspace = true, features = ["std"] }
 fx-utils.workspace = true
 
 cranelift-entity.workspace = true

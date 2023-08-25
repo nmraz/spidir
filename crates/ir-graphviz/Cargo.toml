@@ -12,6 +12,6 @@ fx-utils.workspace = true
 itertools.workspace = true
 
 [dev-dependencies]
-parser.workspace = true
+parser = { workspace = true, features = ["std"] }
 
 expect-test.workspace = true

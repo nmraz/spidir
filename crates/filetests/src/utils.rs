@@ -16,7 +16,7 @@ pub fn find_run_line<'a>(lines: impl Iterator<Item = &'a str>) -> Option<(usize,
 }
 
 pub fn parse_run_line(line: &str) -> Option<&str> {
-    let run_regex = regex!(r#"^run:\s*(.+)"#);
+    let run_regex = regex!(r"^run:\s*(.+)");
     let comment_start = find_comment_start(line)?;
     let comment = line[comment_start + 1..].trim();
     let captures = run_regex.captures(comment)?;

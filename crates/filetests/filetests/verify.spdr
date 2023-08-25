@@ -1,6 +1,0 @@
-# run: verify
-func @test(ptr, i32) {
-    # check: function sjklf:
-    %0:ctrl, %2:i32, %1:ptr = entry
-    return %0
-}

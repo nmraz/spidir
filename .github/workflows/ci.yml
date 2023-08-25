@@ -12,12 +12,30 @@ jobs:
       - run: cargo check --all-features
 
   test:
-    name: Test Suite
+    name: Rust Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --all-features
+
+  filetest:
+    name: File Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo filetest
+
+  test-c-api:
+    name: C API Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-none
+      - run: c-api-tests/run.sh
 
   fmt:
     name: Rustfmt
@@ -49,13 +67,3 @@ jobs:
           components: clippy
           targets: x86_64-unknown-none
       - run: cargo clippy -p c-api --target x86_64-unknown-none -- -D warnings
-
-  test-c-api:
-    name: C API Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-unknown-none
-      - run: c-api-tests/run.sh

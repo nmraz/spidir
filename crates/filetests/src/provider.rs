@@ -1,11 +1,24 @@
 use std::fmt::Write;
 
+use anyhow::{anyhow, bail, Result};
 use fx_utils::FxHashMap;
 use ir::module::Module;
 
 use self::verify::VerifyProvider;
 
 mod verify;
+
+pub trait TestProvider {
+    fn output_for(&self, module: &Module) -> Result<String>;
+    fn update(&self, updater: &mut Updater<'_>, module: &Module, output_str: &str) -> Result<()>;
+}
+
+pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> {
+    match run_command {
+        "verify" => Ok(Box::new(VerifyProvider)),
+        _ => bail!("unknown run command '{run_command}'"),
+    }
+}
 
 pub struct Updater<'a> {
     lines: &'a [&'a str],
@@ -32,16 +45,18 @@ impl<'a> Updater<'a> {
         output
     }
 
-    pub fn advance_to_before(&mut self, mut pred: impl FnMut(&str) -> bool) {
+    pub fn advance_to_before(&mut self, mut pred: impl FnMut(&str) -> bool) -> Result<()> {
         self.insertion_point += self.lines[self.insertion_point..]
             .iter()
             .position(|line| pred(line))
-            .expect("could not find line to advance to");
+            .ok_or_else(|| anyhow!("could not find line to advance to"))?;
+        Ok(())
     }
 
-    pub fn advance_to_after(&mut self, pred: impl FnMut(&str) -> bool) {
-        self.advance_to_before(pred);
+    pub fn advance_to_after(&mut self, pred: impl FnMut(&str) -> bool) -> Result<()> {
+        self.advance_to_before(pred)?;
         self.insertion_point += 1;
+        Ok(())
     }
 
     pub fn directive(&mut self, indent: usize, name: &str, contents: &str) {
@@ -65,17 +80,5 @@ impl<'a> Updater<'a> {
                 writeln!(output, "{new_line}").unwrap();
             }
         }
-    }
-}
-
-pub trait TestProvider {
-    fn output_for(&self, module: &Module) -> String;
-    fn update(&self, updater: &mut Updater<'_>, module: &Module, output_str: &str);
-}
-
-pub fn select_test_provider(run_command: &str) -> Box<dyn TestProvider> {
-    match run_command {
-        "verify" => Box::new(VerifyProvider),
-        _ => panic!("unknown run command '{run_command}'"),
     }
 }

@@ -1,5 +1,6 @@
 use std::{fmt::Write, sync::OnceLock};
 
+use anyhow::{bail, Result};
 use cranelift_entity::SecondaryMap;
 use ir::{
     module::Module,
@@ -13,9 +14,9 @@ use super::{TestProvider, Updater};
 
 pub struct VerifyProvider;
 impl TestProvider for VerifyProvider {
-    fn output_for(&self, module: &Module) -> String {
+    fn output_for(&self, module: &Module) -> Result<String> {
         let Err(errors) = verify_module(module) else {
-            return String::new();
+            bail!("module contained no verifier errors");
         };
 
         let mut global_errors = Vec::new();
@@ -56,10 +57,10 @@ impl TestProvider for VerifyProvider {
             writeln!(output).unwrap();
         }
 
-        output
+        Ok(output)
     }
 
-    fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) {
+    fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) -> Result<()> {
         updater.directive(0, "regex", r"val=%\d+");
         updater.blank_line();
         updater.directive(0, "check", "global:");
@@ -84,7 +85,7 @@ impl TestProvider for VerifyProvider {
                 add_line_run(updater, in_func, &mut output_run);
 
                 let name = &new_func[1];
-                updater.advance_to_after(|line| line.contains(&format!("func @{name}(")));
+                updater.advance_to_after(|line| line.contains(&format!("func @{name}(")))?;
                 updater.directive(4, "check", &format!("function `{name}`:"));
                 in_func = true;
             } else {
@@ -94,6 +95,8 @@ impl TestProvider for VerifyProvider {
 
         // Add in the line run for the last function.
         add_line_run(updater, in_func, &mut output_run);
+
+        Ok(())
     }
 }
 

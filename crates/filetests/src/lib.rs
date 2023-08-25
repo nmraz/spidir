@@ -1,6 +1,8 @@
 use core::iter;
 
-use filecheck::{Checker, CheckerBuilder};
+use anyhow::{anyhow, bail, Context, Ok, Result};
+use filecheck::{Checker, CheckerBuilder, NO_VARIABLES};
+use ir::module::Module;
 use parser::parse_module;
 
 use provider::{select_test_provider, TestProvider};
@@ -15,43 +17,104 @@ use crate::{
 mod utils;
 mod provider;
 
-pub fn select_test_provider_from_input(input: &str) -> Box<dyn TestProvider> {
-    let (_, run_command) = find_run_line(input.lines()).expect("no run line in test file");
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UpdateMode {
+    Never,
+    IfFailed,
+    Always,
+}
+
+#[derive(Debug, Clone)]
+pub enum TestOutcome {
+    Ok,
+    Update(String),
+}
+
+pub fn select_test_provider_from_input(input: &str) -> Result<Box<dyn TestProvider>> {
+    let (_, run_command) =
+        find_run_line(input.lines()).ok_or_else(|| anyhow!("no run line in test file"))?;
     select_test_provider(run_command)
 }
 
-pub fn run_test(provider: &dyn TestProvider, input: &str, update_if_failed: bool) {
-    let module = parse_module(input).expect("failed to parse module");
-    let output = provider.output_for(&module);
-    let checker = build_checker(input);
-    let (ok, explanation) = checker
-        .explain(&output, filecheck::NO_VARIABLES)
-        .expect("bad filecheck directive");
-    if !ok {
-        if update_if_failed {
-            let lines = get_non_directive_lines(input);
-            let mut updater = Updater::new(&lines);
-            updater.advance_to_after(|line| parse_run_line(line).is_some());
-            provider.update(&mut updater, &module, &output);
-            eprint!("{}", updater.output());
-        } else {
-            eprintln!("{}", explanation);
-            panic!("checks failed");
+pub fn run_test(
+    provider: &dyn TestProvider,
+    input: &str,
+    update_mode: UpdateMode,
+) -> Result<TestOutcome> {
+    let module = parse_module(input).context("failed to parse module")?;
+    let output = provider.output_for(&module)?;
+
+    match update_mode {
+        UpdateMode::Never => {
+            run_test_checks(input, &output, true)?;
+            Ok(TestOutcome::Ok)
         }
+        UpdateMode::IfFailed => {
+            if run_test_checks(input, &output, false).is_err() {
+                return Ok(TestOutcome::Update(compute_update(
+                    provider, input, &module, &output,
+                )?));
+            }
+            Ok(TestOutcome::Ok)
+        }
+        UpdateMode::Always => Ok(TestOutcome::Update(compute_update(
+            provider, input, &module, &output,
+        )?)),
     }
 }
 
-fn build_checker(input: &str) -> Checker {
+fn run_test_checks(input: &str, output: &str, explain: bool) -> Result<()> {
+    let checker = build_checker(input)?;
+    let ok = checker
+        .check(output, NO_VARIABLES)
+        .context("filecheck failed")?;
+
+    if !ok {
+        if explain {
+            let (_, explanation) = checker
+                .explain(output, NO_VARIABLES)
+                .context("filecheck explain failed")?;
+            bail!("filecheck failed:\n{explanation}");
+        } else {
+            bail!("filecheck failed");
+        }
+    }
+
+    Ok(())
+}
+
+fn compute_update(
+    provider: &dyn TestProvider,
+    input: &str,
+    module: &Module,
+    output: &str,
+) -> Result<String> {
+    let lines = get_non_directive_lines(input);
+    let mut updater = Updater::new(&lines);
+    updater
+        .advance_to_after(|line| parse_run_line(line).is_some())
+        .context("failed to find run line")?;
+    provider
+        .update(&mut updater, module, output)
+        .context("failed to update file directives")?;
+    Ok(updater.output())
+}
+
+fn build_checker(input: &str) -> Result<Checker> {
     let mut builder = CheckerBuilder::new();
-    for line in input.lines() {
+    for (i, line) in input.lines().enumerate() {
         if let Some(comment_start) = find_comment_start(line) {
             let comment = line[comment_start + 1..].trim();
-            builder.directive(comment).expect("invalid directive");
+            builder
+                .directive(comment)
+                .with_context(|| format!("invalid filecheck directive on line {i}"))?;
         }
     }
     let checker = builder.finish();
-    assert!(!checker.is_empty(), "no filecheck directives in input file");
-    checker
+    if checker.is_empty() {
+        bail!("no filecheck directives found in input file");
+    }
+    Ok(checker)
 }
 
 fn get_non_directive_lines(input: &str) -> Vec<&str> {

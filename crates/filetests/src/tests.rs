@@ -3,8 +3,7 @@ use expect_test::{expect, Expect};
 use super::*;
 
 fn check_lines(input: &str, expected: Expect) {
-    let (_, lines) = build_checker_and_lines(input);
-    let lines = lines.join("\n");
+    let lines = get_non_directive_lines(input).join("\n");
     expected.assert_eq(&lines);
 }
 

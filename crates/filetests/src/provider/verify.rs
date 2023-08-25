@@ -9,12 +9,10 @@ use ir::{
 };
 use regex::Regex;
 
-use crate::utils::{find_run_line, insert_lines_after};
+use super::{TestProvider, Updater};
 
-use super::TestProvider;
-
-pub struct VerifyTest;
-impl TestProvider for VerifyTest {
+pub struct VerifyProvider;
+impl TestProvider for VerifyProvider {
     fn output_for(&self, module: &Module) -> String {
         let Err(errors) = verify_module(module) else {
             return String::new();
@@ -61,11 +59,10 @@ impl TestProvider for VerifyTest {
         output
     }
 
-    fn update(&self, _module: &Module, input_lines: &mut Vec<String>, output_str: &str) {
-        let (run_line_pos, _) = find_run_line(input_lines.iter().map(|a| a.as_str())).unwrap();
-
-        let prefix_lines = [r"# regex: val=%\d+", "", "# check: global:"];
-        insert_lines_after(input_lines, run_line_pos, prefix_lines);
+    fn update(&self, _module: &Module, updater: &mut Updater, output_str: &str) {
+        updater.directive(0, "regex", r"val=%\d+");
+        updater.blank_line();
+        updater.directive(0, "check", "global:");
 
         let mut output_lines = output_str.lines();
         assert!(output_lines.next().unwrap() == "global:");
@@ -73,9 +70,8 @@ impl TestProvider for VerifyTest {
         let func_regex = regex!(r#"^function `(.+)`:"#);
         let val_regex = regex!(r"%\d+");
 
-        let mut input_line = run_line_pos + prefix_lines.len();
         let mut in_func = false;
-        let mut output_run: Vec<String> = Vec::new();
+        let mut output_run = Vec::new();
 
         for output_line in output_lines {
             if output_line.is_empty() {
@@ -83,36 +79,30 @@ impl TestProvider for VerifyTest {
             }
 
             if let Some(new_func) = func_regex.captures(output_line) {
-                insert_lines_after(input_lines, input_line, output_run.iter().map(|s| &**s));
-                insert_lines_after(input_lines, input_line + output_run.len(), [""]);
-                output_run.clear();
+                // Add the lines we've gathered up to this point before moving on to the new
+                // function.
+                add_line_run(updater, in_func, &mut output_run);
 
                 let name = &new_func[1];
-                input_line += input_lines[input_line..]
-                    .iter()
-                    .position(|line| line.contains(&format!("func @{name}(")))
-                    .expect("function not found in source");
-
-                insert_lines_after(
-                    input_lines,
-                    input_line,
-                    [&*format!("    # check: function `{name}`:")],
-                );
-                input_line += 1;
+                updater.advance_to_after(|line| line.contains(&format!("func @{name}(")));
+                updater.directive(4, "check", &format!("function `{name}`:"));
                 in_func = true;
             } else {
-                output_run.push(format!(
-                    "{:1$}# nextln: {2}",
-                    "",
-                    if in_func { 4 } else { 0 },
-                    val_regex.replace_all(output_line, "$$val")
-                ));
+                output_run.push(val_regex.replace_all(output_line, "$$val").into_owned());
             }
         }
 
-        insert_lines_after(input_lines, input_line, output_run.iter().map(|s| &**s));
-        insert_lines_after(input_lines, input_line + output_run.len(), [""]);
+        // Add in the line run for the last function.
+        add_line_run(updater, in_func, &mut output_run);
     }
+}
+
+fn add_line_run(updater: &mut Updater<'_>, in_func: bool, output_run: &mut Vec<String>) {
+    let indent = if in_func { 4 } else { 0 };
+    for line in output_run.drain(..) {
+        updater.directive(indent, "nextln", &line);
+    }
+    updater.blank_line();
 }
 
 fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {

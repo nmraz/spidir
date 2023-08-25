@@ -6,7 +6,10 @@ use parser::parse_module;
 use provider::{select_test_provider, TestProvider};
 use utils::find_comment_start;
 
-use crate::utils::find_run_line;
+use crate::{
+    provider::Updater,
+    utils::{find_run_line, parse_run_line},
+};
 
 #[macro_use]
 mod utils;
@@ -27,8 +30,10 @@ pub fn run_test(provider: &dyn TestProvider, input: &str, update_if_failed: bool
     if !ok {
         if update_if_failed {
             let mut lines = get_non_directive_lines(input);
-            provider.update(&module, &mut lines, &output);
-            eprintln!("{}", lines.join("\n"));
+            let mut updater = Updater::new(&mut lines);
+            updater.advance_to_after(|line| parse_run_line(line).is_some());
+            provider.update(&module, &mut updater, &output);
+            eprint!("{}", updater.output());
         } else {
             eprintln!("{}", explanation);
             panic!("checks failed");

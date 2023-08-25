@@ -12,7 +12,7 @@ const UPDATED: &str = "\x1b[34mupdated\x1b[0m";
 const FAILED: &str = "\x1b[31mfailed\x1b[0m";
 
 fn main() -> Result<()> {
-    let case_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("filetests");
+    let case_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("cases");
     let cases = {
         let mut cases = Vec::new();
         walk_dir(&case_dir, &mut cases)?;

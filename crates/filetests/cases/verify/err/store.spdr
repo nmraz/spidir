@@ -1,0 +1,67 @@
+# run: verify-err
+
+func @store_bad_input_count(i32, ptr) {
+    # check: function `store_bad_input_count`:
+    # unordered: `$val:ctrl = store $val, $val`: bad input count, expected 3
+    # unordered: `$val:ctrl = store $val, $val, $val, $val`: bad input count, expected 3
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl = store %0, %1
+    %4:ctrl = store %3, %1, %2, %2
+    return %4
+}
+
+func @store_bad_output_count(i32, ptr) {
+    # check: function `store_bad_output_count`:
+    # unordered: `$val:ctrl, $val:i32 = store $val, $val, $val`: bad output count, expected 1
+    # unordered: `store $val, $val, $val`: bad output count, expected 1
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl, %4:i32 = store %0, %1, %2
+    store %3, %1, %2
+}
+
+func @store_bad_output_kind(i32, ptr) {
+    # check: function `store_bad_output_kind`:
+    # unordered: `$val:i32 = store $val, $val, $val`: bad value kind for output 0, expected one of `ctrl`, got `i32`
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:i32 = store %0, %1, %2
+}
+
+func @store_bad_input_kinds(i32, ptr) {
+    # check: function `store_bad_input_kinds`:
+    # unordered: `$val:ctrl = store $val, $val, $val`: bad value kind for input 2, expected one of `ptr`, got `i32`
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl = store %0, %2, %1
+    return %3
+}
+
+func @store8_i32(i32, ptr) {
+    # TODO: once sized stores are a thing
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl = store %0, %1, %2
+    return %3
+}
+
+func @store1_f64(f64, ptr) {
+    # TODO: once sized stores are a thing
+    %0:ctrl, %1:f64, %2:ptr = entry
+    %3:ctrl = store %0, %1, %2
+    return %3
+}
+
+func @store2_f64(f64, ptr) {
+    # TODO: once sized stores are a thing
+    %0:ctrl, %1:f64, %2:ptr = entry
+    %3:ctrl = store %0, %1, %2
+    return %3
+}
+
+func @store4_f64(f64, ptr) {
+    # TODO: once sized stores are a thing
+    %0:ctrl, %1:f64, %2:ptr = entry
+    %3:ctrl = store %0, %1, %2
+    return %3
+}

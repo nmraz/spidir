@@ -106,7 +106,7 @@ impl TestProvider for VerifyErrProvider {
                 add_line_run(updater, in_func, &mut output_run);
 
                 let name = &new_func[1];
-                updater.advance_to_after(|line| line.contains(&format!("func @{name}(")))?;
+                updater.advance_to_after(|line| line.contains(&format!("func @{name}")))?;
                 updater.directive(4, "check", &format!("function `{name}`:"));
                 in_func = true;
             } else {

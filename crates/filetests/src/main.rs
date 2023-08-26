@@ -2,6 +2,7 @@ use std::{
     env, fs,
     path::{Path, PathBuf},
     process,
+    time::Instant,
 };
 
 use anyhow::{Context, Result};
@@ -70,6 +71,8 @@ fn main() -> Result<()> {
     let mut updated = 0;
 
     eprintln!("\nrunning {} tests", cases.len());
+
+    let start_time = Instant::now();
     for case_path in &cases {
         let case_name = case_path.strip_prefix(&case_dir)?;
         eprint!("test {} ... ", case_name.display());
@@ -88,6 +91,7 @@ fn main() -> Result<()> {
             }
         }
     }
+    let test_duration = start_time.elapsed();
 
     eprintln!();
 
@@ -101,7 +105,10 @@ fn main() -> Result<()> {
     }
 
     let status = if failed > 0 { FAILED } else { OK };
-    eprintln!("test result: {status}. {passed} passed; {failed} failed; {updated} updated; {filtered} filtered out\n");
+
+    let duration_secs = test_duration.as_secs();
+    let duration_centis = test_duration.subsec_millis() / 10;
+    eprintln!("test result: {status}. {passed} passed; {failed} failed; {updated} updated; {filtered} filtered out; finished in {duration_secs}.{duration_centis:02}s\n");
 
     if failed > 0 {
         process::exit(1);

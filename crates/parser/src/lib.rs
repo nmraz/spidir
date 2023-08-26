@@ -4,7 +4,11 @@ extern crate alloc;
 
 use core::str::FromStr;
 
-use alloc::{borrow::ToOwned, boxed::Box, vec::Vec};
+use alloc::{
+    borrow::{Cow, ToOwned},
+    boxed::Box,
+    vec::Vec,
+};
 
 use fx_utils::FxHashMap;
 use ir::{
@@ -41,7 +45,7 @@ struct ParsedFunction<'a> {
     graph_pair: Pair<'a, Rule>,
 }
 
-type FunctionNames<'a> = FxHashMap<&'a str, FunctionRef>;
+type FunctionNames<'a> = FxHashMap<Cow<'a, str>, FunctionRef>;
 
 struct PendingFunction<'a> {
     id: Function,
@@ -66,7 +70,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                         .expect("external function should contain signature"),
                 );
                 let name = name_from_span(&name_span);
-                if function_names.contains_key(name) {
+                if function_names.contains_key(&name) {
                     return Err(Box::new(Error::new_from_span(
                         ErrorVariant::CustomError {
                             message: "function redefined".to_owned(),
@@ -76,7 +80,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 }
 
                 let function = module.extern_functions.push(ExternFunctionData {
-                    name: name.to_owned(),
+                    name: name.clone().into_owned(),
                     sig,
                 });
                 function_names.insert(name, FunctionRef::External(function));
@@ -84,7 +88,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
             Rule::func => {
                 let parsed = extract_function(item)?;
                 let name = name_from_span(&parsed.name_span);
-                if function_names.contains_key(name) {
+                if function_names.contains_key(&name) {
                     return Err(Box::new(Error::new_from_span(
                         ErrorVariant::CustomError {
                             message: "function redefined".to_owned(),
@@ -94,7 +98,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 }
 
                 let function = module.functions.push(FunctionData {
-                    name: name.to_owned(),
+                    name: name.clone().into_owned(),
                     sig: parsed.sig,
                     graph: ValGraph::new(),
                     // This is cheating, but we promise not to inspect the graph until we fill it in later.
@@ -140,7 +144,7 @@ fn extract_graph(
     function_names: &FunctionNames<'_>,
     graph: &mut ValGraph,
 ) -> Result<Node, Box<Error<Rule>>> {
-    let mut value_map = FxHashMap::<&str, DepValue>::default();
+    let mut value_map = FxHashMap::<Cow<'_, str>, DepValue>::default();
 
     let graph_start = graph_pair.as_span().start_pos();
     let node_listings = graph_pair
@@ -287,7 +291,7 @@ fn extract_special_node_kind(
         Rule::call_nodekind => {
             let name_span = inner.next().unwrap().as_span();
             let name = name_from_span(&name_span);
-            let funcref = *function_names.get(name).ok_or_else(|| {
+            let funcref = *function_names.get(&name).ok_or_else(|| {
                 Box::new(Error::new_from_span(
                     ErrorVariant::CustomError {
                         message: "undefined function".to_owned(),
@@ -365,8 +369,14 @@ fn extract_name_signature(sig_pair: Pair<'_, Rule>) -> (Span<'_>, Signature) {
     )
 }
 
-fn name_from_span<'a>(span: &Span<'a>) -> &'a str {
-    &span.as_str()[1..]
+fn name_from_span<'a>(span: &Span<'a>) -> Cow<'a, str> {
+    let ident = &span.as_str()[1..];
+    if ident.starts_with('"') {
+        let quoted = &ident[1..ident.len() - 1];
+        quoted.replace("\\\"", "\"").into()
+    } else {
+        ident.into()
+    }
 }
 
 fn extract_value_kind(kind_pair: Pair<'_, Rule>) -> DepValueKind {
@@ -486,6 +496,52 @@ mod tests {
                 func @func3:ptr(i64, ptr, f64) {
                     %0:ctrl, %1:i64, %2:ptr, %3:f64 = entry
                     return %0, %2
+                }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn parse_quoted_ident() {
+        let module = parse_module(
+            r#"
+            extfunc @"System.Test+Lol System.Test::Do(Lol[])"()
+            extfunc @"embedded\backslash"()
+            extfunc @"embedded\"quote"()
+            "#,
+        )
+        .unwrap();
+
+        check_module(
+            &module,
+            expect![[r#"
+                extfunc @"System.Test+Lol System.Test::Do(Lol[])"()
+                extfunc @"embedded\backslash"()
+                extfunc @"embedded\"quote"()
+
+            "#]],
+        );
+    }
+
+    #[test]
+    fn parse_quoted_val_name() {
+        let module = parse_module(
+            r#"
+            func @func() {
+                %"control value":ctrl = entry
+                return %"control value"
+            }
+            "#,
+        )
+        .unwrap();
+
+        check_module(
+            &module,
+            expect![[r#"
+
+                func @func() {
+                    %0:ctrl = entry
+                    return %0
                 }
             "#]],
         );
@@ -959,6 +1015,21 @@ mod tests {
                   |                                 ^-------------------------^
                   |
                   = invalid integer literal"#]],
+        );
+    }
+
+    #[test]
+    fn parse_quoted_name_unescaped_quote() {
+        check_parse_error(
+            r#"
+            extfunc @"embedded"quote"()"#,
+            expect![[r#"
+                 --> 2:21
+                  |
+                2 |             extfunc @"embedded"quote"()
+                  |                     ^---
+                  |
+                  = expected signature"#]],
         );
     }
 

@@ -1,5 +1,7 @@
 use core::fmt;
 
+use alloc::{borrow::Cow, format};
+
 use crate::{
     module::{ExternFunction, ExternFunctionData, Function, FunctionData, Module, Signature},
     node::{FunctionRef, NodeKind},
@@ -104,7 +106,7 @@ pub fn write_annotated_function<W: fmt::Write + ?Sized>(
     module: &Module,
     func: &FunctionData,
 ) -> fmt::Result {
-    write!(w, "func @{}", func.name)?;
+    write!(w, "func @{}", quote_ident(&func.name))?;
     write_signature(&mut w, &func.sig)?;
     w.write_str(" {\n")?;
     write_annotated_graph(w, annotator, module, &func.graph, func.entry, 4)?;
@@ -241,9 +243,17 @@ pub fn write_node_kind(
 }
 
 pub fn write_extern_function(w: &mut dyn fmt::Write, func: &ExternFunctionData) -> fmt::Result {
-    write!(w, "extfunc @{}", func.name)?;
+    write!(w, "extfunc @{}", quote_ident(&func.name))?;
     write_signature(w, &func.sig)?;
     writeln!(w)
+}
+
+pub fn quote_ident(ident: &str) -> Cow<'_, str> {
+    if ident.contains(|c| !is_unquoted_ident_char(c)) {
+        format!(r#""{}""#, ident.replace('\"', "\\\"")).into()
+    } else {
+        ident.into()
+    }
 }
 
 fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
@@ -266,7 +276,12 @@ fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
 }
 
 fn write_func_ref(w: &mut dyn fmt::Write, module: &Module, func: FunctionRef) -> fmt::Result {
-    write!(w, "@{}", module.resolve_funcref(func).name)
+    write!(w, "@{}", quote_ident(module.resolve_funcref(func).name))
+}
+
+fn is_unquoted_ident_char(c: char) -> bool {
+    // Note: keep this in sync with the unquoted identifier rules in the parser
+    c == '_' || c == '-' || c.is_ascii_alphanumeric()
 }
 
 #[cfg(test)]
@@ -600,6 +615,26 @@ mod tests {
                 extfunc @func1:i32(i64)
                 extfunc @func2(i64, ptr)
                 extfunc @func3()
+
+            "#]],
+        );
+    }
+
+    #[test]
+    fn write_quoted_ident_module() {
+        let mut module = Module::new();
+        module.extern_functions.push(ExternFunctionData {
+            name: "System.Test+Lol System.Test::Do(Lol[])".to_owned(),
+            sig: Signature {
+                ret_type: None,
+                param_types: vec![],
+            },
+        });
+
+        check_write_module(
+            &module,
+            expect![[r#"
+                extfunc @"System.Test+Lol System.Test::Do(Lol[])"()
 
             "#]],
         );

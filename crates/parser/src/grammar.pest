@@ -2,13 +2,19 @@ WHITESPACE = _{ " " | "\t" }
 
 line_end = _{ ("#" ~ (!"\n" ~ ANY)* ~ "\n") | "\n" }
 
-ident   = @{ ("_" | ASCII_ALPHA) ~ ("_" | ASCII_ALPHANUMERIC)* }
+quoted_ident_letter = @{ "\\\"" | (!"\"" ~ ANY) }
+quoted_ident        = @{ "\"" ~ quoted_ident_letter+ ~ "\"" }
+
+// Note: keep the unquoted variation in sync with `is_unquoted_ident_char` in
+// the writer.
+ident = @{ ("_" | "-" | ASCII_ALPHANUMERIC)+ | quoted_ident }
+
 integer = @{ "-"? ~ ASCII_DIGIT+ }
 float   = @{
     "-"? ~ ((ASCII_DIGIT+ ~ ("." ~ (ASCII_DIGIT*))?) | ("." ~ ASCII_DIGIT+))
 }
 
-valname  = @{ "%" ~ ("_" | ASCII_ALPHANUMERIC)+ }
+valname  = @{ "%" ~ ident }
 funcname = @{ "@" ~ ident }
 
 type = { "i32" | "i64" | "f64" | "ptr" }

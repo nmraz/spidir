@@ -13,8 +13,10 @@ fx-utils.workspace = true
 anyhow.workspace = true
 clap.workspace = true
 cranelift-entity.workspace = true
-expect-test.workspace = true
 
 filecheck = "0.5.0"
 regex = "1.9.3"
 glob = "0.3.1"
+
+[dev-dependencies]
+expect-test.workspace = true

@@ -2,7 +2,8 @@ use core::iter;
 use std::{fs, path::Path};
 
 use anyhow::{anyhow, bail, Context, Ok, Result};
-use filecheck::{Checker, CheckerBuilder, NO_VARIABLES};
+use filecheck::{Checker, CheckerBuilder, Value, VariableMap};
+use fx_utils::FxHashMap;
 use ir::module::Module;
 use parser::parse_module;
 
@@ -59,11 +60,11 @@ pub fn run_test(
 
     match update_mode {
         UpdateMode::Never => {
-            run_test_checks(input, &output, true)?;
+            run_test_checks(provider, input, &output, true)?;
             Ok(TestOutcome::Ok)
         }
         UpdateMode::IfFailed => {
-            if run_test_checks(input, &output, false).is_err() {
+            if run_test_checks(provider, input, &output, false).is_err() {
                 return Ok(TestOutcome::Update(compute_update(
                     provider, input, &module, &output,
                 )?));
@@ -76,16 +77,28 @@ pub fn run_test(
     }
 }
 
-fn run_test_checks(input: &str, output: &str, explain: bool) -> Result<()> {
+struct HashMapEnv<'a>(FxHashMap<String, Value<'a>>);
+impl<'a> VariableMap for HashMapEnv<'a> {
+    fn lookup(&self, varname: &str) -> Option<Value> {
+        self.0.get(varname).cloned()
+    }
+}
+
+fn run_test_checks(
+    provider: &dyn TestProvider,
+    input: &str,
+    output: &str,
+    explain: bool,
+) -> Result<()> {
     let checker = build_checker(input)?;
-    let ok = checker
-        .check(output, NO_VARIABLES)
-        .context("filecheck failed")?;
+    let env = HashMapEnv(provider.env());
+
+    let ok = checker.check(output, &env).context("filecheck failed")?;
 
     if !ok {
         if explain {
             let (_, explanation) = checker
-                .explain(output, NO_VARIABLES)
+                .explain(output, &env)
                 .context("filecheck explain failed")?;
             bail!("filecheck failed:\n{explanation}");
         } else {

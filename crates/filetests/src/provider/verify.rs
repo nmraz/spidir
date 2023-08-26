@@ -2,6 +2,8 @@ use std::{fmt::Write, sync::OnceLock};
 
 use anyhow::{anyhow, bail, Result};
 use cranelift_entity::SecondaryMap;
+use filecheck::Value;
+use fx_utils::FxHashMap;
 use ir::{
     module::Module,
     valgraph::{Node, ValGraph},
@@ -12,6 +14,8 @@ use itertools::Itertools;
 use regex::Regex;
 
 use super::{TestProvider, Updater};
+
+const VAL_REGEX_STR: &str = r"%\d+";
 
 pub struct VerifyOkProvider;
 impl TestProvider for VerifyOkProvider {
@@ -35,6 +39,12 @@ impl TestProvider for VerifyOkProvider {
 
 pub struct VerifyErrProvider;
 impl TestProvider for VerifyErrProvider {
+    fn env(&self) -> FxHashMap<String, Value<'_>> {
+        [("val".to_owned(), Value::Regex(VAL_REGEX_STR.into()))]
+            .into_iter()
+            .collect()
+    }
+
     fn output_for(&self, module: &Module) -> Result<String> {
         let Err(errors) = verify_module(module) else {
             bail!("module contained no verifier errors");
@@ -82,13 +92,11 @@ impl TestProvider for VerifyErrProvider {
     }
 
     fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) -> Result<()> {
-        updater.directive(0, "regex", r"val=%\d+");
-
         let mut output_lines = output_str.lines();
         assert!(output_lines.next().unwrap() == "global:");
 
         let func_regex = regex!(r#"^function `(.+)`:"#);
-        let val_regex = regex!(r"%\d+");
+        let val_regex = regex!(VAL_REGEX_STR);
 
         let mut in_func = false;
         let mut output_run = Vec::new();

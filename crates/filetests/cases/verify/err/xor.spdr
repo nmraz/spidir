@@ -1,5 +1,4 @@
 # run: verify-err
-# regex: val=%\d+
 
 func @xor_bad_input_count:i32() {
     # check: function `xor_bad_input_count`:

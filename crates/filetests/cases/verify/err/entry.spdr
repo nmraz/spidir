@@ -1,5 +1,4 @@
 # run: verify-err
-# regex: val=%\d+
 
 func @bad_entry_node() {
     # check: function `bad_entry_node`:

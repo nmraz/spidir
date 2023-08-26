@@ -2,7 +2,7 @@ use regex::Regex;
 use std::sync::OnceLock;
 
 macro_rules! regex {
-    ($val:literal) => {{
+    ($val:expr) => {{
         static REGEX: OnceLock<Regex> = OnceLock::new();
         REGEX.get_or_init(|| Regex::new($val).unwrap())
     }};

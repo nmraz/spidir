@@ -1,5 +1,4 @@
 # run: verify-err
-# regex: val=%\d+
 
 func @unused_ctrl() {
     # check: function `unused_ctrl`:

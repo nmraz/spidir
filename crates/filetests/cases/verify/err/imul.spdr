@@ -1,5 +1,4 @@
 # run: verify-err
-# regex: val=%\d+
 
 func @imul_bad_input_count:i32() {
     # check: function `imul_bad_input_count`:

@@ -1,6 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::{anyhow, bail, Result};
+use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::module::Module;
 
@@ -9,6 +10,10 @@ use self::verify::{VerifyErrProvider, VerifyOkProvider};
 mod verify;
 
 pub trait TestProvider {
+    fn env(&self) -> FxHashMap<String, Value<'_>> {
+        FxHashMap::default()
+    }
+
     fn output_for(&self, module: &Module) -> Result<String>;
     fn update(&self, updater: &mut Updater<'_>, module: &Module, output_str: &str) -> Result<()>;
 }

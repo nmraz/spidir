@@ -1,5 +1,4 @@
 # run: verify-err
-# regex: val=%\d+
 
 func @iadd_bad_input_count:i32() {
     # check: function `iadd_bad_input_count`:

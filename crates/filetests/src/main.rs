@@ -47,7 +47,7 @@ struct Cli {
     /// environment variable. If this variable is *not* set, no tests will be updated (as if
     /// `never` had been specified); otherwise, failing tests will be updated, as if `failed` had
     /// been specified.
-    #[arg(long)]
+    #[arg(short, long)]
     update_mode: Option<CliUpdateMode>,
 
     /// One or more glob patterns indicating which tests to run

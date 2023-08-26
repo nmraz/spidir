@@ -9,3 +9,20 @@ func @entry_and_ret() {
     %2:i32 = iconst 5
     return %0, %2
 }
+
+func @weird_sdiv:i32() {
+    # check: function `weird_sdiv`:
+    # unordered: `$val:ctrl = entry`: control output 0 reused
+    # unordered: `$val:ctrl, $val:i32 = sdiv`: bad input count, expected 3
+    # unordered: `$val:ctrl, $val:i32 = sdiv`: control output 0 reused
+    # unordered: `$val:ctrl, $val:i32 = sdiv $val, $val, $val, $val`: bad input count, expected 3
+    # unordered: `$val:ctrl, $val:i32 = sdiv $val, $val, $val, $val`: control output 0 unused
+    # unordered: `$val:ctrl = region $val, $val`: bad output count, expected 2
+    # unordered: `$val:ctrl = region $val, $val`: control output 0 unused
+
+    %0:ctrl = entry
+    %1:ctrl, %2:i32 = sdiv
+    %3:ctrl, %4:i32 = sdiv %2, %1, %1, %1
+    %5:ctrl = region %0, %4
+    return %0, %2
+}

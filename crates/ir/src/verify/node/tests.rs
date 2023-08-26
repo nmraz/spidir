@@ -1,7 +1,6 @@
 use crate::{
     node::{NodeKind, Type},
-    test_utils::{create_entry, create_region, create_return},
-    verify::verify_graph,
+    test_utils::{create_entry, create_region},
 };
 
 use super::*;
@@ -17,92 +16,6 @@ fn check_verify_node_kind(graph: &ValGraph, node: Node, expected_err: GraphVerif
     // Dummy entry node since we usually don't care about it.
     verify_node_kind(graph, &signature, node, node, &mut errors);
     assert_eq!(errors, &[expected_err]);
-}
-
-#[track_caller]
-fn check_verify_graph_ok(
-    graph: &ValGraph,
-    entry: Node,
-    param_types: &[Type],
-    ret_type: Option<Type>,
-) {
-    let signature = Signature {
-        ret_type,
-        param_types: param_types.to_owned(),
-    };
-    verify_graph(graph, &signature, entry).expect("expected a valid graph");
-}
-
-#[test]
-fn verify_graph_ptroff_function_ok() {
-    let mut graph = ValGraph::new();
-    let (entry, control_value, [ptr, offset]) = create_entry(&mut graph, [Type::Ptr, Type::I64]);
-    let ptroff = graph.create_node(
-        NodeKind::PtrOff,
-        [ptr, offset],
-        [DepValueKind::Value(Type::Ptr)],
-    );
-    let ptroff_res = graph.node_outputs(ptroff)[0];
-    create_return(&mut graph, [control_value, ptroff_res]);
-    check_verify_graph_ok(&graph, entry, &[Type::Ptr, Type::I64], Some(Type::Ptr));
-}
-
-#[test]
-fn verify_ptroff_input_kinds() {
-    let mut graph = ValGraph::new();
-    let (_entry, _control_value, [ptr, offset]) = create_entry(&mut graph, [Type::Ptr, Type::I64]);
-
-    let ptroff1 = graph.create_node(
-        NodeKind::PtrOff,
-        [offset, offset],
-        [DepValueKind::Value(Type::Ptr)],
-    );
-    check_verify_node_kind(
-        &graph,
-        ptroff1,
-        GraphVerifierError::BadInputKind {
-            node: ptroff1,
-            input: 0,
-            expected: vec![DepValueKind::Value(Type::Ptr)],
-        },
-    );
-
-    let ptroff2 = graph.create_node(
-        NodeKind::PtrOff,
-        [ptr, ptr],
-        [DepValueKind::Value(Type::Ptr)],
-    );
-    check_verify_node_kind(
-        &graph,
-        ptroff2,
-        GraphVerifierError::BadInputKind {
-            node: ptroff2,
-            input: 1,
-            expected: vec![
-                DepValueKind::Value(Type::I32),
-                DepValueKind::Value(Type::I64),
-            ],
-        },
-    );
-}
-
-#[test]
-fn verify_ptroff_output_kinds() {
-    let mut graph = ValGraph::new();
-    let (_entry, _control_value, [ptr, offset]) = create_entry(&mut graph, [Type::Ptr, Type::I64]);
-    let ptroff = graph.create_node(
-        NodeKind::PtrOff,
-        [ptr, offset],
-        [DepValueKind::Value(Type::F64)],
-    );
-    check_verify_node_kind(
-        &graph,
-        ptroff,
-        GraphVerifierError::BadOutputKind {
-            value: graph.node_outputs(ptroff)[0],
-            expected: vec![DepValueKind::Value(Type::Ptr)],
-        },
-    );
 }
 
 #[test]

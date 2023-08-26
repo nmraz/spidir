@@ -1,0 +1,9 @@
+# run: verify-ok
+
+# check: $()
+
+func @offset_ptr:ptr(ptr, i64) {
+    %0:ctrl, %1:ptr, %2:i64 = entry
+    %3:ptr = ptroff %1, %2
+    return %0, %3
+}

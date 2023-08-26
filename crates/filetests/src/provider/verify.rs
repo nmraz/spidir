@@ -1,6 +1,6 @@
 use std::{fmt::Write, sync::OnceLock};
 
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use cranelift_entity::SecondaryMap;
 use ir::{
     module::Module,
@@ -8,12 +8,33 @@ use ir::{
     verify::{verify_module, ModuleVerifierError},
     write::write_node,
 };
+use itertools::Itertools;
 use regex::Regex;
 
 use super::{TestProvider, Updater};
 
-pub struct VerifyProvider;
-impl TestProvider for VerifyProvider {
+pub struct VerifyOkProvider;
+impl TestProvider for VerifyOkProvider {
+    fn output_for(&self, module: &Module) -> Result<String> {
+        verify_module(module).map_err(|errs| {
+            let errs = errs
+                .iter()
+                .format_with("\n", |err, f| f(&err.display_with_context(module)));
+            anyhow!("verification failed:\n{errs}")
+        })?;
+        Ok("".to_owned())
+    }
+
+    fn update(&self, updater: &mut Updater<'_>, _module: &Module, _output_str: &str) -> Result<()> {
+        updater.blank_line();
+        updater.directive(0, "check", "");
+        updater.blank_line();
+        Ok(())
+    }
+}
+
+pub struct VerifyErrProvider;
+impl TestProvider for VerifyErrProvider {
     fn output_for(&self, module: &Module) -> Result<String> {
         let Err(errors) = verify_module(module) else {
             bail!("module contained no verifier errors");

@@ -272,6 +272,7 @@ dependencies = [
  "fx-utils",
  "glob",
  "ir",
+ "itertools",
  "parser",
  "regex",
 ]

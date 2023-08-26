@@ -4,7 +4,7 @@ use anyhow::{anyhow, bail, Result};
 use fx_utils::FxHashMap;
 use ir::module::Module;
 
-use self::verify::VerifyProvider;
+use self::verify::{VerifyErrProvider, VerifyOkProvider};
 
 mod verify;
 
@@ -15,7 +15,8 @@ pub trait TestProvider {
 
 pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> {
     match run_command {
-        "verify" => Ok(Box::new(VerifyProvider)),
+        "verify-err" => Ok(Box::new(VerifyErrProvider)),
+        "verify-ok" => Ok(Box::new(VerifyOkProvider)),
         _ => bail!("unknown run command '{run_command}'"),
     }
 }

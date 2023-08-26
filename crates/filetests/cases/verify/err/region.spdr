@@ -1,0 +1,29 @@
+# run: verify-err
+
+func @region_bad_output_count() {
+    # check: function `region_bad_output_count`:
+    # unordered: `$val:ctrl = region $val`: bad output count, expected 2
+
+    %0:ctrl = entry
+    %1:ctrl = region %0
+    return %1
+}
+
+func @region_bad_output_kinds() {
+    # check: function `region_bad_output_kinds`:
+    # unordered: `$val:phisel, $val:ctrl = region $val`: bad value kind for output 0, expected one of `ctrl`, got `phisel`
+    # unordered: `$val:phisel, $val:ctrl = region $val`: bad value kind for output 1, expected one of `phisel`, got `ctrl`
+
+    %0:ctrl = entry
+    %1:phisel, %2:ctrl = region %0
+    return %2
+}
+
+func @region_bad_input_kind(i32) {
+    # check: function `region_bad_input_kind`:
+    # unordered: `$val:ctrl, $val:phisel = region $val, $val`: bad value kind for input 1, expected one of `ctrl`, got `i32`
+
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:phisel = region %0, %1
+    return %2
+}

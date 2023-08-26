@@ -623,6 +623,15 @@ mod tests {
     #[test]
     fn write_quoted_ident_module() {
         let mut module = Module::new();
+
+        module.functions.push(FunctionData::new(
+            "a function".to_owned(),
+            Signature {
+                ret_type: None,
+                param_types: vec![],
+            },
+        ));
+
         module.extern_functions.push(ExternFunctionData {
             name: "System.Test+Lol System.Test::Do(Lol[])".to_owned(),
             sig: Signature {
@@ -636,6 +645,9 @@ mod tests {
             expect![[r#"
                 extfunc @"System.Test+Lol System.Test::Do(Lol[])"()
 
+                func @"a function"() {
+                    %0:ctrl = entry
+                }
             "#]],
         );
     }

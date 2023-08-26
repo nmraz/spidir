@@ -508,6 +508,11 @@ mod tests {
             extfunc @"System.Test+Lol System.Test::Do(Lol[])"()
             extfunc @"embedded\backslash"()
             extfunc @"embedded\"quote"()
+
+            func @"a function"() {
+                %0:ctrl = entry
+                return %0
+            }
             "#,
         )
         .unwrap();
@@ -519,6 +524,10 @@ mod tests {
                 extfunc @"embedded\backslash"()
                 extfunc @"embedded\"quote"()
 
+                func @"a function"() {
+                    %0:ctrl = entry
+                    return %0
+                }
             "#]],
         );
     }

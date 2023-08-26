@@ -44,7 +44,7 @@ pub trait AnnotateGraph<W: fmt::Write + ?Sized> {
         node: Node,
         input: usize,
     ) -> fmt::Result {
-        write_value_use(w, graph.node_inputs(node)[input])
+        write!(w, "{}", graph.node_inputs(node)[input])
     }
 }
 
@@ -198,11 +198,6 @@ pub fn write_value_def(
     output: DepValue,
 ) -> fmt::Result {
     write!(w, "{output}:{}", graph.value_kind(output))
-}
-
-#[inline]
-pub fn write_value_use(w: &mut (impl fmt::Write + ?Sized), input: DepValue) -> fmt::Result {
-    write!(w, "%{}", input.as_u32())
 }
 
 pub fn write_node_kind(

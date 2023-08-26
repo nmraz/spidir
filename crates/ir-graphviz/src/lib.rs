@@ -9,6 +9,7 @@ use itertools::Itertools;
 
 use ir::{
     module::Module,
+    node::NodeKind,
     valgraph::{Node, ValGraph},
     valwalk::LiveNodeInfo,
     write::write_node_kind,
@@ -57,7 +58,11 @@ pub fn write_graphviz(
             write!(w, "}} | ")?;
         }
 
-        write_node_kind(w, module, graph.node_kind(node))?;
+        write!(
+            w,
+            "{}",
+            stringify_dot_node_kind(module, graph.node_kind(node))
+        )?;
 
         if !outputs.is_empty() {
             write!(w, " | {{")?;
@@ -120,6 +125,12 @@ fn format_dot_attributes(attrs: &DotAttributes) -> impl fmt::Display + '_ {
             escape_dot_attr_value(value)
         ))
     })
+}
+
+fn stringify_dot_node_kind(module: &Module, node_kind: &NodeKind) -> String {
+    let mut s = String::new();
+    write_node_kind(&mut s, module, node_kind).unwrap();
+    escape_dot_attr_value(&s)
 }
 
 fn escape_dot_attr_value(value: &str) -> String {

@@ -1,0 +1,75 @@
+# run: verify-ok
+
+# check: $()
+
+func @shl_i32_i32:i32(i32, i32) {
+    %0:ctrl, %1:i32, %2:i32 = entry
+    %3:i32 = shl %1, %2
+    return %0, %3
+}
+
+func @shl_i64_i64:i64(i64, i64) {
+    %0:ctrl, %1:i64, %2:i64 = entry
+    %3:i64 = shl %1, %2
+    return %0, %3
+}
+
+func @shl_i32_i64:i32(i32, i64) {
+    %0:ctrl, %1:i32, %2:i64 = entry
+    %3:i32 = shl %1, %2
+    return %0, %3
+}
+
+func @shl_i64_i32:i64(i64, i32) {
+    %0:ctrl, %1:i64, %2:i32 = entry
+    %3:i64 = shl %1, %2
+    return %0, %3
+}
+
+func @lshr_i32_i32:i32(i32, i32) {
+    %0:ctrl, %1:i32, %2:i32 = entry
+    %3:i32 = lshr %1, %2
+    return %0, %3
+}
+
+func @lshr_i64_i64:i64(i64, i64) {
+    %0:ctrl, %1:i64, %2:i64 = entry
+    %3:i64 = lshr %1, %2
+    return %0, %3
+}
+
+func @lshr_i32_i64:i32(i32, i64) {
+    %0:ctrl, %1:i32, %2:i64 = entry
+    %3:i32 = lshr %1, %2
+    return %0, %3
+}
+
+func @lshr_i64_i32:i64(i64, i32) {
+    %0:ctrl, %1:i64, %2:i32 = entry
+    %3:i64 = lshr %1, %2
+    return %0, %3
+}
+
+func @ashr_i32_i32:i32(i32, i32) {
+    %0:ctrl, %1:i32, %2:i32 = entry
+    %3:i32 = ashr %1, %2
+    return %0, %3
+}
+
+func @ashr_i64_i64:i64(i64, i64) {
+    %0:ctrl, %1:i64, %2:i64 = entry
+    %3:i64 = ashr %1, %2
+    return %0, %3
+}
+
+func @ashr_i32_i64:i32(i32, i64) {
+    %0:ctrl, %1:i32, %2:i64 = entry
+    %3:i32 = ashr %1, %2
+    return %0, %3
+}
+
+func @ashr_i64_i32:i64(i64, i32) {
+    %0:ctrl, %1:i64, %2:i32 = entry
+    %3:i64 = ashr %1, %2
+    return %0, %3
+}

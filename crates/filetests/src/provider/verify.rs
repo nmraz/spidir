@@ -133,10 +133,14 @@ impl TestProvider for VerifyErrProvider {
 
 fn add_line_run(updater: &mut Updater<'_>, in_func: bool, output_run: &mut Vec<String>) {
     let indent = if in_func { 4 } else { 0 };
+    let nonempty = !output_run.is_empty();
+
     for line in output_run.drain(..) {
         updater.directive(indent, "unordered", &line);
     }
-    updater.blank_line();
+    if nonempty {
+        updater.blank_line();
+    }
 }
 
 fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {

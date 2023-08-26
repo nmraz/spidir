@@ -96,7 +96,7 @@ fn main() -> Result<()> {
     if failed > 0 {
         eprintln!("failures:\n");
         for (name, err) in &failures {
-            eprintln!("\x1b[1m---- {} ----\x1b[0m\n{err}\n", name.display());
+            eprintln!("\x1b[1m---- {} ----\x1b[0m\n{err:?}\n", name.display());
         }
     }
 

@@ -120,7 +120,7 @@ fn build_checker(input: &str) -> Result<Checker> {
             let comment = line[comment_start + 1..].trim();
             builder
                 .directive(comment)
-                .with_context(|| format!("invalid filecheck directive on line {i}"))?;
+                .with_context(|| format!("invalid filecheck directive on line {}", i + 1))?;
         }
     }
     let checker = builder.finish();

@@ -1,0 +1,14 @@
+# run: verify-err
+# regex: val=%\d+
+
+# check: global:
+
+func @entry_and_ret() {
+    # check: function `entry_and_ret`:
+    # unordered: `$val:ctrl, $val:phisel = region`: bad entry node
+    # unordered: `return $val, $val`: bad input count, expected 1
+
+    %0:ctrl, %1:phisel = region
+    %2:i32 = iconst 5
+    return %0, %2
+}

@@ -1,7 +1,7 @@
 use crate::{
     module::{ExternFunctionData, FunctionData},
     node::Type,
-    test_utils::{create_const32, create_entry, create_loop_graph, create_region, create_return},
+    test_utils::{create_const32, create_entry, create_region, create_return},
 };
 
 use super::*;
@@ -25,59 +25,6 @@ fn check_verify_graph_errors(
 #[track_caller]
 fn check_verify_module_errors(module: &Module, expected_errors: &[ModuleVerifierError]) {
     assert_eq!(verify_module(module).unwrap_err(), expected_errors);
-}
-
-#[test]
-fn verify_graph_loop_function() {
-    let (graph, entry) = create_loop_graph();
-    let signature = Signature {
-        ret_type: Some(Type::I32),
-        param_types: vec![Type::I32],
-    };
-    verify_graph(&graph, &signature, entry).expect("expected a valid graph");
-}
-
-#[test]
-fn verify_graph_unused_control() {
-    let mut graph = ValGraph::new();
-    let (entry, entry_control, []) = create_entry(&mut graph, []);
-
-    check_verify_graph_errors(
-        &graph,
-        entry,
-        &[GraphVerifierError::UnusedControl(entry_control)],
-    );
-}
-
-#[test]
-fn verify_graph_unused_control_dead_region() {
-    let mut graph = ValGraph::new();
-    let (entry, entry_control, []) = create_entry(&mut graph, []);
-    create_return(&mut graph, [entry_control]);
-    create_region(&mut graph, []);
-    let signature = Signature {
-        ret_type: None,
-        param_types: vec![],
-    };
-    verify_graph(&graph, &signature, entry).expect("expected a valid graph");
-}
-
-#[test]
-fn verify_graph_reused_control() {
-    let mut graph = ValGraph::new();
-    let (entry, entry_control, []) = create_entry(&mut graph, []);
-
-    let region1 = create_region(&mut graph, [entry_control]);
-    let region2 = create_region(&mut graph, [entry_control]);
-
-    create_return(&mut graph, [region1]);
-    create_return(&mut graph, [region2]);
-
-    check_verify_graph_errors(
-        &graph,
-        entry,
-        &[GraphVerifierError::ReusedControl(entry_control)],
-    );
 }
 
 #[test]
@@ -130,23 +77,6 @@ fn verify_graph_misplaced_entry() {
         entry1,
         &[GraphVerifierError::MisplacedEntry(entry2)],
     );
-}
-
-#[test]
-fn verify_module_loop_function() {
-    let mut module = Module::new();
-    let (graph, entry) = create_loop_graph();
-    let sig = Signature {
-        ret_type: Some(Type::I32),
-        param_types: vec![Type::I32],
-    };
-    module.functions.push(FunctionData {
-        name: "sum_to_n".to_owned(),
-        sig,
-        graph,
-        entry,
-    });
-    verify_module(&module).expect("expected a valid module");
 }
 
 #[test]

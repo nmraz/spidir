@@ -1,0 +1,9 @@
+# run: verify-ok
+
+# check: $()
+
+func @unused_ctrl_dead_region() {
+    %0:ctrl = entry
+    %1:ctrl = region
+    return %0
+}

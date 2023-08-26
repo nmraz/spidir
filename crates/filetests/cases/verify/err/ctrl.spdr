@@ -1,0 +1,22 @@
+# run: verify-err
+# regex: val=%\d+
+
+# check: global:
+
+func @unused_ctrl() {
+    # check: function `unused_ctrl`:
+    # unordered: `$val:ctrl = entry`: control output 0 unused
+
+    %0:ctrl = entry
+}
+
+func @reused_ctrl() {
+    # check: function `reused_ctrl`:
+    # unordered: `$val:ctrl = entry`: control output 0 reused
+
+    %0:ctrl = entry
+    %1:ctrl, %2:phisel = region %0
+    return %1
+    %3:ctrl, %4:phisel = region %0
+    return %3
+}

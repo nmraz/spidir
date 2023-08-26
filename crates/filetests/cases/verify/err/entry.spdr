@@ -1,0 +1,20 @@
+# run: verify-err
+# regex: val=%\d+
+
+# check: global:
+
+func @bad_entry_node() {
+    # check: function `bad_entry_node`:
+    # unordered: `$val:ctrl, $val:phisel = region`: bad entry node
+
+    %0:ctrl, %1:phisel = region
+    return %0
+}
+
+func @entry_mismatched_output_count() {
+    # check: function `entry_mismatched_output_count`:
+    # unordered: `$val:ctrl, $val:i32 = entry`: bad output count, expected 1
+
+    %0:ctrl, %1:i32 = entry
+    return %0
+}

@@ -1,8 +1,7 @@
 # run: verify-err
 
-func @ptroff_bad_input_count:i32(i64) {
+func @ptroff_bad_input_count:ptr(i64) {
     # check: function `ptroff_bad_input_count`:
-    # unordered: `return $val, $val`: bad value kind for input 1, expected one of `i32`, got `ptr`
     # unordered: `$val:ptr = ptroff $val, $val, $val`: bad input count, expected 2
     # unordered: `$val:ptr = ptroff`: bad input count, expected 2
 

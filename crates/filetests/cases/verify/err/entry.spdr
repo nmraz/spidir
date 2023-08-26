@@ -22,3 +22,22 @@ func @entry_mismatched_output_count() {
     %0:ctrl, %1:i32 = entry
     return %0
 }
+
+func @entry_type_mismatch(i32, ptr) {
+    # check: function `entry_type_mismatch`:
+    # unordered: `$val:ctrl, $val:ptr, $val:i32 = entry`: bad value kind for output 1, expected one of `i32`, got `ptr`
+    # unordered: `$val:ctrl, $val:ptr, $val:i32 = entry`: bad value kind for output 2, expected one of `ptr`, got `i32`
+
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    return %0
+}
+
+func @misplaced_entry() {
+    # check: function `misplaced_entry`:
+    # unordered: `$val:ctrl = entry`: misplaced entry node
+
+    %0:ctrl = entry
+    %1:ctrl = entry
+    %2:ctrl, %3:phisel = region %0, %1
+    return %2
+}

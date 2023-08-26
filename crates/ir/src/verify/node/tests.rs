@@ -19,26 +19,6 @@ fn check_verify_node_kind(graph: &ValGraph, node: Node, expected_err: GraphVerif
 }
 
 #[test]
-fn verify_stack_slot_output_kinds() {
-    let mut graph = ValGraph::new();
-
-    let slot_addr_node = graph.create_node(
-        NodeKind::StackSlot { size: 4, align: 4 },
-        [],
-        [DepValueKind::Value(Type::F64)],
-    );
-    let slot_addr = graph.node_outputs(slot_addr_node)[0];
-    check_verify_node_kind(
-        &graph,
-        slot_addr_node,
-        GraphVerifierError::BadOutputKind {
-            value: slot_addr,
-            expected: vec![DepValueKind::Value(Type::Ptr)],
-        },
-    );
-}
-
-#[test]
 fn verify_brcond_input_count() {
     let mut graph = ValGraph::new();
     let brcond = graph.create_node(

@@ -1,0 +1,30 @@
+# run: verify-err
+
+func @stackslot_bad_input_count(i32) {
+    # check: function `stackslot_bad_input_count`:
+    # unordered: `$val:ptr = stackslot 4:4 $val`: bad input count, expected 0
+
+    %0:ctrl, %1:i32 = entry
+    %2:ptr = stackslot 4:4 %1
+    %3:ctrl = store %0, %1, %2
+    return %3
+}
+
+func @stackslot_bad_output_count(i32) {
+    # check: function `stackslot_bad_output_count`:
+    # unordered: `$val:ptr, $val:i32 = stackslot 4:4`: bad output count, expected 1
+
+    %0:ctrl, %1:i32 = entry
+    %2:ptr, %3:i32 = stackslot 4:4
+    %4:ctrl = store %0, %1, %2
+    return %4
+}
+
+func @stackslot_bad_output_kind:i32() {
+    # check: function `stackslot_bad_output_kind`:
+    # unordered: `$val:i32 = stackslot 4:4`: bad value kind for output 0, expected one of `ptr`, got `i32`
+
+    %0:ctrl = entry
+    %1:i32 = stackslot 4:4
+    return %0, %1
+}

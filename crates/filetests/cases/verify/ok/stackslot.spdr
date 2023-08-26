@@ -1,0 +1,10 @@
+# run: verify-ok
+
+# check: $()
+
+func @use_simple_stackslot(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:ptr = stackslot 4:4
+    %3:ctrl = store %0, %1, %2
+    return %3
+}

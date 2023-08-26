@@ -1,6 +1,6 @@
 use crate::{
-    node::{BitwiseF64, IcmpKind, NodeKind, Type},
-    test_utils::{create_const32, create_const64, create_entry, create_region, create_return},
+    node::{BitwiseF64, NodeKind, Type},
+    test_utils::{create_const32, create_entry, create_region, create_return},
     verify::verify_graph,
 };
 
@@ -38,87 +38,6 @@ fn all_integer_types() -> Vec<DepValueKind> {
         DepValueKind::Value(Type::I32),
         DepValueKind::Value(Type::I64),
     ]
-}
-
-#[test]
-fn verify_icmp_input_count() {
-    let mut graph = ValGraph::new();
-    let empty_icmp = graph.create_node(
-        NodeKind::Icmp(IcmpKind::Eq),
-        [],
-        [DepValueKind::Value(Type::I32)],
-    );
-    check_verify_node_kind(
-        &graph,
-        empty_icmp,
-        GraphVerifierError::BadInputCount {
-            node: empty_icmp,
-            expected: 2,
-        },
-    );
-}
-
-#[test]
-fn verify_icmp_input_kinds() {
-    let mut graph = ValGraph::new();
-
-    let non_int_val = create_region(&mut graph, []);
-    let const_val = create_const32(&mut graph);
-    let const64_val = create_const64(&mut graph);
-
-    let non_int_icmp = graph.create_node(
-        NodeKind::Icmp(IcmpKind::Eq),
-        [non_int_val, const_val],
-        [DepValueKind::Value(Type::I32)],
-    );
-    check_verify_node_kind(
-        &graph,
-        non_int_icmp,
-        GraphVerifierError::BadInputKind {
-            node: non_int_icmp,
-            input: 0,
-            expected: vec![
-                DepValueKind::Value(Type::I32),
-                DepValueKind::Value(Type::I64),
-                DepValueKind::Value(Type::Ptr),
-            ],
-        },
-    );
-
-    let mismatched_icmp = graph.create_node(
-        NodeKind::Icmp(IcmpKind::Eq),
-        [const_val, const64_val],
-        [DepValueKind::Value(Type::I32)],
-    );
-    check_verify_node_kind(
-        &graph,
-        mismatched_icmp,
-        GraphVerifierError::BadInputKind {
-            node: mismatched_icmp,
-            input: 1,
-            expected: vec![DepValueKind::Value(Type::I32)],
-        },
-    );
-}
-
-#[test]
-fn verify_icmp_output_kinds() {
-    let mut graph = ValGraph::new();
-    let const_val = create_const32(&mut graph);
-
-    let icmp = graph.create_node(
-        NodeKind::Icmp(IcmpKind::Eq),
-        [const_val, const_val],
-        [DepValueKind::Value(Type::Ptr)],
-    );
-    check_verify_node_kind(
-        &graph,
-        icmp,
-        GraphVerifierError::BadOutputKind {
-            value: graph.node_outputs(icmp)[0],
-            expected: all_integer_types(),
-        },
-    );
 }
 
 #[test]

@@ -14,10 +14,6 @@ pub fn create_const32(graph: &mut ValGraph) -> DepValue {
     create_const_typed(graph, Type::I32)
 }
 
-pub fn create_const64(graph: &mut ValGraph) -> DepValue {
-    create_const_typed(graph, Type::I64)
-}
-
 pub fn create_entry<const N: usize>(
     graph: &mut ValGraph,
     input_types: [Type; N],

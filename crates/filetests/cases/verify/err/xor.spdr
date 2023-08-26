@@ -1,8 +1,6 @@
 # run: verify-err
 # regex: val=%\d+
 
-# check: global:
-
 func @xor_bad_input_count:i32() {
     # check: function `xor_bad_input_count`:
     # unordered: `$val:i32 = xor $val, $val, $val`: bad input count, expected 2

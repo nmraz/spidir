@@ -83,8 +83,6 @@ impl TestProvider for VerifyErrProvider {
 
     fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) -> Result<()> {
         updater.directive(0, "regex", r"val=%\d+");
-        updater.blank_line();
-        updater.directive(0, "check", "global:");
 
         let mut output_lines = output_str.lines();
         assert!(output_lines.next().unwrap() == "global:");
@@ -103,6 +101,11 @@ impl TestProvider for VerifyErrProvider {
             if let Some(new_func) = func_regex.captures(output_line) {
                 // Add the lines we've gathered up to this point before moving on to the new
                 // function.
+                if !in_func && !output_run.is_empty() {
+                    // There were global errors, add the `global:` label.
+                    updater.blank_line();
+                    updater.directive(0, "check", "global:");
+                }
                 add_line_run(updater, in_func, &mut output_run);
 
                 let name = &new_func[1];

@@ -1,8 +1,6 @@
 # run: verify-err
 # regex: val=%\d+
 
-# check: global:
-
 func @unused_ctrl() {
     # check: function `unused_ctrl`:
     # unordered: `$val:ctrl = entry`: control output 0 unused

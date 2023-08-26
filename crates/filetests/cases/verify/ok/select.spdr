@@ -2,10 +2,34 @@
 
 # check: $()
 
-func @select:i32(i32, i32, i32) {
+func @select_i32:i32(i32, i32, i32) {
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
     %8:ctrl, %9:ctrl = brcond %0, %1
     %6:ctrl, %7:phisel = region %8, %9
     %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_i64:i64(i32, i64, i64) {
+    %0:ctrl, %1:i32, %2:i64, %3:i64 = entry
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i64 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_ptr:ptr(i32, ptr, ptr) {
+    %0:ctrl, %1:i32, %2:ptr, %3:ptr = entry
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:ptr = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_f64:f64(i32, f64, f64) {
+    %0:ctrl, %1:i32, %2:f64, %3:f64 = entry
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:f64 = phi %7, %2, %3
     return %6, %10
 }

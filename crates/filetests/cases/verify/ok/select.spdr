@@ -1,0 +1,11 @@
+# run: verify-ok
+
+# check: $()
+
+func @select:i32(i32, i32, i32) {
+    %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}

@@ -392,6 +392,3 @@ const ALL_INTEGER_TYPES: &[DepValueKind] = &[
     DepValueKind::Value(Type::I32),
     DepValueKind::Value(Type::I64),
 ];
-
-#[cfg(test)]
-mod tests;

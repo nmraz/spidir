@@ -1,0 +1,15 @@
+# run: verify-ok
+
+# check: $()
+
+func @iconst32_near_range_end:i32() {
+    %0:ctrl = entry
+    %1:i32 = iconst 4294967295
+    return %0, %1
+}
+
+func @iconst64_near_range_end:i64() {
+    %0:ctrl = entry
+    %1:i64 = iconst 18446744073709551615
+    return %0, %1
+}

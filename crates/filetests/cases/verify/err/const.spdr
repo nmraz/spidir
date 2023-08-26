@@ -1,0 +1,57 @@
+# run: verify-err
+
+func @iconst_bad_input_count:i32() {
+    # check: function `iconst_bad_input_count`:
+    # unordered: `$val:i32 = iconst 3 $val`: bad input count, expected 0
+
+    %0:ctrl = entry
+    %1:i32 = iconst 5
+    %2:i32 = iconst 3 %1
+    return %0, %2
+}
+
+func @iconst_bad_output_count:i32() {
+    # check: function `iconst_bad_output_count`:
+    # unordered: `$val:i32, $val:i32 = iconst 5`: bad output count, expected 1
+
+    %0:ctrl = entry
+    %1:i32, %2:i32 = iconst 5
+    return %0, %1
+}
+
+func @iconst_i32_out_of_range:i32() {
+    # check: function `iconst_i32_out_of_range`:
+    # unordered: `$val:i32 = iconst 4294967296`: constant value out of range
+
+    %0:ctrl = entry
+    %1:i32 = iconst 4294967296
+    return %0, %1
+}
+
+func @iconst_bad_output_kind:f64() {
+    # check: function `iconst_bad_output_kind`:
+    # unordered: `$val:f64 = iconst 5`: bad value kind for output 0, expected one of `i32`, `i64`, got `f64`
+
+    %0:ctrl = entry
+    %1:f64 = iconst 5
+    return %0, %1
+}
+
+func @fconst_bad_input_count:f64() {
+    # check: function `fconst_bad_input_count`:
+    # unordered: `$val:f64 = fconst 3 $val`: bad input count, expected 0
+
+    %0:ctrl = entry
+    %1:i32 = iconst 5
+    %2:f64 = fconst 3 %1
+    return %0, %2
+}
+
+func @fconst_bad_output_count:f64() {
+    # check: function `fconst_bad_output_count`:
+    # unordered: `$val:f64, $val:i32 = fconst 3`: bad output count, expected 1
+
+    %0:ctrl = entry
+    %1:f64, %2:i32 = fconst 3
+    return %0, %1
+}

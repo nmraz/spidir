@@ -1,6 +1,6 @@
 use crate::{
-    node::{BitwiseF64, NodeKind, Type},
-    test_utils::{create_const32, create_entry, create_region, create_return},
+    node::{NodeKind, Type},
+    test_utils::{create_entry, create_region, create_return},
     verify::verify_graph,
 };
 
@@ -31,110 +31,6 @@ fn check_verify_graph_ok(
         param_types: param_types.to_owned(),
     };
     verify_graph(graph, &signature, entry).expect("expected a valid graph");
-}
-
-fn all_integer_types() -> Vec<DepValueKind> {
-    vec![
-        DepValueKind::Value(Type::I32),
-        DepValueKind::Value(Type::I64),
-    ]
-}
-
-#[test]
-fn verify_iconst_input_count() {
-    let mut graph = ValGraph::new();
-    let const_val = create_const32(&mut graph);
-    let iconst = graph.create_node(
-        NodeKind::IConst(3),
-        [const_val],
-        [DepValueKind::Value(Type::I32)],
-    );
-    check_verify_node_kind(
-        &graph,
-        iconst,
-        GraphVerifierError::BadInputCount {
-            node: iconst,
-            expected: 0,
-        },
-    );
-}
-
-#[test]
-fn verify_iconst_output_kinds() {
-    let mut graph = ValGraph::new();
-
-    let iconst_ctrl = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Control]);
-    check_verify_node_kind(
-        &graph,
-        iconst_ctrl,
-        GraphVerifierError::BadOutputKind {
-            value: graph.node_outputs(iconst_ctrl)[0],
-            expected: all_integer_types(),
-        },
-    );
-
-    let iconst_ptr = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Value(Type::Ptr)]);
-    check_verify_node_kind(
-        &graph,
-        iconst_ptr,
-        GraphVerifierError::BadOutputKind {
-            value: graph.node_outputs(iconst_ptr)[0],
-            expected: all_integer_types(),
-        },
-    );
-}
-
-#[test]
-fn verify_iconst_range() {
-    let mut graph = ValGraph::new();
-    let not_u32 = graph.create_node(
-        NodeKind::IConst(u32::MAX as u64 + 1),
-        [],
-        [DepValueKind::Value(Type::I32)],
-    );
-    check_verify_node_kind(
-        &graph,
-        not_u32,
-        GraphVerifierError::ConstantOutOfRange(not_u32),
-    );
-}
-
-#[test]
-fn verify_fconst_input_count() {
-    let mut graph = ValGraph::new();
-    let const_val = create_const32(&mut graph);
-    let fconst = graph.create_node(
-        NodeKind::FConst(BitwiseF64(3.0)),
-        [const_val],
-        [DepValueKind::Value(Type::F64)],
-    );
-    check_verify_node_kind(
-        &graph,
-        fconst,
-        GraphVerifierError::BadInputCount {
-            node: fconst,
-            expected: 0,
-        },
-    );
-}
-
-#[test]
-fn verify_fconst_output_kinds() {
-    let mut graph = ValGraph::new();
-
-    let fconst_ctrl = graph.create_node(
-        NodeKind::FConst(BitwiseF64(3.0)),
-        [],
-        [DepValueKind::Control],
-    );
-    check_verify_node_kind(
-        &graph,
-        fconst_ctrl,
-        GraphVerifierError::BadOutputKind {
-            value: graph.node_outputs(fconst_ctrl)[0],
-            expected: vec![DepValueKind::Value(Type::F64)],
-        },
-    );
 }
 
 #[test]

@@ -97,7 +97,7 @@ impl TestProvider for VerifyErrProvider {
         let func_regex = regex!(r#"^function `(.+)`:"#);
         let val_regex = regex!(VAL_REGEX_STR);
 
-        let mut in_func = false;
+        let mut cur_func = None;
         let mut output_run = Vec::new();
 
         for output_line in output_lines {
@@ -108,39 +108,44 @@ impl TestProvider for VerifyErrProvider {
             if let Some(new_func) = func_regex.captures(output_line) {
                 // Add the lines we've gathered up to this point before moving on to the new
                 // function.
-                if !in_func && !output_run.is_empty() {
-                    // There were global errors, add the `global:` label.
-                    updater.blank_line();
-                    updater.directive(0, "check", "global:");
-                }
-                add_line_run(updater, in_func, &mut output_run);
+                add_error_run(updater, cur_func, &mut output_run);
 
-                let name = &new_func[1];
-                updater.advance_to_after(|line| line.contains(&format!("func @{name}")))?;
-                updater.directive(4, "check", &format!("function `{name}`:"));
-                in_func = true;
+                let name = new_func.get(1).unwrap().as_str();
+                updater
+                    .advance_to_after(|line| line.trim().starts_with(&format!("func @{name}")))?;
+                cur_func = Some(name);
             } else {
                 output_run.push(val_regex.replace_all(output_line, "$$val").into_owned());
             }
         }
 
         // Add in the line run for the last function.
-        add_line_run(updater, in_func, &mut output_run);
+        add_error_run(updater, cur_func, &mut output_run);
 
         Ok(())
     }
 }
 
-fn add_line_run(updater: &mut Updater<'_>, in_func: bool, output_run: &mut Vec<String>) {
-    let indent = if in_func { 4 } else { 0 };
-    let nonempty = !output_run.is_empty();
+fn add_error_run(updater: &mut Updater<'_>, cur_func: Option<&str>, output_run: &mut Vec<String>) {
+    if output_run.is_empty() {
+        // If there aren't any errors to add, don't even insert the heading.
+        return;
+    }
+
+    let indent = if cur_func.is_some() { 4 } else { 0 };
+
+    if let Some(cur_func) = cur_func {
+        updater.directive(4, "check", &format!("function `{cur_func}`:"));
+    } else {
+        updater.blank_line();
+        updater.directive(0, "check", "global:");
+    }
 
     for line in output_run.drain(..) {
         updater.directive(indent, "unordered", &line);
     }
-    if nonempty {
-        updater.blank_line();
-    }
+
+    updater.blank_line();
 }
 
 fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {

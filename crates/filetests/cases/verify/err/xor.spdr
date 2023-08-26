@@ -1,0 +1,48 @@
+# run: verify-err
+# regex: val=%\d+
+
+# check: global:
+
+func @xor_bad_input_count:i32() {
+    # check: function `xor_bad_input_count`:
+    # unordered: `$val:i32 = xor $val, $val, $val`: bad input count, expected 2
+    # unordered: `$val:i32 = xor`: bad input count, expected 2
+
+    %0:ctrl = entry
+    %1:i32 = xor
+    %2:i32 = xor %1, %1, %1
+    return %0, %2
+}
+
+func @xor_bad_output_count:i32(i32) {
+    # check: function `xor_bad_output_count`:
+    # unordered: `$val:i32, $val:i32 = xor $val, $val`: bad output count, expected 1
+
+    %0:ctrl, %1:i32 = entry
+    %2:i32, %3:i32 = xor %1, %1
+    return %0, %2
+}
+
+func @xor_bad_output_kind(i32) {
+    # check: function `xor_bad_output_kind`:
+    # unordered: `$val:ctrl = xor $val, $val`: bad value kind for output 0, expected one of `i32`, `i64`, got `ctrl`
+
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl = xor %1, %1
+    %3:ctrl, %4:phisel = region %0, %2
+    return %3
+}
+
+func @xor_bad_input_kind:i64(i32) {
+    # check: function `xor_bad_input_kind`:
+    # unordered: `$val:i64 = xor $val, $val`: bad value kind for input 1, expected one of `i64`, got `i32`
+    # unordered: `$val:i64 = xor $val, $val`: bad value kind for input 0, expected one of `i64`, got `i32`
+    # unordered: `$val:i64 = xor $val, $val`: bad value kind for input 0, expected one of `i64`, got `i32`
+    # unordered: `$val:i64 = xor $val, $val`: bad value kind for input 1, expected one of `i64`, got `i32`
+
+    %0:ctrl, %1:i32 = entry
+    %3:i64 = xor %1, %1
+    %4:i64 = xor %1, %3
+    %5:i64 = xor %4, %1
+    return %0, %5
+}

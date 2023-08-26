@@ -11,6 +11,13 @@ func @bad_entry_node() {
     return %0
 }
 
+func @entry_no_outputs() {
+    # check: function `entry_no_outputs`:
+    # unordered: `entry`: bad output count, expected 1
+
+    entry
+}
+
 func @entry_mismatched_output_count() {
     # check: function `entry_mismatched_output_count`:
     # unordered: `$val:ctrl, $val:i32 = entry`: bad output count, expected 1

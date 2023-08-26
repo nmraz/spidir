@@ -41,113 +41,6 @@ fn all_integer_types() -> Vec<DepValueKind> {
 }
 
 #[test]
-fn verify_graph_add_function() {
-    let mut graph = ValGraph::new();
-
-    let (entry, control_value, [param1, param2]) = create_entry(&mut graph, [Type::I32, Type::I32]);
-
-    let add = graph.create_node(
-        NodeKind::Iadd,
-        [param1, param2],
-        [DepValueKind::Value(Type::I32)],
-    );
-    let add_res = graph.node_outputs(add)[0];
-    create_return(&mut graph, [control_value, add_res]);
-
-    check_verify_graph_ok(&graph, entry, &[Type::I32, Type::I32], Some(Type::I32));
-}
-
-#[test]
-fn verify_iadd_bad_input_count() {
-    let mut graph = ValGraph::new();
-
-    let empty_iadd = graph.create_node(NodeKind::Iadd, [], [DepValueKind::Value(Type::I32)]);
-    check_verify_node_kind(
-        &graph,
-        empty_iadd,
-        GraphVerifierError::BadInputCount {
-            node: empty_iadd,
-            expected: 2,
-        },
-    );
-
-    let const_val = create_const32(&mut graph);
-
-    let overfull_iadd = graph.create_node(
-        NodeKind::Iadd,
-        [const_val, const_val, const_val],
-        [DepValueKind::Value(Type::I32)],
-    );
-    check_verify_node_kind(
-        &graph,
-        overfull_iadd,
-        GraphVerifierError::BadInputCount {
-            node: overfull_iadd,
-            expected: 2,
-        },
-    );
-}
-
-#[test]
-fn verify_iadd_result_kind() {
-    let mut graph = ValGraph::new();
-    let const_val = create_const32(&mut graph);
-
-    let iadd = graph.create_node(
-        NodeKind::Iadd,
-        [const_val, const_val],
-        [DepValueKind::PhiSelector],
-    );
-    let iadd_output = graph.node_outputs(iadd)[0];
-    check_verify_node_kind(
-        &graph,
-        iadd,
-        GraphVerifierError::BadOutputKind {
-            value: iadd_output,
-            expected: all_integer_types(),
-        },
-    );
-}
-
-#[test]
-fn verify_iadd_input_kinds() {
-    let mut graph = ValGraph::new();
-
-    let const_val = create_const32(&mut graph);
-    let const64_val = create_const64(&mut graph);
-
-    let iadd64_32 = graph.create_node(
-        NodeKind::Iadd,
-        [const64_val, const_val],
-        [DepValueKind::Value(Type::I32)],
-    );
-    check_verify_node_kind(
-        &graph,
-        iadd64_32,
-        GraphVerifierError::BadInputKind {
-            node: iadd64_32,
-            input: 0,
-            expected: vec![DepValueKind::Value(Type::I32)],
-        },
-    );
-
-    let iadd32_64 = graph.create_node(
-        NodeKind::Iadd,
-        [const_val, const64_val],
-        [DepValueKind::Value(Type::I32)],
-    );
-    check_verify_node_kind(
-        &graph,
-        iadd32_64,
-        GraphVerifierError::BadInputKind {
-            node: iadd32_64,
-            input: 1,
-            expected: vec![DepValueKind::Value(Type::I32)],
-        },
-    );
-}
-
-#[test]
 fn verify_graph_shift_function_ok() {
     for shift_input_ty in [Type::I32, Type::I64] {
         for shift_amount_ty in [Type::I32, Type::I64] {
@@ -266,30 +159,6 @@ fn verify_shl_input_kinds() {
 }
 
 #[test]
-fn verify_graph_div_function_ok() {
-    for kind in [NodeKind::Sdiv, NodeKind::Udiv] {
-        for ty in [Type::I32, Type::I64] {
-            let mut graph = ValGraph::new();
-
-            let (entry, control_value, [shift_input, shift_amount]) =
-                create_entry(&mut graph, [ty, ty]);
-
-            let div = graph.create_node(
-                kind,
-                [control_value, shift_input, shift_amount],
-                [DepValueKind::Control, DepValueKind::Value(ty)],
-            );
-            let div_outputs = graph.node_outputs(div);
-            let div_control = div_outputs[0];
-            let div_res = div_outputs[1];
-            create_return(&mut graph, [div_control, div_res]);
-
-            check_verify_graph_ok(&graph, entry, &[ty, ty], Some(ty));
-        }
-    }
-}
-
-#[test]
 fn verify_div_input_count() {
     let mut graph = ValGraph::new();
     let div = graph.create_node(
@@ -396,27 +265,6 @@ fn verify_div_output_kinds() {
             expected: vec![DepValueKind::Control],
         },
     );
-}
-
-#[test]
-fn verify_graph_icmp_function_ok() {
-    for input_ty in [Type::I32, Type::I64, Type::Ptr] {
-        for output_ty in [Type::I32, Type::I64] {
-            let mut graph = ValGraph::new();
-            let (entry, control_value, [param1, param2]) =
-                create_entry(&mut graph, [input_ty, input_ty]);
-
-            let icmp = graph.create_node(
-                NodeKind::Icmp(IcmpKind::Eq),
-                [param1, param2],
-                [DepValueKind::Value(output_ty)],
-            );
-            let icmp_res = graph.node_outputs(icmp)[0];
-            create_return(&mut graph, [control_value, icmp_res]);
-
-            check_verify_graph_ok(&graph, entry, &[input_ty, input_ty], Some(output_ty));
-        }
-    }
 }
 
 #[test]
@@ -670,26 +518,6 @@ fn verify_ptroff_output_kinds() {
 }
 
 #[test]
-fn verify_graph_load_function_ok() {
-    for output_ty in [Type::I32, Type::I64, Type::Ptr] {
-        let mut graph = ValGraph::new();
-
-        let (entry, control_value, [param1]) = create_entry(&mut graph, [Type::Ptr]);
-
-        let load = graph.create_node(
-            NodeKind::Load,
-            [control_value, param1],
-            [DepValueKind::Control, DepValueKind::Value(output_ty)],
-        );
-        let load_control = graph.node_outputs(load)[0];
-
-        let load_res = graph.node_outputs(load)[1];
-        create_return(&mut graph, [load_control, load_res]);
-        check_verify_graph_ok(&graph, entry, &[Type::Ptr], Some(output_ty));
-    }
-}
-
-#[test]
 fn verify_load_input_count() {
     let mut graph = ValGraph::new();
 
@@ -810,25 +638,6 @@ fn verify_load_output_kinds() {
 }
 
 #[test]
-fn verify_graph_store_function_ok() {
-    for input_ty in [Type::I32, Type::I64, Type::Ptr, Type::F64] {
-        let mut graph = ValGraph::new();
-
-        let (entry, control_value, [ptr, value]) = create_entry(&mut graph, [Type::Ptr, input_ty]);
-
-        let store = graph.create_node(
-            NodeKind::Store,
-            [control_value, value, ptr],
-            [DepValueKind::Control],
-        );
-        let store_control = graph.node_outputs(store)[0];
-
-        create_return(&mut graph, [store_control]);
-        check_verify_graph_ok(&graph, entry, &[Type::Ptr, input_ty], None);
-    }
-}
-
-#[test]
 fn verify_store_input_count() {
     let mut graph = ValGraph::new();
     let store = graph.create_node(NodeKind::Store, [], [DepValueKind::Control]);
@@ -931,27 +740,6 @@ fn verify_store_output_kinds() {
             expected: vec![DepValueKind::Control],
         },
     );
-}
-
-#[test]
-fn verify_graph_stack_slot_function_ok() {
-    let mut graph = ValGraph::new();
-
-    let (entry, entry_ctrl, [input]) = create_entry(&mut graph, [Type::I32]);
-    let slot_addr_node = graph.create_node(
-        NodeKind::StackSlot { size: 4, align: 4 },
-        [],
-        [DepValueKind::Value(Type::Ptr)],
-    );
-    let slot_addr = graph.node_outputs(slot_addr_node)[0];
-    let store = graph.create_node(
-        NodeKind::Store,
-        [entry_ctrl, input, slot_addr],
-        [DepValueKind::Control],
-    );
-    let store_ctrl = graph.node_outputs(store)[0];
-    create_return(&mut graph, [store_ctrl]);
-    check_verify_graph_ok(&graph, entry, &[Type::I32], None);
 }
 
 #[test]

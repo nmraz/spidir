@@ -27,7 +27,7 @@ impl TestProvider for VerifyOkProvider {
 
     fn update(&self, updater: &mut Updater<'_>, _module: &Module, _output_str: &str) -> Result<()> {
         updater.blank_line();
-        updater.directive(0, "check", "");
+        updater.directive(0, "check", "$()");
         updater.blank_line();
         Ok(())
     }
@@ -124,7 +124,7 @@ impl TestProvider for VerifyErrProvider {
 fn add_line_run(updater: &mut Updater<'_>, in_func: bool, output_run: &mut Vec<String>) {
     let indent = if in_func { 4 } else { 0 };
     for line in output_run.drain(..) {
-        updater.directive(indent, "nextln", &line);
+        updater.directive(indent, "unordered", &line);
     }
     updater.blank_line();
 }

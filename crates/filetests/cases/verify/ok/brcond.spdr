@@ -1,0 +1,17 @@
+# run: verify-ok
+
+# check: $()
+
+func @brcond_i32(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:ctrl = brcond %0, %1
+    %4:ctrl, %5:phisel = region %2, %3
+    return %4
+}
+
+func @brcond_i64(i64) {
+    %0:ctrl, %1:i64 = entry
+    %2:ctrl, %3:ctrl = brcond %0, %1
+    %4:ctrl, %5:phisel = region %2, %3
+    return %4
+}

@@ -253,7 +253,7 @@ fn verify_ptroff(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierErr
     };
     let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::Ptr)], errors);
     let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::Ptr)], errors);
-    let _ = verify_integer_input_kind(graph, node, 1, errors);
+    let _ = verify_input_kind(graph, node, 1, &[DepValueKind::Value(Type::I64)], errors);
 }
 
 fn verify_load(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {

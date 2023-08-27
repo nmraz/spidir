@@ -42,9 +42,18 @@ func @ptroff_bad_input_kind_0:ptr(i64) {
 
 func @ptroff_bad_input_kind_1:ptr(ptr) {
     # check: function `ptroff_bad_input_kind_1`:
-    # unordered: `$val:ptr = ptroff $val, $val`: bad value kind for input 1, expected one of `i32`, `i64`, got `ptr`
+    # unordered: `$val:ptr = ptroff $val, $val`: bad value kind for input 1, expected one of `i64`, got `ptr`
 
     %0:ctrl, %1:ptr = entry
     %2:ptr = ptroff %1, %1
     return %0, %2
+}
+
+func @ptroff_i32:ptr(ptr, i32) {
+    # check: function `ptroff_i32`:
+    # unordered: `$val:ptr = ptroff $val, $val`: bad value kind for input 1, expected one of `i64`, got `i32`
+
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ptr = ptroff %1, %2
+    return %0, %3
 }

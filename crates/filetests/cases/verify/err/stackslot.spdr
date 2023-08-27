@@ -28,3 +28,13 @@ func @stackslot_bad_output_kind:i32() {
     %1:i32 = stackslot 4:4
     return %0, %1
 }
+
+func @stackslot_bad_align(i32) {
+    # check: function `stackslot_bad_align`:
+    # unordered: `$val:ptr = stackslot 4:5`: illegal stack slot alignment
+
+    %0:ctrl, %1:i32 = entry
+    %2:ptr = stackslot 4:5
+    %3:ctrl = store %0, %1, %2
+    return %3
+}

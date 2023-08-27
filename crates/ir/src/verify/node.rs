@@ -39,7 +39,7 @@ pub fn verify_node_kind(
         NodeKind::PtrOff => verify_ptroff(graph, node, errors),
         NodeKind::Load => verify_load(graph, node, errors),
         NodeKind::Store => verify_store(graph, node, errors),
-        NodeKind::StackSlot { .. } => verify_stack_slot(graph, node, errors),
+        NodeKind::StackSlot { align, .. } => verify_stack_slot(graph, node, *align, errors),
         NodeKind::BrCond => verify_brcond(graph, node, errors),
         NodeKind::Call(_) => {}
     }
@@ -276,11 +276,19 @@ fn verify_store(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierErro
     let _ = verify_input_kind(graph, node, 2, &[DepValueKind::Value(Type::Ptr)], errors);
 }
 
-fn verify_stack_slot(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {
+fn verify_stack_slot(
+    graph: &ValGraph,
+    node: Node,
+    align: u32,
+    errors: &mut Vec<GraphVerifierError>,
+) {
     let Ok([result]) = verify_node_arity(graph, node, 0, errors) else {
         return;
     };
     let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::Ptr)], errors);
+    if !align.is_power_of_two() {
+        errors.push(GraphVerifierError::BadStackSlotAlign(node));
+    }
 }
 
 fn verify_brcond(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {

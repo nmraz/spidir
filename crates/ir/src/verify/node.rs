@@ -3,14 +3,19 @@ use core::array;
 use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::{
-    module::FunctionData,
+    module::{FunctionData, Module},
     node::{DepValueKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
 use super::GraphVerifierError;
 
-pub fn verify_node_kind(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifierError>) {
+pub fn verify_node_kind(
+    _module: &Module,
+    func: &FunctionData,
+    node: Node,
+    errors: &mut Vec<GraphVerifierError>,
+) {
     let graph = &func.graph;
     match graph.node_kind(node) {
         NodeKind::Entry => verify_entry(func, node, errors),

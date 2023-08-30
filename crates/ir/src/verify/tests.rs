@@ -17,7 +17,12 @@ fn check_verify_graph_errors(graph: ValGraph, entry: Node, expected_errors: &[Gr
         graph,
         entry,
     };
-    assert_eq!(verify_func(&func).unwrap_err(), expected_errors);
+    let mut module = Module::new();
+    let func = module.functions.push(func);
+    assert_eq!(
+        verify_func(&module, &module.functions[func]).unwrap_err(),
+        expected_errors
+    );
 }
 
 #[track_caller]

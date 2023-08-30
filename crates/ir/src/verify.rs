@@ -231,7 +231,7 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
 
     for (function, function_data) in &module.functions {
         check_name(&function_data.name, &mut errors);
-        if let Err(graph_errors) = verify_func(function_data) {
+        if let Err(graph_errors) = verify_func(module, function_data) {
             errors.extend(
                 graph_errors
                     .into_iter()
@@ -247,7 +247,7 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
     }
 }
 
-pub fn verify_func(func: &FunctionData) -> Result<(), Vec<GraphVerifierError>> {
+pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<GraphVerifierError>> {
     let mut errors = Vec::new();
 
     if func.graph.node_kind(func.entry) != &NodeKind::Entry {
@@ -255,7 +255,7 @@ pub fn verify_func(func: &FunctionData) -> Result<(), Vec<GraphVerifierError>> {
     }
 
     for node in walk_live_nodes(&func.graph, func.entry) {
-        verify_node_kind(func, node, &mut errors);
+        verify_node_kind(module, func, node, &mut errors);
         verify_control_outputs(&func.graph, node, &mut errors);
     }
 

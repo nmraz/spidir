@@ -179,7 +179,7 @@ fn output_dot_file(
     let mut error_annotator;
 
     let annotator = if verify {
-        match verify_func(func) {
+        match verify_func(module, func) {
             Ok(()) => &mut colored_annotator,
             Err(inner_errors) => {
                 errors = inner_errors;

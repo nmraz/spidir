@@ -1,5 +1,5 @@
 use expect_test::{expect, Expect};
-use ir::{module::FunctionData, verify::verify_graph};
+use ir::{module::FunctionData, verify::verify_func};
 use parser::parse_module;
 
 use crate::annotate::{ColoredAnnotator, ErrorAnnotator, PlainAnnotator};
@@ -40,7 +40,7 @@ fn check_dump_graphviz(input: &str, expected_plain: Expect, expected_colored: Ex
 fn check_dump_graphviz_verifier_errors(input: &str, expected: Expect) {
     let module = parse_module(input).unwrap();
     let func = module.functions.values().next().unwrap();
-    let errors = verify_graph(&func.graph, &func.sig, func.entry).unwrap_err();
+    let errors = verify_func(func).unwrap_err();
     expected.assert_eq(&graphviz_with_annotator(
         &mut ErrorAnnotator::new(&func.graph, &errors),
         &module,

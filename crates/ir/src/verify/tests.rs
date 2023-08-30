@@ -1,5 +1,5 @@
 use crate::{
-    module::{ExternFunctionData, FunctionData},
+    module::{ExternFunctionData, FunctionData, Signature},
     node::Type,
     test_utils::{create_const32, create_entry, create_region, create_return},
 };
@@ -7,19 +7,17 @@ use crate::{
 use super::*;
 
 #[track_caller]
-fn check_verify_graph_errors(
-    graph: &ValGraph,
-    entry: Node,
-    expected_errors: &[GraphVerifierError],
-) {
-    let signature = Signature {
-        ret_type: None,
-        param_types: vec![],
+fn check_verify_graph_errors(graph: ValGraph, entry: Node, expected_errors: &[GraphVerifierError]) {
+    let func = FunctionData {
+        name: "func".to_owned(),
+        sig: Signature {
+            ret_type: None,
+            param_types: vec![],
+        },
+        graph,
+        entry,
     };
-    assert_eq!(
-        verify_graph(graph, &signature, entry).unwrap_err(),
-        expected_errors
-    );
+    assert_eq!(verify_func(&func).unwrap_err(), expected_errors);
 }
 
 #[track_caller]
@@ -37,7 +35,7 @@ fn verify_graph_bad_entry() {
     );
     let region_ctrl = graph.node_outputs(region)[0];
     create_return(&mut graph, [region_ctrl]);
-    check_verify_graph_errors(&graph, region, &[GraphVerifierError::BadEntry(region)]);
+    check_verify_graph_errors(graph, region, &[GraphVerifierError::BadEntry(region)]);
 }
 
 #[test]
@@ -53,7 +51,7 @@ fn verify_graph_bad_entry_multi_err() {
     let ret = create_return(&mut graph, [region_ctrl, const_val]);
 
     check_verify_graph_errors(
-        &graph,
+        graph,
         region,
         &[
             GraphVerifierError::BadEntry(region),
@@ -72,11 +70,7 @@ fn verify_graph_misplaced_entry() {
     let (entry2, entry2_ctrl, []) = create_entry(&mut graph, []);
     let region_ctrl = create_region(&mut graph, [entry1_ctrl, entry2_ctrl]);
     create_return(&mut graph, [region_ctrl]);
-    check_verify_graph_errors(
-        &graph,
-        entry1,
-        &[GraphVerifierError::MisplacedEntry(entry2)],
-    );
+    check_verify_graph_errors(graph, entry1, &[GraphVerifierError::MisplacedEntry(entry2)]);
 }
 
 #[test]

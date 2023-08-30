@@ -5,7 +5,7 @@ use fx_utils::FxHashSet;
 use itertools::Itertools;
 
 use crate::{
-    module::{Function, FunctionData, Module, Signature},
+    module::{Function, FunctionData, Module},
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::walk_live_nodes,
@@ -231,11 +231,7 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
 
     for (function, function_data) in &module.functions {
         check_name(&function_data.name, &mut errors);
-        if let Err(graph_errors) = verify_graph(
-            &function_data.graph,
-            &function_data.sig,
-            function_data.entry,
-        ) {
+        if let Err(graph_errors) = verify_func(function_data) {
             errors.extend(
                 graph_errors
                     .into_iter()
@@ -251,20 +247,16 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
     }
 }
 
-pub fn verify_graph(
-    graph: &ValGraph,
-    signature: &Signature,
-    entry: Node,
-) -> Result<(), Vec<GraphVerifierError>> {
+pub fn verify_func(func: &FunctionData) -> Result<(), Vec<GraphVerifierError>> {
     let mut errors = Vec::new();
 
-    if graph.node_kind(entry) != &NodeKind::Entry {
-        errors.push(GraphVerifierError::BadEntry(entry));
+    if func.graph.node_kind(func.entry) != &NodeKind::Entry {
+        errors.push(GraphVerifierError::BadEntry(func.entry));
     }
 
-    for node in walk_live_nodes(graph, entry) {
-        verify_node_kind(graph, signature, entry, node, &mut errors);
-        verify_control_outputs(graph, node, &mut errors);
+    for node in walk_live_nodes(&func.graph, func.entry) {
+        verify_node_kind(func, node, &mut errors);
+        verify_control_outputs(&func.graph, node, &mut errors);
     }
 
     if errors.is_empty() {

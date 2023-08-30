@@ -3,23 +3,18 @@ use core::array;
 use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::{
-    module::Signature,
+    module::FunctionData,
     node::{DepValueKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
 use super::GraphVerifierError;
 
-pub fn verify_node_kind(
-    graph: &ValGraph,
-    signature: &Signature,
-    entry: Node,
-    node: Node,
-    errors: &mut Vec<GraphVerifierError>,
-) {
+pub fn verify_node_kind(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifierError>) {
+    let graph = &func.graph;
     match graph.node_kind(node) {
-        NodeKind::Entry => verify_entry(graph, signature, entry, node, errors),
-        NodeKind::Return => verify_return(graph, signature, node, errors),
+        NodeKind::Entry => verify_entry(func, node, errors),
+        NodeKind::Return => verify_return(func, node, errors),
         NodeKind::Region => verify_region(graph, node, errors),
         NodeKind::Phi => verify_phi(graph, node, errors),
         NodeKind::IConst(val) => verify_iconst(graph, node, *val, errors),
@@ -45,20 +40,14 @@ pub fn verify_node_kind(
     }
 }
 
-fn verify_entry(
-    graph: &ValGraph,
-    signature: &Signature,
-    entry: Node,
-    node: Node,
-    errors: &mut Vec<GraphVerifierError>,
-) {
-    if node != entry {
+fn verify_entry(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifierError>) {
+    if node != func.entry {
         errors.push(GraphVerifierError::MisplacedEntry(node));
         return;
     }
 
-    let expected_output_count = signature.param_types.len() + 1;
-    let outputs = graph.node_outputs(node);
+    let expected_output_count = func.sig.param_types.len() + 1;
+    let outputs = func.graph.node_outputs(node);
     if outputs.len() != expected_output_count {
         errors.push(GraphVerifierError::BadOutputCount {
             node,
@@ -67,31 +56,37 @@ fn verify_entry(
         return;
     }
 
-    let _ = verify_output_kind(graph, outputs[0], &[DepValueKind::Control], errors);
-    for (output, &expected_ty) in outputs.into_iter().skip(1).zip(&signature.param_types) {
-        let _ = verify_output_kind(graph, output, &[DepValueKind::Value(expected_ty)], errors);
+    let _ = verify_output_kind(&func.graph, outputs[0], &[DepValueKind::Control], errors);
+    for (output, &expected_ty) in outputs.into_iter().skip(1).zip(&func.sig.param_types) {
+        let _ = verify_output_kind(
+            &func.graph,
+            output,
+            &[DepValueKind::Value(expected_ty)],
+            errors,
+        );
     }
 }
 
-fn verify_return(
-    graph: &ValGraph,
-    signature: &Signature,
-    node: Node,
-    errors: &mut Vec<GraphVerifierError>,
-) {
-    match signature.ret_type {
+fn verify_return(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifierError>) {
+    match func.sig.ret_type {
         Some(ret_type) => {
-            let Ok([]) = verify_node_arity(graph, node, 2, errors) else {
+            let Ok([]) = verify_node_arity(&func.graph, node, 2, errors) else {
                 return;
             };
-            let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
-            let _ = verify_input_kind(graph, node, 1, &[DepValueKind::Value(ret_type)], errors);
+            let _ = verify_input_kind(&func.graph, node, 0, &[DepValueKind::Control], errors);
+            let _ = verify_input_kind(
+                &func.graph,
+                node,
+                1,
+                &[DepValueKind::Value(ret_type)],
+                errors,
+            );
         }
         None => {
-            let Ok([]) = verify_node_arity(graph, node, 1, errors) else {
+            let Ok([]) = verify_node_arity(&func.graph, node, 1, errors) else {
                 return;
             };
-            let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
+            let _ = verify_input_kind(&func.graph, node, 0, &[DepValueKind::Control], errors);
         }
     }
 }

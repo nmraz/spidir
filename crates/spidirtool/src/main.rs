@@ -11,7 +11,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use ir::{
     module::{FunctionData, Module},
     valwalk::walk_live_nodes,
-    verify::{verify_graph, verify_module},
+    verify::{verify_func, verify_module},
 };
 use ir_graphviz::{
     annotate::{Annotate, ColoredAnnotator, DotAttributes, ErrorAnnotator},
@@ -179,7 +179,7 @@ fn output_dot_file(
     let mut error_annotator;
 
     let annotator = if verify {
-        match verify_graph(&func.graph, &func.sig, func.entry) {
+        match verify_func(func) {
             Ok(()) => &mut colored_annotator,
             Err(inner_errors) => {
                 errors = inner_errors;

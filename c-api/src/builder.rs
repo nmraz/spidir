@@ -1,5 +1,6 @@
 use frontend::{FunctionBuilder, PhiHandle};
 
+use ir::node::MemSize;
 use paste::paste;
 
 use crate::types::{
@@ -228,7 +229,7 @@ unsafe extern "C" fn spidir_builder_build_load(
 ) -> ApiValue {
     unsafe {
         let builder = &mut *builder;
-        value_to_api(builder.build_load(type_from_api(ty), value_from_api(ptr)))
+        value_to_api(builder.build_load(MemSize::S1, type_from_api(ty), value_from_api(ptr)))
     }
 }
 
@@ -240,7 +241,7 @@ unsafe extern "C" fn spidir_builder_build_store(
 ) {
     unsafe {
         let builder = &mut *builder;
-        builder.build_store(value_from_api(data), value_from_api(ptr));
+        builder.build_store(MemSize::S1, value_from_api(data), value_from_api(ptr));
     }
 }
 

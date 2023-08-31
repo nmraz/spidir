@@ -4,56 +4,48 @@
 
 func @store1_i32(i32, ptr) {
     %0:ctrl, %1:i32, %2:ptr = entry
-    # TODO: sized store
-    %3:ctrl = store %0, %1, %2
+    %3:ctrl = store.1 %0, %1, %2
     return %3
 }
 
 func @store2_i32(i32, ptr) {
     %0:ctrl, %1:i32, %2:ptr = entry
-    # TODO: sized store
-    %3:ctrl = store %0, %1, %2
+    %3:ctrl = store.2 %0, %1, %2
     return %3
 }
 
 func @store4_i32(i32, ptr) {
     %0:ctrl, %1:i32, %2:ptr = entry
-    # TODO: sized store
-    %3:ctrl = store %0, %1, %2
+    %3:ctrl = store.4 %0, %1, %2
     return %3
 }
 
 func @store1_i64(i64, ptr) {
     %0:ctrl, %1:i64, %2:ptr = entry
-    # TODO: sized store
-    %3:ctrl = store %0, %1, %2
+    %3:ctrl = store.1 %0, %1, %2
     return %3
 }
 
 func @store2_i64(i64, ptr) {
     %0:ctrl, %1:i64, %2:ptr = entry
-    # TODO: sized store
-    %3:ctrl = store %0, %1, %2
+    %3:ctrl = store.2 %0, %1, %2
     return %3
 }
 
 func @store4_i64(i64, ptr) {
     %0:ctrl, %1:i64, %2:ptr = entry
-    # TODO: sized store
-    %3:ctrl = store %0, %1, %2
+    %3:ctrl = store.4 %0, %1, %2
     return %3
 }
 
 func @store8_i64(i64, ptr) {
     %0:ctrl, %1:i64, %2:ptr = entry
-    # TODO: sized store
-    %3:ctrl = store %0, %1, %2
+    %3:ctrl = store.8 %0, %1, %2
     return %3
 }
 
 func @store8_f64(f64, ptr) {
     %0:ctrl, %1:f64, %2:ptr = entry
-    # TODO: sized store
-    %3:ctrl = store %0, %1, %2
+    %3:ctrl = store.8 %0, %1, %2
     return %3
 }

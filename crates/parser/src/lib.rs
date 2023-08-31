@@ -13,7 +13,7 @@ use alloc::{
 use fx_utils::FxHashMap;
 use ir::{
     module::{ExternFunctionData, Function, FunctionData, Module, Signature},
-    node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, NodeKind, Type},
+    node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 use itertools::Itertools;
@@ -254,9 +254,7 @@ fn extract_node_kind(
         "imul" => Ok(NodeKind::Imul),
         "sdiv" => Ok(NodeKind::Sdiv),
         "udiv" => Ok(NodeKind::Udiv),
-        "load" => Ok(NodeKind::Load),
         "ptroff" => Ok(NodeKind::PtrOff),
-        "store" => Ok(NodeKind::Store),
         "brcond" => Ok(NodeKind::BrCond),
         _ => extract_special_node_kind(node_kind_pair, function_names),
     }
@@ -283,6 +281,8 @@ fn extract_special_node_kind(
             "invalid floating-point literal",
         )?)),
         Rule::icmp_nodekind => NodeKind::Icmp(extract_icmpkind(inner.next().unwrap())),
+        Rule::load_nodekind => NodeKind::Load(extract_mem_size(inner.next().unwrap())),
+        Rule::store_nodekind => NodeKind::Store(extract_mem_size(inner.next().unwrap())),
         Rule::stackslot_nodekind => {
             let size = parse_from_str(&inner.next().unwrap(), "invalid stack slot size")?;
             let align = parse_from_str(&inner.next().unwrap(), "invalid stack slot align")?;
@@ -315,6 +315,16 @@ fn extract_icmpkind(icmpkind_pair: Pair<'_, Rule>) -> IcmpKind {
         "sle" => IcmpKind::Sle,
         "ult" => IcmpKind::Ult,
         "ule" => IcmpKind::Ule,
+        _ => unreachable!(),
+    }
+}
+
+fn extract_mem_size(mem_size_pair: Pair<'_, Rule>) -> MemSize {
+    match mem_size_pair.as_str() {
+        "1" => MemSize::S1,
+        "2" => MemSize::S2,
+        "4" => MemSize::S4,
+        "8" => MemSize::S8,
         _ => unreachable!(),
     }
 }
@@ -604,8 +614,14 @@ mod tests {
             "icmp ule",
             "fconst 2.71828",
             "ptroff",
-            "load",
-            "store",
+            "load.1",
+            "load.2",
+            "load.4",
+            "load.8",
+            "store.1",
+            "store.2",
+            "store.4",
+            "store.8",
             "brcond",
         ];
 
@@ -647,8 +663,8 @@ mod tests {
                 %24:i32 = icmp ult %23, %6
                 %25:i32 = icmp ule %24, %6
                 %26:f64 = fconst 3.1415
-                %27:ctrl, %28:f64 = load %18, %1
-                %29:ctrl = store %27, %26, %1
+                %27:ctrl, %28:f64 = load.8 %18, %1
+                %29:ctrl = store.8 %27, %26, %1
                 %30:ctrl, %31:ctrl = brcond %29, %25
                 return %30, %25
                 return %31, %2
@@ -676,7 +692,7 @@ mod tests {
                     %15:i32 = imul %14, %6
                     %16:ctrl, %17:i32 = sdiv %3, %15, %6
                     %18:ctrl, %19:i32 = udiv %16, %17, %6
-                    %27:ctrl, %28:f64 = load %18, %1
+                    %27:ctrl, %28:f64 = load.8 %18, %1
                     %20:i32 = icmp eq %19, %6
                     %21:i32 = icmp ne %20, %6
                     %22:i32 = icmp slt %21, %6
@@ -684,7 +700,7 @@ mod tests {
                     %24:i32 = icmp ult %23, %6
                     %25:i32 = icmp ule %24, %6
                     %26:f64 = fconst 3.1415
-                    %29:ctrl = store %27, %26, %1
+                    %29:ctrl = store.8 %27, %26, %1
                     %30:ctrl, %31:ctrl = brcond %29, %25
                     return %30, %25
                     return %31, %2
@@ -899,8 +915,8 @@ mod tests {
                 %0:ctrl, %1:i32, %2:f64 = entry
                 %4:ptr = stackslot 8:8
                 %3:ptr = stackslot 4:4
-                %5:ctrl = store %0, %1, %3
-                %6:ctrl = store %5, %2, %4
+                %5:ctrl = store.4 %0, %1, %3
+                %6:ctrl = store.8 %5, %2, %4
                 return %6
             }",
         )
@@ -914,11 +930,90 @@ mod tests {
                     %0:ctrl, %1:i32, %2:f64 = entry
                     %3:ptr = stackslot 8:8
                     %4:ptr = stackslot 4:4
-                    %5:ctrl = store %0, %1, %4
-                    %6:ctrl = store %5, %2, %3
+                    %5:ctrl = store.4 %0, %1, %4
+                    %6:ctrl = store.8 %5, %2, %3
                     return %6
                 }
             "#]],
+        );
+    }
+
+    #[test]
+    fn parse_iconst_out_of_range() {
+        check_parse_error(
+            "
+            func @func:i32() {
+                %0:ctrl = entry
+                %1:i32 = iconst 123456789123456789123456789
+                return %0, %1
+            }",
+            expect![[r#"
+                 --> 4:33
+                  |
+                4 |                 %1:i32 = iconst 123456789123456789123456789
+                  |                                 ^-------------------------^
+                  |
+                  = invalid integer literal"#]],
+        );
+    }
+
+    #[test]
+    fn parse_load_invalid_size() {
+        check_parse_error(
+            "
+            func @func:i32(ptr) {
+                %0:ctrl, %1:ptr = entry
+                %2:ctrl, %3:i32 = load.3 %0, %1
+                return %2, %3
+            }
+            ",
+            expect![[r#"
+                 --> 4:40
+                  |
+                4 |                 %2:ctrl, %3:i32 = load.3 %0, %1
+                  |                                        ^---
+                  |
+                  = expected memsize"#]],
+        );
+    }
+
+    #[test]
+    fn parse_load_no_size() {
+        check_parse_error(
+            "
+            func @func:i32(ptr) {
+                %0:ctrl, %1:ptr = entry
+                %2:ctrl, %3:i32 = load. %0, %1
+                return %2, %3
+            }
+            ",
+            expect![[r#"
+                 --> 4:40
+                  |
+                4 |                 %2:ctrl, %3:i32 = load. %0, %1
+                  |                                        ^---
+                  |
+                  = expected memsize"#]],
+        );
+    }
+
+    #[test]
+    fn parse_load_spaced_size() {
+        check_parse_error(
+            "
+            func @func:i32(ptr) {
+                %0:ctrl, %1:ptr = entry
+                %2:ctrl, %3:i32 = load . 4 %0, %1
+                return %2, %3
+            }
+            ",
+            expect![[r#"
+                 --> 4:35
+                  |
+                4 |                 %2:ctrl, %3:i32 = load . 4 %0, %1
+                  |                                   ^---
+                  |
+                  = expected nodekind"#]],
         );
     }
 
@@ -1005,25 +1100,6 @@ mod tests {
                   |                            ^^
                   |
                   = undefined value"#]],
-        );
-    }
-
-    #[test]
-    fn parse_iconst_out_of_range() {
-        check_parse_error(
-            "
-            func @func:i32() {
-                %0:ctrl = entry
-                %1:i32 = iconst 123456789123456789123456789
-                return %0, %1
-            }",
-            expect![[r#"
-                 --> 4:33
-                  |
-                4 |                 %1:i32 = iconst 123456789123456789123456789
-                  |                                 ^-------------------------^
-                  |
-                  = invalid integer literal"#]],
         );
     }
 

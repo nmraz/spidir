@@ -25,22 +25,22 @@ func @sum_to_n_with_stack:i32(i32) {
     %2:ctrl, %3:phisel = region %0
     %5:ptr = stackslot 4:4
     %4:ptr = stackslot 4:4
-    %6:ctrl = store %2, %1, %4
+    %6:ctrl = store.4 %2, %1, %4
     %24:i32 = iconst 1
     %7:i32 = iconst 0
-    %8:ctrl = store %6, %7, %5
+    %8:ctrl = store.4 %6, %7, %5
     %13:i32 = icmp eq %12, %7
     %18:ctrl, %19:ctrl = brcond %11, %13
     %14:ctrl, %15:phisel = region %18
-    %29:ctrl, %30:i32 = load %14, %5
+    %29:ctrl, %30:i32 = load.4 %14, %5
     return %29, %30
     %16:ctrl, %17:phisel = region %19
-    %20:ctrl, %21:i32 = load %16, %4
-    %22:ctrl, %23:i32 = load %20, %5
+    %20:ctrl, %21:i32 = load.4 %16, %4
+    %22:ctrl, %23:i32 = load.4 %20, %5
     %25:i32 = isub %21, %24
-    %27:ctrl = store %22, %25, %4
+    %27:ctrl = store.4 %22, %25, %4
     %26:i32 = iadd %23, %21
-    %28:ctrl = store %27, %26, %5
+    %28:ctrl = store.4 %27, %26, %5
     %9:ctrl, %10:phisel = region %8, %28
-    %11:ctrl, %12:i32 = load %9, %4
+    %11:ctrl, %12:i32 = load.4 %9, %4
 }

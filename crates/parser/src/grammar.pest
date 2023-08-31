@@ -27,13 +27,16 @@ extfunc = { "extfunc" ~ signature }
 valkind = { "ctrl" | "phisel" | type }
 
 icmpkind = { "eq" | "ne" | "slt" | "sle" | "ult" | "ule" }
+memsize  = { "1" | "2" | "4" | "8" }
 
-iconst_nodekind    = { "iconst" ~ integer }
-fconst_nodekind    = { "fconst" ~ float }
-icmp_nodekind      = { "icmp" ~ icmpkind }
-stackslot_nodekind = { "stackslot" ~ integer ~ ":" ~ integer }
-call_nodekind      = { "call" ~ funcname }
-nodekind           = {
+iconst_nodekind    =  { "iconst" ~ integer }
+fconst_nodekind    =  { "fconst" ~ float }
+icmp_nodekind      =  { "icmp" ~ icmpkind }
+load_nodekind      = ${ "load." ~ memsize }
+store_nodekind     = ${ "store." ~ memsize }
+stackslot_nodekind =  { "stackslot" ~ integer ~ ":" ~ integer }
+call_nodekind      =  { "call" ~ funcname }
+nodekind           =  {
     "entry"
   | "return"
   | "region"
@@ -53,8 +56,8 @@ nodekind           = {
   | "udiv"
   | icmp_nodekind
   | "ptroff"
-  | "load"
-  | "store"
+  | load_nodekind
+  | store_nodekind
   | stackslot_nodekind
   | "brcond"
   | call_nodekind

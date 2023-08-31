@@ -97,7 +97,7 @@ fn dump_iota_graph() {
             %three:i64 = iconst 3
             %off:i64 = shl %i, %three
             %ptr:ptr = ptroff %arr, %off
-            %poststore:ctrl = store %loopbody, %i, %ptr
+            %poststore:ctrl = store.8 %loopbody, %i, %ptr
             %one:i64 = iconst 1
             %inext:i64 = iadd %i, %one
             %donecmp:i32 = icmp eq %inext, %n
@@ -116,7 +116,7 @@ fn dump_iota_graph() {
                 node6 [shape=Mrecord, label="{iconst 3 | {<o0> i64}}"]
                 node7 [shape=Mrecord, label="{{<i0> | <i1>} | shl | {<o0> i64}}"]
                 node8 [shape=Mrecord, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}"]
-                node9 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}"]
+                node9 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store.8 | {<o0> ctrl}}"]
                 node13 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}"]
                 node14 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
                 node15 [shape=Mrecord, label="{{<i0>} | return}"]
@@ -161,7 +161,7 @@ fn dump_iota_graph() {
                 node6 [shape=Mrecord, label="{iconst 3 | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
                 node7 [shape=Mrecord, label="{{<i0> | <i1>} | shl | {<o0> i64}}", fillcolor="#ffee9b", style="filled"]
                 node8 [shape=Mrecord, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}", fillcolor="#ffee9b", style="filled"]
-                node9 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node9 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store.8 | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
                 node13 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", fillcolor="#ffd3e4", style="filled"]
                 node14 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
                 node15 [shape=Mrecord, label="{{<i0>} | return}", fillcolor="#c2c2ff", style="filled"]
@@ -302,7 +302,7 @@ fn dump_quoted_func_name() {
             %27:ptr = ptroff %2, %26
             %11:i64 = iconst 32
             %12:ptr = ptroff %2, %11
-            %13:ctrl, %14:i32 = load %4, %12
+            %13:ctrl, %14:i32 = load.4 %4, %12
             %15:i32 = icmp slt %6, %14
             %16:ctrl, %17:ctrl = brcond %13, %15
             %7:ctrl, %8:phisel = region %16
@@ -445,24 +445,24 @@ fn dump_verifier_errors() {
             %2:ctrl, %3:phisel = region %0
             %5:ptr = stackslot 4:4
             %4:ptr = stackslot 4:4
-            %6:ctrl = store %2, %1, %4, %4
+            %6:ctrl = store.4 %2, %1, %4, %4
             %24:i32 = iconst 1
             %7:i32 = iconst 0
-            %8:ctrl = store %6, %7, %5
+            %8:ctrl = store.4 %6, %7, %5
             %13:i32 = icmp eq %12, %7
             %18:ctrl, %19:ctrl = brcond %11, %13
             %14:ctrl, %15:phisel = region %18
-            %29:ctrl, %30:i32 = load %6, %5
+            %29:ctrl, %30:i32 = load.4 %6, %5
             return %29, %30
             %16:ctrl, %17:phisel = region %19
-            %20:ctrl, %21:i32 = load %16, %4
-            %22:ctrl, %23:i32 = load %20, %5
+            %20:ctrl, %21:i32 = load.4 %16, %4
+            %22:ctrl, %23:i32 = load.4 %20, %5
             %25:i32 = isub %21, %5
-            %27:ctrl = store %22, %25, %4
+            %27:ctrl = store.4 %22, %25, %4
             %26:i32 = iadd %23, %21
-            %28:ctrl = store %27, %26, %5
+            %28:ctrl = store.4 %27, %26, %5
             %9:ctrl, %10:phisel = region %8, %28
-            %11:ctrl, %12:i32 = load %9, %4
+            %11:ctrl, %12:i32 = load.4 %9, %4
         }
         "#,
         expect![[r##"
@@ -471,23 +471,23 @@ fn dump_verifier_errors() {
                 node1 [shape=Mrecord, label="{{<i0>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
                 node2 [shape=Mrecord, label="{stackslot 4:4 | {<o0> ptr}}", fillcolor="#ffee9b", style="filled"]
                 node3 [shape=Mrecord, label="{stackslot 4:4 | {<o0> ptr}}", fillcolor="#ffee9b", style="filled"]
-                node4 [shape=Mrecord, label="{{<i0> | <i1> | <i2> | <i3>} | store | {<o0> ctrl}}", tooltip="bad input count, expected 3&#10;control output 0 reused", color="#ff0000", penwidth="2", fillcolor="#ffd3e4", style="filled"]
-                node11 [shape=Mrecord, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                node4 [shape=Mrecord, label="{{<i0> | <i1> | <i2> | <i3>} | store.4 | {<o0> ctrl}}", tooltip="bad input count, expected 3&#10;control output 0 reused", color="#ff0000", penwidth="2", fillcolor="#ffd3e4", style="filled"]
+                node11 [shape=Mrecord, label="{{<i0> | <i1>} | load.4 | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
                 node12 [shape=Mrecord, label="{{<i0> | <i1>} | return}", fillcolor="#ffd3e4", style="filled"]
                 node6 [shape=Mrecord, label="{iconst 0 | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
-                node7 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node7 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store.4 | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
                 node8 [shape=Mrecord, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
                 node9 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", fillcolor="#ffd3e4", style="filled"]
                 node10 [shape=Mrecord, label="{{<i0>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="control output 0 unused", color="#ff0000", penwidth="2", fillcolor="#c2c2ff", style="filled"]
                 node13 [shape=Mrecord, label="{{<i0>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
-                node14 [shape=Mrecord, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
-                node15 [shape=Mrecord, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                node14 [shape=Mrecord, label="{{<i0> | <i1>} | load.4 | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                node15 [shape=Mrecord, label="{{<i0> | <i1>} | load.4 | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
                 node16 [shape=Mrecord, label="{{<i0> | <i1>} | isub | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
-                node17 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node17 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store.4 | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
                 node18 [shape=Mrecord, label="{{<i0> | <i1>} | iadd | {<o0> i32}}", fillcolor="#ffee9b", style="filled"]
-                node19 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
+                node19 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store.4 | {<o0> ctrl}}", fillcolor="#ffd3e4", style="filled"]
                 node20 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", fillcolor="#c2c2ff", style="filled"]
-                node21 [shape=Mrecord, label="{{<i0> | <i1>} | load | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
+                node21 [shape=Mrecord, label="{{<i0> | <i1>} | load.4 | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
                 node0:o0 -> node1:i0 [color="#0000ff", penwidth="2"]
                 node1:o0 -> node4:i0 [color="#0000ff", penwidth="2"]
                 node0:o1 -> node4:i1 [color="#d36805"]

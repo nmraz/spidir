@@ -2,66 +2,62 @@
 
 func @load_bad_input_count:i32() {
     # check: function `load_bad_input_count`:
-    # unordered: `$val:ctrl, $val:i32 = load $val`: bad input count, expected 2
+    # unordered: `$val:ctrl, $val:i32 = load.4 $val`: bad input count, expected 2
 
     %0:ctrl = entry
-    %1:ctrl, %2:i32 = load %0
+    %1:ctrl, %2:i32 = load.4 %0
     return %1, %2
 }
 
 func @load_bad_output_count(ptr) {
     # check: function `load_bad_output_count`:
-    # unordered: `$val:ctrl = load $val, $val`: bad output count, expected 2
+    # unordered: `$val:ctrl = load.4 $val, $val`: bad output count, expected 2
 
     %0:ctrl, %1:ptr = entry
-    %2:ctrl = load %0, %1
+    %2:ctrl = load.4 %0, %1
     return %2
 }
 
 func @load_bad_output_kinds:i32(ptr) {
     # check: function `load_bad_output_kinds`:
-    # unordered: `$val:i32, $val:ctrl = load $val, $val`: bad value kind for output 0, expected one of `ctrl`, got `i32`
-    # unordered: `$val:i32, $val:ctrl = load $val, $val`: bad value kind for output 1, expected one of `i32`, `i64`, `f64`, `ptr`, got `ctrl`
+    # unordered: `$val:i32, $val:ctrl = load.4 $val, $val`: bad value kind for output 0, expected one of `ctrl`, got `i32`
+    # unordered: `$val:i32, $val:ctrl = load.4 $val, $val`: bad value kind for output 1, expected one of `i32`, `i64`, `f64`, `ptr`, got `ctrl`
 
     %0:ctrl, %1:ptr = entry
-    %2:i32, %3:ctrl = load %0, %1
+    %2:i32, %3:ctrl = load.4 %0, %1
     return %3, %2
 }
 
 func @load_bad_input_kinds:i32(ptr) {
     # check: function `load_bad_input_kinds`:
-    # unordered: `$val:ctrl, $val:i32 = load $val, $val`: bad value kind for input 0, expected one of `ctrl`, got `ptr`
-    # unordered: `$val:ctrl, $val:i32 = load $val, $val`: bad value kind for input 1, expected one of `ptr`, got `ctrl`
+    # unordered: `$val:ctrl, $val:i32 = load.4 $val, $val`: bad value kind for input 0, expected one of `ctrl`, got `ptr`
+    # unordered: `$val:ctrl, $val:i32 = load.4 $val, $val`: bad value kind for input 1, expected one of `ptr`, got `ctrl`
 
     %0:ctrl, %1:ptr = entry
-    %2:ctrl, %3:i32 = load %1, %0
+    %2:ctrl, %3:i32 = load.4 %1, %0
     return %2, %3
 }
 
 func @load8_i32:i32(ptr) {
-    # TODO: once sized loads are a thing
     %0:ctrl, %1:ptr = entry
-    %2:ctrl, %3:i32 = load %0, %1
+    %2:ctrl, %3:i32 = load.8 %0, %1
     return %2, %3
 }
 
 func @load1_f64:f64(ptr) {
-    # TODO: once sized loads are a thing
     %0:ctrl, %1:ptr = entry
-    %2:ctrl, %3:f64 = load %0, %1
+    %2:ctrl, %3:f64 = load.1 %0, %1
     return %2, %3
 }
 
 func @load2_f64:f64(ptr) {
-    # TODO: once sized loads are a thing
     %0:ctrl, %1:ptr = entry
-    %2:ctrl, %3:f64 = load %0, %1
+    %2:ctrl, %3:f64 = load.2 %0, %1
     return %2, %3
 }
 
 func @load4_f64:f64(ptr) {
-    # TODO: once sized loads are a thing
     %0:ctrl, %1:ptr = entry
-    %2:ctrl, %3:f64 = load %0, %1
+    %2:ctrl, %3:f64 = load.4 %0, %1
     return %2, %3
 }

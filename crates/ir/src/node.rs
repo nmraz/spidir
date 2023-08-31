@@ -57,6 +57,25 @@ impl IcmpKind {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum MemSize {
+    S1,
+    S2,
+    S4,
+    S8,
+}
+
+impl MemSize {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            MemSize::S1 => "1",
+            MemSize::S2 => "2",
+            MemSize::S4 => "4",
+            MemSize::S8 => "8",
+        }
+    }
+}
+
 impl fmt::Display for IcmpKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.as_str())
@@ -113,8 +132,8 @@ pub enum NodeKind {
     Icmp(IcmpKind),
     FConst(BitwiseF64),
     PtrOff,
-    Load,
-    Store,
+    Load(MemSize),
+    Store(MemSize),
     StackSlot { size: u32, align: u32 },
     BrCond,
     Call(FunctionRef),
@@ -135,8 +154,8 @@ impl NodeKind {
                 | Self::Region
                 | Self::Sdiv
                 | Self::Udiv
-                | Self::Load
-                | Self::Store
+                | Self::Load(..)
+                | Self::Store(..)
                 | Self::BrCond
                 | Self::Call(..)
         )

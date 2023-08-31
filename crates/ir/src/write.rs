@@ -225,8 +225,8 @@ pub fn write_node_kind(
         NodeKind::Icmp(kind) => write!(w, "icmp {kind}")?,
         NodeKind::FConst(val) => write!(w, "fconst {val}")?,
         NodeKind::PtrOff => w.write_str("ptroff")?,
-        NodeKind::Load => w.write_str("load")?,
-        NodeKind::Store => w.write_str("store")?,
+        NodeKind::Load(size) => write!(w, "load.{}", size.as_str())?,
+        NodeKind::Store(size) => write!(w, "store.{}", size.as_str())?,
         NodeKind::StackSlot { size, align } => write!(w, "stackslot {size}:{align}")?,
         NodeKind::BrCond => w.write_str("brcond")?,
         NodeKind::Call(func) => {
@@ -286,7 +286,7 @@ mod tests {
     use crate::{
         builder::{Builder, BuilderExt, SimpleBuilder},
         module::{ExternFunctionData, FunctionData, Signature},
-        node::{BitwiseF64, DepValueKind, IcmpKind, Type},
+        node::{BitwiseF64, DepValueKind, IcmpKind, MemSize, Type},
         test_utils::{create_entry, create_loop_graph, create_return},
     };
 
@@ -363,8 +363,10 @@ mod tests {
             (NodeKind::Icmp(IcmpKind::Ule), "icmp ule"),
             (NodeKind::FConst(BitwiseF64(2.71)), "fconst 2.71"),
             (NodeKind::PtrOff, "ptroff"),
-            (NodeKind::Load, "load"),
-            (NodeKind::Store, "store"),
+            (NodeKind::Load(MemSize::S1), "load.1"),
+            (NodeKind::Load(MemSize::S2), "load.2"),
+            (NodeKind::Store(MemSize::S4), "store.4"),
+            (NodeKind::Store(MemSize::S8), "store.8"),
             (NodeKind::StackSlot { size: 8, align: 4 }, "stackslot 8:4"),
             (NodeKind::BrCond, "brcond"),
             (NodeKind::Call(FunctionRef::Internal(func)), "call @my_func"),
@@ -509,8 +511,8 @@ mod tests {
         let addr32 = builder.build_stackslot(4, 4);
         let addr64 = builder.build_stackslot(8, 8);
 
-        let store32_ctrl = builder.build_store(entry_ctrl, param32, addr32);
-        let store64_ctrl = builder.build_store(store32_ctrl, param64, addr64);
+        let store32_ctrl = builder.build_store(MemSize::S4, entry_ctrl, param32, addr32);
+        let store64_ctrl = builder.build_store(MemSize::S8, store32_ctrl, param64, addr64);
         builder.build_return(store64_ctrl, None);
 
         check_write_function(
@@ -520,8 +522,8 @@ mod tests {
                     %0:ctrl, %1:i32, %2:f64 = entry
                     %4:ptr = stackslot 8:8
                     %3:ptr = stackslot 4:4
-                    %5:ctrl = store %0, %1, %3
-                    %6:ctrl = store %5, %2, %4
+                    %5:ctrl = store.4 %0, %1, %3
+                    %6:ctrl = store.8 %5, %2, %4
                     return %6
                 }
             "#]],

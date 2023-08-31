@@ -5,7 +5,7 @@ use ir::{
     builder::{Builder, BuilderExt},
     cons_builder::{Cache, ConsBuilder},
     module::FunctionData,
-    node::{FunctionRef, IcmpKind, Type},
+    node::{FunctionRef, IcmpKind, MemSize, Type},
     valgraph::{DepValue, Node},
 };
 
@@ -197,16 +197,16 @@ impl<'a> FunctionBuilder<'a> {
         self.builder().build_ptroff(ptr, off)
     }
 
-    pub fn build_load(&mut self, ty: Type, ptr: DepValue) -> DepValue {
+    pub fn build_load(&mut self, size: MemSize, ty: Type, ptr: DepValue) -> DepValue {
         let ctrl = self.cur_block_ctrl();
-        let built = self.builder().build_load(ty, ctrl, ptr);
+        let built = self.builder().build_load(size, ty, ctrl, ptr);
         self.advance_cur_block_ctrl(built.ctrl);
         built.output
     }
 
-    pub fn build_store(&mut self, data: DepValue, ptr: DepValue) {
+    pub fn build_store(&mut self, size: MemSize, data: DepValue, ptr: DepValue) {
         let ctrl = self.cur_block_ctrl();
-        let ctrl = self.builder().build_store(ctrl, data, ptr);
+        let ctrl = self.builder().build_store(size, ctrl, data, ptr);
         self.advance_cur_block_ctrl(ctrl);
     }
 
@@ -420,10 +420,10 @@ mod tests {
                 let val64 = builder.build_param_ref(1);
 
                 let slot32 = builder.build_stackslot(4, 4);
-                builder.build_store(val32, slot32);
+                builder.build_store(MemSize::S4, val32, slot32);
 
                 let slot64 = builder.build_stackslot(8, 8);
-                builder.build_store(val64, slot64);
+                builder.build_store(MemSize::S8, val64, slot64);
 
                 builder.build_return(None);
             },
@@ -433,8 +433,8 @@ mod tests {
                     %3:ctrl, %4:phisel = region %0
                     %7:ptr = stackslot 8:8
                     %5:ptr = stackslot 4:4
-                    %6:ctrl = store %3, %1, %5
-                    %8:ctrl = store %6, %2, %7
+                    %6:ctrl = store.4 %3, %1, %5
+                    %8:ctrl = store.8 %6, %2, %7
                     return %8
                 }"#]],
         );

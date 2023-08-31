@@ -1,7 +1,7 @@
 use core::iter;
 
 use crate::{
-    node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, NodeKind, Type},
+    node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
@@ -202,9 +202,15 @@ pub trait BuilderExt: Builder {
         build_single_output_pure(self, NodeKind::PtrOff, [ptr, off], Type::Ptr)
     }
 
-    fn build_load(&mut self, ty: Type, ctrl: DepValue, ptr: DepValue) -> BuiltEffectful {
+    fn build_load(
+        &mut self,
+        size: MemSize,
+        ty: Type,
+        ctrl: DepValue,
+        ptr: DepValue,
+    ) -> BuiltEffectful {
         let load = self.create_node(
-            NodeKind::Load,
+            NodeKind::Load(size),
             [ctrl, ptr],
             [DepValueKind::Control, DepValueKind::Value(ty)],
         );
@@ -214,8 +220,18 @@ pub trait BuilderExt: Builder {
             output: outputs[1],
         }
     }
-    fn build_store(&mut self, ctrl: DepValue, data: DepValue, ptr: DepValue) -> DepValue {
-        let store = self.create_node(NodeKind::Store, [ctrl, data, ptr], [DepValueKind::Control]);
+    fn build_store(
+        &mut self,
+        size: MemSize,
+        ctrl: DepValue,
+        data: DepValue,
+        ptr: DepValue,
+    ) -> DepValue {
+        let store = self.create_node(
+            NodeKind::Store(size),
+            [ctrl, data, ptr],
+            [DepValueKind::Control],
+        );
         self.graph().node_outputs(store)[0]
     }
 

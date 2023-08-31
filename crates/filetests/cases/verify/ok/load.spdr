@@ -4,56 +4,48 @@
 
 func @load1_i32:i32(ptr) {
     %0:ctrl, %1:ptr = entry
-    # TODO: sized load
-    %2:ctrl, %3:i32 = load %0, %1
+    %2:ctrl, %3:i32 = load.1 %0, %1
     return %2, %3
 }
 
 func @load2_i32:i32(ptr) {
     %0:ctrl, %1:ptr = entry
-    # TODO: sized load
-    %2:ctrl, %3:i32 = load %0, %1
+    %2:ctrl, %3:i32 = load.2 %0, %1
     return %2, %3
 }
 
 func @load4_i32:i32(ptr) {
     %0:ctrl, %1:ptr = entry
-    # TODO: sized load
-    %2:ctrl, %3:i32 = load %0, %1
+    %2:ctrl, %3:i32 = load.4 %0, %1
     return %2, %3
 }
 
 func @load1_i64:i64(ptr) {
     %0:ctrl, %1:ptr = entry
-    # TODO: sized load
-    %2:ctrl, %3:i64 = load %0, %1
+    %2:ctrl, %3:i64 = load.1 %0, %1
     return %2, %3
 }
 
 func @load2_i64:i64(ptr) {
     %0:ctrl, %1:ptr = entry
-    # TODO: sized load
-    %2:ctrl, %3:i64 = load %0, %1
+    %2:ctrl, %3:i64 = load.2 %0, %1
     return %2, %3
 }
 
 func @load4_i64:i64(ptr) {
     %0:ctrl, %1:ptr = entry
-    # TODO: sized load
-    %2:ctrl, %3:i64 = load %0, %1
+    %2:ctrl, %3:i64 = load.4 %0, %1
     return %2, %3
 }
 
 func @load8_i64:i64(ptr) {
     %0:ctrl, %1:ptr = entry
-    # TODO: sized load
-    %2:ctrl, %3:i64 = load %0, %1
+    %2:ctrl, %3:i64 = load.8 %0, %1
     return %2, %3
 }
 
 func @load8_f64:f64(ptr) {
     %0:ctrl, %1:ptr = entry
-    # TODO: sized load
-    %2:ctrl, %3:f64 = load %0, %1
+    %2:ctrl, %3:f64 = load.8 %0, %1
     return %2, %3
 }

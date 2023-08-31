@@ -4,14 +4,14 @@ use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::{
     module::{FunctionData, Module},
-    node::{DepValueKind, NodeKind, Type},
+    node::{DepValueKind, FunctionRef, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
 use super::GraphVerifierError;
 
 pub fn verify_node_kind(
-    _module: &Module,
+    module: &Module,
     func: &FunctionData,
     node: Node,
     errors: &mut Vec<GraphVerifierError>,
@@ -41,7 +41,7 @@ pub fn verify_node_kind(
         NodeKind::Store => verify_store(graph, node, errors),
         NodeKind::StackSlot { align, .. } => verify_stack_slot(graph, node, *align, errors),
         NodeKind::BrCond => verify_brcond(graph, node, errors),
-        NodeKind::Call(_) => {}
+        NodeKind::Call(func) => verify_call(module, graph, node, *func, errors),
     }
 }
 
@@ -299,6 +299,42 @@ fn verify_brcond(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierErr
     let _ = verify_output_kind(graph, nontaken_ctrl, &[DepValueKind::Control], errors);
     let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
     let _ = verify_integer_input_kind(graph, node, 1, errors);
+}
+
+fn verify_call(
+    module: &Module,
+    graph: &ValGraph,
+    node: Node,
+    func: FunctionRef,
+    errors: &mut Vec<GraphVerifierError>,
+) {
+    let sig = module.resolve_funcref(func).sig;
+    let expected_input_count = sig.param_types.len() as u32 + 1;
+
+    if let Some(ret_type) = sig.ret_type {
+        let Ok([out_ctrl, retval]) = verify_node_arity(graph, node, expected_input_count, errors)
+        else {
+            return;
+        };
+        let _ = verify_output_kind(graph, out_ctrl, &[DepValueKind::Control], errors);
+        let _ = verify_output_kind(graph, retval, &[DepValueKind::Value(ret_type)], errors);
+    } else {
+        let Ok([out_ctrl]) = verify_node_arity(graph, node, expected_input_count, errors) else {
+            return;
+        };
+        let _ = verify_output_kind(graph, out_ctrl, &[DepValueKind::Control], errors);
+    }
+
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
+    for (i, &param_type) in (0..).zip(&sig.param_types) {
+        let _ = verify_input_kind(
+            graph,
+            node,
+            i + 1,
+            &[DepValueKind::Value(param_type)],
+            errors,
+        );
+    }
 }
 
 fn verify_node_arity<const O: usize>(

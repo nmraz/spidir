@@ -1,0 +1,49 @@
+# run: verify-ok
+
+# check: $()
+
+extfunc @extfunc(ptr, i32)
+extfunc @extfunc2:i32(ptr, i32)
+
+func @infunc(ptr, i32) {
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    return %3
+}
+
+func @infunc2:i32(ptr, i32) {
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    return %3, %2
+}
+
+func @no_params() {
+    %0:ctrl = entry
+    return %0
+}
+
+func @mixed_params(i32, i64, f64, ptr, i64) {
+    %0:ctrl, %1:i32, %2:i64, %3:f64, %4:ptr, %5:i64 = entry
+    return %0
+}
+
+func @caller:i32(ptr, i32) {
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    %5:ctrl = call @extfunc %3, %1, %2
+    %6:ctrl, %7:i32 = call @extfunc2 %5, %1, %2
+    %8:ctrl = call @infunc %6, %1, %2
+    %9:ctrl, %10:i32 = call @infunc2 %8, %1, %2
+    %11:i32 = iadd %7, %10
+    %12:ctrl = call @no_params %9
+    return %12, %11
+}
+
+func @call_mixed_params(ptr) {
+    %0:ctrl, %p:ptr = entry
+    %zero32:i32 = iconst 0
+    %zero64:i64 = iconst 0
+    %fivef:f64 = fconst 5
+    %1:ctrl = call @mixed_params %0, %zero32, %zero64, %fivef, %p, %zero64
+    return %1
+}

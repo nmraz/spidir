@@ -2,6 +2,12 @@
 
 # check: $()
 
+func @nullptr:ptr() {
+    %0:ctrl = entry
+    %1:ptr = iconst 0
+    return %0, %1
+}
+
 func @iconst32_near_range_end:i32() {
     %0:ctrl = entry
     %1:i32 = iconst 4294967295
@@ -11,5 +17,11 @@ func @iconst32_near_range_end:i32() {
 func @iconst64_near_range_end:i64() {
     %0:ctrl = entry
     %1:i64 = iconst 18446744073709551615
+    return %0, %1
+}
+
+func @ptr_near_range_end:ptr() {
+    %0:ctrl = entry
+    %1:ptr = iconst 18446744073709551615
     return %0, %1
 }

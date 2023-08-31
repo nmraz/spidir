@@ -30,7 +30,7 @@ func @iconst_i32_out_of_range:i32() {
 
 func @iconst_bad_output_kind:f64() {
     # check: function `iconst_bad_output_kind`:
-    # unordered: `$val:f64 = iconst 5`: bad value kind for output 0, expected one of `i32`, `i64`, got `f64`
+    # unordered: `$val:f64 = iconst 5`: bad value kind for output 0, expected one of `i32`, `i64`, `ptr`, got `f64`
 
     %0:ctrl = entry
     %1:f64 = iconst 5

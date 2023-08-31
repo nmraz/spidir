@@ -150,7 +150,8 @@ fn verify_iconst(graph: &ValGraph, node: Node, val: u64, errors: &mut Vec<GraphV
     let Ok([result]) = verify_node_arity(graph, node, 0, errors) else {
         return;
     };
-    if verify_integer_output_kind(graph, result, errors).is_err() {
+
+    if verify_intlike_output_kind(graph, result, errors).is_err() {
         return;
     }
 
@@ -161,8 +162,8 @@ fn verify_iconst(graph: &ValGraph, node: Node, val: u64, errors: &mut Vec<GraphV
                 errors.push(GraphVerifierError::ConstantOutOfRange(node));
             }
         }
-        Type::I64 => {
-            // Value is already a `u64`
+        Type::Ptr | Type::I64 => {
+            // Value is already a `u64`; we always treat pointers like `u64`s.
         }
         _ => panic!("type should have been verified here"),
     }
@@ -228,15 +229,7 @@ fn verify_icmp(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError
 
     let _ = verify_integer_output_kind(graph, result, errors);
 
-    if verify_input_kind(
-        graph,
-        node,
-        0,
-        &[Type::I32, Type::I64, Type::Ptr].map(DepValueKind::Value),
-        errors,
-    )
-    .is_err()
-    {
+    if verify_intlike_input_kind(graph, node, 0, errors).is_err() {
         return;
     }
 
@@ -418,6 +411,23 @@ fn verify_value_input_kind(
     verify_input_kind(graph, node, input, ALL_VALUE_TYPES, errors)
 }
 
+fn verify_intlike_input_kind(
+    graph: &ValGraph,
+    node: Node,
+    input: u32,
+    errors: &mut Vec<GraphVerifierError>,
+) -> Result<(), ()> {
+    verify_input_kind(graph, node, input, ALL_INTLIKE_TYPES, errors)
+}
+
+fn verify_intlike_output_kind(
+    graph: &ValGraph,
+    value: DepValue,
+    errors: &mut Vec<GraphVerifierError>,
+) -> Result<(), ()> {
+    verify_output_kind(graph, value, ALL_INTLIKE_TYPES, errors)
+}
+
 fn verify_value_output_kind(
     graph: &ValGraph,
     result: DepValue,
@@ -465,6 +475,12 @@ const ALL_VALUE_TYPES: &[DepValueKind] = &[
     DepValueKind::Value(Type::I32),
     DepValueKind::Value(Type::I64),
     DepValueKind::Value(Type::F64),
+    DepValueKind::Value(Type::Ptr),
+];
+
+const ALL_INTLIKE_TYPES: &[DepValueKind] = &[
+    DepValueKind::Value(Type::I32),
+    DepValueKind::Value(Type::I64),
     DepValueKind::Value(Type::Ptr),
 ];
 

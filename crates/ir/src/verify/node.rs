@@ -61,7 +61,7 @@ fn verify_entry(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifierE
         return;
     }
 
-    let _ = verify_output_kind(&func.graph, outputs[0], &[DepValueKind::Control], errors);
+    let _ = verify_ctrl_output_kind(&func.graph, outputs[0], errors);
     for (output, &expected_ty) in outputs.into_iter().skip(1).zip(&func.sig.param_types) {
         let _ = verify_output_kind(
             &func.graph,
@@ -78,7 +78,7 @@ fn verify_return(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifier
             let Ok([]) = verify_node_arity(&func.graph, node, 2, errors) else {
                 return;
             };
-            let _ = verify_input_kind(&func.graph, node, 0, &[DepValueKind::Control], errors);
+            let _ = verify_ctrl_input_kind(&func.graph, node, 0, errors);
             let _ = verify_input_kind(
                 &func.graph,
                 node,
@@ -91,7 +91,7 @@ fn verify_return(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifier
             let Ok([]) = verify_node_arity(&func.graph, node, 1, errors) else {
                 return;
             };
-            let _ = verify_input_kind(&func.graph, node, 0, &[DepValueKind::Control], errors);
+            let _ = verify_ctrl_input_kind(&func.graph, node, 0, errors);
         }
     }
 }
@@ -100,11 +100,12 @@ fn verify_region(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierErr
     let Ok([ctrl, phisel]) = verify_outputs(graph, node, errors) else {
         return;
     };
-    let _ = verify_output_kind(graph, ctrl, &[DepValueKind::Control], errors);
+
+    let _ = verify_ctrl_output_kind(graph, ctrl, errors);
     let _ = verify_output_kind(graph, phisel, &[DepValueKind::PhiSelector], errors);
 
     for input in 0..graph.node_inputs(node).len() as u32 {
-        let _ = verify_input_kind(graph, node, input, &[DepValueKind::Control], errors);
+        let _ = verify_ctrl_input_kind(graph, node, input, errors);
     }
 }
 
@@ -135,7 +136,7 @@ fn verify_phi(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>
         return;
     }
 
-    if verify_output_kind(graph, result, ALL_VALUE_TYPES, errors).is_err() {
+    if verify_value_output_kind(graph, result, errors).is_err() {
         return;
     }
 
@@ -207,8 +208,9 @@ fn verify_int_div(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierEr
     let Ok([out_ctrl, result]) = verify_node_arity(graph, node, 3, errors) else {
         return;
     };
-    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
-    let _ = verify_output_kind(graph, out_ctrl, &[DepValueKind::Control], errors);
+
+    let _ = verify_ctrl_input_kind(graph, node, 0, errors);
+    let _ = verify_ctrl_output_kind(graph, out_ctrl, errors);
 
     if verify_integer_output_kind(graph, result, errors).is_err() {
         return;
@@ -260,9 +262,9 @@ fn verify_load(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError
     let Ok([out_ctrl, result]) = verify_node_arity(graph, node, 2, errors) else {
         return;
     };
-    let _ = verify_output_kind(graph, out_ctrl, &[DepValueKind::Control], errors);
-    let _ = verify_output_kind(graph, result, ALL_VALUE_TYPES, errors);
-    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
+    let _ = verify_ctrl_output_kind(graph, out_ctrl, errors);
+    let _ = verify_value_output_kind(graph, result, errors);
+    let _ = verify_ctrl_input_kind(graph, node, 0, errors);
     let _ = verify_input_kind(graph, node, 1, &[DepValueKind::Value(Type::Ptr)], errors);
 }
 
@@ -270,9 +272,9 @@ fn verify_store(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierErro
     let Ok([out_ctrl]) = verify_node_arity(graph, node, 3, errors) else {
         return;
     };
-    let _ = verify_output_kind(graph, out_ctrl, &[DepValueKind::Control], errors);
-    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
-    let _ = verify_input_kind(graph, node, 1, ALL_VALUE_TYPES, errors);
+    let _ = verify_ctrl_output_kind(graph, out_ctrl, errors);
+    let _ = verify_ctrl_input_kind(graph, node, 0, errors);
+    let _ = verify_value_input_kind(graph, node, 1, errors);
     let _ = verify_input_kind(graph, node, 2, &[DepValueKind::Value(Type::Ptr)], errors);
 }
 
@@ -295,9 +297,9 @@ fn verify_brcond(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierErr
     let Ok([taken_ctrl, nontaken_ctrl]) = verify_node_arity(graph, node, 2, errors) else {
         return;
     };
-    let _ = verify_output_kind(graph, taken_ctrl, &[DepValueKind::Control], errors);
-    let _ = verify_output_kind(graph, nontaken_ctrl, &[DepValueKind::Control], errors);
-    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
+    let _ = verify_ctrl_output_kind(graph, taken_ctrl, errors);
+    let _ = verify_ctrl_output_kind(graph, nontaken_ctrl, errors);
+    let _ = verify_ctrl_input_kind(graph, node, 0, errors);
     let _ = verify_integer_input_kind(graph, node, 1, errors);
 }
 
@@ -316,16 +318,16 @@ fn verify_call(
         else {
             return;
         };
-        let _ = verify_output_kind(graph, out_ctrl, &[DepValueKind::Control], errors);
+        let _ = verify_ctrl_output_kind(graph, out_ctrl, errors);
         let _ = verify_output_kind(graph, retval, &[DepValueKind::Value(ret_type)], errors);
     } else {
         let Ok([out_ctrl]) = verify_node_arity(graph, node, expected_input_count, errors) else {
             return;
         };
-        let _ = verify_output_kind(graph, out_ctrl, &[DepValueKind::Control], errors);
+        let _ = verify_ctrl_output_kind(graph, out_ctrl, errors);
     }
 
-    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
+    let _ = verify_ctrl_input_kind(graph, node, 0, errors);
     for (i, &param_type) in (0..).zip(&sig.param_types) {
         let _ = verify_input_kind(
             graph,
@@ -373,6 +375,23 @@ fn verify_outputs<const O: usize>(
     Ok(array::from_fn(|i| outputs[i]))
 }
 
+fn verify_ctrl_input_kind(
+    graph: &ValGraph,
+    node: Node,
+    input: u32,
+    errors: &mut Vec<GraphVerifierError>,
+) -> Result<(), ()> {
+    verify_input_kind(graph, node, input, &[DepValueKind::Control], errors)
+}
+
+fn verify_ctrl_output_kind(
+    graph: &ValGraph,
+    value: DepValue,
+    errors: &mut Vec<GraphVerifierError>,
+) -> Result<(), ()> {
+    verify_output_kind(graph, value, &[DepValueKind::Control], errors)
+}
+
 fn verify_integer_input_kind(
     graph: &ValGraph,
     node: Node,
@@ -388,6 +407,23 @@ fn verify_integer_output_kind(
     errors: &mut Vec<GraphVerifierError>,
 ) -> Result<(), ()> {
     verify_output_kind(graph, value, ALL_INTEGER_TYPES, errors)
+}
+
+fn verify_value_input_kind(
+    graph: &ValGraph,
+    node: Node,
+    input: u32,
+    errors: &mut Vec<GraphVerifierError>,
+) -> Result<(), ()> {
+    verify_input_kind(graph, node, input, ALL_VALUE_TYPES, errors)
+}
+
+fn verify_value_output_kind(
+    graph: &ValGraph,
+    result: DepValue,
+    errors: &mut Vec<GraphVerifierError>,
+) -> Result<(), ()> {
+    verify_output_kind(graph, result, ALL_VALUE_TYPES, errors)
 }
 
 fn verify_input_kind(

@@ -104,7 +104,8 @@ enum spidir_mem_size {
     /// This access size is permitted for 32-bit and 64-bit integers.
     SPIDIR_MEM_SIZE_4 = 2,
     /// An 8-byte memory access.
-    /// This access size is permitted for integers, `f64` values and pointers.
+    /// This access size is permitted for 64-bit integers, `f64` values and
+    /// pointers.
     SPIDIR_MEM_SIZE_8 = 3,
 };
 

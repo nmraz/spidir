@@ -40,6 +40,9 @@ func @store_bad_input_kinds(i32, ptr) {
 }
 
 func @store8_i32(i32, ptr) {
+    # check: function `store8_i32`:
+    # unordered: `$val:ctrl = store.8 $val, $val, $val`: bad value kind for input 1, expected one of `i64`, `f64`, `ptr`, got `i32`
+
     %0:ctrl, %1:i32, %2:ptr = entry
     %3:ctrl = store.8 %0, %1, %2
     return %3

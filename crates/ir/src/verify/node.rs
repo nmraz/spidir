@@ -286,7 +286,6 @@ fn allowed_kinds_for_mem_size(size: MemSize) -> &'static [DepValueKind] {
             DepValueKind::Value(Type::I64),
         ],
         MemSize::S8 => &[
-            DepValueKind::Value(Type::I32),
             DepValueKind::Value(Type::I64),
             DepValueKind::Value(Type::F64),
             DepValueKind::Value(Type::Ptr),

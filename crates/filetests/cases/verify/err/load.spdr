@@ -39,6 +39,9 @@ func @load_bad_input_kinds:i32(ptr) {
 }
 
 func @load8_i32:i32(ptr) {
+    # check: function `load8_i32`:
+    # unordered: `$val:ctrl, $val:i32 = load.8 $val, $val`: bad value kind for output 1, expected one of `i64`, `f64`, `ptr`, got `i32`
+
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:i32 = load.8 %0, %1
     return %2, %3

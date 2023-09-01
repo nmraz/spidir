@@ -49,3 +49,9 @@ func @load8_f64:f64(ptr) {
     %2:ctrl, %3:f64 = load.8 %0, %1
     return %2, %3
 }
+
+func @load8_ptr:ptr(ptr) {
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:ptr = load.8 %0, %1
+    return %2, %3
+}

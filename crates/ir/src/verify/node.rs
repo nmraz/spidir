@@ -4,7 +4,7 @@ use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::{
     module::{FunctionData, Module},
-    node::{DepValueKind, FunctionRef, NodeKind, Type},
+    node::{DepValueKind, FunctionRef, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
@@ -37,8 +37,8 @@ pub fn verify_node_kind(
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
         NodeKind::FConst(_) => verify_fconst(graph, node, errors),
         NodeKind::PtrOff => verify_ptroff(graph, node, errors),
-        NodeKind::Load(_size) => verify_load(graph, node, errors),
-        NodeKind::Store(_size) => verify_store(graph, node, errors),
+        NodeKind::Load(size) => verify_load(graph, node, *size, errors),
+        NodeKind::Store(size) => verify_store(graph, node, *size, errors),
         NodeKind::StackSlot { align, .. } => verify_stack_slot(graph, node, *align, errors),
         NodeKind::BrCond => verify_brcond(graph, node, errors),
         NodeKind::Call(func) => verify_call(module, graph, node, *func, errors),
@@ -251,24 +251,47 @@ fn verify_ptroff(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierErr
     let _ = verify_input_kind(graph, node, 1, &[DepValueKind::Value(Type::I64)], errors);
 }
 
-fn verify_load(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {
+fn verify_load(graph: &ValGraph, node: Node, size: MemSize, errors: &mut Vec<GraphVerifierError>) {
     let Ok([out_ctrl, result]) = verify_node_arity(graph, node, 2, errors) else {
         return;
     };
     let _ = verify_ctrl_output_kind(graph, out_ctrl, errors);
-    let _ = verify_value_output_kind(graph, result, errors);
+    let _ = verify_output_kind(graph, result, allowed_kinds_for_mem_size(size), errors);
     let _ = verify_ctrl_input_kind(graph, node, 0, errors);
     let _ = verify_input_kind(graph, node, 1, &[DepValueKind::Value(Type::Ptr)], errors);
 }
 
-fn verify_store(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {
+fn verify_store(graph: &ValGraph, node: Node, size: MemSize, errors: &mut Vec<GraphVerifierError>) {
     let Ok([out_ctrl]) = verify_node_arity(graph, node, 3, errors) else {
         return;
     };
     let _ = verify_ctrl_output_kind(graph, out_ctrl, errors);
     let _ = verify_ctrl_input_kind(graph, node, 0, errors);
-    let _ = verify_value_input_kind(graph, node, 1, errors);
+    let _ = verify_input_kind(graph, node, 1, allowed_kinds_for_mem_size(size), errors);
     let _ = verify_input_kind(graph, node, 2, &[DepValueKind::Value(Type::Ptr)], errors);
+}
+
+fn allowed_kinds_for_mem_size(size: MemSize) -> &'static [DepValueKind] {
+    match size {
+        MemSize::S1 => &[
+            DepValueKind::Value(Type::I32),
+            DepValueKind::Value(Type::I64),
+        ],
+        MemSize::S2 => &[
+            DepValueKind::Value(Type::I32),
+            DepValueKind::Value(Type::I64),
+        ],
+        MemSize::S4 => &[
+            DepValueKind::Value(Type::I32),
+            DepValueKind::Value(Type::I64),
+        ],
+        MemSize::S8 => &[
+            DepValueKind::Value(Type::I32),
+            DepValueKind::Value(Type::I64),
+            DepValueKind::Value(Type::F64),
+            DepValueKind::Value(Type::Ptr),
+        ],
+    }
 }
 
 fn verify_stack_slot(
@@ -400,15 +423,6 @@ fn verify_integer_output_kind(
     errors: &mut Vec<GraphVerifierError>,
 ) -> Result<(), ()> {
     verify_output_kind(graph, value, ALL_INTEGER_TYPES, errors)
-}
-
-fn verify_value_input_kind(
-    graph: &ValGraph,
-    node: Node,
-    input: u32,
-    errors: &mut Vec<GraphVerifierError>,
-) -> Result<(), ()> {
-    verify_input_kind(graph, node, input, ALL_VALUE_TYPES, errors)
 }
 
 fn verify_intlike_input_kind(

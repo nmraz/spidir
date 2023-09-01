@@ -52,9 +52,9 @@ enum ToolCommand {
         /// The function to graph
         function: String,
 
-        /// Verify the function and display any errors in the graph
+        /// Don't show verifier errors inline in the graph
         #[arg(long)]
-        verify: bool,
+        no_verify: bool,
 
         /// Show dominance edges in the graph
         #[arg(long)]
@@ -89,12 +89,14 @@ fn main() -> Result<()> {
         ToolCommand::Graph {
             input_file,
             function: function_name,
-            verify,
+            no_verify,
             domtree,
             output_file,
             format,
             no_open,
         } => {
+            let verify = !no_verify;
+
             let output_file = output_file.unwrap_or_else(|| {
                 let mut filename = input_file
                     .file_stem()

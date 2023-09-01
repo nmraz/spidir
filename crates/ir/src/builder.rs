@@ -181,6 +181,20 @@ pub trait BuilderExt: Builder {
         build_binop_with_lhs_type(self, NodeKind::Imul, lhs, rhs)
     }
 
+    fn build_sdiv(&mut self, ctrl: DepValue, lhs: DepValue, rhs: DepValue) -> BuiltEffectful {
+        build_int_div(self, NodeKind::Sdiv, ctrl, lhs, rhs)
+    }
+    fn build_udiv(&mut self, ctrl: DepValue, lhs: DepValue, rhs: DepValue) -> BuiltEffectful {
+        build_int_div(self, NodeKind::Udiv, ctrl, lhs, rhs)
+    }
+
+    fn build_iext(&mut self, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::Iext, [value], Type::I64)
+    }
+    fn build_itrunc(&mut self, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::Itrunc, [value], Type::I32)
+    }
+
     fn build_icmp(
         &mut self,
         kind: IcmpKind,
@@ -189,13 +203,6 @@ pub trait BuilderExt: Builder {
         rhs: DepValue,
     ) -> DepValue {
         build_single_output_pure(self, NodeKind::Icmp(kind), [lhs, rhs], output_ty)
-    }
-
-    fn build_sdiv(&mut self, ctrl: DepValue, lhs: DepValue, rhs: DepValue) -> BuiltEffectful {
-        build_int_div(self, NodeKind::Sdiv, ctrl, lhs, rhs)
-    }
-    fn build_udiv(&mut self, ctrl: DepValue, lhs: DepValue, rhs: DepValue) -> BuiltEffectful {
-        build_int_div(self, NodeKind::Udiv, ctrl, lhs, rhs)
     }
 
     fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {

@@ -596,6 +596,32 @@ spidir_value_t spidir_builder_build_udiv(spidir_builder_handle_t builder,
                                          spidir_value_t lhs,
                                          spidir_value_t rhs);
 
+/// Builds an integer extend operation at the current insertion point.
+///
+/// This operation extends a 32-bit integer into a 64-bit one, leaving an
+/// indeterminate bit pattern in the upper 32 bits. This instruction should
+/// typically be followed by a mask to guarantee the values of the upper 32
+/// bits.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] value   The value to extend. This must be a 32-bit integer.
+/// @return An SSA value representing the result of the operation. This value
+///         will be a 64-bit integer.
+spidir_value_t spidir_builder_build_iext(spidir_builder_handle_t builder,
+                                         spidir_value_t value);
+
+/// Builds an integer truncate operation at the current insertion point.
+///
+/// This operation extracts the low 32 bits of a 64-bit integer into a new
+/// 32-bit integer.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] value   The value to truncate. This must be a 64-bit integer.
+/// @return An SSA value representing the result of the operation. This value
+///         will be a 32-bit integer.
+spidir_value_t spidir_builder_build_itrunc(spidir_builder_handle_t builder,
+                                           spidir_value_t value);
+
 /// Builds an integer compare operation at the current insertion point. This
 /// operation can be used to compare either integers or pointers.
 ///

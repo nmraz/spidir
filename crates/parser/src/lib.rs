@@ -254,6 +254,8 @@ fn extract_node_kind(
         "imul" => Ok(NodeKind::Imul),
         "sdiv" => Ok(NodeKind::Sdiv),
         "udiv" => Ok(NodeKind::Udiv),
+        "iext" => Ok(NodeKind::Iext),
+        "itrunc" => Ok(NodeKind::Itrunc),
         "ptroff" => Ok(NodeKind::PtrOff),
         "brcond" => Ok(NodeKind::BrCond),
         _ => extract_special_node_kind(node_kind_pair, function_names),
@@ -606,6 +608,9 @@ mod tests {
             "ashr",
             "imul",
             "sdiv",
+            "udiv",
+            "iext",
+            "itrunc",
             "icmp eq",
             "icmp ne",
             "icmp slt",
@@ -656,18 +661,20 @@ mod tests {
                 %15:i32 = imul %14, %6
                 %16:ctrl, %17:i32 = sdiv %3, %15, %6
                 %18:ctrl, %19:i32 = udiv %16, %17, %6
-                %20:i32 = icmp eq %19, %6
-                %21:i32 = icmp ne %20, %6
-                %22:i32 = icmp slt %21, %6
-                %23:i32 = icmp sle %22, %6
-                %24:i32 = icmp ult %23, %6
-                %25:i32 = icmp ule %24, %6
-                %26:f64 = fconst 3.1415
-                %27:ctrl, %28:f64 = load.8 %18, %1
-                %29:ctrl = store.8 %27, %26, %1
-                %30:ctrl, %31:ctrl = brcond %29, %25
-                return %30, %25
-                return %31, %2
+                %29:ctrl, %30:f64 = load.8 %18, %1
+                %20:i64 = iext %19
+                %21:i32 = itrunc %20
+                %22:i32 = icmp eq %21, %6
+                %23:i32 = icmp ne %22, %6
+                %24:i32 = icmp slt %23, %6
+                %25:i32 = icmp sle %24, %6
+                %26:i32 = icmp ult %25, %6
+                %27:i32 = icmp ule %26, %6
+                %28:f64 = fconst 3.1415
+                %31:ctrl = store.8 %29, %28, %1
+                %32:ctrl, %33:ctrl = brcond %31, %27
+                return %32, %27
+                return %33, %2
             }",
         )
         .unwrap();
@@ -692,18 +699,20 @@ mod tests {
                     %15:i32 = imul %14, %6
                     %16:ctrl, %17:i32 = sdiv %3, %15, %6
                     %18:ctrl, %19:i32 = udiv %16, %17, %6
-                    %27:ctrl, %28:f64 = load.8 %18, %1
-                    %20:i32 = icmp eq %19, %6
-                    %21:i32 = icmp ne %20, %6
-                    %22:i32 = icmp slt %21, %6
-                    %23:i32 = icmp sle %22, %6
-                    %24:i32 = icmp ult %23, %6
-                    %25:i32 = icmp ule %24, %6
-                    %26:f64 = fconst 3.1415
-                    %29:ctrl = store.8 %27, %26, %1
-                    %30:ctrl, %31:ctrl = brcond %29, %25
-                    return %30, %25
-                    return %31, %2
+                    %20:ctrl, %21:f64 = load.8 %18, %1
+                    %22:i64 = iext %19
+                    %23:i32 = itrunc %22
+                    %24:i32 = icmp eq %23, %6
+                    %25:i32 = icmp ne %24, %6
+                    %26:i32 = icmp slt %25, %6
+                    %27:i32 = icmp sle %26, %6
+                    %28:i32 = icmp ult %27, %6
+                    %29:i32 = icmp ule %28, %6
+                    %30:f64 = fconst 3.1415
+                    %31:ctrl = store.8 %20, %30, %1
+                    %32:ctrl, %33:ctrl = brcond %31, %29
+                    return %32, %29
+                    return %33, %2
                 }
             "#]],
         );

@@ -176,6 +176,14 @@ impl<'a> FunctionBuilder<'a> {
         built.output
     }
 
+    pub fn build_iext(&mut self, value: DepValue) -> DepValue {
+        self.builder().build_iext(value)
+    }
+
+    pub fn build_itrunc(&mut self, value: DepValue) -> DepValue {
+        self.builder().build_itrunc(value)
+    }
+
     pub fn build_udiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
         let ctrl = self.cur_block_ctrl();
         let built = self.builder().build_udiv(ctrl, lhs, rhs);

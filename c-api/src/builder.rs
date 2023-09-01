@@ -189,6 +189,28 @@ impl_builder_binop!(imul);
 impl_builder_binop!(sdiv);
 impl_builder_binop!(udiv);
 
+macro_rules! impl_builder_unop {
+    ($unop:ident) => {
+        paste! {
+            #[no_mangle]
+            unsafe extern "C" fn [<spidir_builder_build_ $unop>](
+                builder: *mut FunctionBuilder<'_>,
+                value: ApiValue
+            ) -> ApiValue {
+                unsafe {
+                    let builder = &mut *builder;
+                    value_to_api(
+                        builder.[<build_ $unop>](value_from_api(value))
+                    )
+                }
+            }
+        }
+    };
+}
+
+impl_builder_unop!(iext);
+impl_builder_unop!(itrunc);
+
 #[no_mangle]
 unsafe extern "C" fn spidir_builder_build_icmp(
     builder: *mut FunctionBuilder<'_>,

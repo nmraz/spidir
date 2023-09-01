@@ -54,6 +54,8 @@ nodekind           =  {
   | "imul"
   | "sdiv"
   | "udiv"
+  | "iext"
+  | "itrunc"
   | icmp_nodekind
   | "ptroff"
   | load_nodekind

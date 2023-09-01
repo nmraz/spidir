@@ -34,6 +34,8 @@ pub fn verify_node_kind(
         NodeKind::Imul => verify_int_binop(graph, node, errors),
         NodeKind::Sdiv => verify_int_div(graph, node, errors),
         NodeKind::Udiv => verify_int_div(graph, node, errors),
+        NodeKind::Iext => verify_iext(graph, node, errors),
+        NodeKind::Itrunc => verify_itrunc(graph, node, errors),
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
         NodeKind::FConst(_) => verify_fconst(graph, node, errors),
         NodeKind::PtrOff => verify_ptroff(graph, node, errors),
@@ -220,6 +222,22 @@ fn verify_int_div(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierEr
     let result_kind = graph.value_kind(result);
     let _ = verify_input_kind(graph, node, 1, &[result_kind], errors);
     let _ = verify_input_kind(graph, node, 2, &[result_kind], errors);
+}
+
+fn verify_iext(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 1, errors) else {
+        return;
+    };
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::I32)], errors);
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::I64)], errors);
+}
+
+fn verify_itrunc(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 1, errors) else {
+        return;
+    };
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::I64)], errors);
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::I32)], errors);
 }
 
 fn verify_icmp(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {

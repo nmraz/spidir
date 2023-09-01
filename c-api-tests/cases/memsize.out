@@ -1,0 +1,10 @@
+
+func @func(ptr, i64) {
+    %0:ctrl, %1:ptr, %2:i64 = entry
+    %3:ctrl, %4:phisel = region %0
+    %5:ctrl = store.1 %3, %2, %1
+    %6:ctrl = store.2 %5, %2, %1
+    %7:ctrl = store.4 %6, %2, %1
+    %8:ctrl = store.8 %7, %2, %1
+    return %8
+}

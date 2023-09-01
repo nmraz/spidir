@@ -19,5 +19,7 @@ func @arith_stuff:i32(i32, i32) {
     %21:i32 = icmp sle %20, %1
     %22:i32 = icmp ult %21, %1
     %23:i32 = icmp ule %22, %1
-    return %16, %23
+    %24:i64 = iext %23
+    %25:i32 = itrunc %24
+    return %16, %25
 }

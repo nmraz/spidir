@@ -37,6 +37,9 @@ void builder_callback(spidir_builder_handle_t builder, void* ctx) {
     BUILD_ICMP(ULT);
     BUILD_ICMP(ULE);
 
+    a = spidir_builder_build_iext(builder, a);
+    a = spidir_builder_build_itrunc(builder, a);
+
     spidir_builder_build_return(builder, a);
 }
 

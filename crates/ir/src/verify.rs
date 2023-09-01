@@ -40,6 +40,7 @@ pub enum GraphVerifierError {
     BadEntry(Node),
     MisplacedEntry(Node),
     ConstantOutOfRange(Node),
+    BadFillWidth(Node),
     BadStackSlotAlign(Node),
 }
 
@@ -55,6 +56,7 @@ impl GraphVerifierError {
             | Self::BadEntry(node)
             | Self::MisplacedEntry(node)
             | Self::ConstantOutOfRange(node)
+            | Self::BadFillWidth(node)
             | Self::BadStackSlotAlign(node) => *node,
         }
     }
@@ -123,6 +125,9 @@ impl fmt::Display for DisplayGraphVerifierError<'_> {
             }
             GraphVerifierError::ConstantOutOfRange(_) => {
                 write!(f, "constant value out of range")?;
+            }
+            GraphVerifierError::BadFillWidth(_) => {
+                write!(f, "bad fill width")?;
             }
             GraphVerifierError::BadStackSlotAlign(_) => {
                 write!(f, "illegal stack slot alignment")?;

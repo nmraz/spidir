@@ -282,6 +282,10 @@ fn extract_special_node_kind(
             &inner.next().unwrap(),
             "invalid floating-point literal",
         )?)),
+        Rule::sfill_nodekind => NodeKind::Sfill(parse_from_str(
+            &inner.next().unwrap(),
+            "invalid fill width",
+        )?),
         Rule::icmp_nodekind => NodeKind::Icmp(extract_icmpkind(inner.next().unwrap())),
         Rule::load_nodekind => NodeKind::Load(extract_mem_size(inner.next().unwrap())),
         Rule::store_nodekind => NodeKind::Store(extract_mem_size(inner.next().unwrap())),
@@ -611,6 +615,8 @@ mod tests {
             "udiv",
             "iext",
             "itrunc",
+            "sfill 16",
+            "sfill 31",
             "icmp eq",
             "icmp ne",
             "icmp slt",
@@ -963,6 +969,26 @@ mod tests {
                   |                                 ^-------------------------^
                   |
                   = invalid integer literal"#]],
+        );
+    }
+
+    #[test]
+    fn parse_sfill_width_out_of_range() {
+        check_parse_error(
+            "
+            func @func:i32(i32) {
+                %0:ctrl, %1:i32 = entry
+                %2:i32 = sfill 256 %1
+                return %0, %2
+            }
+            ",
+            expect![[r#"
+                 --> 4:32
+                  |
+                4 |                 %2:i32 = sfill 256 %1
+                  |                                ^-^
+                  |
+                  = invalid fill width"#]],
         );
     }
 

@@ -184,6 +184,10 @@ impl<'a> FunctionBuilder<'a> {
         self.builder().build_itrunc(value)
     }
 
+    pub fn build_sfill(&mut self, width: u8, value: DepValue) -> DepValue {
+        self.builder().build_sfill(width, value)
+    }
+
     pub fn build_udiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
         let ctrl = self.cur_block_ctrl();
         let built = self.builder().build_udiv(ctrl, lhs, rhs);

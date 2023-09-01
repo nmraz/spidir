@@ -39,6 +39,7 @@ void builder_callback(spidir_builder_handle_t builder, void* ctx) {
 
     a = spidir_builder_build_iext(builder, a);
     a = spidir_builder_build_itrunc(builder, a);
+    a = spidir_builder_build_sfill(builder, 16, a);
 
     spidir_builder_build_return(builder, a);
 }

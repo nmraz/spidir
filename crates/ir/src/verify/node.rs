@@ -36,6 +36,7 @@ pub fn verify_node_kind(
         NodeKind::Udiv => verify_int_div(graph, node, errors),
         NodeKind::Iext => verify_iext(graph, node, errors),
         NodeKind::Itrunc => verify_itrunc(graph, node, errors),
+        NodeKind::Sfill(width) => verify_sfill(graph, node, *width, errors),
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
         NodeKind::FConst(_) => verify_fconst(graph, node, errors),
         NodeKind::PtrOff => verify_ptroff(graph, node, errors),
@@ -238,6 +239,29 @@ fn verify_itrunc(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierErr
     };
     let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::I64)], errors);
     let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::I32)], errors);
+}
+
+fn verify_sfill(graph: &ValGraph, node: Node, width: u8, errors: &mut Vec<GraphVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 1, errors) else {
+        return;
+    };
+
+    if verify_integer_output_kind(graph, result, errors).is_err() {
+        return;
+    }
+
+    let result_kind = graph.value_kind(result);
+    let _ = verify_input_kind(graph, node, 0, &[result_kind], errors);
+
+    let bit_width = match result_kind.as_value().unwrap() {
+        Type::I32 => 32,
+        Type::I64 => 64,
+        _ => unreachable!("type verified"),
+    };
+
+    if !(1..bit_width).contains(&width) {
+        errors.push(GraphVerifierError::BadFillWidth(node));
+    }
 }
 
 fn verify_icmp(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {

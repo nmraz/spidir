@@ -195,6 +195,11 @@ pub trait BuilderExt: Builder {
         build_single_output_pure(self, NodeKind::Itrunc, [value], Type::I32)
     }
 
+    fn build_sfill(&mut self, width: u8, value: DepValue) -> DepValue {
+        let output_ty = get_input_ty(self, value);
+        build_single_output_pure(self, NodeKind::Sfill(width), [value], output_ty)
+    }
+
     fn build_icmp(
         &mut self,
         kind: IcmpKind,
@@ -261,7 +266,7 @@ fn build_int_div(
     lhs: DepValue,
     rhs: DepValue,
 ) -> BuiltEffectful {
-    let ty = binop_input_ty(factory, lhs);
+    let ty = get_input_ty(factory, lhs);
     let node = factory.create_node(
         kind,
         [ctrl, lhs, rhs],
@@ -280,7 +285,7 @@ fn build_binop_with_lhs_type(
     lhs: DepValue,
     rhs: DepValue,
 ) -> DepValue {
-    let ty = binop_input_ty(factory, lhs);
+    let ty = get_input_ty(factory, lhs);
     build_single_output_pure(factory, kind, [lhs, rhs], ty)
 }
 
@@ -294,11 +299,11 @@ fn build_single_output_pure(
     factory.graph().node_outputs(node)[0]
 }
 
-fn binop_input_ty(factory: &mut (impl Builder + ?Sized), lhs: DepValue) -> Type {
+fn get_input_ty(factory: &mut (impl Builder + ?Sized), lhs: DepValue) -> Type {
     let ty = factory
         .graph()
         .value_kind(lhs)
         .as_value()
-        .expect("binop input should be a value");
+        .expect("input should be a value");
     ty
 }

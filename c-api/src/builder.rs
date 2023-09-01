@@ -212,6 +212,18 @@ impl_builder_unop!(iext);
 impl_builder_unop!(itrunc);
 
 #[no_mangle]
+unsafe extern "C" fn spidir_builder_build_sfill(
+    builder: *mut FunctionBuilder<'_>,
+    width: u8,
+    value: ApiValue,
+) -> ApiValue {
+    unsafe {
+        let builder = &mut *builder;
+        value_to_api(builder.build_sfill(width, value_from_api(value)))
+    }
+}
+
+#[no_mangle]
 unsafe extern "C" fn spidir_builder_build_icmp(
     builder: *mut FunctionBuilder<'_>,
     kind: ApiIcmpKind,

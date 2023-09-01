@@ -22,7 +22,8 @@ func @arith_stuff32:i32(i32, i32) {
     %21:i32 = icmp sle %20, %1
     %22:i32 = icmp ult %21, %1
     %23:i32 = icmp ule %22, %1
-    return %16, %23
+    %24:i32 = sfill 8 %23
+    return %16, %24
 }
 
 func @arith_stuff64:i64(i64, i64) {
@@ -45,5 +46,6 @@ func @arith_stuff64:i64(i64, i64) {
     %21:i64 = icmp sle %20, %1
     %22:i64 = icmp ult %21, %1
     %23:i64 = icmp ule %22, %1
-    return %16, %23
+    %24:i64 = sfill 8 %23
+    return %16, %24
 }

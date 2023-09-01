@@ -31,6 +31,7 @@ memsize  = { "1" | "2" | "4" | "8" }
 
 iconst_nodekind    =  { "iconst" ~ integer }
 fconst_nodekind    =  { "fconst" ~ float }
+sfill_nodekind     =  { "sfill" ~ integer }
 icmp_nodekind      =  { "icmp" ~ icmpkind }
 load_nodekind      = ${ "load." ~ memsize }
 store_nodekind     = ${ "store." ~ memsize }
@@ -56,6 +57,7 @@ nodekind           =  {
   | "udiv"
   | "iext"
   | "itrunc"
+  | sfill_nodekind
   | icmp_nodekind
   | "ptroff"
   | load_nodekind

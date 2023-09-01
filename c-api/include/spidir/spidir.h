@@ -600,8 +600,8 @@ spidir_value_t spidir_builder_build_udiv(spidir_builder_handle_t builder,
 ///
 /// This operation extends a 32-bit integer into a 64-bit one, leaving an
 /// indeterminate bit pattern in the upper 32 bits. This instruction should
-/// typically be followed by a mask to guarantee the values of the upper 32
-/// bits.
+/// typically be followed by a mask or `sfill` to guarantee the values of the
+/// upper 32 bits.
 ///
 /// @param[in] builder A handle to the function builder.
 /// @param[in] value   The value to extend. This must be a 32-bit integer.
@@ -621,6 +621,25 @@ spidir_value_t spidir_builder_build_iext(spidir_builder_handle_t builder,
 ///         will be a 32-bit integer.
 spidir_value_t spidir_builder_build_itrunc(spidir_builder_handle_t builder,
                                            spidir_value_t value);
+
+/// Builds an integer sign-fill operation at the current insertion point.
+///
+/// This operation copies the bit at position `width-1` in the integer into all
+/// higher bits, thereby sign-extending from a `width`-bit integer to the full
+/// bit width of the integer type.
+///
+/// For example, `sfill 8` sign-extends the low 8 bits of its input to the full
+/// bit width of the input type.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] width   The position of the first bit to be filled. This
+///                    parameter must be in the range `[1, B)`, where `B` is the
+///                    bit width of `value`.
+/// @param[in] value   The value to extend. This must be an integer.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the same type as `value`.
+spidir_value_t spidir_builder_build_sfill(spidir_builder_handle_t builder,
+                                          uint8_t width, spidir_value_t value);
 
 /// Builds an integer compare operation at the current insertion point. This
 /// operation can be used to compare either integers or pointers.

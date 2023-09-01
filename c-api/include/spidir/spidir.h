@@ -88,6 +88,26 @@ enum spidir_icmp_kind {
     SPIDIR_ICMP_ULE = 5,
 };
 
+/// Represents the possible access sizes of a memory (load or store) operation.
+///
+/// See the `SPIDIR_MEM_SIZE_` constants for possible values.
+typedef uint8_t spidir_mem_size_t;
+
+enum spidir_mem_size {
+    /// A 1-byte memory access.
+    /// This access size is permitted for 32-bit and 64-bit integers.
+    SPIDIR_MEM_SIZE_1 = 0,
+    /// A 2-byte memory access.
+    /// This access size is permitted for 32-bit and 64-bit integers.
+    SPIDIR_MEM_SIZE_2 = 1,
+    /// A 4-byte memory access.
+    /// This access size is permitted for 32-bit and 64-bit integers.
+    SPIDIR_MEM_SIZE_4 = 2,
+    /// An 8-byte memory access.
+    /// This access size is permitted for integers, `f64` values and pointers.
+    SPIDIR_MEM_SIZE_8 = 3,
+};
+
 /// A status code that can be returned from user callbacks to
 /// `spidir_module_dump`.
 typedef uint8_t spidir_dump_status_t;
@@ -619,20 +639,28 @@ spidir_value_t spidir_builder_build_ptroff(spidir_builder_handle_t builder,
 /// Builds a load operation at the current insertion point.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The type of the value to load from the pointer
+/// @param[in] size    The access size of the memory operation. See the
+///                    `SPIDIR_MEM_SIZE_` constants for possible values, and
+///                    constraints on the type of the value loaded.
+/// @param[in] type    The type of the value to load from the pointer.
 /// @param[in] ptr     A value containing the pointer to load from.
 /// @return An SSA value representing the result of the operation. This value
 /// will have the type `type`.
 spidir_value_t spidir_builder_build_load(spidir_builder_handle_t builder,
+                                         spidir_mem_size_t size,
                                          spidir_value_type_t type,
                                          spidir_value_t ptr);
 
 /// Builds a store operation at the current insertion point.
 ///
 /// @param[in] builder A handle to the function builder.
+/// @param[in] size    The access size of the memory operation. See the
+///                    `SPIDIR_MEM_SIZE_` constants for possible values, and
+///                    constraints on the type of the value stored.
 /// @param[in] data    An SSA value containing the data to store to memory.
 /// @param[in] ptr     A value containing the pointer to store to.
 spidir_value_t spidir_builder_build_store(spidir_builder_handle_t builder,
+                                          spidir_mem_size_t size,
                                           spidir_value_t data,
                                           spidir_value_t ptr);
 

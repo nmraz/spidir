@@ -1,12 +1,11 @@
 use frontend::{FunctionBuilder, PhiHandle};
 
-use ir::node::MemSize;
 use paste::paste;
 
 use crate::types::{
-    block_from_api, funcref_from_api, icmp_kind_from_api, opt_type_from_api, opt_value_from_api,
-    opt_value_to_api, type_from_api, value_from_api, value_list_from_api, value_to_api, ApiBlock,
-    ApiFunction, ApiIcmpKind, ApiPhi, ApiType, ApiValue,
+    block_from_api, funcref_from_api, icmp_kind_from_api, mem_size_from_api, opt_type_from_api,
+    opt_value_from_api, opt_value_to_api, type_from_api, value_from_api, value_list_from_api,
+    value_to_api, ApiBlock, ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
 };
 
 #[no_mangle]
@@ -224,24 +223,34 @@ unsafe extern "C" fn spidir_builder_build_ptroff(
 #[no_mangle]
 unsafe extern "C" fn spidir_builder_build_load(
     builder: *mut FunctionBuilder<'_>,
+    size: ApiMemSize,
     ty: ApiType,
     ptr: ApiValue,
 ) -> ApiValue {
     unsafe {
         let builder = &mut *builder;
-        value_to_api(builder.build_load(MemSize::S1, type_from_api(ty), value_from_api(ptr)))
+        value_to_api(builder.build_load(
+            mem_size_from_api(size),
+            type_from_api(ty),
+            value_from_api(ptr),
+        ))
     }
 }
 
 #[no_mangle]
 unsafe extern "C" fn spidir_builder_build_store(
     builder: *mut FunctionBuilder<'_>,
+    size: ApiMemSize,
     data: ApiValue,
     ptr: ApiValue,
 ) {
     unsafe {
         let builder = &mut *builder;
-        builder.build_store(MemSize::S1, value_from_api(data), value_from_api(ptr));
+        builder.build_store(
+            mem_size_from_api(size),
+            value_from_api(data),
+            value_from_api(ptr),
+        );
     }
 }
 

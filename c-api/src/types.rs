@@ -7,7 +7,7 @@ use alloc::{borrow::ToOwned, string::String};
 use frontend::{Block, FunctionBuilder};
 use ir::{
     module::{ExternFunction, Function, Signature},
-    node::{FunctionRef, IcmpKind, Type},
+    node::{FunctionRef, IcmpKind, MemSize, Type},
     valgraph::DepValue,
 };
 use smallvec::SmallVec;
@@ -27,6 +27,7 @@ pub struct ApiPhi(pub u32);
 
 pub type ApiType = u8;
 pub type ApiIcmpKind = u8;
+pub type ApiMemSize = u8;
 
 pub type BuildFunctionCallback = extern "C" fn(*mut FunctionBuilder, *mut ());
 pub type DumpCallback = extern "C" fn(*const c_char, usize, *mut ()) -> u8;
@@ -46,6 +47,11 @@ pub const SPIDIR_ICMP_SLT: u8 = 2;
 pub const SPIDIR_ICMP_SLE: u8 = 3;
 pub const SPIDIR_ICMP_ULT: u8 = 4;
 pub const SPIDIR_ICMP_ULE: u8 = 5;
+
+pub const SPIDIR_MEM_SIZE_1: u8 = 0;
+pub const SPIDIR_MEM_SIZE_2: u8 = 1;
+pub const SPIDIR_MEM_SIZE_4: u8 = 2;
+pub const SPIDIR_MEM_SIZE_8: u8 = 3;
 
 pub const SPIDIR_DUMP_CONTINUE: u8 = 0;
 
@@ -162,6 +168,17 @@ pub fn icmp_kind_from_api(kind: ApiIcmpKind) -> IcmpKind {
         SPIDIR_ICMP_ULT => IcmpKind::Ult,
         SPIDIR_ICMP_ULE => IcmpKind::Ule,
         _ => panic!("unexpected icmp kind {kind}"),
+    }
+}
+
+#[track_caller]
+pub fn mem_size_from_api(api_size: ApiMemSize) -> MemSize {
+    match api_size {
+        SPIDIR_MEM_SIZE_1 => MemSize::S1,
+        SPIDIR_MEM_SIZE_2 => MemSize::S2,
+        SPIDIR_MEM_SIZE_4 => MemSize::S4,
+        SPIDIR_MEM_SIZE_8 => MemSize::S8,
+        _ => panic!("unexpected memory size {api_size}"),
     }
 }
 

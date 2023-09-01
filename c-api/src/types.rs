@@ -32,28 +32,28 @@ pub type ApiMemSize = u8;
 pub type BuildFunctionCallback = extern "C" fn(*mut FunctionBuilder, *mut ());
 pub type DumpCallback = extern "C" fn(*const c_char, usize, *mut ()) -> u8;
 
+pub const SPIDIR_DUMP_CONTINUE: u8 = 0;
+
 const SPIDIR_VALUE_INVALID: ApiValue = ApiValue(u32::MAX);
 const EXTERN_FUNCTION_BIT: u64 = 1 << 63;
 
-pub const SPIDIR_TYPE_I32: u8 = 0;
-pub const SPIDIR_TYPE_I64: u8 = 1;
-pub const SPIDIR_TYPE_F64: u8 = 2;
-pub const SPIDIR_TYPE_PTR: u8 = 3;
-pub const SPIDIR_TYPE_NONE: u8 = u8::MAX;
+const SPIDIR_TYPE_I32: u8 = 0;
+const SPIDIR_TYPE_I64: u8 = 1;
+const SPIDIR_TYPE_F64: u8 = 2;
+const SPIDIR_TYPE_PTR: u8 = 3;
+const SPIDIR_TYPE_NONE: u8 = u8::MAX;
 
-pub const SPIDIR_ICMP_EQ: u8 = 0;
-pub const SPIDIR_ICMP_NE: u8 = 1;
-pub const SPIDIR_ICMP_SLT: u8 = 2;
-pub const SPIDIR_ICMP_SLE: u8 = 3;
-pub const SPIDIR_ICMP_ULT: u8 = 4;
-pub const SPIDIR_ICMP_ULE: u8 = 5;
+const SPIDIR_ICMP_EQ: u8 = 0;
+const SPIDIR_ICMP_NE: u8 = 1;
+const SPIDIR_ICMP_SLT: u8 = 2;
+const SPIDIR_ICMP_SLE: u8 = 3;
+const SPIDIR_ICMP_ULT: u8 = 4;
+const SPIDIR_ICMP_ULE: u8 = 5;
 
-pub const SPIDIR_MEM_SIZE_1: u8 = 0;
-pub const SPIDIR_MEM_SIZE_2: u8 = 1;
-pub const SPIDIR_MEM_SIZE_4: u8 = 2;
-pub const SPIDIR_MEM_SIZE_8: u8 = 3;
-
-pub const SPIDIR_DUMP_CONTINUE: u8 = 0;
+const SPIDIR_MEM_SIZE_1: u8 = 0;
+const SPIDIR_MEM_SIZE_2: u8 = 1;
+const SPIDIR_MEM_SIZE_4: u8 = 2;
+const SPIDIR_MEM_SIZE_8: u8 = 3;
 
 pub unsafe fn value_list_from_api(
     arg_count: usize,

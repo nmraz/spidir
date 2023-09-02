@@ -302,22 +302,16 @@ spidir_value_t spidir_builder_build_param_ref(spidir_builder_handle_t builder,
 /// `spidir_builder_build_extern_call`.
 ///
 /// @param[in] builder   A handle to the function builder.
-/// @param[in] ret_type  The return type to use for the call. If this parameter
-///                      is `SPIDIR_TYPE_NONE`, the call will be treated as
-///                      returning no value. This type should match the return
-///                      type specified when the function was created.
-/// @param[in] func      The function to call.
 /// @param[in] arg_count The number of arguments to pass to the function. This
 ///                      value should match the parameter count specified when
 ///                      the function was created.
 /// @param[in] args      A pointer to an array of `arg_count` values, each
 ///                      representing an argument to pass. This parameter may be
 ///                      null if `arg_count` is 0.
-/// @return An SSA value containing the return value of the function. If
-/// `ret_type` was null (indicating a call to a function with no return value),
-/// the returned value will be `SPIDIR_VALUE_INVALID`.
+/// @return An SSA value containing the return value of the function. If the
+///         called function had no return type, the returned value will be
+///         `SPIDIR_VALUE_INVALID`.
 spidir_value_t spidir_builder_build_call(spidir_builder_handle_t builder,
-                                         spidir_value_type_t ret_type,
                                          spidir_function_t func,
                                          size_t arg_count,
                                          const spidir_value_t* args);

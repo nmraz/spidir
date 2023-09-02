@@ -3,9 +3,9 @@ use frontend::{FunctionBuilder, PhiHandle};
 use paste::paste;
 
 use crate::types::{
-    block_from_api, funcref_from_api, icmp_kind_from_api, mem_size_from_api, opt_type_from_api,
-    opt_value_from_api, opt_value_to_api, type_from_api, value_from_api, value_list_from_api,
-    value_to_api, ApiBlock, ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
+    block_from_api, funcref_from_api, icmp_kind_from_api, mem_size_from_api, opt_value_from_api,
+    opt_value_to_api, type_from_api, value_from_api, value_list_from_api, value_to_api, ApiBlock,
+    ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
 };
 
 #[no_mangle]
@@ -50,7 +50,6 @@ unsafe extern "C" fn spidir_builder_build_param_ref(
 #[no_mangle]
 unsafe extern "C" fn spidir_builder_build_call(
     builder: *mut FunctionBuilder<'_>,
-    ret_type: ApiType,
     func: ApiFunction,
     arg_count: usize,
     args: *const ApiValue,
@@ -58,8 +57,7 @@ unsafe extern "C" fn spidir_builder_build_call(
     unsafe {
         let builder = &mut *builder;
         let args = value_list_from_api(arg_count, args);
-        let ret_type = opt_type_from_api(ret_type);
-        opt_value_to_api(builder.build_call(ret_type, funcref_from_api(func), &args))
+        opt_value_to_api(builder.build_call(funcref_from_api(func), &args))
     }
 }
 

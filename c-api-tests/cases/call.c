@@ -38,14 +38,12 @@ void caller_builder_callback(spidir_builder_handle_t builder, void* ctx) {
 
     spidir_value_t args[] = {ptr, ival};
 
-    spidir_builder_build_call(builder, SPIDIR_TYPE_NONE, func_ctx->extfunc, 2,
-                              args);
-    spidir_value_t ext_ret = spidir_builder_build_call(
-        builder, SPIDIR_TYPE_I32, func_ctx->extfunc2, 2, args);
-    spidir_builder_build_call(builder, SPIDIR_TYPE_NONE, func_ctx->infunc, 2,
-                              args);
-    spidir_value_t in_ret = spidir_builder_build_call(
-        builder, SPIDIR_TYPE_I32, func_ctx->infunc2, 2, args);
+    spidir_builder_build_call(builder, func_ctx->extfunc, 2, args);
+    spidir_value_t ext_ret =
+        spidir_builder_build_call(builder, func_ctx->extfunc2, 2, args);
+    spidir_builder_build_call(builder, func_ctx->infunc, 2, args);
+    spidir_value_t in_ret =
+        spidir_builder_build_call(builder, func_ctx->infunc2, 2, args);
 
     spidir_value_t retval = spidir_builder_build_iadd(builder, ext_ret, in_ret);
     spidir_builder_build_return(builder, retval);

@@ -1,5 +1,6 @@
 use frontend::{FunctionBuilder, PhiHandle};
 
+use ir::module::Module;
 use paste::paste;
 
 use crate::types::{
@@ -7,6 +8,11 @@ use crate::types::{
     opt_value_to_api, type_from_api, value_from_api, value_list_from_api, value_to_api, ApiBlock,
     ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
 };
+
+#[no_mangle]
+unsafe extern "C" fn spidir_builder_get_module(builder: *mut FunctionBuilder<'_>) -> *mut Module {
+    unsafe { (*builder).module_mut() }
+}
 
 #[no_mangle]
 unsafe extern "C" fn spidir_builder_create_block(builder: *mut FunctionBuilder<'_>) -> ApiBlock {

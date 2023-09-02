@@ -1,0 +1,12 @@
+
+func @outer() {
+    %0:ctrl = entry
+    %1:ctrl, %2:phisel = region %0
+    return %1
+}
+
+func @inner() {
+    %0:ctrl = entry
+    %1:ctrl, %2:phisel = region %0
+    return %1
+}

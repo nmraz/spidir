@@ -214,9 +214,11 @@ spidir_function_t spidir_module_create_extern_function(
 /// function. The callback should, at the very least, call
 /// `spidir_builder_set_entry_block` to set the function's first basic block.
 ///
-/// @warning The callback should not access `module` in any way (**including**
-/// by passing it to read-only functions such as `spidir_module_dump`). Doing so
-/// will violate aliasing assumptions in the Rust implementation and lead to UB.
+/// @warning The callback should not access the `module` pointer in any way
+/// (**including** by passing it to read-only functions such as
+/// `spidir_module_dump`). Doing so will violate aliasing assumptions in the
+/// Rust implementation and lead to UB. If you need to access the module from
+/// within the builder callback, see `spidir_builder_get_module`.
 ///
 /// @param[in] module   The module containing the function to build.
 /// @param[in] func     The function whose body should be built.
@@ -241,6 +243,23 @@ void spidir_module_build_function(spidir_module_handle_t module,
 void spidir_module_dump(spidir_module_handle_t module,
                         spidir_dump_callback_t callback, void* ctx);
 
+/// Retrieves a handle to the module to which the provided builder belongs.
+///
+/// This is the correct way to access the surrounding module from within the
+/// scope of a `spidir_module_build_function` call.
+///
+/// @warning Any call on the original builder handle will invalidate the module
+/// handle returned by this function due to aliasing requirements in the Rust
+/// implementation. Uses of the handle returned by a single call to this
+/// function should always be well-nested within calls to builder APIs; if you
+/// need to use the module across a call to some builder API, call this function
+/// both before and after the builder call.
+///
+/// @param[in] builder A handle to the function builder.
+/// @return A handle to the module to which this builder belongs.
+spidir_module_handle_t
+spidir_builder_get_module(spidir_builder_handle_t builder);
+
 /// Creates a new basic block in the function being built by `builder`.
 ///
 /// The newly-created block will not be attached to the CFG of the function
@@ -252,7 +271,7 @@ void spidir_module_dump(spidir_module_handle_t module,
 ///
 /// @param[in] builder A handle to the function builder.
 /// @return A value identifying the newly-created block. This value is only
-/// meaningful when used with the same builder.
+///         meaningful when used with the same builder.
 spidir_block_t spidir_builder_create_block(spidir_builder_handle_t builder);
 
 /// Sets the current insertion point of `builder`.

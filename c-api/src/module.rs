@@ -77,7 +77,7 @@ unsafe extern "C" fn spidir_module_build_function(
 
     unsafe {
         let module = &mut *module;
-        let mut builder = FunctionBuilder::new(&mut module.functions[func]);
+        let mut builder = FunctionBuilder::new(module, func);
         callback(&mut builder, ctx);
     }
 }

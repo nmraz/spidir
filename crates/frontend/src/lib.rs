@@ -4,9 +4,9 @@ use cranelift_entity::{entity_impl, PrimaryMap};
 use ir::{
     builder::{Builder, BuilderExt},
     cons_builder::{Cache, ConsBuilder},
-    module::FunctionData,
+    module::{Function, FunctionData, Module},
     node::{FunctionRef, IcmpKind, MemSize, Type},
-    valgraph::{DepValue, Node},
+    valgraph::{DepValue, Node, ValGraph},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,20 +33,30 @@ struct BlockData {
 }
 
 pub struct FunctionBuilder<'a> {
-    func: &'a mut FunctionData,
+    module: &'a mut Module,
+    func: Function,
     blocks: PrimaryMap<Block, BlockData>,
     cur_block: Option<Block>,
     node_cache: Cache,
 }
 
 impl<'a> FunctionBuilder<'a> {
-    pub fn new(func: &'a mut FunctionData) -> Self {
+    pub fn new(module: &'a mut Module, func: Function) -> Self {
         Self {
+            module,
             func,
             blocks: PrimaryMap::new(),
             cur_block: None,
             node_cache: Cache::new(),
         }
+    }
+
+    pub fn module(&self) -> &Module {
+        self.module
+    }
+
+    pub fn module_mut(&mut self) -> &mut Module {
+        self.module
     }
 
     pub fn create_block(&mut self) -> Block {
@@ -67,14 +77,16 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub fn set_entry_block(&mut self, block: Block) {
-        let entry_ctrl = self.func.graph.node_outputs(self.func.entry)[0];
-        self.func
-            .graph
-            .add_node_input(self.blocks[block].region, entry_ctrl);
+        let entry = self.func().entry;
+        let region = self.blocks[block].region;
+        let graph = self.graph_mut();
+
+        let entry_ctrl = graph.node_outputs(entry)[0];
+        graph.add_node_input(region, entry_ctrl);
     }
 
     pub fn build_param_ref(&mut self, index: u32) -> DepValue {
-        self.func.graph.node_outputs(self.func.entry)[index as usize + 1]
+        self.graph().node_outputs(self.func().entry)[index as usize + 1]
     }
 
     pub fn build_call(
@@ -96,33 +108,32 @@ impl<'a> FunctionBuilder<'a> {
 
     pub fn build_branch(&mut self, dest: Block) {
         let cur_ctrl = self.terminate_cur_block();
-        self.func
-            .graph
-            .add_node_input(self.blocks[dest].region, cur_ctrl);
+        let region = self.blocks[dest].region;
+        self.graph_mut().add_node_input(region, cur_ctrl);
     }
 
     pub fn build_brcond(&mut self, cond: DepValue, true_dest: Block, false_dest: Block) {
         let cur_ctrl = self.terminate_cur_block();
         let built = self.builder().build_brcond(cur_ctrl, cond);
-        self.func
-            .graph
-            .add_node_input(self.blocks[true_dest].region, built.true_ctrl);
-        self.func
-            .graph
-            .add_node_input(self.blocks[false_dest].region, built.false_ctrl);
+
+        let true_region = self.blocks[true_dest].region;
+        let false_region = self.blocks[false_dest].region;
+
+        let graph = self.graph_mut();
+        graph.add_node_input(true_region, built.true_ctrl);
+        graph.add_node_input(false_region, built.false_ctrl);
     }
 
     pub fn build_phi(&mut self, ty: Type, incoming_values: &[DepValue]) -> (PhiHandle, DepValue) {
         let selector = self
-            .func
-            .graph
+            .graph()
             .node_outputs(self.blocks[self.require_cur_block()].region)[1];
         let built = self.builder().build_phi(ty, selector, incoming_values);
         (PhiHandle(built.node), built.output)
     }
 
     pub fn add_phi_input(&mut self, phi: PhiHandle, value: DepValue) {
-        self.func.graph.add_node_input(phi.0, value);
+        self.graph_mut().add_node_input(phi.0, value);
     }
 
     pub fn build_iconst(&mut self, ty: Type, value: u64) -> DepValue {
@@ -239,7 +250,11 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn builder(&mut self) -> impl Builder + '_ {
-        ConsBuilder::new(&mut self.func.graph, &mut self.node_cache)
+        // Note: we can't call `graph_mut` here because we need disjoint borrows.
+        ConsBuilder::new(
+            &mut self.module.functions[self.func].graph,
+            &mut self.node_cache,
+        )
     }
 
     fn cur_block_ctrl(&self) -> DepValue {
@@ -253,6 +268,22 @@ impl<'a> FunctionBuilder<'a> {
             "attempted to insert into terminated block"
         );
         block
+    }
+
+    fn graph(&self) -> &ValGraph {
+        &self.func().graph
+    }
+
+    fn graph_mut(&mut self) -> &mut ValGraph {
+        &mut self.func_mut().graph
+    }
+
+    fn func(&self) -> &FunctionData {
+        &self.module.functions[self.func]
+    }
+
+    fn func_mut(&mut self) -> &mut FunctionData {
+        &mut self.module.functions[self.func]
     }
 }
 
@@ -280,7 +311,7 @@ mod tests {
                 param_types: params.to_owned(),
             },
         ));
-        build(&mut FunctionBuilder::new(&mut module.functions[func]));
+        build(&mut FunctionBuilder::new(&mut module, func));
         expected.assert_eq(module.to_string().trim());
     }
 

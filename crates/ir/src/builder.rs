@@ -260,19 +260,19 @@ pub trait BuilderExt: Builder {
 impl<F: Builder> BuilderExt for F {}
 
 fn build_int_div(
-    factory: &mut (impl Builder + ?Sized),
+    builder: &mut (impl Builder + ?Sized),
     kind: NodeKind,
     ctrl: DepValue,
     lhs: DepValue,
     rhs: DepValue,
 ) -> BuiltEffectful {
-    let ty = get_input_ty(factory, lhs);
-    let node = factory.create_node(
+    let ty = get_input_ty(builder, lhs);
+    let node = builder.create_node(
         kind,
         [ctrl, lhs, rhs],
         [DepValueKind::Control, DepValueKind::Value(ty)],
     );
-    let outputs = factory.graph().node_outputs(node);
+    let outputs = builder.graph().node_outputs(node);
     BuiltEffectful {
         ctrl: outputs[0],
         output: outputs[1],
@@ -280,27 +280,27 @@ fn build_int_div(
 }
 
 fn build_binop_with_lhs_type(
-    factory: &mut (impl Builder + ?Sized),
+    builder: &mut (impl Builder + ?Sized),
     kind: NodeKind,
     lhs: DepValue,
     rhs: DepValue,
 ) -> DepValue {
-    let ty = get_input_ty(factory, lhs);
-    build_single_output_pure(factory, kind, [lhs, rhs], ty)
+    let ty = get_input_ty(builder, lhs);
+    build_single_output_pure(builder, kind, [lhs, rhs], ty)
 }
 
 fn build_single_output_pure(
-    factory: &mut (impl Builder + ?Sized),
+    builder: &mut (impl Builder + ?Sized),
     kind: NodeKind,
     inputs: impl IntoIterator<Item = DepValue>,
     output_ty: Type,
 ) -> DepValue {
-    let node = factory.create_node(kind, inputs, [DepValueKind::Value(output_ty)]);
-    factory.graph().node_outputs(node)[0]
+    let node = builder.create_node(kind, inputs, [DepValueKind::Value(output_ty)]);
+    builder.graph().node_outputs(node)[0]
 }
 
-fn get_input_ty(factory: &mut (impl Builder + ?Sized), lhs: DepValue) -> Type {
-    let ty = factory
+fn get_input_ty(builder: &mut (impl Builder + ?Sized), lhs: DepValue) -> Type {
+    let ty = builder
         .graph()
         .value_kind(lhs)
         .as_value()

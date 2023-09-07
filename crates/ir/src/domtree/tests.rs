@@ -30,7 +30,14 @@ fn check_idoms(graph: &ValGraph, entry: Node, expected: Expect) {
             rpo_nums[node] = rpo_num;
             let mut s = String::new();
             write_node(&mut s, &module, graph, node).unwrap();
-            (node, domtree.idom_children(node), domtree.idom(node), s)
+            (
+                node,
+                domtree
+                    .idom_children(node)
+                    .map(|children| children.collect::<Vec<_>>()),
+                domtree.idom(node),
+                s,
+            )
         })
         .collect();
 

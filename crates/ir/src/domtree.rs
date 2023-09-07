@@ -3,7 +3,9 @@ use core::{
     cmp::{self, Ordering},
     ops::{Index, IndexMut},
 };
-use cranelift_entity::packed_option::PackedOption;
+use cranelift_entity::{
+    entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap,
+};
 use hashbrown::hash_map::Entry;
 use smallvec::SmallVec;
 
@@ -16,30 +18,42 @@ use crate::{
 
 type CfgMap<T> = FxHashMap<Node, T>;
 
-struct DomTreeNodeInfo {
-    parent: PackedOption<Node>,
-    // This 4 was carefully chosen as the largest we can make the `SmallVec` storage without
-    // increasing the type's size. The `SmallVec` always requires 8 bytes for capacity, followed by
-    // an enum containing either the array or 16 bytes (pointer + length). 16 bytes in nodes is
-    // exactly 4 nodes.
-    children: SmallVec<[Node; 4]>,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct TreeNode(u32);
+entity_impl!(TreeNode);
+
+type TreeNodeList = EntityList<TreeNode>;
+
+struct TreeNodeData {
+    cfg_node: Node,
+    parent: PackedOption<TreeNode>,
+    children: TreeNodeList,
 }
 
 pub struct DomTree {
-    info: CfgMap<DomTreeNodeInfo>,
+    tree: PrimaryMap<TreeNode, TreeNodeData>,
+    tree_nodes_by_node: CfgMap<TreeNode>,
+    child_pool: ListPool<TreeNode>,
 }
 
 impl DomTree {
     pub fn is_cfg_reachable(&self, node: Node) -> bool {
-        self.info.contains_key(&node)
+        self.tree_node_from_node(node).is_some()
     }
 
     pub fn idom(&self, node: Node) -> Option<Node> {
-        self.info.get(&node).and_then(|info| info.parent.expand())
+        self.data_from_node(node)
+            .and_then(|data| data.parent.expand())
+            .map(|parent| self.node_from_tree_node(parent))
     }
 
-    pub fn idom_children(&self, node: Node) -> Option<&[Node]> {
-        self.info.get(&node).map(|info| &*info.children)
+    pub fn idom_children(&self, node: Node) -> Option<impl Iterator<Item = Node> + '_> {
+        self.data_from_node(node).map(|data| {
+            data.children
+                .as_slice(&self.child_pool)
+                .iter()
+                .map(|&tree_node| self.node_from_tree_node(tree_node))
+        })
     }
 
     pub fn compare(&self, _a: Node, _b: Node) -> Option<Ordering> {
@@ -52,6 +66,33 @@ impl DomTree {
 
     pub fn strictly_dominates(&self, a: Node, b: Node) -> bool {
         self.compare(a, b) == Some(Ordering::Less)
+    }
+
+    fn data_from_node(&self, node: Node) -> Option<&TreeNodeData> {
+        self.tree_node_from_node(node)
+            .map(|tree_node| &self.tree[tree_node])
+    }
+
+    fn tree_node_from_node(&self, node: Node) -> Option<TreeNode> {
+        self.tree_nodes_by_node.get(&node).copied()
+    }
+
+    fn node_from_tree_node(&self, tree_node: TreeNode) -> Node {
+        self.tree[tree_node].cfg_node
+    }
+
+    fn add_child(&mut self, idom: TreeNode, child: TreeNode) {
+        self.tree[idom].children.push(child, &mut self.child_pool);
+    }
+
+    fn insert_node(&mut self, node: Node, idom: Option<TreeNode>) -> TreeNode {
+        let tree_node = self.tree.push(TreeNodeData {
+            cfg_node: node,
+            parent: idom.into(),
+            children: TreeNodeList::new(),
+        });
+        self.tree_nodes_by_node.insert(node, tree_node);
+        tree_node
     }
 }
 
@@ -133,9 +174,7 @@ pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
 
     // Pass 2: Fill in all immediate dominators by walking down the DFS tree and applying the
     // information recorded in the previous pass.
-    let info = compute_domtree_from_reldoms(&mut preorder);
-
-    DomTree { info }
+    compute_domtree_from_reldoms(&mut preorder)
 }
 
 fn do_dfs(graph: &ValGraph, entry: Node) -> (Preorder, CfgMap<PreorderNum>) {
@@ -295,18 +334,14 @@ fn compute_reldoms(
     }
 }
 
-fn compute_domtree_from_reldoms(preorder: &mut Preorder) -> CfgMap<DomTreeNodeInfo> {
-    // Maps each `ValGraph` node to its immediate dominator.
-    let mut info = CfgMap::default();
+fn compute_domtree_from_reldoms(preorder: &mut Preorder) -> DomTree {
+    let mut domtree = DomTree {
+        tree: PrimaryMap::new(),
+        tree_nodes_by_node: CfgMap::default(),
+        child_pool: ListPool::new(),
+    };
 
-    // Set up an entry for the root node so we can add its children later.
-    info.insert(
-        preorder[0].node,
-        DomTreeNodeInfo {
-            parent: None.into(),
-            children: SmallVec::new(),
-        },
-    );
+    domtree.insert_node(preorder[0].node, None);
 
     // Fill in immediate dominators for all nodes based on their `dom`, by traversing the DFS tree
     // in preorder.
@@ -319,23 +354,17 @@ fn compute_domtree_from_reldoms(preorder: &mut Preorder) -> CfgMap<DomTreeNodeIn
             preorder[node].dom = preorder[preorder[node].dom].dom;
         }
 
-        let idom = preorder[preorder[node].dom].node;
+        // The idom must have been visited earlier as we are in preorder.
+        let idom = domtree
+            .tree_node_from_node(preorder[preorder[node].dom].node)
+            .expect("idom should already have been visited");
         let node = preorder[node].node;
 
-        info.insert(
-            node,
-            DomTreeNodeInfo {
-                parent: idom.into(),
-                children: SmallVec::new(),
-            },
-        );
-
-        // The idom must have been visited earlier as we are in preorder; just tack this new child
-        // on.
-        info.get_mut(&idom).unwrap().children.push(node);
+        let node = domtree.insert_node(node, Some(idom));
+        domtree.add_child(idom, node);
     }
 
-    info
+    domtree
 }
 
 struct EvalContext {

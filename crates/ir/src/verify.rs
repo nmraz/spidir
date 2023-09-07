@@ -3,7 +3,7 @@ use core::fmt;
 use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
 use cranelift_entity::{packed_option::PackedOption, EntitySet, SecondaryMap};
 use fx_utils::FxHashSet;
-use itertools::Itertools;
+use itertools::{izip, Itertools};
 use smallvec::SmallVec;
 
 use crate::{
@@ -289,6 +289,12 @@ pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<Graph
         verify_control_outputs(&func.graph, node, &mut errors);
     }
 
+    if !errors.is_empty() {
+        // If there were type/CFG errors, don't move on and try to verify data flow.
+        // This allows us to assume basic well-formedness during data flow verification.
+        return Err(errors);
+    }
+
     verify_dataflow(&func.graph, func.entry, &mut errors);
 
     if errors.is_empty() {
@@ -322,12 +328,12 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
     let domtree = domtree::compute(graph, entry);
 
     let mut schedule = SecondaryMap::new();
-    let mut visited_nodes = EntitySet::new();
+    let mut visited = EntitySet::new();
     let mut data_postorder = PostOrderContext::new(ValUseDefSuccs(graph), []);
 
     let mut input_schedules = InputSchedules::new();
 
-    // Overview: walk down the dominator tree in preorder, and then walk back across use edges for
+    // Part 1: Walk down the dominator tree in preorder, and then walk back across use edges for
     // every visited control node (in postorder), excluding edges entering phis. Every new node
     // discovered must be "scheduled" (attached to a node in the dominator tree); specifically, each
     // node will be placed at the highest-scheduled (relative to dominance) one of its inputs.
@@ -343,7 +349,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
         let cfg_node = domtree.get_cfg_node(cfg_tree_node);
         data_postorder.reset([cfg_node]);
 
-        while let Some(node) = data_postorder.next_post(&mut visited_nodes) {
+        while let Some(node) = data_postorder.next_post(&mut visited) {
             let tree_node = domtree.get_tree_node(node);
             let Ok(highest_scheduled_input) = get_highest_scheduled_input(
                 graph,
@@ -389,7 +395,68 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
         }
     }
 
-    // TODO: Verify phi inputs.
+    // Part 2: Now that everything is scheduled, check that phi inputs are legal by checking that
+    // the node outputting the control edge relevant to each input is dominated by the computation
+    // of the input.
+    stack.clear();
+    stack.push(root_tree_node);
+    while let Some(cfg_tree_node) = stack.pop() {
+        let cfg_node = domtree.get_cfg_node(cfg_tree_node);
+
+        let Some(phisel) = graph
+            .node_outputs(cfg_node)
+            .into_iter()
+            .find(|&output| graph.value_kind(output) == DepValueKind::PhiSelector)
+        else {
+            continue;
+        };
+
+        for (phi, _) in graph.value_uses(phisel) {
+            if !visited.contains(phi) {
+                // Ignore any dead phi nodes, they may not even be meaningful.
+                continue;
+            }
+
+            for (i, phi_input, ctrl_input) in izip!(
+                1..,
+                graph.node_inputs(phi).into_iter().skip(1),
+                graph.node_inputs(cfg_node),
+            ) {
+                let Some(ctrl_tree_node) = schedule
+                    .get(graph.value_def(ctrl_input).0)
+                    .and_then(|node| node.expand())
+                else {
+                    // Inputs from dead regions are actually okay: if we can never select the
+                    // corresponding value in the phi, we don't need to check any constraints on it.
+                    // This can happen in practice when existing regions in the code are made dead
+                    // by optimizations.
+                    continue;
+                };
+
+                let Some(input_sched_tree_node) = schedule
+                    .get(graph.value_def(phi_input).0)
+                    .and_then(|node| node.expand())
+                else {
+                    // Having dead *inputs* for a non-dead control edge, on the other hand, is
+                    // problematic. Report that now.
+                    errors.push(GraphVerifierError::UseNotDominated {
+                        node: phi,
+                        input: i,
+                    });
+                    continue;
+                };
+
+                // Finally, we can actually check that the phi input is scheduled before the
+                // corresponding control input.
+                if !domtree.dominates(input_sched_tree_node, ctrl_tree_node) {
+                    errors.push(GraphVerifierError::UseNotDominated {
+                        node: phi,
+                        input: i,
+                    });
+                }
+            }
+        }
+    }
 }
 
 fn get_highest_scheduled_input(

@@ -178,6 +178,14 @@ pub enum DepValueKind {
 }
 
 impl DepValueKind {
+    pub fn is_control(self) -> bool {
+        self == Self::Control
+    }
+
+    pub fn is_value(self) -> bool {
+        matches!(self, Self::Value(..))
+    }
+
     pub fn as_value(self) -> Option<Type> {
         match self {
             Self::Value(v) => Some(v),

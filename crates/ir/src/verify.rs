@@ -1,14 +1,17 @@
 use core::fmt;
 
-use alloc::{borrow::ToOwned, string::String, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
+use cranelift_entity::{packed_option::PackedOption, EntitySet, SecondaryMap};
 use fx_utils::FxHashSet;
 use itertools::Itertools;
+use smallvec::SmallVec;
 
 use crate::{
+    domtree::{self, DomTree, TreeNode},
     module::{Function, FunctionData, Module},
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::walk_live_nodes,
+    valwalk::{walk_live_nodes, PostOrderContext, Succs},
     write::write_node,
 };
 
@@ -20,6 +23,10 @@ mod node;
 pub enum GraphVerifierError {
     UnusedControl(DepValue),
     ReusedControl(DepValue),
+    UseNotDominated {
+        node: Node,
+        input: u32,
+    },
     BadInputCount {
         node: Node,
         expected: u32,
@@ -50,7 +57,8 @@ impl GraphVerifierError {
             Self::UnusedControl(value)
             | Self::ReusedControl(value)
             | Self::BadOutputKind { value, .. } => graph.value_def(*value).0,
-            Self::BadInputCount { node, .. }
+            Self::UseNotDominated { node, .. }
+            | Self::BadInputCount { node, .. }
             | Self::BadOutputCount { node, .. }
             | Self::BadInputKind { node, .. }
             | Self::BadEntry(node)
@@ -63,7 +71,9 @@ impl GraphVerifierError {
 
     pub fn node_input(&self) -> Option<(Node, u32)> {
         match self {
-            &Self::BadInputKind { node, input, .. } => Some((node, input)),
+            &Self::BadInputKind { node, input, .. } | &Self::UseNotDominated { node, input } => {
+                Some((node, input))
+            }
             _ => None,
         }
     }
@@ -88,6 +98,9 @@ impl fmt::Display for DisplayGraphVerifierError<'_> {
             GraphVerifierError::ReusedControl(value) => {
                 let (_, output_idx) = self.graph.value_def(*value);
                 write!(f, "control output {output_idx} reused")?;
+            }
+            GraphVerifierError::UseNotDominated { input, .. } => {
+                write!(f, "input {input} not dominated by def")?;
             }
             GraphVerifierError::BadInputCount { expected, .. } => {
                 write!(f, "bad input count, expected {expected}")?;
@@ -136,6 +149,18 @@ impl fmt::Display for DisplayGraphVerifierError<'_> {
 
         Ok(())
     }
+}
+
+fn display_expected_kinds(kinds: &[DepValueKind]) -> impl fmt::Display + '_ {
+    kinds
+        .iter()
+        .format_with(", ", |kind, f| f(&format_args!("`{kind}`")))
+}
+
+fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {
+    let mut s = String::new();
+    write_node(&mut s, module, graph, node).unwrap();
+    s
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -264,6 +289,8 @@ pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<Graph
         verify_control_outputs(&func.graph, node, &mut errors);
     }
 
+    verify_dataflow(&func.graph, func.entry, &mut errors);
+
     if errors.is_empty() {
         Ok(())
     } else {
@@ -289,16 +316,169 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVe
     }
 }
 
-fn display_expected_kinds(kinds: &[DepValueKind]) -> impl fmt::Display + '_ {
-    kinds
-        .iter()
-        .format_with(", ", |kind, f| f(&format_args!("`{kind}`")))
+type InputSchedules = SmallVec<[(TreeNode, u32); 4]>;
+
+fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
+    let domtree = domtree::compute(graph, entry);
+
+    let mut schedule = SecondaryMap::new();
+    let mut visited_nodes = EntitySet::new();
+    let mut data_postorder = PostOrderContext::new(ValUseDefSuccs(graph), []);
+
+    let mut input_schedules = InputSchedules::new();
+
+    // Overview: walk down the dominator tree in preorder, and then walk back across use edges for
+    // every visited control node (in postorder), excluding edges entering phis. Every new node
+    // discovered must be "scheduled" (attached to a node in the dominator tree); specifically, each
+    // node will be placed at the highest-scheduled (relative to dominance) one of its inputs.
+    //
+    // If cycles are found during the backward DFS, or a node's inputs' scheduling positions aren't
+    // totally ordered by dominance, the appropriate error is reported.
+
+    let root_tree_node = domtree.get_tree_node(entry).unwrap();
+    let mut stack = vec![root_tree_node];
+    while let Some(tree_node) = stack.pop() {
+        stack.extend(domtree.children(tree_node));
+
+        let cfg_node = domtree.get_cfg_node(tree_node);
+        data_postorder.reset([cfg_node]);
+
+        while let Some(node) = data_postorder.next_post(&mut visited_nodes) {
+            let dep_tree_node = domtree.get_tree_node(node);
+            let Ok(highest_scheduled_input) = get_highest_scheduled_input(
+                graph,
+                node,
+                &domtree,
+                &schedule,
+                &mut input_schedules,
+                errors,
+            ) else {
+                // The node's inputs weren't totally ordered by schedule dominance, so we can't
+                // schedule this node either.
+                continue;
+            };
+
+            match dep_tree_node {
+                Some(dep_tree_node) => {
+                    if let Some((highest_scheduled_input, highest_scheduled_input_idx)) =
+                        highest_scheduled_input
+                    {
+                        if !domtree.dominates(highest_scheduled_input, dep_tree_node) {
+                            // If the last (dominance-wise) input to be scheduled doesn't dominate
+                            // this node itself, report the error now.
+                            errors.push(GraphVerifierError::UseNotDominated {
+                                node: cfg_node,
+                                input: highest_scheduled_input_idx,
+                            });
+                        }
+                    }
+
+                    // This node already has an explicit control edge forcing its schedule.
+                    schedule[node] = dep_tree_node.into();
+                }
+                None => {
+                    // Schedule the node as early as possible, falling back to immediately after the
+                    // entry if it has no inputs.
+                    schedule[node] = highest_scheduled_input
+                        .map_or(root_tree_node, |(highest_scheduled_input, _)| {
+                            highest_scheduled_input
+                        })
+                        .into();
+                }
+            }
+        }
+    }
+
+    // TODO: Verify phi inputs.
 }
 
-fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {
-    let mut s = String::new();
-    write_node(&mut s, module, graph, node).unwrap();
-    s
+fn get_highest_scheduled_input(
+    graph: &ValGraph,
+    node: Node,
+    domtree: &DomTree,
+    schedule: &SecondaryMap<Node, PackedOption<TreeNode>>,
+    input_schedules: &mut InputSchedules,
+    errors: &mut Vec<GraphVerifierError>,
+) -> Result<Option<(TreeNode, u32)>, ()> {
+    input_schedules.clear();
+
+    let follow_values = should_follow_values(graph, node);
+    let inputs = graph.node_inputs(node);
+    input_schedules.reserve(inputs.len());
+
+    // Part 1: Find the schedule position for every non-control input value.
+    for (i, input) in (0..).zip(inputs) {
+        if !is_followable_input(graph, follow_values, input) {
+            continue;
+        }
+
+        let sched_node = schedule
+            .get(graph.value_def(input).0)
+            .and_then(|sched_node| sched_node.expand());
+        let Some(sched_node) = sched_node else {
+            // If the node producing this input hasn't been scheduled, we either have a data flow
+            // cycle or that node depends on a computation that is unreachable in the CFG. Both
+            // scenarios are errors.
+            errors.push(GraphVerifierError::UseNotDominated { node, input: i });
+            continue;
+        };
+        // Save the input index so we can report errors accurately later.
+        input_schedules.push((sched_node, i));
+    }
+
+    // Part 2: Check that input schedules are totally ordered with respect to dominance, and find
+    // the maximum with respect to that relation.
+    // We use a simple insertion sort for doing both things.
+
+    for i in 1..input_schedules.len() {
+        // Insert `input_schedules[i]` into the sorted subslice `input_schedules[0..i]`.
+        for j in (0..i).rev() {
+            let (prev, _) = input_schedules[j];
+            // Note: `j < i`, so `j + 1 <= i < len`.
+            let (cur, cur_input_idx) = input_schedules[j + 1];
+
+            // TODO: We could save some redundant comparisons here by reintroducing `DomTree::compare`.
+            if domtree.dominates(cur, prev) {
+                input_schedules.swap(j, j + 1);
+            } else if !domtree.dominates(prev, cur) {
+                // The inputs at positions `j` and `j + 1` are not ordered by dominance; report an
+                // error on one of them. We choose `j + 1` here so that nodes always appear to be
+                // placed based on earlier (lower-indexed) inputs.
+                errors.push(GraphVerifierError::UseNotDominated {
+                    node,
+                    input: cur_input_idx,
+                });
+                // We have nothing more to do here, a basic invariant necessary for the remainder of
+                // the function has been broken.
+                return Err(());
+            }
+        }
+    }
+
+    Ok(input_schedules.last().copied())
+}
+
+struct ValUseDefSuccs<'a>(&'a ValGraph);
+impl Succs for ValUseDefSuccs<'_> {
+    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
+        let follow_values = should_follow_values(self.0, node);
+        for input in self.0.node_inputs(node) {
+            if is_followable_input(self.0, follow_values, input) {
+                f(self.0.value_def(input).0);
+            }
+        }
+    }
+}
+
+fn is_followable_input(graph: &ValGraph, follow_values: bool, input: DepValue) -> bool {
+    let input_kind = graph.value_kind(input);
+    !input_kind.is_control() && (follow_values || !input_kind.is_value())
+}
+
+fn should_follow_values(graph: &ValGraph, node: Node) -> bool {
+    // Don't follow value inputs on phi nodes, since they should actually count as "used" at the
+    // corresponding branch and not where the phi is.
+    graph.node_kind(node) != &NodeKind::Phi
 }
 
 #[cfg(test)]

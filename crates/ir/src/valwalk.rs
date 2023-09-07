@@ -26,8 +26,17 @@ pub struct PreOrderContext<S> {
 
 impl<S: Succs> PreOrderContext<S> {
     pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
-        let stack = roots.into_iter().collect();
-        Self { succs, stack }
+        let mut res = Self {
+            succs,
+            stack: Vec::new(),
+        };
+        res.reset(roots);
+        res
+    }
+
+    pub fn reset(&mut self, roots: impl IntoIterator<Item = Node>) {
+        self.stack.clear();
+        self.stack.extend(roots);
     }
 
     pub fn next(&mut self, visited: &mut EntitySet<Node>) -> Option<Node> {
@@ -82,15 +91,31 @@ pub struct PostOrderContext<S> {
 
 impl<S: Succs> PostOrderContext<S> {
     pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
+        let mut res = Self {
+            succs,
+            stack: Vec::new(),
+        };
+        res.reset(roots);
+        res
+    }
+
+    pub fn reset(&mut self, roots: impl IntoIterator<Item = Node>) {
+        self.stack.clear();
+
         // Note: push the roots onto the stack in source order so that this order is preserved in
         // any RPO. Some clients depend on this: for example, the live-node RPO of a function graph
         // should always start with its entry node.
-        let stack = roots
-            .into_iter()
-            .map(|node| (WalkPhase::Pre, node))
-            .collect();
+        self.stack
+            .extend(roots.into_iter().map(|node| (WalkPhase::Pre, node)));
+    }
 
-        Self { succs, stack }
+    pub fn next_post(&mut self, visited: &mut EntitySet<Node>) -> Option<Node> {
+        loop {
+            let (phase, node) = self.next(visited)?;
+            if phase == WalkPhase::Post {
+                return Some(node);
+            }
+        }
     }
 
     pub fn next(&mut self, visited: &mut EntitySet<Node>) -> Option<(WalkPhase, Node)> {
@@ -139,12 +164,7 @@ impl<S: Succs> Iterator for PostOrder<S> {
     type Item = Node;
 
     fn next(&mut self) -> Option<Node> {
-        loop {
-            let (phase, node) = self.ctx.next(&mut self.visited)?;
-            if phase == WalkPhase::Post {
-                return Some(node);
-            }
-        }
+        self.ctx.next_post(&mut self.visited)
     }
 }
 

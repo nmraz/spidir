@@ -332,7 +332,7 @@ fn compute_domtree_from_reldoms(preorder: &mut Preorder) -> CfgMap<DomTreeNodeIn
 
         // The idom must have been visited earlier as we are in preorder; just tack this new child
         // on.
-        info.get_mut(&node).unwrap().children.push(node);
+        info.get_mut(&idom).unwrap().children.push(node);
     }
 
     info

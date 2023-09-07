@@ -19,41 +19,32 @@ pub enum WalkPhase {
     Post,
 }
 
-pub struct PreOrder<S> {
-    pub visited: EntitySet<Node>,
+pub struct PreOrderContext<S> {
     succs: S,
     stack: Vec<Node>,
 }
 
-impl<S> PreOrder<S> {
+impl<S: Succs> PreOrderContext<S> {
     pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
         let stack = roots.into_iter().collect();
-        Self {
-            visited: EntitySet::new(),
-            succs,
-            stack,
-        }
+        Self { succs, stack }
     }
-}
 
-impl<S: Succs> Iterator for PreOrder<S> {
-    type Item = Node;
-
-    fn next(&mut self) -> Option<Node> {
+    pub fn next(&mut self, visited: &mut EntitySet<Node>) -> Option<Node> {
         let node = loop {
             let node = self.stack.pop()?;
-            if !self.visited.contains(node) {
+            if !visited.contains(node) {
                 break node;
             }
         };
 
-        self.visited.insert(node);
+        visited.insert(node);
 
         self.succs.successors(node, |succ| {
             // This extra check here is an optimization to avoid needlessly placing
             // an obviously-visited node on to the stack. Even if the node is not
             // visited now, it may be by the time it is popped off the stack later.
-            if !self.visited.contains(succ) {
+            if !visited.contains(succ) {
                 self.stack.push(succ);
             }
         });
@@ -62,13 +53,34 @@ impl<S: Succs> Iterator for PreOrder<S> {
     }
 }
 
-pub struct PostOrder<S> {
+pub struct PreOrder<S> {
     pub visited: EntitySet<Node>,
+    ctx: PreOrderContext<S>,
+}
+
+impl<S: Succs> PreOrder<S> {
+    pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
+        Self {
+            visited: EntitySet::new(),
+            ctx: PreOrderContext::new(succs, roots),
+        }
+    }
+}
+
+impl<S: Succs> Iterator for PreOrder<S> {
+    type Item = Node;
+
+    fn next(&mut self) -> Option<Node> {
+        self.ctx.next(&mut self.visited)
+    }
+}
+
+pub struct PostOrderContext<S> {
     succs: S,
     stack: Vec<(WalkPhase, Node)>,
 }
 
-impl<S> PostOrder<S> {
+impl<S: Succs> PostOrderContext<S> {
     pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
         // Note: push the roots onto the stack in source order so that this order is preserved in
         // any RPO. Some clients depend on this: for example, the live-node RPO of a function graph
@@ -78,10 +90,47 @@ impl<S> PostOrder<S> {
             .map(|node| (WalkPhase::Pre, node))
             .collect();
 
+        Self { succs, stack }
+    }
+
+    pub fn next(&mut self, visited: &mut EntitySet<Node>) -> Option<(WalkPhase, Node)> {
+        loop {
+            let (phase, node) = self.stack.pop()?;
+            match phase {
+                WalkPhase::Pre => {
+                    if !visited.contains(node) {
+                        visited.insert(node);
+                        self.stack.push((WalkPhase::Post, node));
+                        self.succs.successors(node, |succ| {
+                            // This extra check here is an optimization to avoid needlessly placing
+                            // an obviously-visited node on to the stack. Even if the node is not
+                            // visited now, it may be by the time it is popped off the stack later.
+                            if !visited.contains(succ) {
+                                self.stack.push((WalkPhase::Pre, succ));
+                            }
+                        });
+
+                        return Some((WalkPhase::Pre, node));
+                    }
+                }
+                WalkPhase::Post => {
+                    return Some((WalkPhase::Post, node));
+                }
+            }
+        }
+    }
+}
+
+pub struct PostOrder<S> {
+    pub visited: EntitySet<Node>,
+    ctx: PostOrderContext<S>,
+}
+
+impl<S: Succs> PostOrder<S> {
+    pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
         Self {
             visited: EntitySet::new(),
-            succs,
-            stack,
+            ctx: PostOrderContext::new(succs, roots),
         }
     }
 }
@@ -91,23 +140,9 @@ impl<S: Succs> Iterator for PostOrder<S> {
 
     fn next(&mut self) -> Option<Node> {
         loop {
-            let (phase, node) = self.stack.pop()?;
-            match phase {
-                WalkPhase::Pre => {
-                    if !self.visited.contains(node) {
-                        self.visited.insert(node);
-                        self.stack.push((WalkPhase::Post, node));
-                        self.succs.successors(node, |succ| {
-                            // This extra check here is an optimization to avoid needlessly placing
-                            // an obviously-visited node on to the stack. Even if the node is not
-                            // visited now, it may be by the time it is popped off the stack later.
-                            if !self.visited.contains(succ) {
-                                self.stack.push((WalkPhase::Pre, succ));
-                            }
-                        });
-                    }
-                }
-                WalkPhase::Post => return Some(node),
+            let (phase, node) = self.ctx.next(&mut self.visited)?;
+            if phase == WalkPhase::Post {
+                return Some(node);
             }
         }
     }

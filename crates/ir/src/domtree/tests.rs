@@ -30,12 +30,11 @@ fn check_idoms(graph: &ValGraph, entry: Node, expected: Expect) {
             rpo_nums[node] = rpo_num;
             let mut s = String::new();
             write_node(&mut s, &module, graph, node).unwrap();
+            let tree_node = domtree.get_tree_node(node);
             (
                 node,
-                domtree
-                    .idom_children(node)
-                    .map(|children| children.collect::<Vec<_>>()),
-                domtree.idom(node),
+                tree_node.map_or(&[] as &[_], |node| domtree.children(node)),
+                tree_node.and_then(|node| domtree.idom(node)),
                 s,
             )
         })
@@ -49,18 +48,19 @@ fn check_idoms(graph: &ValGraph, entry: Node, expected: Expect) {
         write!(printed, "  # {}", rpo_nums[node]).unwrap();
 
         if let Some(idom) = idom {
-            write!(printed, "; idom {}", rpo_nums[idom]).unwrap();
+            write!(printed, "; idom {}", rpo_nums[domtree.get_cfg_node(idom)]).unwrap();
         }
 
-        if let Some(children) = children {
-            if !children.is_empty() {
-                write!(
-                    printed,
-                    "; children {}",
-                    children.iter().map(|&child| rpo_nums[child]).format(", ")
-                )
-                .unwrap();
-            }
+        if !children.is_empty() {
+            write!(
+                printed,
+                "; children {}",
+                children
+                    .iter()
+                    .map(|&child| rpo_nums[domtree.get_cfg_node(child)])
+                    .format(", ")
+            )
+            .unwrap();
         }
 
         writeln!(printed).unwrap();
@@ -209,18 +209,18 @@ fn straight_line_query() {
 
     let domtree = compute(&graph, entry);
 
-    assert!(domtree.dominates(entry, entry));
-    assert!(!domtree.strictly_dominates(entry, entry));
-    assert!(domtree.dominates(entry, ret));
-    assert!(domtree.strictly_dominates(entry, ret));
-    assert!(!domtree.dominates(ret, entry));
+    assert!(domtree.cfg_dominates(entry, entry));
+    assert!(!domtree.cfg_strictly_dominates(entry, entry));
+    assert!(domtree.cfg_dominates(entry, ret));
+    assert!(domtree.cfg_strictly_dominates(entry, ret));
+    assert!(!domtree.cfg_dominates(ret, entry));
 
-    assert!(domtree.dominates(entry, reg1));
-    assert!(domtree.dominates(entry, reg2));
-    assert!(domtree.dominates(entry, reg3));
+    assert!(domtree.cfg_dominates(entry, reg1));
+    assert!(domtree.cfg_dominates(entry, reg2));
+    assert!(domtree.cfg_dominates(entry, reg3));
 
-    assert!(!domtree.dominates(reg3, reg1));
-    assert!(!domtree.dominates(reg2, reg1));
+    assert!(!domtree.cfg_dominates(reg3, reg1));
+    assert!(!domtree.cfg_dominates(reg2, reg1));
 }
 
 #[test]
@@ -238,10 +238,10 @@ fn diamond_query() {
 
     let domtree = compute(&graph, entry);
 
-    assert!(domtree.dominates(entry, join));
-    assert!(domtree.dominates(entry, ret));
-    assert!(domtree.dominates(entry, anode));
-    assert!(domtree.dominates(entry, bnode));
-    assert!(!domtree.dominates(anode, ret));
-    assert!(!domtree.dominates(bnode, ret));
+    assert!(domtree.cfg_dominates(entry, join));
+    assert!(domtree.cfg_dominates(entry, ret));
+    assert!(domtree.cfg_dominates(entry, anode));
+    assert!(domtree.cfg_dominates(entry, bnode));
+    assert!(!domtree.cfg_dominates(anode, ret));
+    assert!(!domtree.cfg_dominates(bnode, ret));
 }

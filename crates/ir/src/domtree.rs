@@ -20,14 +20,14 @@ use crate::{
 type CfgMap<T> = FxHashMap<Node, T>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct TreeNode(u32);
+pub struct TreeNode(u32);
 entity_impl!(TreeNode);
 
 type TreeNodeList = EntityList<TreeNode>;
 
 struct TreeNodeData {
     cfg_node: Node,
-    parent: PackedOption<TreeNode>,
+    idom: PackedOption<TreeNode>,
     children: TreeNodeList,
     dfs_entry: u32,
     dfs_exit: u32,
@@ -41,27 +41,48 @@ pub struct DomTree {
 
 impl DomTree {
     pub fn is_cfg_reachable(&self, node: Node) -> bool {
-        self.tree_node_from_node(node).is_some()
+        self.get_tree_node(node).is_some()
     }
 
-    pub fn idom(&self, node: Node) -> Option<Node> {
-        self.data_from_node(node)
-            .and_then(|data| data.parent.expand())
-            .map(|parent| self.node_from_tree_node(parent))
+    pub fn cfg_idom(&self, node: Node) -> Option<Node> {
+        let node = self.get_tree_node(node)?;
+        Some(self.get_cfg_node(self.idom(node)?))
     }
 
-    pub fn idom_children(&self, node: Node) -> Option<impl Iterator<Item = Node> + '_> {
-        self.data_from_node(node).map(|data| {
-            data.children
-                .as_slice(&self.child_pool)
-                .iter()
-                .map(|&child| self.node_from_tree_node(child))
-        })
+    pub fn cfg_dominates(&self, a: Node, b: Node) -> bool {
+        let Some(a) = self.get_tree_node(a) else {
+            return false;
+        };
+        let Some(b) = self.get_tree_node(b) else {
+            return false;
+        };
+
+        self.dominates(a, b)
     }
 
-    pub fn compare(&self, a: Node, b: Node) -> Option<Ordering> {
-        let a = self.data_from_node(a)?;
-        let b = self.data_from_node(b)?;
+    pub fn cfg_strictly_dominates(&self, a: Node, b: Node) -> bool {
+        a != b && self.cfg_dominates(a, b)
+    }
+
+    pub fn get_tree_node(&self, node: Node) -> Option<TreeNode> {
+        self.tree_nodes_by_node.get(&node).copied()
+    }
+
+    pub fn get_cfg_node(&self, node: TreeNode) -> Node {
+        self.tree[node].cfg_node
+    }
+
+    pub fn idom(&self, node: TreeNode) -> Option<TreeNode> {
+        self.tree[node].idom.expand()
+    }
+
+    pub fn children(&self, node: TreeNode) -> &[TreeNode] {
+        self.tree[node].children.as_slice(&self.child_pool)
+    }
+
+    pub fn compare(&self, a: TreeNode, b: TreeNode) -> Option<Ordering> {
+        let a = &self.tree[a];
+        let b = &self.tree[b];
 
         // Apply the parenthesis theorem to determine whether `a` is an ancestor of `b` or
         // vice-versa.
@@ -89,11 +110,11 @@ impl DomTree {
         }
     }
 
-    pub fn dominates(&self, a: Node, b: Node) -> bool {
+    pub fn dominates(&self, a: TreeNode, b: TreeNode) -> bool {
         matches!(self.compare(a, b), Some(Ordering::Less | Ordering::Equal))
     }
 
-    pub fn strictly_dominates(&self, a: Node, b: Node) -> bool {
+    pub fn strictly_dominates(&self, a: TreeNode, b: TreeNode) -> bool {
         self.compare(a, b) == Some(Ordering::Less)
     }
 
@@ -126,26 +147,13 @@ impl DomTree {
     fn insert_node(&mut self, node: Node, idom: Option<TreeNode>) -> TreeNode {
         let tree_node = self.tree.push(TreeNodeData {
             cfg_node: node,
-            parent: idom.into(),
+            idom: idom.into(),
             children: TreeNodeList::new(),
             dfs_entry: 0,
             dfs_exit: 0,
         });
         self.tree_nodes_by_node.insert(node, tree_node);
         tree_node
-    }
-
-    fn data_from_node(&self, node: Node) -> Option<&TreeNodeData> {
-        self.tree_node_from_node(node)
-            .map(|tree_node| &self.tree[tree_node])
-    }
-
-    fn tree_node_from_node(&self, node: Node) -> Option<TreeNode> {
-        self.tree_nodes_by_node.get(&node).copied()
-    }
-
-    fn node_from_tree_node(&self, tree_node: TreeNode) -> Node {
-        self.tree[tree_node].cfg_node
     }
 }
 
@@ -409,7 +417,7 @@ fn compute_domtree_from_reldoms(preorder: &mut Preorder) -> DomTree {
 
         // The idom must have been visited earlier as we are in preorder.
         let idom = domtree
-            .tree_node_from_node(preorder[preorder[node].dom].node)
+            .get_tree_node(preorder[preorder[node].dom].node)
             .expect("idom should already have been visited");
         let node = preorder[node].node;
 

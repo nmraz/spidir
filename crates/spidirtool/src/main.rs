@@ -232,7 +232,7 @@ fn get_domtree_edges(func: &FunctionData) -> Vec<StructuralEdge> {
 
     let mut idom_edges = Vec::new();
     for node in walk_live_nodes(&func.graph, func.entry) {
-        if let Some(idom) = domtree.idom(node) {
+        if let Some(idom) = domtree.cfg_idom(node) {
             idom_edges.push(StructuralEdge {
                 from: idom,
                 to: node,

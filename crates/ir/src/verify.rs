@@ -337,14 +337,14 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
 
     let root_tree_node = domtree.get_tree_node(entry).unwrap();
     let mut stack = vec![root_tree_node];
-    while let Some(tree_node) = stack.pop() {
-        stack.extend(domtree.children(tree_node));
+    while let Some(cfg_tree_node) = stack.pop() {
+        stack.extend(domtree.children(cfg_tree_node));
 
-        let cfg_node = domtree.get_cfg_node(tree_node);
+        let cfg_node = domtree.get_cfg_node(cfg_tree_node);
         data_postorder.reset([cfg_node]);
 
         while let Some(node) = data_postorder.next_post(&mut visited_nodes) {
-            let dep_tree_node = domtree.get_tree_node(node);
+            let tree_node = domtree.get_tree_node(node);
             let Ok(highest_scheduled_input) = get_highest_scheduled_input(
                 graph,
                 node,
@@ -358,12 +358,12 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
                 continue;
             };
 
-            match dep_tree_node {
-                Some(dep_tree_node) => {
+            match tree_node {
+                Some(tree_node) => {
                     if let Some((highest_scheduled_input, highest_scheduled_input_idx)) =
                         highest_scheduled_input
                     {
-                        if !domtree.dominates(highest_scheduled_input, dep_tree_node) {
+                        if !domtree.dominates(highest_scheduled_input, tree_node) {
                             // If the last (dominance-wise) input to be scheduled doesn't dominate
                             // this node itself, report the error now.
                             errors.push(GraphVerifierError::UseNotDominated {
@@ -374,7 +374,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
                     }
 
                     // This node already has an explicit control edge forcing its schedule.
-                    schedule[node] = dep_tree_node.into();
+                    schedule[node] = tree_node.into();
                 }
                 None => {
                     // Schedule the node as early as possible, falling back to immediately after the

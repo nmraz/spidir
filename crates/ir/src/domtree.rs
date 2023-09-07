@@ -1,6 +1,6 @@
 use alloc::{vec, vec::Vec};
 use core::{
-    cmp::{self, Ordering},
+    cmp,
     ops::{Index, IndexMut},
 };
 use cranelift_entity::{
@@ -80,42 +80,15 @@ impl DomTree {
         self.tree[node].children.as_slice(&self.child_pool)
     }
 
-    pub fn compare(&self, a: TreeNode, b: TreeNode) -> Option<Ordering> {
+    pub fn dominates(&self, a: TreeNode, b: TreeNode) -> bool {
         let a = &self.tree[a];
         let b = &self.tree[b];
-
-        // Apply the parenthesis theorem to determine whether `a` is an ancestor of `b` or
-        // vice-versa.
-        match a.dfs_entry.cmp(&b.dfs_entry) {
-            Ordering::Less => match a.dfs_exit.cmp(&b.dfs_exit) {
-                // We exited `a` before entering `b`, so they are actually unrelated nodes.
-                Ordering::Less => None,
-                // `a` is an ancestor of `b` in the tree, so say it preceeds `b`.
-                Ordering::Greater => Some(Ordering::Less),
-                // This can never happen because the entry times were different.
-                Ordering::Equal => unreachable!(),
-            },
-            Ordering::Greater => {
-                match a.dfs_exit.cmp(&b.dfs_exit) {
-                    // `a` is a descendent of `b` in the tree, so say it succeeds `b`.
-                    Ordering::Less => Some(Ordering::Greater),
-                    // We exited `a` before entering `b`, so they are actually unrelated nodes.
-                    Ordering::Greater => None,
-                    // This can never happen because the entry times were different.
-                    Ordering::Equal => unreachable!(),
-                }
-            }
-            // Different nodes can never have identical entry times
-            Ordering::Equal => Some(Ordering::Equal),
-        }
-    }
-
-    pub fn dominates(&self, a: TreeNode, b: TreeNode) -> bool {
-        matches!(self.compare(a, b), Some(Ordering::Less | Ordering::Equal))
+        // Apply the parenthesis theorem to determine whether `a` is an ancestor of `b`.
+        a.dfs_entry <= b.dfs_entry && b.dfs_exit <= a.dfs_exit
     }
 
     pub fn strictly_dominates(&self, a: TreeNode, b: TreeNode) -> bool {
-        self.compare(a, b) == Some(Ordering::Less)
+        a != b && self.dominates(a, b)
     }
 
     fn compute_dfs_times(&mut self, root: TreeNode) {

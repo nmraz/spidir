@@ -14,7 +14,7 @@ pub trait Succs {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum WalkPhase {
+pub enum WalkPhase {
     Pre,
     Post,
 }

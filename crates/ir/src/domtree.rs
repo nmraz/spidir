@@ -14,6 +14,7 @@ use fx_utils::FxHashMap;
 use crate::{
     node::DepValueKind,
     valgraph::{Node, ValGraph},
+    valwalk::WalkPhase,
 };
 
 type CfgMap<T> = FxHashMap<Node, T>;
@@ -28,6 +29,8 @@ struct TreeNodeData {
     cfg_node: Node,
     parent: PackedOption<TreeNode>,
     children: TreeNodeList,
+    dfs_entry: u32,
+    dfs_exit: u32,
 }
 
 pub struct DomTree {
@@ -52,12 +55,38 @@ impl DomTree {
             data.children
                 .as_slice(&self.child_pool)
                 .iter()
-                .map(|&tree_node| self.node_from_tree_node(tree_node))
+                .map(|&child| self.node_from_tree_node(child))
         })
     }
 
-    pub fn compare(&self, _a: Node, _b: Node) -> Option<Ordering> {
-        todo!()
+    pub fn compare(&self, a: Node, b: Node) -> Option<Ordering> {
+        let a = self.data_from_node(a)?;
+        let b = self.data_from_node(b)?;
+
+        // Apply the parenthesis theorem to determine whether `a` is an ancestor of `b` or
+        // vice-versa.
+        match a.dfs_entry.cmp(&b.dfs_entry) {
+            Ordering::Less => match a.dfs_exit.cmp(&b.dfs_exit) {
+                // We exited `a` before entering `b`, so they are actually unrelated nodes.
+                Ordering::Less => None,
+                // `a` is an ancestor of `b` in the tree, so say it preceeds `b`.
+                Ordering::Greater => Some(Ordering::Less),
+                // This can never happen because the entry times were different.
+                Ordering::Equal => unreachable!(),
+            },
+            Ordering::Greater => {
+                match a.dfs_exit.cmp(&b.dfs_exit) {
+                    // `a` is a descendent of `b` in the tree, so say it succeeds `b`.
+                    Ordering::Less => Some(Ordering::Greater),
+                    // We exited `a` before entering `b`, so they are actually unrelated nodes.
+                    Ordering::Greater => None,
+                    // This can never happen because the entry times were different.
+                    Ordering::Equal => unreachable!(),
+                }
+            }
+            // Different nodes can never have identical entry times
+            Ordering::Equal => Some(Ordering::Equal),
+        }
     }
 
     pub fn dominates(&self, a: Node, b: Node) -> bool {
@@ -66,6 +95,44 @@ impl DomTree {
 
     pub fn strictly_dominates(&self, a: Node, b: Node) -> bool {
         self.compare(a, b) == Some(Ordering::Less)
+    }
+
+    fn compute_dfs_times(&mut self, root: TreeNode) {
+        let mut timestamp = 0;
+        let mut stack = vec![(WalkPhase::Pre, root)];
+
+        while let Some((phase, node)) = stack.pop() {
+            match phase {
+                WalkPhase::Pre => {
+                    let data = &mut self.tree[node];
+                    data.dfs_entry = timestamp;
+                    stack.push((WalkPhase::Post, node));
+                    for &child in data.children.as_slice(&self.child_pool) {
+                        stack.push((WalkPhase::Pre, child));
+                    }
+                }
+                WalkPhase::Post => {
+                    self.tree[node].dfs_exit = timestamp;
+                }
+            }
+            timestamp += 1;
+        }
+    }
+
+    fn add_child(&mut self, idom: TreeNode, child: TreeNode) {
+        self.tree[idom].children.push(child, &mut self.child_pool);
+    }
+
+    fn insert_node(&mut self, node: Node, idom: Option<TreeNode>) -> TreeNode {
+        let tree_node = self.tree.push(TreeNodeData {
+            cfg_node: node,
+            parent: idom.into(),
+            children: TreeNodeList::new(),
+            dfs_entry: 0,
+            dfs_exit: 0,
+        });
+        self.tree_nodes_by_node.insert(node, tree_node);
+        tree_node
     }
 
     fn data_from_node(&self, node: Node) -> Option<&TreeNodeData> {
@@ -79,20 +146,6 @@ impl DomTree {
 
     fn node_from_tree_node(&self, tree_node: TreeNode) -> Node {
         self.tree[tree_node].cfg_node
-    }
-
-    fn add_child(&mut self, idom: TreeNode, child: TreeNode) {
-        self.tree[idom].children.push(child, &mut self.child_pool);
-    }
-
-    fn insert_node(&mut self, node: Node, idom: Option<TreeNode>) -> TreeNode {
-        let tree_node = self.tree.push(TreeNodeData {
-            cfg_node: node,
-            parent: idom.into(),
-            children: TreeNodeList::new(),
-        });
-        self.tree_nodes_by_node.insert(node, tree_node);
-        tree_node
     }
 }
 
@@ -341,7 +394,7 @@ fn compute_domtree_from_reldoms(preorder: &mut Preorder) -> DomTree {
         child_pool: ListPool::new(),
     };
 
-    domtree.insert_node(preorder[0].node, None);
+    let root = domtree.insert_node(preorder[0].node, None);
 
     // Fill in immediate dominators for all nodes based on their `dom`, by traversing the DFS tree
     // in preorder.
@@ -364,6 +417,7 @@ fn compute_domtree_from_reldoms(preorder: &mut Preorder) -> DomTree {
         domtree.add_child(idom, node);
     }
 
+    domtree.compute_dfs_times(root);
     domtree
 }
 

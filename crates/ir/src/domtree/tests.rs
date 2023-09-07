@@ -194,3 +194,54 @@ fn basic_cfg_reachable() {
     assert!(domtree.is_cfg_reachable(ret));
     assert!(!domtree.is_cfg_reachable(graph.value_def(dead_region).0));
 }
+
+#[test]
+fn straight_line_query() {
+    let (mut graph, entry, ctrl0) = create_graph();
+    let ctrl1 = create_region(&mut graph, [ctrl0]);
+    let ctrl2 = create_region(&mut graph, [ctrl1]);
+    let ctrl3 = create_region(&mut graph, [ctrl2]);
+    let ret = create_return(&mut graph, [ctrl3]);
+
+    let reg1 = graph.value_def(ctrl1).0;
+    let reg2 = graph.value_def(ctrl2).0;
+    let reg3 = graph.value_def(ctrl3).0;
+
+    let domtree = compute(&graph, entry);
+
+    assert!(domtree.dominates(entry, entry));
+    assert!(!domtree.strictly_dominates(entry, entry));
+    assert!(domtree.dominates(entry, ret));
+    assert!(domtree.strictly_dominates(entry, ret));
+    assert!(!domtree.dominates(ret, entry));
+
+    assert!(domtree.dominates(entry, reg1));
+    assert!(domtree.dominates(entry, reg2));
+    assert!(domtree.dominates(entry, reg3));
+
+    assert!(!domtree.dominates(reg3, reg1));
+    assert!(!domtree.dominates(reg2, reg1));
+}
+
+#[test]
+fn diamond_query() {
+    let (mut graph, entry, ctrl) = create_graph();
+    let (actrl, bctrl) = create_brcond(&mut graph, ctrl);
+    let actrl = create_region(&mut graph, [actrl]);
+    let bctrl = create_region(&mut graph, [bctrl]);
+    let join_ctrl = create_region(&mut graph, [actrl, bctrl]);
+    let ret = create_return(&mut graph, [join_ctrl]);
+
+    let anode = graph.value_def(actrl).0;
+    let bnode = graph.value_def(bctrl).0;
+    let join = graph.value_def(join_ctrl).0;
+
+    let domtree = compute(&graph, entry);
+
+    assert!(domtree.dominates(entry, join));
+    assert!(domtree.dominates(entry, ret));
+    assert!(domtree.dominates(entry, anode));
+    assert!(domtree.dominates(entry, bnode));
+    assert!(!domtree.dominates(anode, ret));
+    assert!(!domtree.dominates(bnode, ret));
+}

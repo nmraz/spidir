@@ -323,7 +323,6 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVe
 }
 
 type InputSchedules = SmallVec<[(TreeNode, u32); 4]>;
-type Schedule = SecondaryMap<Node, PackedOption<TreeNode>>;
 
 struct DataflowSuccs<'a>(&'a ValGraph);
 impl Succs for DataflowSuccs<'_> {
@@ -334,16 +333,38 @@ impl Succs for DataflowSuccs<'_> {
     }
 }
 
+/// Scratch buffers that are reused throughout dataflow verification.
 struct ScratchSpace<'a> {
     data_postorder: PostOrderContext<DataflowSuccs<'a>>,
     input_schedules: InputSchedules,
 }
 
+/// Associates every node with a point in the reachable CFG at which it can be computed (if one
+/// exists), and tracks all nodes which have already had scheduling attempted.
+struct Schedule {
+    schedule: SecondaryMap<Node, PackedOption<TreeNode>>,
+    visited: EntitySet<Node>,
+}
+
+impl Schedule {
+    fn get(&self, node: Node) -> Option<TreeNode> {
+        self.schedule
+            .get(node)
+            .and_then(|tree_node| tree_node.expand())
+    }
+
+    fn set(&mut self, node: Node, sched_tree_node: impl Into<PackedOption<TreeNode>>) {
+        self.schedule[node] = sched_tree_node.into();
+    }
+}
+
 fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
     let domtree = domtree::compute(graph, entry);
 
-    let mut schedule = SecondaryMap::new();
-    let mut visited = EntitySet::new();
+    let mut sched = Schedule {
+        schedule: SecondaryMap::new(),
+        visited: EntitySet::new(),
+    };
     let mut scratch_space = ScratchSpace {
         data_postorder: PostOrderContext::new(DataflowSuccs(graph), []),
         input_schedules: InputSchedules::new(),
@@ -367,8 +388,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
             &domtree,
             cfg_node,
             &mut scratch_space,
-            &mut visited,
-            &mut schedule,
+            &mut sched,
             errors,
         );
     }
@@ -390,7 +410,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
         };
 
         for (phi, _) in graph.value_uses(phisel) {
-            if !visited.contains(phi) {
+            if !sched.visited.contains(phi) {
                 // Ignore any dead phi nodes, they may not even be meaningful.
                 continue;
             }
@@ -400,10 +420,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
                 graph.node_inputs(phi).into_iter().skip(1),
                 graph.node_inputs(cfg_node),
             ) {
-                let Some(ctrl_tree_node) = schedule
-                    .get(graph.value_def(ctrl_input).0)
-                    .and_then(|node| node.expand())
-                else {
+                let Some(ctrl_tree_node) = sched.get(graph.value_def(ctrl_input).0) else {
                     // Inputs from dead regions are actually okay: if we can never select the
                     // corresponding value in the phi, we don't need to check any constraints on it.
                     // This can happen in practice when existing regions in the code are made dead
@@ -411,10 +428,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
                     continue;
                 };
 
-                let Some(input_sched_tree_node) = schedule
-                    .get(graph.value_def(phi_input).0)
-                    .and_then(|node| node.expand())
-                else {
+                let Some(input_sched_tree_node) = sched.get(graph.value_def(phi_input).0) else {
                     // Having dead *inputs* for a non-dead control edge, on the other hand, is
                     // problematic. Report that now.
                     errors.push(GraphVerifierError::UseNotDominated {
@@ -442,22 +456,24 @@ fn schedule_nodes(
     domtree: &DomTree,
     node: Node,
     scratch_space: &mut ScratchSpace<'_>,
-    visited: &mut EntitySet<Node>,
-    schedule: &mut Schedule,
+    sched: &mut Schedule,
     errors: &mut Vec<GraphVerifierError>,
 ) {
     scratch_space.data_postorder.reset([node]);
-    while let Some(node) = scratch_space.data_postorder.next_post(visited) {
+    while let Some(node) = scratch_space.data_postorder.next_post(&mut sched.visited) {
         let highest_scheduled_input = get_highest_scheduled_input(
             graph,
             domtree,
-            schedule,
+            sched,
             node,
             &mut scratch_space.input_schedules,
             errors,
         );
 
         if has_ctrl_edges(graph, node) {
+            // This node has explicit control edges, so schedule it exactly where the dominator
+            // tree says it should be (which could also be nowhere).
+
             let tree_node = domtree.get_tree_node(node);
             if let (Some(tree_node), Some(highest_scheduled_input)) =
                 (tree_node, highest_scheduled_input)
@@ -480,15 +496,16 @@ fn schedule_nodes(
             // This node already has an explicit control edge forcing its schedule.
             // Not that if this node is unreachable in the CFG, it will still be unscheduled at
             // this point.
-            schedule[node] = tree_node.into();
+            sched.set(node, tree_node);
         } else {
             // This node doesn't have any control edges forcing its schedule; place it as early
             // as possible, falling back to immediately after the entry if it has no inputs.
-            schedule[node] = highest_scheduled_input
-                .map_or(domtree.root(), |(highest_scheduled_input, _)| {
+            sched.set(
+                node,
+                highest_scheduled_input.map_or(domtree.root(), |(highest_scheduled_input, _)| {
                     highest_scheduled_input
-                })
-                .into();
+                }),
+            );
         }
     }
 }
@@ -496,7 +513,7 @@ fn schedule_nodes(
 fn get_highest_scheduled_input(
     graph: &ValGraph,
     domtree: &DomTree,
-    schedule: &Schedule,
+    sched: &Schedule,
     node: Node,
     input_schedules: &mut InputSchedules,
     errors: &mut Vec<GraphVerifierError>,
@@ -513,9 +530,7 @@ fn get_highest_scheduled_input(
             continue;
         }
 
-        let sched_node = schedule
-            .get(graph.value_def(input).0)
-            .and_then(|sched_node| sched_node.expand());
+        let sched_node = sched.get(graph.value_def(input).0);
         let Some(sched_node) = sched_node else {
             // If the node producing this input hasn't been scheduled, we either have a data flow
             // cycle or that node depends on a computation that is unreachable in the CFG. Both

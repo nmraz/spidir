@@ -323,13 +323,14 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVe
 }
 
 type InputSchedules = SmallVec<[(TreeNode, u32); 4]>;
+type Schedule = SecondaryMap<Node, PackedOption<TreeNode>>;
 
 fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
     let domtree = domtree::compute(graph, entry);
 
     let mut schedule = SecondaryMap::new();
     let mut visited = EntitySet::new();
-    let mut data_postorder = PostOrderContext::new(ValUseDefSuccs(graph), []);
+    let mut data_postorder = PostOrderContext::new(DataflowSuccs(graph), []);
 
     let mut input_schedules = InputSchedules::new();
 
@@ -347,55 +348,18 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
         stack.extend(domtree.children(cfg_tree_node));
 
         let cfg_node = domtree.get_cfg_node(cfg_tree_node);
+
         data_postorder.reset([cfg_node]);
-
-        while let Some(node) = data_postorder.next_post(&mut visited) {
-            let highest_scheduled_input = get_highest_scheduled_input(
-                graph,
-                node,
-                &domtree,
-                &schedule,
-                &mut input_schedules,
-                errors,
-            );
-
-            if has_ctrl_edges(graph, node) {
-                // This node has explicit control edges, so schedule it exactly where the dominator
-                // tree says it should be (which could also be nowhere).
-
-                let tree_node = domtree.get_tree_node(node);
-                if let (Some(tree_node), Some(highest_scheduled_input)) =
-                    (tree_node, highest_scheduled_input)
-                {
-                    // We have both a dominator tree node dictating our schedule and a
-                    // last-scheduled input; make sure we aren't trying to use something that can't
-                    // be computed yet.
-                    let (highest_scheduled_input, highest_scheduled_input_idx) =
-                        highest_scheduled_input;
-                    if !domtree.dominates(highest_scheduled_input, tree_node) {
-                        // If the last (dominance-wise) input to be scheduled doesn't dominate
-                        // this node itself, report the error now.
-                        errors.push(GraphVerifierError::UseNotDominated {
-                            node: cfg_node,
-                            input: highest_scheduled_input_idx,
-                        });
-                    }
-                }
-
-                // This node already has an explicit control edge forcing its schedule.
-                // Not that if this node is unreachable in the CFG, it will still be unscheduled at
-                // this point.
-                schedule[node] = tree_node.into();
-            } else {
-                // This node doesn't have any control edges forcing its schedule; place it as early
-                // as possible, falling back to immediately after the entry if it has no inputs.
-                schedule[node] = highest_scheduled_input
-                    .map_or(root_tree_node, |(highest_scheduled_input, _)| {
-                        highest_scheduled_input
-                    })
-                    .into();
-            }
-        }
+        schedule_nodes(
+            graph,
+            &domtree,
+            root_tree_node,
+            &mut data_postorder,
+            &mut visited,
+            &mut schedule,
+            &mut input_schedules,
+            errors,
+        );
     }
 
     // Part 2: Now that everything is scheduled, check that phi inputs are legal by checking that
@@ -458,6 +422,57 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
                     });
                 }
             }
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn schedule_nodes(
+    graph: &ValGraph,
+    domtree: &DomTree,
+    root_tree_node: TreeNode,
+    data_postorder: &mut PostOrderContext<DataflowSuccs<'_>>,
+    visited: &mut EntitySet<Node>,
+    schedule: &mut Schedule,
+    input_schedules: &mut InputSchedules,
+    errors: &mut Vec<GraphVerifierError>,
+) {
+    while let Some(node) = data_postorder.next_post(visited) {
+        let highest_scheduled_input =
+            get_highest_scheduled_input(graph, node, domtree, schedule, input_schedules, errors);
+
+        if has_ctrl_edges(graph, node) {
+            let tree_node = domtree.get_tree_node(node);
+            if let (Some(tree_node), Some(highest_scheduled_input)) =
+                (tree_node, highest_scheduled_input)
+            {
+                // We have both a dominator tree node dictating our schedule and a
+                // last-scheduled input; make sure we aren't trying to use something that can't
+                // be computed yet.
+                let (highest_scheduled_input, highest_scheduled_input_idx) =
+                    highest_scheduled_input;
+                if !domtree.dominates(highest_scheduled_input, tree_node) {
+                    // If the last (dominance-wise) input to be scheduled doesn't dominate
+                    // this node itself, report the error now.
+                    errors.push(GraphVerifierError::UseNotDominated {
+                        node,
+                        input: highest_scheduled_input_idx,
+                    });
+                }
+            }
+
+            // This node already has an explicit control edge forcing its schedule.
+            // Not that if this node is unreachable in the CFG, it will still be unscheduled at
+            // this point.
+            schedule[node] = tree_node.into();
+        } else {
+            // This node doesn't have any control edges forcing its schedule; place it as early
+            // as possible, falling back to immediately after the entry if it has no inputs.
+            schedule[node] = highest_scheduled_input
+                .map_or(root_tree_node, |(highest_scheduled_input, _)| {
+                    highest_scheduled_input
+                })
+                .into();
         }
     }
 }
@@ -530,16 +545,22 @@ fn get_highest_scheduled_input(
     input_schedules.last().copied()
 }
 
-struct ValUseDefSuccs<'a>(&'a ValGraph);
-impl Succs for ValUseDefSuccs<'_> {
+struct DataflowSuccs<'a>(&'a ValGraph);
+impl Succs for DataflowSuccs<'_> {
     fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
-        let follow_values = should_follow_values(self.0, node);
-        for input in self.0.node_inputs(node) {
-            if is_followable_input(self.0, follow_values, input) {
-                f(self.0.value_def(input).0);
-            }
+        for input_node in follow_dataflow_inputs(self.0, node) {
+            f(input_node);
         }
     }
+}
+
+fn follow_dataflow_inputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+    let follow_values = should_follow_values(graph, node);
+    graph
+        .node_inputs(node)
+        .into_iter()
+        .filter(move |&input| is_followable_input(graph, follow_values, input))
+        .map(|input| graph.value_def(input).0)
 }
 
 fn is_followable_input(graph: &ValGraph, follow_values: bool, input: DepValue) -> bool {

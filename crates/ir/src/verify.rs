@@ -350,18 +350,14 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
         data_postorder.reset([cfg_node]);
 
         while let Some(node) = data_postorder.next_post(&mut visited) {
-            let Ok(highest_scheduled_input) = get_highest_scheduled_input(
+            let highest_scheduled_input = get_highest_scheduled_input(
                 graph,
                 node,
                 &domtree,
                 &schedule,
                 &mut input_schedules,
                 errors,
-            ) else {
-                // The node's inputs weren't totally ordered by schedule dominance, so we can't
-                // schedule this node either.
-                continue;
-            };
+            );
 
             if has_ctrl_edges(graph, node) {
                 // This node has explicit control edges, so schedule it exactly where the dominator
@@ -473,7 +469,7 @@ fn get_highest_scheduled_input(
     schedule: &SecondaryMap<Node, PackedOption<TreeNode>>,
     input_schedules: &mut InputSchedules,
     errors: &mut Vec<GraphVerifierError>,
-) -> Result<Option<(TreeNode, u32)>, ()> {
+) -> Option<(TreeNode, u32)> {
     input_schedules.clear();
 
     let follow_values = should_follow_values(graph, node);
@@ -507,7 +503,7 @@ fn get_highest_scheduled_input(
     for i in 1..input_schedules.len() {
         // Insert `input_schedules[i]` into the sorted subslice `input_schedules[0..i]`.
         for j in (0..i).rev() {
-            let (prev, _) = input_schedules[j];
+            let (prev, prev_input_idx) = input_schedules[j];
             // Note: `j < i`, so `j + 1 <= i < len`.
             let (cur, cur_input_idx) = input_schedules[j + 1];
 
@@ -522,14 +518,16 @@ fn get_highest_scheduled_input(
                     node,
                     input: cur_input_idx,
                 });
-                // We have nothing more to do here, a basic invariant necessary for the remainder of
-                // the function has been broken.
-                return Err(());
+
+                // We have a broken invariant, so don't try to schedule based on remaining inputs;
+                // just go by what we've seen so far to enable at least some additional errors to be
+                // detected.
+                return Some((prev, prev_input_idx));
             }
         }
     }
 
-    Ok(input_schedules.last().copied())
+    input_schedules.last().copied()
 }
 
 struct ValUseDefSuccs<'a>(&'a ValGraph);

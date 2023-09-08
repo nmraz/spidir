@@ -1,0 +1,51 @@
+# run: verify-err
+
+func @ctrl_dead_input_unattached:i32(i32) {
+    # check: function `ctrl_dead_input_unattached`:
+    # unordered: `$val:i32 = iadd $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:phisel = region
+    %4:ptr = iconst 12345
+    %5:ctrl, %6:i32 = load.4 %2, %4
+    return %5, %6
+    %7:i32 = iadd %1, %6
+    return %0, %7
+}
+
+func @ctrl_dead_input_attached_below:i32(i32) {
+    # check: function `ctrl_dead_input_attached_below`:
+    # unordered: `$val:i32 = iadd $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:phisel = region
+    %4:ptr = iconst 12345
+    %5:ctrl, %6:i32 = load.4 %2, %4
+    %7:ctrl, %8:phisel = region %0, %5
+    %9:i32 = iadd %1, %6
+    return %7, %9
+}
+
+func @ctrl_dead_input_attached_above:i32(i32, ptr) {
+    # check: function `ctrl_dead_input_attached_above`:
+    # unordered: `$val:i32 = iadd $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl, %4:phisel = region
+    %5:ctrl, %6:i32 = load.4 %3, %2
+    return %5, %6
+    %7:i32 = iadd %1, %6
+    return %0, %7
+}
+
+func @ctrl_dead_input_attached_both:i32(i32, ptr) {
+    # check: function `ctrl_dead_input_attached_both`:
+    # unordered: `$val:i32 = iadd $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl, %4:phisel = region
+    %5:ctrl, %6:i32 = load.4 %3, %2
+    %7:ctrl, %8:phisel = region %0, %5
+    %9:i32 = iadd %1, %6
+    return %7, %9
+}

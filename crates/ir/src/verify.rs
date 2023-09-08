@@ -350,7 +350,6 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
         data_postorder.reset([cfg_node]);
 
         while let Some(node) = data_postorder.next_post(&mut visited) {
-            let tree_node = domtree.get_tree_node(node);
             let Ok(highest_scheduled_input) = get_highest_scheduled_input(
                 graph,
                 node,
@@ -364,33 +363,41 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
                 continue;
             };
 
-            match tree_node {
-                Some(tree_node) => {
-                    if let Some((highest_scheduled_input, highest_scheduled_input_idx)) =
-                        highest_scheduled_input
-                    {
-                        if !domtree.dominates(highest_scheduled_input, tree_node) {
-                            // If the last (dominance-wise) input to be scheduled doesn't dominate
-                            // this node itself, report the error now.
-                            errors.push(GraphVerifierError::UseNotDominated {
-                                node: cfg_node,
-                                input: highest_scheduled_input_idx,
-                            });
-                        }
-                    }
+            if has_ctrl_edges(graph, node) {
+                // This node has explicit control edges, so schedule it exactly where the dominator
+                // tree says it should be (which could also be nowhere).
 
-                    // This node already has an explicit control edge forcing its schedule.
-                    schedule[node] = tree_node.into();
+                let tree_node = domtree.get_tree_node(node);
+                if let (Some(tree_node), Some(highest_scheduled_input)) =
+                    (tree_node, highest_scheduled_input)
+                {
+                    // We have both a dominator tree node dictating our schedule and a
+                    // last-scheduled input; make sure we aren't trying to use something that can't
+                    // be computed yet.
+                    let (highest_scheduled_input, highest_scheduled_input_idx) =
+                        highest_scheduled_input;
+                    if !domtree.dominates(highest_scheduled_input, tree_node) {
+                        // If the last (dominance-wise) input to be scheduled doesn't dominate
+                        // this node itself, report the error now.
+                        errors.push(GraphVerifierError::UseNotDominated {
+                            node: cfg_node,
+                            input: highest_scheduled_input_idx,
+                        });
+                    }
                 }
-                None => {
-                    // Schedule the node as early as possible, falling back to immediately after the
-                    // entry if it has no inputs.
-                    schedule[node] = highest_scheduled_input
-                        .map_or(root_tree_node, |(highest_scheduled_input, _)| {
-                            highest_scheduled_input
-                        })
-                        .into();
-                }
+
+                // This node already has an explicit control edge forcing its schedule.
+                // Not that if this node is unreachable in the CFG, it will still be unscheduled at
+                // this point.
+                schedule[node] = tree_node.into();
+            } else {
+                // This node doesn't have any control edges forcing its schedule; place it as early
+                // as possible, falling back to immediately after the entry if it has no inputs.
+                schedule[node] = highest_scheduled_input
+                    .map_or(root_tree_node, |(highest_scheduled_input, _)| {
+                        highest_scheduled_input
+                    })
+                    .into();
             }
         }
     }
@@ -546,6 +553,17 @@ fn should_follow_values(graph: &ValGraph, node: Node) -> bool {
     // Don't follow value inputs on phi nodes, since they should actually count as "used" at the
     // corresponding branch and not where the phi is.
     graph.node_kind(node) != &NodeKind::Phi
+}
+
+fn has_ctrl_edges(graph: &ValGraph, node: Node) -> bool {
+    graph
+        .node_inputs(node)
+        .into_iter()
+        .any(|input| graph.value_kind(input).is_control())
+        || graph
+            .node_outputs(node)
+            .into_iter()
+            .any(|input| graph.value_kind(input).is_control())
 }
 
 #[cfg(test)]

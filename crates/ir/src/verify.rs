@@ -1,6 +1,6 @@
 use core::fmt;
 
-use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec::Vec};
 use cranelift_entity::{packed_option::PackedOption, EntitySet, SecondaryMap};
 use fx_utils::FxHashSet;
 use itertools::{izip, Itertools};
@@ -358,6 +358,24 @@ impl Schedule {
     }
 }
 
+struct DomTreePreOrder<'a> {
+    domtree: &'a DomTree,
+    stack: Vec<TreeNode>,
+}
+
+impl<'a> DomTreePreOrder<'a> {
+    fn reset(&mut self) {
+        self.stack.clear();
+        self.stack.push(self.domtree.root());
+    }
+
+    fn next(&mut self) -> Option<TreeNode> {
+        let node = self.stack.pop()?;
+        self.stack.extend(self.domtree.children(node));
+        Some(node)
+    }
+}
+
 fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
     let domtree = domtree::compute(graph, entry);
 
@@ -369,6 +387,10 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
         data_postorder: PostOrderContext::new(DataflowSuccs(graph), []),
         input_schedules: InputSchedules::new(),
     };
+    let mut domtree_preorder = DomTreePreOrder {
+        domtree: &domtree,
+        stack: Vec::new(),
+    };
 
     // Part 1: Walk down the dominator tree in preorder, and then walk back across use edges for
     // every visited control node (in postorder), excluding edges entering phis. Every new node
@@ -378,10 +400,8 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
     // If cycles are found during the backward DFS, or a node's inputs' scheduling positions aren't
     // totally ordered by dominance, the appropriate error is reported.
 
-    let mut stack = vec![domtree.root()];
-    while let Some(cfg_tree_node) = stack.pop() {
-        stack.extend(domtree.children(cfg_tree_node));
-
+    domtree_preorder.reset();
+    while let Some(cfg_tree_node) = domtree_preorder.next() {
         let cfg_node = domtree.get_cfg_node(cfg_tree_node);
         schedule_nodes(
             graph,
@@ -396,56 +416,78 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
     // Part 2: Now that everything is scheduled, check that phi inputs are legal by checking that
     // the node outputting the control edge relevant to each input is dominated by the computation
     // of the input.
-    stack.clear();
-    stack.push(domtree.root());
-    while let Some(cfg_tree_node) = stack.pop() {
+    domtree_preorder.reset();
+    while let Some(cfg_tree_node) = domtree_preorder.next() {
         let cfg_node = domtree.get_cfg_node(cfg_tree_node);
+        verify_attached_phi_inputs(
+            graph,
+            &domtree,
+            cfg_node,
+            &mut scratch_space,
+            &mut sched,
+            errors,
+        );
+    }
+}
 
-        let Some(phisel) = graph
-            .node_outputs(cfg_node)
-            .into_iter()
-            .find(|&output| graph.value_kind(output) == DepValueKind::PhiSelector)
-        else {
+fn verify_attached_phi_inputs(
+    graph: &ValGraph,
+    domtree: &DomTree,
+    cfg_node: Node,
+    scratch_space: &mut ScratchSpace<'_>,
+    sched: &mut Schedule,
+    errors: &mut Vec<GraphVerifierError>,
+) {
+    let Some(phisel) = graph
+        .node_outputs(cfg_node)
+        .into_iter()
+        .find(|&output| graph.value_kind(output) == DepValueKind::PhiSelector)
+    else {
+        return;
+    };
+
+    for (phi, _) in graph.value_uses(phisel) {
+        if !sched.visited.contains(phi) {
+            // Ignore any dead phi nodes, they may not even be meaningful.
             continue;
-        };
+        }
 
-        for (phi, _) in graph.value_uses(phisel) {
-            if !sched.visited.contains(phi) {
-                // Ignore any dead phi nodes, they may not even be meaningful.
+        for (i, phi_input, ctrl_input) in izip!(
+            1..,
+            graph.node_inputs(phi).into_iter().skip(1),
+            graph.node_inputs(cfg_node),
+        ) {
+            let Some(ctrl_tree_node) = sched.get(graph.value_def(ctrl_input).0) else {
+                // Inputs from dead regions are actually okay: if we can never select the
+                // corresponding value in the phi, we don't need to check any constraints on it.
+                // This can happen in practice when existing regions in the code are made dead
+                // by optimizations.
                 continue;
-            }
+            };
 
-            for (i, phi_input, ctrl_input) in izip!(
-                1..,
-                graph.node_inputs(phi).into_iter().skip(1),
-                graph.node_inputs(cfg_node),
-            ) {
-                let Some(ctrl_tree_node) = sched.get(graph.value_def(ctrl_input).0) else {
-                    // Inputs from dead regions are actually okay: if we can never select the
-                    // corresponding value in the phi, we don't need to check any constraints on it.
-                    // This can happen in practice when existing regions in the code are made dead
-                    // by optimizations.
-                    continue;
-                };
+            let input_node = graph.value_def(phi_input).0;
 
-                let Some(input_sched_tree_node) = sched.get(graph.value_def(phi_input).0) else {
-                    // Having dead *inputs* for a non-dead control edge, on the other hand, is
-                    // problematic. Report that now.
-                    errors.push(GraphVerifierError::UseNotDominated {
-                        node: phi,
-                        input: i,
-                    });
-                    continue;
-                };
+            // This input may not have been scheduled yet, because we skipped all phi inputs during
+            // the initial traversal.
+            schedule_nodes(graph, domtree, input_node, scratch_space, sched, errors);
 
-                // Finally, we can actually check that the phi input is scheduled before the
-                // corresponding control input.
-                if !domtree.dominates(input_sched_tree_node, ctrl_tree_node) {
-                    errors.push(GraphVerifierError::UseNotDominated {
-                        node: phi,
-                        input: i,
-                    });
-                }
+            let Some(input_sched_tree_node) = sched.get(input_node) else {
+                // Having dead *inputs* for a non-dead control edge, on the other hand, is
+                // problematic. Report that now.
+                errors.push(GraphVerifierError::UseNotDominated {
+                    node: phi,
+                    input: i,
+                });
+                continue;
+            };
+
+            // Finally, we can actually check that the phi input is scheduled before the
+            // corresponding control input.
+            if !domtree.dominates(input_sched_tree_node, ctrl_tree_node) {
+                errors.push(GraphVerifierError::UseNotDominated {
+                    node: phi,
+                    input: i,
+                });
             }
         }
     }

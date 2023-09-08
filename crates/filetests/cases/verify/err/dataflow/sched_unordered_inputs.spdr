@@ -1,0 +1,50 @@
+# run: verify-err
+
+func @sched_unordered_inputs:i32(i32, ptr, ptr) {
+    # check: function `sched_unordered_inputs`:
+    # unordered: `$val:i32 = iadd $val, $val`: input 1 not dominated by def
+    # unordered: `return $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:i32, %2:ptr, %3:ptr = entry
+    %4:ctrl, %5:ctrl = brcond %0, %1
+    %6:ctrl, %7:i32 = load.4 %4, %2
+    %8:ctrl, %9:i32 = load.4 %5, %3
+    %10:ctrl, %11:phisel = region %6, %8
+    %12:i32 = iadd %7, %9
+    return %10, %12
+}
+
+func @sched_unordered_inputs_with_phi:i32(i32) {
+    # check: function `sched_unordered_inputs_with_phi`:
+    # unordered: `$val:i32 = iadd $val, $val`: input 1 not dominated by def
+    # unordered: `return $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:ctrl = brcond %0, %1
+    %4:ctrl, %5:phisel = region %2
+    %6:i32 = phi %5, %1
+    %7:ctrl, %8:phisel = region %3
+    %9:i32 = phi %8, %1
+    %10:ctrl, %11:phisel = region %4, %7
+    %12:i32 = iadd %6, %9
+    return %10, %12
+}
+
+func @sched_unordered_input_chains:i32(ptr, ptr, ptr) {
+    # check: function `sched_unordered_input_chains`:
+    # unordered: `$val:i32 = iadd $val, $val`: input 1 not dominated by def
+    # unordered: `return $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:ptr, %2:ptr, %3:ptr = entry
+    %4:ctrl, %5:i32 = load.4 %0, %1
+    %6:i32 = iconst 5
+    %7:i32 = xor %5, %6
+    %8:ctrl, %9:ctrl = brcond %4, %7
+    %10:ctrl, %11:i32 = load.4 %8, %2
+    %12:i32 = isub %11, %7
+    %13:ctrl, %14:i32 = load.4 %9, %3
+    %15:i32 = imul %7, %14
+    %16:ctrl, %17:phisel = region %10, %13
+    %18:i32 = iadd %12, %15
+    return %16, %18
+}

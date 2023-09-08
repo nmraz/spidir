@@ -1,0 +1,31 @@
+# run: verify-ok
+
+# check: $()
+
+func @first_input_early:i32(ptr, ptr) {
+    %0:ctrl, %1:ptr, %2:ptr = entry
+    %3:ctrl, %4:i32 = load.4 %0, %1
+    %5:ctrl, %6:i32 = load.4 %3, %2
+    %7:i32 = isub %4, %6
+    return %5, %7
+}
+
+func @second_input_early:i32(ptr, ptr) {
+    %0:ctrl, %1:ptr, %2:ptr = entry
+    %3:ctrl, %4:i32 = load.4 %0, %1
+    %5:ctrl, %6:i32 = load.4 %3, %2
+    %7:i32 = isub %6, %4
+    return %5, %7
+}
+
+func @sched_dominating_input_chain:i32(ptr, ptr, ptr) {
+    %0:ctrl, %1:ptr, %2:ptr, %3:ptr = entry
+    %4:ctrl, %5:i32 = load.4 %0, %1
+    %6:i32 = iconst 5
+    %7:i32 = xor %5, %6
+    %8:ctrl, %9:ctrl = brcond %4, %7
+    %10:ctrl, %11:i32 = load.4 %8, %2
+    %13:ctrl, %14:i32 = load.4 %9, %3
+    %16:ctrl, %17:phisel = region %10, %13
+    return %16, %7
+}

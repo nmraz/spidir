@@ -1,0 +1,38 @@
+# run: verify-err
+
+func @sched_cross_ordered_input_1(i32, ptr) {
+    # check: function `sched_cross_ordered_input_1`:
+    # unordered: `$val:ctrl, $val:i32 = load.4 $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl, %4:ctrl = brcond %0, %1
+    %5:ctrl, %6:ptr = load.8 %3, %2
+    %7:ctrl, %8:i32 = load.4 %4, %6
+    %9:ctrl, %10:phisel = region %5, %7
+    return %9
+}
+
+func @sched_cross_ordered_input_2(i32, ptr) {
+    # check: function `sched_cross_ordered_input_2`:
+    # unordered: `$val:ctrl, $val:i32 = load.4 $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl, %4:ctrl = brcond %0, %1
+    %5:ctrl, %6:ptr = load.8 %4, %2
+    %7:ctrl, %8:i32 = load.4 %3, %6
+    %9:ctrl, %10:phisel = region %5, %7
+    return %9
+}
+
+func @sched_cross_ordered_input_both(i32) {
+    # check: function `sched_cross_ordered_input_both`:
+    # unordered: `$val:ctrl, $val:ptr = load.8 $val, $val`: input 1 not dominated by def
+    # unordered: `$val:ctrl, $val:ptr = load.8 $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:i32 = entry
+    %3:ctrl, %4:ctrl = brcond %0, %1
+    %5:ctrl, %6:ptr = load.8 %4, %8
+    %7:ctrl, %8:ptr = load.8 %3, %6
+    %9:ctrl, %10:phisel = region %5, %7
+    return %9
+}

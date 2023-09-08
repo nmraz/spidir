@@ -1,0 +1,29 @@
+# run: verify-err
+
+func @select_load_phi_inputs_swapped:i32(i32, ptr, ptr) {
+    # check: function `select_load_phi_inputs_swapped`:
+    # unordered: `$val:i32 = phi $val, $val, $val`: input 1 not dominated by def
+    # unordered: `$val:i32 = phi $val, $val, $val`: input 2 not dominated by def
+
+    %0:ctrl, %1:i32, %2:ptr, %3:ptr = entry
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %10:ctrl, %11:i32 = load.4 %8, %2
+    %12:ctrl, %13:i32 = load.4 %9, %3
+    %14:ctrl, %15:phisel = region %10, %12
+    %16:i32 = phi %15, %13, %11
+    return %14, %16
+}
+
+func @phi_dead_region_inputs_swapped:i32() {
+    # check: function `phi_dead_region_inputs_swapped`:
+    # unordered: `$val:i32 = phi $val, $val, $val`: input 1 not dominated by def
+
+    %0:ctrl = entry
+    %1:i32 = iconst 3
+    %2:ctrl, %3:phisel = region
+    %4:ptr = iconst 12345
+    %5:ctrl, %6:i32 = load.4 %2, %4
+    %7:ctrl, %8:phisel = region %0, %5
+    %9:i32 = phi %8, %6, %1
+    return %7, %9
+}

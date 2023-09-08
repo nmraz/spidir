@@ -71,6 +71,11 @@ impl DomTree {
         self.tree[node].cfg_node
     }
 
+    pub fn root(&self) -> TreeNode {
+        // This is verified below when constructing the tree.
+        TreeNode::from_u32(0)
+    }
+
     pub fn idom(&self, node: TreeNode) -> Option<TreeNode> {
         self.tree[node].idom.expand()
     }
@@ -375,6 +380,7 @@ fn compute_domtree_from_reldoms(preorder: &mut Preorder) -> DomTree {
     };
 
     let root = domtree.insert_node(preorder[0].node, None);
+    assert!(root == domtree.root());
 
     // Fill in immediate dominators for all nodes based on their `dom`, by traversing the DFS tree
     // in preorder.

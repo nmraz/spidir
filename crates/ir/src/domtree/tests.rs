@@ -188,6 +188,7 @@ fn basic_cfg_reachable() {
     let ret = create_return(&mut graph, [ctrl]);
 
     let domtree = compute(&graph, entry);
+    assert_eq!(domtree.root(), domtree.get_tree_node(entry).unwrap());
     assert!(domtree.is_cfg_reachable(entry));
     assert!(domtree.is_cfg_reachable(graph.value_def(actrl).0));
     assert!(domtree.is_cfg_reachable(graph.value_def(bctrl).0));

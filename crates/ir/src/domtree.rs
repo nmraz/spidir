@@ -12,7 +12,6 @@ use smallvec::SmallVec;
 use fx_utils::FxHashMap;
 
 use crate::{
-    node::DepValueKind,
     valgraph::{Node, ValGraph},
     valwalk::WalkPhase,
 };
@@ -482,7 +481,7 @@ fn cfg_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
     graph
         .node_outputs(node)
         .into_iter()
-        .filter(|&output| graph.value_kind(output) == DepValueKind::Control)
+        .filter(|&output| graph.value_kind(output).is_control())
         .flat_map(|output| graph.value_uses(output))
         .map(|(succ_node, _succ_input_idx)| succ_node)
 }
@@ -491,7 +490,7 @@ fn cfg_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
     graph
         .node_inputs(node)
         .into_iter()
-        .filter(|&input| graph.value_kind(input) == DepValueKind::Control)
+        .filter(|&input| graph.value_kind(input).is_control())
         .map(|input| graph.value_def(input).0)
 }
 

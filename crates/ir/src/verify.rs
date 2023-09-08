@@ -325,14 +325,29 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVe
 type InputSchedules = SmallVec<[(TreeNode, u32); 4]>;
 type Schedule = SecondaryMap<Node, PackedOption<TreeNode>>;
 
+struct DataflowSuccs<'a>(&'a ValGraph);
+impl Succs for DataflowSuccs<'_> {
+    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
+        for input_node in follow_dataflow_inputs(self.0, node) {
+            f(input_node);
+        }
+    }
+}
+
+struct ScratchSpace<'a> {
+    data_postorder: PostOrderContext<DataflowSuccs<'a>>,
+    input_schedules: InputSchedules,
+}
+
 fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
     let domtree = domtree::compute(graph, entry);
 
     let mut schedule = SecondaryMap::new();
     let mut visited = EntitySet::new();
-    let mut data_postorder = PostOrderContext::new(DataflowSuccs(graph), []);
-
-    let mut input_schedules = InputSchedules::new();
+    let mut scratch_space = ScratchSpace {
+        data_postorder: PostOrderContext::new(DataflowSuccs(graph), []),
+        input_schedules: InputSchedules::new(),
+    };
 
     // Part 1: Walk down the dominator tree in preorder, and then walk back across use edges for
     // every visited control node (in postorder), excluding edges entering phis. Every new node
@@ -342,22 +357,18 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
     // If cycles are found during the backward DFS, or a node's inputs' scheduling positions aren't
     // totally ordered by dominance, the appropriate error is reported.
 
-    let root_tree_node = domtree.get_tree_node(entry).unwrap();
-    let mut stack = vec![root_tree_node];
+    let mut stack = vec![domtree.root()];
     while let Some(cfg_tree_node) = stack.pop() {
         stack.extend(domtree.children(cfg_tree_node));
 
         let cfg_node = domtree.get_cfg_node(cfg_tree_node);
-
-        data_postorder.reset([cfg_node]);
         schedule_nodes(
             graph,
             &domtree,
-            root_tree_node,
-            &mut data_postorder,
+            cfg_node,
+            &mut scratch_space,
             &mut visited,
             &mut schedule,
-            &mut input_schedules,
             errors,
         );
     }
@@ -366,7 +377,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
     // the node outputting the control edge relevant to each input is dominated by the computation
     // of the input.
     stack.clear();
-    stack.push(root_tree_node);
+    stack.push(domtree.root());
     while let Some(cfg_tree_node) = stack.pop() {
         let cfg_node = domtree.get_cfg_node(cfg_tree_node);
 
@@ -426,20 +437,25 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn schedule_nodes(
     graph: &ValGraph,
     domtree: &DomTree,
-    root_tree_node: TreeNode,
-    data_postorder: &mut PostOrderContext<DataflowSuccs<'_>>,
+    node: Node,
+    scratch_space: &mut ScratchSpace<'_>,
     visited: &mut EntitySet<Node>,
     schedule: &mut Schedule,
-    input_schedules: &mut InputSchedules,
     errors: &mut Vec<GraphVerifierError>,
 ) {
-    while let Some(node) = data_postorder.next_post(visited) {
-        let highest_scheduled_input =
-            get_highest_scheduled_input(graph, node, domtree, schedule, input_schedules, errors);
+    scratch_space.data_postorder.reset([node]);
+    while let Some(node) = scratch_space.data_postorder.next_post(visited) {
+        let highest_scheduled_input = get_highest_scheduled_input(
+            graph,
+            domtree,
+            schedule,
+            node,
+            &mut scratch_space.input_schedules,
+            errors,
+        );
 
         if has_ctrl_edges(graph, node) {
             let tree_node = domtree.get_tree_node(node);
@@ -469,7 +485,7 @@ fn schedule_nodes(
             // This node doesn't have any control edges forcing its schedule; place it as early
             // as possible, falling back to immediately after the entry if it has no inputs.
             schedule[node] = highest_scheduled_input
-                .map_or(root_tree_node, |(highest_scheduled_input, _)| {
+                .map_or(domtree.root(), |(highest_scheduled_input, _)| {
                     highest_scheduled_input
                 })
                 .into();
@@ -479,9 +495,9 @@ fn schedule_nodes(
 
 fn get_highest_scheduled_input(
     graph: &ValGraph,
-    node: Node,
     domtree: &DomTree,
-    schedule: &SecondaryMap<Node, PackedOption<TreeNode>>,
+    schedule: &Schedule,
+    node: Node,
     input_schedules: &mut InputSchedules,
     errors: &mut Vec<GraphVerifierError>,
 ) -> Option<(TreeNode, u32)> {
@@ -543,15 +559,6 @@ fn get_highest_scheduled_input(
     }
 
     input_schedules.last().copied()
-}
-
-struct DataflowSuccs<'a>(&'a ValGraph);
-impl Succs for DataflowSuccs<'_> {
-    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
-        for input_node in follow_dataflow_inputs(self.0, node) {
-            f(input_node);
-        }
-    }
 }
 
 fn follow_dataflow_inputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {

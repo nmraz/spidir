@@ -22,6 +22,11 @@ func @select_load_dead_phi_inputs_swapped(i32, ptr, ptr) {
     return %14
 }
 
+# This behavior is desirable because it means that removing a control edge (for
+# example, following constant propagation) preserves the modified function's
+# validity without any additional effort. However, it does mean that scheduling
+# code later needs to be more careful about phi inputs from dead regions, since
+# they may be completely nonsensical.
 func @phi_dead_region:i32() {
     %0:ctrl = entry
     %1:i32 = iconst 3

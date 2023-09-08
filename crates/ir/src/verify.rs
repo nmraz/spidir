@@ -395,7 +395,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
     // Part 1: Walk down the dominator tree in preorder, and then walk back across use edges for
     // every visited control node (in postorder), excluding edges entering phis. Every new node
     // discovered must be "scheduled" (attached to a node in the dominator tree); specifically, each
-    // node will be placed at the highest-scheduled (relative to dominance) one of its inputs.
+    // node will be placed at the last-scheduled (relative to dominance) one of its inputs.
     //
     // If cycles are found during the backward DFS, or a node's inputs' scheduling positions aren't
     // totally ordered by dominance, the appropriate error is reported.
@@ -503,7 +503,7 @@ fn schedule_nodes(
 ) {
     scratch_space.data_postorder.reset([node]);
     while let Some(node) = scratch_space.data_postorder.next_post(&mut sched.visited) {
-        let highest_scheduled_input = get_highest_scheduled_input(
+        let last_scheduled_input = get_last_scheduled_input(
             graph,
             domtree,
             sched,
@@ -517,20 +517,18 @@ fn schedule_nodes(
             // tree says it should be (which could also be nowhere).
 
             let tree_node = domtree.get_tree_node(node);
-            if let (Some(tree_node), Some(highest_scheduled_input)) =
-                (tree_node, highest_scheduled_input)
+            if let (Some(tree_node), Some(last_scheduled_input)) = (tree_node, last_scheduled_input)
             {
                 // We have both a dominator tree node dictating our schedule and a
                 // last-scheduled input; make sure we aren't trying to use something that can't
                 // be computed yet.
-                let (highest_scheduled_input, highest_scheduled_input_idx) =
-                    highest_scheduled_input;
-                if !domtree.dominates(highest_scheduled_input, tree_node) {
+                let (last_scheduled_input, last_scheduled_input_idx) = last_scheduled_input;
+                if !domtree.dominates(last_scheduled_input, tree_node) {
                     // If the last (dominance-wise) input to be scheduled doesn't dominate
                     // this node itself, report the error now.
                     errors.push(GraphVerifierError::UseNotDominated {
                         node,
-                        input: highest_scheduled_input_idx,
+                        input: last_scheduled_input_idx,
                     });
                 }
             }
@@ -544,15 +542,15 @@ fn schedule_nodes(
             // as possible, falling back to immediately after the entry if it has no inputs.
             sched.set(
                 node,
-                highest_scheduled_input.map_or(domtree.root(), |(highest_scheduled_input, _)| {
-                    highest_scheduled_input
+                last_scheduled_input.map_or(domtree.root(), |(last_scheduled_input, _)| {
+                    last_scheduled_input
                 }),
             );
         }
     }
 }
 
-fn get_highest_scheduled_input(
+fn get_last_scheduled_input(
     graph: &ValGraph,
     domtree: &DomTree,
     sched: &Schedule,

@@ -12,7 +12,6 @@ func @store_from_future(ptr) {
 
 func @arith_stuff_cycle:i32(i32) {
     # check: function `arith_stuff_cycle`:
-    # unordered: `$val:ctrl, $val:i32 = udiv $val, $val, $val`: input 1 not dominated by def
     # unordered: `$val:ctrl, $val:i32 = sdiv $val, $val, $val`: input 1 not dominated by def
 
     %0:ctrl, %1:i32 = entry

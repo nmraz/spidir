@@ -178,10 +178,6 @@ pub enum DepValueKind {
 }
 
 impl DepValueKind {
-    pub fn is_control(self) -> bool {
-        self == Self::Control
-    }
-
     pub fn is_value(self) -> bool {
         matches!(self, Self::Value(..))
     }
@@ -191,6 +187,18 @@ impl DepValueKind {
             Self::Value(v) => Some(v),
             _ => None,
         }
+    }
+
+    pub fn is_control(self) -> bool {
+        self == Self::Control
+    }
+
+    pub fn is_phisel(self) -> bool {
+        self == Self::PhiSelector
+    }
+
+    pub fn is_control_or_phisel(self) -> bool {
+        self.is_control() || self.is_phisel()
     }
 }
 

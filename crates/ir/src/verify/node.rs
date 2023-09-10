@@ -21,6 +21,7 @@ pub fn verify_node_kind(
         NodeKind::Entry => verify_entry(func, node, errors),
         NodeKind::Return => verify_return(func, node, errors),
         NodeKind::Region => verify_region(graph, node, errors),
+        NodeKind::Unreachable => verify_unreachable(graph, node, errors),
         NodeKind::Phi => verify_phi(graph, node, errors),
         NodeKind::IConst(val) => verify_iconst(graph, node, *val, errors),
         NodeKind::Iadd => verify_int_binop(graph, node, errors),
@@ -110,6 +111,13 @@ fn verify_region(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierErr
     for input in 0..graph.node_inputs(node).len() as u32 {
         let _ = verify_ctrl_input_kind(graph, node, input, errors);
     }
+}
+
+fn verify_unreachable(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {
+    let Ok([]) = verify_node_arity(graph, node, 1, errors) else {
+        return;
+    };
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Control], errors);
 }
 
 fn verify_phi(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {

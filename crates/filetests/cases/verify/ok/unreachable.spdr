@@ -1,0 +1,8 @@
+# run: verify-ok
+
+# check: $()
+
+func @noreturn:i32() {
+    %0:ctrl = entry
+    unreachable %0
+}

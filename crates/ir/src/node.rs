@@ -116,6 +116,7 @@ pub enum NodeKind {
     Entry,
     Return,
     Region,
+    Unreachable,
     Phi,
     IConst(u64),
     Iadd,

@@ -1,0 +1,26 @@
+# run: verify-err
+
+func @unreachable_bad_input_count:i32(i32) {
+    # check: function `unreachable_bad_input_count`:
+    # unordered: `unreachable $val, $val`: bad input count, expected 1
+
+    %0:ctrl, %1:i32 = entry
+    unreachable %0, %1
+}
+
+func @unreachable_bad_output_count() {
+    # check: function `unreachable_bad_output_count`:
+    # unordered: `$val:ctrl = unreachable $val`: bad output count, expected 0
+
+    %0:ctrl = entry
+    %1:ctrl = unreachable %0
+    return %1
+}
+
+func @unreachable_bad_input_kind:i32(i32) {
+    # check: function `unreachable_bad_input_kind`:
+    # unordered: `$val:ctrl, $val:i32 = entry`: control output 0 unused
+
+    %0:ctrl, %1:i32 = entry
+    unreachable %1
+}

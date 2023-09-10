@@ -41,6 +41,7 @@ nodekind           =  {
     "entry"
   | "return"
   | "region"
+  | "unreachable"
   | "phi"
   | iconst_nodekind
   | fconst_nodekind

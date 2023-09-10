@@ -156,6 +156,7 @@ impl NodeKind {
             Self::Entry
                 | Self::Return
                 | Self::Region
+                | Self::Unreachable
                 | Self::Sdiv
                 | Self::Udiv
                 | Self::Load(..)

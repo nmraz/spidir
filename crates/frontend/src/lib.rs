@@ -120,6 +120,11 @@ impl<'a> FunctionBuilder<'a> {
         graph.add_node_input(false_region, built.false_ctrl);
     }
 
+    pub fn build_unreachable(&mut self) {
+        let ctrl = self.terminate_cur_block();
+        self.builder().build_unreachable(ctrl);
+    }
+
     pub fn build_phi(&mut self, ty: Type, incoming_values: &[DepValue]) -> (PhiHandle, DepValue) {
         let selector = self
             .graph()

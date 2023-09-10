@@ -97,6 +97,10 @@ pub trait BuilderExt: Builder {
         }
     }
 
+    fn build_unreachable(&mut self, ctrl: DepValue) {
+        self.create_node(NodeKind::Unreachable, [ctrl], []);
+    }
+
     fn build_brcond(&mut self, ctrl: DepValue, cond: DepValue) -> BuiltBrcond {
         let brcond = self.create_node(
             NodeKind::BrCond,

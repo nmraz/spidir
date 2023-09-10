@@ -107,6 +107,14 @@ unsafe extern "C" fn spidir_builder_build_brcond(
 }
 
 #[no_mangle]
+unsafe extern "C" fn spidir_builder_build_unreachable(builder: *mut FunctionBuilder<'_>) {
+    unsafe {
+        let builder = &mut *builder;
+        builder.build_unreachable();
+    }
+}
+
+#[no_mangle]
 unsafe extern "C" fn spidir_builder_build_phi(
     builder: *mut FunctionBuilder<'_>,
     ty: ApiType,

@@ -390,6 +390,19 @@ void spidir_builder_build_brcond(spidir_builder_handle_t builder,
                                  spidir_value_t cond, spidir_block_t true_dest,
                                  spidir_block_t false_dest);
 
+/// Builds an "unreachable" node at the current insertion point.
+///
+/// This node is used to indicate that control can never reach the current
+/// program point, even though it is reachable statically. If an unreachable
+/// node is executed at runtime, the behavior is undefined.
+///
+/// After the instruction is built, the current block will be considered
+/// "terminated" and no new instructions will be allowed. Use
+/// `spidir_builder_set_block` to switch to a different block if necessary.
+///
+/// @param[in] builder A handle to the function builder.
+void spidir_builder_build_unreachable(spidir_builder_handle_t builder);
+
 /// Builds an SSA phi operation pertaining to the current block.
 ///
 /// The phi operation should have one input for every incoming control edge to

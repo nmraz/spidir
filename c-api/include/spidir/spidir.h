@@ -731,10 +731,9 @@ spidir_value_t spidir_builder_build_load(spidir_builder_handle_t builder,
 ///                    constraints on the type of the value stored.
 /// @param[in] data    An SSA value containing the data to store to memory.
 /// @param[in] ptr     A value containing the pointer to store to.
-spidir_value_t spidir_builder_build_store(spidir_builder_handle_t builder,
-                                          spidir_mem_size_t size,
-                                          spidir_value_t data,
-                                          spidir_value_t ptr);
+void spidir_builder_build_store(spidir_builder_handle_t builder,
+                                spidir_mem_size_t size, spidir_value_t data,
+                                spidir_value_t ptr);
 
 /// Builds a "stack slot" operation.
 ///

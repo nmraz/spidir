@@ -4,6 +4,7 @@
 #ifndef SPIDIR_SPIDIR_H
 #define SPIDIR_SPIDIR_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -273,6 +274,21 @@ spidir_builder_get_module(spidir_builder_handle_t builder);
 /// @return A value identifying the newly-created block. This value is only
 ///         meaningful when used with the same builder.
 spidir_block_t spidir_builder_create_block(spidir_builder_handle_t builder);
+
+/// Retrieves the current insertion block of `builder`, as set by
+/// `spidir_builder_set_block`.
+///
+/// If a block has been set, this function returns `true` and stores the block
+/// in `out_block`. If a block has not yet been set, this function returns
+/// false.
+///
+/// @param[in]  builder   A handle to the function builder.
+/// @param[out] out_block An out parameter that will receive the current block
+///                       if there is one.
+/// @return True if there was a current block and `out_block` was assigned,
+///         false otherwise.
+bool spidir_builder_cur_block(spidir_builder_handle_t builder,
+                              spidir_block_t* out_block);
 
 /// Sets the current insertion point of `builder`.
 ///

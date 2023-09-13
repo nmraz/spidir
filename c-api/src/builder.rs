@@ -4,9 +4,9 @@ use ir::module::Module;
 use paste::paste;
 
 use crate::types::{
-    block_from_api, funcref_from_api, icmp_kind_from_api, mem_size_from_api, opt_value_from_api,
-    opt_value_to_api, type_from_api, value_from_api, value_list_from_api, value_to_api, ApiBlock,
-    ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
+    block_from_api, block_to_api, funcref_from_api, icmp_kind_from_api, mem_size_from_api,
+    opt_value_from_api, opt_value_to_api, type_from_api, value_from_api, value_list_from_api,
+    value_to_api, ApiBlock, ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
 };
 
 #[no_mangle]
@@ -19,8 +19,24 @@ unsafe extern "C" fn spidir_builder_create_block(builder: *mut FunctionBuilder<'
     unsafe {
         let builder = &mut *builder;
         let block = builder.create_block();
-        ApiBlock(block.as_u32())
+        block_to_api(block)
     }
+}
+
+#[no_mangle]
+unsafe extern "C" fn spidir_builder_cur_block(
+    builder: *mut FunctionBuilder<'_>,
+    out_block: *mut ApiBlock,
+) -> bool {
+    unsafe {
+        let builder = &mut *builder;
+        if let Some(block) = builder.cur_block() {
+            *out_block = block_to_api(block);
+            return true;
+        }
+    }
+
+    false
 }
 
 #[no_mangle]

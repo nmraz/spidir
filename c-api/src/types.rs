@@ -142,6 +142,10 @@ pub fn value_from_api(value: ApiValue) -> DepValue {
     DepValue::from_u32(value.0)
 }
 
+pub fn block_to_api(block: Block) -> ApiBlock {
+    ApiBlock(block.as_u32())
+}
+
 pub fn block_from_api(block: ApiBlock) -> Block {
     Block::from_u32(block.0)
 }

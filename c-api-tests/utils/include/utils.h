@@ -3,6 +3,14 @@
 
 #include <spidir/spidir.h>
 
+#define ASSERT(expr)                                                           \
+    do {                                                                       \
+        if (!(expr))                                                           \
+            assert_failed(__FILE__, __LINE__, #expr);                          \
+    } while (0)
+
+void assert_failed(const char* file, int line, const char* expr);
+
 void dump_module_to_stdout(spidir_module_handle_t module);
 
 #endif

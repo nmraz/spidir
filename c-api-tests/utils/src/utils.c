@@ -3,6 +3,12 @@
 #include <spidir/spidir.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+void assert_failed(const char* file, int line, const char* expr) {
+    fprintf(stderr, "assertion failed at %s:%d: `%s`\n", file, line, expr);
+    abort();
+}
 
 static spidir_dump_status_t stdout_dump_callback(const char* s, size_t size,
                                                  void* ctx) {

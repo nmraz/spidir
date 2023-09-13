@@ -95,9 +95,9 @@ impl DomTree {
         a != b && self.dominates(a, b)
     }
 
-    fn compute_dfs_times(&mut self, root: TreeNode) {
+    fn compute_dfs_times(&mut self) {
         let mut timestamp = 0;
-        let mut stack = vec![(WalkPhase::Pre, root)];
+        let mut stack = vec![(WalkPhase::Pre, self.root())];
 
         while let Some((phase, node)) = stack.pop() {
             match phase {
@@ -403,7 +403,7 @@ fn compute_domtree_from_reldoms(preorder: &mut Preorder) -> DomTree {
         domtree.add_child(idom, node);
     }
 
-    domtree.compute_dfs_times(root);
+    domtree.compute_dfs_times();
     domtree
 }
 

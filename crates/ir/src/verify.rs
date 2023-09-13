@@ -612,7 +612,7 @@ fn get_attached_phis(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node>
     graph
         .node_outputs(node)
         .into_iter()
-        .filter(|&output| graph.value_kind(output) == DepValueKind::PhiSelector)
+        .filter(|&output| graph.value_kind(output).is_phisel())
         .flat_map(|phisel| graph.value_uses(phisel))
         .map(|(phi, _)| phi)
 }

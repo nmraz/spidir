@@ -16,6 +16,7 @@ cranelift-entity = "0.95.0"
 expect-test = "1.4.1"
 hashbrown = { version = "0.13.2", default-features = false }
 itertools = { version = "0.11.0", default-features = false }
+log = "0.4.20"
 smallvec = { version = "1.10.0", default-features = false, features = [
     "const_new",
 ] }

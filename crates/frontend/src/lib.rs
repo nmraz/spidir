@@ -1,12 +1,15 @@
 #![cfg_attr(not(test), no_std)]
 
 use cranelift_entity::{entity_impl, PrimaryMap};
+use log::trace;
+
 use ir::{
     builder::{Builder, BuilderExt},
     cons_builder::{Cache, ConsBuilder},
     module::{Function, FunctionData, Module},
-    node::{FunctionRef, IcmpKind, MemSize, Type},
+    node::{DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
+    write::display_node,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -285,6 +288,33 @@ impl<'a> FunctionBuilder<'a> {
 
     fn func_mut(&mut self) -> &mut FunctionData {
         &mut self.module.functions[self.func]
+    }
+}
+
+struct GraphBuilderWrapper<'a> {
+    module: &'a mut Module,
+    func: Function,
+    cache: &'a mut Cache,
+}
+
+impl<'a> Builder for GraphBuilderWrapper<'a> {
+    fn create_node(
+        &mut self,
+        kind: NodeKind,
+        inputs: impl IntoIterator<Item = DepValue>,
+        output_kinds: impl IntoIterator<Item = DepValueKind>,
+    ) -> Node {
+        let mut builder = ConsBuilder::new(&mut self.module.functions[self.func].graph, self.cache);
+        let node = builder.create_node(kind, inputs, output_kinds);
+        trace!(
+            "built node: `{}`",
+            display_node(self.module, &self.module.functions[self.func].graph, node)
+        );
+        node
+    }
+
+    fn graph(&self) -> &ValGraph {
+        &self.module.functions[self.func].graph
     }
 }
 

@@ -254,11 +254,11 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn builder(&mut self) -> impl Builder + '_ {
-        // Note: we can't call `graph_mut` here because we need disjoint borrows.
-        ConsBuilder::new(
-            &mut self.module.functions[self.func].graph,
-            &mut self.node_cache,
-        )
+        GraphBuilderWrapper {
+            module: self.module,
+            func: self.func,
+            node_cache: &mut self.node_cache,
+        }
     }
 
     fn cur_block_ctrl(&self) -> DepValue {
@@ -294,7 +294,7 @@ impl<'a> FunctionBuilder<'a> {
 struct GraphBuilderWrapper<'a> {
     module: &'a mut Module,
     func: Function,
-    cache: &'a mut Cache,
+    node_cache: &'a mut Cache,
 }
 
 impl<'a> Builder for GraphBuilderWrapper<'a> {
@@ -304,7 +304,8 @@ impl<'a> Builder for GraphBuilderWrapper<'a> {
         inputs: impl IntoIterator<Item = DepValue>,
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node {
-        let mut builder = ConsBuilder::new(&mut self.module.functions[self.func].graph, self.cache);
+        let mut builder =
+            ConsBuilder::new(&mut self.module.functions[self.func].graph, self.node_cache);
         let node = builder.create_node(kind, inputs, output_kinds);
         trace!(
             "built node: `{}`",

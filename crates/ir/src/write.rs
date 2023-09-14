@@ -70,6 +70,30 @@ struct DefaultAnnotator;
 impl<'a> AnnotateGraph<dyn fmt::Write + 'a> for DefaultAnnotator {}
 impl<'a> AnnotateModule<dyn fmt::Write + 'a> for DefaultAnnotator {}
 
+pub fn display_node<'a>(
+    module: &'a Module,
+    graph: &'a ValGraph,
+    node: Node,
+) -> impl fmt::Display + 'a {
+    DisplayNode {
+        module,
+        graph,
+        node,
+    }
+}
+
+struct DisplayNode<'a> {
+    module: &'a Module,
+    graph: &'a ValGraph,
+    node: Node,
+}
+
+impl<'a> fmt::Display for DisplayNode<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_node(f, self.module, self.graph, self.node)
+    }
+}
+
 pub fn write_module(w: &mut dyn fmt::Write, module: &Module) -> fmt::Result {
     write_annotated_module(w, &mut DefaultAnnotator, module)
 }

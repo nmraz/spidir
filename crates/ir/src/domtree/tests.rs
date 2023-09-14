@@ -10,7 +10,7 @@ use crate::{
     test_utils::{create_const32, create_entry, create_loop_graph, create_region, create_return},
     valgraph::DepValue,
     valwalk::LiveNodeInfo,
-    write::write_node,
+    write::display_node,
 };
 
 use super::*;
@@ -28,8 +28,7 @@ fn check_idoms(graph: &ValGraph, entry: Node, expected: Expect) {
         .enumerate()
         .map(|(rpo_num, &node)| {
             rpo_nums[node] = rpo_num;
-            let mut s = String::new();
-            write_node(&mut s, &module, graph, node).unwrap();
+            let s = display_node(&module, graph, node).to_string();
             let tree_node = domtree.get_tree_node(node);
             (
                 node,

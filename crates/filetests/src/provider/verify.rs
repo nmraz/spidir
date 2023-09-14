@@ -6,9 +6,8 @@ use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{
     module::Module,
-    valgraph::{Node, ValGraph},
     verify::{verify_module, ModuleVerifierError},
-    write::write_node,
+    write::display_node,
 };
 use itertools::Itertools;
 use regex::Regex;
@@ -146,10 +145,4 @@ fn add_error_run(updater: &mut Updater<'_>, cur_func: Option<&str>, output_run: 
     }
 
     updater.blank_line();
-}
-
-fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {
-    let mut s = String::new();
-    write_node(&mut s, module, graph, node).unwrap();
-    s
 }

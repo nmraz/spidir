@@ -12,7 +12,7 @@ use crate::{
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{walk_live_nodes, PostOrderContext, Succs},
-    write::write_node,
+    write::display_node,
 };
 
 use self::node::verify_node_kind;
@@ -155,12 +155,6 @@ fn display_expected_kinds(kinds: &[DepValueKind]) -> impl fmt::Display + '_ {
     kinds
         .iter()
         .format_with(", ", |kind, f| f(&format_args!("`{kind}`")))
-}
-
-fn display_node(module: &Module, graph: &ValGraph, node: Node) -> String {
-    let mut s = String::new();
-    write_node(&mut s, module, graph, node).unwrap();
-    s
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

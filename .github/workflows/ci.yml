@@ -57,8 +57,19 @@ jobs:
           components: clippy
       - run: cargo clippy --all-features -- -D warnings
 
-  clippy-c-api:
-    name: Clippy (C API)
+  clippy-c-api-unlogged:
+    name: Clippy (C API, Logging disabled)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+          targets: x86_64-unknown-none
+      - run: cargo clippy -p c-api --features no_logging --target x86_64-unknown-none -- -D warnings
+
+  clippy-c-api-logged:
+    name: Clippy (C API, Logging enabled)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

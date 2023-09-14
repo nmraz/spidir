@@ -1,0 +1,5 @@
+[TRACE frontend] built node: `%14:ctrl, %15:i32 = sdiv %3, %13, %1`
+[TRACE frontend] built node: `%16:ctrl, %17:i32 = udiv %14, %15, %1`
+[TRACE frontend] built node: `%18:i32 = icmp eq %17, %1`
+[TRACE frontend] built node: `%19:i32 = icmp ne %18, %1`
+[TRACE frontend] built node: `%20:i32 = icmp slt %19, %1`

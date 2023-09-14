@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <spidir/log.h>
 #include <spidir/spidir.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -8,6 +9,34 @@
 void assert_failed(const char* file, int line, const char* expr) {
     fprintf(stderr, "assertion failed at %s:%d: `%s`\n", file, line, expr);
     abort();
+}
+
+static const char* spidir_log_level_to_string(spidir_log_level_t level) {
+    switch (level) {
+    case SPIDIR_LOG_LEVEL_ERROR:
+        return "ERROR";
+    case SPIDIR_LOG_LEVEL_WARN:
+        return "WARN";
+    case SPIDIR_LOG_LEVEL_INFO:
+        return "INFO";
+    case SPIDIR_LOG_LEVEL_DEBUG:
+        return "DEBUG";
+    case SPIDIR_LOG_LEVEL_TRACE:
+        return "TRACE";
+    default:
+        return "LOG";
+    }
+}
+
+static void stdout_log_callback(spidir_log_level_t level, const char* module,
+                                size_t module_len, const char* message,
+                                size_t message_len) {
+    printf("[%s %.*s] %.*s\n", spidir_log_level_to_string(level),
+           (int) module_len, module, (int) message_len, message);
+}
+
+void init_stdout_spidir_log(void) {
+    spidir_log_init(stdout_log_callback);
 }
 
 static spidir_dump_status_t stdout_dump_callback(const char* s, size_t size,

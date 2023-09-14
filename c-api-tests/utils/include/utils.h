@@ -11,6 +11,7 @@
 
 void assert_failed(const char* file, int line, const char* expr);
 
+void init_stdout_spidir_log(void);
 void dump_module_to_stdout(spidir_module_handle_t module);
 
 #endif

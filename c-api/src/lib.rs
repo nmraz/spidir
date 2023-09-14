@@ -3,6 +3,7 @@
 extern crate alloc;
 
 mod builder;
+mod log;
 mod module;
 mod types;
 

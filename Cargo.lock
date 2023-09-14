@@ -99,6 +99,7 @@ version = "0.1.0"
 dependencies = [
  "frontend",
  "ir",
+ "log",
  "paste",
  "smallvec",
 ]

@@ -12,6 +12,12 @@ crate-type = ["staticlib"]
 [dependencies]
 frontend.workspace = true
 ir.workspace = true
+
+log.workspace = true
+smallvec.workspace = true
+
 paste = "1.0.13"
 
-smallvec.workspace = true
+[features]
+# Unfortunately, this feature has to be subtractive because of the underlying `log` crate.
+no_logging = ["log/max_level_off"]

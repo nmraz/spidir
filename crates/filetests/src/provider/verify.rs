@@ -7,7 +7,7 @@ use fx_utils::FxHashMap;
 use ir::{
     module::Module,
     verify::{verify_module, ModuleVerifierError},
-    write::display_node,
+    write::{display_node, quote_ident},
 };
 use itertools::Itertools;
 use regex::Regex;
@@ -110,8 +110,10 @@ impl TestProvider for VerifyErrProvider {
                 add_error_run(updater, cur_func, &mut output_run);
 
                 let name = new_func.get(1).unwrap().as_str();
-                updater
-                    .advance_to_after(|line| line.trim().starts_with(&format!("func @{name}")))?;
+                updater.advance_to_after(|line| {
+                    line.trim()
+                        .starts_with(&format!("func @{}", quote_ident(name)))
+                })?;
                 cur_func = Some(name);
             } else {
                 output_run.push(val_regex.replace_all(output_line, "$$val").into_owned());

@@ -1,12 +1,16 @@
 use std::fmt::Write;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, bail, Ok, Result};
 use filecheck::Value;
 use fx_utils::FxHashMap;
-use ir::module::Module;
+use ir::{module::Module, write::quote_ident};
 
-use self::verify::{VerifyErrProvider, VerifyOkProvider};
+use self::{
+    domtree::DomTreeProvider,
+    verify::{VerifyErrProvider, VerifyOkProvider},
+};
 
+mod domtree;
 mod verify;
 
 pub trait TestProvider {
@@ -20,6 +24,7 @@ pub trait TestProvider {
 
 pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> {
     match run_command {
+        "domtree" => Ok(Box::new(DomTreeProvider)),
         "verify-err" => Ok(Box::new(VerifyErrProvider)),
         "verify-ok" => Ok(Box::new(VerifyOkProvider)),
         _ => bail!("unknown run command '{run_command}'"),
@@ -49,6 +54,13 @@ impl<'a> Updater<'a> {
         }
         self.append_new_lines(&mut output, self.lines.len());
         output
+    }
+
+    pub fn advance_to_function(&mut self, name: &str) -> Result<()> {
+        self.advance_to_after(|line| {
+            line.trim()
+                .starts_with(&format!("func @{}", quote_ident(name)))
+        })
     }
 
     pub fn advance_to_before(&mut self, mut pred: impl FnMut(&str) -> bool) -> Result<()> {

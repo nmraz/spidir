@@ -7,10 +7,12 @@ use fx_utils::FxHashMap;
 use ir::{
     module::Module,
     verify::{verify_module, ModuleVerifierError},
-    write::{display_node, quote_ident},
+    write::display_node,
 };
 use itertools::Itertools;
 use regex::Regex;
+
+use crate::utils::parse_output_func_heading;
 
 use super::{TestProvider, Updater};
 
@@ -93,7 +95,6 @@ impl TestProvider for VerifyErrProvider {
         let mut output_lines = output_str.lines();
         assert!(output_lines.next().unwrap() == "global:");
 
-        let func_regex = regex!(r#"^function `(.+)`:"#);
         let val_regex = regex!(VAL_REGEX_STR);
 
         let mut cur_func = None;
@@ -104,17 +105,12 @@ impl TestProvider for VerifyErrProvider {
                 continue;
             }
 
-            if let Some(new_func) = func_regex.captures(output_line) {
+            if let Some(new_func) = parse_output_func_heading(output_line) {
                 // Add the lines we've gathered up to this point before moving on to the new
                 // function.
                 add_error_run(updater, cur_func, &mut output_run);
-
-                let name = new_func.get(1).unwrap().as_str();
-                updater.advance_to_after(|line| {
-                    line.trim()
-                        .starts_with(&format!("func @{}", quote_ident(name)))
-                })?;
-                cur_func = Some(name);
+                updater.advance_to_function(new_func)?;
+                cur_func = Some(new_func);
             } else {
                 output_run.push(val_regex.replace_all(output_line, "$$val").into_owned());
             }

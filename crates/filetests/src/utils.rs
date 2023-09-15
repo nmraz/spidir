@@ -8,6 +8,13 @@ macro_rules! regex {
     }};
 }
 
+pub fn parse_output_func_heading(output_line: &str) -> Option<&str> {
+    let func_regex = regex!(r"^function `(.+)`:$");
+    func_regex
+        .captures(output_line)
+        .map(|caps| caps.get(1).unwrap().as_str())
+}
+
 pub fn find_run_line<'a>(lines: impl Iterator<Item = &'a str>) -> Option<(usize, &'a str)> {
     lines.enumerate().find_map(|(i, line)| {
         let line = parse_run_line(line)?;

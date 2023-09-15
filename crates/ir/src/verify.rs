@@ -7,7 +7,7 @@ use itertools::{izip, Itertools};
 use smallvec::SmallVec;
 
 use crate::{
-    domtree::{self, DomTree, TreeNode},
+    domtree::{DomTree, TreeNode},
     module::{Function, FunctionData, Module},
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
@@ -367,7 +367,7 @@ impl Schedule {
 }
 
 fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
-    let domtree = domtree::compute(graph, entry);
+    let domtree = DomTree::compute(graph, entry);
 
     let mut sched = Schedule {
         schedule: SecondaryMap::new(),

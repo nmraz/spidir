@@ -9,6 +9,7 @@ use std::{
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 use ir::{
+    domtree::DomTree,
     module::{FunctionData, Module},
     valwalk::walk_live_nodes,
     verify::{verify_func, verify_module},
@@ -228,7 +229,7 @@ fn get_graphviz_str(
 }
 
 fn get_domtree_edges(func: &FunctionData) -> Vec<StructuralEdge> {
-    let domtree = ir::domtree::compute(&func.graph, func.entry);
+    let domtree = DomTree::compute(&func.graph, func.entry);
 
     let mut idom_edges = Vec::new();
     for node in walk_live_nodes(&func.graph, func.entry) {

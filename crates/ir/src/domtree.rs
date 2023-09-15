@@ -39,6 +39,26 @@ pub struct DomTree {
 }
 
 impl DomTree {
+    pub fn compute(graph: &ValGraph, entry: Node) -> Self {
+        // Find dominators as discussed in the original 1979 Lengauer-Tarjan (LT) paper
+        // "A Fast Algorithm for Finding Dominators in a Flowgraph".
+        // We use the "simple" variant of the algorithm, since the sophisticated version is dramatically
+        // more complicated and has been observed to perform worse in practice; this is consistent with
+        // most production compilers.
+
+        // Setup: Perform the DFS and initialize per-node data structures used in the remainder of the
+        // algorithm.
+        let (mut preorder, preorder_by_node) = do_dfs(graph, entry);
+
+        // Pass 1: Compute semidominators and use Theorem 2 to find either relative or immediate
+        // dominators for each node.
+        compute_reldoms(graph, &mut preorder, preorder_by_node);
+
+        // Pass 2: Fill in all immediate dominators by walking down the DFS tree and applying the
+        // information recorded in the previous pass.
+        compute_domtree_from_reldoms(&mut preorder)
+    }
+
     pub fn is_cfg_reachable(&self, node: Node) -> bool {
         self.get_tree_node(node).is_some()
     }
@@ -200,26 +220,6 @@ impl IndexMut<PreorderNum> for Preorder {
 }
 
 type Bucket = SmallVec<[PreorderNum; 2]>;
-
-pub fn compute(graph: &ValGraph, entry: Node) -> DomTree {
-    // Find dominators as discussed in the original 1979 Lengauer-Tarjan (LT) paper
-    // "A Fast Algorithm for Finding Dominators in a Flowgraph".
-    // We use the "simple" variant of the algorithm, since the sophisticated version is dramatically
-    // more complicated and has been observed to perform worse in practice; this is consistent with
-    // most production compilers.
-
-    // Setup: Perform the DFS and initialize per-node data structures used in the remainder of the
-    // algorithm.
-    let (mut preorder, preorder_by_node) = do_dfs(graph, entry);
-
-    // Pass 1: Compute semidominators and use Theorem 2 to find either relative or immediate
-    // dominators for each node.
-    compute_reldoms(graph, &mut preorder, preorder_by_node);
-
-    // Pass 2: Fill in all immediate dominators by walking down the DFS tree and applying the
-    // information recorded in the previous pass.
-    compute_domtree_from_reldoms(&mut preorder)
-}
 
 fn do_dfs(graph: &ValGraph, entry: Node) -> (Preorder, CfgMap<PreorderNum>) {
     let mut preorder_by_node = CfgMap::default();

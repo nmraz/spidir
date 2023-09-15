@@ -28,7 +28,7 @@ fn basic_cfg_reachable() {
     let ctrl = create_region(&mut graph, [actrl, bctrl, dead_region]);
     let ret = create_return(&mut graph, [ctrl]);
 
-    let domtree = compute(&graph, entry);
+    let domtree = DomTree::compute(&graph, entry);
     assert_eq!(domtree.root(), domtree.get_tree_node(entry).unwrap());
     assert!(domtree.is_cfg_reachable(entry));
     assert!(domtree.is_cfg_reachable(graph.value_def(actrl).0));
@@ -49,7 +49,7 @@ fn straight_line_query() {
     let reg2 = graph.value_def(ctrl2).0;
     let reg3 = graph.value_def(ctrl3).0;
 
-    let domtree = compute(&graph, entry);
+    let domtree = DomTree::compute(&graph, entry);
 
     assert!(domtree.cfg_dominates(entry, entry));
     assert!(!domtree.cfg_strictly_dominates(entry, entry));
@@ -78,7 +78,7 @@ fn diamond_query() {
     let bnode = graph.value_def(bctrl).0;
     let join = graph.value_def(join_ctrl).0;
 
-    let domtree = compute(&graph, entry);
+    let domtree = DomTree::compute(&graph, entry);
 
     assert!(domtree.cfg_dominates(entry, join));
     assert!(domtree.cfg_dominates(entry, ret));

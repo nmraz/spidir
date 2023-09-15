@@ -32,10 +32,10 @@ func @xor_bad_output_kind(i32) {
 
 func @xor_bad_input_kind_i32:i32(i64) {
     # check: function `xor_bad_input_kind_i32`:
-    # unxordered: `$val:i32 = xor $val, $val`: bad value kind fxor input 1, expected one of `i32`, got `i64`
-    # unxordered: `$val:i32 = xor $val, $val`: bad value kind fxor input 0, expected one of `i32`, got `i64`
-    # unxordered: `$val:i32 = xor $val, $val`: bad value kind fxor input 0, expected one of `i32`, got `i64`
-    # unxordered: `$val:i32 = xor $val, $val`: bad value kind fxor input 1, expected one of `i32`, got `i64`
+    # unordered: `$val:i32 = xor $val, $val`: bad value kind for input 1, expected one of `i32`, got `i64`
+    # unordered: `$val:i32 = xor $val, $val`: bad value kind for input 0, expected one of `i32`, got `i64`
+    # unordered: `$val:i32 = xor $val, $val`: bad value kind for input 0, expected one of `i32`, got `i64`
+    # unordered: `$val:i32 = xor $val, $val`: bad value kind for input 1, expected one of `i32`, got `i64`
 
     %0:ctrl, %1:i64 = entry
     %3:i32 = xor %1, %1
@@ -46,10 +46,10 @@ func @xor_bad_input_kind_i32:i32(i64) {
 
 func @xor_bad_input_kind_i64:i64(i32) {
     # check: function `xor_bad_input_kind_i64`:
-    # unxordered: `$val:i64 = xor $val, $val`: bad value kind fxor input 1, expected one of `i64`, got `i32`
-    # unxordered: `$val:i64 = xor $val, $val`: bad value kind fxor input 0, expected one of `i64`, got `i32`
-    # unxordered: `$val:i64 = xor $val, $val`: bad value kind fxor input 0, expected one of `i64`, got `i32`
-    # unxordered: `$val:i64 = xor $val, $val`: bad value kind fxor input 1, expected one of `i64`, got `i32`
+    # unordered: `$val:i64 = xor $val, $val`: bad value kind for input 1, expected one of `i64`, got `i32`
+    # unordered: `$val:i64 = xor $val, $val`: bad value kind for input 0, expected one of `i64`, got `i32`
+    # unordered: `$val:i64 = xor $val, $val`: bad value kind for input 0, expected one of `i64`, got `i32`
+    # unordered: `$val:i64 = xor $val, $val`: bad value kind for input 1, expected one of `i64`, got `i32`
 
     %0:ctrl, %1:i32 = entry
     %3:i64 = xor %1, %1

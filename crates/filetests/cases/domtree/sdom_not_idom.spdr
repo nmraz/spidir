@@ -1,0 +1,22 @@
+# run: domtree
+
+func @sdom_not_idom() {
+    # check: function `sdom_not_idom`:
+    # nextln: %0:ctrl = entry                      # 0; children 3
+    # nextln: %1:i32 = iconst 5                    # 1
+    # nextln: %2:i32 = iconst 5                    # 2
+    # nextln: %3:ctrl, %4:ctrl = brcond %0, %2     # 3; idom 0; children 5, 6, 4
+    # nextln: %5:ctrl, %6:ctrl = brcond %3, %1     # 4; idom 3
+    # nextln: %7:ctrl, %8:phisel = region %4, %6   # 5; idom 3
+    # nextln: %9:ctrl, %10:phisel = region %5, %7  # 6; idom 3; children 7
+    # nextln: return %9                            # 7; idom 6
+
+    %0:ctrl = entry
+    %4:i32 = iconst 5
+    %1:i32 = iconst 5
+    %2:ctrl, %3:ctrl = brcond %0, %1
+    %5:ctrl, %6:ctrl = brcond %2, %4
+    %7:ctrl, %8:phisel = region %3, %6
+    %9:ctrl, %10:phisel = region %5, %7
+    return %9
+}

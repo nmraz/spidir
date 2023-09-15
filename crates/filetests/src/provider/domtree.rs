@@ -69,18 +69,26 @@ impl TestProvider for DomTreeProvider {
     }
 
     fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) -> Result<()> {
+        let mut in_func = false;
+
         for output_line in output_str.lines() {
             if output_line.is_empty() {
                 continue;
             }
             if let Some(new_func) = parse_output_func_heading(output_line) {
-                // This is a new function, insert a `check`.
+                if in_func {
+                    updater.blank_line();
+                }
                 updater.advance_to_function(new_func)?;
                 updater.directive(4, "check", output_line);
+                in_func = true;
             } else {
                 updater.directive(4, "nextln", output_line);
             }
         }
+
+        updater.blank_line();
+
         Ok(())
     }
 }

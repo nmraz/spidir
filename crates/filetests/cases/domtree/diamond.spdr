@@ -1,0 +1,20 @@
+# run: domtree
+
+func @diamond() {
+    # check: function `diamond`:
+    # nextln: %0:ctrl = entry                     # 0; children 2
+    # nextln: %1:i32 = iconst 5                   # 1
+    # nextln: %2:ctrl, %3:ctrl = brcond %0, %1    # 2; idom 0; children 4, 5, 3
+    # nextln: %4:ctrl, %5:phisel = region %2      # 3; idom 2
+    # nextln: %6:ctrl, %7:phisel = region %3      # 4; idom 2
+    # nextln: %8:ctrl, %9:phisel = region %4, %6  # 5; idom 2; children 6
+    # nextln: return %8                           # 6; idom 5
+
+    %0:ctrl = entry
+    %1:i32 = iconst 5
+    %2:ctrl, %3:ctrl = brcond %0, %1
+    %4:ctrl, %5:phisel = region %2
+    %6:ctrl, %7:phisel = region %3
+    %8:ctrl, %9:phisel = region %4, %6
+    return %8
+}

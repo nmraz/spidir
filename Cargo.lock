@@ -314,6 +314,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
+name = "graphwalk"
+version = "0.1.0"
+dependencies = [
+ "cranelift-entity",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -358,6 +365,7 @@ dependencies = [
  "cranelift-entity",
  "expect-test",
  "fx-utils",
+ "graphwalk",
  "hashbrown",
  "itertools",
  "smallvec",

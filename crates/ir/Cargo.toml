@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 fx-utils.workspace = true
+graphwalk.workspace = true
 
 cranelift-entity.workspace = true
 hashbrown = { workspace = true, features = ["raw"] }

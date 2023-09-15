@@ -6,6 +6,7 @@ use core::{
 use cranelift_entity::{
     entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap,
 };
+use graphwalk::{TreePostOrder, TreePreOrder, WalkPhase};
 use hashbrown::hash_map::Entry;
 use smallvec::SmallVec;
 
@@ -13,7 +14,7 @@ use fx_utils::FxHashMap;
 
 use crate::{
     valgraph::{Node, ValGraph},
-    valwalk::{cfg_preds, cfg_succs, WalkPhase},
+    valwalk::{cfg_preds, cfg_succs},
 };
 
 type CfgMap<T> = FxHashMap<Node, T>;
@@ -115,7 +116,18 @@ impl DomTree {
         a != b && self.dominates(a, b)
     }
 
+    pub fn preorder(&self) -> TreePreOrder<&Self> {
+        TreePreOrder::new(self, [self.root()])
+    }
+
+    pub fn postorder(&self) -> TreePostOrder<&Self> {
+        TreePostOrder::new(self, [self.root()])
+    }
+
     fn compute_dfs_times(&mut self) {
+        // Note: we don't use the postorder API here because it doesn't yet provide easy access to
+        // the underlying graph, which we need here because we mutate `self`.
+
         let mut timestamp = 0;
         let mut stack = vec![(WalkPhase::Pre, self.root())];
 
@@ -151,6 +163,16 @@ impl DomTree {
         });
         self.tree_nodes_by_node.insert(node, tree_node);
         tree_node
+    }
+}
+
+impl graphwalk::Graph for &'_ DomTree {
+    type Node = TreeNode;
+
+    fn successors(&self, node: Self::Node, mut f: impl FnMut(Self::Node)) {
+        for &child in self.children(node) {
+            f(child);
+        }
     }
 }
 

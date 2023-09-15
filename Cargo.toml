@@ -5,6 +5,7 @@ default-members = ["crates/*"]
 
 [workspace.dependencies]
 fx-utils = { path = "crates/fx-utils" }
+graphwalk = { path = "crates/graphwalk" }
 ir = { path = "crates/ir" }
 frontend = { path = "crates/frontend" }
 parser = { path = "crates/parser" }

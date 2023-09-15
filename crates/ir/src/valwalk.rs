@@ -9,164 +9,8 @@ use crate::{
     valgraph::{Node, ValGraph},
 };
 
-pub trait Succs {
-    fn successors(&self, node: Node, f: impl FnMut(Node));
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum WalkPhase {
-    Pre,
-    Post,
-}
-
-pub struct PreOrderContext<S> {
-    succs: S,
-    stack: Vec<Node>,
-}
-
-impl<S: Succs> PreOrderContext<S> {
-    pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
-        let mut res = Self {
-            succs,
-            stack: Vec::new(),
-        };
-        res.reset(roots);
-        res
-    }
-
-    pub fn reset(&mut self, roots: impl IntoIterator<Item = Node>) {
-        self.stack.clear();
-        self.stack.extend(roots);
-    }
-
-    pub fn next(&mut self, visited: &mut EntitySet<Node>) -> Option<Node> {
-        let node = loop {
-            let node = self.stack.pop()?;
-            if !visited.contains(node) {
-                break node;
-            }
-        };
-
-        visited.insert(node);
-
-        self.succs.successors(node, |succ| {
-            // This extra check here is an optimization to avoid needlessly placing
-            // an obviously-visited node on to the stack. Even if the node is not
-            // visited now, it may be by the time it is popped off the stack later.
-            if !visited.contains(succ) {
-                self.stack.push(succ);
-            }
-        });
-
-        Some(node)
-    }
-}
-
-pub struct PreOrder<S> {
-    pub visited: EntitySet<Node>,
-    ctx: PreOrderContext<S>,
-}
-
-impl<S: Succs> PreOrder<S> {
-    pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
-        Self {
-            visited: EntitySet::new(),
-            ctx: PreOrderContext::new(succs, roots),
-        }
-    }
-}
-
-impl<S: Succs> Iterator for PreOrder<S> {
-    type Item = Node;
-
-    fn next(&mut self) -> Option<Node> {
-        self.ctx.next(&mut self.visited)
-    }
-}
-
-pub struct PostOrderContext<S> {
-    succs: S,
-    stack: Vec<(WalkPhase, Node)>,
-}
-
-impl<S: Succs> PostOrderContext<S> {
-    pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
-        let mut res = Self {
-            succs,
-            stack: Vec::new(),
-        };
-        res.reset(roots);
-        res
-    }
-
-    pub fn reset(&mut self, roots: impl IntoIterator<Item = Node>) {
-        self.stack.clear();
-
-        // Note: push the roots onto the stack in source order so that this order is preserved in
-        // any RPO. Some clients depend on this: for example, the live-node RPO of a function graph
-        // should always start with its entry node.
-        self.stack
-            .extend(roots.into_iter().map(|node| (WalkPhase::Pre, node)));
-    }
-
-    pub fn next_post(&mut self, visited: &mut EntitySet<Node>) -> Option<Node> {
-        loop {
-            let (phase, node) = self.next(visited)?;
-            if phase == WalkPhase::Post {
-                return Some(node);
-            }
-        }
-    }
-
-    pub fn next(&mut self, visited: &mut EntitySet<Node>) -> Option<(WalkPhase, Node)> {
-        loop {
-            let (phase, node) = self.stack.pop()?;
-            match phase {
-                WalkPhase::Pre => {
-                    if !visited.contains(node) {
-                        visited.insert(node);
-                        self.stack.push((WalkPhase::Post, node));
-                        self.succs.successors(node, |succ| {
-                            // This extra check here is an optimization to avoid needlessly placing
-                            // an obviously-visited node on to the stack. Even if the node is not
-                            // visited now, it may be by the time it is popped off the stack later.
-                            if !visited.contains(succ) {
-                                self.stack.push((WalkPhase::Pre, succ));
-                            }
-                        });
-
-                        return Some((WalkPhase::Pre, node));
-                    }
-                }
-                WalkPhase::Post => {
-                    return Some((WalkPhase::Post, node));
-                }
-            }
-        }
-    }
-}
-
-pub struct PostOrder<S> {
-    pub visited: EntitySet<Node>,
-    ctx: PostOrderContext<S>,
-}
-
-impl<S: Succs> PostOrder<S> {
-    pub fn new(succs: S, roots: impl IntoIterator<Item = Node>) -> Self {
-        Self {
-            visited: EntitySet::new(),
-            ctx: PostOrderContext::new(succs, roots),
-        }
-    }
-}
-
-impl<S: Succs> Iterator for PostOrder<S> {
-    type Item = Node;
-
-    fn next(&mut self) -> Option<Node> {
-        self.ctx.next_post(&mut self.visited)
-    }
-}
+pub type PreOrder<G> = graphwalk::PreOrder<G, EntitySet<Node>>;
+pub type PostOrder<G> = graphwalk::PostOrder<G, EntitySet<Node>>;
 
 #[derive(Clone, Copy)]
 pub struct LiveNodeSuccs<'a>(&'a ValGraph);
@@ -177,7 +21,9 @@ impl<'a> LiveNodeSuccs<'a> {
     }
 }
 
-impl<'a> Succs for LiveNodeSuccs<'a> {
+impl<'a> graphwalk::Graph for LiveNodeSuccs<'a> {
+    type Node = Node;
+
     fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
         // Consider all inputs as "live" so we don't cause cases where uses are traversed without their
         // corresponding defs. Users that want to treat regions with no control inputs as dead should do
@@ -220,7 +66,9 @@ impl<'a> DefUseSuccs<'a> {
     }
 }
 
-impl<'a> Succs for DefUseSuccs<'a> {
+impl<'a> graphwalk::Graph for DefUseSuccs<'a> {
+    type Node = Node;
+
     fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
         for output in self.graph.node_outputs(node) {
             for (user, _) in self.graph.value_uses(output) {

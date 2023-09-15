@@ -1,8 +1,9 @@
 use core::fmt;
 
-use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec::Vec};
 use cranelift_entity::{packed_option::PackedOption, EntitySet, SecondaryMap};
 use fx_utils::FxHashSet;
+use graphwalk::PostOrderContext;
 use itertools::{izip, Itertools};
 use smallvec::SmallVec;
 
@@ -11,7 +12,7 @@ use crate::{
     module::{Function, FunctionData, Module},
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::{walk_live_nodes, PostOrderContext, Succs},
+    valwalk::walk_live_nodes,
     write::display_node,
 };
 
@@ -321,7 +322,10 @@ type InputSchedules = SmallVec<[(TreeNode, u32); 4]>;
 struct DataflowPreds<'a> {
     graph: &'a ValGraph,
 }
-impl Succs for DataflowPreds<'_> {
+
+impl graphwalk::Graph for DataflowPreds<'_> {
+    type Node = Node;
+
     fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
         // Never walk through pinned nodes when searching for predecessors; these nodes are
         // scheduled manually, and we don't want to look at their inputs at all if they are dead
@@ -378,7 +382,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
         input_schedules: InputSchedules::new(),
     };
 
-    let domtree_preorder = get_domtree_preorder(&domtree);
+    let domtree_preorder: Vec<_> = domtree.preorder().collect();
 
     // Pass 1: Schedule all pinned nodes, which are nodes with control edges and phis.
     // Note: we are careful not to mark the nodes as visited, as some of the phis may be dead.
@@ -444,7 +448,7 @@ fn schedule_node_early(
     errors: &mut Vec<GraphVerifierError>,
 ) {
     scratch_space.data_postorder.reset([node]);
-    while let Some(node) = scratch_space.data_postorder.next_post(&mut sched.visited) {
+    while let Some(node) = scratch_space.data_postorder.next(&mut sched.visited) {
         if is_pinned_node(graph, node) {
             continue;
         }
@@ -609,16 +613,6 @@ fn get_attached_phis(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node>
         .filter(|&output| graph.value_kind(output).is_phisel())
         .flat_map(|phisel| graph.value_uses(phisel))
         .map(|(phi, _)| phi)
-}
-
-fn get_domtree_preorder(domtree: &DomTree) -> Vec<TreeNode> {
-    let mut preorder = Vec::new();
-    let mut stack = vec![domtree.root()];
-    while let Some(node) = stack.pop() {
-        preorder.push(node);
-        stack.extend(domtree.children(node));
-    }
-    preorder
 }
 
 fn is_pinned_node(graph: &ValGraph, node: Node) -> bool {

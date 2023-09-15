@@ -1,6 +1,6 @@
 use core::iter;
 
-use alloc::{borrow::ToOwned, vec};
+use alloc::borrow::ToOwned;
 
 use cranelift_entity::{entity_impl, packed_option::PackedOption, PrimaryMap, SecondaryMap};
 use smallvec::SmallVec;
@@ -8,7 +8,7 @@ use smallvec::SmallVec;
 use crate::{
     domtree::{DomTree, TreeNode},
     valgraph::ValGraph,
-    valwalk::{cfg_preds, WalkPhase},
+    valwalk::cfg_preds,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -34,47 +34,35 @@ impl LoopForest {
 
         let mut latches = SmallVec::<[TreeNode; 4]>::new();
 
-        // TODO: generalize graph walking a bit more, we're doing this all over the place.
-        let mut stack = vec![(WalkPhase::Pre, domtree.root())];
-        while let Some((phase, tree_node)) = stack.pop() {
-            match phase {
-                WalkPhase::Pre => {
-                    stack.push((WalkPhase::Post, tree_node));
-                    for &child in domtree.children(tree_node) {
-                        stack.push((WalkPhase::Pre, child));
-                    }
+        for tree_node in domtree.postorder() {
+            // Detect if `tree_node` is a loop header by checking if it has a CFG
+            // predecessor that it dominates.
+            let cfg_node = domtree.get_cfg_node(tree_node);
+
+            latches.clear();
+            for pred in cfg_preds(graph, cfg_node) {
+                let Some(pred_tree_node) = domtree.get_tree_node(pred) else {
+                    // Skip any unreachable nodes.
+                    continue;
+                };
+
+                if domtree.dominates(tree_node, pred_tree_node) {
+                    latches.push(pred_tree_node);
                 }
-                WalkPhase::Post => {
-                    // Detect if `tree_node` is a loop header by checking if it has a CFG
-                    // predecessor that it dominates.
-                    let cfg_node = domtree.get_cfg_node(tree_node);
+            }
 
-                    latches.clear();
-                    for pred in cfg_preds(graph, cfg_node) {
-                        let Some(pred_tree_node) = domtree.get_tree_node(pred) else {
-                            // Skip any unreachable nodes.
-                            continue;
-                        };
+            if !latches.is_empty() {
+                // We've found backedges to a dominator, so it must be a loop header.
+                let new_loop = forest.create_loop(tree_node);
 
-                        if domtree.dominates(tree_node, pred_tree_node) {
-                            latches.push(pred_tree_node);
-                        }
-                    }
-
-                    if !latches.is_empty() {
-                        // `tree_node` is a loop header!
-                        let loop_node = forest.create_loop(tree_node);
-
-                        // Discover all the nodes making up the loop. We take advantage of the fact
-                        // that:
-                        // 1. outer loop headers always dominate inner loop headers
-                        // 2. we are discovering loops by their headers
-                        // 3. we are traversing the dominator tree in postorder
-                        // to conclude that no ancestors of `loop_node` have yet been found, making
-                        // this function legal to call.
-                        forest.discover_loop(graph, domtree, loop_node, &latches);
-                    }
-                }
+                // Discover all the nodes making up the loop. We take advantage of the fact
+                // that:
+                // 1. outer loop headers always dominate inner loop headers
+                // 2. we are discovering loops by their headers
+                // 3. we are traversing the dominator tree in postorder
+                // to conclude that no ancestors of `new_loop` have yet been found, making
+                // this function legal to call.
+                forest.discover_loop(graph, domtree, new_loop, &latches);
             }
         }
 
@@ -122,8 +110,8 @@ impl LoopForest {
                     self.loops[existing_root].parent = new_loop.into();
                 }
             } else {
-                // This node hasn't been discovered yet, so it must be a part of our loop the header
-                // dominates all nodes we discover here.
+                // This node hasn't been discovered yet, so it must be a part of our loop as the
+                // header dominates all nodes we discover here.
                 self.containing_loops[node] = new_loop.into();
                 for pred in cfg_preds(graph, domtree.get_cfg_node(node)) {
                     if let Some(tree_pred) = domtree.get_tree_node(pred) {

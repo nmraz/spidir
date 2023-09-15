@@ -52,9 +52,11 @@ impl AnnotateGraph<String> for LoopAnnotator<'_> {
     ) -> fmt::Result {
         write_annotated_node(s, self, module, graph, node)?;
 
+        write!(s, "  # ")?;
+        let mut added_comment = false;
         if let Some(domtree_node) = self.domtree.get_tree_node(node) {
             if let Some(containing_loop) = self.loop_forest.containing_loop(domtree_node) {
-                write!(s, "  # ")?;
+                added_comment = true;
                 if domtree_node == self.loop_forest.loop_header(containing_loop) {
                     write!(
                         s,
@@ -69,6 +71,12 @@ impl AnnotateGraph<String> for LoopAnnotator<'_> {
                     write!(s, "containing loop: {}", containing_loop.as_u32())?;
                 }
             }
+        }
+
+        if !added_comment {
+            // Add a dummy marker comment if we haven't written anything else, so that "no loop" can
+            // easily be distinguished in the tests.
+            write!(s, "x")?;
         }
 
         Ok(())

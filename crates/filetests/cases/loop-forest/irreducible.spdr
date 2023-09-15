@@ -1,0 +1,22 @@
+# run: loop-forest
+
+func @irreducible(i32, i32, i32) {
+    # check: function `irreducible`:
+    # nextln: %0:ctrl, %1:i32, %2:i32, %3:i32 = entry  # x
+    # nextln: %4:ctrl, %5:ctrl = brcond %0, %1  # x
+    # nextln: %12:ctrl, %13:ctrl = brcond %10, %3  # x
+    # nextln: %6:ctrl, %7:phisel = region %4, %13  # x
+    # nextln: %8:ctrl, %9:ctrl = brcond %6, %1  # x
+    # nextln: %14:ctrl, %15:phisel = region %8, %12  # x
+    # nextln: return %14  # x
+    # nextln: %10:ctrl, %11:phisel = region %5, %9  # x
+
+    %ent:ctrl, %p1:i32, %p2:i32, %p3:i32 = entry
+    %to_cycle1:ctrl, %to_cycle2:ctrl = brcond %ent, %p1
+    %cycle1:ctrl, %c1p:phisel = region %to_cycle1, %c2_to_c1
+    %c1_to_exit:ctrl, %c1_to_c2:ctrl = brcond %cycle1, %p1
+    %cycle2:ctrl, %c2p:phisel = region %to_cycle2, %c1_to_c2
+    %c2_to_exit:ctrl, %c2_to_c1:ctrl = brcond %cycle2, %p3
+    %exit:ctrl, %ep:phisel = region %c1_to_exit, %c2_to_exit
+    return %exit
+}

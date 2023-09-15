@@ -5,9 +5,7 @@ use cranelift_entity::SecondaryMap;
 use ir::{domtree::DomTree, module::Module, valwalk::LiveNodeInfo, write::display_node};
 use itertools::Itertools;
 
-use crate::utils::parse_output_func_heading;
-
-use super::{TestProvider, Updater};
+use super::{update_per_func_output, TestProvider, Updater};
 
 pub struct DomTreeProvider;
 impl TestProvider for DomTreeProvider {
@@ -69,26 +67,6 @@ impl TestProvider for DomTreeProvider {
     }
 
     fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) -> Result<()> {
-        let mut in_func = false;
-
-        for output_line in output_str.lines() {
-            if output_line.is_empty() {
-                continue;
-            }
-            if let Some(new_func) = parse_output_func_heading(output_line) {
-                if in_func {
-                    updater.blank_line();
-                }
-                updater.advance_to_function(new_func)?;
-                updater.directive(4, "check", output_line);
-                in_func = true;
-            } else {
-                updater.directive(4, "nextln", output_line);
-            }
-        }
-
-        updater.blank_line();
-
-        Ok(())
+        update_per_func_output(updater, output_str)
     }
 }

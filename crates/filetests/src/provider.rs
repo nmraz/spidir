@@ -5,12 +5,16 @@ use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{module::Module, write::quote_ident};
 
+use crate::utils::parse_output_func_heading;
+
 use self::{
     domtree::DomTreeProvider,
+    loop_forest::LoopForestProvider,
     verify::{VerifyErrProvider, VerifyOkProvider},
 };
 
 mod domtree;
+mod loop_forest;
 mod verify;
 
 pub trait TestProvider {
@@ -25,10 +29,35 @@ pub trait TestProvider {
 pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> {
     match run_command {
         "domtree" => Ok(Box::new(DomTreeProvider)),
+        "loop-forest" => Ok(Box::new(LoopForestProvider)),
         "verify-err" => Ok(Box::new(VerifyErrProvider)),
         "verify-ok" => Ok(Box::new(VerifyOkProvider)),
         _ => bail!("unknown run command '{run_command}'"),
     }
+}
+
+fn update_per_func_output(updater: &mut Updater<'_>, output_str: &str) -> Result<()> {
+    let mut in_func = false;
+
+    for output_line in output_str.lines() {
+        if output_line.is_empty() {
+            continue;
+        }
+        if let Some(new_func) = parse_output_func_heading(output_line) {
+            if in_func {
+                updater.blank_line();
+            }
+            updater.advance_to_function(new_func)?;
+            updater.directive(4, "check", output_line);
+            in_func = true;
+        } else {
+            updater.directive(4, "nextln", output_line);
+        }
+    }
+
+    updater.blank_line();
+
+    Ok(())
 }
 
 pub struct Updater<'a> {

@@ -1,0 +1,38 @@
+# run: loop-forest
+
+func @iota(ptr, i64) {
+    # check: function `iota`:
+    # nextln: %0:ctrl, %1:ptr, %2:i64 = entry         # x
+    # nextln: %14:i64 = iconst 1                      # x
+    # nextln: %3:i64 = iconst 0                       # x
+    # nextln: %4:i32 = icmp eq %2, %3                 # x
+    # nextln: %5:ctrl, %6:ctrl = brcond %0, %4        # x
+    # nextln: %10:i64 = iconst 3                      # x
+    # nextln: %11:i64 = shl %9, %10                   # x
+    # nextln: %12:ptr = ptroff %1, %11                # x
+    # nextln: %13:ctrl = store.8 %7, %9, %12          # containing loop: 0; x
+    # nextln: %17:ctrl, %18:ctrl = brcond %13, %16    # containing loop: 0; x
+    # nextln: %19:ctrl, %20:phisel = region %5, %17   # x
+    # nextln: return %19                              # x
+    # nextln: %7:ctrl, %8:phisel = region %6, %18     # loop header: 0; root: 0; x
+    # nextln: %9:i64 = phi %8, %3, %15                # x
+    # nextln: %15:i64 = iadd %9, %14                  # x
+    # nextln: %16:i32 = icmp eq %15, %2               # x
+
+    %entry_ctrl:ctrl, %arr:ptr, %n:i64 = entry
+    %zero:i64 = iconst 0
+    %zerocmp:i32 = icmp eq %n, %zero
+    %iszero:ctrl, %isnonzero:ctrl = brcond %entry_ctrl, %zerocmp
+    %loopbody:ctrl, %loopphi:phisel = region %isnonzero, %looplatch
+    %i:i64 = phi %loopphi, %zero, %inext
+    %three:i64 = iconst 3
+    %off:i64 = shl %i, %three
+    %ptr:ptr = ptroff %arr, %off
+    %poststore:ctrl = store.8 %loopbody, %i, %ptr
+    %one:i64 = iconst 1
+    %inext:i64 = iadd %i, %one
+    %donecmp:i32 = icmp eq %inext, %n
+    %loopdone:ctrl, %looplatch:ctrl = brcond %poststore, %donecmp
+    %exit:ctrl, %exitphi:phisel = region %iszero, %loopdone
+    return %exit
+}

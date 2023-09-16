@@ -133,7 +133,6 @@ impl<'a> ErrorAnnotator<'a> {
 
 impl<'a> Annotate for ErrorAnnotator<'a> {
     fn annotate_node(&mut self, graph: &ValGraph, node: Node, attrs: &mut DotAttributes) {
-        colored_node_attrs(graph, node, attrs);
         if let Some(errors) = self.node_errors.get(&node) {
             error_attrs(errors, graph, attrs);
         }
@@ -146,7 +145,6 @@ impl<'a> Annotate for ErrorAnnotator<'a> {
         input_idx: usize,
         attrs: &mut DotAttributes,
     ) {
-        colored_edge_attrs(graph, node, input_idx, attrs);
         if let Some(errors) = self.edge_errors.get(&(node, input_idx as u32)) {
             error_attrs(errors, graph, attrs);
         }

@@ -3,10 +3,10 @@ use std::fmt::Write;
 use anyhow::{anyhow, Result};
 use ir::{
     module::{FunctionData, Module},
-    verify::verify_func,
+    verify::{verify_func, GraphVerifierError},
 };
 use ir_graphviz::{
-    annotate::{Annotate, ColoredAnnotator, ErrorAnnotator, PlainAnnotator},
+    annotate::{Annotate, ColoredAnnotator, ErrorAnnotator},
     write_graphviz,
 };
 
@@ -16,7 +16,8 @@ use super::{update_per_func_output, TestProvider, Updater};
 pub enum AnnotatorKind {
     Plain,
     Colored,
-    Error,
+    Verify,
+    VerifyColored,
 }
 
 pub struct GraphvizTestProvider {
@@ -37,28 +38,33 @@ impl TestProvider for GraphvizTestProvider {
 
             match self.kind {
                 AnnotatorKind::Plain => {
-                    write_graphviz_with_annotator(
-                        &mut output,
-                        Box::new(PlainAnnotator),
-                        module,
-                        func,
-                    );
+                    write_graphviz_with_annotator(&mut output, &mut [], module, func);
                 }
                 AnnotatorKind::Colored => {
                     write_graphviz_with_annotator(
                         &mut output,
-                        Box::new(ColoredAnnotator),
+                        &mut [Box::new(ColoredAnnotator)],
                         module,
                         func,
                     );
                 }
-                AnnotatorKind::Error => {
-                    let errors = verify_func(module, func)
-                        .err()
-                        .ok_or_else(|| anyhow!("expected function to contain errors"))?;
+                AnnotatorKind::Verify => {
+                    let errors = get_verifier_errors(module, func)?;
                     write_graphviz_with_annotator(
                         &mut output,
-                        Box::new(ErrorAnnotator::new(&func.graph, &errors)),
+                        &mut [Box::new(ErrorAnnotator::new(&func.graph, &errors))],
+                        module,
+                        func,
+                    );
+                }
+                AnnotatorKind::VerifyColored => {
+                    let errors = get_verifier_errors(module, func)?;
+                    write_graphviz_with_annotator(
+                        &mut output,
+                        &mut [
+                            Box::new(ColoredAnnotator),
+                            Box::new(ErrorAnnotator::new(&func.graph, &errors)),
+                        ],
                         module,
                         func,
                     );
@@ -74,19 +80,17 @@ impl TestProvider for GraphvizTestProvider {
     }
 }
 
+fn get_verifier_errors(module: &Module, func: &FunctionData) -> Result<Vec<GraphVerifierError>> {
+    verify_func(module, func)
+        .err()
+        .ok_or_else(|| anyhow!("expected function to contain errors"))
+}
+
 fn write_graphviz_with_annotator(
     output: &mut String,
-    annotator: Box<dyn Annotate + '_>,
+    annotators: &mut [Box<dyn Annotate + '_>],
     module: &Module,
     func: &FunctionData,
 ) {
-    write_graphviz(
-        output,
-        &mut [annotator],
-        module,
-        &func.graph,
-        func.entry,
-        &[],
-    )
-    .unwrap();
+    write_graphviz(output, annotators, module, &func.graph, func.entry, &[]).unwrap();
 }

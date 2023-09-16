@@ -2,7 +2,7 @@
 
 extern crate alloc;
 
-use alloc::string::String;
+use alloc::{boxed::Box, string::String};
 use core::fmt;
 
 use itertools::Itertools;
@@ -27,7 +27,7 @@ pub struct StructuralEdge {
 
 pub fn write_graphviz(
     w: &mut dyn fmt::Write,
-    annotator: &mut dyn Annotate,
+    annotators: &mut [Box<dyn Annotate + '_>],
     module: &Module,
     graph: &ValGraph,
     entry: Node,
@@ -80,7 +80,9 @@ pub fn write_graphviz(
         write!(w, r#"}}""#)?;
 
         let mut attrs = DotAttributes::default();
-        annotator.annotate_node(graph, node, &mut attrs);
+        for annotator in annotators.iter_mut() {
+            annotator.annotate_node(graph, node, &mut attrs);
+        }
         if !attrs.is_empty() {
             write!(w, ", {}", format_dot_attributes(&attrs))?;
         }
@@ -98,7 +100,9 @@ pub fn write_graphviz(
             write!(w, "    {def_node}:o{def_idx} -> {node}:i{input_idx}")?;
 
             let mut attrs = DotAttributes::default();
-            annotator.annotate_edge(graph, node, input_idx, &mut attrs);
+            for annotator in annotators.iter_mut() {
+                annotator.annotate_edge(graph, node, input_idx, &mut attrs);
+            }
             if !attrs.is_empty() {
                 write!(w, " [{}]", format_dot_attributes(&attrs))?;
             }

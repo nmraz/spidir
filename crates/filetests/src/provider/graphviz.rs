@@ -37,10 +37,20 @@ impl TestProvider for GraphvizTestProvider {
 
             match self.kind {
                 AnnotatorKind::Plain => {
-                    write_graphviz_with_annotator(&mut output, &mut PlainAnnotator, module, func);
+                    write_graphviz_with_annotator(
+                        &mut output,
+                        Box::new(PlainAnnotator),
+                        module,
+                        func,
+                    );
                 }
                 AnnotatorKind::Colored => {
-                    write_graphviz_with_annotator(&mut output, &mut ColoredAnnotator, module, func);
+                    write_graphviz_with_annotator(
+                        &mut output,
+                        Box::new(ColoredAnnotator),
+                        module,
+                        func,
+                    );
                 }
                 AnnotatorKind::Error => {
                     let errors = verify_func(module, func)
@@ -48,7 +58,7 @@ impl TestProvider for GraphvizTestProvider {
                         .ok_or_else(|| anyhow!("expected function to contain errors"))?;
                     write_graphviz_with_annotator(
                         &mut output,
-                        &mut ErrorAnnotator::new(&func.graph, &errors),
+                        Box::new(ErrorAnnotator::new(&func.graph, &errors)),
                         module,
                         func,
                     );
@@ -66,9 +76,17 @@ impl TestProvider for GraphvizTestProvider {
 
 fn write_graphviz_with_annotator(
     output: &mut String,
-    annotator: &mut dyn Annotate,
+    annotator: Box<dyn Annotate + '_>,
     module: &Module,
     func: &FunctionData,
 ) {
-    write_graphviz(output, annotator, module, &func.graph, func.entry, &[]).unwrap();
+    write_graphviz(
+        output,
+        &mut [annotator],
+        module,
+        &func.graph,
+        func.entry,
+        &[],
+    )
+    .unwrap();
 }

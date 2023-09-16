@@ -176,25 +176,17 @@ fn output_dot_file(
     module: &Module,
     func: &FunctionData,
 ) -> Result<()> {
-    let mut colored_annotator = ColoredAnnotator;
-
     let errors;
-    let mut error_annotator;
+    let mut annotators: Vec<Box<dyn Annotate>> = vec![Box::new(ColoredAnnotator)];
 
-    let annotator = if verify {
-        match verify_func(module, func) {
-            Ok(()) => &mut colored_annotator,
-            Err(inner_errors) => {
-                errors = inner_errors;
-                error_annotator = ErrorAnnotator::new(&func.graph, &errors);
-                &mut error_annotator as &mut dyn Annotate
-            }
+    if verify {
+        if let Err(inner_errors) = verify_func(module, func) {
+            errors = inner_errors;
+            annotators.push(Box::new(ErrorAnnotator::new(&func.graph, &errors)));
         }
-    } else {
-        &mut colored_annotator
     };
 
-    let s = get_graphviz_str(domtree, annotator, module, func)?;
+    let s = get_graphviz_str(domtree, &mut annotators, module, func)?;
 
     file.write_all(s.as_bytes())
         .context("failed to write dot file")?;
@@ -204,10 +196,10 @@ fn output_dot_file(
 
 fn get_graphviz_str(
     domtree: bool,
-    annotator: &mut dyn Annotate,
+    annotators: &mut [Box<dyn Annotate + '_>],
     module: &Module,
     func: &FunctionData,
-) -> Result<String, anyhow::Error> {
+) -> Result<String> {
     let domtree_edges = if domtree {
         get_domtree_edges(func)
     } else {
@@ -217,7 +209,7 @@ fn get_graphviz_str(
     let mut s = String::new();
     write_graphviz(
         &mut s,
-        annotator,
+        annotators,
         module,
         &func.graph,
         func.entry,

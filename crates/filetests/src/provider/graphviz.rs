@@ -92,5 +92,5 @@ fn write_graphviz_with_annotator(
     module: &Module,
     func: &FunctionData,
 ) {
-    write_graphviz(output, annotators, module, &func.graph, func.entry, &[]).unwrap();
+    write_graphviz(output, annotators, module, &func.graph, func.entry).unwrap();
 }

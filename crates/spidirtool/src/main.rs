@@ -12,12 +12,11 @@ use ir::{
     domtree::DomTree,
     loop_forest::LoopForest,
     module::{FunctionData, Module},
-    valwalk::walk_live_nodes,
     verify::{verify_func, verify_module},
 };
 use ir_graphviz::{
-    annotate::{Annotate, ColoredAnnotator, DotAttributes, ErrorAnnotator, LoopAnnotator},
-    write_graphviz, StructuralEdge,
+    annotate::{Annotate, ColoredAnnotator, DomTreeAnnotator, ErrorAnnotator, LoopAnnotator},
+    write_graphviz,
 };
 use parser::parse_module;
 use tempfile::NamedTempFile;
@@ -184,10 +183,26 @@ fn output_dot_file(
     func: &FunctionData,
 ) -> Result<()> {
     let errors;
-    let domtree;
     let loop_forest;
 
+    let domtree = if annotator_opts.domtree || annotator_opts.loops {
+        Some(DomTree::compute(&func.graph, func.entry))
+    } else {
+        None
+    };
+
     let mut annotators: Vec<Box<dyn Annotate>> = vec![Box::new(ColoredAnnotator)];
+
+    if annotator_opts.domtree {
+        let domtree = domtree.as_ref().unwrap();
+        annotators.push(Box::new(DomTreeAnnotator::new(domtree)));
+    }
+
+    if annotator_opts.loops {
+        let domtree = domtree.as_ref().unwrap();
+        loop_forest = LoopForest::compute(&func.graph, domtree);
+        annotators.push(Box::new(LoopAnnotator::new(domtree, &loop_forest)));
+    }
 
     if !annotator_opts.no_verify {
         if let Err(inner_errors) = verify_func(module, func) {
@@ -196,13 +211,7 @@ fn output_dot_file(
         }
     };
 
-    if annotator_opts.loops {
-        domtree = DomTree::compute(&func.graph, func.entry);
-        loop_forest = LoopForest::compute(&func.graph, &domtree);
-        annotators.push(Box::new(LoopAnnotator::new(&domtree, &loop_forest)));
-    }
-
-    let s = get_graphviz_str(annotator_opts.domtree, &mut annotators, module, func)?;
+    let s = get_graphviz_str(&mut annotators, module, func)?;
 
     file.write_all(s.as_bytes())
         .context("failed to write dot file")?;
@@ -211,49 +220,15 @@ fn output_dot_file(
 }
 
 fn get_graphviz_str(
-    domtree: bool,
     annotators: &mut [Box<dyn Annotate + '_>],
     module: &Module,
     func: &FunctionData,
 ) -> Result<String> {
-    let domtree_edges = if domtree {
-        get_domtree_edges(func)
-    } else {
-        Vec::new()
-    };
-
     let mut s = String::new();
-    write_graphviz(
-        &mut s,
-        annotators,
-        module,
-        &func.graph,
-        func.entry,
-        &domtree_edges,
-    )
-    .context("failed to format dot graph")?;
+    write_graphviz(&mut s, annotators, module, &func.graph, func.entry)
+        .context("failed to format dot graph")?;
 
     Ok(s)
-}
-
-fn get_domtree_edges(func: &FunctionData) -> Vec<StructuralEdge> {
-    let domtree = DomTree::compute(&func.graph, func.entry);
-
-    let mut idom_edges = Vec::new();
-    for node in walk_live_nodes(&func.graph, func.entry) {
-        if let Some(idom) = domtree.cfg_idom(node) {
-            idom_edges.push(StructuralEdge {
-                from: idom,
-                to: node,
-                attrs: DotAttributes::from_iter([
-                    ("penwidth".to_owned(), "2".to_owned()),
-                    ("style".to_owned(), "dashed".to_owned()),
-                    ("color".to_owned(), "#a1a1a1".to_owned()),
-                ]),
-            });
-        }
-    }
-    idom_edges
 }
 
 fn read_module(input_file: &Path) -> Result<Module> {

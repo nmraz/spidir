@@ -19,19 +19,12 @@ use crate::annotate::{Annotate, DotAttributes};
 
 pub mod annotate;
 
-pub struct StructuralEdge {
-    pub from: Node,
-    pub to: Node,
-    pub attrs: DotAttributes,
-}
-
 pub fn write_graphviz(
     w: &mut dyn fmt::Write,
     annotators: &mut [Box<dyn Annotate + '_>],
     module: &Module,
     graph: &ValGraph,
     entry: Node,
-    structural_edges: &[StructuralEdge],
 ) -> fmt::Result {
     let live_info = &LiveNodeInfo::compute(graph, entry);
     let rpo = live_info.reverse_postorder(graph);
@@ -111,10 +104,12 @@ pub fn write_graphviz(
         }
     }
 
-    for structural_edge in structural_edges {
-        write!(w, "    {} -> {}", structural_edge.from, structural_edge.to)?;
-        if !structural_edge.attrs.is_empty() {
-            write!(w, "[{}]", format_dot_attributes(&structural_edge.attrs))?;
+    for annotator in annotators {
+        for structural_edge in annotator.structural_edges(graph, entry) {
+            write!(w, "    {} -> {}", structural_edge.from, structural_edge.to)?;
+            if !structural_edge.attrs.is_empty() {
+                write!(w, "[{}]", format_dot_attributes(&structural_edge.attrs))?;
+            }
         }
     }
 

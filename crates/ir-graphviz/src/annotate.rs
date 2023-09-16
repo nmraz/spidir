@@ -12,15 +12,25 @@ use ir::{
     loop_forest::LoopForest,
     node::DepValueKind,
     valgraph::{Node, ValGraph},
+    valwalk::walk_live_nodes,
     verify::GraphVerifierError,
 };
 use itertools::Itertools;
 
 pub type DotAttributes = FxHashMap<String, String>;
 
-pub trait Annotate {
-    fn annotate_node(&mut self, _graph: &ValGraph, _node: Node, _attrs: &mut DotAttributes) {}
+pub struct StructuralEdge {
+    pub from: Node,
+    pub to: Node,
+    pub attrs: DotAttributes,
+}
 
+pub trait Annotate {
+    fn structural_edges(&mut self, _graph: &ValGraph, _entry: Node) -> Vec<StructuralEdge> {
+        Vec::new()
+    }
+
+    fn annotate_node(&mut self, _graph: &ValGraph, _node: Node, _attrs: &mut DotAttributes) {}
     fn annotate_edge(
         &mut self,
         _graph: &ValGraph,
@@ -163,6 +173,36 @@ fn format_verifier_errors(errors: &[&GraphVerifierError], graph: &ValGraph) -> S
         .iter()
         .format_with("&#10;", |error, f| f(&error.display(graph)))
         .to_string()
+}
+
+pub struct DomTreeAnnotator<'a> {
+    domtree: &'a DomTree,
+}
+
+impl<'a> DomTreeAnnotator<'a> {
+    pub fn new(domtree: &'a DomTree) -> Self {
+        Self { domtree }
+    }
+}
+
+impl<'a> Annotate for DomTreeAnnotator<'a> {
+    fn structural_edges(&mut self, graph: &ValGraph, entry: Node) -> Vec<StructuralEdge> {
+        let mut idom_edges = Vec::new();
+        for node in walk_live_nodes(graph, entry) {
+            if let Some(idom) = self.domtree.cfg_idom(node) {
+                idom_edges.push(StructuralEdge {
+                    from: idom,
+                    to: node,
+                    attrs: DotAttributes::from_iter([
+                        ("penwidth".to_owned(), "2".to_owned()),
+                        ("style".to_owned(), "dashed".to_owned()),
+                        ("color".to_owned(), "#a1a1a1".to_owned()),
+                    ]),
+                });
+            }
+        }
+        idom_edges
+    }
 }
 
 pub struct LoopAnnotator<'a> {

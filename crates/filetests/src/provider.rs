@@ -9,11 +9,13 @@ use crate::utils::parse_output_func_heading;
 
 use self::{
     domtree::DomTreeProvider,
+    graphviz::{AnnotatorKind, GraphvizTestProvider},
     loop_forest::LoopForestProvider,
     verify::{VerifyErrProvider, VerifyOkProvider},
 };
 
 mod domtree;
+mod graphviz;
 mod loop_forest;
 mod verify;
 
@@ -29,6 +31,9 @@ pub trait TestProvider {
 pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> {
     match run_command {
         "domtree" => Ok(Box::new(DomTreeProvider)),
+        "graphviz[plain]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Plain))),
+        "graphviz[colored]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Colored))),
+        "graphviz[verify]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Error))),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),
         "verify-err" => Ok(Box::new(VerifyErrProvider)),
         "verify-ok" => Ok(Box::new(VerifyOkProvider)),

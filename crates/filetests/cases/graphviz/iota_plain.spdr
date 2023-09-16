@@ -1,0 +1,65 @@
+# run: graphviz[plain]
+
+func @iota(ptr, i64) {
+    # check: function `iota`:
+    # nextln: digraph {
+    # nextln:     node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> ptr | <o2> i64}}"]
+    # nextln:     node10 [shape=Mrecord, label="{iconst 1 | {<o0> i64}}"]
+    # nextln:     node1 [shape=Mrecord, label="{iconst 0 | {<o0> i64}}"]
+    # nextln:     node2 [shape=Mrecord, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}"]
+    # nextln:     node3 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}"]
+    # nextln:     node6 [shape=Mrecord, label="{iconst 3 | {<o0> i64}}"]
+    # nextln:     node7 [shape=Mrecord, label="{{<i0> | <i1>} | shl | {<o0> i64}}"]
+    # nextln:     node8 [shape=Mrecord, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}"]
+    # nextln:     node9 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store.8 | {<o0> ctrl}}"]
+    # nextln:     node13 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}"]
+    # nextln:     node14 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
+    # nextln:     node15 [shape=Mrecord, label="{{<i0>} | return}"]
+    # nextln:     node4 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
+    # nextln:     node5 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | phi | {<o0> i64}}"]
+    # nextln:     node11 [shape=Mrecord, label="{{<i0> | <i1>} | iadd | {<o0> i64}}"]
+    # nextln:     node12 [shape=Mrecord, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}"]
+    # nextln:     node0:o2 -> node2:i0
+    # nextln:     node1:o0 -> node2:i1
+    # nextln:     node0:o0 -> node3:i0
+    # nextln:     node2:o0 -> node3:i1
+    # nextln:     node5:o0 -> node7:i0
+    # nextln:     node6:o0 -> node7:i1
+    # nextln:     node0:o1 -> node8:i0
+    # nextln:     node7:o0 -> node8:i1
+    # nextln:     node4:o0 -> node9:i0
+    # nextln:     node5:o0 -> node9:i1
+    # nextln:     node8:o0 -> node9:i2
+    # nextln:     node9:o0 -> node13:i0
+    # nextln:     node12:o0 -> node13:i1
+    # nextln:     node3:o0 -> node14:i0
+    # nextln:     node13:o0 -> node14:i1
+    # nextln:     node14:o0 -> node15:i0
+    # nextln:     node3:o1 -> node4:i0
+    # nextln:     node13:o1 -> node4:i1
+    # nextln:     node4:o1 -> node5:i0
+    # nextln:     node1:o0 -> node5:i1
+    # nextln:     node11:o0 -> node5:i2
+    # nextln:     node5:o0 -> node11:i0
+    # nextln:     node10:o0 -> node11:i1
+    # nextln:     node11:o0 -> node12:i0
+    # nextln:     node0:o2 -> node12:i1
+    # nextln: }
+
+    %entry_ctrl:ctrl, %arr:ptr, %n:i64 = entry
+    %zero:i64 = iconst 0
+    %zerocmp:i32 = icmp eq %n, %zero
+    %iszero:ctrl, %isnonzero:ctrl = brcond %entry_ctrl, %zerocmp
+    %loopbody:ctrl, %loopphi:phisel = region %isnonzero, %looplatch
+    %i:i64 = phi %loopphi, %zero, %inext
+    %three:i64 = iconst 3
+    %off:i64 = shl %i, %three
+    %ptr:ptr = ptroff %arr, %off
+    %poststore:ctrl = store.8 %loopbody, %i, %ptr
+    %one:i64 = iconst 1
+    %inext:i64 = iadd %i, %one
+    %donecmp:i32 = icmp eq %inext, %n
+    %loopdone:ctrl, %looplatch:ctrl = brcond %poststore, %donecmp
+    %exit:ctrl, %exitphi:phisel = region %iszero, %loopdone
+    return %exit
+}

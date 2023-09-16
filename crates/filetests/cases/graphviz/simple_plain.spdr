@@ -1,0 +1,20 @@
+# run: graphviz[plain]
+
+extfunc @my_ext_func:i32(i64)
+
+func @my_func:i32(i64) {
+    # check: function `my_func`:
+    # nextln: digraph {
+    # nextln:     node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> i64}}"]
+    # nextln:     node1 [shape=Mrecord, label="{{<i0> | <i1>} | call @my_ext_func | {<o0> ctrl | <o1> i32}}"]
+    # nextln:     node2 [shape=Mrecord, label="{{<i0> | <i1>} | return}"]
+    # nextln:     node0:o0 -> node1:i0
+    # nextln:     node0:o1 -> node1:i1
+    # nextln:     node1:o0 -> node2:i0
+    # nextln:     node1:o1 -> node2:i1
+    # nextln: }
+
+    %0:ctrl, %1:i64 = entry
+    %2:ctrl, %3:i32 = call @my_ext_func %0, %1
+    return %2, %3
+}

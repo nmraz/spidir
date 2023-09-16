@@ -137,6 +137,3 @@ fn escape_dot_attr_value(value: &str) -> String {
     // In DOT attributes, everything else (including a plain `\`) is treated verbatim.
     value.replace('\"', "\\\"")
 }
-
-#[cfg(test)]
-mod tests;

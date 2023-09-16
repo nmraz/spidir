@@ -13,23 +13,23 @@ func @"System.Void System.Test::Loop1()"(ptr) {
     # nextln: %10:ctrl = store.4 %9, %8, %7           # x
     # nextln: %11:ctrl, %12:phisel = region %10       # x
     # nextln: %13:ctrl = store.4 %11, %6, %5          # x
-    # nextln: %14:ctrl, %15:phisel = region %13, %39  # loop header: 1; root: 1; x
-    # nextln: %16:ctrl = store.4 %14, %6, %7          # containing loop: 1; x
-    # nextln: %17:ctrl, %18:phisel = region %16, %28  # loop header: 0; root: 1; parent: 1; x
-    # nextln: %19:ctrl, %20:i32 = load.4 %17, %7      # containing loop: 0; x
+    # nextln: %14:ctrl, %15:phisel = region %13, %39  # loop 1; header; root 1; x
+    # nextln: %16:ctrl = store.4 %14, %6, %7          # loop 1; x
+    # nextln: %17:ctrl, %18:phisel = region %16, %28  # loop 0; header; root 1; parent 1; x
+    # nextln: %19:ctrl, %20:i32 = load.4 %17, %7      # loop 0; x
     # nextln: %21:i32 = iadd %20, %6                  # x
-    # nextln: %22:ctrl = store.4 %19, %21, %7         # containing loop: 0; x
-    # nextln: %23:ctrl, %24:i32 = load.4 %22, %7      # containing loop: 0; x
-    # nextln: %25:ctrl, %26:i32 = load.4 %23, %5      # containing loop: 0; x
+    # nextln: %22:ctrl = store.4 %19, %21, %7         # loop 0; x
+    # nextln: %23:ctrl, %24:i32 = load.4 %22, %7      # loop 0; x
+    # nextln: %25:ctrl, %26:i32 = load.4 %23, %5      # loop 0; x
     # nextln: %27:i32 = icmp sle %24, %26             # x
-    # nextln: %28:ctrl, %29:ctrl = brcond %25, %27    # containing loop: 0; x
-    # nextln: %30:ctrl, %31:phisel = region %29       # containing loop: 1; x
-    # nextln: %32:ctrl, %33:i32 = load.4 %30, %5      # containing loop: 1; x
+    # nextln: %28:ctrl, %29:ctrl = brcond %25, %27    # loop 0; x
+    # nextln: %30:ctrl, %31:phisel = region %29       # loop 1; x
+    # nextln: %32:ctrl, %33:i32 = load.4 %30, %5      # loop 1; x
     # nextln: %34:i32 = iadd %33, %6                  # x
-    # nextln: %35:ctrl = store.4 %32, %34, %5         # containing loop: 1; x
-    # nextln: %36:ctrl, %37:i32 = load.4 %35, %5      # containing loop: 1; x
+    # nextln: %35:ctrl = store.4 %32, %34, %5         # loop 1; x
+    # nextln: %36:ctrl, %37:i32 = load.4 %35, %5      # loop 1; x
     # nextln: %38:i32 = icmp sle %37, %4              # x
-    # nextln: %39:ctrl, %40:ctrl = brcond %36, %38    # containing loop: 1; x
+    # nextln: %39:ctrl, %40:ctrl = brcond %36, %38    # loop 1; x
     # nextln: %41:ctrl, %42:phisel = region %40       # x
     # nextln: return %41                              # x
 

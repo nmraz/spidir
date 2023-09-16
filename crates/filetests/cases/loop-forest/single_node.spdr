@@ -3,7 +3,7 @@
 func @sink() {
     # check: function `sink`:
     # nextln: %0:ctrl = entry                         # x
-    # nextln: %1:ctrl, %2:phisel = region %0, %1      # loop header: 0; root: 0; x
+    # nextln: %1:ctrl, %2:phisel = region %0, %1      # loop 0; header; root 0; x
 
     %0:ctrl = entry
     %1:ctrl, %2:phisel = region %0, %1

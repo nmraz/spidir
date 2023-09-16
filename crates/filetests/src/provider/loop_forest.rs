@@ -20,21 +20,19 @@ impl TestProvider for LoopForestProvider {
             write_graph_with_trailing_comments(&mut output, module, func, |s, node| {
                 if let Some(domtree_node) = domtree.get_tree_node(node) {
                     if let Some(containing_loop) = loop_forest.containing_loop(domtree_node) {
+                        write!(s, "loop {}; ", containing_loop.as_u32()).unwrap();
                         if domtree_node == loop_forest.loop_header(containing_loop) {
                             let root_loop = loop_forest.root_loop(containing_loop);
                             write!(
                                 s,
-                                "loop header: {}; root: {}; ",
-                                containing_loop.as_u32(),
+                                "header; root {}; ",
                                 loop_forest.root_loop(containing_loop).as_u32()
                             )
                             .unwrap();
                             if let Some(parent_loop) = loop_forest.loop_parent(containing_loop) {
                                 ensure!(loop_forest.root_loop(parent_loop) == root_loop);
-                                write!(s, "parent: {}; ", parent_loop.as_u32()).unwrap();
+                                write!(s, "parent {}; ", parent_loop.as_u32()).unwrap();
                             }
-                        } else {
-                            write!(s, "containing loop: {}; ", containing_loop.as_u32()).unwrap();
                         }
                     }
                 }

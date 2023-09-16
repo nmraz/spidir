@@ -25,9 +25,9 @@ func @header_in_irreducible_cycle(i32, i32, i32, i32) {
     # check: function `header_in_irreducible_cycle`:
     # nextln: %0:ctrl, %1:i32, %2:i32, %3:i32, %4:i32 = entry         # x
     # nextln: %5:ctrl, %6:ctrl = brcond %0, %1        # x
-    # nextln: %11:ctrl, %12:ctrl = brcond %10, %3     # containing loop: 0; x
-    # nextln: %7:ctrl, %8:phisel = region %11, %5, %13        # loop header: 0; root: 0; x
-    # nextln: %9:ctrl, %10:ctrl = brcond %7, %2       # containing loop: 0; x
+    # nextln: %11:ctrl, %12:ctrl = brcond %10, %3     # loop 0; x
+    # nextln: %7:ctrl, %8:phisel = region %11, %5, %13        # loop 0; header; root 0; x
+    # nextln: %9:ctrl, %10:ctrl = brcond %7, %2       # loop 0; x
     # nextln: %13:ctrl, %14:phisel = region %6, %9    # x
     # nextln: return %12                              # x
 
@@ -43,12 +43,12 @@ func @header_in_irreducible_cycle(i32, i32, i32, i32) {
 func @irreducible_cycle_in_body(i32, i32, i32) {
     # check: function `irreducible_cycle_in_body`:
     # nextln: %0:ctrl, %1:i32, %2:i32, %3:i32 = entry         # x
-    # nextln: %14:ctrl, %15:ctrl = brcond %12, %3     # containing loop: 0; x
-    # nextln: %8:ctrl, %9:phisel = region %6, %14     # containing loop: 0; x
-    # nextln: %10:ctrl, %11:ctrl = brcond %8, %2      # containing loop: 0; x
-    # nextln: %4:ctrl, %5:phisel = region %0, %10     # loop header: 0; root: 0; x
-    # nextln: %6:ctrl, %7:ctrl = brcond %4, %1        # containing loop: 0; x
-    # nextln: %12:ctrl, %13:phisel = region %11, %7   # containing loop: 0; x
+    # nextln: %14:ctrl, %15:ctrl = brcond %12, %3     # loop 0; x
+    # nextln: %8:ctrl, %9:phisel = region %6, %14     # loop 0; x
+    # nextln: %10:ctrl, %11:ctrl = brcond %8, %2      # loop 0; x
+    # nextln: %4:ctrl, %5:phisel = region %0, %10     # loop 0; header; root 0; x
+    # nextln: %6:ctrl, %7:ctrl = brcond %4, %1        # loop 0; x
+    # nextln: %12:ctrl, %13:phisel = region %11, %7   # loop 0; x
     # nextln: return %15                              # x
 
     %ent:ctrl, %p1:i32, %p2:i32, %p3:i32 = entry

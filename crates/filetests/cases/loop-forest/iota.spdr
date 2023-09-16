@@ -10,11 +10,11 @@ func @iota(ptr, i64) {
     # nextln: %10:i64 = iconst 3                      # x
     # nextln: %11:i64 = shl %9, %10                   # x
     # nextln: %12:ptr = ptroff %1, %11                # x
-    # nextln: %13:ctrl = store.8 %7, %9, %12          # containing loop: 0; x
-    # nextln: %17:ctrl, %18:ctrl = brcond %13, %16    # containing loop: 0; x
+    # nextln: %13:ctrl = store.8 %7, %9, %12          # loop 0; x
+    # nextln: %17:ctrl, %18:ctrl = brcond %13, %16    # loop 0; x
     # nextln: %19:ctrl, %20:phisel = region %5, %17   # x
     # nextln: return %19                              # x
-    # nextln: %7:ctrl, %8:phisel = region %6, %18     # loop header: 0; root: 0; x
+    # nextln: %7:ctrl, %8:phisel = region %6, %18     # loop 0; header; root 0; x
     # nextln: %9:i64 = phi %8, %3, %15                # x
     # nextln: %15:i64 = iadd %9, %14                  # x
     # nextln: %16:i32 = icmp eq %15, %2               # x

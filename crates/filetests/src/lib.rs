@@ -4,6 +4,7 @@ use std::{fs, path::Path};
 use anyhow::{anyhow, bail, Context, Ok, Result};
 use filecheck::{Checker, CheckerBuilder, Value, VariableMap};
 use fx_utils::FxHashMap;
+use hooks::catch_panic_message;
 use ir::module::Module;
 use parser::parse_module;
 
@@ -17,6 +18,7 @@ use crate::{
 
 #[macro_use]
 mod utils;
+mod hooks;
 mod provider;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,15 +35,18 @@ pub enum TestOutcome<U> {
 }
 
 pub fn run_file_test(path: &Path, update_mode: UpdateMode) -> Result<TestOutcome<()>> {
-    let input = fs::read_to_string(path).context("failed to read file")?;
-    let provider =
-        select_test_provider_from_input(&input).context("failed to select test provider")?;
-    let outcome = run_test(&*provider, &input, update_mode)?;
-    if let TestOutcome::Update(new_contents) = outcome {
-        fs::write(path, new_contents).context("failed to update file")?;
-        return Ok(TestOutcome::Update(()));
-    }
-    Ok(TestOutcome::Ok)
+    catch_panic_message(|| {
+        let input = fs::read_to_string(path).context("failed to read file")?;
+        let provider =
+            select_test_provider_from_input(&input).context("failed to select test provider")?;
+        let outcome = run_test(&*provider, &input, update_mode)?;
+        if let TestOutcome::Update(new_contents) = outcome {
+            fs::write(path, new_contents).context("failed to update file")?;
+            return Ok(TestOutcome::Update(()));
+        }
+        Ok(TestOutcome::Ok)
+    })
+    .map_err(|panic_msg| anyhow!(panic_msg))?
 }
 
 pub fn select_test_provider_from_input(input: &str) -> Result<Box<dyn TestProvider>> {

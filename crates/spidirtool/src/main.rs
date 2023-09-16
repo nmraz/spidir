@@ -7,15 +7,16 @@ use std::{
 };
 
 use anyhow::{anyhow, bail, Context, Result};
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use ir::{
     domtree::DomTree,
+    loop_forest::LoopForest,
     module::{FunctionData, Module},
     valwalk::walk_live_nodes,
     verify::{verify_func, verify_module},
 };
 use ir_graphviz::{
-    annotate::{Annotate, ColoredAnnotator, DotAttributes, ErrorAnnotator},
+    annotate::{Annotate, ColoredAnnotator, DotAttributes, ErrorAnnotator, LoopAnnotator},
     write_graphviz, StructuralEdge,
 };
 use parser::parse_module;
@@ -44,6 +45,21 @@ impl GraphFormat {
     }
 }
 
+#[derive(Args)]
+struct AnnotatorOptions {
+    /// Don't show verifier errors inline in the graph
+    #[arg(long)]
+    no_verify: bool,
+
+    /// Show dominance edges in the graph
+    #[arg(long)]
+    domtree: bool,
+
+    /// Annotate loop headers and bodies in the graph
+    #[arg(long)]
+    loops: bool,
+}
+
 #[derive(Subcommand)]
 enum ToolCommand {
     /// Display the specified function as a graphviz graph
@@ -53,13 +69,8 @@ enum ToolCommand {
         /// The function to graph
         function: String,
 
-        /// Don't show verifier errors inline in the graph
-        #[arg(long)]
-        no_verify: bool,
-
-        /// Show dominance edges in the graph
-        #[arg(long)]
-        domtree: bool,
+        #[clap(flatten)]
+        annotator_opts: AnnotatorOptions,
 
         /// The output file to use
         ///
@@ -90,14 +101,11 @@ fn main() -> Result<()> {
         ToolCommand::Graph {
             input_file,
             function: function_name,
-            no_verify,
-            domtree,
+            annotator_opts,
             output_file,
             format,
             no_open,
         } => {
-            let verify = !no_verify;
-
             let output_file = output_file.unwrap_or_else(|| {
                 let mut filename = input_file
                     .file_stem()
@@ -121,12 +129,12 @@ fn main() -> Result<()> {
                 GraphFormat::Dot => {
                     let mut output_file =
                         File::create(&output_file).context("failed to create output file")?;
-                    output_dot_file(&mut output_file, verify, domtree, &module, func)?;
+                    output_dot_file(&mut output_file, &annotator_opts, &module, func)?;
                 }
                 GraphFormat::Svg => {
                     let mut dotfile =
                         NamedTempFile::new().context("failed to create temporary dot file")?;
-                    output_dot_file(dotfile.as_file_mut(), verify, domtree, &module, func)?;
+                    output_dot_file(dotfile.as_file_mut(), &annotator_opts, &module, func)?;
 
                     run_command(
                         Command::new("dot")
@@ -171,22 +179,30 @@ fn run_command(command: &mut Command) -> Result<()> {
 
 fn output_dot_file(
     file: &mut File,
-    verify: bool,
-    domtree: bool,
+    annotator_opts: &AnnotatorOptions,
     module: &Module,
     func: &FunctionData,
 ) -> Result<()> {
     let errors;
+    let domtree;
+    let loop_forest;
+
     let mut annotators: Vec<Box<dyn Annotate>> = vec![Box::new(ColoredAnnotator)];
 
-    if verify {
+    if !annotator_opts.no_verify {
         if let Err(inner_errors) = verify_func(module, func) {
             errors = inner_errors;
             annotators.push(Box::new(ErrorAnnotator::new(&func.graph, &errors)));
         }
     };
 
-    let s = get_graphviz_str(domtree, &mut annotators, module, func)?;
+    if annotator_opts.loops {
+        domtree = DomTree::compute(&func.graph, func.entry);
+        loop_forest = LoopForest::compute(&func.graph, &domtree);
+        annotators.push(Box::new(LoopAnnotator::new(&domtree, &loop_forest)));
+    }
+
+    let s = get_graphviz_str(annotator_opts.domtree, &mut annotators, module, func)?;
 
     file.write_all(s.as_bytes())
         .context("failed to write dot file")?;

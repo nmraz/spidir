@@ -1,5 +1,6 @@
 use alloc::{
     borrow::ToOwned,
+    format,
     string::{String, ToString},
     vec::Vec,
 };
@@ -7,6 +8,8 @@ use alloc::{
 use fx_utils::FxHashMap;
 
 use ir::{
+    domtree::DomTree,
+    loop_forest::LoopForest,
     node::DepValueKind,
     valgraph::{Node, ValGraph},
     verify::GraphVerifierError,
@@ -100,8 +103,8 @@ impl Annotate for ColoredAnnotator {
 }
 
 pub struct ErrorAnnotator<'a> {
-    pub(crate) node_errors: FxHashMap<Node, Vec<&'a GraphVerifierError>>,
-    pub(crate) edge_errors: FxHashMap<(Node, u32), Vec<&'a GraphVerifierError>>,
+    node_errors: FxHashMap<Node, Vec<&'a GraphVerifierError>>,
+    edge_errors: FxHashMap<(Node, u32), Vec<&'a GraphVerifierError>>,
 }
 
 impl<'a> ErrorAnnotator<'a> {
@@ -160,4 +163,51 @@ fn format_verifier_errors(errors: &[&GraphVerifierError], graph: &ValGraph) -> S
         .iter()
         .format_with("&#10;", |error, f| f(&error.display(graph)))
         .to_string()
+}
+
+pub struct LoopAnnotator<'a> {
+    domtree: &'a DomTree,
+    loop_forest: &'a LoopForest,
+}
+
+impl<'a> LoopAnnotator<'a> {
+    pub fn new(domtree: &'a DomTree, loop_forest: &'a LoopForest) -> Self {
+        Self {
+            domtree,
+            loop_forest,
+        }
+    }
+}
+
+impl<'a> Annotate for LoopAnnotator<'a> {
+    fn annotate_node(&mut self, _graph: &ValGraph, node: Node, attrs: &mut DotAttributes) {
+        static LOOP_COLORS: &[&str] = &[
+            "#167288", "#8cdaec", "#b45248", "#d48c84", "#a89a49", "#d6cfa2", "#3cb464", "#9bddb1",
+            "#643c6a", "#836394",
+        ];
+
+        let Some(domtre_node) = self.domtree.get_tree_node(node) else {
+            return;
+        };
+
+        let Some(loop_node) = self.loop_forest.containing_loop(domtre_node) else {
+            return;
+        };
+
+        let loop_id = loop_node.as_u32() as usize;
+        attrs.insert(
+            "color".to_owned(),
+            LOOP_COLORS[loop_id % LOOP_COLORS.len()].to_owned(),
+        );
+        attrs.extend([("penwidth".to_owned(), "2".to_owned())]);
+
+        let tooltip = if domtre_node == self.loop_forest.loop_header(loop_node) {
+            format!("loop header {}", loop_id)
+        } else {
+            attrs.insert("style".to_owned(), "filled,dashed".to_owned());
+            format!("loop {}", loop_id)
+        };
+
+        attrs.insert("tooltip".to_owned(), tooltip);
+    }
 }

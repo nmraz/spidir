@@ -221,11 +221,6 @@ impl<'a> LoopAnnotator<'a> {
 
 impl<'a> Annotate for LoopAnnotator<'a> {
     fn annotate_node(&mut self, _graph: &ValGraph, node: Node, attrs: &mut DotAttributes) {
-        static LOOP_COLORS: &[&str] = &[
-            "#167288", "#8cdaec", "#b45248", "#d48c84", "#a89a49", "#d6cfa2", "#3cb464", "#9bddb1",
-            "#643c6a", "#836394",
-        ];
-
         let Some(domtre_node) = self.domtree.get_tree_node(node) else {
             return;
         };
@@ -234,20 +229,65 @@ impl<'a> Annotate for LoopAnnotator<'a> {
             return;
         };
 
-        let loop_id = loop_node.as_u32() as usize;
-        attrs.insert(
-            "color".to_owned(),
-            LOOP_COLORS[loop_id % LOOP_COLORS.len()].to_owned(),
-        );
+        let loop_id = loop_node.as_u32();
+        attrs.insert("color".to_owned(), get_loop_color(loop_id));
         attrs.extend([("penwidth".to_owned(), "2".to_owned())]);
 
         let tooltip = if domtre_node == self.loop_forest.loop_header(loop_node) {
-            format!("loop header {}", loop_id)
+            format!("loop {loop_id} header")
         } else {
             attrs.insert("style".to_owned(), "filled,dashed".to_owned());
-            format!("loop {}", loop_id)
+            format!("loop {loop_id}")
         };
 
         attrs.insert("tooltip".to_owned(), tooltip);
     }
+
+    fn annotate_edge(
+        &mut self,
+        graph: &ValGraph,
+        node: Node,
+        input_idx: usize,
+        attrs: &mut DotAttributes,
+    ) {
+        // Check if this input is a loop backedge and annotate accordingly if so.
+
+        let input = graph.node_inputs(node)[input_idx];
+        if !graph.value_kind(input).is_control() {
+            return;
+        }
+
+        // Is `node` a loop header?
+        let Some(target_tree_node) = self.domtree.get_tree_node(node) else {
+            return;
+        };
+        let Some(loop_node) = self.loop_forest.containing_loop(target_tree_node) else {
+            return;
+        };
+        if target_tree_node != self.loop_forest.loop_header(loop_node) {
+            return;
+        }
+
+        // Does the input source belong to the same loop?
+        let Some(src_tree_node) = self.domtree.get_tree_node(graph.value_def(input).0) else {
+            return;
+        };
+        if self.loop_forest.containing_loop(src_tree_node) != Some(loop_node) {
+            return;
+        }
+
+        let loop_id = loop_node.as_u32();
+        attrs.extend([
+            ("color".to_owned(), get_loop_color(loop_id)),
+            ("tooltip".to_owned(), format!("loop {loop_id} backedge")),
+        ]);
+    }
+}
+
+fn get_loop_color(loop_id: u32) -> String {
+    static LOOP_COLORS: &[&str] = &[
+        "#167288", "#8cdaec", "#b45248", "#d48c84", "#a89a49", "#d6cfa2", "#3cb464", "#9bddb1",
+        "#643c6a", "#836394",
+    ];
+    LOOP_COLORS[loop_id as usize % LOOP_COLORS.len()].to_owned()
 }

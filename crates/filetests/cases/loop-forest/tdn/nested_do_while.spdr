@@ -1,0 +1,66 @@
+# run: loop-forest
+
+func @"System.Void System.Test::Loop1()"(ptr) {
+    # check: function `System.Void System.Test::Loop1()`:
+    # nextln: %0:ctrl, %1:ptr = entry                 # x
+    # nextln: %2:ctrl, %3:phisel = region %0          # x
+    # nextln: %4:i32 = iconst 9                       # x
+    # nextln: %5:ptr = stackslot 4:4                  # x
+    # nextln: %6:i32 = iconst 1                       # x
+    # nextln: %7:ptr = stackslot 4:4                  # x
+    # nextln: %8:i32 = iconst 0                       # x
+    # nextln: %9:ctrl = store.4 %2, %8, %5            # x
+    # nextln: %10:ctrl = store.4 %9, %8, %7           # x
+    # nextln: %11:ctrl, %12:phisel = region %10       # x
+    # nextln: %13:ctrl = store.4 %11, %6, %5          # x
+    # nextln: %14:ctrl, %15:phisel = region %13, %39  # loop header: 1; root: 1; x
+    # nextln: %16:ctrl = store.4 %14, %6, %7          # x
+    # nextln: %17:ctrl, %18:phisel = region %16, %28  # loop header: 0; root: 1; parent: 1; x
+    # nextln: %19:ctrl, %20:i32 = load.4 %17, %7      # containing loop: 0; x
+    # nextln: %21:i32 = iadd %20, %6                  # x
+    # nextln: %22:ctrl = store.4 %19, %21, %7         # containing loop: 0; x
+    # nextln: %23:ctrl, %24:i32 = load.4 %22, %7      # containing loop: 0; x
+    # nextln: %25:ctrl, %26:i32 = load.4 %23, %5      # containing loop: 0; x
+    # nextln: %27:i32 = icmp sle %24, %26             # x
+    # nextln: %28:ctrl, %29:ctrl = brcond %25, %27    # containing loop: 0; x
+    # nextln: %30:ctrl, %31:phisel = region %29       # containing loop: 1; x
+    # nextln: %32:ctrl, %33:i32 = load.4 %30, %5      # containing loop: 1; x
+    # nextln: %34:i32 = iadd %33, %6                  # x
+    # nextln: %35:ctrl = store.4 %32, %34, %5         # containing loop: 1; x
+    # nextln: %36:ctrl, %37:i32 = load.4 %35, %5      # containing loop: 1; x
+    # nextln: %38:i32 = icmp sle %37, %4              # x
+    # nextln: %39:ctrl, %40:ctrl = brcond %36, %38    # containing loop: 1; x
+    # nextln: %41:ctrl, %42:phisel = region %40       # x
+    # nextln: return %41                              # x
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:phisel = region %0
+    %39:i32 = iconst 9
+    %4:ptr = stackslot 4:4
+    %19:i32 = iconst 1
+    %7:ptr = stackslot 4:4
+    %5:i32 = iconst 0
+    %6:ctrl = store.4 %2, %5, %4
+    %8:ctrl = store.4 %6, %5, %7
+    %17:ctrl, %18:phisel = region %8
+    %20:ctrl = store.4 %17, %19, %4
+    %9:ctrl, %10:phisel = region %20, %41
+    %21:ctrl = store.4 %9, %19, %7
+    %11:ctrl, %12:phisel = region %21, %31
+    %22:ctrl, %23:i32 = load.4 %11, %7
+    %24:i32 = iadd %23, %19
+    %25:ctrl = store.4 %22, %24, %7
+    %26:ctrl, %27:i32 = load.4 %25, %7
+    %28:ctrl, %29:i32 = load.4 %26, %4
+    %30:i32 = icmp sle %27, %29
+    %31:ctrl, %32:ctrl = brcond %28, %30
+    %13:ctrl, %14:phisel = region %32
+    %33:ctrl, %34:i32 = load.4 %13, %4
+    %35:i32 = iadd %34, %19
+    %36:ctrl = store.4 %33, %35, %4
+    %37:ctrl, %38:i32 = load.4 %36, %4
+    %40:i32 = icmp sle %38, %39
+    %41:ctrl, %42:ctrl = brcond %37, %40
+    %15:ctrl, %16:phisel = region %42
+    return %15
+}

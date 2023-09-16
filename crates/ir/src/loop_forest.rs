@@ -101,13 +101,29 @@ impl LoopForest {
         let header = self.loops[new_loop].header;
         let mut stack = latches.to_owned();
         while let Some(node) = stack.pop() {
-            if let Some(existing_loop) = self.containing_loop(node) {
+            if let Some(subloop) = self.containing_loop(node) {
                 // This node belongs to an existing loop, and by the function precondition we know
-                // it must be a (weak) descendant of ours; attach its tree root as a child of ours
-                // if it hasn't been attached already.
-                let existing_root = self.root_loop(existing_loop);
-                if existing_root != new_loop {
-                    self.loops[existing_root].parent = new_loop.into();
+                // it must be a (non-strict) descendant of ours.
+                let root_subloop = self.root_loop(subloop);
+                if root_subloop == new_loop {
+                    // We already know this node is in a subloop of ours, nothing more to do.
+                    continue;
+                }
+
+                self.loops[root_subloop].parent = new_loop.into();
+
+                // Keep walking at the subloop's header to discover remaining nodes.
+                for pred in cfg_preds(graph, domtree.get_cfg_node(self.loop_header(root_subloop))) {
+                    if let Some(tree_pred) = domtree.get_tree_node(pred) {
+                        debug_assert!(domtree.dominates(header, tree_pred));
+
+                        // Don't bother walking back to the header since nothing interesting would
+                        // come of it anyway. Note that this is strictly an optimization, as walking
+                        // the header would fall into a benign "existing loop" case.
+                        if tree_pred != header {
+                            stack.push(tree_pred);
+                        }
+                    }
                 }
             } else {
                 // This node hasn't been discovered yet, so it must be a part of our loop as the

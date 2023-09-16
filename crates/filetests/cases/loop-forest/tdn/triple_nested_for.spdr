@@ -17,13 +17,13 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %17:ctrl, %18:phisel = region %16       # x
     # nextln: %19:ctrl = store.4 %17, %12, %7         # x
     # nextln: %20:ctrl = store.4 %19, %12, %8         # x
-    # nextln: %83:ctrl = store.4 %81, %12, %10        # x
+    # nextln: %83:ctrl = store.4 %81, %12, %10        # containing loop: 2; x
     # nextln: %53:ctrl, %54:phisel = region %83, %52  # loop header: 1; root: 2; parent: 2; x
-    # nextln: %55:ctrl, %56:i32 = load.4 %53, %10     # containing loop: 2; x
+    # nextln: %55:ctrl, %56:i32 = load.4 %53, %10     # containing loop: 1; x
     # nextln: %57:i32 = icmp slt %56, %3              # x
-    # nextln: %58:ctrl, %59:ctrl = brcond %55, %57    # containing loop: 2; x
-    # nextln: %60:ctrl, %61:phisel = region %58       # x
-    # nextln: %21:ctrl = store.4 %60, %12, %11        # x
+    # nextln: %58:ctrl, %59:ctrl = brcond %55, %57    # containing loop: 1; x
+    # nextln: %60:ctrl, %61:phisel = region %58       # containing loop: 1; x
+    # nextln: %21:ctrl = store.4 %60, %12, %11        # containing loop: 1; x
     # nextln: %22:ctrl, %23:phisel = region %21, %40  # loop header: 0; root: 2; parent: 1; x
     # nextln: %24:ctrl, %25:i32 = load.4 %22, %11     # containing loop: 0; x
     # nextln: %26:i32 = icmp slt %25, %4              # x
@@ -53,10 +53,10 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %72:i32 = iadd %71, %9                  # x
     # nextln: %73:ctrl = store.4 %70, %72, %8         # containing loop: 2; x
     # nextln: %74:ctrl, %75:phisel = region %20, %73  # loop header: 2; root: 2; x
-    # nextln: %76:ctrl, %77:i32 = load.4 %74, %8      # x
+    # nextln: %76:ctrl, %77:i32 = load.4 %74, %8      # containing loop: 2; x
     # nextln: %78:i32 = icmp slt %77, %2              # x
-    # nextln: %79:ctrl, %80:ctrl = brcond %76, %78    # x
-    # nextln: %81:ctrl, %82:phisel = region %79       # x
+    # nextln: %79:ctrl, %80:ctrl = brcond %76, %78    # containing loop: 2; x
+    # nextln: %81:ctrl, %82:phisel = region %79       # containing loop: 2; x
     # nextln: %84:ctrl, %85:phisel = region %80       # x
     # nextln: %86:ctrl, %87:i32 = load.4 %84, %7      # x
     # nextln: return %86, %87                         # x

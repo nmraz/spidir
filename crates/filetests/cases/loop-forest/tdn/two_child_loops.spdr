@@ -1,7 +1,5 @@
 # run: loop-forest
 
-# TODO: This looks wrong?
-
 func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)":i32(ptr, i32, i32, i32) {
     # check: function `System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)`:
     # nextln: %0:ctrl, %1:ptr, %2:i32, %3:i32, %4:i32 = entry         # x
@@ -24,9 +22,9 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %23:i32 = iconst 2                      # x
     # nextln: %24:i32 = and %111, %23                 # x
     # nextln: %25:ctrl, %26:ctrl = brcond %110, %24   # containing loop: 2; x
-    # nextln: %27:ctrl, %28:phisel = region %25       # x
-    # nextln: %29:ctrl = store.4 %27, %11, %14        # x
-    # nextln: %30:ctrl, %31:phisel = region %29, %55  # loop header: 1; root: 1; x
+    # nextln: %27:ctrl, %28:phisel = region %25       # containing loop: 2; x
+    # nextln: %29:ctrl = store.4 %27, %11, %14        # containing loop: 2; x
+    # nextln: %30:ctrl, %31:phisel = region %29, %55  # loop header: 1; root: 2; parent: 2; x
     # nextln: %32:ctrl, %33:i32 = load.4 %30, %14     # containing loop: 1; x
     # nextln: %34:i32 = icmp slt %33, %3              # x
     # nextln: %35:ctrl, %36:ctrl = brcond %32, %34    # containing loop: 1; x
@@ -42,8 +40,8 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %52:ctrl, %53:i32 = load.4 %51, %14     # containing loop: 1; x
     # nextln: %54:i32 = iadd %53, %9                  # x
     # nextln: %55:ctrl = store.4 %52, %54, %14        # containing loop: 1; x
-    # nextln: %56:ctrl, %57:phisel = region %43, %36  # x
-    # nextln: %58:ctrl = store.4 %56, %11, %10        # x
+    # nextln: %56:ctrl, %57:phisel = region %43, %36  # containing loop: 2; x
+    # nextln: %58:ctrl = store.4 %56, %11, %10        # containing loop: 2; x
     # nextln: %59:ctrl, %60:phisel = region %58, %86  # loop header: 0; root: 2; parent: 2; x
     # nextln: %61:ctrl, %62:i32 = load.4 %59, %10     # containing loop: 0; x
     # nextln: %63:i32 = icmp slt %62, %4              # x

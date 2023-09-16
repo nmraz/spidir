@@ -12,7 +12,6 @@ use ir::{
     loop_forest::LoopForest,
     node::DepValueKind,
     valgraph::{Node, ValGraph},
-    valwalk::walk_live_nodes,
     verify::GraphVerifierError,
 };
 use itertools::Itertools;
@@ -186,22 +185,25 @@ impl<'a> DomTreeAnnotator<'a> {
 }
 
 impl<'a> Annotate for DomTreeAnnotator<'a> {
-    fn structural_edges(&mut self, graph: &ValGraph, entry: Node) -> Vec<StructuralEdge> {
-        let mut idom_edges = Vec::new();
-        for node in walk_live_nodes(graph, entry) {
-            if let Some(idom) = self.domtree.cfg_idom(node) {
-                idom_edges.push(StructuralEdge {
-                    from: idom,
-                    to: node,
-                    attrs: DotAttributes::from_iter([
-                        ("penwidth".to_owned(), "2".to_owned()),
-                        ("style".to_owned(), "dashed".to_owned()),
-                        ("color".to_owned(), "#a1a1a1".to_owned()),
-                    ]),
-                });
-            }
-        }
-        idom_edges
+    fn structural_edges(&mut self, _graph: &ValGraph, _entry: Node) -> Vec<StructuralEdge> {
+        self.domtree
+            .preorder()
+            .filter_map(|tree_node| {
+                self.domtree.idom(tree_node).map(|idom| {
+                    let cfg_node = self.domtree.get_cfg_node(tree_node);
+                    let idom = self.domtree.get_cfg_node(idom);
+                    StructuralEdge {
+                        from: idom,
+                        to: cfg_node,
+                        attrs: DotAttributes::from_iter([
+                            ("penwidth".to_owned(), "2".to_owned()),
+                            ("style".to_owned(), "dashed".to_owned()),
+                            ("color".to_owned(), "#a1a1a1".to_owned()),
+                        ]),
+                    }
+                })
+            })
+            .collect()
     }
 }
 

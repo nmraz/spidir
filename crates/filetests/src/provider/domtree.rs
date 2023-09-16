@@ -53,8 +53,7 @@ impl TestProvider for DomTreeProvider {
 
                 write!(s, "x").unwrap();
                 Ok(())
-            })
-            .unwrap();
+            })?;
         }
 
         Ok(output)

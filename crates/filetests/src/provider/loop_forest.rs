@@ -46,8 +46,7 @@ impl TestProvider for LoopForestProvider {
 
                 write!(s, "x").unwrap();
                 Ok(())
-            })
-            .unwrap();
+            })?;
         }
 
         Ok(output)

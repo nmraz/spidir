@@ -1,3 +1,9 @@
+use core::fmt::{self, Write};
+use ir::{
+    module::{FunctionData, Module},
+    valgraph::{Node, ValGraph},
+    write::{write_annotated_graph, write_annotated_node, AnnotateGraph},
+};
 use regex::Regex;
 use std::sync::OnceLock;
 
@@ -6,6 +12,49 @@ macro_rules! regex {
         static REGEX: OnceLock<Regex> = OnceLock::new();
         REGEX.get_or_init(|| Regex::new($val).unwrap())
     }};
+}
+
+pub fn write_graph_with_trailing_comments(
+    output: &mut String,
+    module: &Module,
+    func: &FunctionData,
+    comment_fn: impl FnMut(&mut String, Node) -> fmt::Result,
+) -> fmt::Result {
+    writeln!(output, "function `{}`:", func.name)?;
+    write_annotated_graph(
+        output,
+        &mut CommentAnnotator(comment_fn),
+        module,
+        &func.graph,
+        func.entry,
+        0,
+    )
+}
+
+struct CommentAnnotator<F>(F);
+
+impl<F: FnMut(&mut String, Node) -> fmt::Result> AnnotateGraph<String> for CommentAnnotator<F> {
+    fn write_node(
+        &mut self,
+        s: &mut String,
+        module: &Module,
+        graph: &ValGraph,
+        node: Node,
+    ) -> fmt::Result {
+        const MAX_LINE_LENGTH: usize = 45;
+
+        let orig_len = s.len();
+        write_annotated_node(s, self, module, graph, node)?;
+        let node_line_len = s.len() - orig_len;
+        let pad_len = if node_line_len >= MAX_LINE_LENGTH {
+            2
+        } else {
+            MAX_LINE_LENGTH - node_line_len
+        };
+
+        write!(s, "{:pad_len$}# ", "")?;
+        (self.0)(s, node)
+    }
 }
 
 pub fn parse_output_func_heading(output_line: &str) -> Option<&str> {

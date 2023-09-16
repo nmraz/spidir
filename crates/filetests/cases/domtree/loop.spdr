@@ -2,21 +2,21 @@
 
 func @sum_to_n:i32(i32) {
     # check: function `sum_to_n`:
-    # nextln: %0:ctrl, %1:i32 = entry               # 0; children 4
-    # nextln: %2:i32 = iconst 1                     # 1
-    # nextln: %3:i32 = iconst 0                     # 2
-    # nextln: %4:i32 = icmp eq %1, %3               # 3
-    # nextln: %5:ctrl, %6:ctrl = brcond %0, %4      # 4; idom 0; children 8, 7
-    # nextln: %7:i32 = icmp eq %15, %3              # 5
-    # nextln: %8:ctrl, %9:ctrl = brcond %12, %7     # 6; idom 8
-    # nextln: %10:ctrl, %11:phisel = region %5, %8  # 7; idom 4; children 14
-    # nextln: %12:ctrl, %13:phisel = region %6, %9  # 8; idom 4; children 6
-    # nextln: %14:i32 = phi %13, %1, %15            # 9
-    # nextln: %15:i32 = isub %14, %2                # 10
-    # nextln: %16:i32 = phi %13, %3, %17            # 11
-    # nextln: %17:i32 = iadd %16, %14               # 12
-    # nextln: %18:i32 = phi %11, %3, %17            # 13
-    # nextln: return %10, %18                       # 14; idom 7
+    # nextln: %0:ctrl, %1:i32 = entry                      # 0; children 4; x
+    # nextln: %2:i32 = iconst 1                            # 1; x
+    # nextln: %3:i32 = iconst 0                            # 2; x
+    # nextln: %4:i32 = icmp eq %1, %3                      # 3; x
+    # nextln: %5:ctrl, %6:ctrl = brcond %0, %4             # 4; idom 0; children 8, 7; x
+    # nextln: %7:i32 = icmp eq %15, %3                     # 5; x
+    # nextln: %8:ctrl, %9:ctrl = brcond %12, %7            # 6; idom 8; x
+    # nextln: %10:ctrl, %11:phisel = region %5, %8         # 7; idom 4; children 14; x
+    # nextln: %12:ctrl, %13:phisel = region %6, %9         # 8; idom 4; children 6; x
+    # nextln: %14:i32 = phi %13, %1, %15                   # 9; x
+    # nextln: %15:i32 = isub %14, %2                       # 10; x
+    # nextln: %16:i32 = phi %13, %3, %17                   # 11; x
+    # nextln: %17:i32 = iadd %16, %14                      # 12; x
+    # nextln: %18:i32 = phi %11, %3, %17                   # 13; x
+    # nextln: return %10, %18                              # 14; idom 7; x
 
     %0:ctrl, %1:i32 = entry
     %10:i32 = iconst 1

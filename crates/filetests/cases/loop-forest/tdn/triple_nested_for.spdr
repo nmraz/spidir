@@ -35,7 +35,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %36:ctrl = store.4 %33, %35, %7         # loop 0; x
     # nextln: %37:ctrl, %38:i32 = load.4 %36, %11     # loop 0; x
     # nextln: %39:i32 = iadd %38, %9                  # x
-    # nextln: %40:ctrl = store.4 %37, %39, %11        # loop 0; x
+    # nextln: %40:ctrl = store.4 %37, %39, %11        # loop 0; latch 0; x
     # nextln: %41:ctrl, %42:phisel = region %28       # loop 1; x
     # nextln: %43:ctrl, %44:i32 = load.4 %41, %7      # loop 1; x
     # nextln: %45:ctrl, %46:i32 = load.4 %43, %10     # loop 1; x
@@ -43,7 +43,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %48:ctrl = store.4 %45, %47, %7         # loop 1; x
     # nextln: %49:ctrl, %50:i32 = load.4 %48, %10     # loop 1; x
     # nextln: %51:i32 = iadd %50, %9                  # x
-    # nextln: %52:ctrl = store.4 %49, %51, %10        # loop 1; x
+    # nextln: %52:ctrl = store.4 %49, %51, %10        # loop 1; latch 1; x
     # nextln: %62:ctrl, %63:phisel = region %59       # loop 2; x
     # nextln: %64:ctrl, %65:i32 = load.4 %62, %7      # loop 2; x
     # nextln: %66:ctrl, %67:i32 = load.4 %64, %8      # loop 2; x
@@ -51,7 +51,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %69:ctrl = store.4 %66, %68, %7         # loop 2; x
     # nextln: %70:ctrl, %71:i32 = load.4 %69, %8      # loop 2; x
     # nextln: %72:i32 = iadd %71, %9                  # x
-    # nextln: %73:ctrl = store.4 %70, %72, %8         # loop 2; x
+    # nextln: %73:ctrl = store.4 %70, %72, %8         # loop 2; latch 2; x
     # nextln: %74:ctrl, %75:phisel = region %20, %73  # loop 2; header; root 2; x
     # nextln: %76:ctrl, %77:i32 = load.4 %74, %8      # loop 2; x
     # nextln: %78:i32 = icmp slt %77, %2              # x

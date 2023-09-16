@@ -21,11 +21,11 @@ func @"System.Void System.Test::Loop2(System.Int32)"(ptr, i32) {
     # nextln: %26:ctrl, %27:phisel = region %25       # loop 0; x
     # nextln: %28:ctrl, %29:i32 = load.4 %26, %5      # loop 0; x
     # nextln: %30:i32 = and %29, %6                   # x
-    # nextln: %31:ctrl, %32:ctrl = brcond %28, %30    # loop 0; x
+    # nextln: %31:ctrl, %32:ctrl = brcond %28, %30    # loop 0; latch 0; x
     # nextln: %33:ctrl, %34:phisel = region %31       # loop 0; x
     # nextln: %35:ctrl, %36:i32 = load.4 %33, %5      # loop 0; x
     # nextln: %37:ctrl, %38:i32 = sdiv %35, %36, %6   # loop 0; x
-    # nextln: %39:ctrl = store.4 %37, %38, %5         # loop 0; x
+    # nextln: %39:ctrl = store.4 %37, %38, %5         # loop 0; latch 0; x
     # nextln: %40:ctrl, %41:phisel = region %24, %18  # x
     # nextln: return %40                              # x
 

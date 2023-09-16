@@ -5,7 +5,7 @@ func @header_multi_entry(i32, i32) {
     # nextln: %0:ctrl, %1:i32, %2:i32 = entry         # x
     # nextln: %3:ctrl, %4:ctrl = brcond %0, %1        # x
     # nextln: %5:ctrl, %6:phisel = region %4          # x
-    # nextln: %9:ctrl, %10:ctrl = brcond %7, %2       # loop 0; x
+    # nextln: %9:ctrl, %10:ctrl = brcond %7, %2       # loop 0; latch 0; x
     # nextln: return %9                               # x
     # nextln: %7:ctrl, %8:phisel = region %3, %10, %5         # loop 0; header; root 0; x
 

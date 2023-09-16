@@ -11,7 +11,7 @@ func @iota(ptr, i64) {
     # nextln: %11:i64 = shl %9, %10                   # x
     # nextln: %12:ptr = ptroff %1, %11                # x
     # nextln: %13:ctrl = store.8 %7, %9, %12          # loop 0; x
-    # nextln: %17:ctrl, %18:ctrl = brcond %13, %16    # loop 0; x
+    # nextln: %17:ctrl, %18:ctrl = brcond %13, %16    # loop 0; latch 0; x
     # nextln: %19:ctrl, %20:phisel = region %5, %17   # x
     # nextln: return %19                              # x
     # nextln: %7:ctrl, %8:phisel = region %6, %18     # loop 0; header; root 0; x

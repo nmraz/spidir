@@ -77,16 +77,34 @@ impl LoopForest {
         self.loops[loop_node].parent.expand()
     }
 
+    pub fn loop_ancestors(&self, loop_node: Loop) -> impl Iterator<Item = Loop> + '_ {
+        iter::successors(Some(loop_node), |&loop_node| self.loop_parent(loop_node))
+    }
+
+    pub fn root_loop(&self, loop_node: Loop) -> Loop {
+        self.loop_ancestors(loop_node).last().unwrap()
+    }
+
     pub fn containing_loop(&self, node: TreeNode) -> Option<Loop> {
         self.containing_loops
             .get(node)
             .and_then(|loop_node| loop_node.expand())
     }
 
-    pub fn root_loop(&self, loop_node: Loop) -> Loop {
-        iter::successors(Some(loop_node), |&loop_node| self.loop_parent(loop_node))
-            .last()
-            .unwrap()
+    pub fn is_latch(
+        &self,
+        graph: &ValGraph,
+        domtree: &DomTree,
+        loop_node: Loop,
+        node: TreeNode,
+    ) -> bool {
+        let header = self.loop_header(loop_node);
+        if !domtree.dominates(header, node) {
+            return false;
+        }
+
+        let node = domtree.get_cfg_node(node);
+        cfg_preds(graph, domtree.get_cfg_node(header)).any(|pred| pred == node)
     }
 
     /// Discovers the maximal loop containing `latches` and populates `loop_node` accordingly,

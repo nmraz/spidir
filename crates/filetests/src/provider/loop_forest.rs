@@ -34,6 +34,12 @@ impl TestProvider for LoopForestProvider {
                                 write!(s, "parent {}; ", parent_loop.as_u32()).unwrap();
                             }
                         }
+
+                        for loop_node in loop_forest.loop_ancestors(containing_loop) {
+                            if loop_forest.is_latch(graph, &domtree, loop_node, domtree_node) {
+                                write!(s, "latch {}; ", loop_node.as_u32()).unwrap();
+                            }
+                        }
                     }
                 }
 

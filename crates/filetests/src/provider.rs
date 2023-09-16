@@ -37,6 +37,8 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> 
         "graphviz[verify-colored]" => Ok(Box::new(GraphvizTestProvider::new(
             AnnotatorKind::VerifyColored,
         ))),
+        "graphviz[domtree]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::DomTree))),
+        "graphviz[loops]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Loops))),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),
         "verify-err" => Ok(Box::new(VerifyErrProvider)),
         "verify-ok" => Ok(Box::new(VerifyOkProvider)),

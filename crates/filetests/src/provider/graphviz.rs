@@ -2,11 +2,13 @@ use std::fmt::Write;
 
 use anyhow::{anyhow, Result};
 use ir::{
+    domtree::DomTree,
+    loop_forest::LoopForest,
     module::{FunctionData, Module},
     verify::{verify_func, GraphVerifierError},
 };
 use ir_graphviz::{
-    annotate::{Annotate, ColoredAnnotator, ErrorAnnotator},
+    annotate::{Annotate, ColoredAnnotator, DomTreeAnnotator, ErrorAnnotator, LoopAnnotator},
     write_graphviz,
 };
 
@@ -18,6 +20,8 @@ pub enum AnnotatorKind {
     Colored,
     Verify,
     VerifyColored,
+    DomTree,
+    Loops,
 }
 
 pub struct GraphvizTestProvider {
@@ -65,6 +69,25 @@ impl TestProvider for GraphvizTestProvider {
                             Box::new(ColoredAnnotator),
                             Box::new(ErrorAnnotator::new(&func.graph, &errors)),
                         ],
+                        module,
+                        func,
+                    );
+                }
+                AnnotatorKind::DomTree => {
+                    let domtree = DomTree::compute(&func.graph, func.entry);
+                    write_graphviz_with_annotator(
+                        &mut output,
+                        &mut [Box::new(DomTreeAnnotator::new(&domtree))],
+                        module,
+                        func,
+                    );
+                }
+                AnnotatorKind::Loops => {
+                    let domtree = DomTree::compute(&func.graph, func.entry);
+                    let loop_forest = LoopForest::compute(&func.graph, &domtree);
+                    write_graphviz_with_annotator(
+                        &mut output,
+                        &mut [Box::new(LoopAnnotator::new(&domtree, &loop_forest))],
                         module,
                         func,
                     );

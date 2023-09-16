@@ -108,8 +108,9 @@ pub fn write_graphviz(
         for structural_edge in annotator.structural_edges(graph, entry) {
             write!(w, "    {} -> {}", structural_edge.from, structural_edge.to)?;
             if !structural_edge.attrs.is_empty() {
-                write!(w, "[{}]", format_dot_attributes(&structural_edge.attrs))?;
+                write!(w, " [{}]", format_dot_attributes(&structural_edge.attrs))?;
             }
+            writeln!(w)?;
         }
     }
 

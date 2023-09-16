@@ -28,10 +28,6 @@ pub trait Annotate {
     }
 }
 
-pub struct PlainAnnotator;
-
-impl Annotate for PlainAnnotator {}
-
 pub fn colored_edge_attrs(
     graph: &ValGraph,
     node: Node,

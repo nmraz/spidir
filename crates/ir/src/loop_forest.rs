@@ -1,6 +1,6 @@
 use core::iter;
 
-use alloc::borrow::ToOwned;
+use alloc::{borrow::ToOwned, vec::Vec};
 
 use cranelift_entity::{entity_impl, packed_option::PackedOption, PrimaryMap, SecondaryMap};
 use smallvec::SmallVec;
@@ -112,35 +112,20 @@ impl LoopForest {
 
                 self.loops[root_subloop].parent = new_loop.into();
 
-                // Keep walking at the subloop's header to discover remaining nodes.
-                for pred in cfg_preds(graph, domtree.get_cfg_node(self.loop_header(root_subloop))) {
-                    if let Some(tree_pred) = domtree.get_tree_node(pred) {
-                        debug_assert!(domtree.dominates(header, tree_pred));
-
-                        // Don't bother walking back to the header since nothing interesting would
-                        // come of it anyway. Note that this is strictly an optimization, as walking
-                        // the header would fall into a benign "existing loop" case.
-                        if tree_pred != header {
-                            stack.push(tree_pred);
-                        }
-                    }
-                }
+                // Keep walking at the subloop's header to discover remaining nodes in our outer
+                // loop.
+                push_loop_preds(
+                    graph,
+                    domtree,
+                    self.loop_header(root_subloop),
+                    header,
+                    &mut stack,
+                );
             } else {
                 // This node hasn't been discovered yet, so it must be a part of our loop as the
                 // header dominates all nodes we discover here.
                 self.containing_loops[node] = new_loop.into();
-                for pred in cfg_preds(graph, domtree.get_cfg_node(node)) {
-                    if let Some(tree_pred) = domtree.get_tree_node(pred) {
-                        debug_assert!(domtree.dominates(header, tree_pred));
-
-                        // Don't bother walking back to the header since nothing interesting would
-                        // come of it anyway. Note that this is strictly an optimization, as walking
-                        // the header would fall into a benign "existing loop" case.
-                        if tree_pred != header {
-                            stack.push(tree_pred);
-                        }
-                    }
-                }
+                push_loop_preds(graph, domtree, node, header, &mut stack);
             }
         }
     }
@@ -152,5 +137,26 @@ impl LoopForest {
         });
         self.containing_loops[header] = loop_node.into();
         loop_node
+    }
+}
+
+fn push_loop_preds(
+    graph: &ValGraph,
+    domtree: &DomTree,
+    node: TreeNode,
+    header: TreeNode,
+    stack: &mut Vec<TreeNode>,
+) {
+    for pred in cfg_preds(graph, domtree.get_cfg_node(node)) {
+        if let Some(tree_pred) = domtree.get_tree_node(pred) {
+            debug_assert!(domtree.dominates(header, tree_pred));
+
+            // Don't bother walking back to the header since nothing interesting would
+            // come of it anyway. Note that this is strictly an optimization, as walking
+            // the header would fall into a benign "existing loop" case.
+            if tree_pred != header {
+                stack.push(tree_pred);
+            }
+        }
     }
 }

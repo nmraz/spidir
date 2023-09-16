@@ -21,3 +21,8 @@ log = "0.4.20"
 smallvec = { version = "1.10.0", default-features = false, features = [
     "const_new",
 ] }
+
+# This crate is very hot because of filetests, so make sure it gets reasonably
+# optimized.
+[profile.dev.package.regex-automata]
+opt-level = 2

@@ -130,6 +130,8 @@ pub enum NodeKind {
     Imul,
     Sdiv,
     Udiv,
+    Srem,
+    Urem,
     Iext,
     Itrunc,
     Sfill(u8),
@@ -159,6 +161,8 @@ impl NodeKind {
                 | Self::Unreachable
                 | Self::Sdiv
                 | Self::Udiv
+                | Self::Srem
+                | Self::Urem
                 | Self::Load(..)
                 | Self::Store(..)
                 | Self::BrCond

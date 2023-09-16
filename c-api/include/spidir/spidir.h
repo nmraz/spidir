@@ -604,8 +604,8 @@ spidir_value_t spidir_builder_build_ashr(spidir_builder_handle_t builder,
 /// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] lhs       The left-hand input value.
-/// @param[in] rhs       The right-hand input value.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
 ///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_imul(spidir_builder_handle_t builder,
@@ -617,8 +617,8 @@ spidir_value_t spidir_builder_build_imul(spidir_builder_handle_t builder,
 /// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] lhs       The left-hand input value.
-/// @param[in] rhs       The right-hand input value.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
 ///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_sdiv(spidir_builder_handle_t builder,
@@ -630,11 +630,37 @@ spidir_value_t spidir_builder_build_sdiv(spidir_builder_handle_t builder,
 /// The values `lhs` and `rhs` must both be integers of the same type.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] lhs       The left-hand input value.
-/// @param[in] rhs       The right-hand input value.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
 /// @return An SSA value representing the result of the operation. This value
 ///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_udiv(spidir_builder_handle_t builder,
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
+
+/// Builds a signed remainder operation at the current insertion point.
+///
+/// The values `lhs` and `rhs` must both be integers of the same type.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the same type as `lhs` and `rhs`.
+spidir_value_t spidir_builder_build_srem(spidir_builder_handle_t builder,
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
+
+/// Builds an unsigned remainder operation at the current insertion point.
+///
+/// The values `lhs` and `rhs` must both be integers of the same type.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the same type as `lhs` and `rhs`.
+spidir_value_t spidir_builder_build_urem(spidir_builder_handle_t builder,
                                          spidir_value_t lhs,
                                          spidir_value_t rhs);
 

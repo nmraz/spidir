@@ -191,6 +191,12 @@ pub trait BuilderExt: Builder {
     fn build_udiv(&mut self, ctrl: DepValue, lhs: DepValue, rhs: DepValue) -> BuiltEffectful {
         build_int_div(self, NodeKind::Udiv, ctrl, lhs, rhs)
     }
+    fn build_srem(&mut self, ctrl: DepValue, lhs: DepValue, rhs: DepValue) -> BuiltEffectful {
+        build_int_div(self, NodeKind::Srem, ctrl, lhs, rhs)
+    }
+    fn build_urem(&mut self, ctrl: DepValue, lhs: DepValue, rhs: DepValue) -> BuiltEffectful {
+        build_int_div(self, NodeKind::Urem, ctrl, lhs, rhs)
+    }
 
     fn build_iext(&mut self, value: DepValue) -> DepValue {
         build_single_output_pure(self, NodeKind::Iext, [value], Type::I64)

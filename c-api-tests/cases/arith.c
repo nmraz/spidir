@@ -30,6 +30,8 @@ void builder_callback(spidir_builder_handle_t builder, void* ctx) {
     BUILD_BINOP(imul);
     BUILD_BINOP(sdiv);
     BUILD_BINOP(udiv);
+    BUILD_BINOP(srem);
+    BUILD_BINOP(urem);
     BUILD_ICMP(EQ);
     BUILD_ICMP(NE);
     BUILD_ICMP(SLT);

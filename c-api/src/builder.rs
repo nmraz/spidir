@@ -216,6 +216,8 @@ impl_builder_binop!(ashr);
 impl_builder_binop!(imul);
 impl_builder_binop!(sdiv);
 impl_builder_binop!(udiv);
+impl_builder_binop!(srem);
+impl_builder_binop!(urem);
 
 macro_rules! impl_builder_unop {
     ($unop:ident) => {

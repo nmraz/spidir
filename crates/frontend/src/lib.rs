@@ -191,6 +191,27 @@ impl<'a> FunctionBuilder<'a> {
         built.output
     }
 
+    pub fn build_udiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        let ctrl = self.cur_block_ctrl();
+        let built = self.builder().build_udiv(ctrl, lhs, rhs);
+        self.advance_cur_block_ctrl(built.ctrl);
+        built.output
+    }
+
+    pub fn build_srem(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        let ctrl = self.cur_block_ctrl();
+        let built = self.builder().build_srem(ctrl, lhs, rhs);
+        self.advance_cur_block_ctrl(built.ctrl);
+        built.output
+    }
+
+    pub fn build_urem(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        let ctrl = self.cur_block_ctrl();
+        let built = self.builder().build_urem(ctrl, lhs, rhs);
+        self.advance_cur_block_ctrl(built.ctrl);
+        built.output
+    }
+
     pub fn build_iext(&mut self, value: DepValue) -> DepValue {
         self.builder().build_iext(value)
     }
@@ -201,13 +222,6 @@ impl<'a> FunctionBuilder<'a> {
 
     pub fn build_sfill(&mut self, width: u8, value: DepValue) -> DepValue {
         self.builder().build_sfill(width, value)
-    }
-
-    pub fn build_udiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
-        let ctrl = self.cur_block_ctrl();
-        let built = self.builder().build_udiv(ctrl, lhs, rhs);
-        self.advance_cur_block_ctrl(built.ctrl);
-        built.output
     }
 
     pub fn build_icmp(

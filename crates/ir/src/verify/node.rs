@@ -35,6 +35,8 @@ pub fn verify_node_kind(
         NodeKind::Imul => verify_int_binop(graph, node, errors),
         NodeKind::Sdiv => verify_int_div(graph, node, errors),
         NodeKind::Udiv => verify_int_div(graph, node, errors),
+        NodeKind::Srem => verify_int_div(graph, node, errors),
+        NodeKind::Urem => verify_int_div(graph, node, errors),
         NodeKind::Iext => verify_iext(graph, node, errors),
         NodeKind::Itrunc => verify_itrunc(graph, node, errors),
         NodeKind::Sfill(width) => verify_sfill(graph, node, *width, errors),

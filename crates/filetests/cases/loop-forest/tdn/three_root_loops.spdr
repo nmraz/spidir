@@ -31,7 +31,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %37:ctrl, %38:i32 = load.4 %35, %15     # loop 2; x
     # nextln: %39:i32 = iadd %38, %9                  # x
     # nextln: %40:ctrl = store.4 %37, %39, %15        # loop 2; latch 2; x
-    # nextln: %41:ctrl, %42:phisel = region %22, %40  # loop 2; header; root 2; x
+    # nextln: %41:ctrl, %42:phisel = region %22, %40  # loop 2; header; depth 1; root 2; x
     # nextln: %43:ctrl, %44:i32 = load.4 %41, %15     # loop 2; x
     # nextln: %45:i32 = icmp slt %44, %2              # x
     # nextln: %46:ctrl, %47:ctrl = brcond %43, %45    # loop 2; x
@@ -39,7 +39,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %50:ctrl, %51:i32 = load.4 %48, %15     # loop 2; x
     # nextln: %52:ctrl, %53:phisel = region %47       # x
     # nextln: %54:ctrl = store.4 %52, %11, %13        # x
-    # nextln: %55:ctrl, %56:phisel = region %54, %80  # loop 1; header; root 1; x
+    # nextln: %55:ctrl, %56:phisel = region %54, %80  # loop 1; header; depth 1; root 1; x
     # nextln: %57:ctrl, %58:i32 = load.4 %55, %13     # loop 1; x
     # nextln: %59:i32 = icmp slt %58, %3              # x
     # nextln: %60:ctrl, %61:ctrl = brcond %57, %59    # loop 1; x
@@ -57,7 +57,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %80:ctrl = store.4 %77, %79, %13        # loop 1; latch 1; x
     # nextln: %81:ctrl, %82:phisel = region %68, %61  # x
     # nextln: %83:ctrl = store.4 %81, %11, %8         # x
-    # nextln: %84:ctrl, %85:phisel = region %83, %111         # loop 0; header; root 0; x
+    # nextln: %84:ctrl, %85:phisel = region %83, %111         # loop 0; header; depth 1; root 0; x
     # nextln: %86:ctrl, %87:i32 = load.4 %84, %8      # loop 0; x
     # nextln: %88:i32 = icmp slt %87, %4              # x
     # nextln: %89:ctrl, %90:ctrl = brcond %86, %88    # loop 0; x

@@ -25,7 +25,8 @@ impl TestProvider for LoopForestProvider {
                             let root_loop = loop_forest.root_loop(containing_loop);
                             write!(
                                 s,
-                                "header; root {}; ",
+                                "header; depth {}; root {}; ",
+                                loop_forest.loop_depth(containing_loop),
                                 loop_forest.root_loop(containing_loop).as_u32()
                             )
                             .unwrap();

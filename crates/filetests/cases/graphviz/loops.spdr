@@ -11,11 +11,11 @@ func @iota(ptr, i64) {
     # nextln:     node6 [shape=Mrecord, label="{iconst 3 | {<o0> i64}}"]
     # nextln:     node7 [shape=Mrecord, label="{{<i0> | <i1>} | shl | {<o0> i64}}"]
     # nextln:     node8 [shape=Mrecord, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}"]
-    # nextln:     node9 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store.8 | {<o0> ctrl}}", tooltip="loop 0", color="#167288", penwidth="2", style="filled,dashed"]
-    # nextln:     node13 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", tooltip="loop 0&#10;loop 0 latch", color="#167288", penwidth="2", style="filled,dashed"]
+    # nextln:     node9 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store.8 | {<o0> ctrl}}", tooltip="loop 0 (depth 1)", color="#167288", penwidth="2", style="filled,dashed"]
+    # nextln:     node13 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", tooltip="loop 0 (depth 1)&#10;loop 0 latch", color="#167288", penwidth="2", style="filled,dashed"]
     # nextln:     node14 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
     # nextln:     node15 [shape=Mrecord, label="{{<i0>} | return}"]
-    # nextln:     node4 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="loop 0 header", color="#167288", penwidth="2"]
+    # nextln:     node4 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="loop 0 header (depth 1)", color="#167288", penwidth="2"]
     # nextln:     node5 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | phi | {<o0> i64}}"]
     # nextln:     node11 [shape=Mrecord, label="{{<i0> | <i1>} | iadd | {<o0> i64}}"]
     # nextln:     node12 [shape=Mrecord, label="{{<i0> | <i1>} | icmp eq | {<o0> i32}}"]
@@ -68,10 +68,10 @@ func @shared_latch(i32, i32) {
     # check: function `shared_latch`:
     # nextln: digraph {
     # nextln:     node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> i32 | <o2> i32}}"]
-    # nextln:     node4 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", tooltip="loop 0&#10;loop 0 latch&#10;loop 1 latch", color="#167288", penwidth="2", style="filled,dashed"]
-    # nextln:     node1 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="loop 1 header", color="#8cdaec", penwidth="2"]
-    # nextln:     node2 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="loop 0 header", color="#167288", penwidth="2"]
-    # nextln:     node3 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", tooltip="loop 0", color="#167288", penwidth="2", style="filled,dashed"]
+    # nextln:     node4 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", tooltip="loop 0 (depth 2)&#10;loop 0 latch&#10;loop 1 latch", color="#167288", penwidth="2", style="filled,dashed"]
+    # nextln:     node1 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="loop 1 header (depth 1)", color="#8cdaec", penwidth="2"]
+    # nextln:     node2 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="loop 0 header (depth 2)", color="#167288", penwidth="2"]
+    # nextln:     node3 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", tooltip="loop 0 (depth 2)", color="#167288", penwidth="2", style="filled,dashed"]
     # nextln:     node5 [shape=Mrecord, label="{{<i0>} | return}"]
     # nextln:     node3:o1 -> node4:i0
     # nextln:     node0:o2 -> node4:i1

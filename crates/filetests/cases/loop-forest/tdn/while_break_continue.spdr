@@ -11,7 +11,7 @@ func @"System.Void System.Test::Loop2(System.Int32)"(ptr, i32) {
     # nextln: %9:ctrl = store.4 %3, %8, %5            # x
     # nextln: %10:ctrl, %11:phisel = region %9        # x
     # nextln: %12:ctrl = store.4 %10, %2, %5          # x
-    # nextln: %13:ctrl, %14:phisel = region %12, %32, %39     # loop 0; header; root 0; x
+    # nextln: %13:ctrl, %14:phisel = region %12, %32, %39     # loop 0; header; depth 1; root 0; x
     # nextln: %15:ctrl, %16:i32 = load.4 %13, %5      # loop 0; x
     # nextln: %17:ctrl, %18:ctrl = brcond %15, %16    # loop 0; x
     # nextln: %19:ctrl, %20:phisel = region %17       # loop 0; x

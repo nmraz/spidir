@@ -24,7 +24,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %25:ctrl, %26:ctrl = brcond %110, %24   # loop 2; x
     # nextln: %27:ctrl, %28:phisel = region %25       # loop 2; x
     # nextln: %29:ctrl = store.4 %27, %11, %10        # loop 2; x
-    # nextln: %30:ctrl, %31:phisel = region %29, %86  # loop 1; header; root 2; parent 2; x
+    # nextln: %30:ctrl, %31:phisel = region %29, %86  # loop 1; header; depth 2; root 2; parent 2; x
     # nextln: %32:ctrl, %33:i32 = load.4 %30, %10     # loop 1; x
     # nextln: %34:i32 = icmp slt %33, %3              # x
     # nextln: %35:ctrl, %36:ctrl = brcond %32, %34    # loop 1; x
@@ -34,7 +34,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %42:ctrl, %43:ctrl = brcond %39, %41    # loop 1; x
     # nextln: %44:ctrl, %45:phisel = region %42       # loop 1; x
     # nextln: %46:ctrl = store.4 %44, %11, %15        # loop 1; x
-    # nextln: %47:ctrl, %48:phisel = region %46, %74  # loop 0; header; root 2; parent 1; x
+    # nextln: %47:ctrl, %48:phisel = region %46, %74  # loop 0; header; depth 3; root 2; parent 1; x
     # nextln: %49:ctrl, %50:i32 = load.4 %47, %15     # loop 0; x
     # nextln: %51:i32 = icmp slt %50, %4              # x
     # nextln: %52:ctrl, %53:ctrl = brcond %49, %51    # loop 0; x
@@ -68,7 +68,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: %97:ctrl, %98:i32 = load.4 %95, %8      # loop 2; x
     # nextln: %99:i32 = iadd %98, %9                  # x
     # nextln: %100:ctrl = store.4 %97, %99, %8        # loop 2; latch 2; x
-    # nextln: %101:ctrl, %102:phisel = region %20, %100       # loop 2; header; root 2; x
+    # nextln: %101:ctrl, %102:phisel = region %20, %100       # loop 2; header; depth 1; root 2; x
     # nextln: %103:ctrl, %104:i32 = load.4 %101, %8   # loop 2; x
     # nextln: %105:i32 = icmp slt %104, %2            # x
     # nextln: %106:ctrl, %107:ctrl = brcond %103, %105        # loop 2; x

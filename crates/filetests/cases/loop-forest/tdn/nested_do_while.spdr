@@ -13,9 +13,9 @@ func @"System.Void System.Test::Loop1()"(ptr) {
     # nextln: %10:ctrl = store.4 %9, %8, %7           # x
     # nextln: %11:ctrl, %12:phisel = region %10       # x
     # nextln: %13:ctrl = store.4 %11, %6, %5          # x
-    # nextln: %14:ctrl, %15:phisel = region %13, %39  # loop 1; header; root 1; x
+    # nextln: %14:ctrl, %15:phisel = region %13, %39  # loop 1; header; depth 1; root 1; x
     # nextln: %16:ctrl = store.4 %14, %6, %7          # loop 1; x
-    # nextln: %17:ctrl, %18:phisel = region %16, %28  # loop 0; header; root 1; parent 1; x
+    # nextln: %17:ctrl, %18:phisel = region %16, %28  # loop 0; header; depth 2; root 1; parent 1; x
     # nextln: %19:ctrl, %20:i32 = load.4 %17, %7      # loop 0; x
     # nextln: %21:i32 = iadd %20, %6                  # x
     # nextln: %22:ctrl = store.4 %19, %21, %7         # loop 0; x

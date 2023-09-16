@@ -242,6 +242,12 @@ impl<'a> Annotate for LoopAnnotator<'a> {
             attrs.insert("style".to_owned(), "filled,dashed".to_owned());
             format!("loop {loop_id}")
         };
+        write!(
+            tooltip,
+            " (depth {})",
+            self.loop_forest.loop_depth(loop_node)
+        )
+        .unwrap();
 
         for ancestor in self.loop_forest.loop_ancestors(loop_node) {
             if self

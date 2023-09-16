@@ -1,4 +1,6 @@
 use core::fmt::{self, Write};
+
+use anyhow::Result;
 use ir::{
     module::{FunctionData, Module},
     valgraph::{Node, ValGraph},
@@ -18,22 +20,32 @@ pub fn write_graph_with_trailing_comments(
     output: &mut String,
     module: &Module,
     func: &FunctionData,
-    comment_fn: impl FnMut(&mut String, Node) -> fmt::Result,
-) -> fmt::Result {
+    comment_fn: impl FnMut(&mut String, Node) -> Result<()>,
+) -> Result<()> {
     writeln!(output, "function `{}`:", func.name)?;
-    write_annotated_graph(
+    let mut comment_annotator = CommentAnnotator {
+        comment_fn,
+        result: Ok(()),
+    };
+
+    let _ = write_annotated_graph(
         output,
-        &mut CommentAnnotator(comment_fn),
+        &mut comment_annotator,
         module,
         &func.graph,
         func.entry,
         0,
-    )
+    );
+
+    comment_annotator.result
 }
 
-struct CommentAnnotator<F>(F);
+struct CommentAnnotator<F> {
+    comment_fn: F,
+    result: Result<()>,
+}
 
-impl<F: FnMut(&mut String, Node) -> fmt::Result> AnnotateGraph<String> for CommentAnnotator<F> {
+impl<F: FnMut(&mut String, Node) -> Result<()>> AnnotateGraph<String> for CommentAnnotator<F> {
     fn write_node(
         &mut self,
         s: &mut String,
@@ -44,7 +56,7 @@ impl<F: FnMut(&mut String, Node) -> fmt::Result> AnnotateGraph<String> for Comme
         const MAX_LINE_LENGTH: usize = 45;
 
         let orig_len = s.len();
-        write_annotated_node(s, self, module, graph, node)?;
+        write_annotated_node(s, self, module, graph, node).unwrap();
         let node_line_len = s.len() - orig_len;
         let pad_len = if node_line_len >= MAX_LINE_LENGTH {
             2
@@ -52,8 +64,14 @@ impl<F: FnMut(&mut String, Node) -> fmt::Result> AnnotateGraph<String> for Comme
             MAX_LINE_LENGTH - node_line_len
         };
 
-        write!(s, "{:pad_len$}# ", "")?;
-        (self.0)(s, node)
+        write!(s, "{:pad_len$}# ", "").unwrap();
+        if let Err(err) = (self.comment_fn)(s, node) {
+            self.result = Err(err);
+            // Stop trying to print out the rest of the output.
+            return Err(fmt::Error);
+        }
+
+        Ok(())
     }
 }
 

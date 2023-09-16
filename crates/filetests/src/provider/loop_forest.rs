@@ -26,17 +26,19 @@ impl TestProvider for LoopForestProvider {
                                 "loop header: {}; root: {}; ",
                                 containing_loop.as_u32(),
                                 loop_forest.root_loop(containing_loop).as_u32()
-                            )?;
+                            )
+                            .unwrap();
                             if let Some(parent_loop) = loop_forest.loop_parent(containing_loop) {
                                 write!(s, "parent: {}; ", parent_loop.as_u32())?;
                             }
                         } else {
-                            write!(s, "containing loop: {}; ", containing_loop.as_u32())?;
+                            write!(s, "containing loop: {}; ", containing_loop.as_u32()).unwrap();
                         }
                     }
                 }
 
-                write!(s, "x")
+                write!(s, "x").unwrap();
+                Ok(())
             })
             .unwrap();
         }

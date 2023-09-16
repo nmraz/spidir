@@ -33,10 +33,10 @@ impl TestProvider for DomTreeProvider {
                 let children =
                     tree_node.map_or(&[] as &[_], |tree_node| domtree.children(tree_node));
 
-                write!(s, "{}; ", rpo_nums[node])?;
+                write!(s, "{}; ", rpo_nums[node]).unwrap();
 
                 if let Some(idom) = idom {
-                    write!(s, "idom {}; ", rpo_nums[domtree.get_cfg_node(idom)])?;
+                    write!(s, "idom {}; ", rpo_nums[domtree.get_cfg_node(idom)]).unwrap();
                 }
 
                 if !children.is_empty() {
@@ -47,10 +47,12 @@ impl TestProvider for DomTreeProvider {
                             .iter()
                             .map(|&child| rpo_nums[domtree.get_cfg_node(child)])
                             .format(", ")
-                    )?;
+                    )
+                    .unwrap();
                 }
 
-                write!(s, "x")
+                write!(s, "x").unwrap();
+                Ok(())
             })
             .unwrap();
         }

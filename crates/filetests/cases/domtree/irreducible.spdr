@@ -2,14 +2,14 @@
 
 func @irreducible(i32, i32, i32) {
     # check: function `irreducible`:
-    # nextln: %0:ctrl, %1:i32, %2:i32, %3:i32 = entry      # 0; children 1; x
-    # nextln: %4:ctrl, %5:ctrl = brcond %0, %1             # 1; idom 0; children 7, 3, 5; x
-    # nextln: %12:ctrl, %13:ctrl = brcond %10, %3          # 2; idom 7; x
-    # nextln: %6:ctrl, %7:phisel = region %4, %13          # 3; idom 1; children 4; x
-    # nextln: %8:ctrl, %9:ctrl = brcond %6, %1             # 4; idom 3; x
-    # nextln: %14:ctrl, %15:phisel = region %8, %12        # 5; idom 1; children 6; x
-    # nextln: return %14                                   # 6; idom 5; x
-    # nextln: %10:ctrl, %11:phisel = region %5, %9         # 7; idom 1; children 2; x
+    # nextln: %0:ctrl, %1:i32, %2:i32, %3:i32 = entry         # 0; children 1; x
+    # nextln: %4:ctrl, %5:ctrl = brcond %0, %1        # 1; idom 0; children 7, 3, 5; x
+    # nextln: %12:ctrl, %13:ctrl = brcond %10, %3     # 2; idom 7; x
+    # nextln: %6:ctrl, %7:phisel = region %4, %13     # 3; idom 1; children 4; x
+    # nextln: %8:ctrl, %9:ctrl = brcond %6, %1        # 4; idom 3; x
+    # nextln: %14:ctrl, %15:phisel = region %8, %12   # 5; idom 1; children 6; x
+    # nextln: return %14                              # 6; idom 5; x
+    # nextln: %10:ctrl, %11:phisel = region %5, %9    # 7; idom 1; children 2; x
 
     %ent:ctrl, %p1:i32, %p2:i32, %p3:i32 = entry
     %to_cycle1:ctrl, %to_cycle2:ctrl = brcond %ent, %p1

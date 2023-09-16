@@ -2,11 +2,11 @@
 
 func @straight_line() {
     # check: function `straight_line`:
-    # nextln: %0:ctrl = entry                              # 0; children 1; x
-    # nextln: %1:ctrl, %2:phisel = region %0               # 1; idom 0; children 2; x
-    # nextln: %3:ctrl, %4:phisel = region %1               # 2; idom 1; children 3; x
-    # nextln: %5:ctrl, %6:phisel = region %3               # 3; idom 2; children 4; x
-    # nextln: return %5                                    # 4; idom 3; x
+    # nextln: %0:ctrl = entry                         # 0; children 1; x
+    # nextln: %1:ctrl, %2:phisel = region %0          # 1; idom 0; children 2; x
+    # nextln: %3:ctrl, %4:phisel = region %1          # 2; idom 1; children 3; x
+    # nextln: %5:ctrl, %6:phisel = region %3          # 3; idom 2; children 4; x
+    # nextln: return %5                               # 4; idom 3; x
 
     %0:ctrl = entry
     %1:ctrl, %2:phisel = region %0

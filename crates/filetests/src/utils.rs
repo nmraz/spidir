@@ -7,7 +7,7 @@ use ir::{
     write::{write_annotated_graph, write_annotated_node, AnnotateGraph},
 };
 use regex::Regex;
-use std::sync::OnceLock;
+use std::{cmp, sync::OnceLock};
 
 macro_rules! regex {
     ($val:expr) => {{
@@ -53,16 +53,14 @@ impl<F: FnMut(&mut String, Node) -> Result<()>> AnnotateGraph<String> for Commen
         graph: &ValGraph,
         node: Node,
     ) -> fmt::Result {
-        const MAX_LINE_LENGTH: usize = 45;
+        const MIN_LINE_LIMIT: usize = 40;
+        const TAB_WIDTH: usize = 8;
 
         let orig_len = s.len();
         write_annotated_node(s, self, module, graph, node).unwrap();
         let node_line_len = s.len() - orig_len;
-        let pad_len = if node_line_len >= MAX_LINE_LENGTH {
-            2
-        } else {
-            MAX_LINE_LENGTH - node_line_len
-        };
+        let comment_start = round_up(cmp::max(MIN_LINE_LIMIT, node_line_len + 2), TAB_WIDTH);
+        let pad_len = comment_start - node_line_len;
 
         write!(s, "{:pad_len$}# ", "").unwrap();
         if let Err(err) = (self.comment_fn)(s, node) {
@@ -99,4 +97,8 @@ pub fn parse_run_line(line: &str) -> Option<&str> {
 
 pub fn find_comment_start(line: &str) -> Option<usize> {
     line.find('#')
+}
+
+fn round_up(num: usize, divisor: usize) -> usize {
+    ((num + divisor - 1) / divisor) * divisor
 }

@@ -79,7 +79,8 @@ pub fn write_graphviz(
 
         write!(w, r#"}}""#)?;
 
-        let attrs = annotator.annotate_node(graph, node);
+        let mut attrs = DotAttributes::default();
+        annotator.annotate_node(graph, node, &mut attrs);
         if !attrs.is_empty() {
             write!(w, ", {}", format_dot_attributes(&attrs))?;
         }
@@ -96,7 +97,8 @@ pub fn write_graphviz(
             let (def_node, def_idx) = graph.value_def(input);
             write!(w, "    {def_node}:o{def_idx} -> {node}:i{input_idx}")?;
 
-            let attrs = annotator.annotate_edge(graph, node, input_idx);
+            let mut attrs = DotAttributes::default();
+            annotator.annotate_edge(graph, node, input_idx, &mut attrs);
             if !attrs.is_empty() {
                 write!(w, " [{}]", format_dot_attributes(&attrs))?;
             }

@@ -16,17 +16,15 @@ use itertools::Itertools;
 pub type DotAttributes = FxHashMap<String, String>;
 
 pub trait Annotate {
-    fn annotate_node(&mut self, _graph: &ValGraph, _node: Node) -> DotAttributes {
-        Default::default()
-    }
+    fn annotate_node(&mut self, _graph: &ValGraph, _node: Node, _attrs: &mut DotAttributes) {}
 
     fn annotate_edge(
         &mut self,
         _graph: &ValGraph,
         _node: Node,
         _input_idx: usize,
-    ) -> DotAttributes {
-        Default::default()
+        _attrs: &mut DotAttributes,
+    ) {
     }
 }
 
@@ -34,22 +32,23 @@ pub struct PlainAnnotator;
 
 impl Annotate for PlainAnnotator {}
 
-pub fn colored_edge_attrs(graph: &ValGraph, node: Node, input_idx: usize) -> DotAttributes {
+pub fn colored_edge_attrs(
+    graph: &ValGraph,
+    node: Node,
+    input_idx: usize,
+    attrs: &mut DotAttributes,
+) {
     match graph.value_kind(graph.node_inputs(node)[input_idx]) {
-        DepValueKind::Control => DotAttributes::from_iter([
+        DepValueKind::Control => attrs.extend([
             ("penwidth".to_owned(), "2".to_owned()),
             ("color".to_owned(), "#0000ff".to_owned()),
         ]),
-        DepValueKind::Value(_) => {
-            DotAttributes::from_iter([("color".to_owned(), "#d36805".to_owned())])
-        }
-        DepValueKind::PhiSelector => {
-            DotAttributes::from_iter([("color".to_owned(), "#4e4e4e".to_owned())])
-        }
+        DepValueKind::Value(_) => attrs.extend([("color".to_owned(), "#d36805".to_owned())]),
+        DepValueKind::PhiSelector => attrs.extend([("color".to_owned(), "#4e4e4e".to_owned())]),
     }
 }
 
-pub fn colored_node_attrs(graph: &ValGraph, node: Node) -> DotAttributes {
+pub fn colored_node_attrs(graph: &ValGraph, node: Node, attrs: &mut DotAttributes) {
     let value_kinds = &mut graph
         .node_inputs(node)
         .into_iter()
@@ -80,21 +79,27 @@ pub fn colored_node_attrs(graph: &ValGraph, node: Node) -> DotAttributes {
         "#ffee9b"
     };
 
-    DotAttributes::from_iter([
+    attrs.extend([
         ("style".to_owned(), "filled".to_owned()),
         ("fillcolor".to_owned(), fill_color.to_owned()),
-    ])
+    ]);
 }
 
 pub struct ColoredAnnotator;
 
 impl Annotate for ColoredAnnotator {
-    fn annotate_node(&mut self, graph: &ValGraph, node: Node) -> DotAttributes {
-        colored_node_attrs(graph, node)
+    fn annotate_node(&mut self, graph: &ValGraph, node: Node, attrs: &mut DotAttributes) {
+        colored_node_attrs(graph, node, attrs)
     }
 
-    fn annotate_edge(&mut self, graph: &ValGraph, node: Node, input_idx: usize) -> DotAttributes {
-        colored_edge_attrs(graph, node, input_idx)
+    fn annotate_edge(
+        &mut self,
+        graph: &ValGraph,
+        node: Node,
+        input_idx: usize,
+        attrs: &mut DotAttributes,
+    ) {
+        colored_edge_attrs(graph, node, input_idx, attrs)
     }
 }
 
@@ -127,27 +132,33 @@ impl<'a> ErrorAnnotator<'a> {
 }
 
 impl<'a> Annotate for ErrorAnnotator<'a> {
-    fn annotate_node(&mut self, graph: &ValGraph, node: Node) -> DotAttributes {
-        let mut attrs = colored_node_attrs(graph, node);
+    fn annotate_node(&mut self, graph: &ValGraph, node: Node, attrs: &mut DotAttributes) {
+        colored_node_attrs(graph, node, attrs);
         if let Some(errors) = self.node_errors.get(&node) {
-            add_error_attrs(&mut attrs, errors, graph);
+            error_attrs(errors, graph, attrs);
         }
-        attrs
     }
 
-    fn annotate_edge(&mut self, graph: &ValGraph, node: Node, input_idx: usize) -> DotAttributes {
-        let mut attrs = colored_edge_attrs(graph, node, input_idx);
+    fn annotate_edge(
+        &mut self,
+        graph: &ValGraph,
+        node: Node,
+        input_idx: usize,
+        attrs: &mut DotAttributes,
+    ) {
+        colored_edge_attrs(graph, node, input_idx, attrs);
         if let Some(errors) = self.edge_errors.get(&(node, input_idx as u32)) {
-            add_error_attrs(&mut attrs, errors, graph);
+            error_attrs(errors, graph, attrs);
         }
-        attrs
     }
 }
 
-fn add_error_attrs(attrs: &mut DotAttributes, errors: &[&GraphVerifierError], graph: &ValGraph) {
-    attrs.insert("color".to_owned(), "#ff0000".to_owned());
-    attrs.insert("penwidth".to_owned(), "2".to_owned());
-    attrs.insert("tooltip".to_owned(), format_verifier_errors(errors, graph));
+fn error_attrs(errors: &[&GraphVerifierError], graph: &ValGraph, attrs: &mut DotAttributes) {
+    attrs.extend([
+        ("color".to_owned(), "#ff0000".to_owned()),
+        ("penwidth".to_owned(), "2".to_owned()),
+        ("tooltip".to_owned(), format_verifier_errors(errors, graph)),
+    ]);
 }
 
 fn format_verifier_errors(errors: &[&GraphVerifierError], graph: &ValGraph) -> String {

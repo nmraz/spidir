@@ -1,0 +1,58 @@
+# run: loop-forest
+
+func @multi_backedge_simple(i32, i32) {
+    # check: function `multi_backedge_simple`:
+    # nextln: %0:ctrl, %1:i32, %2:i32 = entry         # x
+    # nextln: %7:ctrl, %8:ctrl = brcond %5, %2        # containing loop: 0; x
+    # nextln: %3:ctrl, %4:phisel = region %0, %6, %7  # loop header: 0; root: 0; x
+    # nextln: %5:ctrl, %6:ctrl = brcond %3, %1        # containing loop: 0; x
+    # nextln: return %8                               # x
+
+    %ent:ctrl, %p1:i32, %p2:i32 = entry
+    %head:ctrl, %hp:phisel = region %ent, %b2, %backedge
+    %b1:ctrl, %b2:ctrl = brcond %head, %p1
+    %backedge:ctrl, %exit:ctrl = brcond %b1, %p2
+    return %exit
+}
+
+func @multi_backedge_join(i32, i32, i32) {
+    # check: function `multi_backedge_join`:
+    # nextln: %0:ctrl, %1:i32, %2:i32, %3:i32 = entry         # x
+    # nextln: %10:ctrl, %11:ctrl = brcond %7, %3      # containing loop: 0; x
+    # nextln: %4:ctrl, %5:phisel = region %0, %8, %10         # loop header: 0; root: 0; x
+    # nextln: %6:ctrl, %7:ctrl = brcond %4, %1        # containing loop: 0; x
+    # nextln: %8:ctrl, %9:ctrl = brcond %6, %2        # containing loop: 0; x
+    # nextln: %12:ctrl, %13:phisel = region %9, %11   # x
+    # nextln: return %12                              # x
+
+    %ent:ctrl, %p1:i32, %p2:i32, %p3:i32 = entry
+    %head:ctrl, %hp:phisel = region %ent, %backedge1, %backedge2
+    %b1:ctrl, %b2:ctrl = brcond %head, %p1
+    %backedge1:ctrl, %exit1:ctrl = brcond %b1, %p2
+    %backedge2:ctrl, %exit2:ctrl = brcond %b2, %p3
+    %exit:ctrl, %ep:phisel = region %exit1, %exit2
+    return %exit
+}
+
+func @multi_backedge_diamond_body(i32, i32, i32, i32) {
+    # check: function `multi_backedge_diamond_body`:
+    # nextln: %0:ctrl, %1:i32, %2:i32, %3:i32, %4:i32 = entry         # x
+    # nextln: %15:ctrl, %16:ctrl = brcond %13, %4     # containing loop: 0; x
+    # nextln: %5:ctrl, %6:phisel = region %0, %9, %15         # loop header: 0; root: 0; x
+    # nextln: %7:ctrl, %8:ctrl = brcond %5, %1        # containing loop: 0; x
+    # nextln: %9:ctrl, %10:ctrl = brcond %7, %2       # containing loop: 0; x
+    # nextln: %11:ctrl, %12:ctrl = brcond %8, %3      # containing loop: 0; x
+    # nextln: %13:ctrl, %14:phisel = region %11, %12  # containing loop: 0; x
+    # nextln: %17:ctrl, %18:phisel = region %10, %16  # x
+    # nextln: return %17                              # x
+
+    %ent:ctrl, %p1:i32, %p2:i32, %p3:i32, %p4:i32 = entry
+    %head:ctrl, %hp:phisel = region %ent, %backedge1, %backedge2
+    %b1:ctrl, %b2:ctrl = brcond %head, %p1
+    %backedge1:ctrl, %exit1:ctrl = brcond %b1, %p2
+    %d1:ctrl, %d2:ctrl = brcond %b2, %p3
+    %d:ctrl, %dp:phisel = region %d1, %d2
+    %backedge2:ctrl, %exit2:ctrl = brcond %d, %p4
+    %exit:ctrl, %ep:phisel = region %exit1, %exit2
+    return %exit
+}

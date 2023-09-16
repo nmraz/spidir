@@ -1,0 +1,18 @@
+# run: loop-forest
+
+func @shared_latch(i32, i32) {
+    # check: function `shared_latch`:
+    # nextln: %0:ctrl, %1:i32, %2:i32 = entry         # x
+    # nextln: %9:ctrl, %10:ctrl = brcond %8, %2       # containing loop: 0; x
+    # nextln: %3:ctrl, %4:phisel = region %0, %9      # loop header: 1; root: 1; x
+    # nextln: %5:ctrl, %6:phisel = region %10, %3     # loop header: 0; root: 1; parent: 1; x
+    # nextln: %7:ctrl, %8:ctrl = brcond %5, %1        # containing loop: 0; x
+    # nextln: return %7                               # x
+
+    %ent:ctrl, %p1:i32, %p2:i32 = entry
+    %outer:ctrl, %op:phisel = region %ent, %outer_backedge
+    %inner:ctrl, %ip:phisel = region %inner_backedge, %outer
+    %exit:ctrl, %to_latch:ctrl = brcond %inner, %p1
+    %outer_backedge:ctrl, %inner_backedge:ctrl = brcond %to_latch, %p2
+    return %exit
+}

@@ -1,0 +1,18 @@
+# run: loop-forest
+
+func @header_multi_entry(i32, i32) {
+    # check: function `header_multi_entry`:
+    # nextln: %0:ctrl, %1:i32, %2:i32 = entry         # x
+    # nextln: %3:ctrl, %4:ctrl = brcond %0, %1        # x
+    # nextln: %5:ctrl, %6:phisel = region %4          # x
+    # nextln: %9:ctrl, %10:ctrl = brcond %7, %2       # containing loop: 0; x
+    # nextln: return %9                               # x
+    # nextln: %7:ctrl, %8:phisel = region %3, %10, %5         # loop header: 0; root: 0; x
+
+    %ent:ctrl, %p1:i32, %p2:i32 = entry
+    %ent1:ctrl, %ent2:ctrl = brcond %ent, %p1
+    %preheader2:ctrl, %php:phisel = region %ent2
+    %head:ctrl, %hp:phisel = region %ent1, %backedge, %preheader2
+    %exit:ctrl, %backedge:ctrl = brcond %head, %p2
+    return %exit
+}

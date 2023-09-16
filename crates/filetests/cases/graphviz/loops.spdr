@@ -12,7 +12,7 @@ func @iota(ptr, i64) {
     # nextln:     node7 [shape=Mrecord, label="{{<i0> | <i1>} | shl | {<o0> i64}}"]
     # nextln:     node8 [shape=Mrecord, label="{{<i0> | <i1>} | ptroff | {<o0> ptr}}"]
     # nextln:     node9 [shape=Mrecord, label="{{<i0> | <i1> | <i2>} | store.8 | {<o0> ctrl}}", tooltip="loop 0", color="#167288", penwidth="2", style="filled,dashed"]
-    # nextln:     node13 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", tooltip="loop 0", color="#167288", penwidth="2", style="filled,dashed"]
+    # nextln:     node13 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", tooltip="loop 0&#10;loop 0 latch", color="#167288", penwidth="2", style="filled,dashed"]
     # nextln:     node14 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}"]
     # nextln:     node15 [shape=Mrecord, label="{{<i0>} | return}"]
     # nextln:     node4 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="loop 0 header", color="#167288", penwidth="2"]
@@ -61,5 +61,33 @@ func @iota(ptr, i64) {
     %donecmp:i32 = icmp eq %inext, %n
     %loopdone:ctrl, %looplatch:ctrl = brcond %poststore, %donecmp
     %exit:ctrl, %exitphi:phisel = region %iszero, %loopdone
+    return %exit
+}
+
+func @shared_latch(i32, i32) {
+    # check: function `shared_latch`:
+    # nextln: digraph {
+    # nextln:     node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> i32 | <o2> i32}}"]
+    # nextln:     node4 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", tooltip="loop 0&#10;loop 0 latch&#10;loop 1 latch", color="#167288", penwidth="2", style="filled,dashed"]
+    # nextln:     node1 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="loop 1 header", color="#8cdaec", penwidth="2"]
+    # nextln:     node2 [shape=Mrecord, label="{{<i0> | <i1>} | region | {<o0> ctrl | <o1> phisel}}", tooltip="loop 0 header", color="#167288", penwidth="2"]
+    # nextln:     node3 [shape=Mrecord, label="{{<i0> | <i1>} | brcond | {<o0> ctrl | <o1> ctrl}}", tooltip="loop 0", color="#167288", penwidth="2", style="filled,dashed"]
+    # nextln:     node5 [shape=Mrecord, label="{{<i0>} | return}"]
+    # nextln:     node3:o1 -> node4:i0
+    # nextln:     node0:o2 -> node4:i1
+    # nextln:     node0:o0 -> node1:i0
+    # nextln:     node4:o0 -> node1:i1 [tooltip="loop 1 backedge", color="#8cdaec"]
+    # nextln:     node4:o1 -> node2:i0 [tooltip="loop 0 backedge", color="#167288"]
+    # nextln:     node1:o0 -> node2:i1
+    # nextln:     node2:o0 -> node3:i0
+    # nextln:     node0:o1 -> node3:i1
+    # nextln:     node3:o0 -> node5:i0
+    # nextln: }
+
+    %ent:ctrl, %p1:i32, %p2:i32 = entry
+    %outer:ctrl, %op:phisel = region %ent, %outer_backedge
+    %inner:ctrl, %ip:phisel = region %inner_backedge, %outer
+    %exit:ctrl, %to_latch:ctrl = brcond %inner, %p1
+    %outer_backedge:ctrl, %inner_backedge:ctrl = brcond %to_latch, %p2
     return %exit
 }

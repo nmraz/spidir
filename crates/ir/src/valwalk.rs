@@ -4,13 +4,33 @@ use alloc::{vec, vec::Vec};
 
 use cranelift_entity::EntitySet;
 
-use crate::{
-    node::DepValueKind,
-    valgraph::{Node, ValGraph},
-};
+use crate::valgraph::{Node, ValGraph};
 
 pub type PreOrder<G> = graphwalk::PreOrder<G, EntitySet<Node>>;
 pub type PostOrder<G> = graphwalk::PostOrder<G, EntitySet<Node>>;
+
+pub fn live_node_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+    // Consider all inputs as "live" so we don't cause cases where uses are traversed without their
+    // corresponding defs. Users that want to treat regions with no control inputs as dead should do
+    // so themselves.
+    graph
+        .node_inputs(node)
+        .into_iter()
+        .map(move |input| graph.value_def(input).0)
+        .chain(
+            // For outputs, a control output indicates that the node receiving control is live.
+            graph
+                .node_outputs(node)
+                .into_iter()
+                .filter(move |&output| graph.value_kind(output).is_control())
+                .flat_map(move |output| {
+                    // Note: we explicitly cope with malformed unused/reused control values here as this
+                    // traversal is used in the verifier itself and the graph visualizer.
+                    graph.value_uses(output)
+                })
+                .map(|(node, _input_idx)| node),
+        )
+}
 
 #[derive(Clone, Copy)]
 pub struct LiveNodeSuccs<'a>(&'a ValGraph);
@@ -24,24 +44,8 @@ impl<'a> LiveNodeSuccs<'a> {
 impl<'a> graphwalk::Graph for LiveNodeSuccs<'a> {
     type Node = Node;
 
-    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
-        // Consider all inputs as "live" so we don't cause cases where uses are traversed without their
-        // corresponding defs. Users that want to treat regions with no control inputs as dead should do
-        // so themselves.
-        for input in self.0.node_inputs(node) {
-            f(self.0.value_def(input).0);
-        }
-
-        for output in self.0.node_outputs(node) {
-            // For outputs, a control output indicates that the node receiving control is live.
-            if self.0.value_kind(output) == DepValueKind::Control {
-                // Note: we explicitly cope with malformed unused/reused control values here as this
-                // traversal is used in the verifier itself and the graph visualizer.
-                for (succ, _) in self.0.value_uses(output) {
-                    f(succ);
-                }
-            }
-        }
+    fn successors(&self, node: Node, f: impl FnMut(Node)) {
+        live_node_succs(self.0, node).for_each(f);
     }
 }
 
@@ -52,6 +56,19 @@ pub type LiveNodeWalk<'a> = PreOrder<LiveNodeSuccs<'a>>;
 /// `entry` is guaranteed to be the first node returned.
 pub fn walk_live_nodes(graph: &ValGraph, entry: Node) -> LiveNodeWalk<'_> {
     PreOrder::new(LiveNodeSuccs::new(graph), iter::once(entry))
+}
+
+pub fn def_use_succs<'a>(
+    graph: &'a ValGraph,
+    live_nodes: &'a EntitySet<Node>,
+    node: Node,
+) -> impl Iterator<Item = Node> + 'a {
+    graph
+        .node_outputs(node)
+        .into_iter()
+        .flat_map(move |output| graph.value_uses(output))
+        .map(|(succ, _use_idx)| succ)
+        .filter(move |&succ| live_nodes.contains(succ))
 }
 
 #[derive(Clone, Copy)]
@@ -69,14 +86,8 @@ impl<'a> DefUseSuccs<'a> {
 impl<'a> graphwalk::Graph for DefUseSuccs<'a> {
     type Node = Node;
 
-    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
-        for output in self.graph.node_outputs(node) {
-            for (user, _) in self.graph.value_uses(output) {
-                if self.live_nodes.contains(user) {
-                    f(user);
-                }
-            }
-        }
+    fn successors(&self, node: Node, f: impl FnMut(Node)) {
+        def_use_succs(self.graph, self.live_nodes, node).for_each(f);
     }
 }
 
@@ -126,6 +137,28 @@ impl LiveNodeInfo {
     }
 }
 
+pub fn dataflow_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+    graph
+        .node_inputs(node)
+        .into_iter()
+        .filter(move |&input| graph.value_kind(input).is_value())
+        .map(|input| graph.value_def(input).0)
+}
+
+pub fn dataflow_succs<'a>(
+    graph: &'a ValGraph,
+    live_nodes: &'a EntitySet<Node>,
+    node: Node,
+) -> impl Iterator<Item = Node> + 'a {
+    graph
+        .node_outputs(node)
+        .into_iter()
+        .filter(move |&output| graph.value_kind(output).is_value())
+        .flat_map(move |output| graph.value_uses(output))
+        .map(|(succ, _use_idx)| succ)
+        .filter(move |&succ| live_nodes.contains(succ))
+}
+
 pub fn cfg_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
     graph
         .node_outputs(node)
@@ -157,7 +190,7 @@ mod tests {
     use fx_utils::FxHashSet;
 
     use crate::{
-        node::{NodeKind, Type},
+        node::{DepValueKind, NodeKind, Type},
         test_utils::{create_entry, create_return},
     };
 

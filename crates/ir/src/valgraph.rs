@@ -250,14 +250,17 @@ impl ValGraph {
         node
     }
 
+    #[inline]
     pub fn node_kind(&self, node: Node) -> &NodeKind {
         &self.nodes[node].kind
     }
 
+    #[inline]
     pub fn node_kind_mut(&mut self, node: Node) -> &mut NodeKind {
         &mut self.nodes[node].kind
     }
 
+    #[inline]
     pub fn node_inputs(&self, node: Node) -> Inputs<'_> {
         Inputs {
             graph: self,
@@ -291,19 +294,23 @@ impl ValGraph {
         self.unlink_use(input_use);
     }
 
+    #[inline]
     pub fn node_outputs(&self, node: Node) -> Outputs<'_> {
         Outputs(self.nodes[node].outputs.as_slice(&self.value_pool))
     }
 
+    #[inline]
     pub fn value_kind(&self, value: DepValue) -> DepValueKind {
         self.values[value].kind
     }
 
+    #[inline]
     pub fn value_def(&self, value: DepValue) -> (Node, u32) {
         let data = &self.values[value];
         (data.source, data.output_index)
     }
 
+    #[inline]
     pub fn value_uses(&self, value: DepValue) -> UseIter<'_> {
         UseIter {
             graph: self,
@@ -311,10 +318,12 @@ impl ValGraph {
         }
     }
 
+    #[inline]
     pub fn has_one_use(&self, value: DepValue) -> bool {
         self.use_count(value) == 1
     }
 
+    #[inline]
     pub fn use_count(&self, value: DepValue) -> u32 {
         self.values[value].uses.len(&self.use_pool) as u32
     }

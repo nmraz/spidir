@@ -58,6 +58,7 @@ impl<'a> Builder for SimpleBuilder<'a> {
         self.0.create_node(kind, inputs, output_kinds)
     }
 
+    #[inline]
     fn graph(&self) -> &ValGraph {
         self.0
     }

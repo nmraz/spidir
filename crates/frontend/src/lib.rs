@@ -20,10 +20,12 @@ entity_impl!(Block);
 pub struct PhiHandle(Node);
 
 impl PhiHandle {
+    #[inline]
     pub fn as_u32(self) -> u32 {
         self.0.as_u32()
     }
 
+    #[inline]
     pub fn from_u32(x: u32) -> Self {
         Self(Node::from_u32(x))
     }
@@ -44,6 +46,7 @@ pub struct FunctionBuilder<'a> {
 }
 
 impl<'a> FunctionBuilder<'a> {
+    #[inline]
     pub fn new(module: &'a mut Module, func: Function) -> Self {
         Self {
             module,
@@ -54,10 +57,12 @@ impl<'a> FunctionBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn module(&self) -> &Module {
         self.module
     }
 
+    #[inline]
     pub fn module_mut(&mut self) -> &mut Module {
         self.module
     }
@@ -71,10 +76,12 @@ impl<'a> FunctionBuilder<'a> {
         })
     }
 
+    #[inline]
     pub fn cur_block(&self) -> Option<Block> {
         self.cur_block
     }
 
+    #[inline]
     pub fn set_block(&mut self, block: Block) {
         self.cur_block = Some(block);
     }

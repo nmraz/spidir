@@ -69,14 +69,17 @@ impl LoopForest {
         forest
     }
 
+    #[inline]
     pub fn loop_header(&self, loop_node: Loop) -> TreeNode {
         self.loops[loop_node].header
     }
 
+    #[inline]
     pub fn loop_parent(&self, loop_node: Loop) -> Option<Loop> {
         self.loops[loop_node].parent.expand()
     }
 
+    #[inline]
     pub fn loop_ancestors(&self, loop_node: Loop) -> impl Iterator<Item = Loop> + '_ {
         iter::successors(Some(loop_node), |&loop_node| self.loop_parent(loop_node))
     }
@@ -89,10 +92,9 @@ impl LoopForest {
         self.loop_ancestors(loop_node).last().unwrap()
     }
 
+    #[inline]
     pub fn containing_loop(&self, node: TreeNode) -> Option<Loop> {
-        self.containing_loops
-            .get(node)
-            .and_then(|loop_node| loop_node.expand())
+        self.containing_loops[node].expand()
     }
 
     pub fn is_latch(

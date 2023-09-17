@@ -64,6 +64,7 @@ pub struct Module {
 }
 
 impl Module {
+    #[inline]
     pub fn new() -> Self {
         Self {
             functions: PrimaryMap::new(),

@@ -88,19 +88,23 @@ impl DomTree {
         self.tree_nodes_by_node.get(&node).copied()
     }
 
+    #[inline]
     pub fn get_cfg_node(&self, node: TreeNode) -> Node {
         self.tree[node].cfg_node
     }
 
+    #[inline]
     pub fn root(&self) -> TreeNode {
         // This is verified below when constructing the tree.
         TreeNode::from_u32(0)
     }
 
+    #[inline]
     pub fn idom(&self, node: TreeNode) -> Option<TreeNode> {
         self.tree[node].idom.expand()
     }
 
+    #[inline]
     pub fn children(&self, node: TreeNode) -> &[TreeNode] {
         self.tree[node].children.as_slice(&self.child_pool)
     }

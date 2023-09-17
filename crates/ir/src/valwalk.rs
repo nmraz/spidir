@@ -36,6 +36,7 @@ pub fn live_node_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Nod
 pub struct LiveNodeSuccs<'a>(&'a ValGraph);
 
 impl<'a> LiveNodeSuccs<'a> {
+    #[inline]
     pub fn new(graph: &'a ValGraph) -> Self {
         Self(graph)
     }
@@ -77,6 +78,7 @@ pub struct DefUseSuccs<'a> {
 }
 
 impl<'a> DefUseSuccs<'a> {
+    #[inline]
     pub fn new(graph: &'a ValGraph, live_nodes: &'a EntitySet<Node>) -> Self {
         Self { graph, live_nodes }
     }
@@ -114,10 +116,12 @@ impl LiveNodeInfo {
         }
     }
 
+    #[inline]
     pub fn roots(&self) -> &[Node] {
         &self.roots
     }
 
+    #[inline]
     pub fn live_nodes(&self) -> &EntitySet<Node> {
         &self.live_nodes
     }

@@ -14,6 +14,7 @@ pub enum Type {
 }
 
 impl Type {
+    #[inline]
     pub fn as_str(self) -> &'static str {
         match self {
             Type::I32 => "i32",
@@ -23,6 +24,7 @@ impl Type {
         }
     }
 
+    #[inline]
     pub fn is_integer(self) -> bool {
         matches!(self, Type::I32 | Type::I64)
     }
@@ -45,6 +47,7 @@ pub enum IcmpKind {
 }
 
 impl IcmpKind {
+    #[inline]
     pub fn as_str(self) -> &'static str {
         match self {
             IcmpKind::Eq => "eq",
@@ -66,6 +69,7 @@ pub enum MemSize {
 }
 
 impl MemSize {
+    #[inline]
     pub fn as_str(self) -> &'static str {
         match self {
             MemSize::S1 => "1",
@@ -146,12 +150,14 @@ pub enum NodeKind {
 }
 
 impl NodeKind {
+    #[inline]
     pub fn has_identity(&self) -> bool {
         // Distinct stack slot nodes must always return distinct stack locations - the identity of
         // the stack location is tied to the node itself.
         matches!(self, Self::StackSlot { .. })
     }
 
+    #[inline]
     pub fn has_control_flow(&self) -> bool {
         matches!(
             self,
@@ -184,10 +190,12 @@ pub enum DepValueKind {
 }
 
 impl DepValueKind {
+    #[inline]
     pub fn is_value(self) -> bool {
         matches!(self, Self::Value(..))
     }
 
+    #[inline]
     pub fn as_value(self) -> Option<Type> {
         match self {
             Self::Value(v) => Some(v),
@@ -195,14 +203,17 @@ impl DepValueKind {
         }
     }
 
+    #[inline]
     pub fn is_control(self) -> bool {
         self == Self::Control
     }
 
+    #[inline]
     pub fn is_phisel(self) -> bool {
         self == Self::PhiSelector
     }
 
+    #[inline]
     pub fn is_control_or_phisel(self) -> bool {
         self.is_control() || self.is_phisel()
     }

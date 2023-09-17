@@ -14,6 +14,7 @@ use crate::{
 pub struct Cache(RawTable<Node>);
 
 impl Cache {
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
@@ -25,6 +26,7 @@ pub struct ConsBuilder<'a> {
 }
 
 impl<'a> ConsBuilder<'a> {
+    #[inline]
     pub fn new(graph: &'a mut ValGraph, cache: &'a mut Cache) -> Self {
         Self { graph, cache }
     }
@@ -61,6 +63,7 @@ impl<'a> Builder for ConsBuilder<'a> {
         }
     }
 
+    #[inline]
     fn graph(&self) -> &ValGraph {
         self.graph
     }

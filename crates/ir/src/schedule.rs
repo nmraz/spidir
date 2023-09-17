@@ -8,7 +8,7 @@ use graphwalk::PostOrderContext;
 use crate::{
     domtree::{DomTree, TreeNode},
     valgraph::{Node, ValGraph},
-    valwalk::{dataflow_preds, get_attached_phis, LiveNodeInfo},
+    valwalk::{dataflow_preds, dataflow_succs, get_attached_phis, LiveNodeInfo},
 };
 
 pub type ByNodeSchedule = SecondaryMap<Node, PackedOption<TreeNode>>;
@@ -44,30 +44,37 @@ impl<'a> ScheduleCtx<'a> {
         }
     }
 
+    #[inline]
     pub fn graph(&self) -> &ValGraph {
         self.graph
     }
 
+    #[inline]
     pub fn domtree(&self) -> &DomTree {
         self.domtree
     }
 
+    #[inline]
     pub fn domtree_preorder(&self) -> &[TreeNode] {
         &self.domtree_preorder
     }
 
+    #[inline]
     pub fn live_node_info(&self) -> &LiveNodeInfo {
         &self.live_node_info
     }
 
+    #[inline]
     pub fn live_nodes(&self) -> &EntitySet<Node> {
         self.live_node_info.live_nodes()
     }
 
+    #[inline]
     pub fn is_live(&self, node: Node) -> bool {
         self.live_nodes().contains(node)
     }
 
+    #[inline]
     pub fn pinned_nodes(&self) -> &ByNodeSchedule {
         &self.pinned_nodes
     }
@@ -90,23 +97,55 @@ pub fn schedule_early(
 ) -> ByNodeSchedule {
     let mut schedule = ctx.pinned_nodes.clone();
     let mut visited = EntitySet::new();
-    let mut data_pred_postorder =
-        DataPredPostOrder::new(UnpinnedDataPreds::new(ctx.graph(), ctx.pinned_nodes()), []);
+    let mut data_pred_postorder = PostOrderContext::new(UnpinnedDataPreds::new(ctx.graph()), []);
 
     for pinned in ctx.walk_pinned_nodes() {
-        data_pred_postorder.reset([pinned]);
+        data_pred_postorder.reset(unpinned_dataflow_preds(ctx.graph(), pinned));
         while let Some(pred) = data_pred_postorder.next(&mut visited) {
-            if !is_pinned_node(ctx.graph, pred) {
-                debug_assert!(schedule[pred].is_none());
-                schedule[pred] = schedule_node(&schedule, pred).into();
-            }
+            debug_assert!(!is_pinned_node(ctx.graph(), pred));
+            debug_assert!(schedule[pred].is_none());
+            schedule[pred] = schedule_node(&schedule, pred).into();
         }
     }
 
     schedule
 }
 
-pub fn is_pinned_node(graph: &ValGraph, node: Node) -> bool {
+pub fn schedule_late(
+    ctx: &ScheduleCtx<'_>,
+    mut schedule_node: impl FnMut(&ByNodeSchedule, Node) -> TreeNode,
+) -> ByNodeSchedule {
+    let mut schedule = ctx.pinned_nodes.clone();
+    let mut visited = EntitySet::new();
+    let mut data_succ_postorder =
+        PostOrderContext::new(UnpinnedDataSuccs::new(ctx.graph(), ctx.live_nodes()), []);
+
+    for pinned in ctx.walk_pinned_nodes() {
+        data_succ_postorder.reset(
+            unpinned_dataflow_succs(ctx.graph(), ctx.live_nodes(), pinned)
+                .map(|(node, _input_idx)| node),
+        );
+        while let Some(succ) = data_succ_postorder.next(&mut visited) {
+            debug_assert!(!is_pinned_node(ctx.graph(), succ));
+            debug_assert!(schedule[succ].is_none());
+            schedule[succ] = schedule_node(&schedule, succ).into();
+        }
+    }
+
+    for &root in ctx.live_node_info().roots() {
+        if schedule[root].is_none() {
+            debug_assert!(
+                !is_pinned_node(ctx.graph(), root),
+                "unscheduled liveness root has control outputs"
+            );
+            schedule[root] = schedule_node(&schedule, root).into();
+        }
+    }
+
+    schedule
+}
+
+fn is_pinned_node(graph: &ValGraph, node: Node) -> bool {
     graph
         .node_inputs(node)
         .into_iter()
@@ -117,30 +156,53 @@ pub fn is_pinned_node(graph: &ValGraph, node: Node) -> bool {
             .any(|input| graph.value_kind(input).is_control())
 }
 
+fn unpinned_dataflow_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+    dataflow_preds(graph, node).filter(move |&pred| !is_pinned_node(graph, pred))
+}
+
 struct UnpinnedDataPreds<'a> {
     graph: &'a ValGraph,
-    pinned_nodes: &'a ByNodeSchedule,
 }
 
 impl<'a> UnpinnedDataPreds<'a> {
-    fn new(graph: &'a ValGraph, pinned_nodes: &'a ByNodeSchedule) -> Self {
-        Self {
-            graph,
-            pinned_nodes,
-        }
+    fn new(graph: &'a ValGraph) -> Self {
+        Self { graph }
     }
 }
 
 impl<'a> graphwalk::Graph for UnpinnedDataPreds<'a> {
     type Node = Node;
 
-    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
-        for pred in dataflow_preds(self.graph, node) {
-            if self.pinned_nodes[pred].is_none() {
-                f(pred);
-            }
-        }
+    fn successors(&self, node: Node, f: impl FnMut(Node)) {
+        unpinned_dataflow_preds(self.graph, node).for_each(f);
     }
 }
 
-type DataPredPostOrder<'a> = PostOrderContext<UnpinnedDataPreds<'a>>;
+fn unpinned_dataflow_succs<'a>(
+    graph: &'a ValGraph,
+    live_nodes: &'a EntitySet<Node>,
+    node: Node,
+) -> impl Iterator<Item = (Node, u32)> + 'a {
+    dataflow_succs(graph, live_nodes, node)
+        .filter(|&(succ, _input_idx)| !is_pinned_node(graph, succ))
+}
+
+struct UnpinnedDataSuccs<'a> {
+    graph: &'a ValGraph,
+    live_nodes: &'a EntitySet<Node>,
+}
+
+impl<'a> UnpinnedDataSuccs<'a> {
+    fn new(graph: &'a ValGraph, live_nodes: &'a EntitySet<Node>) -> Self {
+        Self { graph, live_nodes }
+    }
+}
+
+impl<'a> graphwalk::Graph for UnpinnedDataSuccs<'a> {
+    type Node = Node;
+
+    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
+        unpinned_dataflow_succs(self.graph, self.live_nodes, node)
+            .for_each(|(succ, _input_idx)| f(succ));
+    }
+}

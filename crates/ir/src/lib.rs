@@ -8,6 +8,7 @@ pub mod domtree;
 pub mod loop_forest;
 pub mod module;
 pub mod node;
+pub mod schedule;
 pub mod valgraph;
 pub mod valwalk;
 pub mod verify;

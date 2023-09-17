@@ -1,9 +1,8 @@
 use core::fmt;
 
 use alloc::{borrow::ToOwned, string::String, vec::Vec};
-use cranelift_entity::{packed_option::PackedOption, EntitySet, SecondaryMap};
+
 use fx_utils::FxHashSet;
-use graphwalk::PostOrderContext;
 use itertools::{izip, Itertools};
 use smallvec::SmallVec;
 
@@ -11,8 +10,9 @@ use crate::{
     domtree::{DomTree, TreeNode},
     module::{Function, FunctionData, Module},
     node::{DepValueKind, NodeKind},
+    schedule::{schedule_early, ByNodeSchedule, ScheduleCtx},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::{get_attached_phis, walk_live_nodes},
+    valwalk::walk_live_nodes,
     write::display_node,
 };
 
@@ -317,172 +317,45 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVe
     }
 }
 
-type InputSchedules = SmallVec<[(TreeNode, u32); 4]>;
-
-struct DataflowPreds<'a> {
-    graph: &'a ValGraph,
-}
-
-impl graphwalk::Graph for DataflowPreds<'_> {
-    type Node = Node;
-
-    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
-        // Never walk through pinned nodes when searching for predecessors; these nodes are
-        // scheduled manually, and we don't want to look at their inputs at all if they are dead
-        // in the CFG.
-        // Note: this check is performed on the source node here and not on the destination nodes
-        // below as we still want pinned nodes to be considered visited if their outputs are used.
-        // We take advantage of this fact when checking phi nodes later.
-        if is_pinned_node(self.graph, node) {
-            return;
-        }
-
-        for input in self.graph.node_inputs(node) {
-            if self.graph.value_kind(input).is_value() {
-                f(self.graph.value_def(input).0);
-            }
-        }
-    }
-}
-
-/// Scratch buffers that are reused throughout dataflow verification.
-struct ScratchSpace<'a> {
-    data_postorder: PostOrderContext<DataflowPreds<'a>>,
-    input_schedules: InputSchedules,
-}
-
-/// Associates every node with a point in the reachable CFG at which it can be computed (if one
-/// exists), and tracks all nodes which have already had scheduling attempted.
-struct Schedule {
-    schedule: SecondaryMap<Node, PackedOption<TreeNode>>,
-    visited: EntitySet<Node>,
-}
-
-impl Schedule {
-    fn get(&self, node: Node) -> Option<TreeNode> {
-        self.schedule[node].expand()
-    }
-
-    fn set(&mut self, node: Node, sched_tree_node: impl Into<PackedOption<TreeNode>>) {
-        self.schedule[node] = sched_tree_node.into();
-    }
-}
+type InputLocScratch = SmallVec<[(TreeNode, u32); 4]>;
 
 fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
     let domtree = DomTree::compute(graph, entry);
+    let ctx = ScheduleCtx::prepare(graph, &domtree);
 
-    let mut sched = Schedule {
-        schedule: SecondaryMap::new(),
-        visited: EntitySet::new(),
-    };
-    let mut scratch_space = ScratchSpace {
-        data_postorder: PostOrderContext::new(DataflowPreds { graph }, []),
-        input_schedules: InputSchedules::new(),
-    };
+    let mut input_locs = InputLocScratch::new();
+    let schedule = schedule_early(&ctx, |sched, node| {
+        get_last_scheduled_input(&ctx, sched, node, &mut input_locs, errors)
+            .map(|(domtree_node, _input_idx)| domtree_node)
+            .unwrap_or(ctx.domtree().root())
+    });
 
-    let domtree_preorder: Vec<_> = domtree.preorder().collect();
+    for &domtree_node in ctx.domtree_preorder() {
+        let cfg_node = ctx.domtree().get_cfg_node(domtree_node);
+        verify_dataflow_cfg_node_inputs(&ctx, domtree_node, &schedule, &mut input_locs, errors);
 
-    // Pass 1: Schedule all pinned nodes, which are nodes with control edges and phis.
-    // Note: we are careful not to mark the nodes as visited, as some of the phis may be dead.
-    for &domtree_node in &domtree_preorder {
-        let cfg_node = domtree.get_cfg_node(domtree_node);
-        sched.set(cfg_node, domtree_node);
-
-        for phi in get_attached_phis(graph, cfg_node) {
-            sched.set(phi, domtree_node);
+        for phi in ctx.get_attached_phis(cfg_node) {
+            verify_dataflow_phi_node_inputs(&ctx, cfg_node, phi, &schedule, errors);
         }
-    }
-
-    // Pass 2: Schedule all other nodes by performing a postorder DFS along *inputs* (tracing
-    // def-use edges backwards), reporting any impossibilities as errors.
-    for &domtree_node in &domtree_preorder {
-        for input in graph.node_inputs(domtree.get_cfg_node(domtree_node)) {
-            schedule_node_early(
-                graph,
-                &domtree,
-                graph.value_def(input).0,
-                &mut scratch_space,
-                &mut sched,
-                errors,
-            );
-        }
-    }
-
-    // Pass 3: Verify data inputs to CFG and phi nodes.
-    for &domtree_node in &domtree_preorder {
-        verify_dataflow_cfg_node_inputs(
-            graph,
-            &domtree,
-            domtree_node,
-            &mut scratch_space.input_schedules,
-            &sched,
-            errors,
-        );
-        let cfg_node = domtree.get_cfg_node(domtree_node);
-        for phi in get_attached_phis(graph, cfg_node) {
-            if !sched.visited.contains(phi) {
-                // Skip any dead phis, they should never count as part of the graph anyway.
-                continue;
-            }
-            verify_dataflow_phi_node_inputs(
-                graph,
-                &domtree,
-                cfg_node,
-                phi,
-                &mut scratch_space,
-                &mut sched,
-                errors,
-            );
-        }
-    }
-}
-
-fn schedule_node_early(
-    graph: &ValGraph,
-    domtree: &DomTree,
-    node: Node,
-    scratch_space: &mut ScratchSpace<'_>,
-    sched: &mut Schedule,
-    errors: &mut Vec<GraphVerifierError>,
-) {
-    scratch_space.data_postorder.reset([node]);
-    while let Some(node) = scratch_space.data_postorder.next(&mut sched.visited) {
-        if is_pinned_node(graph, node) {
-            continue;
-        }
-
-        let last_scheduled_input = get_last_scheduled_input(
-            graph,
-            domtree,
-            sched,
-            node,
-            &mut scratch_space.input_schedules,
-            errors,
-        )
-        .map(|(last_scheduled_input, _)| last_scheduled_input);
-
-        let sched_tree_node = last_scheduled_input.unwrap_or(domtree.root());
-        sched.set(node, sched_tree_node);
     }
 }
 
 fn verify_dataflow_cfg_node_inputs(
-    graph: &ValGraph,
-    domtree: &DomTree,
+    ctx: &ScheduleCtx<'_>,
     domtree_node: TreeNode,
-    input_schedules: &mut InputSchedules,
-    sched: &Schedule,
+    schedule: &ByNodeSchedule,
+    input_locs: &mut InputLocScratch,
     errors: &mut Vec<GraphVerifierError>,
 ) {
-    let cfg_node = domtree.get_cfg_node(domtree_node);
+    let cfg_node = ctx.domtree().get_cfg_node(domtree_node);
     let Some((last_scheduled_input, last_scheduled_input_idx)) =
-        get_last_scheduled_input(graph, domtree, sched, cfg_node, input_schedules, errors)
+        get_last_scheduled_input(ctx, schedule, cfg_node, input_locs, errors)
     else {
         // If we have no data inputs, everything is fine.
         return;
     };
 
-    if !domtree.dominates(last_scheduled_input, domtree_node) {
+    if !ctx.domtree().dominates(last_scheduled_input, domtree_node) {
         errors.push(GraphVerifierError::UseNotDominated {
             node: cfg_node,
             input: last_scheduled_input_idx,
@@ -491,20 +364,19 @@ fn verify_dataflow_cfg_node_inputs(
 }
 
 fn verify_dataflow_phi_node_inputs(
-    graph: &ValGraph,
-    domtree: &DomTree,
+    ctx: &ScheduleCtx<'_>,
     cfg_node: Node,
     phi: Node,
-    scratch_space: &mut ScratchSpace<'_>,
-    sched: &mut Schedule,
+    schedule: &ByNodeSchedule,
     errors: &mut Vec<GraphVerifierError>,
 ) {
+    let graph = ctx.graph();
     for (i, phi_input, ctrl_input) in izip!(
         1..,
         graph.node_inputs(phi).into_iter().skip(1),
         graph.node_inputs(cfg_node),
     ) {
-        let Some(ctrl_tree_node) = sched.get(graph.value_def(ctrl_input).0) else {
+        let Some(ctrl_tree_node) = schedule[graph.value_def(ctrl_input).0].expand() else {
             // Inputs from dead regions are actually okay: if we can never select the
             // corresponding value in the phi, we don't need to check any constraints on it.
             // This can happen in practice when existing regions in the code are made dead
@@ -514,11 +386,7 @@ fn verify_dataflow_phi_node_inputs(
 
         let input_node = graph.value_def(phi_input).0;
 
-        // This input may not have been scheduled yet, because we skipped all phi inputs during
-        // the initial traversal.
-        schedule_node_early(graph, domtree, input_node, scratch_space, sched, errors);
-
-        let Some(input_sched_tree_node) = sched.get(input_node) else {
+        let Some(input_sched_tree_node) = schedule[input_node].expand() else {
             // Having dead *inputs* for a non-dead control edge, on the other hand, is
             // problematic. Report that now.
             errors.push(GraphVerifierError::UseNotDominated {
@@ -530,7 +398,10 @@ fn verify_dataflow_phi_node_inputs(
 
         // Finally, we can actually check that the phi input is scheduled before the
         // corresponding control input.
-        if !domtree.dominates(input_sched_tree_node, ctrl_tree_node) {
+        if !ctx
+            .domtree()
+            .dominates(input_sched_tree_node, ctrl_tree_node)
+        {
             errors.push(GraphVerifierError::UseNotDominated {
                 node: phi,
                 input: i,
@@ -540,25 +411,25 @@ fn verify_dataflow_phi_node_inputs(
 }
 
 fn get_last_scheduled_input(
-    graph: &ValGraph,
-    domtree: &DomTree,
-    sched: &Schedule,
+    ctx: &ScheduleCtx<'_>,
+    sched: &ByNodeSchedule,
     node: Node,
-    input_schedules: &mut InputSchedules,
+    input_locs: &mut InputLocScratch,
     errors: &mut Vec<GraphVerifierError>,
 ) -> Option<(TreeNode, u32)> {
-    input_schedules.clear();
+    let graph = ctx.graph();
 
-    let inputs = graph.node_inputs(node);
-    input_schedules.reserve(inputs.len());
+    input_locs.clear();
 
     // Part 1: Find the schedule position for every input data value.
-    for (i, input) in (0..).zip(inputs) {
+    for (i, input) in (0..).zip(graph.node_inputs(node)) {
         if !graph.value_kind(input).is_value() {
             continue;
         }
 
-        let sched_node = sched.get(graph.value_def(input).0);
+        let input_node = graph.value_def(input).0;
+
+        let sched_node = sched[input_node].expand();
         let Some(sched_node) = sched_node else {
             // If the node producing this input hasn't been scheduled, we either have a data flow
             // cycle or that node depends on a computation that is unreachable in the CFG. Both
@@ -567,24 +438,24 @@ fn get_last_scheduled_input(
             continue;
         };
         // Save the input index so we can report errors accurately later.
-        input_schedules.push((sched_node, i));
+        input_locs.push((sched_node, i));
     }
 
     // Part 2: Check that input schedules are totally ordered with respect to dominance, and find
     // the maximum with respect to that relation.
     // We use a simple insertion sort for doing both things.
 
-    for i in 1..input_schedules.len() {
-        // Insert `input_schedules[i]` into the sorted subslice `input_schedules[0..i]`.
+    for i in 1..input_locs.len() {
+        // Insert `input_locs[i]` into the sorted subslice `input_locs[0..i]`.
         for j in (0..i).rev() {
-            let (prev, prev_input_idx) = input_schedules[j];
+            let (prev, prev_input_idx) = input_locs[j];
             // Note: `j < i`, so `j + 1 <= i < len`.
-            let (cur, cur_input_idx) = input_schedules[j + 1];
+            let (cur, cur_input_idx) = input_locs[j + 1];
 
             // TODO: We could save some redundant comparisons here by reintroducing `DomTree::compare`.
-            if domtree.dominates(cur, prev) {
-                input_schedules.swap(j, j + 1);
-            } else if !domtree.dominates(prev, cur) {
+            if ctx.domtree().dominates(cur, prev) {
+                input_locs.swap(j, j + 1);
+            } else if !ctx.domtree().dominates(prev, cur) {
                 // The inputs at positions `j` and `j + 1` are not ordered by dominance; report an
                 // error on one of them. We choose `j + 1` here so that nodes always appear to be
                 // placed based on earlier (lower-indexed) inputs.
@@ -601,18 +472,7 @@ fn get_last_scheduled_input(
         }
     }
 
-    input_schedules.last().copied()
-}
-
-fn is_pinned_node(graph: &ValGraph, node: Node) -> bool {
-    graph
-        .node_inputs(node)
-        .into_iter()
-        .any(|input| graph.value_kind(input).is_control_or_phisel())
-        || graph
-            .node_outputs(node)
-            .into_iter()
-            .any(|input| graph.value_kind(input).is_control())
+    input_locs.last().copied()
 }
 
 #[cfg(test)]

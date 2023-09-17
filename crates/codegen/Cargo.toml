@@ -9,3 +9,5 @@ edition = "2021"
 graphwalk.workspace = true
 ir.workspace = true
 log.workspace = true
+
+cranelift-entity.workspace = true

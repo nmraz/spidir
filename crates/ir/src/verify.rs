@@ -360,9 +360,7 @@ struct Schedule {
 
 impl Schedule {
     fn get(&self, node: Node) -> Option<TreeNode> {
-        self.schedule
-            .get(node)
-            .and_then(|tree_node| tree_node.expand())
+        self.schedule[node].expand()
     }
 
     fn set(&mut self, node: Node, sched_tree_node: impl Into<PackedOption<TreeNode>>) {

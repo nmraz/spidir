@@ -81,8 +81,8 @@ impl LoopForest {
         iter::successors(Some(loop_node), |&loop_node| self.loop_parent(loop_node))
     }
 
-    pub fn loop_depth(&self, loop_node: Loop) -> usize {
-        self.loop_ancestors(loop_node).count()
+    pub fn loop_depth(&self, loop_node: Loop) -> u32 {
+        self.loop_ancestors(loop_node).count() as u32
     }
 
     pub fn root_loop(&self, loop_node: Loop) -> Loop {

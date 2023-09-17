@@ -12,7 +12,7 @@ use crate::{
     module::{Function, FunctionData, Module},
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::walk_live_nodes,
+    valwalk::{get_attached_phis, walk_live_nodes},
     write::display_node,
 };
 
@@ -604,15 +604,6 @@ fn get_last_scheduled_input(
     }
 
     input_schedules.last().copied()
-}
-
-fn get_attached_phis(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
-    graph
-        .node_outputs(node)
-        .into_iter()
-        .filter(|&output| graph.value_kind(output).is_phisel())
-        .flat_map(|phisel| graph.value_uses(phisel))
-        .map(|(phi, _)| phi)
 }
 
 fn is_pinned_node(graph: &ValGraph, node: Node) -> bool {

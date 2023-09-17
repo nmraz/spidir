@@ -27,3 +27,19 @@ func @phi_dead_region_inputs_swapped:i32() {
     %9:i32 = phi %8, %6, %1
     return %7, %9
 }
+
+func @live_phi_chain:i32(i32, ptr) {
+    # check: function `live_phi_chain`:
+    # unordered: `$val:i32 = phi $val, $val`: input 1 not dominated by def
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl, %4:phisel = region %0
+    %5:ctrl, %6:phisel = region %3
+    %7:ctrl, %8:phisel = region %5
+    %9:i32 = phi %4, %1
+    %10:ctrl, %11:i32 = load.4 %7, %2
+    %12:i32 = iadd %9, %11
+    %13:i32 = phi %6, %12
+    %14:i32 = phi %8, %13
+    return %10, %14
+}

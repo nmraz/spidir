@@ -22,6 +22,17 @@ func @select_load_dead_phi_inputs_swapped(i32, ptr, ptr) {
     return %14
 }
 
+func @live_phi_chain:i32(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:phisel = region %0
+    %4:i32 = phi %3, %1
+    %5:ctrl, %6:phisel = region %2
+    %7:i32 = phi %6, %4
+    %8:ctrl, %9:phisel = region %5
+    %10:i32 = phi %9, %7
+    return %8, %10
+}
+
 # This behavior is desirable because it means that removing a control edge (for
 # example, following constant propagation) preserves the modified function's
 # validity without any additional effort. However, it does mean that scheduling

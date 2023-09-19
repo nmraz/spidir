@@ -117,6 +117,7 @@ impl<'a> FunctionBuilder<'a> {
         let cur_ctrl = self.terminate_cur_block();
         let region = self.blocks[dest].region;
         self.graph_mut().add_node_input(region, cur_ctrl);
+        trace!("branched to block {}", dest.as_u32());
     }
 
     pub fn build_brcond(&mut self, cond: DepValue, true_dest: Block, false_dest: Block) {

@@ -84,6 +84,7 @@ impl<'a> FunctionBuilder<'a> {
     #[inline]
     pub fn set_block(&mut self, block: Block) {
         self.cur_block = Some(block);
+        trace!("switched to block {}", block.as_u32());
     }
 
     pub fn set_entry_block(&mut self, block: Block) {
@@ -271,6 +272,11 @@ impl<'a> FunctionBuilder<'a> {
         let cur_block = self.require_cur_block();
         let ctrl = self.blocks[cur_block].last_ctrl;
         self.blocks[cur_block].terminated = true;
+        trace!(
+            "terminating block {}, last control node `{}`",
+            cur_block.as_u32(),
+            display_node(self.module, self.graph(), self.graph().value_def(ctrl).0)
+        );
         ctrl
     }
 
@@ -290,7 +296,8 @@ impl<'a> FunctionBuilder<'a> {
         let block = self.cur_block.expect("current block not set");
         assert!(
             !self.blocks[block].terminated,
-            "attempted to insert into terminated block"
+            "attempted to insert into terminated block {}",
+            block.as_u32()
         );
         block
     }

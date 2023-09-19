@@ -11,12 +11,14 @@ use self::{
     domtree::DomTreeProvider,
     graphviz::{AnnotatorKind, GraphvizTestProvider},
     loop_forest::LoopForestProvider,
+    schedule::ScheduleProvider,
     verify::{VerifyErrProvider, VerifyOkProvider},
 };
 
 mod domtree;
 mod graphviz;
 mod loop_forest;
+mod schedule;
 mod verify;
 
 pub trait TestProvider {
@@ -40,6 +42,7 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> 
         "graphviz[domtree]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::DomTree))),
         "graphviz[loops]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Loops))),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),
+        "schedule" => Ok(Box::new(ScheduleProvider)),
         "verify-err" => Ok(Box::new(VerifyErrProvider)),
         "verify-ok" => Ok(Box::new(VerifyOkProvider)),
         _ => bail!("unknown run command '{run_command}'"),

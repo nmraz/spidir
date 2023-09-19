@@ -4,12 +4,13 @@ members = ["crates/*", "c-api"]
 default-members = ["crates/*"]
 
 [workspace.dependencies]
+codegen = { path = "crates/codegen" }
+frontend = { path = "crates/frontend" }
 fx-utils = { path = "crates/fx-utils" }
 graphwalk = { path = "crates/graphwalk" }
 ir = { path = "crates/ir" }
-frontend = { path = "crates/frontend" }
-parser = { path = "crates/parser" }
 ir-graphviz = { path = "crates/ir-graphviz" }
+parser = { path = "crates/parser" }
 
 anyhow = "1.0.71"
 clap = { version = "4.3.10", features = ["derive", "wrap_help"] }

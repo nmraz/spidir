@@ -277,6 +277,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "codegen",
  "cranelift-entity",
  "expect-test",
  "filecheck",

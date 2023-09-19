@@ -112,10 +112,15 @@ fn late_schedule_location(
 
     dataflow_succs(ctx.graph(), ctx.live_nodes(), node)
         .filter_map(|(succ, input_idx)| {
-            if graph.node_kind(node) != &NodeKind::Phi {
-                // Plain data nodes using the value should always have a schedule if they are live.
-                Some(schedule[succ].expect("data flow cycle"))
-            } else {
+            if let Some(succ_domtree_node) = domtree.get_tree_node(succ) {
+                // If this successor is a CFG node, we explicitly want to be scheduled before it and
+                // not under it.
+                Some(
+                    ctx.domtree()
+                        .idom(succ_domtree_node)
+                        .expect("dominator tree root was a data successor"),
+                )
+            } else if graph.node_kind(node) == &NodeKind::Phi {
                 let region = graph.value_def(graph.node_inputs(node)[0]).0;
 
                 // Note: the corresponding region input might be dead even when the phi is live;
@@ -125,6 +130,12 @@ fn late_schedule_location(
                         .value_def(graph.node_inputs(region)[input_idx as usize])
                         .0,
                 )
+            } else {
+                // Plain data nodes using the value should always have a schedule if they are live.
+                // We want to be scheduled in the same CFG node as they are; the fact that we are
+                // doing a postorder traversal will ensure that we get appended to the reverse list
+                // after them.
+                Some(schedule[succ].expect("data flow cycle"))
             }
         })
         .reduce(|acc, cur| domtree_lca(domtree, depth_map, acc, cur))

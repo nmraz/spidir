@@ -18,9 +18,10 @@ use crate::{
 
 #[macro_use]
 mod utils;
-mod hooks;
 mod provider;
 mod regexes;
+
+pub mod hooks;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UpdateMode {

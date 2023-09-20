@@ -1,10 +1,21 @@
 use std::{
     cell::RefCell,
+    mem,
     panic::{self, PanicInfo, UnwindSafe},
 };
 
-thread_local! {
-    static PANIC_MESSAGE: RefCell<Option<String>> = RefCell::new(None);
+use log::Log;
+
+pub fn init_log_capture() {
+    log::set_logger(&CapturingLogger).unwrap();
+    log::set_max_level(log::LevelFilter::Trace);
+}
+
+pub fn capture_logs<R>(f: impl FnOnce() -> R) -> (R, Vec<String>) {
+    clear_captured_logs();
+    let ret = f();
+    let logs = take_captured_logs();
+    (ret, logs)
 }
 
 pub fn catch_panic_message<R>(f: impl FnOnce() -> R + UnwindSafe) -> Result<R, String> {
@@ -13,6 +24,43 @@ pub fn catch_panic_message<R>(f: impl FnOnce() -> R + UnwindSafe) -> Result<R, S
     let ret = panic::catch_unwind(f);
     let _ = panic::take_hook();
     ret.map_err(|_| take_panic_message().unwrap_or("unknown panic".to_owned()))
+}
+
+thread_local! {
+    static CAPTURED_LOGS: RefCell<Vec<String>> = RefCell::new(Vec::new());
+}
+
+fn clear_captured_logs() {
+    CAPTURED_LOGS.with(|captured_logs| captured_logs.borrow_mut().clear());
+}
+
+fn take_captured_logs() -> Vec<String> {
+    CAPTURED_LOGS.with(|captured_logs| mem::take(&mut *captured_logs.borrow_mut()))
+}
+
+struct CapturingLogger;
+impl Log for CapturingLogger {
+    fn enabled(&self, _metadata: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        let formatted = format!(
+            "[{} {}] {}",
+            record.level(),
+            record.module_path().unwrap_or_default(),
+            record.args()
+        );
+        CAPTURED_LOGS.with(|captured_logs| {
+            captured_logs.borrow_mut().push(formatted);
+        })
+    }
+
+    fn flush(&self) {}
+}
+
+thread_local! {
+    static PANIC_MESSAGE: RefCell<Option<String>> = RefCell::new(None);
 }
 
 fn clear_panic_message() {

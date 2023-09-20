@@ -7,7 +7,10 @@ use std::{
 
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
-use filetests::{run_file_test, TestOutcome, UpdateMode};
+use filetests::{
+    hooks::{capture_logs, init_log_capture},
+    run_file_test, TestOutcome, UpdateMode,
+};
 use glob::Pattern;
 
 const OK: &str = "\x1b[32mok\x1b[0m";
@@ -66,6 +69,8 @@ fn main() -> Result<()> {
     let case_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("cases");
     let (cases, filtered) = collect_test_cases(&case_dir, cli.cases)?;
 
+    init_log_capture();
+
     let mut passed = 0;
     let mut failures = Vec::new();
     let mut updated = 0;
@@ -76,7 +81,8 @@ fn main() -> Result<()> {
     for case_path in &cases {
         let case_name = case_path.strip_prefix(&case_dir)?;
         eprint!("test {} ... ", case_name.display());
-        match run_file_test(case_path, update_mode) {
+        let (result, logs) = capture_logs(|| run_file_test(case_path, update_mode));
+        match result {
             Ok(TestOutcome::Ok) => {
                 passed += 1;
                 eprintln!("{OK}");
@@ -86,7 +92,7 @@ fn main() -> Result<()> {
                 eprintln!("{UPDATED}")
             }
             Err(err) => {
-                failures.push((case_name, err));
+                failures.push((case_name, err, logs));
                 eprintln!("{FAILED}")
             }
         }
@@ -99,8 +105,11 @@ fn main() -> Result<()> {
 
     if failed > 0 {
         eprintln!("failures:\n");
-        for (name, err) in &failures {
+        for (name, err, logs) in &failures {
             eprintln!("\x1b[1m---- {} ----\x1b[0m\n{err:?}\n", name.display());
+            if !logs.is_empty() {
+                eprintln!("logs:\n{}\n", logs.join("\n"));
+            }
         }
     }
 

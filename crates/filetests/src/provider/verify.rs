@@ -12,11 +12,9 @@ use ir::{
 use itertools::Itertools;
 use regex::Regex;
 
-use crate::utils::parse_output_func_heading;
+use crate::{regexes::VAL_REGEX, utils::parse_output_func_heading};
 
 use super::{TestProvider, Updater};
-
-const VAL_REGEX_STR: &str = r"%\d+";
 
 pub struct VerifyOkProvider;
 impl TestProvider for VerifyOkProvider {
@@ -40,7 +38,7 @@ impl TestProvider for VerifyOkProvider {
 pub struct VerifyErrProvider;
 impl TestProvider for VerifyErrProvider {
     fn env(&self) -> FxHashMap<String, Value<'_>> {
-        [("val".to_owned(), Value::Regex(VAL_REGEX_STR.into()))]
+        [("val".to_owned(), Value::Regex(VAL_REGEX.into()))]
             .into_iter()
             .collect()
     }
@@ -95,7 +93,7 @@ impl TestProvider for VerifyErrProvider {
         let mut output_lines = output_str.lines();
         assert!(output_lines.next().unwrap() == "global:");
 
-        let val_regex = regex!(VAL_REGEX_STR);
+        let val_regex = regex!(VAL_REGEX);
 
         let mut cur_func = None;
         let mut output_run = Vec::new();

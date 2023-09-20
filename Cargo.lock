@@ -283,6 +283,7 @@ dependencies = [
  "filecheck",
  "fx-utils",
  "glob",
+ "hashbrown",
  "ir",
  "ir-graphviz",
  "itertools",

@@ -15,6 +15,7 @@ fx-utils.workspace = true
 anyhow.workspace = true
 clap.workspace = true
 cranelift-entity.workspace = true
+hashbrown.workspace = true
 itertools.workspace = true
 
 filecheck = "0.5.0"

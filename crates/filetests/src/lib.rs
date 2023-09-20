@@ -20,6 +20,7 @@ use crate::{
 mod utils;
 mod hooks;
 mod provider;
+mod regexes;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UpdateMode {

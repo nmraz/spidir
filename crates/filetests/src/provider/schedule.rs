@@ -2,12 +2,22 @@ use std::fmt::Write;
 
 use anyhow::Result;
 use codegen::schedule::Schedule;
+use filecheck::Value;
+use fx_utils::FxHashMap;
 use ir::{domtree::DomTree, loop_forest::LoopForest, module::Module, write::display_node};
+
+use crate::{regexes::VAL_REGEX, utils::generalize_value_names};
 
 use super::{update_per_func_output, TestProvider, Updater};
 
 pub struct ScheduleProvider;
 impl TestProvider for ScheduleProvider {
+    fn env(&self) -> FxHashMap<String, Value<'_>> {
+        [("val".to_owned(), Value::Regex(VAL_REGEX.into()))]
+            .into_iter()
+            .collect()
+    }
+
     fn output_for(&self, module: &Module) -> Result<String> {
         let mut output = String::new();
 
@@ -32,7 +42,8 @@ impl TestProvider for ScheduleProvider {
         Ok(output)
     }
 
-    fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) -> Result<()> {
-        update_per_func_output(updater, output_str)
+    fn update(&self, updater: &mut Updater<'_>, module: &Module, output_str: &str) -> Result<()> {
+        let output_str = generalize_value_names(module, output_str)?;
+        update_per_func_output(updater, &output_str)
     }
 }

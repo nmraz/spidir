@@ -1,13 +1,17 @@
 use core::fmt::{self, Write};
 
 use anyhow::Result;
+use fx_utils::FxHashMap;
+use hashbrown::hash_map::Entry;
 use ir::{
     module::{FunctionData, Module},
-    valgraph::{Node, ValGraph},
-    write::{write_annotated_graph, write_annotated_node, AnnotateGraph},
+    valgraph::{DepValue, Node, ValGraph},
+    write::{write_annotated_graph, write_annotated_node, write_node_kind, AnnotateGraph},
 };
-use regex::Regex;
+use regex::{Captures, Regex};
 use std::{cmp, sync::OnceLock};
+
+use crate::regexes::VAL_REGEX;
 
 macro_rules! regex {
     ($val:expr) => {{
@@ -73,6 +77,10 @@ impl<F: FnMut(&mut String, Node) -> Result<()>> AnnotateGraph<String> for Commen
     }
 }
 
+fn round_up(num: usize, divisor: usize) -> usize {
+    ((num + divisor - 1) / divisor) * divisor
+}
+
 pub fn parse_output_func_heading(output_line: &str) -> Option<&str> {
     let func_regex = regex!(r"^function `(.+)`:$");
     func_regex
@@ -99,6 +107,60 @@ pub fn find_comment_start(line: &str) -> Option<usize> {
     line.find('#')
 }
 
-fn round_up(num: usize, divisor: usize) -> usize {
-    ((num + divisor - 1) / divisor) * divisor
+pub fn generalize_value_names(module: &Module, output_str: &str) -> Result<String> {
+    let mut new_output = String::new();
+    let mut cur_func = None;
+
+    let mut name_counter = FxHashMap::default();
+    let mut val_names = FxHashMap::<DepValue, String>::default();
+
+    let val_regex = regex!(VAL_REGEX);
+
+    for line in output_str.lines() {
+        if let Some(new_func) = parse_output_func_heading(line) {
+            cur_func = module.functions.values().find(|func| func.name == new_func);
+            name_counter.clear();
+            val_names.clear();
+            writeln!(new_output, "{line}").unwrap();
+            continue;
+        }
+
+        let Some(cur_func) = cur_func else {
+            writeln!(new_output, "{line}").unwrap();
+            continue;
+        };
+
+        let line = val_regex.replace_all(line, |caps: &Captures<'_>| {
+            let value = DepValue::from_u32(caps[1].parse().unwrap());
+            match val_names.entry(value) {
+                Entry::Occupied(existing_name) => format!("${}", existing_name.get()),
+                Entry::Vacant(vacant_entry) => {
+                    let name = get_value_var_name(module, cur_func, &mut name_counter, value);
+                    let replacement = format!("$({name}=$val)");
+                    vacant_entry.insert(name);
+                    replacement
+                }
+            }
+        });
+
+        writeln!(new_output, "{line}").unwrap();
+    }
+
+    Ok(new_output.to_owned())
+}
+
+fn get_value_var_name(
+    module: &Module,
+    func: &FunctionData,
+    name_counter: &mut FxHashMap<String, usize>,
+    value: DepValue,
+) -> String {
+    let node_kind = func.graph.node_kind(func.graph.value_def(value).0);
+    let mut node_string = String::new();
+    write_node_kind(&mut node_string, module, node_kind).unwrap();
+    let name_prefix = node_string.split(&[' ', '.']).next().unwrap();
+    let counter = name_counter.entry(name_prefix.to_owned()).or_default();
+    let name = format!("{name_prefix}{counter}");
+    *counter += 1;
+    name
 }

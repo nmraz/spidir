@@ -1,0 +1,24 @@
+# run: schedule
+
+func @conditional_uses(i32, i32, ptr) {
+    # check: function `conditional_uses`:
+    # nextln: $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32, $(entry3=$val):ptr = entry
+    # nextln:     $(iconst0=$val):i32 = iconst 5
+    # nextln:     $(iadd0=$val):i32 = iadd $entry1, $iconst0
+    # nextln:     $(imul0=$val):i32 = imul $entry1, $entry2
+    # nextln: $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $entry1
+    # nextln: $(store0=$val):ctrl = store.4 $brcond1, $iadd0, $entry3
+    # nextln: $(region0=$val):ctrl, $(region1=$val):phisel = region $(store1=$val), $store0
+    # nextln: return $region0
+    # nextln: $store1:ctrl = store.4 $brcond0, $imul0, $entry3
+
+    %entry:ctrl, %p1:i32, %p2:i32, %p3:ptr = entry
+    %p1t:ctrl, %p1f:ctrl = brcond %entry, %p1
+    %p1p2:i32 = imul %p1, %p2
+    %exit1:ctrl = store.4 %p1t, %p1p2, %p3
+    %five:i32 = iconst 5
+    %p1_5:i32 = iadd %p1, %five
+    %exit2:ctrl = store.4 %p1f, %p1_5, %p3
+    %exit:ctrl, %ep:phisel = region %exit1, %exit2
+    return %exit
+}

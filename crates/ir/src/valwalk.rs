@@ -170,6 +170,30 @@ pub fn cfg_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '
         .map(|(succ_node, _succ_input_idx)| succ_node)
 }
 
+#[derive(Clone, Copy)]
+pub struct CfgSuccs<'a>(&'a ValGraph);
+
+impl<'a> CfgSuccs<'a> {
+    #[inline]
+    pub fn new(graph: &'a ValGraph) -> Self {
+        Self(graph)
+    }
+}
+
+impl<'a> graphwalk::Graph for CfgSuccs<'a> {
+    type Node = Node;
+
+    fn successors(&self, node: Self::Node, f: impl FnMut(Node)) {
+        cfg_succs(self.0, node).for_each(f);
+    }
+}
+
+pub type CfgPreorder<'a> = PreOrder<CfgSuccs<'a>>;
+
+pub fn cfg_preorder(graph: &ValGraph, entry: Node) -> CfgPreorder<'_> {
+    CfgPreorder::new(CfgSuccs::new(graph), [entry])
+}
+
 pub fn cfg_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
     graph
         .node_inputs(node)

@@ -8,7 +8,7 @@ use graphwalk::PostOrderContext;
 use crate::{
     domtree::{DomTree, TreeNode},
     valgraph::{Node, ValGraph},
-    valwalk::{dataflow_preds, dataflow_succs, get_attached_phis, LiveNodeInfo},
+    valwalk::{cfg_preorder, dataflow_preds, dataflow_succs, get_attached_phis, LiveNodeInfo},
 };
 
 pub type ByNodeSchedule = SecondaryMap<Node, PackedOption<TreeNode>>;
@@ -16,21 +16,24 @@ pub type ByNodeSchedule = SecondaryMap<Node, PackedOption<TreeNode>>;
 pub struct ScheduleCtx<'a> {
     graph: &'a ValGraph,
     domtree: &'a DomTree,
-    domtree_preorder: Vec<TreeNode>,
+    cfg_preorder: Vec<Node>,
     live_node_info: LiveNodeInfo,
     pinned_nodes: ByNodeSchedule,
 }
 
 impl<'a> ScheduleCtx<'a> {
     pub fn prepare(graph: &'a ValGraph, domtree: &'a DomTree) -> Self {
-        let domtree_preorder: Vec<_> = domtree.preorder().collect();
+        let entry = domtree.get_cfg_node(domtree.root());
+        let cfg_preorder: Vec<_> = cfg_preorder(graph, entry).collect();
         let live_node_info = LiveNodeInfo::compute(graph, domtree.get_cfg_node(domtree.root()));
         let mut pinned_nodes = ByNodeSchedule::new();
 
-        for &domtree_node in &domtree_preorder {
-            let cfg_node = domtree.get_cfg_node(domtree_node);
-            pinned_nodes[cfg_node] = domtree_node.into();
-            for phi in get_attached_phis(graph, cfg_node) {
+        for &node in &cfg_preorder {
+            let domtree_node = domtree
+                .get_tree_node(node)
+                .expect("live CFG node not in dominator tree");
+            pinned_nodes[node] = domtree_node.into();
+            for phi in get_attached_phis(graph, node) {
                 pinned_nodes[phi] = domtree_node.into();
             }
         }
@@ -38,7 +41,7 @@ impl<'a> ScheduleCtx<'a> {
         Self {
             graph,
             domtree,
-            domtree_preorder,
+            cfg_preorder,
             live_node_info,
             pinned_nodes,
         }
@@ -55,8 +58,8 @@ impl<'a> ScheduleCtx<'a> {
     }
 
     #[inline]
-    pub fn domtree_preorder(&self) -> &[TreeNode] {
-        &self.domtree_preorder
+    pub fn cfg_preorder(&self) -> &[Node] {
+        &self.cfg_preorder
     }
 
     #[inline]
@@ -80,10 +83,9 @@ impl<'a> ScheduleCtx<'a> {
     }
 
     pub fn walk_pinned_nodes(&self) -> impl Iterator<Item = Node> + '_ {
-        self.domtree_preorder.iter().flat_map(move |&domtree_node| {
-            let cfg_node = self.domtree.get_cfg_node(domtree_node);
-            iter::once(cfg_node).chain(self.get_attached_phis(cfg_node))
-        })
+        self.cfg_preorder
+            .iter()
+            .flat_map(move |&cfg_node| iter::once(cfg_node).chain(self.get_attached_phis(cfg_node)))
     }
 
     pub fn get_attached_phis(&self, cfg_node: Node) -> impl Iterator<Item = Node> + '_ {

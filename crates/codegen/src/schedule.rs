@@ -47,8 +47,9 @@ impl Schedule {
 
         // Push the phi nodes for every region on last (which means they will actually show up
         // first, because the attached node lists are reversed).
-        for &domtree_node in ctx.domtree_preorder() {
-            for phi in ctx.get_attached_phis(domtree.get_cfg_node(domtree_node)) {
+        for &cfg_node in ctx.cfg_preorder() {
+            let domtree_node = ctx.domtree().get_tree_node(cfg_node).unwrap();
+            for phi in ctx.get_attached_phis(cfg_node) {
                 final_schedule.push_node(domtree_node, phi);
             }
         }
@@ -216,7 +217,7 @@ type CfgDepthMap = SecondaryMap<DomTreeNode, CfgDepthData>;
 fn get_cfg_depth_map(ctx: &ScheduleCtx<'_>, loop_forest: &LoopForest) -> CfgDepthMap {
     let mut depth_map = CfgDepthMap::new();
 
-    for &domtree_node in ctx.domtree_preorder() {
+    for domtree_node in ctx.domtree().preorder() {
         // TODO: `loop_depth` is linear in the loop depth, which is probably okay in practice, but
         // can cause worst-case quadratic behavior.
         let loop_depth = loop_forest

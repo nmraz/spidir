@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use anyhow::{ensure, Result};
+use anyhow::Result;
 use ir::{domtree::DomTree, loops::LoopForest, module::Module};
 
 use crate::utils::write_graph_with_trailing_comments;
@@ -31,7 +31,7 @@ impl TestProvider for LoopForestProvider {
                             )
                             .unwrap();
                             if let Some(parent_loop) = loop_forest.loop_parent(containing_loop) {
-                                ensure!(loop_forest.root_loop(parent_loop) == root_loop);
+                                assert_eq!(loop_forest.root_loop(parent_loop), root_loop);
                                 write!(s, "parent {}; ", parent_loop.as_u32()).unwrap();
                             }
                         }
@@ -45,8 +45,7 @@ impl TestProvider for LoopForestProvider {
                 }
 
                 write!(s, "x").unwrap();
-                Ok(())
-            })?;
+            });
         }
 
         Ok(output)

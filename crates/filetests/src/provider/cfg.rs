@@ -31,8 +31,7 @@ impl TestProvider for CfgProvider {
                 } else {
                     write!(s, "x").unwrap();
                 }
-                Ok(())
-            })?;
+            });
         }
 
         Ok(output)

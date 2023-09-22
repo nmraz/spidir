@@ -24,32 +24,27 @@ pub fn write_graph_with_trailing_comments(
     output: &mut String,
     module: &Module,
     func: &FunctionData,
-    comment_fn: impl FnMut(&mut String, Node) -> Result<()>,
-) -> Result<()> {
-    writeln!(output, "function `{}`:", func.name)?;
-    let mut comment_annotator = CommentAnnotator {
-        comment_fn,
-        result: Ok(()),
-    };
+    comment_fn: impl FnMut(&mut String, Node),
+) {
+    writeln!(output, "function `{}`:", func.name).unwrap();
+    let mut comment_annotator = CommentAnnotator { comment_fn };
 
-    let _ = write_annotated_graph(
+    write_annotated_graph(
         output,
         &mut comment_annotator,
         module,
         &func.graph,
         func.entry,
         0,
-    );
-
-    comment_annotator.result
+    )
+    .unwrap();
 }
 
 struct CommentAnnotator<F> {
     comment_fn: F,
-    result: Result<()>,
 }
 
-impl<F: FnMut(&mut String, Node) -> Result<()>> AnnotateGraph<String> for CommentAnnotator<F> {
+impl<F: FnMut(&mut String, Node)> AnnotateGraph<String> for CommentAnnotator<F> {
     fn write_node(
         &mut self,
         s: &mut String,
@@ -67,11 +62,7 @@ impl<F: FnMut(&mut String, Node) -> Result<()>> AnnotateGraph<String> for Commen
         let pad_len = comment_start - node_line_len;
 
         write!(s, "{:pad_len$}# ", "").unwrap();
-        if let Err(err) = (self.comment_fn)(s, node) {
-            self.result = Err(err);
-            // Stop trying to print out the rest of the output.
-            return Err(fmt::Error);
-        }
+        (self.comment_fn)(s, node);
 
         Ok(())
     }

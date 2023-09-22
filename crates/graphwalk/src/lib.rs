@@ -65,6 +65,16 @@ impl<G: GraphRef> PreOrderContext<G> {
         self.stack.extend(roots);
     }
 
+    #[inline]
+    pub fn graph(&self) -> &G {
+        &self.graph
+    }
+
+    #[inline]
+    pub fn graph_mut(&mut self) -> &mut G {
+        &mut self.graph
+    }
+
     pub fn next(&mut self, visited: &mut impl VisitTracker<G::Node>) -> Option<G::Node> {
         let node = loop {
             let node = self.stack.pop()?;
@@ -99,6 +109,16 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> PreOrder<G, V> {
             visited: V::default(),
             ctx: PreOrderContext::new(graph, roots),
         }
+    }
+
+    #[inline]
+    pub fn graph(&self) -> &G {
+        self.ctx.graph()
+    }
+
+    #[inline]
+    pub fn graph_mut(&mut self) -> &mut G {
+        self.ctx.graph_mut()
     }
 }
 
@@ -135,6 +155,16 @@ impl<G: GraphRef> PostOrderContext<G> {
         // should always start with its entry node.
         self.stack
             .extend(roots.into_iter().map(|node| (WalkPhase::Pre, node)));
+    }
+
+    #[inline]
+    pub fn graph(&self) -> &G {
+        &self.graph
+    }
+
+    #[inline]
+    pub fn graph_mut(&mut self) -> &mut G {
+        &mut self.graph
     }
 
     pub fn next(&mut self, visited: &mut impl VisitTracker<G::Node>) -> Option<G::Node> {
@@ -188,6 +218,16 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> PostOrder<G, V> {
             visited: V::default(),
             ctx: PostOrderContext::new(graph, roots),
         }
+    }
+
+    #[inline]
+    pub fn graph(&self) -> &G {
+        self.ctx.graph()
+    }
+
+    #[inline]
+    pub fn graph_mut(&mut self) -> &mut G {
+        self.ctx.graph_mut()
     }
 
     pub fn next_event(&mut self) -> Option<(WalkPhase, G::Node)> {

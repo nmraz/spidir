@@ -131,24 +131,20 @@ impl<N: EntityRef> DomTree<N> {
     }
 
     fn compute_dfs_times(&mut self) {
-        // Note: we don't use the postorder API here because it doesn't yet provide easy access to
-        // the underlying graph, which we need here because we mutate `self`.
+        let root = self.root();
+        let mut postorder = TreePostOrder::new(self, [root]);
 
         let mut timestamp = 0;
-        let mut stack = vec![(WalkPhase::Pre, self.root())];
+        while let Some((phase, node)) = postorder.next_event() {
+            let this = postorder.graph_mut();
 
-        while let Some((phase, node)) = stack.pop() {
             match phase {
                 WalkPhase::Pre => {
-                    let data = &mut self.tree[node];
+                    let data = &mut this.tree[node];
                     data.dfs_entry = timestamp;
-                    stack.push((WalkPhase::Post, node));
-                    for &child in data.children.as_slice(&self.child_pool) {
-                        stack.push((WalkPhase::Pre, child));
-                    }
                 }
                 WalkPhase::Post => {
-                    self.tree[node].dfs_exit = timestamp;
+                    this.tree[node].dfs_exit = timestamp;
                 }
             }
             timestamp += 1;
@@ -179,6 +175,14 @@ impl<N: EntityRef> graphwalk::GraphRef for &'_ DomTree<N> {
         for &child in self.children(node) {
             f(child);
         }
+    }
+}
+
+impl<N: EntityRef> graphwalk::GraphRef for &'_ mut DomTree<N> {
+    type Node = DomTreeNode;
+
+    fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
+        (&**self).successors(node, f);
     }
 }
 

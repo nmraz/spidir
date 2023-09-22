@@ -8,7 +8,6 @@ use log::Log;
 
 pub fn init_log_capture() {
     log::set_logger(&CapturingLogger).unwrap();
-    log::set_max_level(log::LevelFilter::Trace);
 }
 
 pub fn capture_logs<R>(f: impl FnOnce() -> R) -> (R, Vec<String>) {

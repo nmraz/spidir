@@ -12,6 +12,7 @@ use filetests::{
     run_file_test, TestOutcome, UpdateMode,
 };
 use glob::Pattern;
+use log::LevelFilter as LogLevelFilter;
 
 const OK: &str = "\x1b[32mok\x1b[0m";
 const UPDATED: &str = "\x1b[34mupdated\x1b[0m";
@@ -30,6 +31,27 @@ impl CliUpdateMode {
             CliUpdateMode::Never => UpdateMode::Never,
             CliUpdateMode::Failed => UpdateMode::IfFailed,
             CliUpdateMode::Always => UpdateMode::Always,
+        }
+    }
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum CliLogLevel {
+    Trace,
+    Debug,
+    Info,
+    Warn,
+    Error,
+}
+
+impl CliLogLevel {
+    fn to_log_level(self) -> LogLevelFilter {
+        match self {
+            CliLogLevel::Trace => LogLevelFilter::Trace,
+            CliLogLevel::Debug => LogLevelFilter::Debug,
+            CliLogLevel::Info => LogLevelFilter::Info,
+            CliLogLevel::Warn => LogLevelFilter::Warn,
+            CliLogLevel::Error => LogLevelFilter::Error,
         }
     }
 }
@@ -54,6 +76,14 @@ struct Cli {
     #[arg(short, long)]
     update_mode: Option<CliUpdateMode>,
 
+    /// Enables logs from tests to be captured, and displays them if tests fail
+    ///
+    /// This option accepts an optional level argument controlling the verbosity of logs to be
+    /// captured; `trace` is the most verbose while `error` is the least verbose. If the level is
+    /// not specified, it defaults to `trace`.
+    #[arg(short, long)]
+    logs: Option<Option<CliLogLevel>>,
+
     /// One or more glob patterns indicating which tests to run
     ///
     /// If no patterns are specified, all tests will be run.
@@ -69,7 +99,11 @@ fn main() -> Result<()> {
     let case_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("cases");
     let (cases, filtered) = collect_test_cases(&case_dir, cli.cases)?;
 
-    init_log_capture();
+    if let Some(logs) = cli.logs {
+        init_log_capture();
+        let level = logs.unwrap_or(CliLogLevel::Trace).to_log_level();
+        log::set_max_level(level);
+    }
 
     let mut passed = 0;
     let mut failures = Vec::new();

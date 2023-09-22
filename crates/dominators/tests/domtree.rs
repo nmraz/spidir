@@ -241,6 +241,64 @@ test_domtree! {
 }
 
 test_domtree! {
+    lt_paper,
+    "R -> A, B, C
+    B -> A, D, E
+    A -> D
+    E -> H
+    D -> L
+    L -> H
+    H -> E, K
+    C -> F, G
+    F -> I
+    G -> I, J
+    J -> I
+    I -> K
+    K -> I, R",
+    expect![[r#"
+        R
+          A
+          D
+            L
+          H
+          E
+          B
+          K
+          I
+          C
+            F
+            G
+              J
+    "#]]
+}
+
+test_domtree! {
+    rustc_bucket_bug,
+    "0 -> 1
+    1 -> 2
+    2 -> 3
+    3 -> 4
+
+    1 -> 5
+    5 -> 6
+
+    0 -> 7
+
+    7 -> 2
+    5 -> 3",
+    expect![[r#"
+        0
+          1
+            5
+              6
+          3
+            4
+          2
+          7
+    "#]]
+}
+
+test_domtree! {
     unreachable_subgraph,
     "entry -> exit
     a -> b, c

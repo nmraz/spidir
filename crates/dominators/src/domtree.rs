@@ -6,8 +6,9 @@ use core::{
 use alloc::{vec, vec::Vec};
 
 use cranelift_entity::{
-    entity_impl, packed_option::PackedOption, EntityList, EntityRef, ListPool, PrimaryMap,
-    SecondaryMap,
+    entity_impl,
+    packed_option::{PackedOption, ReservedValue},
+    EntityList, EntityRef, ListPool, PrimaryMap, SecondaryMap,
 };
 use graphwalk::{PredGraph, TreePostOrder, TreePreOrder, WalkPhase};
 use smallvec::SmallVec;
@@ -181,11 +182,33 @@ impl<N: EntityRef> graphwalk::Graph for &'_ DomTree<N> {
     }
 }
 
-type PreorderNum = u32;
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct PreorderNum(u32);
+
+impl PreorderNum {
+    fn new(val: u32) -> Self {
+        assert!(val < u32::MAX);
+        Self(val)
+    }
+
+    fn get(self) -> u32 {
+        self.0
+    }
+}
+
+impl ReservedValue for PreorderNum {
+    fn reserved_value() -> Self {
+        PreorderNum(u32::MAX)
+    }
+
+    fn is_reserved_value(&self) -> bool {
+        self.0 == u32::MAX
+    }
+}
 
 struct DfsFrame<N> {
     node: N,
-    parent: Option<PreorderNum>,
+    parent: PackedOption<PreorderNum>,
 }
 
 struct NodeInfo<N> {
@@ -194,7 +217,7 @@ struct NodeInfo<N> {
 
     /// The preorder number of the parent of the node in the DFS tree if it has not yet been linked
     /// in the link-eval forest, or some ancestor of the node in the forest otherwise.
-    ancestor: Option<PreorderNum>,
+    ancestor: PackedOption<PreorderNum>,
 
     /// If this node is a tree root in the link-eval forest, points to the node itself.
     /// Otherwise, contains a node `w` with minimal `info.sdom` such that
@@ -228,7 +251,11 @@ impl<N> Preorder<N> {
     }
 
     fn next_num(&self) -> PreorderNum {
-        self.0.len() as u32
+        PreorderNum::new(self.0.len() as u32)
+    }
+
+    fn iter(&self) -> impl DoubleEndedIterator<Item = PreorderNum> + ExactSizeIterator {
+        (0..self.next_num().get()).map(PreorderNum::new)
     }
 }
 
@@ -236,17 +263,17 @@ impl<N> Index<PreorderNum> for Preorder<N> {
     type Output = NodeInfo<N>;
 
     fn index(&self, index: PreorderNum) -> &NodeInfo<N> {
-        &self.0[index as usize]
+        &self.0[index.get() as usize]
     }
 }
 
 impl<N> IndexMut<PreorderNum> for Preorder<N> {
     fn index_mut(&mut self, index: PreorderNum) -> &mut Self::Output {
-        &mut self.0[index as usize]
+        &mut self.0[index.get() as usize]
     }
 }
 
-type PreorderByNode<N> = SecondaryMap<N, Option<PreorderNum>>;
+type PreorderByNode<N> = SecondaryMap<N, PackedOption<PreorderNum>>;
 
 type Bucket = SmallVec<[PreorderNum; 2]>;
 
@@ -259,7 +286,7 @@ fn do_dfs<N: EntityRef>(
 
     let mut dfs_stack = vec![DfsFrame {
         node: entry,
-        parent: None,
+        parent: None.into(),
     }];
 
     while let Some(frame) = dfs_stack.pop() {
@@ -277,9 +304,9 @@ fn do_dfs<N: EntityRef>(
                 // `node` itself.
                 sdom: num,
                 // This will be filled in later once the node's semidominator is visited.
-                dom: 0,
+                dom: PreorderNum::new(0),
             });
-            preorder_by_node[node] = Some(num);
+            preorder_by_node[node] = num.into();
 
             graph.successors(node, |succ| {
                 // Optimization: avoid placing the node on the stack at all if it has already
@@ -287,7 +314,7 @@ fn do_dfs<N: EntityRef>(
                 if preorder_by_node[succ].is_none() {
                     dfs_stack.push(DfsFrame {
                         node: succ,
-                        parent: Some(num),
+                        parent: num.into(),
                     });
                 }
             });
@@ -309,17 +336,17 @@ fn compute_reldoms<N: EntityRef>(
     // Compute semidominators for all nodes other than `entry` by traversing the DFS tree in reverse
     // preorder, and find all nodes whose immediate dominator can be known immediately based
     // on Theorem 2.
-    for node in (1..preorder.next_num()).rev() {
+    for node in preorder.iter().skip(1).rev() {
         // This is the lowest-numbered node with a parent in the link-eval forest, since every loop
         // iteration ends by linking the current node to its DFS parent.
         // Note that this value is still correct when processing highest-numbered node in the graph;
         // it just means that all nodes in the graph will be considered as tree roots, which is
         // exactly what we want.
-        let lowest_linked = node + 1;
+        let lowest_linked = PreorderNum::new(node.get() + 1);
 
         // Try to identify any new nodes `u` for which we can prove `idom(u) = sdom(u)` based on
         // Theorem 2, and record those immediate dominators.
-        for &semi_dominee in &buckets[node as usize] {
+        for &semi_dominee in &buckets[node.get() as usize] {
             let reldom = eval_ctx.eval(preorder, lowest_linked, semi_dominee);
 
             // Note: we are guaranteed that
@@ -348,7 +375,7 @@ fn compute_reldoms<N: EntityRef>(
         // This only works because we are traversing in reverse preorder, which means that the
         // semidominators for any nodes with a higher preorder number are already correct.
         graph.predecessors(preorder[node].node, |pred| {
-            let Some(pred) = preorder_by_node[pred] else {
+            let Some(pred) = preorder_by_node[pred].expand() else {
                 // This predecessor isn't reachable in the CFG, so it can (and should) be completely
                 // ignored.
                 return;
@@ -397,7 +424,7 @@ fn compute_reldoms<N: EntityRef>(
             preorder[node].dom = parent;
         } else {
             // Place `node` in the bucket of its semidominator for processing later.
-            buckets[sdom as usize].push(node);
+            buckets[sdom.get() as usize].push(node);
         }
 
         // Implicit: we now consider `node` to be linked to its parent in the link-eval forest;
@@ -412,12 +439,12 @@ fn compute_domtree_from_reldoms<N: EntityRef>(preorder: &mut Preorder<N>) -> Dom
         child_pool: ListPool::new(),
     };
 
-    let root = domtree.insert_node(preorder[0].node, None);
+    let root = domtree.insert_node(preorder[PreorderNum::new(0)].node, None);
     assert!(root == domtree.root());
 
     // Fill in immediate dominators for all nodes based on their `dom`, by traversing the DFS tree
     // in preorder.
-    for node in 1..preorder.next_num() {
+    for node in preorder.iter().skip(1) {
         // If the recorded dominator is not the same as the semidominator, it is actually a relative
         // dominator and not the immediate dominator. In that case, grab the immediate dominator of
         // the relative dominator, using the fact that it will have already been computed in a
@@ -459,11 +486,11 @@ impl EvalContext {
         node: PreorderNum,
     ) -> PreorderNum {
         debug_assert!(
-            lowest_linked > 0,
+            lowest_linked.get() > 0,
             "root node should never be linked in link-eval forest"
         );
 
-        let Some(mut ancestor) = preorder[node].ancestor else {
+        let Some(mut ancestor) = preorder[node].ancestor.expand() else {
             // The DFS root is never linked, so its `eval` always ends up returning itself.
             return node;
         };
@@ -503,7 +530,7 @@ impl EvalContext {
 
         for &node in self.path.iter().rev() {
             // Compress all paths directly to the root.
-            preorder[node].ancestor = Some(root);
+            preorder[node].ancestor = root.into();
             // We know that `preorder[node].label` was the correct minimum at least along the path
             // from `node` to `parent`, so to get it all the way to `root` just combine it with the
             // already-correct value of the parent.

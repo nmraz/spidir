@@ -7,7 +7,7 @@ use itertools::{izip, Itertools};
 use smallvec::SmallVec;
 
 use crate::{
-    domtree::{DomTree, TreeNode},
+    domtree::{DomTree, DomTreeNode},
     module::{Function, FunctionData, Module},
     node::{DepValueKind, NodeKind},
     schedule::{schedule_early, ByNodeSchedule, ScheduleCtx},
@@ -317,7 +317,7 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVe
     }
 }
 
-type InputLocScratch = SmallVec<[(TreeNode, u32); 4]>;
+type InputLocScratch = SmallVec<[(DomTreeNode, u32); 4]>;
 
 fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
     let domtree = DomTree::compute(graph, entry);
@@ -342,7 +342,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
 
 fn verify_dataflow_cfg_node_inputs(
     ctx: &ScheduleCtx<'_>,
-    domtree_node: TreeNode,
+    domtree_node: DomTreeNode,
     schedule: &ByNodeSchedule,
     input_locs: &mut InputLocScratch,
     errors: &mut Vec<GraphVerifierError>,
@@ -416,7 +416,7 @@ fn get_last_scheduled_input(
     node: Node,
     input_locs: &mut InputLocScratch,
     errors: &mut Vec<GraphVerifierError>,
-) -> Option<(TreeNode, u32)> {
+) -> Option<(DomTreeNode, u32)> {
     let graph = ctx.graph();
 
     input_locs.clear();

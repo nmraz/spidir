@@ -6,12 +6,12 @@ use cranelift_entity::{packed_option::PackedOption, EntitySet, SecondaryMap};
 use graphwalk::PostOrderContext;
 
 use crate::{
-    domtree::{DomTree, TreeNode},
+    domtree::{DomTree, DomTreeNode},
     valgraph::{Node, ValGraph},
     valwalk::{cfg_preorder, dataflow_preds, dataflow_succs, get_attached_phis, LiveNodeInfo},
 };
 
-pub type ByNodeSchedule = SecondaryMap<Node, PackedOption<TreeNode>>;
+pub type ByNodeSchedule = SecondaryMap<Node, PackedOption<DomTreeNode>>;
 
 pub struct ScheduleCtx<'a> {
     graph: &'a ValGraph,
@@ -95,7 +95,7 @@ impl<'a> ScheduleCtx<'a> {
 
 pub fn schedule_early(
     ctx: &ScheduleCtx<'_>,
-    mut schedule_node: impl FnMut(&ByNodeSchedule, Node) -> TreeNode,
+    mut schedule_node: impl FnMut(&ByNodeSchedule, Node) -> DomTreeNode,
 ) -> ByNodeSchedule {
     let mut schedule = ctx.pinned_nodes.clone();
     let mut visited = EntitySet::new();
@@ -115,7 +115,7 @@ pub fn schedule_early(
 
 pub fn schedule_late(
     ctx: &ScheduleCtx<'_>,
-    mut schedule_node: impl FnMut(&ByNodeSchedule, Node) -> TreeNode,
+    mut schedule_node: impl FnMut(&ByNodeSchedule, Node) -> DomTreeNode,
 ) -> ByNodeSchedule {
     let mut schedule = ctx.pinned_nodes.clone();
     let mut visited = EntitySet::new();

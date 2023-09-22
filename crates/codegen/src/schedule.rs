@@ -1,6 +1,6 @@
 use cranelift_entity::{EntityList, ListPool, SecondaryMap};
 use ir::{
-    domtree::{DomTree, TreeNode as DomTreeNode},
+    domtree::{DomTree, DomTreeNode},
     loop_forest::LoopForest,
     node::NodeKind,
     schedule::{schedule_early, schedule_late, ByNodeSchedule, ScheduleCtx},

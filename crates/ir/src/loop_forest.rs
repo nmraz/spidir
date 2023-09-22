@@ -6,7 +6,7 @@ use cranelift_entity::{entity_impl, packed_option::PackedOption, PrimaryMap, Sec
 use smallvec::SmallVec;
 
 use crate::{
-    domtree::{DomTree, TreeNode},
+    domtree::{DomTree, DomTreeNode},
     valgraph::ValGraph,
     valwalk::cfg_preds,
 };
@@ -17,12 +17,12 @@ entity_impl!(Loop, "loop");
 
 struct LoopData {
     parent: PackedOption<Loop>,
-    header: TreeNode,
+    header: DomTreeNode,
 }
 
 pub struct LoopForest {
     loops: PrimaryMap<Loop, LoopData>,
-    containing_loops: SecondaryMap<TreeNode, PackedOption<Loop>>,
+    containing_loops: SecondaryMap<DomTreeNode, PackedOption<Loop>>,
 }
 
 impl LoopForest {
@@ -32,7 +32,7 @@ impl LoopForest {
             containing_loops: SecondaryMap::new(),
         };
 
-        let mut latches = SmallVec::<[TreeNode; 4]>::new();
+        let mut latches = SmallVec::<[DomTreeNode; 4]>::new();
 
         for tree_node in domtree.postorder() {
             // Detect if `tree_node` is a loop header by checking if it has a CFG
@@ -70,7 +70,7 @@ impl LoopForest {
     }
 
     #[inline]
-    pub fn loop_header(&self, loop_node: Loop) -> TreeNode {
+    pub fn loop_header(&self, loop_node: Loop) -> DomTreeNode {
         self.loops[loop_node].header
     }
 
@@ -93,7 +93,7 @@ impl LoopForest {
     }
 
     #[inline]
-    pub fn containing_loop(&self, node: TreeNode) -> Option<Loop> {
+    pub fn containing_loop(&self, node: DomTreeNode) -> Option<Loop> {
         self.containing_loops[node].expand()
     }
 
@@ -102,7 +102,7 @@ impl LoopForest {
         graph: &ValGraph,
         domtree: &DomTree,
         loop_node: Loop,
-        node: TreeNode,
+        node: DomTreeNode,
     ) -> bool {
         let header = self.loop_header(loop_node);
         if !domtree.dominates(header, node) {
@@ -120,7 +120,7 @@ impl LoopForest {
         graph: &ValGraph,
         domtree: &DomTree,
         new_loop: Loop,
-        latches: &[TreeNode],
+        latches: &[DomTreeNode],
     ) {
         let header = self.loops[new_loop].header;
         let mut stack = latches.to_owned();
@@ -154,7 +154,7 @@ impl LoopForest {
         }
     }
 
-    fn create_loop(&mut self, header: TreeNode) -> Loop {
+    fn create_loop(&mut self, header: DomTreeNode) -> Loop {
         let loop_node = self.loops.push(LoopData {
             parent: None.into(),
             header,
@@ -167,9 +167,9 @@ impl LoopForest {
 fn push_loop_preds(
     graph: &ValGraph,
     domtree: &DomTree,
-    node: TreeNode,
-    header: TreeNode,
-    stack: &mut Vec<TreeNode>,
+    node: DomTreeNode,
+    header: DomTreeNode,
+    stack: &mut Vec<DomTreeNode>,
 ) {
     for pred in cfg_preds(graph, domtree.get_cfg_node(node)) {
         if let Some(tree_pred) = domtree.get_tree_node(pred) {

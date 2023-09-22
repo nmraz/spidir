@@ -20,23 +20,23 @@ use crate::{
 type CfgMap<T> = FxHashMap<Node, T>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct TreeNode(u32);
-entity_impl!(TreeNode);
+pub struct DomTreeNode(u32);
+entity_impl!(DomTreeNode);
 
-type TreeNodeList = EntityList<TreeNode>;
+type TreeNodeList = EntityList<DomTreeNode>;
 
-struct TreeNodeData {
+struct DomTreeNodeData {
     cfg_node: Node,
-    idom: PackedOption<TreeNode>,
+    idom: PackedOption<DomTreeNode>,
     children: TreeNodeList,
     dfs_entry: u32,
     dfs_exit: u32,
 }
 
 pub struct DomTree {
-    tree: PrimaryMap<TreeNode, TreeNodeData>,
-    tree_nodes_by_node: CfgMap<TreeNode>,
-    child_pool: ListPool<TreeNode>,
+    tree: PrimaryMap<DomTreeNode, DomTreeNodeData>,
+    tree_nodes_by_node: CfgMap<DomTreeNode>,
+    child_pool: ListPool<DomTreeNode>,
 }
 
 impl DomTree {
@@ -84,39 +84,39 @@ impl DomTree {
         a != b && self.cfg_dominates(a, b)
     }
 
-    pub fn get_tree_node(&self, node: Node) -> Option<TreeNode> {
+    pub fn get_tree_node(&self, node: Node) -> Option<DomTreeNode> {
         self.tree_nodes_by_node.get(&node).copied()
     }
 
     #[inline]
-    pub fn get_cfg_node(&self, node: TreeNode) -> Node {
+    pub fn get_cfg_node(&self, node: DomTreeNode) -> Node {
         self.tree[node].cfg_node
     }
 
     #[inline]
-    pub fn root(&self) -> TreeNode {
+    pub fn root(&self) -> DomTreeNode {
         // This is verified below when constructing the tree.
-        TreeNode::from_u32(0)
+        DomTreeNode::from_u32(0)
     }
 
     #[inline]
-    pub fn idom(&self, node: TreeNode) -> Option<TreeNode> {
+    pub fn idom(&self, node: DomTreeNode) -> Option<DomTreeNode> {
         self.tree[node].idom.expand()
     }
 
     #[inline]
-    pub fn children(&self, node: TreeNode) -> &[TreeNode] {
+    pub fn children(&self, node: DomTreeNode) -> &[DomTreeNode] {
         self.tree[node].children.as_slice(&self.child_pool)
     }
 
-    pub fn dominates(&self, a: TreeNode, b: TreeNode) -> bool {
+    pub fn dominates(&self, a: DomTreeNode, b: DomTreeNode) -> bool {
         let a = &self.tree[a];
         let b = &self.tree[b];
         // Apply the parenthesis theorem to determine whether `a` is an ancestor of `b`.
         a.dfs_entry <= b.dfs_entry && b.dfs_exit <= a.dfs_exit
     }
 
-    pub fn strictly_dominates(&self, a: TreeNode, b: TreeNode) -> bool {
+    pub fn strictly_dominates(&self, a: DomTreeNode, b: DomTreeNode) -> bool {
         a != b && self.dominates(a, b)
     }
 
@@ -153,12 +153,12 @@ impl DomTree {
         }
     }
 
-    fn add_child(&mut self, idom: TreeNode, child: TreeNode) {
+    fn add_child(&mut self, idom: DomTreeNode, child: DomTreeNode) {
         self.tree[idom].children.push(child, &mut self.child_pool);
     }
 
-    fn insert_node(&mut self, node: Node, idom: Option<TreeNode>) -> TreeNode {
-        let tree_node = self.tree.push(TreeNodeData {
+    fn insert_node(&mut self, node: Node, idom: Option<DomTreeNode>) -> DomTreeNode {
+        let tree_node = self.tree.push(DomTreeNodeData {
             cfg_node: node,
             idom: idom.into(),
             children: TreeNodeList::new(),
@@ -171,7 +171,7 @@ impl DomTree {
 }
 
 impl graphwalk::Graph for &'_ DomTree {
-    type Node = TreeNode;
+    type Node = DomTreeNode;
 
     fn successors(&self, node: Self::Node, mut f: impl FnMut(Self::Node)) {
         for &child in self.children(node) {

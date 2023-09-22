@@ -1,0 +1,24 @@
+# run: cfg
+
+func @conditional_uses(i32, i32, ptr) {
+    # check: function `conditional_uses`:
+    # nextln: %0:ctrl, %1:i32, %2:i32, %3:ptr = entry         # head block0
+    # nextln: %4:ctrl, %5:ctrl = brcond %0, %1        # term block0 -> block3, block1
+    # nextln: %6:i32 = imul %1, %2                    # x
+    # nextln: %7:ctrl = store.4 %4, %6, %3            # head block3
+    # nextln: %8:i32 = iconst 5                       # x
+    # nextln: %9:i32 = iadd %1, %8                    # x
+    # nextln: %10:ctrl = store.4 %5, %9, %3           # head block1
+    # nextln: %11:ctrl, %12:phisel = region %7, %10   # head block2
+    # nextln: return %11                              # term block2
+
+    %entry:ctrl, %p1:i32, %p2:i32, %p3:ptr = entry
+    %p1t:ctrl, %p1f:ctrl = brcond %entry, %p1
+    %p1p2:i32 = imul %p1, %p2
+    %exit1:ctrl = store.4 %p1t, %p1p2, %p3
+    %five:i32 = iconst 5
+    %p1_5:i32 = iadd %p1, %five
+    %exit2:ctrl = store.4 %p1f, %p1_5, %p3
+    %exit:ctrl, %ep:phisel = region %exit1, %exit2
+    return %exit
+}

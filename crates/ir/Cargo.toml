@@ -13,6 +13,7 @@ graphwalk.workspace = true
 cranelift-entity.workspace = true
 hashbrown = { workspace = true, features = ["raw"] }
 itertools.workspace = true
+log.workspace = true
 smallvec.workspace = true
 
 [dev-dependencies]

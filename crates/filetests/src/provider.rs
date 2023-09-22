@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use anyhow::{anyhow, bail, Ok, Result};
+use anyhow::{anyhow, bail, Result};
 use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{module::Module, write::quote_ident};
@@ -8,6 +8,7 @@ use ir::{module::Module, write::quote_ident};
 use crate::utils::parse_output_func_heading;
 
 use self::{
+    cfg::CfgProvider,
     domtree::DomTreeProvider,
     graphviz::{AnnotatorKind, GraphvizTestProvider},
     loops::LoopForestProvider,
@@ -15,6 +16,7 @@ use self::{
     verify::{VerifyErrProvider, VerifyOkProvider},
 };
 
+mod cfg;
 mod domtree;
 mod graphviz;
 mod loops;
@@ -32,6 +34,7 @@ pub trait TestProvider {
 
 pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> {
     match run_command {
+        "cfg" => Ok(Box::new(CfgProvider)),
         "domtree" => Ok(Box::new(DomTreeProvider)),
         "graphviz[plain]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Plain))),
         "graphviz[colored]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Colored))),

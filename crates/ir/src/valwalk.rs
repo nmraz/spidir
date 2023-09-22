@@ -5,7 +5,7 @@ use alloc::{vec, vec::Vec};
 use cranelift_entity::EntitySet;
 use dominators::IntoCfg;
 
-use crate::valgraph::{Node, ValGraph};
+use crate::valgraph::{DepValue, Node, ValGraph};
 
 pub type PreOrder<G> = graphwalk::PreOrder<G, EntitySet<Node>>;
 pub type PostOrder<G> = graphwalk::PostOrder<G, EntitySet<Node>>;
@@ -162,11 +162,15 @@ pub fn dataflow_succs<'a>(
         .filter(move |&(succ, _input_idx)| live_nodes.contains(succ))
 }
 
-pub fn cfg_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+pub fn cfg_outputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = DepValue> + '_ {
     graph
         .node_outputs(node)
         .into_iter()
         .filter(|&output| graph.value_kind(output).is_control())
+}
+
+pub fn cfg_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+    cfg_outputs(graph, node)
         .flat_map(|output| graph.value_uses(output))
         .map(|(succ_node, _succ_input_idx)| succ_node)
 }
@@ -210,12 +214,15 @@ pub fn cfg_preorder(graph: &ValGraph, entry: Node) -> CfgPreorder<'_> {
     CfgPreorder::new(ForwardCfg::new(graph), [entry])
 }
 
-pub fn cfg_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+pub fn cfg_inputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = DepValue> + '_ {
     graph
         .node_inputs(node)
         .into_iter()
         .filter(|&input| graph.value_kind(input).is_control())
-        .map(|input| graph.value_def(input).0)
+}
+
+pub fn cfg_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+    cfg_inputs(graph, node).map(|input| graph.value_def(input).0)
 }
 
 pub fn get_attached_phis(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {

@@ -408,6 +408,7 @@ dependencies = [
  "graphwalk",
  "hashbrown",
  "itertools",
+ "log",
  "smallvec",
 ]
 

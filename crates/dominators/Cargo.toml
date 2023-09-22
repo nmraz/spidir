@@ -11,3 +11,7 @@ graphwalk.workspace = true
 
 cranelift-entity.workspace = true
 smallvec.workspace = true
+
+[dev-dependencies]
+graphmock.workspace = true
+expect-test.workspace = true

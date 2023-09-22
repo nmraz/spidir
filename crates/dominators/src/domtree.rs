@@ -10,7 +10,7 @@ use cranelift_entity::{
     packed_option::{PackedOption, ReservedValue},
     EntityList, EntityRef, ListPool, PrimaryMap, SecondaryMap,
 };
-use graphwalk::{PredGraph, TreePostOrder, TreePreOrder, WalkPhase};
+use graphwalk::{PredGraphRef, TreePostOrder, TreePreOrder, WalkPhase};
 use smallvec::SmallVec;
 
 use crate::IntoCfg;
@@ -172,7 +172,7 @@ impl<N: EntityRef> DomTree<N> {
     }
 }
 
-impl<N: EntityRef> graphwalk::Graph for &'_ DomTree<N> {
+impl<N: EntityRef> graphwalk::GraphRef for &'_ DomTree<N> {
     type Node = DomTreeNode;
 
     fn successors(&self, node: Self::Node, mut f: impl FnMut(Self::Node)) {
@@ -278,7 +278,7 @@ type PreorderByNode<N> = SecondaryMap<N, PackedOption<PreorderNum>>;
 type Bucket = SmallVec<[PreorderNum; 2]>;
 
 fn do_dfs<N: EntityRef>(
-    graph: &impl PredGraph<Node = N>,
+    graph: &impl PredGraphRef<Node = N>,
     entry: N,
 ) -> (Preorder<N>, PreorderByNode<N>) {
     let mut preorder_by_node = PreorderByNode::default();
@@ -325,7 +325,7 @@ fn do_dfs<N: EntityRef>(
 }
 
 fn compute_reldoms<N: EntityRef>(
-    graph: &impl PredGraph<Node = N>,
+    graph: &impl PredGraphRef<Node = N>,
     preorder: &mut Preorder<N>,
     preorder_by_node: PreorderByNode<N>,
 ) {

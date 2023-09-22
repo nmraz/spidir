@@ -172,7 +172,7 @@ impl<'a> UnpinnedDataPreds<'a> {
     }
 }
 
-impl<'a> graphwalk::Graph for UnpinnedDataPreds<'a> {
+impl<'a> graphwalk::GraphRef for UnpinnedDataPreds<'a> {
     type Node = Node;
 
     fn successors(&self, node: Node, f: impl FnMut(Node)) {
@@ -200,7 +200,7 @@ impl<'a> UnpinnedDataSuccs<'a> {
     }
 }
 
-impl<'a> graphwalk::Graph for UnpinnedDataSuccs<'a> {
+impl<'a> graphwalk::GraphRef for UnpinnedDataSuccs<'a> {
     type Node = Node;
 
     fn successors(&self, node: Node, mut f: impl FnMut(Node)) {

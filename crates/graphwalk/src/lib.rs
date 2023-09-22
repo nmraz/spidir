@@ -11,12 +11,12 @@ pub enum WalkPhase {
     Post,
 }
 
-pub trait Graph {
+pub trait GraphRef {
     type Node: Copy;
     fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node));
 }
 
-pub trait PredGraph: Graph {
+pub trait PredGraphRef: GraphRef {
     fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node));
 }
 
@@ -45,12 +45,12 @@ impl<N: EntityRef> VisitTracker<N> for EntitySet<N> {
     }
 }
 
-pub struct PreOrderContext<G: Graph> {
+pub struct PreOrderContext<G: GraphRef> {
     graph: G,
     stack: Vec<G::Node>,
 }
 
-impl<G: Graph> PreOrderContext<G> {
+impl<G: GraphRef> PreOrderContext<G> {
     pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
         let mut res = Self {
             graph,
@@ -88,12 +88,12 @@ impl<G: Graph> PreOrderContext<G> {
     }
 }
 
-pub struct PreOrder<G: Graph, V> {
+pub struct PreOrder<G: GraphRef, V> {
     pub visited: V,
     ctx: PreOrderContext<G>,
 }
 
-impl<G: Graph, V: VisitTracker<G::Node>> PreOrder<G, V> {
+impl<G: GraphRef, V: VisitTracker<G::Node>> PreOrder<G, V> {
     pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
         Self {
             visited: V::default(),
@@ -102,7 +102,7 @@ impl<G: Graph, V: VisitTracker<G::Node>> PreOrder<G, V> {
     }
 }
 
-impl<G: Graph, V: VisitTracker<G::Node>> Iterator for PreOrder<G, V> {
+impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PreOrder<G, V> {
     type Item = G::Node;
 
     fn next(&mut self) -> Option<G::Node> {
@@ -112,12 +112,12 @@ impl<G: Graph, V: VisitTracker<G::Node>> Iterator for PreOrder<G, V> {
 
 pub type TreePreOrder<G> = PreOrder<G, NopTracker>;
 
-pub struct PostOrderContext<G: Graph> {
+pub struct PostOrderContext<G: GraphRef> {
     graph: G,
     stack: Vec<(WalkPhase, G::Node)>,
 }
 
-impl<G: Graph> PostOrderContext<G> {
+impl<G: GraphRef> PostOrderContext<G> {
     pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
         let mut res = Self {
             graph,
@@ -177,12 +177,12 @@ impl<G: Graph> PostOrderContext<G> {
     }
 }
 
-pub struct PostOrder<G: Graph, V> {
+pub struct PostOrder<G: GraphRef, V> {
     pub visited: V,
     ctx: PostOrderContext<G>,
 }
 
-impl<G: Graph, V: VisitTracker<G::Node>> PostOrder<G, V> {
+impl<G: GraphRef, V: VisitTracker<G::Node>> PostOrder<G, V> {
     pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
         Self {
             visited: V::default(),
@@ -195,7 +195,7 @@ impl<G: Graph, V: VisitTracker<G::Node>> PostOrder<G, V> {
     }
 }
 
-impl<G: Graph, V: VisitTracker<G::Node>> Iterator for PostOrder<G, V> {
+impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PostOrder<G, V> {
     type Item = G::Node;
 
     fn next(&mut self) -> Option<G::Node> {

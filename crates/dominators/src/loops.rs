@@ -4,7 +4,7 @@ use core::iter;
 use cranelift_entity::{
     entity_impl, packed_option::PackedOption, EntityRef, PrimaryMap, SecondaryMap,
 };
-use graphwalk::PredGraph;
+use graphwalk::PredGraphRef;
 use smallvec::SmallVec;
 
 use crate::{
@@ -132,7 +132,7 @@ impl LoopForest {
     /// assuming no ancestors of the loop have yet been recorded in the forest.
     fn discover_loop<N: EntityRef>(
         &mut self,
-        graph: &impl PredGraph<Node = N>,
+        graph: &impl PredGraphRef<Node = N>,
         domtree: &DomTree<N>,
         new_loop: Loop,
         latches: &[DomTreeNode],
@@ -180,7 +180,7 @@ impl LoopForest {
 }
 
 fn push_loop_preds<N: EntityRef>(
-    graph: &impl PredGraph<Node = N>,
+    graph: &impl PredGraphRef<Node = N>,
     domtree: &DomTree<N>,
     node: DomTreeNode,
     header: DomTreeNode,

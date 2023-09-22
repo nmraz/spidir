@@ -351,6 +351,9 @@ name = "graphwalk"
 version = "0.1.0"
 dependencies = [
  "cranelift-entity",
+ "expect-test",
+ "graphmock",
+ "itertools",
 ]
 
 [[package]]

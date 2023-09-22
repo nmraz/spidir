@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use anyhow::{Ok, Result};
 use cranelift_entity::SecondaryMap;
-use ir::{domtree::DomTree, module::Module, valwalk::LiveNodeInfo};
+use ir::{domtree, module::Module, valwalk::LiveNodeInfo};
 use itertools::Itertools;
 
 use crate::utils::write_graph_with_trailing_comments;
@@ -17,7 +17,7 @@ impl TestProvider for DomTreeProvider {
         for func in module.functions.values() {
             let graph = &func.graph;
 
-            let domtree = DomTree::compute(graph, func.entry);
+            let domtree = domtree::compute(graph, func.entry);
             let mut rpo_nums = SecondaryMap::new();
             for (i, &node) in LiveNodeInfo::compute(graph, func.entry)
                 .reverse_postorder(graph)

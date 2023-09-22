@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::{ensure, Result};
-use ir::{domtree::DomTree, loop_forest::LoopForest, module::Module};
+use ir::{domtree, loop_forest::LoopForest, module::Module};
 
 use crate::utils::write_graph_with_trailing_comments;
 
@@ -14,7 +14,7 @@ impl TestProvider for LoopForestProvider {
 
         for func in module.functions.values() {
             let graph = &func.graph;
-            let domtree = DomTree::compute(graph, func.entry);
+            let domtree = domtree::compute(graph, func.entry);
             let loop_forest = LoopForest::compute(graph, &domtree);
 
             write_graph_with_trailing_comments(&mut output, module, func, |s, node| {

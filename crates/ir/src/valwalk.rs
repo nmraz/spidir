@@ -171,16 +171,16 @@ pub fn cfg_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '
 }
 
 #[derive(Clone, Copy)]
-pub struct CfgSuccs<'a>(&'a ValGraph);
+pub struct ForwardCfg<'a>(&'a ValGraph);
 
-impl<'a> CfgSuccs<'a> {
+impl<'a> ForwardCfg<'a> {
     #[inline]
     pub fn new(graph: &'a ValGraph) -> Self {
         Self(graph)
     }
 }
 
-impl<'a> graphwalk::Graph for CfgSuccs<'a> {
+impl graphwalk::Graph for ForwardCfg<'_> {
     type Node = Node;
 
     fn successors(&self, node: Self::Node, f: impl FnMut(Node)) {
@@ -188,10 +188,16 @@ impl<'a> graphwalk::Graph for CfgSuccs<'a> {
     }
 }
 
-pub type CfgPreorder<'a> = PreOrder<CfgSuccs<'a>>;
+impl graphwalk::PredGraph for ForwardCfg<'_> {
+    fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
+        cfg_preds(self.0, node).for_each(f);
+    }
+}
+
+pub type CfgPreorder<'a> = PreOrder<ForwardCfg<'a>>;
 
 pub fn cfg_preorder(graph: &ValGraph, entry: Node) -> CfgPreorder<'_> {
-    CfgPreorder::new(CfgSuccs::new(graph), [entry])
+    CfgPreorder::new(ForwardCfg::new(graph), [entry])
 }
 
 pub fn cfg_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {

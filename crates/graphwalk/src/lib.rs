@@ -16,6 +16,10 @@ pub trait Graph {
     fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node));
 }
 
+pub trait PredGraph: Graph {
+    fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node));
+}
+
 pub trait VisitTracker<N>: Default {
     fn is_visited(&self, node: N) -> bool;
     fn mark_visited(&mut self, node: N);

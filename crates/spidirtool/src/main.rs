@@ -9,7 +9,7 @@ use std::{
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use ir::{
-    domtree::DomTree,
+    domtree,
     loop_forest::LoopForest,
     module::{FunctionData, Module},
     verify::{verify_func, verify_module},
@@ -186,7 +186,7 @@ fn output_dot_file(
     let loop_forest;
 
     let domtree = if annotator_opts.domtree || annotator_opts.loops {
-        Some(DomTree::compute(&func.graph, func.entry))
+        Some(domtree::compute(&func.graph, func.entry))
     } else {
         None
     };

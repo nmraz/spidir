@@ -4,7 +4,7 @@ use anyhow::Result;
 use codegen::schedule::Schedule;
 use filecheck::Value;
 use fx_utils::FxHashMap;
-use ir::{domtree::DomTree, loop_forest::LoopForest, module::Module, write::display_node};
+use ir::{domtree, loop_forest::LoopForest, module::Module, write::display_node};
 
 use crate::{regexes::VAL_REGEX, utils::generalize_value_names};
 
@@ -25,7 +25,7 @@ impl TestProvider for ScheduleProvider {
             writeln!(output, "function `{}`:", func.name).unwrap();
 
             let graph = &func.graph;
-            let domtree = DomTree::compute(graph, func.entry);
+            let domtree = domtree::compute(graph, func.entry);
             let loop_forest = LoopForest::compute(graph, &domtree);
             let schedule = Schedule::compute(graph, &domtree, &loop_forest);
 

@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use anyhow::{anyhow, Result};
 use ir::{
-    domtree::DomTree,
+    domtree,
     loop_forest::LoopForest,
     module::{FunctionData, Module},
     verify::{verify_func, GraphVerifierError},
@@ -74,7 +74,7 @@ impl TestProvider for GraphvizTestProvider {
                     );
                 }
                 AnnotatorKind::DomTree => {
-                    let domtree = DomTree::compute(&func.graph, func.entry);
+                    let domtree = domtree::compute(&func.graph, func.entry);
                     write_graphviz_with_annotator(
                         &mut output,
                         &mut [Box::new(DomTreeAnnotator::new(&domtree))],
@@ -83,7 +83,7 @@ impl TestProvider for GraphvizTestProvider {
                     );
                 }
                 AnnotatorKind::Loops => {
-                    let domtree = DomTree::compute(&func.graph, func.entry);
+                    let domtree = domtree::compute(&func.graph, func.entry);
                     let loop_forest = LoopForest::compute(&func.graph, &domtree);
                     write_graphviz_with_annotator(
                         &mut output,

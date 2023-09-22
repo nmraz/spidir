@@ -10,7 +10,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use ir::{
     domtree::DomTree,
-    loop_forest::LoopForest,
+    loops::LoopForest,
     module::{FunctionData, Module},
     verify::{verify_func, verify_module},
 };

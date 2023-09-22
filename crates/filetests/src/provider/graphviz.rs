@@ -3,7 +3,7 @@ use std::fmt::Write;
 use anyhow::{anyhow, Result};
 use ir::{
     domtree::DomTree,
-    loop_forest::LoopForest,
+    loops::LoopForest,
     module::{FunctionData, Module},
     verify::{verify_func, GraphVerifierError},
 };

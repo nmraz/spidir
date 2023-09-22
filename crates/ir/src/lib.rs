@@ -5,7 +5,7 @@ extern crate alloc;
 pub mod builder;
 pub mod cons_builder;
 pub mod domtree;
-pub mod loop_forest;
+pub mod loops;
 pub mod module;
 pub mod node;
 pub mod schedule;

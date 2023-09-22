@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::{ensure, Result};
-use ir::{domtree::DomTree, loop_forest::LoopForest, module::Module};
+use ir::{domtree::DomTree, loops::LoopForest, module::Module};
 
 use crate::utils::write_graph_with_trailing_comments;
 

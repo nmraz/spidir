@@ -10,7 +10,7 @@ use fx_utils::FxHashMap;
 
 use ir::{
     domtree::DomTree,
-    loop_forest::LoopForest,
+    loops::LoopForest,
     node::DepValueKind,
     valgraph::{Node, ValGraph},
     verify::GraphVerifierError,

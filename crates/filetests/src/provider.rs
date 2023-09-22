@@ -10,14 +10,14 @@ use crate::utils::parse_output_func_heading;
 use self::{
     domtree::DomTreeProvider,
     graphviz::{AnnotatorKind, GraphvizTestProvider},
-    loop_forest::LoopForestProvider,
+    loops::LoopForestProvider,
     schedule::ScheduleProvider,
     verify::{VerifyErrProvider, VerifyOkProvider},
 };
 
 mod domtree;
 mod graphviz;
-mod loop_forest;
+mod loops;
 mod schedule;
 mod verify;
 

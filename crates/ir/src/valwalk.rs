@@ -3,6 +3,7 @@ use core::iter;
 use alloc::{vec, vec::Vec};
 
 use cranelift_entity::EntitySet;
+use dominators::IntoCfg;
 
 use crate::valgraph::{Node, ValGraph};
 
@@ -191,6 +192,15 @@ impl graphwalk::Graph for ForwardCfg<'_> {
 impl graphwalk::PredGraph for ForwardCfg<'_> {
     fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
         cfg_preds(self.0, node).for_each(f);
+    }
+}
+
+impl<'a> IntoCfg for &'a ValGraph {
+    type Node = Node;
+    type Cfg = ForwardCfg<'a>;
+
+    fn into_cfg(self) -> Self::Cfg {
+        ForwardCfg::new(self)
     }
 }
 

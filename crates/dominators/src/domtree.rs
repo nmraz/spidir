@@ -12,6 +12,8 @@ use cranelift_entity::{
 use graphwalk::{PredGraph, TreePostOrder, TreePreOrder, WalkPhase};
 use smallvec::SmallVec;
 
+use crate::IntoCfg;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DomTreeNode(u32);
 entity_impl!(DomTreeNode);
@@ -35,12 +37,14 @@ pub struct DomTree<N: EntityRef> {
 }
 
 impl<N: EntityRef> DomTree<N> {
-    pub fn compute(graph: impl PredGraph<Node = N>, entry: N) -> Self {
+    pub fn compute(graph: impl IntoCfg<Node = N>, entry: N) -> Self {
         // Find dominators as discussed in the original 1979 Lengauer-Tarjan (LT) paper
         // "A Fast Algorithm for Finding Dominators in a Flowgraph".
         // We use the "simple" variant of the algorithm, since the sophisticated version is dramatically
         // more complicated and has been observed to perform worse in practice; this is consistent with
         // most production compilers.
+
+        let graph = graph.into_cfg();
 
         // Setup: Perform the DFS and initialize per-node data structures used in the remainder of the
         // algorithm.

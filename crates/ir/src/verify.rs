@@ -7,7 +7,7 @@ use itertools::{izip, Itertools};
 use smallvec::SmallVec;
 
 use crate::{
-    domtree::{self, DomTreeNode},
+    domtree::{DomTree, DomTreeNode},
     module::{Function, FunctionData, Module},
     node::{DepValueKind, NodeKind},
     schedule::{schedule_early, ByNodeSchedule, ScheduleCtx},
@@ -320,7 +320,7 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVe
 type InputLocScratch = SmallVec<[(DomTreeNode, u32); 4]>;
 
 fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
-    let domtree = domtree::compute(graph, entry);
+    let domtree = DomTree::compute(graph, entry);
     let ctx = ScheduleCtx::prepare(graph, &domtree);
 
     let mut input_locs = InputLocScratch::new();

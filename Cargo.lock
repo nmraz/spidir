@@ -224,6 +224,7 @@ dependencies = [
  "fx-utils",
  "graphmock",
  "graphwalk",
+ "itertools",
  "smallvec",
 ]
 

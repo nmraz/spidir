@@ -15,3 +15,4 @@ smallvec.workspace = true
 [dev-dependencies]
 graphmock.workspace = true
 expect-test.workspace = true
+itertools.workspace = true

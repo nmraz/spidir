@@ -17,15 +17,28 @@ impl TestProvider for CfgProvider {
             let cfg = BlockCfg::compute(&func.graph, func.entry);
             write_graph_with_trailing_comments(&mut output, module, func, |s, node| {
                 if let Some(block) = cfg.containing_block(node) {
+                    let mut is_boundary = false;
+
                     if node == cfg.block_header(block) {
                         write!(s, "head {block}").unwrap();
-                    } else if node == cfg.block_terminator(block) {
+                        is_boundary = true;
+                    }
+
+                    if node == cfg.block_terminator(block) {
+                        if is_boundary {
+                            write!(s, ", ").unwrap();
+                        }
+
+                        is_boundary = true;
+
                         write!(s, "term {block}").unwrap();
                         let succs: Vec<_> = cfg.succs(&func.graph, block).collect();
                         if !succs.is_empty() {
                             write!(s, " -> {}", succs.iter().format(", ")).unwrap();
                         }
-                    } else {
+                    }
+
+                    if !is_boundary {
                         write!(s, "body {block}").unwrap();
                     }
                 } else {

@@ -1,0 +1,16 @@
+# run: cfg
+
+func @select:i32(i32, i32, i32) {
+    # check: function `select`:
+    # nextln: %0:ctrl, %1:i32, %2:i32, %3:i32 = entry         # head block0
+    # nextln: %4:ctrl, %5:ctrl = brcond %0, %1        # term block0 -> block1, block1
+    # nextln: %6:ctrl, %7:phisel = region %4, %5      # head block1
+    # nextln: %8:i32 = phi %7, %2, %3                 # x
+    # nextln: return %6, %8                           # term block1
+
+    %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}

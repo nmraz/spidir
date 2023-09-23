@@ -1,4 +1,5 @@
 use cranelift_entity::{entity_impl, packed_option::PackedOption, PrimaryMap, SecondaryMap};
+use graphwalk::{GraphRef, PredGraphRef};
 use log::trace;
 use smallvec::SmallVec;
 
@@ -88,6 +89,11 @@ impl BlockCfg {
         cfg_preds(graph, self.block_header(block)).filter_map(|pred| self.containing_block(pred))
     }
 
+    #[inline]
+    pub fn graph_ref<'a>(&'a self, graph: &'a ValGraph) -> BlockCfgGraphRef<'a> {
+        BlockCfgGraphRef { graph, cfg: self }
+    }
+
     fn create_block(&mut self, header: Node) -> Block {
         let block = self.blocks.push(BlockData {
             header,
@@ -100,6 +106,25 @@ impl BlockCfg {
     fn terminate_block(&mut self, block: Block, terminator: Node) {
         trace!("terminating {block} with node {}", terminator.as_u32());
         self.blocks[block].terminator = terminator;
+    }
+}
+
+pub struct BlockCfgGraphRef<'a> {
+    graph: &'a ValGraph,
+    cfg: &'a BlockCfg,
+}
+
+impl GraphRef for BlockCfgGraphRef<'_> {
+    type Node = Block;
+
+    fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
+        self.cfg.succs(self.graph, node).for_each(f);
+    }
+}
+
+impl PredGraphRef for BlockCfgGraphRef<'_> {
+    fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
+        self.cfg.preds(self.graph, node).for_each(f);
     }
 }
 

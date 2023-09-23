@@ -1,60 +1,35 @@
 use core::iter;
 
-use cranelift_entity::{packed_option::PackedOption, EntitySet, SecondaryMap};
+use cranelift_entity::EntitySet;
 use graphwalk::PostOrderContext;
 
 use crate::{
-    domtree::{DomTree, DomTreeNode},
     valgraph::{Node, ValGraph},
     valwalk::{dataflow_preds, dataflow_succs, get_attached_phis, LiveNodeInfo},
 };
 
-pub type ByNodeSchedule = SecondaryMap<Node, PackedOption<DomTreeNode>>;
-
 pub struct ScheduleCtx<'a> {
     graph: &'a ValGraph,
-    domtree: &'a DomTree,
     cfg_preorder: &'a [Node],
     live_node_info: &'a LiveNodeInfo,
-    pinned_nodes: ByNodeSchedule,
 }
 
 impl<'a> ScheduleCtx<'a> {
-    pub fn prepare(
+    pub fn new(
         graph: &'a ValGraph,
         live_node_info: &'a LiveNodeInfo,
         cfg_preorder: &'a [Node],
-        domtree: &'a DomTree,
     ) -> Self {
-        let mut pinned_nodes = ByNodeSchedule::new();
-
-        for &node in cfg_preorder {
-            let domtree_node = domtree
-                .get_tree_node(node)
-                .expect("live CFG node not in dominator tree");
-            pinned_nodes[node] = domtree_node.into();
-            for phi in get_attached_phis(graph, node) {
-                pinned_nodes[phi] = domtree_node.into();
-            }
-        }
-
         Self {
             graph,
-            domtree,
             cfg_preorder,
             live_node_info,
-            pinned_nodes,
         }
     }
 
     #[inline]
     pub fn graph(&self) -> &ValGraph {
         self.graph
-    }
-
-    #[inline]
-    pub fn domtree(&self) -> &DomTree {
-        self.domtree
     }
 
     #[inline]
@@ -77,11 +52,6 @@ impl<'a> ScheduleCtx<'a> {
         self.live_nodes().contains(node)
     }
 
-    #[inline]
-    pub fn pinned_nodes(&self) -> &ByNodeSchedule {
-        &self.pinned_nodes
-    }
-
     pub fn walk_pinned_nodes(&self) -> impl Iterator<Item = Node> + '_ {
         self.cfg_preorder
             .iter()
@@ -93,11 +63,23 @@ impl<'a> ScheduleCtx<'a> {
     }
 }
 
-pub fn schedule_early(
-    ctx: &ScheduleCtx<'_>,
-    mut schedule_node: impl FnMut(&ByNodeSchedule, Node) -> DomTreeNode,
-) -> ByNodeSchedule {
-    let mut schedule = ctx.pinned_nodes.clone();
+pub trait PinNodes {
+    type Block: Copy;
+    fn control_node_block(&self, node: Node) -> Self::Block;
+    fn pin(&mut self, node: Node, block: Self::Block);
+}
+
+pub fn pin_nodes(ctx: &ScheduleCtx<'_>, pin_nodes: &mut impl PinNodes) {
+    for &node in ctx.cfg_preorder() {
+        let block = pin_nodes.control_node_block(node);
+        pin_nodes.pin(node, block);
+        for phi in ctx.get_attached_phis(node) {
+            pin_nodes.pin(phi, block);
+        }
+    }
+}
+
+pub fn schedule_early(ctx: &ScheduleCtx<'_>, mut schedule: impl FnMut(&ScheduleCtx<'_>, Node)) {
     let mut visited = EntitySet::new();
     let mut data_pred_postorder = PostOrderContext::new(UnpinnedDataPreds::new(ctx.graph()), []);
 
@@ -105,19 +87,12 @@ pub fn schedule_early(
         data_pred_postorder.reset(unpinned_dataflow_preds(ctx.graph(), pinned));
         while let Some(pred) = data_pred_postorder.next(&mut visited) {
             debug_assert!(!is_pinned_node(ctx.graph(), pred));
-            debug_assert!(schedule[pred].is_none());
-            schedule[pred] = schedule_node(&schedule, pred).into();
+            schedule(ctx, pred);
         }
     }
-
-    schedule
 }
 
-pub fn schedule_late(
-    ctx: &ScheduleCtx<'_>,
-    mut schedule_node: impl FnMut(&ByNodeSchedule, Node) -> DomTreeNode,
-) -> ByNodeSchedule {
-    let mut schedule = ctx.pinned_nodes.clone();
+pub fn schedule_late(ctx: &ScheduleCtx<'_>, mut schedule: impl FnMut(&ScheduleCtx<'_>, Node)) {
     let mut visited = EntitySet::new();
     let mut data_succ_postorder =
         PostOrderContext::new(UnpinnedDataSuccs::new(ctx.graph(), ctx.live_nodes()), []);
@@ -129,22 +104,20 @@ pub fn schedule_late(
         );
         while let Some(succ) = data_succ_postorder.next(&mut visited) {
             debug_assert!(!is_pinned_node(ctx.graph(), succ));
-            debug_assert!(schedule[succ].is_none());
-            schedule[succ] = schedule_node(&schedule, succ).into();
+            schedule(ctx, succ);
         }
     }
 
+    let entry = ctx.cfg_preorder()[0];
     for &root in ctx.live_node_info().roots() {
-        if schedule[root].is_none() {
+        if root != entry {
             debug_assert!(
                 !is_pinned_node(ctx.graph(), root),
                 "unscheduled liveness root has control outputs"
             );
-            schedule[root] = schedule_node(&schedule, root).into();
+            schedule(ctx, root);
         }
     }
-
-    schedule
 }
 
 fn is_pinned_node(graph: &ValGraph, node: Node) -> bool {

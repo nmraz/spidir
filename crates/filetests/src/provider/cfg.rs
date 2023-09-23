@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::Result;
-use ir::{cfg::BlockCfg, module::Module};
+use ir::{cfg::BlockCfg, module::Module, valwalk::cfg_preorder};
 use itertools::Itertools;
 
 use crate::utils::write_graph_with_trailing_comments;
@@ -14,7 +14,7 @@ impl TestProvider for CfgProvider {
         let mut output = String::new();
 
         for func in module.functions.values() {
-            let cfg = BlockCfg::compute(&func.graph, func.entry);
+            let cfg = BlockCfg::compute(&func.graph, cfg_preorder(&func.graph, func.entry));
             write_graph_with_trailing_comments(&mut output, module, func, |s, node| {
                 if let Some(block) = cfg.containing_block(node) {
                     let mut is_boundary = false;

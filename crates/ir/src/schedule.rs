@@ -1,14 +1,12 @@
 use core::iter;
 
-use alloc::vec::Vec;
-
 use cranelift_entity::{packed_option::PackedOption, EntitySet, SecondaryMap};
 use graphwalk::PostOrderContext;
 
 use crate::{
     domtree::{DomTree, DomTreeNode},
     valgraph::{Node, ValGraph},
-    valwalk::{cfg_preorder, dataflow_preds, dataflow_succs, get_attached_phis, LiveNodeInfo},
+    valwalk::{dataflow_preds, dataflow_succs, get_attached_phis, LiveNodeInfo},
 };
 
 pub type ByNodeSchedule = SecondaryMap<Node, PackedOption<DomTreeNode>>;
@@ -16,19 +14,21 @@ pub type ByNodeSchedule = SecondaryMap<Node, PackedOption<DomTreeNode>>;
 pub struct ScheduleCtx<'a> {
     graph: &'a ValGraph,
     domtree: &'a DomTree,
-    cfg_preorder: Vec<Node>,
-    live_node_info: LiveNodeInfo,
+    cfg_preorder: &'a [Node],
+    live_node_info: &'a LiveNodeInfo,
     pinned_nodes: ByNodeSchedule,
 }
 
 impl<'a> ScheduleCtx<'a> {
-    pub fn prepare(graph: &'a ValGraph, domtree: &'a DomTree) -> Self {
-        let entry = domtree.get_cfg_node(domtree.root());
-        let cfg_preorder: Vec<_> = cfg_preorder(graph, entry).collect();
-        let live_node_info = LiveNodeInfo::compute(graph, domtree.get_cfg_node(domtree.root()));
+    pub fn prepare(
+        graph: &'a ValGraph,
+        live_node_info: &'a LiveNodeInfo,
+        cfg_preorder: &'a [Node],
+        domtree: &'a DomTree,
+    ) -> Self {
         let mut pinned_nodes = ByNodeSchedule::new();
 
-        for &node in &cfg_preorder {
+        for &node in cfg_preorder {
             let domtree_node = domtree
                 .get_tree_node(node)
                 .expect("live CFG node not in dominator tree");
@@ -59,12 +59,12 @@ impl<'a> ScheduleCtx<'a> {
 
     #[inline]
     pub fn cfg_preorder(&self) -> &[Node] {
-        &self.cfg_preorder
+        self.cfg_preorder
     }
 
     #[inline]
     pub fn live_node_info(&self) -> &LiveNodeInfo {
-        &self.live_node_info
+        self.live_node_info
     }
 
     #[inline]

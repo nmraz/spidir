@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use cranelift_entity::{EntityList, ListPool, SecondaryMap};
 use ir::{
     domtree::{DomTree, DomTreeNode},
@@ -5,7 +7,7 @@ use ir::{
     node::NodeKind,
     schedule::{schedule_early, schedule_late, ByNodeSchedule, ScheduleCtx},
     valgraph::{Node, ValGraph},
-    valwalk::{dataflow_preds, dataflow_succs},
+    valwalk::{cfg_preorder, dataflow_preds, dataflow_succs, LiveNodeInfo},
 };
 use log::{log_enabled, trace};
 
@@ -16,7 +18,10 @@ pub struct Schedule {
 
 impl Schedule {
     pub fn compute(graph: &ValGraph, domtree: &DomTree, loop_forest: &LoopForest) -> Self {
-        let ctx = ScheduleCtx::prepare(graph, domtree);
+        let entry = domtree.get_cfg_node(domtree.root());
+        let live_node_info = LiveNodeInfo::compute(graph, entry);
+        let cfg_preorder: Vec<_> = cfg_preorder(graph, entry).collect();
+        let ctx = ScheduleCtx::prepare(graph, &live_node_info, &cfg_preorder, domtree);
         let mut final_schedule = Self {
             schedule: SecondaryMap::new(),
             node_list_pool: ListPool::new(),

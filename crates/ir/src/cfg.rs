@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 
 use crate::{
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::{cfg_inputs, cfg_outputs, cfg_preds, cfg_preorder, cfg_succs},
+    valwalk::{cfg_inputs, cfg_outputs, cfg_preds, cfg_succs},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -23,7 +23,7 @@ pub struct BlockCfg {
 }
 
 impl BlockCfg {
-    pub fn compute(graph: &ValGraph, entry: Node) -> Self {
+    pub fn compute(graph: &ValGraph, cfg_preorder: impl Iterator<Item = Node>) -> Self {
         let mut ctrl_outputs = SmallVec::<[DepValue; 4]>::new();
         let mut cfg = Self {
             blocks: PrimaryMap::new(),
@@ -31,7 +31,7 @@ impl BlockCfg {
         };
 
         let mut cur_block = None;
-        for node in cfg_preorder(graph, entry) {
+        for node in cfg_preorder {
             let block = match cur_block {
                 Some(cur_block) => cur_block,
                 None => {

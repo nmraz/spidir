@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use cranelift_entity::{
     packed_option::PackedOption, EntityList, EntitySet, ListPool, SecondaryMap,
 };
@@ -6,8 +8,8 @@ use ir::{
     cfg::{Block, BlockCfg, BlockDomTree},
     loops::LoopForest,
     node::NodeKind,
-    schedule::{pin_nodes, schedule_early, schedule_late, PinNodes, ScheduleCtx},
-    valgraph::{Node, ValGraph},
+    schedule::{schedule_early, schedule_late, ScheduleCtx},
+    valgraph::{DepValue, Node, ValGraph},
     valwalk::{dataflow_preds, dataflow_succs, raw_def_use_succs, LiveNodeInfo},
 };
 use log::trace;
@@ -16,11 +18,18 @@ use log::trace;
 /// behavior.
 const MAX_HOIST_DEPTH: usize = 50;
 
+#[derive(Default, Clone, Copy)]
+struct BlockParamData {
+    block_param_base: u32,
+    block_param_len: u32,
+}
+
 pub struct Schedule {
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
     nodes_by_block: SecondaryMap<Block, EntityList<Node>>,
-    block_phi_inputs: SecondaryMap<Block, EntityList<Node>>,
     node_list_pool: ListPool<Node>,
+    block_params: SecondaryMap<Block, BlockParamData>,
+    block_param_pool: Vec<DepValue>,
 }
 
 impl Schedule {
@@ -37,9 +46,12 @@ impl Schedule {
         let mut schedule = Self {
             blocks_by_node: SecondaryMap::new(),
             nodes_by_block: SecondaryMap::new(),
-            block_phi_inputs: SecondaryMap::new(),
             node_list_pool: ListPool::new(),
+            block_params: SecondaryMap::new(),
+            block_param_pool: Vec::new(),
         };
+
+        schedule.pin_nodes(&ctx, block_cfg);
 
         let mut scheduler = Scheduler {
             block_cfg,
@@ -47,8 +59,6 @@ impl Schedule {
             depth_map: &depth_map,
             schedule: &mut schedule,
         };
-
-        pin_nodes(&ctx, &mut scheduler);
 
         let mut scratch_postorder = PostOrderContext::new();
         schedule_early(&ctx, &mut scratch_postorder, |ctx, node| {
@@ -67,8 +77,40 @@ impl Schedule {
         self.nodes_by_block[block].as_slice(&self.node_list_pool)
     }
 
-    pub fn block_phi_inputs(&self, block: Block) -> &[Node] {
-        self.block_phi_inputs[block].as_slice(&self.node_list_pool)
+    pub fn block_params(&self, block: Block) -> &[DepValue] {
+        let base = self.block_params[block].block_param_base as usize;
+        let len = self.block_params[block].block_param_len as usize;
+        trace!("get params for {block}: base {base}, len {len}");
+        &self.block_param_pool[base..base + len]
+    }
+
+    fn pin_nodes(&mut self, ctx: &ScheduleCtx<'_>, block_cfg: &BlockCfg) {
+        for &cfg_node in ctx.cfg_preorder() {
+            let block = block_cfg
+                .containing_block(cfg_node)
+                .expect("live CFG node not in block CFG");
+
+            trace!("pinned: node {} -> {block}", cfg_node.as_u32());
+            self.append_to_block(block, cfg_node);
+
+            if cfg_node == block_cfg.block_header(block) {
+                // For block headers, see if we need to convert any phi nodes to block params
+                let block_param_base: usize = self.block_param_pool.len();
+                for phi in ctx.get_attached_phis(cfg_node) {
+                    trace!("phi: node {} -> {block}", phi.as_u32());
+                    // Note: we don't want to `append_to_block` because we're converting these phi nodes
+                    // into block parameters.
+                    self.assign_block(block, phi);
+                    self.block_param_pool.push(ctx.graph().node_outputs(phi)[0]);
+                }
+                let block_param_len = self.block_param_pool.len() - block_param_base;
+
+                self.block_params[block].block_param_base = block_param_base.try_into().unwrap();
+                self.block_params[block].block_param_len = block_param_len.try_into().unwrap();
+            } else {
+                debug_assert!(ctx.get_attached_phis(cfg_node).next().is_none());
+            }
+        }
     }
 
     fn schedule_intra_block(
@@ -104,12 +146,13 @@ impl Schedule {
         }
     }
 
-    fn push_block_node(&mut self, block: Block, node: Node) {
+    fn append_to_block(&mut self, block: Block, node: Node) {
+        self.assign_block(block, node);
         self.nodes_by_block[block].push(node, &mut self.node_list_pool);
     }
 
-    fn push_block_phi(&mut self, block: Block, phi: Node) {
-        self.block_phi_inputs[block].push(phi, &mut self.node_list_pool);
+    fn assign_block(&mut self, block: Block, node: Node) {
+        self.blocks_by_node[node] = block.into();
     }
 }
 
@@ -151,33 +194,11 @@ struct Scheduler<'a> {
     schedule: &'a mut Schedule,
 }
 
-impl PinNodes for Scheduler<'_> {
-    type Block = Block;
-
-    fn control_node_block(&self, node: Node) -> Block {
-        self.block_cfg
-            .containing_block(node)
-            .expect("live CFG node not in block CFG")
-    }
-
-    fn pin(&mut self, ctx: &ScheduleCtx<'_>, node: Node, block: Block) {
-        assert!(self.schedule.blocks_by_node[node].is_none());
-        self.schedule.blocks_by_node[node] = block.into();
-
-        if matches!(ctx.graph().node_kind(node), NodeKind::Phi) {
-            trace!("phi: node {} -> {block}", node.as_u32());
-            self.schedule.push_block_phi(block, node);
-        } else {
-            trace!("pinned: node {} -> {block}", node.as_u32());
-            self.schedule.push_block_node(block, node);
-        }
-    }
-}
-
 impl Scheduler<'_> {
     fn schedule_early(&mut self, ctx: &ScheduleCtx<'_>, node: Node) {
         assert!(self.schedule.blocks_by_node[node].is_none());
-        self.schedule.blocks_by_node[node] = self.early_schedule_location(ctx, node).into();
+        self.schedule
+            .assign_block(self.early_schedule_location(ctx, node), node);
     }
 
     fn schedule_late(&mut self, ctx: &ScheduleCtx<'_>, node: Node) {
@@ -185,8 +206,7 @@ impl Scheduler<'_> {
             self.schedule.blocks_by_node[node].expect("node should have been scheduled early");
         let late_loc = self.late_schedule_location(ctx, node);
         let loc = self.best_schedule_location(node, early_loc, late_loc);
-        self.schedule.blocks_by_node[node] = loc.into();
-        self.schedule.push_block_node(loc, node);
+        self.schedule.append_to_block(loc, node);
     }
 
     fn best_schedule_location(&self, node: Node, early_loc: Block, late_loc: Block) -> Block {

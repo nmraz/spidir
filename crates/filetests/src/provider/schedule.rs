@@ -35,12 +35,8 @@ impl TestProvider for ScheduleProvider {
             for block in
                 PreOrder::<_, EntitySet<_>>::new(&block_cfg, block_cfg.containing_block(func.entry))
             {
-                let phis = schedule
-                    .block_phi_inputs(block)
-                    .iter()
-                    .map(|&phi| graph.node_outputs(phi)[0])
-                    .format(", ");
-                writeln!(output, "{block}[{phis}]:").unwrap();
+                let params = schedule.block_params(block).iter().format(", ");
+                writeln!(output, "{block}[{params}]:").unwrap();
                 for &attached_node in schedule.scheduled_nodes_rev(block).iter().rev() {
                     writeln!(output, "    {}", display_node(module, graph, attached_node)).unwrap();
                 }

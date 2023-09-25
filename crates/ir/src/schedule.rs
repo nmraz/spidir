@@ -4,6 +4,7 @@ use cranelift_entity::EntitySet;
 use graphwalk::PostOrderContext;
 
 use crate::{
+    node::NodeKind,
     valgraph::{Node, ValGraph},
     valwalk::{dataflow_preds, dataflow_succs, get_attached_phis, LiveNodeInfo},
 };
@@ -128,14 +129,8 @@ pub fn schedule_late(
 }
 
 fn is_pinned_node(graph: &ValGraph, node: Node) -> bool {
-    graph
-        .node_inputs(node)
-        .into_iter()
-        .any(|input| graph.value_kind(input).is_control_or_phisel())
-        || graph
-            .node_outputs(node)
-            .into_iter()
-            .any(|input| graph.value_kind(input).is_control())
+    let kind = graph.node_kind(node);
+    kind.has_control_flow() || matches!(kind, NodeKind::Phi)
 }
 
 fn unpinned_dataflow_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {

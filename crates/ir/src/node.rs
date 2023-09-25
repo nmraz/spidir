@@ -212,11 +212,6 @@ impl DepValueKind {
     pub fn is_phisel(self) -> bool {
         self == Self::PhiSelector
     }
-
-    #[inline]
-    pub fn is_control_or_phisel(self) -> bool {
-        self.is_control() || self.is_phisel()
-    }
 }
 
 impl fmt::Display for DepValueKind {

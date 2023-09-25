@@ -370,7 +370,7 @@ impl PinNodes for VerifierScheduler<'_> {
             .expect("live CFG node not in dominator tree")
     }
 
-    fn pin(&mut self, node: Node, block: Self::Block) {
+    fn pin(&mut self, _ctx: &ScheduleCtx<'_>, node: Node, block: Self::Block) {
         assert!(self.schedule[node].is_none());
         self.schedule[node] = block.into();
     }

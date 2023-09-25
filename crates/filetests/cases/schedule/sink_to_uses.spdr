@@ -2,15 +2,19 @@
 
 func @conditional_uses(i32, i32, ptr) {
     # check: function `conditional_uses`:
-    # nextln: $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32, $(entry3=$val):ptr = entry
+    # nextln: block0[]:
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32, $(entry3=$val):ptr = entry
+    # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $entry1
+    # nextln: block1[]:
     # nextln:     $(iconst0=$val):i32 = iconst 5
     # nextln:     $(iadd0=$val):i32 = iadd $entry1, $iconst0
+    # nextln:     $(store0=$val):ctrl = store.4 $brcond1, $iadd0, $entry3
+    # nextln: block2[]:
+    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $(store1=$val), $store0
+    # nextln:     return $region0
+    # nextln: block3[]:
     # nextln:     $(imul0=$val):i32 = imul $entry1, $entry2
-    # nextln: $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $entry1
-    # nextln: $(store0=$val):ctrl = store.4 $brcond1, $iadd0, $entry3
-    # nextln: $(region0=$val):ctrl, $(region1=$val):phisel = region $(store1=$val), $store0
-    # nextln: return $region0
-    # nextln: $store1:ctrl = store.4 $brcond0, $imul0, $entry3
+    # nextln:     $store1:ctrl = store.4 $brcond0, $imul0, $entry3
 
     %entry:ctrl, %p1:i32, %p2:i32, %p3:ptr = entry
     %p1t:ctrl, %p1f:ctrl = brcond %entry, %p1

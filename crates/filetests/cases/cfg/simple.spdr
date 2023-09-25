@@ -2,8 +2,8 @@
 
 func @arith_stuff:i32(i32, i32) {
     # check: function `arith_stuff`:
-    # nextln: %0:ctrl, %1:i32, %2:i32 = entry         # head block0
-    # nextln: %3:ctrl, %4:phisel = region %0          # body block0
+    # nextln: %0:ctrl, %1:i32, %2:i32 = entry         # head block0, term block0 -> block1
+    # nextln: %3:ctrl, %4:phisel = region %0          # head block1
     # nextln: %5:i32 = iadd %1, %1                    # x
     # nextln: %6:i32 = isub %5, %1                    # x
     # nextln: %7:i32 = and %6, %1                     # x
@@ -13,10 +13,10 @@ func @arith_stuff:i32(i32, i32) {
     # nextln: %11:i32 = lshr %10, %1                  # x
     # nextln: %12:i32 = ashr %11, %1                  # x
     # nextln: %13:i32 = imul %12, %1                  # x
-    # nextln: %14:ctrl, %15:i32 = sdiv %3, %13, %1    # body block0
-    # nextln: %16:ctrl, %17:i32 = udiv %14, %15, %1   # body block0
-    # nextln: %18:ctrl, %19:i32 = srem %16, %17, %1   # body block0
-    # nextln: %20:ctrl, %21:i32 = urem %18, %19, %1   # body block0
+    # nextln: %14:ctrl, %15:i32 = sdiv %3, %13, %1    # body block1
+    # nextln: %16:ctrl, %17:i32 = udiv %14, %15, %1   # body block1
+    # nextln: %18:ctrl, %19:i32 = srem %16, %17, %1   # body block1
+    # nextln: %20:ctrl, %21:i32 = urem %18, %19, %1   # body block1
     # nextln: %22:i32 = icmp eq %21, %1               # x
     # nextln: %23:i32 = icmp ne %22, %1               # x
     # nextln: %24:i32 = icmp slt %23, %1              # x
@@ -26,7 +26,7 @@ func @arith_stuff:i32(i32, i32) {
     # nextln: %28:i64 = iext %27                      # x
     # nextln: %29:i32 = itrunc %28                    # x
     # nextln: %30:i32 = sfill 16 %29                  # x
-    # nextln: return %20, %30                         # term block0
+    # nextln: return %20, %30                         # term block1
 
     %0:ctrl, %1:i32, %2:i32 = entry
     %3:ctrl, %4:phisel = region %0

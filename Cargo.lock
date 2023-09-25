@@ -296,6 +296,7 @@ dependencies = [
  "filecheck",
  "fx-utils",
  "glob",
+ "graphwalk",
  "hashbrown",
  "ir",
  "ir-graphviz",

@@ -60,18 +60,20 @@ pub fn walk_live_nodes(graph: &ValGraph, entry: Node) -> LiveNodeWalk<'_> {
     PreOrder::new(LiveNodeSuccs::new(graph), iter::once(entry))
 }
 
+pub fn raw_def_use_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = (Node, u32)> + '_ {
+    graph
+        .node_outputs(node)
+        .into_iter()
+        .flat_map(move |output| graph.value_uses(output))
+}
+
 pub fn def_use_succs<'a>(
     graph: &'a ValGraph,
     live_nodes: &'a EntitySet<Node>,
     node: Node,
 ) -> impl Iterator<Item = (Node, u32)> + 'a {
-    graph
-        .node_outputs(node)
-        .into_iter()
-        .flat_map(move |output| graph.value_uses(output))
-        .filter(move |&(succ, _use_idx)| live_nodes.contains(succ))
+    raw_def_use_succs(graph, node).filter(move |&(succ, _use_idx)| live_nodes.contains(succ))
 }
-
 #[derive(Clone, Copy)]
 pub struct DefUseSuccs<'a> {
     graph: &'a ValGraph,

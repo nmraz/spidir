@@ -37,28 +37,28 @@ func @sum_to_n:i32(i32) {
 
 func @sum_to_n_with_stack:i32(i32) {
     # check: function `sum_to_n_with_stack`:
-    # nextln: %0:ctrl, %1:i32 = entry                 # head block0
-    # nextln: %2:ctrl, %3:phisel = region %0          # body block0
+    # nextln: %0:ctrl, %1:i32 = entry                 # head block0, term block0 -> block1
+    # nextln: %2:ctrl, %3:phisel = region %0          # head block1
     # nextln: %4:ptr = stackslot 4:4                  # x
     # nextln: %5:ptr = stackslot 4:4                  # x
-    # nextln: %6:ctrl = store.4 %2, %1, %5            # body block0
+    # nextln: %6:ctrl = store.4 %2, %1, %5            # body block1
     # nextln: %7:i32 = iconst 1                       # x
     # nextln: %8:i32 = iconst 0                       # x
-    # nextln: %9:ctrl = store.4 %6, %8, %4            # term block0 -> block1
+    # nextln: %9:ctrl = store.4 %6, %8, %4            # term block1 -> block2
     # nextln: %10:i32 = icmp eq %30, %8               # x
-    # nextln: %11:ctrl, %12:ctrl = brcond %29, %10    # term block1 -> block3, block2
-    # nextln: %13:ctrl, %14:phisel = region %11       # head block3
-    # nextln: %15:ctrl, %16:i32 = load.4 %13, %4      # body block3
-    # nextln: return %15, %16                         # term block3
-    # nextln: %17:ctrl, %18:phisel = region %12       # head block2
-    # nextln: %19:ctrl, %20:i32 = load.4 %17, %5      # body block2
-    # nextln: %21:ctrl, %22:i32 = load.4 %19, %4      # body block2
+    # nextln: %11:ctrl, %12:ctrl = brcond %29, %10    # term block2 -> block4, block3
+    # nextln: %13:ctrl, %14:phisel = region %11       # head block4
+    # nextln: %15:ctrl, %16:i32 = load.4 %13, %4      # body block4
+    # nextln: return %15, %16                         # term block4
+    # nextln: %17:ctrl, %18:phisel = region %12       # head block3
+    # nextln: %19:ctrl, %20:i32 = load.4 %17, %5      # body block3
+    # nextln: %21:ctrl, %22:i32 = load.4 %19, %4      # body block3
     # nextln: %23:i32 = isub %20, %7                  # x
-    # nextln: %24:ctrl = store.4 %21, %23, %5         # body block2
+    # nextln: %24:ctrl = store.4 %21, %23, %5         # body block3
     # nextln: %25:i32 = iadd %22, %20                 # x
-    # nextln: %26:ctrl = store.4 %24, %25, %4         # term block2 -> block1
-    # nextln: %27:ctrl, %28:phisel = region %9, %26   # head block1
-    # nextln: %29:ctrl, %30:i32 = load.4 %27, %5      # body block1
+    # nextln: %26:ctrl = store.4 %24, %25, %4         # term block3 -> block2
+    # nextln: %27:ctrl, %28:phisel = region %9, %26   # head block2
+    # nextln: %29:ctrl, %30:i32 = load.4 %27, %5      # body block2
 
     %0:ctrl, %1:i32 = entry
     %2:ctrl, %3:phisel = region %0

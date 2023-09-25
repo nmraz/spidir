@@ -1,11 +1,13 @@
 use cranelift_entity::{entity_impl, packed_option::PackedOption, PrimaryMap, SecondaryMap};
+use dominators::domtree::DomTree;
 use graphwalk::{GraphRef, PredGraphRef};
 use log::trace;
 use smallvec::SmallVec;
 
 use crate::{
+    node::NodeKind,
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::{cfg_inputs, cfg_outputs, cfg_preds, cfg_succs},
+    valwalk::{cfg_outputs, cfg_preds, cfg_succs},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -16,6 +18,8 @@ struct BlockData {
     header: Node,
     terminator: Node,
 }
+
+pub type BlockDomTree = DomTree<Block>;
 
 pub struct BlockCfg {
     blocks: PrimaryMap<Block, BlockData>,
@@ -109,6 +113,7 @@ impl BlockCfg {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct BlockCfgGraphRef<'a> {
     graph: &'a ValGraph,
     cfg: &'a BlockCfg,
@@ -133,12 +138,10 @@ fn should_terminate_block(graph: &ValGraph, ctrl_outputs: &[DepValue]) -> bool {
         return true;
     }
 
-    ctrl_outputs
-        .iter()
-        .any(|&output| !has_single_cfg_input(graph, graph.value_uses(output).next().unwrap().0))
-}
+    // We have a single output at this point.
+    let succ = graph.value_uses(ctrl_outputs[0]).next().unwrap().0;
 
-fn has_single_cfg_input(graph: &ValGraph, node: Node) -> bool {
-    let mut cfg_inputs = cfg_inputs(graph, node);
-    cfg_inputs.next().is_some() && cfg_inputs.next().is_none()
+    // Create a new block for all region nodes (even if they have a single input), so that we don't
+    // have to deal with phi nodes in the "middle" of blocks later.
+    matches!(graph.node_kind(succ), NodeKind::Region)
 }

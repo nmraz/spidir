@@ -2,9 +2,12 @@ use std::fmt::Write;
 
 use anyhow::Result;
 use codegen::schedule::Schedule;
+use cranelift_entity::EntitySet;
 use filecheck::Value;
 use fx_utils::FxHashMap;
-use ir::{domtree::DomTree, loops::LoopForest, module::Module, write::display_node};
+use graphwalk::PreOrder;
+use ir::{cfg::BlockCfg, module::Module, valwalk::cfg_preorder, write::display_node};
+use itertools::Itertools;
 
 use crate::{regexes::VAL_REGEX, utils::generalize_value_names};
 
@@ -25,15 +28,21 @@ impl TestProvider for ScheduleProvider {
             writeln!(output, "function `{}`:", func.name).unwrap();
 
             let graph = &func.graph;
-            let domtree = DomTree::compute(graph, func.entry);
-            let loop_forest = LoopForest::compute(graph, &domtree);
-            let schedule = Schedule::compute(graph, &domtree, &loop_forest);
+            let cfg_preorder: Vec<_> = cfg_preorder(graph, func.entry).collect();
+            let block_cfg = BlockCfg::compute(graph, cfg_preorder.iter().copied());
+            let schedule = Schedule::compute(graph, &cfg_preorder, &block_cfg);
 
-            let cfg_postorder: Vec<_> = domtree.postorder().collect();
-            for &domtree_node in cfg_postorder.iter().rev() {
-                let cfg_node = domtree.get_cfg_node(domtree_node);
-                writeln!(output, "{}", display_node(module, graph, cfg_node)).unwrap();
-                for &attached_node in schedule.attached_nodes_rev(domtree_node).iter().rev() {
+            for block in PreOrder::<_, EntitySet<_>>::new(
+                block_cfg.graph_ref(graph),
+                block_cfg.containing_block(func.entry),
+            ) {
+                let phis = schedule
+                    .block_phi_inputs(block)
+                    .iter()
+                    .map(|&phi| graph.node_outputs(phi)[0])
+                    .format(", ");
+                writeln!(output, "{block}[{phis}]:").unwrap();
+                for &attached_node in schedule.scheduled_nodes_rev(block).iter().rev() {
                     writeln!(output, "    {}", display_node(module, graph, attached_node)).unwrap();
                 }
             }

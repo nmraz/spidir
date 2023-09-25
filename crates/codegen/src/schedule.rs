@@ -1,38 +1,50 @@
-use alloc::vec::Vec;
-
-use cranelift_entity::{packed_option::PackedOption, EntityList, ListPool, SecondaryMap};
+use cranelift_entity::{
+    packed_option::PackedOption, EntityList, EntitySet, ListPool, SecondaryMap,
+};
+use graphwalk::{GraphRef, PostOrderContext};
 use ir::{
-    domtree::{DomTree, DomTreeNode},
+    cfg::{Block, BlockCfg, BlockDomTree},
     loops::LoopForest,
     node::NodeKind,
     schedule::{pin_nodes, schedule_early, schedule_late, PinNodes, ScheduleCtx},
     valgraph::{Node, ValGraph},
-    valwalk::{cfg_preorder, dataflow_preds, dataflow_succs, LiveNodeInfo},
+    valwalk::{dataflow_preds, dataflow_succs, raw_def_use_succs, LiveNodeInfo},
 };
 use log::trace;
 
 pub struct Schedule {
-    schedule: SecondaryMap<DomTreeNode, EntityList<Node>>,
+    blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
+    nodes_by_block: SecondaryMap<Block, EntityList<Node>>,
+    block_phi_inputs: SecondaryMap<Block, EntityList<Node>>,
     node_list_pool: ListPool<Node>,
 }
 
 impl Schedule {
-    pub fn compute(graph: &ValGraph, domtree: &DomTree, loop_forest: &LoopForest) -> Self {
-        let entry = domtree.get_cfg_node(domtree.root());
+    pub fn compute(graph: &ValGraph, valgraph_cfg_preorder: &[Node], block_cfg: &BlockCfg) -> Self {
+        let entry = valgraph_cfg_preorder[0];
         let live_node_info = LiveNodeInfo::compute(graph, entry);
-        let cfg_preorder: Vec<_> = cfg_preorder(graph, entry).collect();
 
-        let ctx = ScheduleCtx::new(graph, &live_node_info, &cfg_preorder);
-        let mut final_schedule = Self {
-            schedule: SecondaryMap::new(),
+        let block_cfg_graph = block_cfg.graph_ref(graph);
+        let domtree =
+            BlockDomTree::compute(block_cfg_graph, block_cfg.containing_block(entry).unwrap());
+
+        let loop_forest = LoopForest::compute(block_cfg_graph, &domtree);
+
+        let ctx = ScheduleCtx::new(graph, &live_node_info, valgraph_cfg_preorder);
+        let depth_map = get_cfg_depth_map(&domtree, &loop_forest);
+
+        let mut schedule = Self {
+            blocks_by_node: SecondaryMap::new(),
+            nodes_by_block: SecondaryMap::new(),
+            block_phi_inputs: SecondaryMap::new(),
             node_list_pool: ListPool::new(),
         };
 
-        let depth_map = get_cfg_depth_map(graph, domtree, loop_forest);
         let mut scheduler = Scheduler {
-            domtree,
+            block_cfg,
+            domtree: &domtree,
             depth_map: &depth_map,
-            by_node_schedule: SecondaryMap::new(),
+            schedule: &mut schedule,
         };
 
         pin_nodes(&ctx, &mut scheduler);
@@ -41,86 +53,149 @@ impl Schedule {
         });
 
         schedule_late(&ctx, |ctx, node| {
-            let loc = scheduler.schedule_late(ctx, node);
-            final_schedule.push_node(loc, node);
+            scheduler.schedule_late(ctx, node);
         });
 
-        // Push the phi nodes for every region on last (which means they will actually show up
-        // first, because the attached node lists are reversed).
-        for &cfg_node in ctx.cfg_preorder() {
-            let domtree_node = domtree.get_tree_node(cfg_node).unwrap();
-            for phi in ctx.get_attached_phis(cfg_node) {
-                final_schedule.push_node(domtree_node, phi);
+        schedule.schedule_intra_block(graph, &domtree);
+        schedule
+    }
+
+    pub fn scheduled_nodes_rev(&self, block: Block) -> &[Node] {
+        self.nodes_by_block[block].as_slice(&self.node_list_pool)
+    }
+
+    pub fn block_phi_inputs(&self, block: Block) -> &[Node] {
+        self.block_phi_inputs[block].as_slice(&self.node_list_pool)
+    }
+
+    fn schedule_intra_block(&mut self, graph: &ValGraph, domtree: &BlockDomTree) {
+        // TODO: The block in here is a lie, but we need to provide it because `PostOrderContext` is
+        // currently coupled to the graph.
+        let mut per_block_postorder = PostOrderContext::new(
+            SingleBlockSuccs {
+                graph,
+                blocks_by_node: &self.blocks_by_node,
+                block: Block::from_u32(0),
+            },
+            [],
+        );
+        let mut per_block_visited = EntitySet::new();
+
+        // Get a reverse-topological sort of all nodes placed into each block.
+        for block in domtree.preorder() {
+            let block = domtree.get_cfg_node(block);
+            per_block_postorder.graph_mut().block = block;
+
+            let nodes = &mut self.nodes_by_block[block];
+            per_block_postorder.reset(nodes.as_slice(&self.node_list_pool).iter().copied());
+            nodes.clear(&mut self.node_list_pool);
+
+            trace!("sorting {block}");
+            let mut i = 0;
+            while let Some(node) = per_block_postorder.next(&mut per_block_visited) {
+                if matches!(graph.node_kind(node), NodeKind::Phi) {
+                    // We handle phi nodes specially.
+                    continue;
+                }
+                trace!("    {i}: graph {}", node.as_u32());
+                nodes.push(node, &mut self.node_list_pool);
+                i += 1;
             }
         }
-
-        final_schedule
     }
 
-    pub fn attached_nodes_rev(&self, domtree_node: DomTreeNode) -> &[Node] {
-        self.schedule
-            .get(domtree_node)
-            .map_or(&[], |attached_nodes| {
-                attached_nodes.as_slice(&self.node_list_pool)
+    fn push_block_node(&mut self, block: Block, node: Node) {
+        self.nodes_by_block[block].push(node, &mut self.node_list_pool);
+    }
+
+    fn push_block_phi(&mut self, block: Block, phi: Node) {
+        self.block_phi_inputs[block].push(phi, &mut self.node_list_pool);
+    }
+}
+
+struct SingleBlockSuccs<'a> {
+    graph: &'a ValGraph,
+    blocks_by_node: &'a SecondaryMap<Node, PackedOption<Block>>,
+    block: Block,
+}
+
+impl GraphRef for SingleBlockSuccs<'_> {
+    type Node = Node;
+
+    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
+        raw_def_use_succs(self.graph, node)
+            .filter(|&(succ, use_idx)| {
+                // Take only outputs from the right block, and skip skip any cycle back edges coming
+                // from control/phi nodes.
+                self.blocks_by_node[succ].expand() == Some(self.block)
+                    && !is_block_backedge(self.graph, succ, use_idx)
             })
+            .for_each(|(node, _use_idx)| f(node));
     }
+}
 
-    fn push_node(&mut self, loc: DomTreeNode, node: Node) {
-        self.schedule[loc].push(node, &mut self.node_list_pool);
+fn is_block_backedge(graph: &ValGraph, succ: Node, use_idx: u32) -> bool {
+    match graph.node_kind(succ) {
+        // Data inputs to phi nodes from the same block are always back edges.
+        NodeKind::Phi => use_idx != 0,
+        // Control inputs to the block header region are always back edges.
+        NodeKind::Region => true,
+        _ => false,
     }
 }
 
 struct Scheduler<'a> {
-    domtree: &'a DomTree,
+    block_cfg: &'a BlockCfg,
+    domtree: &'a BlockDomTree,
     depth_map: &'a CfgDepthMap,
-    by_node_schedule: SecondaryMap<Node, PackedOption<DomTreeNode>>,
+    schedule: &'a mut Schedule,
 }
 
 impl PinNodes for Scheduler<'_> {
-    type Block = DomTreeNode;
+    type Block = Block;
 
-    fn control_node_block(&self, node: Node) -> Self::Block {
-        self.domtree
-            .get_tree_node(node)
-            .expect("live CFG node not in dominator tree")
+    fn control_node_block(&self, node: Node) -> Block {
+        self.block_cfg
+            .containing_block(node)
+            .expect("live CFG node not in block CFG")
     }
 
-    fn pin(&mut self, node: Node, block: Self::Block) {
-        assert!(self.by_node_schedule[node].is_none());
-        trace!("pinned: graph {} -> CFG {}", node.as_u32(), block.as_u32());
-        self.by_node_schedule[node] = block.into();
+    fn pin(&mut self, ctx: &ScheduleCtx<'_>, node: Node, block: Block) {
+        assert!(self.schedule.blocks_by_node[node].is_none());
+        self.schedule.blocks_by_node[node] = block.into();
+
+        if matches!(ctx.graph().node_kind(node), NodeKind::Phi) {
+            trace!("phi: graph {} -> {block}", node.as_u32());
+            self.schedule.push_block_phi(block, node);
+        } else {
+            trace!("pinned: graph {} -> {block}", node.as_u32());
+            self.schedule.push_block_node(block, node);
+        }
     }
 }
 
 impl Scheduler<'_> {
     fn schedule_early(&mut self, ctx: &ScheduleCtx<'_>, node: Node) {
-        assert!(self.by_node_schedule[node].is_none());
-        let loc = self.early_schedule_location(ctx, node);
-        self.by_node_schedule[node] = loc.into();
+        assert!(self.schedule.blocks_by_node[node].is_none());
+        self.schedule.blocks_by_node[node] = self.early_schedule_location(ctx, node).into();
     }
 
-    fn schedule_late(&mut self, ctx: &ScheduleCtx<'_>, node: Node) -> DomTreeNode {
-        let early_loc = self.by_node_schedule[node].expect("node should have been scheduled early");
+    fn schedule_late(&mut self, ctx: &ScheduleCtx<'_>, node: Node) {
+        let early_loc =
+            self.schedule.blocks_by_node[node].expect("node should have been scheduled early");
         let late_loc = self.late_schedule_location(ctx, node);
         let loc = self.best_schedule_location(node, early_loc, late_loc);
-        self.by_node_schedule[node] = loc.into();
-        loc
+        self.schedule.blocks_by_node[node] = loc.into();
+        self.schedule.push_block_node(loc, node);
     }
 
-    fn best_schedule_location(
-        &self,
-        node: Node,
-        early_loc: DomTreeNode,
-        mut late_loc: DomTreeNode,
-    ) -> DomTreeNode {
+    fn best_schedule_location(&self, node: Node, early_loc: Block, mut late_loc: Block) -> Block {
         trace!(
-            "place: graph {} in CFG range ({}, {})",
-            node.as_u32(),
-            early_loc.as_u32(),
-            late_loc.as_u32()
+            "place: graph {} in range ({early_loc}, {late_loc})",
+            node.as_u32()
         );
 
-        debug_assert!(self.domtree.dominates(early_loc, late_loc));
+        debug_assert!(self.domtree.cfg_dominates(early_loc, late_loc));
 
         // Select a node between `early_loc` and `late_loc` on the dominator
         // tree that has minimal loop depth, favoring deeper nodes (those closer to `late_loc`).
@@ -129,109 +204,79 @@ impl Scheduler<'_> {
             if self.depth_map[late_loc].loop_depth < self.depth_map[best_loc].loop_depth {
                 best_loc = late_loc;
             }
-            late_loc = self.domtree.idom(late_loc).unwrap();
+            late_loc = self.domtree.cfg_idom(late_loc).unwrap();
         }
 
-        // Make sure we don't land on nodes that don't have exactly one control output, since we can't
-        // actually "place" things there.
-        while !self.depth_map[best_loc].single_ctrl_output {
-            best_loc = self
-                .domtree
-                .idom(best_loc)
-                .expect("entry node should have single control output");
-        }
+        debug_assert!(self.domtree.cfg_dominates(early_loc, best_loc));
 
-        debug_assert!(self.domtree.dominates(early_loc, best_loc));
-
-        trace!(
-            "place: graph {} -> CFG {}",
-            node.as_u32(),
-            best_loc.as_u32()
-        );
-
+        trace!("place: graph {} -> {best_loc}", node.as_u32());
         best_loc
     }
 
-    fn early_schedule_location(&self, ctx: &ScheduleCtx<'_>, node: Node) -> DomTreeNode {
+    fn early_schedule_location(&self, ctx: &ScheduleCtx<'_>, node: Node) -> Block {
         trace!("early: graph {}", node.as_u32());
         let loc = dataflow_preds(ctx.graph(), node)
             .map(|pred| {
-                let pred_loc = self.by_node_schedule[pred].expect("data flow cycle or dead input");
-                trace!(
-                    "    pred: graph {} (CFG {})",
-                    pred.as_u32(),
-                    pred_loc.as_u32()
-                );
+                let pred_loc =
+                    self.schedule.blocks_by_node[pred].expect("data flow cycle or dead input");
+                trace!("    pred: graph {} ({pred_loc})", pred.as_u32());
                 pred_loc
             })
             .reduce(|acc, cur| {
                 // Find the deepest input schedule location in the dominator tree, assuming they are
                 // totally ordered by dominance.
-                if self.domtree.dominates(acc, cur) {
+                if self.domtree.cfg_dominates(acc, cur) {
                     cur
                 } else {
                     acc
                 }
             })
-            .unwrap_or(self.domtree.root());
-        trace!("early: graph {} -> CFG {}", node.as_u32(), loc.as_u32());
+            .unwrap_or(self.domtree.get_cfg_node(self.domtree.root()));
+        trace!("early: graph {} -> {loc}", node.as_u32());
         loc
     }
 
-    fn late_schedule_location(&self, ctx: &ScheduleCtx<'_>, node: Node) -> DomTreeNode {
+    fn late_schedule_location(&self, ctx: &ScheduleCtx<'_>, node: Node) -> Block {
         let graph = ctx.graph();
 
         trace!("late: graph {}", node.as_u32());
 
         let loc = dataflow_succs(ctx.graph(), ctx.live_nodes(), node)
             .filter_map(|(succ, input_idx)| {
-                if let Some(succ_domtree_node) = self.domtree.get_tree_node(succ) {
-                    // If this successor is a CFG node, we explicitly want to be scheduled before it and
-                    // not under it.
-                    let loc = self
-                        .domtree
-                        .idom(succ_domtree_node)
-                        .expect("dominator tree root was a data successor");
-                    trace!(
-                        "    succ: pinned graph {} (idom CFG {})",
-                        succ.as_u32(),
-                        loc.as_u32()
-                    );
-                    Some(loc)
-                } else if graph.node_kind(succ) == &NodeKind::Phi {
+                if matches!(graph.node_kind(succ), NodeKind::Phi) {
+                    // Phi nodes are special, because they "use" their inputs in the corresponding
+                    // input blocks and not in the blocks housing them.
+
                     let region = graph.value_def(graph.node_inputs(succ)[0]).0;
 
                     // Note: the corresponding region input might be dead even when the phi is live;
                     // this just means that this instance doesn't count as a use and can be skipped.
                     let input_idx = input_idx as usize - 1;
                     let loc = self
-                        .domtree
-                        .get_tree_node(graph.value_def(graph.node_inputs(region)[input_idx]).0);
+                        .block_cfg
+                        .containing_block(graph.value_def(graph.node_inputs(region)[input_idx]).0);
 
                     if let Some(loc) = loc {
                         trace!(
-                            "    succ: phi {} input {} (CFG {})",
+                            "    succ: phi {} input {} ({loc})",
                             node.as_u32(),
                             input_idx,
-                            loc.as_u32()
                         );
                     }
 
                     loc
                 } else {
-                    // Plain data nodes using the value should always have a schedule if they are live.
-                    // We want to be scheduled in the same CFG node as they are; the fact that we are
-                    // doing a postorder traversal will ensure that we get appended to the reverse list
-                    // after them.
-                    let loc = self.by_node_schedule[succ].expect("data flow cycle");
-                    trace!("    succ: graph {} (CFG {})", succ.as_u32(), loc.as_u32());
+                    // Other nodes using the value should always be scheduled in the same block as
+                    // the value computation.
+                    let loc = self.schedule.blocks_by_node[succ].expect("data flow cycle");
+                    trace!("    succ: graph {} ({loc})", succ.as_u32());
                     Some(loc)
                 }
             })
             .reduce(|acc, cur| domtree_lca(self.domtree, self.depth_map, acc, cur))
             .expect("live non-pinned node has no data uses");
 
-        trace!("late: graph {} -> CFG {}", node.as_u32(), loc.as_u32());
+        trace!("late: graph {} -> {loc}", node.as_u32());
         loc
     }
 }
@@ -240,12 +285,11 @@ impl Scheduler<'_> {
 struct CfgDepthData {
     domtree_depth: u32,
     loop_depth: u32,
-    single_ctrl_output: bool,
 }
 
-type CfgDepthMap = SecondaryMap<DomTreeNode, CfgDepthData>;
+type CfgDepthMap = SecondaryMap<Block, CfgDepthData>;
 
-fn get_cfg_depth_map(graph: &ValGraph, domtree: &DomTree, loop_forest: &LoopForest) -> CfgDepthMap {
+fn get_cfg_depth_map(domtree: &BlockDomTree, loop_forest: &LoopForest) -> CfgDepthMap {
     let mut depth_map = CfgDepthMap::new();
 
     for domtree_node in domtree.preorder() {
@@ -254,48 +298,42 @@ fn get_cfg_depth_map(graph: &ValGraph, domtree: &DomTree, loop_forest: &LoopFore
         let loop_depth = loop_forest
             .containing_loop(domtree_node)
             .map_or(0, |containing_loop| loop_forest.loop_depth(containing_loop));
-        let domtree_depth = domtree
-            .idom(domtree_node)
-            .map_or(0, |idom| depth_map[idom].domtree_depth + 1);
 
-        depth_map[domtree_node] = CfgDepthData {
+        let domtree_depth = domtree.idom(domtree_node).map_or(0, |idom| {
+            let idom = domtree.get_cfg_node(idom);
+            depth_map[idom].domtree_depth + 1
+        });
+
+        let block = domtree.get_cfg_node(domtree_node);
+        depth_map[block] = CfgDepthData {
             domtree_depth,
             loop_depth,
-            single_ctrl_output: has_single_ctrl_output(graph, domtree.get_cfg_node(domtree_node)),
         };
     }
 
     depth_map
 }
 
-fn has_single_ctrl_output(graph: &ValGraph, node: Node) -> bool {
-    let mut ctrl_outputs = graph
-        .node_outputs(node)
-        .into_iter()
-        .filter(|&output| graph.value_kind(output).is_control());
-    ctrl_outputs.next().is_some() && ctrl_outputs.next().is_none()
-}
-
 fn domtree_lca(
-    domtree: &DomTree,
+    domtree: &BlockDomTree,
     depth_map: &CfgDepthMap,
-    mut a: DomTreeNode,
-    mut b: DomTreeNode,
-) -> DomTreeNode {
+    mut a: Block,
+    mut b: Block,
+) -> Block {
     while depth_map[a].domtree_depth > depth_map[b].domtree_depth {
         // Note: `a` must have an immediate dominator here because its depth is nonzero.
-        a = domtree.idom(a).unwrap();
+        a = domtree.cfg_idom(a).unwrap();
     }
 
     while depth_map[b].domtree_depth > depth_map[a].domtree_depth {
         // Note: `b` must have an immediate dominator here because its depth is nonzero.
-        b = domtree.idom(b).unwrap();
+        b = domtree.cfg_idom(b).unwrap();
     }
 
     debug_assert!(depth_map[a].domtree_depth == depth_map[b].domtree_depth);
     while a != b {
-        a = domtree.idom(a).unwrap();
-        b = domtree.idom(b).unwrap();
+        a = domtree.cfg_idom(a).unwrap();
+        b = domtree.cfg_idom(b).unwrap();
     }
 
     a

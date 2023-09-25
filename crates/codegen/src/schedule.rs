@@ -80,7 +80,6 @@ impl Schedule {
     pub fn block_params(&self, block: Block) -> &[DepValue] {
         let base = self.block_params[block].block_param_base as usize;
         let len = self.block_params[block].block_param_len as usize;
-        trace!("get params for {block}: base {base}, len {len}");
         &self.block_param_pool[base..base + len]
     }
 

@@ -89,15 +89,13 @@ impl Schedule {
             nodes.clear(&mut self.node_list_pool);
 
             trace!("sorting {block}");
-            let mut i = 0;
             while let Some(node) = scratch_postorder.next(&succs, &mut per_block_visited) {
                 if matches!(graph.node_kind(node), NodeKind::Phi) {
                     // We handle phi nodes specially.
                     continue;
                 }
-                trace!("    {i}: graph {}", node.as_u32());
+                trace!("    node {}", node.as_u32());
                 nodes.push(node, &mut self.node_list_pool);
-                i += 1;
             }
         }
     }
@@ -163,10 +161,10 @@ impl PinNodes for Scheduler<'_> {
         self.schedule.blocks_by_node[node] = block.into();
 
         if matches!(ctx.graph().node_kind(node), NodeKind::Phi) {
-            trace!("phi: graph {} -> {block}", node.as_u32());
+            trace!("phi: node {} -> {block}", node.as_u32());
             self.schedule.push_block_phi(block, node);
         } else {
-            trace!("pinned: graph {} -> {block}", node.as_u32());
+            trace!("pinned: node {} -> {block}", node.as_u32());
             self.schedule.push_block_node(block, node);
         }
     }
@@ -189,8 +187,12 @@ impl Scheduler<'_> {
 
     fn best_schedule_location(&self, node: Node, early_loc: Block, mut late_loc: Block) -> Block {
         trace!(
-            "place: graph {} in range ({early_loc}, {late_loc})",
-            node.as_u32()
+            "place: node {} in {early_loc} [domtree depth {}, loop depth {}] .. {late_loc} [domtree depth {}, loop depth {}]",
+            node.as_u32(),
+            self.depth_map[early_loc].domtree_depth,
+            self.depth_map[early_loc].loop_depth,
+            self.depth_map[late_loc].domtree_depth,
+            self.depth_map[late_loc].loop_depth,
         );
 
         debug_assert!(self.domtree.cfg_dominates(early_loc, late_loc));
@@ -200,6 +202,11 @@ impl Scheduler<'_> {
         let mut best_loc = late_loc;
         while late_loc != early_loc {
             if self.depth_map[late_loc].loop_depth < self.depth_map[best_loc].loop_depth {
+                trace!(
+                    "place: hoist to {late_loc} [domtree depth {}, loop depth {}]",
+                    self.depth_map[late_loc].domtree_depth,
+                    self.depth_map[late_loc].loop_depth
+                );
                 best_loc = late_loc;
             }
             late_loc = self.domtree.cfg_idom(late_loc).unwrap();
@@ -207,17 +214,17 @@ impl Scheduler<'_> {
 
         debug_assert!(self.domtree.cfg_dominates(early_loc, best_loc));
 
-        trace!("place: graph {} -> {best_loc}", node.as_u32());
+        trace!("place: node {} -> {best_loc}", node.as_u32());
         best_loc
     }
 
     fn early_schedule_location(&self, ctx: &ScheduleCtx<'_>, node: Node) -> Block {
-        trace!("early: graph {}", node.as_u32());
+        trace!("early: node {}", node.as_u32());
         let loc = dataflow_preds(ctx.graph(), node)
             .map(|pred| {
                 let pred_loc =
                     self.schedule.blocks_by_node[pred].expect("data flow cycle or dead input");
-                trace!("    pred: graph {} ({pred_loc})", pred.as_u32());
+                trace!("    pred: node {} ({pred_loc})", pred.as_u32());
                 pred_loc
             })
             .reduce(|acc, cur| {
@@ -230,14 +237,14 @@ impl Scheduler<'_> {
                 }
             })
             .unwrap_or(self.domtree.get_cfg_node(self.domtree.root()));
-        trace!("early: graph {} -> {loc}", node.as_u32());
+        trace!("early: node {} -> {loc}", node.as_u32());
         loc
     }
 
     fn late_schedule_location(&self, ctx: &ScheduleCtx<'_>, node: Node) -> Block {
         let graph = ctx.graph();
 
-        trace!("late: graph {}", node.as_u32());
+        trace!("late: node {}", node.as_u32());
 
         let loc = dataflow_succs(ctx.graph(), ctx.live_nodes(), node)
             .filter_map(|(succ, input_idx)| {
@@ -267,14 +274,14 @@ impl Scheduler<'_> {
                     // Other nodes using the value should always be scheduled in the same block as
                     // the value computation.
                     let loc = self.schedule.blocks_by_node[succ].expect("data flow cycle");
-                    trace!("    succ: graph {} ({loc})", succ.as_u32());
+                    trace!("    succ: node {} ({loc})", succ.as_u32());
                     Some(loc)
                 }
             })
             .reduce(|acc, cur| domtree_lca(self.domtree, self.depth_map, acc, cur))
             .expect("live non-pinned node has no data uses");
 
-        trace!("late: graph {} -> {loc}", node.as_u32());
+        trace!("late: node {} -> {loc}", node.as_u32());
         loc
     }
 }

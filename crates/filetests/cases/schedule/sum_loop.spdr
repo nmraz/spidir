@@ -4,15 +4,15 @@ func @sum_to_n:i32(i32) {
     # check: function `sum_to_n`:
     # nextln: block0[]:
     # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # nextln:     $(iconst0=$val):i32 = iconst 0
-    # nextln:     $(icmp0=$val):i32 = icmp eq $entry1, $iconst0
+    # nextln:     $(iconst0=$val):i32 = iconst 1
+    # nextln:     $(iconst1=$val):i32 = iconst 0
+    # nextln:     $(icmp0=$val):i32 = icmp eq $entry1, $iconst1
     # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $icmp0
     # nextln: block2[$(phi0=$val), $(phi1=$val)]:
     # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond1, $(brcond2=$val)
     # nextln:     $(iadd0=$val):i32 = iadd $phi1, $phi0
-    # nextln:     $(iconst1=$val):i32 = iconst 1
-    # nextln:     $(isub0=$val):i32 = isub $phi0, $iconst1
-    # nextln:     $(icmp1=$val):i32 = icmp eq $isub0, $iconst0
+    # nextln:     $(isub0=$val):i32 = isub $phi0, $iconst0
+    # nextln:     $(icmp1=$val):i32 = icmp eq $isub0, $iconst1
     # nextln:     $(brcond3=$val):ctrl, $brcond2:ctrl = brcond $region0, $icmp1
     # nextln: block1[$(phi2=$val)]:
     # nextln:     $(region2=$val):ctrl, $(region3=$val):phisel = region $brcond0, $brcond3

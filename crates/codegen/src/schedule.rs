@@ -12,6 +12,10 @@ use ir::{
 };
 use log::trace;
 
+/// The maximum path length up the dominator tree we are willing to hoist nodes, to avoid quadratic
+/// behavior.
+const MAX_HOIST_DEPTH: usize = 50;
+
 pub struct Schedule {
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
     nodes_by_block: SecondaryMap<Block, EntityList<Node>>,
@@ -185,7 +189,7 @@ impl Scheduler<'_> {
         self.schedule.push_block_node(loc, node);
     }
 
-    fn best_schedule_location(&self, node: Node, early_loc: Block, mut late_loc: Block) -> Block {
+    fn best_schedule_location(&self, node: Node, early_loc: Block, late_loc: Block) -> Block {
         trace!(
             "place: node {} in {early_loc} [domtree depth {}, loop depth {}] .. {late_loc} [domtree depth {}, loop depth {}]",
             node.as_u32(),
@@ -199,17 +203,31 @@ impl Scheduler<'_> {
 
         // Select a node between `early_loc` and `late_loc` on the dominator
         // tree that has minimal loop depth, favoring deeper nodes (those closer to `late_loc`).
-        let mut best_loc = late_loc;
-        while late_loc != early_loc {
-            if self.depth_map[late_loc].loop_depth < self.depth_map[best_loc].loop_depth {
-                trace!(
-                    "place: hoist to {late_loc} [domtree depth {}, loop depth {}]",
-                    self.depth_map[late_loc].domtree_depth,
-                    self.depth_map[late_loc].loop_depth
-                );
-                best_loc = late_loc;
+        let mut cur_loc = late_loc;
+        let mut best_loc = cur_loc;
+        let mut i = 0;
+
+        loop {
+            if i > MAX_HOIST_DEPTH {
+                trace!("place: reached maximum hoist depth {MAX_HOIST_DEPTH}, stopping search");
+                break;
             }
-            late_loc = self.domtree.cfg_idom(late_loc).unwrap();
+
+            if self.depth_map[cur_loc].loop_depth < self.depth_map[best_loc].loop_depth {
+                trace!(
+                    "place: hoist to {cur_loc} [domtree depth {}, loop depth {}]",
+                    self.depth_map[cur_loc].domtree_depth,
+                    self.depth_map[cur_loc].loop_depth
+                );
+                best_loc = cur_loc;
+            }
+
+            if cur_loc == early_loc {
+                break;
+            }
+
+            cur_loc = self.domtree.cfg_idom(cur_loc).unwrap();
+            i += 1;
         }
 
         debug_assert!(self.domtree.cfg_dominates(early_loc, best_loc));

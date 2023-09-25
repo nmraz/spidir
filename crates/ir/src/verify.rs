@@ -12,7 +12,7 @@ use crate::{
     domtree::{DomTree, DomTreeNode},
     module::{Function, FunctionData, Module},
     node::{DepValueKind, NodeKind},
-    schedule::{pin_nodes, schedule_early, PinNodes, ScheduleCtx},
+    schedule::{schedule_early, ScheduleCtx},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{cfg_preorder, walk_live_nodes, LiveNodeInfo},
     write::display_node,
@@ -335,7 +335,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
         schedule: ByNodeSchedule::new(),
     };
 
-    pin_nodes(&ctx, &mut scheduler);
+    scheduler.pin_nodes(&ctx);
 
     schedule_early(&ctx, &mut PostOrderContext::new(), |ctx, node| {
         assert!(scheduler.schedule[node].is_none());
@@ -363,22 +363,21 @@ struct VerifierScheduler<'a> {
     schedule: ByNodeSchedule,
 }
 
-impl PinNodes for VerifierScheduler<'_> {
-    type Block = DomTreeNode;
-
-    fn control_node_block(&self, node: Node) -> Self::Block {
-        self.domtree
-            .get_tree_node(node)
-            .expect("live CFG node not in dominator tree")
-    }
-
-    fn pin(&mut self, _ctx: &ScheduleCtx<'_>, node: Node, block: Self::Block) {
-        assert!(self.schedule[node].is_none());
-        self.schedule[node] = block.into();
-    }
-}
-
 impl VerifierScheduler<'_> {
+    fn pin_nodes(&mut self, ctx: &ScheduleCtx<'_>) {
+        for &cfg_node in ctx.cfg_preorder() {
+            let domtree_node = self
+                .domtree
+                .get_tree_node(cfg_node)
+                .expect("live CFG node not in dominator tree");
+
+            self.schedule[cfg_node] = domtree_node.into();
+            for phi in ctx.get_attached_phis(cfg_node) {
+                self.schedule[phi] = domtree_node.into();
+            }
+        }
+    }
+
     fn verify_dataflow_cfg_node_inputs(
         &mut self,
         ctx: &ScheduleCtx<'_>,

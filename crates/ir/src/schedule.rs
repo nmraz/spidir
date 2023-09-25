@@ -64,22 +64,6 @@ impl<'a> ScheduleCtx<'a> {
     }
 }
 
-pub trait PinNodes {
-    type Block: Copy;
-    fn control_node_block(&self, node: Node) -> Self::Block;
-    fn pin(&mut self, ctx: &ScheduleCtx<'_>, node: Node, block: Self::Block);
-}
-
-pub fn pin_nodes(ctx: &ScheduleCtx<'_>, pin_nodes: &mut impl PinNodes) {
-    for &node in ctx.cfg_preorder() {
-        let block = pin_nodes.control_node_block(node);
-        pin_nodes.pin(ctx, node, block);
-        for phi in ctx.get_attached_phis(node) {
-            pin_nodes.pin(ctx, phi, block);
-        }
-    }
-}
-
 pub fn schedule_early(
     ctx: &ScheduleCtx<'_>,
     scratch_postorder: &mut PostOrderContext<Node>,

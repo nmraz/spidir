@@ -1,4 +1,6 @@
-use cranelift_entity::{entity_impl, packed_option::PackedOption, PrimaryMap, SecondaryMap};
+use cranelift_entity::{
+    entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap, SecondaryMap,
+};
 use dominators::domtree::DomTree;
 use graphwalk::{GraphRef, PredGraphRef};
 use log::trace;
@@ -7,7 +9,7 @@ use smallvec::SmallVec;
 use crate::{
     node::NodeKind,
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::{cfg_outputs, cfg_preds, cfg_succs},
+    valwalk::cfg_outputs,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -19,12 +21,20 @@ struct BlockData {
     terminator: Node,
 }
 
+#[derive(Default, Clone, Copy)]
+struct BlockLinks {
+    preds: EntityList<Block>,
+    succs: EntityList<Block>,
+}
+
 pub type BlockDomTree = DomTree<Block>;
 
 pub struct BlockCfg {
     blocks: PrimaryMap<Block, BlockData>,
+    block_links: SecondaryMap<Block, BlockLinks>,
     // If this is too sparse, we may want to consider a hashmap instead.
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
+    block_link_pool: ListPool<Block>,
 }
 
 impl BlockCfg {
@@ -32,26 +42,34 @@ impl BlockCfg {
         let mut ctrl_outputs = SmallVec::<[DepValue; 4]>::new();
         let mut cfg = Self {
             blocks: PrimaryMap::new(),
+            block_links: SecondaryMap::new(),
             blocks_by_node: SecondaryMap::new(),
+            block_link_pool: ListPool::new(),
         };
 
-        let mut cur_block = None;
+        let mut cur_block: Option<Block> = None;
         for node in cfg_preorder {
             let block = match cur_block {
-                Some(cur_block) => cur_block,
+                Some(cur_block) => {
+                    cfg.blocks_by_node[node] = cur_block.into();
+                    cur_block
+                }
                 None => {
-                    let block = cfg.create_block(node);
+                    let block = cfg.get_headed_block(node);
                     cur_block = Some(block);
                     block
                 }
             };
 
-            cfg.blocks_by_node[node] = block.into();
-
             ctrl_outputs.clear();
             ctrl_outputs.extend(cfg_outputs(graph, node));
+
             if should_terminate_block(graph, &ctrl_outputs) {
                 cfg.terminate_block(block, node);
+                for &output in &ctrl_outputs {
+                    let succ = cfg.get_headed_block(graph.value_uses(output).next().unwrap().0);
+                    cfg.add_block_edge(block, succ);
+                }
                 cur_block = None;
             }
         }
@@ -74,35 +92,40 @@ impl BlockCfg {
         self.blocks[block].terminator
     }
 
-    pub fn succs<'a>(
-        &'a self,
-        graph: &'a ValGraph,
-        block: Block,
-    ) -> impl Iterator<Item = Block> + 'a {
-        cfg_succs(graph, self.block_terminator(block))
-            .map(move |succ| self.containing_block(succ).unwrap())
-    }
-
-    pub fn preds<'a>(
-        &'a self,
-        graph: &'a ValGraph,
-        block: Block,
-    ) -> impl Iterator<Item = Block> + 'a {
-        // Ignore any predecessors that don't belong to any block, which can happen if there are
-        // dead control nodes.
-        cfg_preds(graph, self.block_header(block)).filter_map(|pred| self.containing_block(pred))
+    #[inline]
+    pub fn block_succs(&self, block: Block) -> &[Block] {
+        self.block_links[block]
+            .succs
+            .as_slice(&self.block_link_pool)
     }
 
     #[inline]
-    pub fn graph_ref<'a>(&'a self, graph: &'a ValGraph) -> BlockCfgGraphRef<'a> {
-        BlockCfgGraphRef { graph, cfg: self }
+    pub fn block_preds(&self, block: Block) -> &[Block] {
+        self.block_links[block]
+            .preds
+            .as_slice(&self.block_link_pool)
     }
 
-    fn create_block(&mut self, header: Node) -> Block {
+    fn add_block_edge(&mut self, pred: Block, succ: Block) {
+        self.block_links[pred]
+            .succs
+            .push(succ, &mut self.block_link_pool);
+        self.block_links[succ]
+            .preds
+            .push(pred, &mut self.block_link_pool);
+    }
+
+    fn get_headed_block(&mut self, header: Node) -> Block {
+        if let Some(block) = self.containing_block(header) {
+            debug_assert!(self.block_header(block) == header);
+            return block;
+        }
+
         let block = self.blocks.push(BlockData {
             header,
             terminator: header,
         });
+        self.blocks_by_node[header] = block.into();
         trace!("discovered {block} with header {}", header.as_u32());
         block
     }
@@ -113,23 +136,17 @@ impl BlockCfg {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct BlockCfgGraphRef<'a> {
-    graph: &'a ValGraph,
-    cfg: &'a BlockCfg,
-}
-
-impl GraphRef for BlockCfgGraphRef<'_> {
+impl GraphRef for &'_ BlockCfg {
     type Node = Block;
 
-    fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
-        self.cfg.succs(self.graph, node).for_each(f);
+    fn successors(&self, node: Block, f: impl FnMut(Block)) {
+        self.block_succs(node).iter().copied().for_each(f);
     }
 }
 
-impl PredGraphRef for BlockCfgGraphRef<'_> {
-    fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
-        self.cfg.preds(self.graph, node).for_each(f);
+impl PredGraphRef for &'_ BlockCfg {
+    fn predecessors(&self, node: Block, f: impl FnMut(Block)) {
+        self.block_preds(node).iter().copied().for_each(f);
     }
 }
 

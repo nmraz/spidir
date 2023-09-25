@@ -7,14 +7,14 @@ func @sum_to_n:i32(i32) {
     # nextln:     $(iconst0=$val):i32 = iconst 0
     # nextln:     $(icmp0=$val):i32 = icmp eq $entry1, $iconst0
     # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $icmp0
-    # nextln: block1[$(phi0=$val), $(phi1=$val)]:
+    # nextln: block2[$(phi0=$val), $(phi1=$val)]:
     # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond1, $(brcond2=$val)
     # nextln:     $(iadd0=$val):i32 = iadd $phi1, $phi0
     # nextln:     $(iconst1=$val):i32 = iconst 1
     # nextln:     $(isub0=$val):i32 = isub $phi0, $iconst1
     # nextln:     $(icmp1=$val):i32 = icmp eq $isub0, $iconst0
     # nextln:     $(brcond3=$val):ctrl, $brcond2:ctrl = brcond $region0, $icmp1
-    # nextln: block2[$(phi2=$val)]:
+    # nextln: block1[$(phi2=$val)]:
     # nextln:     $(region2=$val):ctrl, $(region3=$val):phisel = region $brcond0, $brcond3
     # nextln:     return $region2, $phi2
 
@@ -52,7 +52,7 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln:     $(load0=$val):ctrl, $(load1=$val):i32 = load.4 $region2, $stackslot1
     # nextln:     $(icmp0=$val):i32 = icmp eq $load1, $iconst1
     # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $load0, $icmp0
-    # nextln: block3[]:
+    # nextln: block4[]:
     # nextln:     $(region4=$val):ctrl, $(region5=$val):phisel = region $brcond1
     # nextln:     $(load2=$val):ctrl, $(load3=$val):i32 = load.4 $region4, $stackslot1
     # nextln:     $(load4=$val):ctrl, $(load5=$val):i32 = load.4 $load2, $stackslot0
@@ -60,7 +60,7 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln:     $(isub0=$val):i32 = isub $load3, $iconst0
     # nextln:     $(store3=$val):ctrl = store.4 $load4, $isub0, $stackslot1
     # nextln:     $store2:ctrl = store.4 $store3, $iadd0, $stackslot0
-    # nextln: block4[]:
+    # nextln: block3[]:
     # nextln:     $(region6=$val):ctrl, $(region7=$val):phisel = region $brcond0
     # nextln:     $(load6=$val):ctrl, $(load7=$val):i32 = load.4 $region6, $stackslot0
     # nextln:     return $load6, $load7

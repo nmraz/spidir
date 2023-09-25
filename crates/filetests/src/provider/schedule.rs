@@ -32,10 +32,9 @@ impl TestProvider for ScheduleProvider {
             let block_cfg = BlockCfg::compute(graph, cfg_preorder.iter().copied());
             let schedule = Schedule::compute(graph, &cfg_preorder, &block_cfg);
 
-            for block in PreOrder::<_, EntitySet<_>>::new(
-                block_cfg.graph_ref(graph),
-                block_cfg.containing_block(func.entry),
-            ) {
+            for block in
+                PreOrder::<_, EntitySet<_>>::new(&block_cfg, block_cfg.containing_block(func.entry))
+            {
                 let phis = schedule
                     .block_phi_inputs(block)
                     .iter()

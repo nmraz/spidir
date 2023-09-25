@@ -3,14 +3,14 @@
 func @conditional_uses(i32, i32, ptr) {
     # check: function `conditional_uses`:
     # nextln: %0:ctrl, %1:i32, %2:i32, %3:ptr = entry         # head block0
-    # nextln: %4:ctrl, %5:ctrl = brcond %0, %1        # term block0 -> block3, block1
+    # nextln: %4:ctrl, %5:ctrl = brcond %0, %1        # term block0 -> block1, block2
     # nextln: %6:i32 = imul %1, %2                    # x
-    # nextln: %7:ctrl = store.4 %4, %6, %3            # head block3, term block3 -> block2
+    # nextln: %7:ctrl = store.4 %4, %6, %3            # head block1, term block1 -> block3
     # nextln: %8:i32 = iconst 5                       # x
     # nextln: %9:i32 = iadd %1, %8                    # x
-    # nextln: %10:ctrl = store.4 %5, %9, %3           # head block1, term block1 -> block2
-    # nextln: %11:ctrl, %12:phisel = region %7, %10   # head block2
-    # nextln: return %11                              # term block2
+    # nextln: %10:ctrl = store.4 %5, %9, %3           # head block2, term block2 -> block3
+    # nextln: %11:ctrl, %12:phisel = region %7, %10   # head block3
+    # nextln: return %11                              # term block3
 
     %entry:ctrl, %p1:i32, %p2:i32, %p3:ptr = entry
     %p1t:ctrl, %p1f:ctrl = brcond %entry, %p1

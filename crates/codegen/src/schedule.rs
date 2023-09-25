@@ -24,11 +24,8 @@ impl Schedule {
         let entry = valgraph_cfg_preorder[0];
         let live_node_info = LiveNodeInfo::compute(graph, entry);
 
-        let block_cfg_graph = block_cfg.graph_ref(graph);
-        let domtree =
-            BlockDomTree::compute(block_cfg_graph, block_cfg.containing_block(entry).unwrap());
-
-        let loop_forest = LoopForest::compute(block_cfg_graph, &domtree);
+        let domtree = BlockDomTree::compute(block_cfg, block_cfg.containing_block(entry).unwrap());
+        let loop_forest = LoopForest::compute(block_cfg, &domtree);
 
         let ctx = ScheduleCtx::new(graph, &live_node_info, valgraph_cfg_preorder);
         let depth_map = get_cfg_depth_map(&domtree, &loop_forest);

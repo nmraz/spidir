@@ -32,7 +32,7 @@ impl TestProvider for CfgProvider {
                         is_boundary = true;
 
                         write!(s, "term {block}").unwrap();
-                        let succs: Vec<_> = cfg.succs(&func.graph, block).collect();
+                        let succs = cfg.block_succs(block);
                         if !succs.is_empty() {
                             write!(s, " -> {}", succs.iter().format(", ")).unwrap();
                         }

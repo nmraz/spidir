@@ -71,20 +71,17 @@ impl Schedule {
     fn schedule_intra_block(&mut self, graph: &ValGraph, domtree: &BlockDomTree) {
         // TODO: The block in here is a lie, but we need to provide it because `PostOrderContext` is
         // currently coupled to the graph.
-        let mut per_block_postorder = PostOrderContext::new(
-            SingleBlockSuccs {
-                graph,
-                blocks_by_node: &self.blocks_by_node,
-                block: Block::from_u32(0),
-            },
-            [],
-        );
+        let mut per_block_postorder = PostOrderContext::new();
         let mut per_block_visited = EntitySet::new();
 
         // Get a reverse-topological sort of all nodes placed into each block.
         for block in domtree.preorder() {
             let block = domtree.get_cfg_node(block);
-            per_block_postorder.graph_mut().block = block;
+            let succs = SingleBlockSuccs {
+                graph,
+                blocks_by_node: &self.blocks_by_node,
+                block,
+            };
 
             let nodes = &mut self.nodes_by_block[block];
             per_block_postorder.reset(nodes.as_slice(&self.node_list_pool).iter().copied());
@@ -92,7 +89,7 @@ impl Schedule {
 
             trace!("sorting {block}");
             let mut i = 0;
-            while let Some(node) = per_block_postorder.next(&mut per_block_visited) {
+            while let Some(node) = per_block_postorder.next(&succs, &mut per_block_visited) {
                 if matches!(graph.node_kind(node), NodeKind::Phi) {
                     // We handle phi nodes specially.
                     continue;

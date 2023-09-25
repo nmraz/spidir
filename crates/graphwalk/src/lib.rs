@@ -16,8 +16,22 @@ pub trait GraphRef {
     fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node));
 }
 
+impl<G: GraphRef> GraphRef for &'_ G {
+    type Node = G::Node;
+
+    fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
+        (*self).successors(node, f);
+    }
+}
+
 pub trait PredGraphRef: GraphRef {
     fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node));
+}
+
+impl<G: PredGraphRef> PredGraphRef for &'_ G {
+    fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
+        (*self).predecessors(node, f);
+    }
 }
 
 pub trait VisitTracker<N>: Default {
@@ -45,37 +59,26 @@ impl<N: EntityRef> VisitTracker<N> for EntitySet<N> {
     }
 }
 
-pub struct PreOrderContext<G: GraphRef> {
-    graph: G,
-    stack: Vec<G::Node>,
+#[derive(Debug)]
+pub struct PreOrderContext<N> {
+    stack: Vec<N>,
 }
 
-impl<G: GraphRef> PreOrderContext<G> {
-    pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
-        let mut res = Self {
-            graph,
-            stack: Vec::new(),
-        };
-        res.reset(roots);
-        res
+impl<N: Copy> PreOrderContext<N> {
+    pub fn new() -> Self {
+        Self { stack: Vec::new() }
     }
 
-    pub fn reset(&mut self, roots: impl IntoIterator<Item = G::Node>) {
+    pub fn reset(&mut self, roots: impl IntoIterator<Item = N>) {
         self.stack.clear();
         self.stack.extend(roots);
     }
 
-    #[inline]
-    pub fn graph(&self) -> &G {
-        &self.graph
-    }
-
-    #[inline]
-    pub fn graph_mut(&mut self) -> &mut G {
-        &mut self.graph
-    }
-
-    pub fn next(&mut self, visited: &mut impl VisitTracker<G::Node>) -> Option<G::Node> {
+    pub fn next(
+        &mut self,
+        graph: impl GraphRef<Node = N>,
+        visited: &mut impl VisitTracker<N>,
+    ) -> Option<N> {
         let node = loop {
             let node = self.stack.pop()?;
             if !visited.is_visited(node) {
@@ -85,7 +88,7 @@ impl<G: GraphRef> PreOrderContext<G> {
 
         visited.mark_visited(node);
 
-        self.graph.successors(node, |succ| {
+        graph.successors(node, |succ| {
             // This extra check here is an optimization to avoid needlessly placing
             // an obviously-visited node on to the stack. Even if the node is not
             // visited now, it may be by the time it is popped off the stack later.
@@ -98,27 +101,27 @@ impl<G: GraphRef> PreOrderContext<G> {
     }
 }
 
+impl<N: Copy> Default for PreOrderContext<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct PreOrder<G: GraphRef, V> {
+    pub graph: G,
     pub visited: V,
-    ctx: PreOrderContext<G>,
+    ctx: PreOrderContext<G::Node>,
 }
 
 impl<G: GraphRef, V: VisitTracker<G::Node>> PreOrder<G, V> {
     pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
+        let mut ctx = PreOrderContext::new();
+        ctx.reset(roots);
         Self {
+            graph,
             visited: V::default(),
-            ctx: PreOrderContext::new(graph, roots),
+            ctx,
         }
-    }
-
-    #[inline]
-    pub fn graph(&self) -> &G {
-        self.ctx.graph()
-    }
-
-    #[inline]
-    pub fn graph_mut(&mut self) -> &mut G {
-        self.ctx.graph_mut()
     }
 }
 
@@ -126,28 +129,22 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PreOrder<G, V> {
     type Item = G::Node;
 
     fn next(&mut self) -> Option<G::Node> {
-        self.ctx.next(&mut self.visited)
+        self.ctx.next(&self.graph, &mut self.visited)
     }
 }
 
 pub type TreePreOrder<G> = PreOrder<G, NopTracker>;
 
-pub struct PostOrderContext<G: GraphRef> {
-    graph: G,
-    stack: Vec<(WalkPhase, G::Node)>,
+pub struct PostOrderContext<N> {
+    stack: Vec<(WalkPhase, N)>,
 }
 
-impl<G: GraphRef> PostOrderContext<G> {
-    pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
-        let mut res = Self {
-            graph,
-            stack: Vec::new(),
-        };
-        res.reset(roots);
-        res
+impl<N: Copy> PostOrderContext<N> {
+    pub fn new() -> Self {
+        Self { stack: Vec::new() }
     }
 
-    pub fn reset(&mut self, roots: impl IntoIterator<Item = G::Node>) {
+    pub fn reset(&mut self, roots: impl IntoIterator<Item = N>) {
         self.stack.clear();
 
         // Note: push the roots onto the stack in source order so that this order is preserved in
@@ -157,19 +154,13 @@ impl<G: GraphRef> PostOrderContext<G> {
             .extend(roots.into_iter().map(|node| (WalkPhase::Pre, node)));
     }
 
-    #[inline]
-    pub fn graph(&self) -> &G {
-        &self.graph
-    }
-
-    #[inline]
-    pub fn graph_mut(&mut self) -> &mut G {
-        &mut self.graph
-    }
-
-    pub fn next(&mut self, visited: &mut impl VisitTracker<G::Node>) -> Option<G::Node> {
+    pub fn next(
+        &mut self,
+        graph: impl GraphRef<Node = N>,
+        visited: &mut impl VisitTracker<N>,
+    ) -> Option<N> {
         loop {
-            let (phase, node) = self.next_event(visited)?;
+            let (phase, node) = self.next_event(&graph, visited)?;
             if phase == WalkPhase::Post {
                 return Some(node);
             }
@@ -178,8 +169,9 @@ impl<G: GraphRef> PostOrderContext<G> {
 
     pub fn next_event(
         &mut self,
-        visited: &mut impl VisitTracker<G::Node>,
-    ) -> Option<(WalkPhase, G::Node)> {
+        graph: impl GraphRef<Node = N>,
+        visited: &mut impl VisitTracker<N>,
+    ) -> Option<(WalkPhase, N)> {
         loop {
             let (phase, node) = self.stack.pop()?;
             match phase {
@@ -187,7 +179,7 @@ impl<G: GraphRef> PostOrderContext<G> {
                     if !visited.is_visited(node) {
                         visited.mark_visited(node);
                         self.stack.push((WalkPhase::Post, node));
-                        self.graph.successors(node, |succ| {
+                        graph.successors(node, |succ| {
                             // This extra check here is an optimization to avoid needlessly placing
                             // an obviously-visited node on to the stack. Even if the node is not
                             // visited now, it may be by the time it is popped off the stack later.
@@ -207,31 +199,31 @@ impl<G: GraphRef> PostOrderContext<G> {
     }
 }
 
+impl<N: Copy> Default for PostOrderContext<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct PostOrder<G: GraphRef, V> {
+    pub graph: G,
     pub visited: V,
-    ctx: PostOrderContext<G>,
+    ctx: PostOrderContext<G::Node>,
 }
 
 impl<G: GraphRef, V: VisitTracker<G::Node>> PostOrder<G, V> {
     pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
+        let mut ctx = PostOrderContext::new();
+        ctx.reset(roots);
         Self {
+            graph,
             visited: V::default(),
-            ctx: PostOrderContext::new(graph, roots),
+            ctx,
         }
     }
 
-    #[inline]
-    pub fn graph(&self) -> &G {
-        self.ctx.graph()
-    }
-
-    #[inline]
-    pub fn graph_mut(&mut self) -> &mut G {
-        self.ctx.graph_mut()
-    }
-
     pub fn next_event(&mut self) -> Option<(WalkPhase, G::Node)> {
-        self.ctx.next_event(&mut self.visited)
+        self.ctx.next_event(&self.graph, &mut self.visited)
     }
 }
 
@@ -239,7 +231,7 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PostOrder<G, V> {
     type Item = G::Node;
 
     fn next(&mut self) -> Option<G::Node> {
-        self.ctx.next(&mut self.visited)
+        self.ctx.next(&self.graph, &mut self.visited)
     }
 }
 

@@ -136,13 +136,12 @@ impl<N: EntityRef> DomTree<N> {
 
         let mut timestamp = 0;
         while let Some((phase, node)) = postorder.next_event() {
-            let this = postorder.graph_mut();
             match phase {
                 WalkPhase::Pre => {
-                    this.tree[node].dfs_entry = timestamp;
+                    postorder.graph.tree[node].dfs_entry = timestamp;
                 }
                 WalkPhase::Post => {
-                    this.tree[node].dfs_exit = timestamp;
+                    postorder.graph.tree[node].dfs_exit = timestamp;
                 }
             }
             timestamp += 1;

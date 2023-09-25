@@ -291,11 +291,22 @@ fn get_cfg_depth_map(domtree: &BlockDomTree, loop_forest: &LoopForest) -> CfgDep
     let mut depth_map = CfgDepthMap::new();
 
     for domtree_node in domtree.preorder() {
-        // TODO: `loop_depth` is linear in the loop depth, which is probably okay in practice, but
-        // can cause worst-case quadratic behavior.
-        let loop_depth = loop_forest
-            .containing_loop(domtree_node)
-            .map_or(0, |containing_loop| loop_forest.loop_depth(containing_loop));
+        // We make use of two facts here:
+        // 1. Loop headers dominate all nodes in the loop (including subloops).
+        // 2. We are walking down the dominator tree in preorder.
+        // This means that whenever we are walking through a loop, at least its parent's header will
+        // have been traversed and have correct depth information.
+        let cur_loop = loop_forest.containing_loop(domtree_node);
+        let loop_depth = match cur_loop {
+            Some(cur_loop) => {
+                let parent_loop = loop_forest.loop_parent(cur_loop);
+                let parent_depth = parent_loop.map_or(0, |parent_loop| {
+                    depth_map[domtree.get_cfg_node(loop_forest.loop_header(parent_loop))].loop_depth
+                });
+                parent_depth + 1
+            }
+            None => 0,
+        };
 
         let domtree_depth = domtree.idom(domtree_node).map_or(0, |idom| {
             let idom = domtree.get_cfg_node(idom);

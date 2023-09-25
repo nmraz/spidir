@@ -79,31 +79,37 @@ pub fn pin_nodes(ctx: &ScheduleCtx<'_>, pin_nodes: &mut impl PinNodes) {
     }
 }
 
-pub fn schedule_early(ctx: &ScheduleCtx<'_>, mut schedule: impl FnMut(&ScheduleCtx<'_>, Node)) {
+pub fn schedule_early(
+    ctx: &ScheduleCtx<'_>,
+    scratch_postorder: &mut PostOrderContext<Node>,
+    mut schedule: impl FnMut(&ScheduleCtx<'_>, Node),
+) {
     let mut visited = EntitySet::new();
-    let mut data_pred_postorder = PostOrderContext::new();
     let unpinned_data_preds = UnpinnedDataPreds::new(ctx.graph());
 
     for pinned in ctx.walk_pinned_nodes() {
-        data_pred_postorder.reset(unpinned_dataflow_preds(ctx.graph(), pinned));
-        while let Some(pred) = data_pred_postorder.next(&unpinned_data_preds, &mut visited) {
+        scratch_postorder.reset(unpinned_dataflow_preds(ctx.graph(), pinned));
+        while let Some(pred) = scratch_postorder.next(&unpinned_data_preds, &mut visited) {
             debug_assert!(!is_pinned_node(ctx.graph(), pred));
             schedule(ctx, pred);
         }
     }
 }
 
-pub fn schedule_late(ctx: &ScheduleCtx<'_>, mut schedule: impl FnMut(&ScheduleCtx<'_>, Node)) {
+pub fn schedule_late(
+    ctx: &ScheduleCtx<'_>,
+    scratch_postorder: &mut PostOrderContext<Node>,
+    mut schedule: impl FnMut(&ScheduleCtx<'_>, Node),
+) {
     let mut visited = EntitySet::new();
-    let mut data_succ_postorder = PostOrderContext::new();
     let unpinned_data_succs = UnpinnedDataSuccs::new(ctx.graph(), ctx.live_nodes());
 
     for pinned in ctx.walk_pinned_nodes() {
-        data_succ_postorder.reset(
+        scratch_postorder.reset(
             unpinned_dataflow_succs(ctx.graph(), ctx.live_nodes(), pinned)
                 .map(|(node, _input_idx)| node),
         );
-        while let Some(succ) = data_succ_postorder.next(&unpinned_data_succs, &mut visited) {
+        while let Some(succ) = scratch_postorder.next(&unpinned_data_succs, &mut visited) {
             debug_assert!(!is_pinned_node(ctx.graph(), succ));
             schedule(ctx, succ);
         }

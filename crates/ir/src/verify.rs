@@ -4,6 +4,7 @@ use alloc::{borrow::ToOwned, string::String, vec::Vec};
 
 use cranelift_entity::{packed_option::PackedOption, SecondaryMap};
 use fx_utils::FxHashSet;
+use graphwalk::PostOrderContext;
 use itertools::{izip, Itertools};
 use smallvec::SmallVec;
 
@@ -335,7 +336,8 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
     };
 
     pin_nodes(&ctx, &mut scheduler);
-    schedule_early(&ctx, |ctx, node| {
+
+    schedule_early(&ctx, &mut PostOrderContext::new(), |ctx, node| {
         assert!(scheduler.schedule[node].is_none());
         scheduler.schedule[node] = scheduler
             .get_last_scheduled_input(ctx, node)

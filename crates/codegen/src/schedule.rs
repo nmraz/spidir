@@ -48,15 +48,17 @@ impl Schedule {
         };
 
         pin_nodes(&ctx, &mut scheduler);
-        schedule_early(&ctx, |ctx, node| {
+
+        let mut scratch_postorder = PostOrderContext::new();
+        schedule_early(&ctx, &mut scratch_postorder, |ctx, node| {
             scheduler.schedule_early(ctx, node);
         });
 
-        schedule_late(&ctx, |ctx, node| {
+        schedule_late(&ctx, &mut scratch_postorder, |ctx, node| {
             scheduler.schedule_late(ctx, node);
         });
 
-        schedule.schedule_intra_block(graph, &domtree);
+        schedule.schedule_intra_block(graph, &domtree, &mut scratch_postorder);
         schedule
     }
 
@@ -68,10 +70,12 @@ impl Schedule {
         self.block_phi_inputs[block].as_slice(&self.node_list_pool)
     }
 
-    fn schedule_intra_block(&mut self, graph: &ValGraph, domtree: &BlockDomTree) {
-        // TODO: The block in here is a lie, but we need to provide it because `PostOrderContext` is
-        // currently coupled to the graph.
-        let mut per_block_postorder = PostOrderContext::new();
+    fn schedule_intra_block(
+        &mut self,
+        graph: &ValGraph,
+        domtree: &BlockDomTree,
+        scratch_postorder: &mut PostOrderContext<Node>,
+    ) {
         let mut per_block_visited = EntitySet::new();
 
         // Get a reverse-topological sort of all nodes placed into each block.
@@ -84,12 +88,12 @@ impl Schedule {
             };
 
             let nodes = &mut self.nodes_by_block[block];
-            per_block_postorder.reset(nodes.as_slice(&self.node_list_pool).iter().copied());
+            scratch_postorder.reset(nodes.as_slice(&self.node_list_pool).iter().copied());
             nodes.clear(&mut self.node_list_pool);
 
             trace!("sorting {block}");
             let mut i = 0;
-            while let Some(node) = per_block_postorder.next(&succs, &mut per_block_visited) {
+            while let Some(node) = scratch_postorder.next(&succs, &mut per_block_visited) {
                 if matches!(graph.node_kind(node), NodeKind::Phi) {
                     // We handle phi nodes specially.
                     continue;

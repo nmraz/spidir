@@ -1,0 +1,40 @@
+# run: schedule
+
+func @embedded_region:i32(i32) {
+    # check: function `embedded_region`:
+    # nextln: block0[]:
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # nextln: block1[]:
+    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $entry0
+    # nextln: block2[]:
+    # nextln:     $(region2=$val):ctrl, $(region3=$val):phisel = region $region0
+    # nextln: block3[]:
+    # nextln:     $(region4=$val):ctrl, $(region5=$val):phisel = region $region2
+    # nextln:     return $region4, $entry1
+
+    %ent:ctrl, %p1:i32 = entry
+    %c1:ctrl, %ph1:phisel = region %ent
+    %c2:ctrl, %ph2:phisel = region %c1
+    %c3:ctrl, %ph3:phisel = region %c2
+    return %c3, %p1
+}
+
+func @embedded_region_phi:i32(i32) {
+    # check: function `embedded_region_phi`:
+    # nextln: block0[]:
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # nextln: block1[]:
+    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $entry0
+    # nextln: block2[$(phi0=$val)]:
+    # nextln:     $(region2=$val):ctrl, $(region3=$val):phisel = region $region0
+    # nextln: block3[]:
+    # nextln:     $(region4=$val):ctrl, $(region5=$val):phisel = region $region2
+    # nextln:     return $region4, $phi0
+
+    %ent:ctrl, %p1:i32 = entry
+    %c1:ctrl, %ph1:phisel = region %ent
+    %c2:ctrl, %ph2:phisel = region %c1
+    %p1c2:i32 = phi %ph2, %p1
+    %c3:ctrl, %ph3:phisel = region %c2
+    return %c3, %p1c2
+}

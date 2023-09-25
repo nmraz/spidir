@@ -1,0 +1,173 @@
+# run: schedule
+
+func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)":i32(ptr, i32, i32, i32) {
+    # check: function `System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)`:
+    # nextln: block0[]:
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):i32, $(entry3=$val):i32, $(entry4=$val):i32 = entry
+    # nextln: block1[]:
+    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $entry0
+    # nextln:     $(stackslot0=$val):ptr = stackslot 4:4
+    # nextln:     $(stackslot1=$val):ptr = stackslot 4:4
+    # nextln:     $(stackslot2=$val):ptr = stackslot 4:4
+    # nextln:     $(iconst0=$val):i32 = iconst 0
+    # nextln:     $(store0=$val):ctrl = store.4 $region0, $iconst0, $stackslot0
+    # nextln:     $(store1=$val):ctrl = store.4 $store0, $iconst0, $stackslot1
+    # nextln:     $(stackslot3=$val):ptr = stackslot 4:4
+    # nextln:     $(store2=$val):ctrl = store.4 $store1, $iconst0, $stackslot3
+    # nextln:     $(store3=$val):ctrl = store.4 $store2, $iconst0, $stackslot2
+    # nextln: block2[]:
+    # nextln:     $(region2=$val):ctrl, $(region3=$val):phisel = region $store3
+    # nextln:     $(store4=$val):ctrl = store.4 $region2, $iconst0, $stackslot0
+    # nextln:     $(store5=$val):ctrl = store.4 $store4, $iconst0, $stackslot1
+    # nextln:     $(iconst1=$val):i32 = iconst 1
+    # nextln:     $(iconst2=$val):i32 = iconst 3
+    # nextln:     $(iconst3=$val):i32 = iconst 4
+    # nextln:     $(iconst4=$val):i32 = iconst 2
+    # nextln: block3[]:
+    # nextln:     $(region4=$val):ctrl, $(region5=$val):phisel = region $store5, $(store6=$val)
+    # nextln:     $(load0=$val):ctrl, $(load1=$val):i32 = load.4 $region4, $stackslot1
+    # nextln:     $(icmp0=$val):i32 = icmp slt $load1, $entry2
+    # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $load0, $icmp0
+    # nextln: block5[]:
+    # nextln:     $(region6=$val):ctrl, $(region7=$val):phisel = region $brcond1
+    # nextln:     $(load2=$val):ctrl, $(load3=$val):i32 = load.4 $region6, $stackslot0
+    # nextln:     return $load2, $load3
+    # nextln: block4[]:
+    # nextln:     $(region8=$val):ctrl, $(region9=$val):phisel = region $brcond0
+    # nextln:     $(load4=$val):ctrl, $(load5=$val):i32 = load.4 $region8, $stackslot1
+    # nextln:     $(and0=$val):i32 = and $load5, $iconst4
+    # nextln:     $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $load4, $and0
+    # nextln: block7[]:
+    # nextln:     $(region10=$val):ctrl, $(region11=$val):phisel = region $brcond3, $(store7=$val)
+    # nextln:     $(load6=$val):ctrl, $(load7=$val):i32 = load.4 $region10, $stackslot1
+    # nextln:     $(iadd0=$val):i32 = iadd $load7, $iconst1
+    # nextln:     $store6:ctrl = store.4 $load6, $iadd0, $stackslot1
+    # nextln: block6[]:
+    # nextln:     $(region12=$val):ctrl, $(region13=$val):phisel = region $brcond2
+    # nextln:     $(store8=$val):ctrl = store.4 $region12, $iconst0, $stackslot3
+    # nextln: block8[]:
+    # nextln:     $(region14=$val):ctrl, $(region15=$val):phisel = region $store8, $(store9=$val)
+    # nextln:     $(load8=$val):ctrl, $(load9=$val):i32 = load.4 $region14, $stackslot3
+    # nextln:     $(icmp1=$val):i32 = icmp slt $load9, $entry3
+    # nextln:     $(brcond4=$val):ctrl, $(brcond5=$val):ctrl = brcond $load8, $icmp1
+    # nextln: block10[]:
+    # nextln:     $(region16=$val):ctrl, $(region17=$val):phisel = region $(brcond6=$val), $brcond5
+    # nextln:     $(store10=$val):ctrl = store.4 $region16, $iconst0, $stackslot2
+    # nextln: block11[]:
+    # nextln:     $(region18=$val):ctrl, $(region19=$val):phisel = region $store10, $(store11=$val)
+    # nextln:     $(load10=$val):ctrl, $(load11=$val):i32 = load.4 $region18, $stackslot2
+    # nextln:     $(icmp2=$val):i32 = icmp slt $load11, $entry4
+    # nextln:     $(brcond7=$val):ctrl, $(brcond8=$val):ctrl = brcond $load10, $icmp2
+    # nextln: block13[]:
+    # nextln:     $(region20=$val):ctrl, $(region21=$val):phisel = region $brcond8
+    # nextln:     $(load12=$val):ctrl, $(load13=$val):i32 = load.4 $region20, $stackslot0
+    # nextln:     $(load14=$val):ctrl, $(load15=$val):i32 = load.4 $load12, $stackslot1
+    # nextln:     $(iadd1=$val):i32 = iadd $load13, $load15
+    # nextln:     $store7:ctrl = store.4 $load14, $iadd1, $stackslot0
+    # nextln: block12[]:
+    # nextln:     $(region22=$val):ctrl, $(region23=$val):phisel = region $brcond7
+    # nextln:     $(load16=$val):ctrl, $(load17=$val):i32 = load.4 $region22, $stackslot1
+    # nextln:     $(and1=$val):i32 = and $load17, $iconst3
+    # nextln:     $(brcond9=$val):ctrl, $(brcond10=$val):ctrl = brcond $load16, $and1
+    # nextln: block15[]:
+    # nextln:     $(region24=$val):ctrl, $(region25=$val):phisel = region $brcond10, $(store12=$val)
+    # nextln:     $(load18=$val):ctrl, $(load19=$val):i32 = load.4 $region24, $stackslot2
+    # nextln:     $(iadd2=$val):i32 = iadd $load19, $iconst1
+    # nextln:     $store11:ctrl = store.4 $load18, $iadd2, $stackslot2
+    # nextln: block14[]:
+    # nextln:     $(region26=$val):ctrl, $(region27=$val):phisel = region $brcond9
+    # nextln:     $(load20=$val):ctrl, $(load21=$val):i32 = load.4 $region26, $stackslot0
+    # nextln:     $(load22=$val):ctrl, $(load23=$val):i32 = load.4 $load20, $stackslot2
+    # nextln:     $(iadd3=$val):i32 = iadd $load21, $load23
+    # nextln:     $store12:ctrl = store.4 $load22, $iadd3, $stackslot0
+    # nextln: block9[]:
+    # nextln:     $(region28=$val):ctrl, $(region29=$val):phisel = region $brcond4
+    # nextln:     $(load24=$val):ctrl, $(load25=$val):i32 = load.4 $region28, $stackslot1
+    # nextln:     $(and2=$val):i32 = and $load25, $iconst2
+    # nextln:     $(brcond11=$val):ctrl, $brcond6:ctrl = brcond $load24, $and2
+    # nextln: block16[]:
+    # nextln:     $(region30=$val):ctrl, $(region31=$val):phisel = region $brcond11
+    # nextln:     $(load26=$val):ctrl, $(load27=$val):i32 = load.4 $region30, $stackslot0
+    # nextln:     $(load28=$val):ctrl, $(load29=$val):i32 = load.4 $load26, $stackslot3
+    # nextln:     $(iadd4=$val):i32 = iadd $load27, $load29
+    # nextln:     $(store13=$val):ctrl = store.4 $load28, $iadd4, $stackslot0
+    # nextln:     $(load30=$val):ctrl, $(load31=$val):i32 = load.4 $store13, $stackslot3
+    # nextln:     $(iadd5=$val):i32 = iadd $load31, $iconst1
+    # nextln:     $store9:ctrl = store.4 $load30, $iadd5, $stackslot3
+
+    %0:ctrl, %1:ptr, %2:i32, %3:i32, %4:i32 = entry
+    %5:ctrl, %6:phisel = region %0
+    %7:ptr = stackslot 4:4
+    %10:ptr = stackslot 4:4
+    %69:i32 = iconst 1
+    %14:ptr = stackslot 4:4
+    %8:i32 = iconst 0
+    %9:ctrl = store.4 %5, %8, %7
+    %11:ctrl = store.4 %9, %8, %10
+    %12:ptr = stackslot 4:4
+    %13:ctrl = store.4 %11, %8, %12
+    %15:ctrl = store.4 %13, %8, %14
+    %44:ctrl, %45:phisel = region %15
+    %46:ctrl = store.4 %44, %8, %7
+    %47:ctrl = store.4 %46, %8, %10
+    %57:i32 = iconst 3
+    %80:i32 = iconst 4
+    %50:i32 = iconst 2
+    %51:i32 = and %49, %50
+    %52:ctrl, %53:ctrl = brcond %48, %51
+    %18:ctrl, %19:phisel = region %52
+    %54:ctrl = store.4 %18, %8, %12
+    %24:ctrl, %25:phisel = region %54, %71
+    %72:ctrl, %73:i32 = load.4 %24, %12
+    %74:i32 = icmp slt %73, %3
+    %75:ctrl, %76:ctrl = brcond %72, %74
+    %20:ctrl, %21:phisel = region %75
+    %55:ctrl, %56:i32 = load.4 %20, %10
+    %58:i32 = and %56, %57
+    %59:ctrl, %60:ctrl = brcond %55, %58
+    %22:ctrl, %23:phisel = region %59
+    %61:ctrl, %62:i32 = load.4 %22, %7
+    %63:ctrl, %64:i32 = load.4 %61, %12
+    %65:i32 = iadd %62, %64
+    %66:ctrl = store.4 %63, %65, %7
+    %67:ctrl, %68:i32 = load.4 %66, %12
+    %70:i32 = iadd %68, %69
+    %71:ctrl = store.4 %67, %70, %12
+    %26:ctrl, %27:phisel = region %60, %76
+    %77:ctrl = store.4 %26, %8, %14
+    %34:ctrl, %35:phisel = region %77, %93
+    %94:ctrl, %95:i32 = load.4 %34, %14
+    %96:i32 = icmp slt %95, %4
+    %97:ctrl, %98:ctrl = brcond %94, %96
+    %28:ctrl, %29:phisel = region %97
+    %78:ctrl, %79:i32 = load.4 %28, %10
+    %81:i32 = and %79, %80
+    %82:ctrl, %83:ctrl = brcond %78, %81
+    %30:ctrl, %31:phisel = region %82
+    %84:ctrl, %85:i32 = load.4 %30, %7
+    %86:ctrl, %87:i32 = load.4 %84, %14
+    %88:i32 = iadd %85, %87
+    %89:ctrl = store.4 %86, %88, %7
+    %32:ctrl, %33:phisel = region %83, %89
+    %90:ctrl, %91:i32 = load.4 %32, %14
+    %92:i32 = iadd %91, %69
+    %93:ctrl = store.4 %90, %92, %14
+    %36:ctrl, %37:phisel = region %98
+    %99:ctrl, %100:i32 = load.4 %36, %7
+    %101:ctrl, %102:i32 = load.4 %99, %10
+    %103:i32 = iadd %100, %102
+    %104:ctrl = store.4 %101, %103, %7
+    %38:ctrl, %39:phisel = region %53, %104
+    %105:ctrl, %106:i32 = load.4 %38, %10
+    %107:i32 = iadd %106, %69
+    %108:ctrl = store.4 %105, %107, %10
+    %40:ctrl, %41:phisel = region %47, %108
+    %109:ctrl, %110:i32 = load.4 %40, %10
+    %111:i32 = icmp slt %110, %2
+    %112:ctrl, %113:ctrl = brcond %109, %111
+    %16:ctrl, %17:phisel = region %112
+    %48:ctrl, %49:i32 = load.4 %16, %10
+    %42:ctrl, %43:phisel = region %113
+    %114:ctrl, %115:i32 = load.4 %42, %7
+    return %114, %115
+}

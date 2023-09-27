@@ -1,5 +1,3 @@
-use alloc::vec::Vec;
-
 use cranelift_entity::{
     packed_option::PackedOption, EntityList, EntitySet, ListPool, SecondaryMap,
 };
@@ -9,7 +7,7 @@ use ir::{
     loops::LoopForest,
     node::NodeKind,
     schedule::{schedule_early, schedule_late, ScheduleCtx},
-    valgraph::{DepValue, Node, ValGraph},
+    valgraph::{Node, ValGraph},
     valwalk::{dataflow_preds, dataflow_succs, raw_def_use_succs, LiveNodeInfo},
 };
 use log::trace;
@@ -18,18 +16,10 @@ use log::trace;
 /// behavior.
 const MAX_HOIST_DEPTH: usize = 50;
 
-#[derive(Default, Clone, Copy)]
-struct BlockParamData {
-    block_param_base: u32,
-    block_param_len: u32,
-}
-
 pub struct Schedule {
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
     nodes_by_block: SecondaryMap<Block, EntityList<Node>>,
     node_list_pool: ListPool<Node>,
-    block_params: SecondaryMap<Block, BlockParamData>,
-    block_param_pool: Vec<DepValue>,
 }
 
 impl Schedule {
@@ -47,8 +37,6 @@ impl Schedule {
             blocks_by_node: SecondaryMap::new(),
             nodes_by_block: SecondaryMap::new(),
             node_list_pool: ListPool::new(),
-            block_params: SecondaryMap::new(),
-            block_param_pool: Vec::new(),
         };
 
         schedule.pin_nodes(&ctx, block_cfg);
@@ -77,37 +65,22 @@ impl Schedule {
         self.nodes_by_block[block].as_slice(&self.node_list_pool)
     }
 
-    pub fn block_params(&self, block: Block) -> &[DepValue] {
-        let base = self.block_params[block].block_param_base as usize;
-        let len = self.block_params[block].block_param_len as usize;
-        &self.block_param_pool[base..base + len]
-    }
-
     fn pin_nodes(&mut self, ctx: &ScheduleCtx<'_>, block_cfg: &BlockCfg) {
         for &cfg_node in ctx.cfg_preorder() {
             let block = block_cfg
                 .containing_block(cfg_node)
                 .expect("live CFG node not in block CFG");
 
+            // Note: we guarantee that the block header comes first and that any attached phis
+            // follow it immediately, so they will will show up first in that order when
+            // `scheduled_nodes_rev` is reversed.
+
             trace!("pinned: node {} -> {block}", cfg_node.as_u32());
             self.append_to_block(block, cfg_node);
 
-            if cfg_node == block_cfg.block_header(block) {
-                // For block headers, see if we need to convert any phi nodes to block params
-                let block_param_base: usize = self.block_param_pool.len();
-                for phi in ctx.get_attached_phis(cfg_node) {
-                    trace!("phi: node {} -> {block}", phi.as_u32());
-                    // Note: we don't want to `append_to_block` because we're converting these phi nodes
-                    // into block parameters.
-                    self.assign_block(block, phi);
-                    self.block_param_pool.push(ctx.graph().node_outputs(phi)[0]);
-                }
-                let block_param_len = self.block_param_pool.len() - block_param_base;
-
-                self.block_params[block].block_param_base = block_param_base.try_into().unwrap();
-                self.block_params[block].block_param_len = block_param_len.try_into().unwrap();
-            } else {
-                debug_assert!(ctx.get_attached_phis(cfg_node).next().is_none());
+            for phi in ctx.get_attached_phis(cfg_node) {
+                trace!("phi: node {} -> {block}", phi.as_u32());
+                self.append_to_block(block, phi);
             }
         }
     }
@@ -130,15 +103,15 @@ impl Schedule {
             };
 
             let nodes = &mut self.nodes_by_block[block];
+
+            // Note: the topological sort of the block ultimately obtained here will be stable with
+            // respect to the original `nodes` slice. In particular, the block header and phi nodes
+            // will come first (since we ignore backedges) and the block terminator will come last.
             scratch_postorder.reset(nodes.as_slice(&self.node_list_pool).iter().copied());
             nodes.clear(&mut self.node_list_pool);
 
             trace!("sorting {block}");
             while let Some(node) = scratch_postorder.next(&succs, &mut per_block_visited) {
-                if matches!(graph.node_kind(node), NodeKind::Phi) {
-                    // We handle phi nodes specially.
-                    continue;
-                }
                 trace!("    node {}", node.as_u32());
                 nodes.push(node, &mut self.node_list_pool);
             }

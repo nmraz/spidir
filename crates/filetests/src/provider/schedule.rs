@@ -7,7 +7,6 @@ use filecheck::Value;
 use fx_utils::FxHashMap;
 use graphwalk::PreOrder;
 use ir::{cfg::BlockCfg, module::Module, valwalk::cfg_preorder, write::display_node};
-use itertools::Itertools;
 
 use crate::{regexes::VAL_REGEX, utils::generalize_value_names};
 
@@ -35,8 +34,7 @@ impl TestProvider for ScheduleProvider {
             for block in
                 PreOrder::<_, EntitySet<_>>::new(&block_cfg, block_cfg.containing_block(func.entry))
             {
-                let params = schedule.block_params(block).iter().format(", ");
-                writeln!(output, "{block}[{params}]:").unwrap();
+                writeln!(output, "{block}:").unwrap();
                 for &attached_node in schedule.scheduled_nodes_rev(block).iter().rev() {
                     writeln!(output, "    {}", display_node(module, graph, attached_node)).unwrap();
                 }

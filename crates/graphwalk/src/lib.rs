@@ -148,8 +148,14 @@ impl<N: Copy> PostOrderContext<N> {
         self.stack.clear();
 
         // Note: push the roots onto the stack in source order so that this order is preserved in
-        // any RPO. Some clients depend on this: for example, the live-node RPO of a function graph
-        // should always start with its entry node.
+        // any RPO. Specifically, we want to guarantee that if `u` precedes `v` in `roots` and there
+        // isn't a path from `v` to `u` in the graph, then `u` will still precede `v` in any RPO
+        // obtained from this graph walk. Pushing the nodes onto the stack in order guarantees this,
+        // as it ensures that `v` is always visited before `u`.
+        //
+        // Some clients depend on this behavior: for example, the live-node RPO of a function graph
+        // should always start with its entry node, and the topological sort performed during
+        // scheduling is supposed to preserve block headers and terminators.
         self.stack
             .extend(roots.into_iter().map(|node| (WalkPhase::Pre, node)));
     }

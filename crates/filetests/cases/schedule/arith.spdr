@@ -4,6 +4,7 @@ func @arith_stuff:i32(i32, i32) {
     # check: function `arith_stuff`:
     # nextln: block0:
     # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # nextln: => block1
     # nextln: block1:
     # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $entry0
     # nextln:     $(iadd0=$val):i32 = iadd $entry1, $entry1
@@ -61,6 +62,7 @@ func @arith_stuff_juggled:i32(i32, i32) {
     # check: function `arith_stuff_juggled`:
     # nextln: block0:
     # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # nextln: => block1
     # nextln: block1:
     # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $entry0
     # nextln:     $(iadd0=$val):i32 = iadd $entry1, $entry1

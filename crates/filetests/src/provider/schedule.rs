@@ -7,6 +7,7 @@ use filecheck::Value;
 use fx_utils::FxHashMap;
 use graphwalk::PreOrder;
 use ir::{cfg::BlockCfg, module::Module, valwalk::cfg_preorder, write::display_node};
+use itertools::Itertools;
 
 use crate::{regexes::VAL_REGEX, utils::generalize_value_names};
 
@@ -37,6 +38,10 @@ impl TestProvider for ScheduleProvider {
                 writeln!(output, "{block}:").unwrap();
                 for &attached_node in schedule.scheduled_nodes_rev(block).iter().rev() {
                     writeln!(output, "    {}", display_node(module, graph, attached_node)).unwrap();
+                }
+                let succs = block_cfg.block_succs(block);
+                if !succs.is_empty() {
+                    writeln!(output, "=> {}", succs.iter().format(", ")).unwrap();
                 }
             }
         }

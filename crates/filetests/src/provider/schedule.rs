@@ -4,9 +4,7 @@ use anyhow::Result;
 use codegen::schedule::Schedule;
 use filecheck::Value;
 use fx_utils::FxHashMap;
-use graphwalk::entity_preorder;
-use ir::{cfg::BlockCfg, module::Module, valwalk::cfg_preorder, write::display_node};
-use itertools::Itertools;
+use ir::{cfg::BlockCfg, module::Module, valwalk::cfg_preorder};
 
 use crate::{regexes::VAL_REGEX, utils::generalize_value_names};
 
@@ -31,16 +29,17 @@ impl TestProvider for ScheduleProvider {
             let block_cfg = BlockCfg::compute(graph, cfg_preorder.iter().copied());
             let schedule = Schedule::compute(graph, &cfg_preorder, &block_cfg);
 
-            for block in entity_preorder(&block_cfg, block_cfg.containing_block(func.entry)) {
-                writeln!(output, "{block}:").unwrap();
-                for &attached_node in schedule.scheduled_nodes_rev(block).iter().rev() {
-                    writeln!(output, "    {}", display_node(module, graph, attached_node)).unwrap();
-                }
-                let succs = block_cfg.block_succs(block);
-                if !succs.is_empty() {
-                    writeln!(output, "=> {}", succs.iter().format(", ")).unwrap();
-                }
-            }
+            write!(
+                output,
+                "{}",
+                schedule.display(
+                    module,
+                    graph,
+                    &block_cfg,
+                    block_cfg.containing_block(func.entry).unwrap()
+                )
+            )
+            .unwrap();
         }
 
         Ok(output)

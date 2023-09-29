@@ -165,6 +165,7 @@ dependencies = [
  "cranelift-entity",
  "graphwalk",
  "ir",
+ "itertools",
  "log",
 ]
 

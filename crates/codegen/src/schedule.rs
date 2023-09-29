@@ -5,12 +5,17 @@ use graphwalk::{GraphRef, PostOrderContext};
 use ir::{
     cfg::{Block, BlockCfg, BlockDomTree},
     loops::LoopForest,
+    module::Module,
     node::NodeKind,
     schedule::{schedule_early, schedule_late, ScheduleCtx},
     valgraph::{Node, ValGraph},
     valwalk::{dataflow_preds, dataflow_succs, raw_def_use_succs, LiveNodeInfo},
 };
 use log::trace;
+
+mod display;
+
+pub use display::Display;
 
 /// The maximum path length up the dominator tree we are willing to hoist nodes, to avoid quadratic
 /// behavior.
@@ -61,6 +66,22 @@ impl Schedule {
 
     pub fn scheduled_nodes_rev(&self, block: Block) -> &[Node] {
         self.nodes_by_block[block].as_slice(&self.node_list_pool)
+    }
+
+    pub fn display<'a>(
+        &'a self,
+        module: &'a Module,
+        graph: &'a ValGraph,
+        cfg: &'a BlockCfg,
+        entry: Block,
+    ) -> Display<'a> {
+        Display {
+            module,
+            graph,
+            cfg,
+            schedule: self,
+            entry,
+        }
     }
 }
 

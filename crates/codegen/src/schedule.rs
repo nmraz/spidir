@@ -280,11 +280,26 @@ impl Scheduler<'_> {
                     // Note: the corresponding region input might be dead even when the phi is live;
                     // this just means that this instance doesn't count as a use and can be skipped.
                     let input_idx = input_idx as usize - 1;
-                    let loc = self
-                        .block_cfg
-                        .containing_block(graph.value_def(graph.node_inputs(region)[input_idx]).0);
+                    let ctrl_input = graph.node_inputs(region)[input_idx];
+
+                    // Find the CFG predecessor corresponding to `ctrl_input`, which might be a
+                    // split critical edge. We don't just index into the region's `block_preds`
+                    // directly with `input_idx` because `block_preds` will not include any dead
+                    // inputs.
+                    let loc = if let Some(crit_edge_block) =
+                        self.block_cfg.critical_edge_block(ctrl_input)
+                    {
+                        Some(crit_edge_block)
+                    } else {
+                        self.block_cfg
+                            .containing_block(graph.value_def(ctrl_input).0)
+                    };
 
                     if let Some(loc) = loc {
+                        debug_assert!(self
+                            .block_cfg
+                            .block_preds(self.block_cfg.containing_block(region).unwrap())
+                            .contains(&loc));
                         trace!(
                             "    succ: phi {} input {} ({loc})",
                             node.as_u32(),

@@ -2,6 +2,7 @@ use cranelift_entity::{
     entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap, SecondaryMap,
 };
 use dominators::domtree::DomTree;
+use fx_utils::FxHashMap;
 use graphwalk::{GraphRef, PredGraphRef};
 use log::trace;
 use smallvec::SmallVec;
@@ -28,6 +29,7 @@ pub struct BlockCfg {
     blocks: PrimaryMap<Block, BlockLinks>,
     // If this is too sparse, we may want to consider a hashmap instead.
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
+    critical_edges: FxHashMap<DepValue, Block>,
     block_link_pool: ListPool<Block>,
 }
 
@@ -37,6 +39,7 @@ impl BlockCfg {
         let mut cfg = Self {
             blocks: PrimaryMap::new(),
             blocks_by_node: SecondaryMap::new(),
+            critical_edges: FxHashMap::default(),
             block_link_pool: ListPool::new(),
         };
 
@@ -66,6 +69,7 @@ impl BlockCfg {
                     if ctrl_outputs.len() > 1 && !has_single_cfg_input(graph, succ) {
                         let split_block = cfg.create_block();
                         cfg.add_block_edge(block, split_block);
+                        cfg.critical_edges.insert(output, split_block);
                         pred_block = split_block;
                         trace!(
                             "split critical edge {} -> {} with {split_block}",
@@ -87,6 +91,10 @@ impl BlockCfg {
     #[inline]
     pub fn containing_block(&self, node: Node) -> Option<Block> {
         self.blocks_by_node[node].expand()
+    }
+
+    pub fn critical_edge_block(&self, edge: DepValue) -> Option<Block> {
+        self.critical_edges.get(&edge).copied()
     }
 
     #[inline]

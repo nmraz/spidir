@@ -1,0 +1,49 @@
+# run: schedule
+
+func @select:i32(i32, i32, i32) {
+    # check: function `select`:
+    # nextln: block0:
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32, $(entry3=$val):i32 = entry
+    # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $entry1
+    # nextln: => block1, block3
+    # nextln: block3:
+    # nextln: => block2
+    # nextln: block2:
+    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond0, $brcond1
+    # nextln:     $(phi0=$val):i32 = phi $region1, $entry2, $entry3
+    # nextln:     return $region0, $phi0
+    # nextln: block1:
+    # nextln: => block2
+
+    %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_sink:i32(i32, i32, i32) {
+    # check: function `select_sink`:
+    # nextln: block0:
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32, $(entry3=$val):i32 = entry
+    # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $entry1
+    # nextln: => block1, block3
+    # nextln: block3:
+    # nextln:     $(imul0=$val):i32 = imul $entry2, $entry3
+    # nextln: => block2
+    # nextln: block2:
+    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond0, $brcond1
+    # nextln:     $(phi0=$val):i32 = phi $region1, $(iadd0=$val), $imul0
+    # nextln:     return $region0, $phi0
+    # nextln: block1:
+    # nextln:     $iadd0:i32 = iadd $entry2, $entry3
+    # nextln: => block2
+
+    %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
+    %4:i32 = iadd %2, %3
+    %5:i32 = imul %2, %3
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %4, %5
+    return %6, %10
+}

@@ -9,9 +9,8 @@ use std::{
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use codegen::schedule::Schedule;
+use codegen::{cfg::BlockCfg, schedule::Schedule};
 use ir::{
-    cfg::BlockCfg,
     domtree::DomTree,
     loops::LoopForest,
     module::{FunctionData, Module},

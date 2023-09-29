@@ -3,7 +3,6 @@ use cranelift_entity::{
 };
 use graphwalk::{GraphRef, PostOrderContext};
 use ir::{
-    cfg::{Block, BlockCfg, BlockDomTree},
     loops::LoopForest,
     module::Module,
     node::NodeKind,
@@ -16,6 +15,8 @@ use log::trace;
 mod display;
 
 pub use display::Display;
+
+use crate::cfg::{Block, BlockCfg, BlockDomTree};
 
 /// The maximum path length up the dominator tree we are willing to hoist nodes, to avoid quadratic
 /// behavior.

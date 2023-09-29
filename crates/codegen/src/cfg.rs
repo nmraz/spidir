@@ -4,14 +4,13 @@ use cranelift_entity::{
 use dominators::domtree::DomTree;
 use fx_utils::FxHashMap;
 use graphwalk::{GraphRef, PredGraphRef};
-use log::trace;
-use smallvec::SmallVec;
-
-use crate::{
+use ir::{
     node::NodeKind,
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{cfg_inputs, cfg_outputs},
 };
+use log::trace;
+use smallvec::SmallVec;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Block(u32);

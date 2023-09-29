@@ -1,10 +1,10 @@
 use std::fmt::Write;
 
 use anyhow::Result;
-use codegen::schedule::Schedule;
+use codegen::{cfg::BlockCfg, schedule::Schedule};
 use filecheck::Value;
 use fx_utils::FxHashMap;
-use ir::{cfg::BlockCfg, module::Module, valwalk::cfg_preorder};
+use ir::{module::Module, valwalk::cfg_preorder};
 
 use crate::{regexes::VAL_REGEX, utils::generalize_value_names};
 

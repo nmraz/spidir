@@ -6,9 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dominators.workspace = true
+fx-utils.workspace = true
 graphwalk.workspace = true
 ir.workspace = true
 log.workspace = true
 
 cranelift-entity.workspace = true
 itertools.workspace = true
+smallvec.workspace = true

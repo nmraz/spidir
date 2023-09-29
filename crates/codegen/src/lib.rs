@@ -2,4 +2,5 @@
 
 extern crate alloc;
 
+pub mod cfg;
 pub mod schedule;

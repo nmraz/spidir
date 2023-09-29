@@ -1,13 +1,10 @@
 use core::fmt;
 
 use graphwalk::entity_preorder;
-use ir::{
-    cfg::{Block, BlockCfg},
-    module::Module,
-    valgraph::ValGraph,
-    write::display_node,
-};
+use ir::{module::Module, valgraph::ValGraph, write::display_node};
 use itertools::Itertools;
+
+use crate::cfg::{Block, BlockCfg};
 
 use super::Schedule;
 

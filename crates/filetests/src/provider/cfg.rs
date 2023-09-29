@@ -1,8 +1,9 @@
 use std::fmt::Write;
 
 use anyhow::Result;
+use codegen::cfg::BlockCfg;
 use cranelift_entity::EntitySet;
-use ir::{cfg::BlockCfg, module::Module, valwalk::cfg_preorder};
+use ir::{module::Module, valwalk::cfg_preorder};
 use itertools::Itertools;
 
 use crate::utils::write_graph_with_trailing_comments;

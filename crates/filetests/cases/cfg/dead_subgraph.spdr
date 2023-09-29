@@ -2,12 +2,12 @@
 
 func @dead_subgraph(i32) {
     # check: function `dead_subgraph`:
-    # nextln: %0:ctrl, %1:i32 = entry                 # head block0, term block0 -> block1
+    # nextln: %0:ctrl, %1:i32 = entry                 # block0 -> block1
     # nextln: %2:ctrl, %3:phisel = region             # x
     # nextln: %4:ctrl, %5:ctrl = brcond %2, %1        # x
     # nextln: %6:ctrl, %7:phisel = region %4, %5      # x
-    # nextln: %8:ctrl, %9:phisel = region %0, %6      # head block1
-    # nextln: return %8                               # term block1
+    # nextln: %8:ctrl, %9:phisel = region %0, %6      # block1
+    # nextln: return %8                               # block1
 
     %ent:ctrl, %p1:i32 = entry
     %d:ctrl, %dp:phisel = region

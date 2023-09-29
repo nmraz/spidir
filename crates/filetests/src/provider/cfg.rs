@@ -1,6 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::Result;
+use cranelift_entity::EntitySet;
 use ir::{cfg::BlockCfg, module::Module, valwalk::cfg_preorder};
 use itertools::Itertools;
 
@@ -15,31 +16,17 @@ impl TestProvider for CfgProvider {
 
         for func in module.functions.values() {
             let cfg = BlockCfg::compute(&func.graph, cfg_preorder(&func.graph, func.entry));
+            let mut seen_blocks = EntitySet::new();
             write_graph_with_trailing_comments(&mut output, module, func, |s, node| {
                 if let Some(block) = cfg.containing_block(node) {
-                    let mut is_boundary = false;
+                    write!(s, "{block}").unwrap();
 
-                    if node == cfg.block_header(block) {
-                        write!(s, "head {block}").unwrap();
-                        is_boundary = true;
-                    }
-
-                    if node == cfg.block_terminator(block) {
-                        if is_boundary {
-                            write!(s, ", ").unwrap();
-                        }
-
-                        is_boundary = true;
-
-                        write!(s, "term {block}").unwrap();
+                    if !seen_blocks.contains(block) {
                         let succs = cfg.block_succs(block);
                         if !succs.is_empty() {
                             write!(s, " -> {}", succs.iter().format(", ")).unwrap();
                         }
-                    }
-
-                    if !is_boundary {
-                        write!(s, "body {block}").unwrap();
+                        seen_blocks.insert(block);
                     }
                 } else {
                     write!(s, "x").unwrap();

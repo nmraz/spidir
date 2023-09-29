@@ -16,11 +16,6 @@ use crate::{
 pub struct Block(u32);
 entity_impl!(Block, "block");
 
-struct BlockData {
-    header: Node,
-    terminator: Node,
-}
-
 #[derive(Default, Clone, Copy)]
 struct BlockLinks {
     preds: EntityList<Block>,
@@ -30,8 +25,7 @@ struct BlockLinks {
 pub type BlockDomTree = DomTree<Block>;
 
 pub struct BlockCfg {
-    blocks: PrimaryMap<Block, BlockData>,
-    block_links: SecondaryMap<Block, BlockLinks>,
+    blocks: PrimaryMap<Block, BlockLinks>,
     // If this is too sparse, we may want to consider a hashmap instead.
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
     block_link_pool: ListPool<Block>,
@@ -42,7 +36,6 @@ impl BlockCfg {
         let mut ctrl_outputs = SmallVec::<[DepValue; 4]>::new();
         let mut cfg = Self {
             blocks: PrimaryMap::new(),
-            block_links: SecondaryMap::new(),
             blocks_by_node: SecondaryMap::new(),
             block_link_pool: ListPool::new(),
         };
@@ -83,48 +76,30 @@ impl BlockCfg {
     }
 
     #[inline]
-    pub fn block_header(&self, block: Block) -> Node {
-        self.blocks[block].header
-    }
-
-    #[inline]
-    pub fn block_terminator(&self, block: Block) -> Node {
-        self.blocks[block].terminator
-    }
-
-    #[inline]
     pub fn block_succs(&self, block: Block) -> &[Block] {
-        self.block_links[block]
-            .succs
-            .as_slice(&self.block_link_pool)
+        self.blocks[block].succs.as_slice(&self.block_link_pool)
     }
 
     #[inline]
     pub fn block_preds(&self, block: Block) -> &[Block] {
-        self.block_links[block]
-            .preds
-            .as_slice(&self.block_link_pool)
+        self.blocks[block].preds.as_slice(&self.block_link_pool)
     }
 
     fn add_block_edge(&mut self, pred: Block, succ: Block) {
-        self.block_links[pred]
+        self.blocks[pred]
             .succs
             .push(succ, &mut self.block_link_pool);
-        self.block_links[succ]
+        self.blocks[succ]
             .preds
             .push(pred, &mut self.block_link_pool);
     }
 
     fn get_headed_block(&mut self, header: Node) -> Block {
         if let Some(block) = self.containing_block(header) {
-            debug_assert!(self.block_header(block) == header);
             return block;
         }
 
-        let block = self.blocks.push(BlockData {
-            header,
-            terminator: header,
-        });
+        let block = self.blocks.push(BlockLinks::default());
         self.blocks_by_node[header] = block.into();
         trace!("discovered {block} with header {}", header.as_u32());
         block
@@ -132,7 +107,6 @@ impl BlockCfg {
 
     fn terminate_block(&mut self, block: Block, terminator: Node) {
         trace!("terminating {block} with node {}", terminator.as_u32());
-        self.blocks[block].terminator = terminator;
     }
 }
 

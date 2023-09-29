@@ -9,7 +9,7 @@ use smallvec::SmallVec;
 use crate::{
     node::NodeKind,
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::cfg_outputs,
+    valwalk::{cfg_inputs, cfg_outputs},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -58,10 +58,24 @@ impl BlockCfg {
             ctrl_outputs.extend(cfg_outputs(graph, node));
 
             if should_terminate_block(graph, &ctrl_outputs) {
-                cfg.terminate_block(block, node);
+                trace!("terminating {block} with node {}", node.as_u32());
                 for &output in &ctrl_outputs {
-                    let succ = cfg.get_headed_block(graph.value_uses(output).next().unwrap().0);
-                    cfg.add_block_edge(block, succ);
+                    let mut pred_block = block;
+                    let succ = graph.value_uses(output).next().unwrap().0;
+
+                    if ctrl_outputs.len() > 1 && !has_single_cfg_input(graph, succ) {
+                        let split_block = cfg.create_block();
+                        cfg.add_block_edge(block, split_block);
+                        pred_block = split_block;
+                        trace!(
+                            "split critical edge {} -> {} with {split_block}",
+                            node.as_u32(),
+                            succ.as_u32()
+                        );
+                    }
+
+                    let succ = cfg.get_headed_block(succ);
+                    cfg.add_block_edge(pred_block, succ);
                 }
                 cur_block = None;
             }
@@ -99,14 +113,14 @@ impl BlockCfg {
             return block;
         }
 
-        let block = self.blocks.push(BlockLinks::default());
+        let block = self.create_block();
         self.blocks_by_node[header] = block.into();
         trace!("discovered {block} with header {}", header.as_u32());
         block
     }
 
-    fn terminate_block(&mut self, block: Block, terminator: Node) {
-        trace!("terminating {block} with node {}", terminator.as_u32());
+    fn create_block(&mut self) -> Block {
+        self.blocks.push(BlockLinks::default())
     }
 }
 
@@ -135,4 +149,9 @@ fn should_terminate_block(graph: &ValGraph, ctrl_outputs: &[DepValue]) -> bool {
     // Create a new block for all region nodes (even if they have a single input), so that we don't
     // have to deal with phi nodes in the "middle" of blocks later.
     matches!(graph.node_kind(succ), NodeKind::Region)
+}
+
+fn has_single_cfg_input(graph: &ValGraph, node: Node) -> bool {
+    let mut cfg_inputs = cfg_inputs(graph, node);
+    cfg_inputs.next().is_some() && cfg_inputs.next().is_none()
 }

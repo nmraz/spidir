@@ -19,18 +19,21 @@ impl TestProvider for CfgProvider {
             let mut seen_blocks = EntitySet::new();
             write_graph_with_trailing_comments(&mut output, module, func, |s, node| {
                 if let Some(block) = cfg.containing_block(node) {
-                    write!(s, "{block}").unwrap();
+                    write!(s, "{block}; ").unwrap();
 
                     if !seen_blocks.contains(block) {
+                        let preds = cfg.block_preds(block);
+                        if !preds.is_empty() {
+                            write!(s, "preds {}; ", preds.iter().format(", ")).unwrap();
+                        }
                         let succs = cfg.block_succs(block);
                         if !succs.is_empty() {
-                            write!(s, " -> {}", succs.iter().format(", ")).unwrap();
+                            write!(s, "succs {}; ", succs.iter().format(", ")).unwrap();
                         }
                         seen_blocks.insert(block);
                     }
-                } else {
-                    write!(s, "x").unwrap();
                 }
+                write!(s, "x").unwrap();
             });
         }
 

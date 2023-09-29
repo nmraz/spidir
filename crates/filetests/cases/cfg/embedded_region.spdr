@@ -2,11 +2,11 @@
 
 func @embedded_region:i32(i32) {
     # check: function `embedded_region`:
-    # nextln: %0:ctrl, %1:i32 = entry                 # block0 -> block1
-    # nextln: %2:ctrl, %3:phisel = region %0          # block1 -> block2
-    # nextln: %4:ctrl, %5:phisel = region %2          # block2 -> block3
-    # nextln: %6:ctrl, %7:phisel = region %4          # block3
-    # nextln: return %6, %1                           # block3
+    # nextln: %0:ctrl, %1:i32 = entry                 # block0; succs block1; x
+    # nextln: %2:ctrl, %3:phisel = region %0          # block1; preds block0; succs block2; x
+    # nextln: %4:ctrl, %5:phisel = region %2          # block2; preds block1; succs block3; x
+    # nextln: %6:ctrl, %7:phisel = region %4          # block3; preds block2; x
+    # nextln: return %6, %1                           # block3; x
 
     %ent:ctrl, %p1:i32 = entry
     %c1:ctrl, %ph1:phisel = region %ent
@@ -17,12 +17,12 @@ func @embedded_region:i32(i32) {
 
 func @embedded_region_phi:i32(i32) {
     # check: function `embedded_region_phi`:
-    # nextln: %0:ctrl, %1:i32 = entry                 # block0 -> block1
-    # nextln: %2:ctrl, %3:phisel = region %0          # block1 -> block2
-    # nextln: %4:ctrl, %5:phisel = region %2          # block2 -> block3
-    # nextln: %7:ctrl, %8:phisel = region %4          # block3
+    # nextln: %0:ctrl, %1:i32 = entry                 # block0; succs block1; x
+    # nextln: %2:ctrl, %3:phisel = region %0          # block1; preds block0; succs block2; x
+    # nextln: %4:ctrl, %5:phisel = region %2          # block2; preds block1; succs block3; x
+    # nextln: %7:ctrl, %8:phisel = region %4          # block3; preds block2; x
     # nextln: %6:i32 = phi %5, %1                     # x
-    # nextln: return %7, %6                           # block3
+    # nextln: return %7, %6                           # block3; x
 
     %ent:ctrl, %p1:i32 = entry
     %c1:ctrl, %ph1:phisel = region %ent

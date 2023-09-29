@@ -17,7 +17,6 @@ use log::trace;
 const MAX_HOIST_DEPTH: usize = 50;
 
 pub struct Schedule {
-    blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
     nodes_by_block: SecondaryMap<Block, EntityList<Node>>,
     node_list_pool: ListPool<Node>,
 }
@@ -34,97 +33,34 @@ impl Schedule {
         let depth_map = get_cfg_depth_map(&domtree, &loop_forest);
 
         let mut schedule = Self {
-            blocks_by_node: SecondaryMap::new(),
             nodes_by_block: SecondaryMap::new(),
             node_list_pool: ListPool::new(),
         };
-
-        schedule.pin_nodes(&ctx, block_cfg);
 
         let mut scheduler = Scheduler {
             block_cfg,
             domtree: &domtree,
             depth_map: &depth_map,
+            blocks_by_node: SecondaryMap::new(),
             schedule: &mut schedule,
         };
+
+        scheduler.pin_nodes(&ctx);
 
         let mut scratch_postorder = PostOrderContext::new();
         schedule_early(&ctx, &mut scratch_postorder, |ctx, node| {
             scheduler.schedule_early(ctx, node);
         });
-
         schedule_late(&ctx, &mut scratch_postorder, |ctx, node| {
             scheduler.schedule_late(ctx, node);
         });
+        scheduler.schedule_intra_block(graph, &mut scratch_postorder);
 
-        schedule.schedule_intra_block(graph, &domtree, &mut scratch_postorder);
         schedule
     }
 
     pub fn scheduled_nodes_rev(&self, block: Block) -> &[Node] {
         self.nodes_by_block[block].as_slice(&self.node_list_pool)
-    }
-
-    fn pin_nodes(&mut self, ctx: &ScheduleCtx<'_>, block_cfg: &BlockCfg) {
-        for &cfg_node in ctx.cfg_preorder() {
-            let block = block_cfg
-                .containing_block(cfg_node)
-                .expect("live CFG node not in block CFG");
-
-            // Note: we guarantee that the block header comes first and that any attached phis
-            // follow it immediately, so they will will show up first in that order when
-            // `scheduled_nodes_rev` is reversed.
-
-            trace!("pinned: node {} -> {block}", cfg_node.as_u32());
-            self.append_to_block(block, cfg_node);
-
-            for phi in ctx.get_attached_phis(cfg_node) {
-                trace!("phi: node {} -> {block}", phi.as_u32());
-                self.append_to_block(block, phi);
-            }
-        }
-    }
-
-    fn schedule_intra_block(
-        &mut self,
-        graph: &ValGraph,
-        domtree: &BlockDomTree,
-        scratch_postorder: &mut PostOrderContext<Node>,
-    ) {
-        let mut per_block_visited = EntitySet::new();
-
-        // Get a reverse-topological sort of all nodes placed into each block.
-        for block in domtree.preorder() {
-            let block = domtree.get_cfg_node(block);
-            let succs = SingleBlockSuccs {
-                graph,
-                blocks_by_node: &self.blocks_by_node,
-                block,
-            };
-
-            let nodes = &mut self.nodes_by_block[block];
-
-            // Note: the topological sort of the block ultimately obtained here will be stable with
-            // respect to the original `nodes` slice. In particular, the block header and phi nodes
-            // will come first (since we ignore backedges) and the block terminator will come last.
-            scratch_postorder.reset(nodes.as_slice(&self.node_list_pool).iter().copied());
-            nodes.clear(&mut self.node_list_pool);
-
-            trace!("sorting {block}");
-            while let Some(node) = scratch_postorder.next(&succs, &mut per_block_visited) {
-                trace!("    node {}", node.as_u32());
-                nodes.push(node, &mut self.node_list_pool);
-            }
-        }
-    }
-
-    fn append_to_block(&mut self, block: Block, node: Node) {
-        self.assign_block(block, node);
-        self.nodes_by_block[block].push(node, &mut self.node_list_pool);
-    }
-
-    fn assign_block(&mut self, block: Block, node: Node) {
-        self.blocks_by_node[node] = block.into();
     }
 }
 
@@ -163,22 +99,79 @@ struct Scheduler<'a> {
     block_cfg: &'a BlockCfg,
     domtree: &'a BlockDomTree,
     depth_map: &'a CfgDepthMap,
+    blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
     schedule: &'a mut Schedule,
 }
 
 impl Scheduler<'_> {
+    fn pin_nodes(&mut self, ctx: &ScheduleCtx<'_>) {
+        for &cfg_node in ctx.cfg_preorder() {
+            let block = self
+                .block_cfg
+                .containing_block(cfg_node)
+                .expect("live CFG node not in block CFG");
+
+            // Note: we guarantee that the block header comes first and that any attached phis
+            // follow it immediately, so they will will show up first in that order when
+            // `scheduled_nodes_rev` is reversed.
+
+            trace!("pinned: node {} -> {block}", cfg_node.as_u32());
+            self.assign_and_append(block, cfg_node);
+
+            for phi in ctx.get_attached_phis(cfg_node) {
+                trace!("phi: node {} -> {block}", phi.as_u32());
+                self.assign_and_append(block, phi);
+            }
+        }
+    }
+
+    fn schedule_intra_block(
+        &mut self,
+        graph: &ValGraph,
+        scratch_postorder: &mut PostOrderContext<Node>,
+    ) {
+        let mut per_block_visited = EntitySet::new();
+
+        // Get a reverse-topological sort of all nodes placed into each block.
+        for block in self.domtree.preorder() {
+            let block = self.domtree.get_cfg_node(block);
+            let succs = SingleBlockSuccs {
+                graph,
+                blocks_by_node: &self.blocks_by_node,
+                block,
+            };
+
+            let nodes = &mut self.schedule.nodes_by_block[block];
+
+            // Note: the topological sort of the block ultimately obtained here will be stable with
+            // respect to the original `nodes` slice. In particular, the block header and phi nodes
+            // will come first (since we ignore backedges) and the block terminator will come last.
+            scratch_postorder.reset(
+                nodes
+                    .as_slice(&self.schedule.node_list_pool)
+                    .iter()
+                    .copied(),
+            );
+            nodes.clear(&mut self.schedule.node_list_pool);
+
+            trace!("sorting {block}");
+            while let Some(node) = scratch_postorder.next(&succs, &mut per_block_visited) {
+                trace!("    node {}", node.as_u32());
+                nodes.push(node, &mut self.schedule.node_list_pool);
+            }
+        }
+    }
+
     fn schedule_early(&mut self, ctx: &ScheduleCtx<'_>, node: Node) {
-        assert!(self.schedule.blocks_by_node[node].is_none());
-        self.schedule
-            .assign_block(self.early_schedule_location(ctx, node), node);
+        assert!(self.blocks_by_node[node].is_none());
+        self.assign_block(self.early_schedule_location(ctx, node), node);
     }
 
     fn schedule_late(&mut self, ctx: &ScheduleCtx<'_>, node: Node) {
-        let early_loc =
-            self.schedule.blocks_by_node[node].expect("node should have been scheduled early");
+        let early_loc = self.blocks_by_node[node].expect("node should have been scheduled early");
         let late_loc = self.late_schedule_location(ctx, node);
         let loc = self.best_schedule_location(node, early_loc, late_loc);
-        self.schedule.append_to_block(loc, node);
+        self.assign_and_append(loc, node);
     }
 
     fn best_schedule_location(&self, node: Node, early_loc: Block, late_loc: Block) -> Block {
@@ -232,8 +225,7 @@ impl Scheduler<'_> {
         trace!("early: node {}", node.as_u32());
         let loc = dataflow_preds(ctx.graph(), node)
             .map(|pred| {
-                let pred_loc =
-                    self.schedule.blocks_by_node[pred].expect("data flow cycle or dead input");
+                let pred_loc = self.blocks_by_node[pred].expect("data flow cycle or dead input");
                 trace!("    pred: node {} ({pred_loc})", pred.as_u32());
                 pred_loc
             })
@@ -283,7 +275,7 @@ impl Scheduler<'_> {
                 } else {
                     // Other nodes using the value should always be scheduled in the same block as
                     // the value computation.
-                    let loc = self.schedule.blocks_by_node[succ].expect("data flow cycle");
+                    let loc = self.blocks_by_node[succ].expect("data flow cycle");
                     trace!("    succ: node {} ({loc})", succ.as_u32());
                     Some(loc)
                 }
@@ -293,6 +285,15 @@ impl Scheduler<'_> {
 
         trace!("late: node {} -> {loc}", node.as_u32());
         loc
+    }
+
+    fn assign_and_append(&mut self, block: Block, node: Node) {
+        self.assign_block(block, node);
+        self.schedule.nodes_by_block[block].push(node, &mut self.schedule.node_list_pool);
+    }
+
+    fn assign_block(&mut self, block: Block, node: Node) {
+        self.blocks_by_node[node] = block.into();
     }
 }
 

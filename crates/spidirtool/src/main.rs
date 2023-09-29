@@ -1,18 +1,23 @@
 use std::{
     ffi::OsStr,
+    fmt::Write as _,
     fs::{self, File},
-    io::Write,
+    io::{self, Write as _},
     path::{Path, PathBuf},
     process::Command,
 };
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use codegen::schedule::Schedule;
 use ir::{
+    cfg::BlockCfg,
     domtree::DomTree,
     loops::LoopForest,
     module::{FunctionData, Module},
+    valwalk::cfg_preorder,
     verify::{verify_func, verify_module},
+    write::{quote_ident, write_signature},
 };
 use ir_graphviz::{
     annotate::{Annotate, ColoredAnnotator, DomTreeAnnotator, ErrorAnnotator, LoopAnnotator},
@@ -91,6 +96,11 @@ enum ToolCommand {
         /// The input IR file
         input_file: PathBuf,
     },
+    /// Schedule an IR module in preparation for codegen
+    Schedule {
+        /// The input IR file
+        input_file: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -163,6 +173,10 @@ fn main() -> Result<()> {
                 }
             }
         }
+        ToolCommand::Schedule { input_file } => {
+            let module = read_module(&input_file)?;
+            io::stdout().write_all(get_module_schedule_str(&module).as_bytes())?;
+        }
     }
 
     Ok(())
@@ -217,6 +231,32 @@ fn output_dot_file(
         .context("failed to write dot file")?;
 
     Ok(())
+}
+
+fn get_module_schedule_str(module: &Module) -> String {
+    let mut output = String::new();
+
+    for func in module.functions.values() {
+        write!(output, "func @{}", quote_ident(&func.name)).unwrap();
+        write_signature(&mut output, &func.sig).unwrap();
+
+        let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
+        let cfg = BlockCfg::compute(&func.graph, cfg_preorder.iter().copied());
+        let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg);
+        writeln!(
+            output,
+            " {{\n{}}}\n",
+            schedule.display(
+                module,
+                &func.graph,
+                &cfg,
+                cfg.containing_block(func.entry).unwrap()
+            )
+        )
+        .unwrap();
+    }
+
+    output
 }
 
 fn get_graphviz_str(

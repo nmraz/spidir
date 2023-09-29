@@ -281,7 +281,7 @@ pub fn quote_ident(ident: &str) -> Cow<'_, str> {
     }
 }
 
-fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
+pub fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
     if let Some(ret_type) = sig.ret_type {
         write!(w, ":{}", ret_type)?;
     }

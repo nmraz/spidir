@@ -2,10 +2,9 @@ use std::fmt::Write;
 
 use anyhow::Result;
 use codegen::schedule::Schedule;
-use cranelift_entity::EntitySet;
 use filecheck::Value;
 use fx_utils::FxHashMap;
-use graphwalk::PreOrder;
+use graphwalk::entity_preorder;
 use ir::{cfg::BlockCfg, module::Module, valwalk::cfg_preorder, write::display_node};
 use itertools::Itertools;
 
@@ -32,9 +31,7 @@ impl TestProvider for ScheduleProvider {
             let block_cfg = BlockCfg::compute(graph, cfg_preorder.iter().copied());
             let schedule = Schedule::compute(graph, &cfg_preorder, &block_cfg);
 
-            for block in
-                PreOrder::<_, EntitySet<_>>::new(&block_cfg, block_cfg.containing_block(func.entry))
-            {
+            for block in entity_preorder(&block_cfg, block_cfg.containing_block(func.entry)) {
                 writeln!(output, "{block}:").unwrap();
                 for &attached_node in schedule.scheduled_nodes_rev(block).iter().rev() {
                     writeln!(output, "    {}", display_node(module, graph, attached_node)).unwrap();

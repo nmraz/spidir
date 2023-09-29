@@ -1,7 +1,6 @@
-use cranelift_entity::EntitySet;
 use expect_test::expect;
-use graphmock::{Graph, Node};
-use graphwalk::PreOrder;
+use graphmock::Graph;
+use graphwalk::entity_preorder;
 use itertools::Itertools;
 
 macro_rules! test_preorder {
@@ -15,7 +14,7 @@ macro_rules! test_preorder {
 }
 
 fn collect_preorder(g: &Graph) -> String {
-    let preorder = PreOrder::<_, EntitySet<Node>>::new(g, [g.entry()]);
+    let preorder = entity_preorder(g, [g.entry()]);
     preorder.map(|node| g.name(node)).format(" ").to_string()
 }
 

@@ -1,7 +1,6 @@
-use cranelift_entity::EntitySet;
 use expect_test::expect;
-use graphmock::{Graph, Node};
-use graphwalk::{PostOrder, WalkPhase};
+use graphmock::Graph;
+use graphwalk::{entity_postorder, WalkPhase};
 use itertools::Itertools;
 use std::fmt::Write;
 
@@ -18,7 +17,7 @@ macro_rules! test_postorder {
 }
 
 fn collect_postorder(g: &Graph) -> (String, String) {
-    let mut postorder = PostOrder::<_, EntitySet<Node>>::new(g, [g.entry()]);
+    let mut postorder = entity_postorder(g, [g.entry()]);
 
     let mut full = String::new();
     let mut indent = 0;
@@ -37,7 +36,7 @@ fn collect_postorder(g: &Graph) -> (String, String) {
         writeln!(full, "{:indent$}{phase}:{}", "", g.name(node)).unwrap();
     }
 
-    let mut rpo: Vec<_> = PostOrder::<_, EntitySet<Node>>::new(g, [g.entry()]).collect();
+    let mut rpo: Vec<_> = entity_postorder(g, [g.entry()]).collect();
     rpo.reverse();
     let rpo = rpo.iter().map(|&node| g.name(node)).format(" ").to_string();
 

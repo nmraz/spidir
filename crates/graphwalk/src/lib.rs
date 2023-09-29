@@ -133,6 +133,16 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PreOrder<G, V> {
     }
 }
 
+pub fn entity_preorder<G: GraphRef>(
+    graph: G,
+    roots: impl IntoIterator<Item = G::Node>,
+) -> PreOrder<G, EntitySet<G::Node>>
+where
+    G::Node: EntityRef,
+{
+    PreOrder::new(graph, roots)
+}
+
 pub type TreePreOrder<G> = PreOrder<G, NopTracker>;
 
 pub struct PostOrderContext<N> {
@@ -239,6 +249,16 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PostOrder<G, V> {
     fn next(&mut self) -> Option<G::Node> {
         self.ctx.next(&self.graph, &mut self.visited)
     }
+}
+
+pub fn entity_postorder<G: GraphRef>(
+    graph: G,
+    roots: impl IntoIterator<Item = G::Node>,
+) -> PostOrder<G, EntitySet<G::Node>>
+where
+    G::Node: EntityRef,
+{
+    PostOrder::new(graph, roots)
 }
 
 pub type TreePostOrder<G> = PostOrder<G, NopTracker>;

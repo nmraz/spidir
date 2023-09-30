@@ -287,14 +287,7 @@ impl Scheduler<'_> {
                     // split critical edge. We don't just index into the region's `block_preds`
                     // directly with `input_idx` because `block_preds` will not include any dead
                     // inputs.
-                    let loc = if let Some(crit_edge_block) =
-                        self.block_cfg.critical_edge_block(ctrl_input)
-                    {
-                        Some(crit_edge_block)
-                    } else {
-                        self.block_cfg
-                            .containing_block(graph.value_def(ctrl_input).0)
-                    };
+                    let loc = self.block_cfg.cfg_pred_block(graph, ctrl_input);
 
                     if let Some(loc) = loc {
                         debug_assert!(self

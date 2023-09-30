@@ -106,6 +106,11 @@ impl BlockCfg {
         self.blocks[block].preds.as_slice(&self.block_link_pool)
     }
 
+    pub fn cfg_pred_block(&self, graph: &ValGraph, edge: DepValue) -> Option<Block> {
+        self.critical_edge_block(edge)
+            .or_else(|| self.containing_block(graph.value_def(edge).0))
+    }
+
     fn add_block_edge(&mut self, pred: Block, succ: Block) {
         self.blocks[pred]
             .succs

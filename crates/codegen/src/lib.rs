@@ -3,4 +3,5 @@
 extern crate alloc;
 
 pub mod cfg;
+pub mod lir;
 pub mod schedule;

@@ -331,11 +331,11 @@ impl<I: fmt::Debug> Lir<I> {
     }
 }
 
-pub struct InstrBuilder<'b, I> {
-    builder: &'b mut Builder<I>,
+pub struct InstrBuilder<'b, 'o, I> {
+    builder: &'b mut Builder<'o, I>,
 }
 
-impl<'b, I> InstrBuilder<'b, I> {
+impl<I> InstrBuilder<'_, '_, I> {
     pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
         let num = self.builder.next_vreg;
         self.builder.next_vreg += 1;
@@ -408,16 +408,18 @@ impl<'b> OutgoingBlockParamBuilder<'b> {
     }
 }
 
-pub struct Builder<I> {
+pub struct Builder<'o, I> {
     lir: Lir<I>,
+    block_order: &'o [Block],
     vreg_copies: FxHashMap<VirtReg, VirtReg>,
     next_vreg: u32,
-    cur_block: Option<Block>,
+    last_finished_block: usize,
 }
 
-impl<I> Builder<I> {
-    pub fn new() -> Self {
-        Self {
+impl<'o, I> Builder<'o, I> {
+    pub fn new(block_order: &'o [Block]) -> Self {
+        assert!(!block_order.is_empty());
+        let mut builder = Self {
             lir: Lir {
                 block_instr_ranges: SecondaryMap::new(),
                 block_params: SecondaryMap::new(),
@@ -428,21 +430,27 @@ impl<I> Builder<I> {
                 def_pool: Vec::new(),
                 use_pool: Vec::new(),
             },
+            block_order,
             vreg_copies: FxHashMap::default(),
-            cur_block: None,
+            last_finished_block: block_order.len(),
             next_vreg: 0,
-        }
+        };
+        builder.lir.block_instr_ranges[*block_order.last().unwrap()].1 = Instr::new(0);
+        builder
     }
 
-    pub fn mark_block(&mut self, block: Block) {
+    pub fn finish_block(&mut self) {
         let next_instr = self.next_instr();
+        self.last_finished_block -= 1;
+        let last_finished_block = self.last_finished_block;
 
         // Note: we always want `.0` to be greater than `.1` for every block, so that when we
         // reverse everything later we'll end up with `.0 < .1`.
-        if let Some(cur_block) = self.cur_block {
-            self.lir.block_instr_ranges[cur_block].0 = next_instr;
+        self.lir.block_instr_ranges[self.block_order[last_finished_block]].0 = next_instr;
+
+        if last_finished_block > 0 {
+            self.lir.block_instr_ranges[self.block_order[last_finished_block - 1]].1 = next_instr;
         }
-        self.lir.block_instr_ranges[block].1 = next_instr;
     }
 
     pub fn set_block_params(&mut self, block: Block, params: impl IntoIterator<Item = VirtReg>) {
@@ -468,7 +476,7 @@ impl<I> Builder<I> {
         self.lir.block_params[block].outgoing_len = len.try_into().unwrap();
     }
 
-    pub fn build_instrs(&mut self, f: impl FnOnce(InstrBuilder<'_, I>)) {
+    pub fn build_instrs(&mut self, f: impl FnOnce(InstrBuilder<'_, '_, I>)) {
         let orig_len = self.lir.instrs.len();
         f(InstrBuilder { builder: self });
         // We're building the LIR in reverse order, but the sequence of instructions should end up
@@ -477,6 +485,8 @@ impl<I> Builder<I> {
     }
 
     pub fn finish(mut self) -> Lir<I> {
+        assert!(self.last_finished_block == 0);
+
         let instr_count = self.lir.instrs.len();
 
         // We've built everything backwards, so reverse things now.
@@ -508,12 +518,6 @@ impl<I> Builder<I> {
                 vreg_use.reg = def;
             }
         }
-    }
-}
-
-impl<I> Default for Builder<I> {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

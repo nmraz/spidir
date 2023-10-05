@@ -1,4 +1,7 @@
+use cranelift_entity::EntityRef;
 use expect_test::{expect, Expect};
+
+use crate::cfg::Block;
 
 use super::{
     Builder, DefOperand, DefOperandConstraint, Lir, OperandPos, PhysReg, RegClass, RegNames,
@@ -65,7 +68,8 @@ fn check_lir(lir: Lir<DummyInstr>, expected: Expect) {
 
 #[test]
 fn build_simple_tied() {
-    let mut builder = Builder::new();
+    let block_order = [Block::new(0)];
+    let mut builder = Builder::new(&block_order);
     let [retval] = push_instr(
         &mut builder,
         DummyInstr::Ret,
@@ -85,6 +89,7 @@ fn build_simple_tied() {
             (UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
+    builder.finish_block();
     let lir = builder.finish();
 
     check_lir(
@@ -98,7 +103,8 @@ fn build_simple_tied() {
 
 #[test]
 fn build_simple_3addr() {
-    let mut builder = Builder::new();
+    let block_order = [Block::new(0)];
+    let mut builder = Builder::new(&block_order);
     let [retval] = push_instr(
         &mut builder,
         DummyInstr::Ret,
@@ -118,6 +124,7 @@ fn build_simple_3addr() {
             (UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
+    builder.finish_block();
     let lir = builder.finish();
 
     check_lir(

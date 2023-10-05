@@ -16,7 +16,7 @@ mod display;
 
 pub use display::Display;
 
-use crate::cfg::{Block, BlockCfg, BlockDomTree};
+use crate::cfg::{Block, BlockDomTree, FunctionCfg};
 
 /// The maximum path length up the dominator tree we are willing to hoist nodes, to avoid quadratic
 /// behavior.
@@ -28,7 +28,11 @@ pub struct Schedule {
 }
 
 impl Schedule {
-    pub fn compute(graph: &ValGraph, valgraph_cfg_preorder: &[Node], block_cfg: &BlockCfg) -> Self {
+    pub fn compute(
+        graph: &ValGraph,
+        valgraph_cfg_preorder: &[Node],
+        block_cfg: &FunctionCfg,
+    ) -> Self {
         let entry = valgraph_cfg_preorder[0];
         let live_node_info = LiveNodeInfo::compute(graph, entry);
 
@@ -73,7 +77,7 @@ impl Schedule {
         &'a self,
         module: &'a Module,
         graph: &'a ValGraph,
-        cfg: &'a BlockCfg,
+        cfg: &'a FunctionCfg,
         entry: Block,
     ) -> Display<'a> {
         Display {
@@ -118,7 +122,7 @@ fn is_block_backedge(graph: &ValGraph, succ: Node, use_idx: u32) -> bool {
 }
 
 struct Scheduler<'a> {
-    block_cfg: &'a BlockCfg,
+    block_cfg: &'a FunctionCfg,
     domtree: &'a BlockDomTree,
     depth_map: &'a CfgDepthMap,
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,

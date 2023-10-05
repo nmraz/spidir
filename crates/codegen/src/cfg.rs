@@ -24,7 +24,7 @@ struct BlockLinks {
 
 pub type BlockDomTree = DomTree<Block>;
 
-pub struct BlockCfg {
+pub struct FunctionCfg {
     blocks: PrimaryMap<Block, BlockLinks>,
     // If this is too sparse, we may want to consider a hashmap instead.
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
@@ -32,7 +32,7 @@ pub struct BlockCfg {
     block_link_pool: ListPool<Block>,
 }
 
-impl BlockCfg {
+impl FunctionCfg {
     pub fn compute(graph: &ValGraph, cfg_preorder: impl Iterator<Item = Node>) -> Self {
         let mut ctrl_outputs = SmallVec::<[DepValue; 4]>::new();
         let mut cfg = Self {
@@ -136,7 +136,7 @@ impl BlockCfg {
     }
 }
 
-impl GraphRef for &'_ BlockCfg {
+impl GraphRef for &'_ FunctionCfg {
     type Node = Block;
 
     fn successors(&self, node: Block, f: impl FnMut(Block)) {
@@ -144,7 +144,7 @@ impl GraphRef for &'_ BlockCfg {
     }
 }
 
-impl PredGraphRef for &'_ BlockCfg {
+impl PredGraphRef for &'_ FunctionCfg {
     fn predecessors(&self, node: Block, f: impl FnMut(Block)) {
         self.block_preds(node).iter().copied().for_each(f);
     }

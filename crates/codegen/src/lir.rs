@@ -15,7 +15,7 @@ pub use display::{
 pub struct RegClass(u8);
 
 impl RegClass {
-    pub fn new(class: u8) -> Self {
+    pub const fn new(class: u8) -> Self {
         Self(class)
     }
 
@@ -65,7 +65,7 @@ impl VirtReg {
 pub struct PhysReg(u8);
 
 impl PhysReg {
-    pub fn new(r: u8) -> Self {
+    pub const fn new(r: u8) -> Self {
         Self(r)
     }
 
@@ -283,25 +283,30 @@ impl<I> Lir<I> {
 
     pub fn instr_uses(&self, instr: Instr) -> &[UseOperand] {
         let operands = &self.instr_operands[instr.as_usize()];
-        &self.use_pool[operands.use_base as usize..operands.use_len as usize]
+        let base = operands.use_base as usize;
+        &self.use_pool[base..base + operands.use_len as usize]
     }
 
     pub fn instr_defs(&self, instr: Instr) -> &[DefOperand] {
         let operands = &self.instr_operands[instr.as_usize()];
-        &self.def_pool[operands.def_base as usize..operands.def_len as usize]
+        let base = operands.def_base as usize;
+        &self.def_pool[base..base + operands.def_len as usize]
     }
 
     pub fn block_params(&self, block: Block) -> &[VirtReg] {
         let params = &self.block_params[block];
-        &self.block_param_pool[params.incoming_base as usize..params.incoming_len as usize]
+        let base = params.incoming_base as usize;
+        &self.block_param_pool[base..base + params.incoming_len as usize]
     }
 
     pub fn outgoing_block_params(&self, block: Block, succ: u32) -> &[VirtReg] {
         let block_param_data = &self.block_params[block];
+        let index_base = block_param_data.outgoing_base as usize;
         let indices = &self.outgoing_block_param_indices
-            [block_param_data.outgoing_base as usize..block_param_data.outgoing_len as usize];
+            [index_base..index_base + block_param_data.outgoing_len as usize];
         let (base, len) = indices[succ as usize];
-        &self.block_param_pool[base as usize..len as usize]
+        let base = base as usize;
+        &self.block_param_pool[base..base + len as usize]
     }
 }
 
@@ -529,3 +534,6 @@ fn resolve_vreg_copy(
 
     Some(def)
 }
+
+#[cfg(test)]
+mod tests;

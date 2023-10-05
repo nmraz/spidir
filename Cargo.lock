@@ -164,6 +164,7 @@ version = "0.1.0"
 dependencies = [
  "cranelift-entity",
  "dominators",
+ "expect-test",
  "fx-utils",
  "graphwalk",
  "ir",

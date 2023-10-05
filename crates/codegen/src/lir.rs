@@ -1,5 +1,5 @@
 use alloc::vec::Vec;
-use core::{iter, ops::Range};
+use core::{fmt, iter, ops::Range};
 use fx_utils::FxHashMap;
 
 use cranelift_entity::SecondaryMap;
@@ -66,6 +66,21 @@ impl PhysReg {
 pub enum OperandPos {
     Early,
     Late,
+}
+
+impl OperandPos {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            OperandPos::Early => "early",
+            OperandPos::Late => "late",
+        }
+    }
+}
+
+impl fmt::Display for OperandPos {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

@@ -1,5 +1,6 @@
 use alloc::vec::Vec;
-use core::ops::Range;
+use core::{iter, ops::Range};
+use fx_utils::FxHashMap;
 
 use cranelift_entity::SecondaryMap;
 
@@ -261,6 +262,30 @@ impl<'b, I> InstrBuilder<'b, I> {
         VirtReg::new(num, class)
     }
 
+    pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
+        let src = resolve_vreg_copy(&mut self.builder.vreg_copies, src).unwrap_or(src);
+        assert!(
+            dest != src,
+            "vreg copy cycle on register {}",
+            dest.reg_num()
+        );
+        assert!(
+            src.class() == dest.class(),
+            "attempted to copy vreg of class {} into vreg of class {}",
+            src.class().as_u8(),
+            dest.class().as_u8()
+        );
+
+        let prev = self.builder.vreg_copies.insert(dest, src);
+        if let Some(prev) = prev {
+            panic!(
+                "vreg {} already copied from {}",
+                dest.reg_num(),
+                prev.reg_num()
+            );
+        }
+    }
+
     pub fn push_instr(
         &mut self,
         data: I,
@@ -290,6 +315,7 @@ impl<'b, I> InstrBuilder<'b, I> {
 
 pub struct Builder<I> {
     lir: Lir<I>,
+    vreg_copies: FxHashMap<VirtReg, VirtReg>,
     next_vreg: u32,
     cur_block: Option<Block>,
 }
@@ -306,6 +332,7 @@ impl<I> Builder<I> {
                 def_pool: Vec::new(),
                 use_pool: Vec::new(),
             },
+            vreg_copies: FxHashMap::default(),
             cur_block: None,
             next_vreg: 0,
         }
@@ -342,6 +369,8 @@ impl<I> Builder<I> {
             assert!(*block_start <= *block_end);
         }
 
+        self.propagate_vreg_copies();
+
         self.lir
     }
 
@@ -353,10 +382,36 @@ impl<I> Builder<I> {
         self.lir.instrs[range.clone()].reverse();
         self.lir.instr_operands[range].reverse();
     }
+
+    fn propagate_vreg_copies(&mut self) {
+        for vreg_use in &mut self.lir.use_pool {
+            if let Some(def) = resolve_vreg_copy(&mut self.vreg_copies, vreg_use.reg) {
+                vreg_use.reg = def;
+            }
+        }
+    }
 }
 
 impl<I> Default for Builder<I> {
     fn default() -> Self {
         Self::new()
     }
+}
+
+fn resolve_vreg_copy(
+    vreg_copies: &mut FxHashMap<VirtReg, VirtReg>,
+    vreg: VirtReg,
+) -> Option<VirtReg> {
+    let def = vreg_copies.get(&vreg).copied()?;
+
+    // Look through all existing copies we have here.
+    let def = iter::successors(Some(def), |def| vreg_copies.get(def).copied())
+        .last()
+        .unwrap();
+
+    // Poor man's path compression: we don't compress the entire path since that could require
+    // linear space, but let's opportunistically shorten the one starting at this vreg.
+    vreg_copies.insert(vreg, def);
+
+    Some(def)
 }

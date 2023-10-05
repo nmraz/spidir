@@ -6,6 +6,11 @@ use cranelift_entity::SecondaryMap;
 
 use crate::cfg::Block;
 
+mod display;
+
+pub use display::{
+    Display, DisplayDefOperand, DisplayInstr, DisplayUseOperand, DisplayVirtReg, RegNames,
+};
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RegClass(u8);
 
@@ -46,6 +51,13 @@ impl VirtReg {
 
     pub fn from_u32(value: u32) -> Self {
         Self(value)
+    }
+
+    pub fn display(self, reg_names: &dyn RegNames) -> DisplayVirtReg<'_> {
+        DisplayVirtReg {
+            reg: self,
+            reg_names,
+        }
     }
 }
 
@@ -125,6 +137,13 @@ impl UseOperand {
     pub fn pos(&self) -> OperandPos {
         self.pos
     }
+
+    pub fn display<'a>(&'a self, reg_names: &'a dyn RegNames) -> DisplayUseOperand<'a> {
+        DisplayUseOperand {
+            operand: self,
+            reg_names,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -153,6 +172,13 @@ impl DefOperand {
 
     pub fn pos(&self) -> OperandPos {
         self.pos
+    }
+
+    pub fn display<'a>(&'a self, reg_names: &'a dyn RegNames) -> DisplayDefOperand<'a> {
+        DisplayDefOperand {
+            operand: self,
+            reg_names,
+        }
     }
 }
 
@@ -276,6 +302,27 @@ impl<I> Lir<I> {
             [block_param_data.outgoing_base as usize..block_param_data.outgoing_len as usize];
         let (base, len) = indices[succ as usize];
         &self.block_param_pool[base as usize..len as usize]
+    }
+}
+
+impl<I: fmt::Debug> Lir<I> {
+    pub fn display_instr<'a>(
+        &'a self,
+        reg_names: &'a dyn RegNames,
+        instr: Instr,
+    ) -> DisplayInstr<'a, I> {
+        DisplayInstr {
+            lir: self,
+            reg_names,
+            instr,
+        }
+    }
+
+    pub fn display<'a>(&'a self, reg_names: &'a dyn RegNames) -> Display<'a, I> {
+        Display {
+            lir: self,
+            reg_names,
+        }
     }
 }
 

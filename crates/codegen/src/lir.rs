@@ -205,15 +205,24 @@ impl ExactSizeIterator for InstrRange {}
 #[derive(Debug, Clone, Copy)]
 struct InstrOperands {
     def_base: u32,
-    def_count: u16,
+    def_len: u16,
     use_base: u32,
-    use_count: u16,
+    use_len: u16,
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+struct BlockParamData {
+    incoming_base: u32,
+    incoming_len: u16,
+    outgoing_base: u32,
+    outgoing_len: u16,
 }
 
 #[derive(Clone)]
 pub struct Lir<I> {
     block_instr_ranges: SecondaryMap<Block, (Instr, Instr)>,
-    block_params: SecondaryMap<Block, (u32, u32)>,
+    block_params: SecondaryMap<Block, BlockParamData>,
+    outgoing_block_param_indices: Vec<(u32, u32)>,
     block_param_pool: Vec<VirtReg>,
     instrs: Vec<I>,
     instr_operands: Vec<InstrOperands>,
@@ -233,21 +242,25 @@ impl<I> Lir<I> {
 
     pub fn instr_uses(&self, instr: Instr) -> &[UseOperand] {
         let operands = &self.instr_operands[instr.as_usize()];
-        &self.use_pool[operands.use_base as usize..operands.use_count as usize]
+        &self.use_pool[operands.use_base as usize..operands.use_len as usize]
     }
 
     pub fn instr_defs(&self, instr: Instr) -> &[DefOperand] {
         let operands = &self.instr_operands[instr.as_usize()];
-        &self.def_pool[operands.def_base as usize..operands.def_count as usize]
+        &self.def_pool[operands.def_base as usize..operands.def_len as usize]
     }
 
     pub fn block_params(&self, block: Block) -> &[VirtReg] {
-        let (start, end) = self.block_params[block];
-        &self.block_param_pool[start as usize..end as usize]
+        let params = &self.block_params[block];
+        &self.block_param_pool[params.incoming_base as usize..params.incoming_len as usize]
     }
 
-    pub fn outgoing_block_params(&self, _block: Block, _succ: u32) -> &[VirtReg] {
-        todo!()
+    pub fn outgoing_block_params(&self, block: Block, succ: u32) -> &[VirtReg] {
+        let block_param_data = &self.block_params[block];
+        let indices = &self.outgoing_block_param_indices
+            [block_param_data.outgoing_base as usize..block_param_data.outgoing_len as usize];
+        let (base, len) = indices[succ as usize];
+        &self.block_param_pool[base as usize..len as usize]
     }
 }
 
@@ -304,12 +317,27 @@ impl<'b, I> InstrBuilder<'b, I> {
 
         self.builder.lir.instr_operands.push(InstrOperands {
             def_base: def_base.try_into().unwrap(),
-            def_count: def_len.try_into().unwrap(),
+            def_len: def_len.try_into().unwrap(),
             use_base: use_base.try_into().unwrap(),
-            use_count: use_len.try_into().unwrap(),
+            use_len: use_len.try_into().unwrap(),
         });
 
         assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_operands.len());
+    }
+}
+
+pub struct OutgoingBlockParamBuilder<'b> {
+    outgoing_block_param_indices: &'b mut Vec<(u32, u32)>,
+    block_param_pool: &'b mut Vec<VirtReg>,
+}
+
+impl<'b> OutgoingBlockParamBuilder<'b> {
+    pub fn push_succ_block_params(&mut self, outgoing_params: impl Iterator<Item = VirtReg>) {
+        let base = self.block_param_pool.len();
+        self.block_param_pool.extend(outgoing_params);
+        let len = self.block_param_pool.len() - base;
+        self.outgoing_block_param_indices
+            .push((base.try_into().unwrap(), len.try_into().unwrap()));
     }
 }
 
@@ -326,6 +354,7 @@ impl<I> Builder<I> {
             lir: Lir {
                 block_instr_ranges: SecondaryMap::new(),
                 block_params: SecondaryMap::new(),
+                outgoing_block_param_indices: Vec::new(),
                 block_param_pool: Vec::new(),
                 instrs: Vec::new(),
                 instr_operands: Vec::new(),
@@ -347,6 +376,29 @@ impl<I> Builder<I> {
             self.lir.block_instr_ranges[cur_block].0 = next_instr;
         }
         self.lir.block_instr_ranges[block].1 = next_instr;
+    }
+
+    pub fn set_block_params(&mut self, block: Block, params: impl IntoIterator<Item = VirtReg>) {
+        let base = self.lir.block_param_pool.len();
+        self.lir.block_param_pool.extend(params);
+        let len = self.lir.block_param_pool.len() - base;
+        self.lir.block_params[block].incoming_base = base.try_into().unwrap();
+        self.lir.block_params[block].incoming_len = len.try_into().unwrap();
+    }
+
+    pub fn set_outgoing_block_params(
+        &mut self,
+        block: Block,
+        f: impl FnOnce(OutgoingBlockParamBuilder<'_>),
+    ) {
+        let base = self.lir.outgoing_block_param_indices.len();
+        f(OutgoingBlockParamBuilder {
+            outgoing_block_param_indices: &mut self.lir.outgoing_block_param_indices,
+            block_param_pool: &mut self.lir.block_param_pool,
+        });
+        let len = self.lir.outgoing_block_param_indices.len() - base;
+        self.lir.block_params[block].outgoing_base = base.try_into().unwrap();
+        self.lir.block_params[block].outgoing_len = len.try_into().unwrap();
     }
 
     pub fn build_instrs(&mut self, f: impl FnOnce(InstrBuilder<'_, I>)) {

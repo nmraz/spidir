@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::ops::Range;
 
-use cranelift_entity::{entity_impl, PrimaryMap, SecondaryMap};
+use cranelift_entity::SecondaryMap;
 
 use crate::cfg::Block;
 
@@ -140,9 +140,26 @@ impl DefOperand {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Instr(u32);
-entity_impl!(Instr);
+
+impl Instr {
+    pub fn new(index: u32) -> Self {
+        Self(index)
+    }
+
+    pub fn from_usize(index: usize) -> Self {
+        Self::new(index.try_into().unwrap())
+    }
+
+    pub fn as_u32(self) -> u32 {
+        self.0
+    }
+
+    pub fn as_usize(self) -> usize {
+        self.0 as usize
+    }
+}
 
 pub struct InstrRange(Range<u32>);
 
@@ -192,12 +209,13 @@ struct InstrOperands {
     use_count: u16,
 }
 
+#[derive(Clone)]
 pub struct Lir<I> {
     block_instr_ranges: SecondaryMap<Block, (Instr, Instr)>,
     block_params: SecondaryMap<Block, (u32, u32)>,
     block_param_pool: Vec<VirtReg>,
-    instrs: PrimaryMap<Instr, I>,
-    instr_operands: SecondaryMap<Instr, InstrOperands>,
+    instrs: Vec<I>,
+    instr_operands: Vec<InstrOperands>,
     def_pool: Vec<DefOperand>,
     use_pool: Vec<UseOperand>,
 }
@@ -209,16 +227,16 @@ impl<I> Lir<I> {
     }
 
     pub fn instr_data(&self, instr: Instr) -> &I {
-        &self.instrs[instr]
+        &self.instrs[instr.as_usize()]
     }
 
     pub fn instr_uses(&self, instr: Instr) -> &[UseOperand] {
-        let operands = &self.instr_operands[instr];
+        let operands = &self.instr_operands[instr.as_usize()];
         &self.use_pool[operands.use_base as usize..operands.use_count as usize]
     }
 
     pub fn instr_defs(&self, instr: Instr) -> &[DefOperand] {
-        let operands = &self.instr_operands[instr];
+        let operands = &self.instr_operands[instr.as_usize()];
         &self.def_pool[operands.def_base as usize..operands.def_count as usize]
     }
 
@@ -229,5 +247,116 @@ impl<I> Lir<I> {
 
     pub fn outgoing_block_params(&self, _block: Block, _succ: u32) -> &[VirtReg] {
         todo!()
+    }
+}
+
+pub struct InstrBuilder<'b, I> {
+    builder: &'b mut Builder<I>,
+}
+
+impl<'b, I> InstrBuilder<'b, I> {
+    pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
+        let num = self.builder.next_vreg;
+        self.builder.next_vreg += 1;
+        VirtReg::new(num, class)
+    }
+
+    pub fn push_instr(
+        &mut self,
+        data: I,
+        defs: impl IntoIterator<Item = DefOperand>,
+        uses: impl IntoIterator<Item = UseOperand>,
+    ) {
+        self.builder.lir.instrs.push(data);
+
+        let def_base = self.builder.lir.def_pool.len();
+        self.builder.lir.def_pool.extend(defs);
+        let def_len = self.builder.lir.def_pool.len() - def_base;
+
+        let use_base = self.builder.lir.use_pool.len();
+        self.builder.lir.use_pool.extend(uses);
+        let use_len = self.builder.lir.use_pool.len() - use_base;
+
+        self.builder.lir.instr_operands.push(InstrOperands {
+            def_base: def_base.try_into().unwrap(),
+            def_count: def_len.try_into().unwrap(),
+            use_base: use_base.try_into().unwrap(),
+            use_count: use_len.try_into().unwrap(),
+        });
+
+        assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_operands.len());
+    }
+}
+
+pub struct Builder<I> {
+    lir: Lir<I>,
+    next_vreg: u32,
+    cur_block: Option<Block>,
+}
+
+impl<I> Builder<I> {
+    pub fn new() -> Self {
+        Self {
+            lir: Lir {
+                block_instr_ranges: SecondaryMap::new(),
+                block_params: SecondaryMap::new(),
+                block_param_pool: Vec::new(),
+                instrs: Vec::new(),
+                instr_operands: Vec::new(),
+                def_pool: Vec::new(),
+                use_pool: Vec::new(),
+            },
+            cur_block: None,
+            next_vreg: 0,
+        }
+    }
+
+    pub fn mark_block(&mut self, block: Block) {
+        let next_instr = self.next_instr();
+
+        // Note: we always want `.0` to be greater than `.1` for every block, so that when we
+        // reverse everything later we'll end up with `.0 < .1`.
+        if let Some(cur_block) = self.cur_block {
+            self.lir.block_instr_ranges[cur_block].0 = next_instr;
+        }
+        self.lir.block_instr_ranges[block].1 = next_instr;
+    }
+
+    pub fn build_instrs(&mut self, f: impl FnOnce(InstrBuilder<'_, I>)) {
+        let orig_len = self.lir.instrs.len();
+        f(InstrBuilder { builder: self });
+        // We're building the LIR in reverse order, but the sequence of instructions should end up
+        // in insertion order, so reverse this tail sequence we've just built.
+        self.reverse_instrs(orig_len..self.lir.instrs.len());
+    }
+
+    pub fn finish(mut self) -> Lir<I> {
+        let instr_count = self.lir.instrs.len();
+
+        // We've built everything backwards, so reverse things now.
+        self.reverse_instrs(0..instr_count);
+        let instr_count: u32 = instr_count.try_into().unwrap();
+        for (block_start, block_end) in self.lir.block_instr_ranges.values_mut() {
+            *block_start = Instr::new(instr_count - block_start.as_u32());
+            *block_end = Instr::new(instr_count - block_end.as_u32());
+            assert!(*block_start <= *block_end);
+        }
+
+        self.lir
+    }
+
+    fn next_instr(&self) -> Instr {
+        Instr::from_usize(self.lir.instrs.len())
+    }
+
+    fn reverse_instrs(&mut self, range: Range<usize>) {
+        self.lir.instrs[range.clone()].reverse();
+        self.lir.instr_operands[range].reverse();
+    }
+}
+
+impl<I> Default for Builder<I> {
+    fn default() -> Self {
+        Self::new()
     }
 }

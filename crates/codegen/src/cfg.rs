@@ -1,7 +1,7 @@
 use cranelift_entity::{
     entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap, SecondaryMap,
 };
-use dominators::domtree::DomTree;
+use dominators::{domtree::DomTree, loops::LoopForest};
 use fx_utils::FxHashMap;
 use graphwalk::{GraphRef, PredGraphRef};
 use ir::{
@@ -24,33 +24,103 @@ struct BlockLinks {
 
 pub type BlockDomTree = DomTree<Block>;
 
-pub struct FunctionCfg {
+#[derive(Default, Clone)]
+pub struct BlockCfg {
     blocks: PrimaryMap<Block, BlockLinks>,
-    // If this is too sparse, we may want to consider a hashmap instead.
-    blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
-    critical_edges: FxHashMap<DepValue, Block>,
     block_link_pool: ListPool<Block>,
 }
 
-impl FunctionCfg {
-    pub fn compute(graph: &ValGraph, cfg_preorder: impl Iterator<Item = Node>) -> Self {
+impl BlockCfg {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    #[inline]
+    pub fn block_succs(&self, block: Block) -> &[Block] {
+        self.blocks[block].succs.as_slice(&self.block_link_pool)
+    }
+
+    #[inline]
+    pub fn block_preds(&self, block: Block) -> &[Block] {
+        self.blocks[block].preds.as_slice(&self.block_link_pool)
+    }
+
+    #[inline]
+    pub fn create_block(&mut self) -> Block {
+        self.blocks.push(BlockLinks::default())
+    }
+
+    pub fn add_block_edge(&mut self, pred: Block, succ: Block) {
+        self.blocks[pred]
+            .succs
+            .push(succ, &mut self.block_link_pool);
+        self.blocks[succ]
+            .preds
+            .push(pred, &mut self.block_link_pool);
+    }
+}
+
+impl GraphRef for &'_ BlockCfg {
+    type Node = Block;
+
+    fn successors(&self, node: Block, f: impl FnMut(Block)) {
+        self.block_succs(node).iter().copied().for_each(f);
+    }
+}
+
+impl PredGraphRef for &'_ BlockCfg {
+    fn predecessors(&self, node: Block, f: impl FnMut(Block)) {
+        self.block_preds(node).iter().copied().for_each(f);
+    }
+}
+
+pub struct FunctionBlockMap {
+    // If this is too sparse, we may want to consider a hashmap instead.
+    blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
+    critical_edges: FxHashMap<DepValue, Block>,
+}
+
+impl FunctionBlockMap {
+    #[inline]
+    pub fn containing_block(&self, node: Node) -> Option<Block> {
+        self.blocks_by_node[node].expand()
+    }
+
+    pub fn critical_edge_block(&self, edge: DepValue) -> Option<Block> {
+        self.critical_edges.get(&edge).copied()
+    }
+
+    pub fn cfg_pred_block(&self, graph: &ValGraph, edge: DepValue) -> Option<Block> {
+        self.critical_edge_block(edge)
+            .or_else(|| self.containing_block(graph.value_def(edge).0))
+    }
+}
+
+pub struct CfgContext {
+    cfg: BlockCfg,
+    block_map: FunctionBlockMap,
+    domtree: BlockDomTree,
+    loop_forest: LoopForest,
+}
+
+impl CfgContext {
+    pub fn compute(graph: &ValGraph, cfg_preorder: &[Node]) -> Self {
         let mut ctrl_outputs = SmallVec::<[DepValue; 4]>::new();
-        let mut cfg = Self {
-            blocks: PrimaryMap::new(),
+        let mut cfg = BlockCfg::new();
+        let mut block_map = FunctionBlockMap {
             blocks_by_node: SecondaryMap::new(),
             critical_edges: FxHashMap::default(),
-            block_link_pool: ListPool::new(),
         };
 
         let mut cur_block: Option<Block> = None;
-        for node in cfg_preorder {
+        for &node in cfg_preorder {
             let block = match cur_block {
                 Some(cur_block) => {
-                    cfg.blocks_by_node[node] = cur_block.into();
+                    block_map.blocks_by_node[node] = cur_block.into();
                     cur_block
                 }
                 None => {
-                    let block = cfg.get_headed_block(node);
+                    let block = get_headed_block(&mut cfg, &mut block_map, node);
                     cur_block = Some(block);
                     block
                 }
@@ -68,7 +138,7 @@ impl FunctionCfg {
                     if ctrl_outputs.len() > 1 && !has_single_cfg_input(graph, succ) {
                         let split_block = cfg.create_block();
                         cfg.add_block_edge(block, split_block);
-                        cfg.critical_edges.insert(output, split_block);
+                        block_map.critical_edges.insert(output, split_block);
                         pred_block = split_block;
                         trace!(
                             "split critical edge {} -> {} with {split_block}",
@@ -77,77 +147,55 @@ impl FunctionCfg {
                         );
                     }
 
-                    let succ = cfg.get_headed_block(succ);
+                    let succ = get_headed_block(&mut cfg, &mut block_map, succ);
                     cfg.add_block_edge(pred_block, succ);
                 }
                 cur_block = None;
             }
         }
 
-        cfg
-    }
+        let domtree =
+            BlockDomTree::compute(&cfg, block_map.containing_block(cfg_preorder[0]).unwrap());
+        let loop_forest = LoopForest::compute(&cfg, &domtree);
 
-    #[inline]
-    pub fn containing_block(&self, node: Node) -> Option<Block> {
-        self.blocks_by_node[node].expand()
-    }
-
-    pub fn critical_edge_block(&self, edge: DepValue) -> Option<Block> {
-        self.critical_edges.get(&edge).copied()
-    }
-
-    #[inline]
-    pub fn block_succs(&self, block: Block) -> &[Block] {
-        self.blocks[block].succs.as_slice(&self.block_link_pool)
-    }
-
-    #[inline]
-    pub fn block_preds(&self, block: Block) -> &[Block] {
-        self.blocks[block].preds.as_slice(&self.block_link_pool)
-    }
-
-    pub fn cfg_pred_block(&self, graph: &ValGraph, edge: DepValue) -> Option<Block> {
-        self.critical_edge_block(edge)
-            .or_else(|| self.containing_block(graph.value_def(edge).0))
-    }
-
-    fn add_block_edge(&mut self, pred: Block, succ: Block) {
-        self.blocks[pred]
-            .succs
-            .push(succ, &mut self.block_link_pool);
-        self.blocks[succ]
-            .preds
-            .push(pred, &mut self.block_link_pool);
-    }
-
-    fn get_headed_block(&mut self, header: Node) -> Block {
-        if let Some(block) = self.containing_block(header) {
-            return block;
+        CfgContext {
+            cfg,
+            block_map,
+            domtree,
+            loop_forest,
         }
-
-        let block = self.create_block();
-        self.blocks_by_node[header] = block.into();
-        trace!("discovered {block} with header {}", header.as_u32());
-        block
     }
 
-    fn create_block(&mut self) -> Block {
-        self.blocks.push(BlockLinks::default())
+    #[inline]
+    pub fn cfg(&self) -> &BlockCfg {
+        &self.cfg
+    }
+
+    #[inline]
+    pub fn block_map(&self) -> &FunctionBlockMap {
+        &self.block_map
+    }
+
+    #[inline]
+    pub fn domtree(&self) -> &BlockDomTree {
+        &self.domtree
+    }
+
+    #[inline]
+    pub fn loop_forest(&self) -> &LoopForest {
+        &self.loop_forest
     }
 }
 
-impl GraphRef for &'_ FunctionCfg {
-    type Node = Block;
-
-    fn successors(&self, node: Block, f: impl FnMut(Block)) {
-        self.block_succs(node).iter().copied().for_each(f);
+fn get_headed_block(cfg: &mut BlockCfg, block_map: &mut FunctionBlockMap, header: Node) -> Block {
+    if let Some(block) = block_map.containing_block(header) {
+        return block;
     }
-}
 
-impl PredGraphRef for &'_ FunctionCfg {
-    fn predecessors(&self, node: Block, f: impl FnMut(Block)) {
-        self.block_preds(node).iter().copied().for_each(f);
-    }
+    let block = cfg.create_block();
+    block_map.blocks_by_node[header] = block.into();
+    trace!("discovered {block} with header {}", header.as_u32());
+    block
 }
 
 fn should_terminate_block(graph: &ValGraph, ctrl_outputs: &[DepValue]) -> bool {

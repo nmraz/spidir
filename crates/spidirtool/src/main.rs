@@ -9,7 +9,7 @@ use std::{
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use codegen::{cfg::FunctionCfg, schedule::Schedule};
+use codegen::{cfg::CfgContext, schedule::Schedule};
 use ir::{
     domtree::DomTree,
     loops::LoopForest,
@@ -240,16 +240,16 @@ fn get_module_schedule_str(module: &Module) -> String {
         write_signature(&mut output, &func.sig).unwrap();
 
         let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
-        let cfg = FunctionCfg::compute(&func.graph, cfg_preorder.iter().copied());
-        let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg);
+        let cfg_ctx = CfgContext::compute(&func.graph, &cfg_preorder);
+        let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx);
         writeln!(
             output,
             " {{\n{}}}\n",
             schedule.display(
                 module,
                 &func.graph,
-                &cfg,
-                cfg.containing_block(func.entry).unwrap()
+                cfg_ctx.cfg(),
+                cfg_ctx.block_map().containing_block(func.entry).unwrap()
             )
         )
         .unwrap();

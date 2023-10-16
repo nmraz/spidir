@@ -4,14 +4,14 @@ use graphwalk::entity_preorder;
 use ir::{module::Module, valgraph::ValGraph, write::display_node};
 use itertools::Itertools;
 
-use crate::cfg::{Block, FunctionCfg};
+use crate::cfg::{Block, BlockCfg};
 
 use super::Schedule;
 
 pub struct Display<'a> {
     pub(super) module: &'a Module,
     pub(super) graph: &'a ValGraph,
-    pub(super) cfg: &'a FunctionCfg,
+    pub(super) cfg: &'a BlockCfg,
     pub(super) schedule: &'a Schedule,
     pub(super) entry: Block,
 }

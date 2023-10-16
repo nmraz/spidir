@@ -16,7 +16,7 @@ mod display;
 
 pub use display::Display;
 
-use crate::cfg::{Block, BlockDomTree, FunctionCfg};
+use crate::cfg::{Block, BlockCfg, BlockDomTree, CfgContext, FunctionBlockMap};
 
 /// The maximum path length up the dominator tree we are willing to hoist nodes, to avoid quadratic
 /// behavior.
@@ -28,19 +28,12 @@ pub struct Schedule {
 }
 
 impl Schedule {
-    pub fn compute(
-        graph: &ValGraph,
-        valgraph_cfg_preorder: &[Node],
-        block_cfg: &FunctionCfg,
-    ) -> Self {
+    pub fn compute(graph: &ValGraph, valgraph_cfg_preorder: &[Node], cfg_ctx: &CfgContext) -> Self {
         let entry = valgraph_cfg_preorder[0];
         let live_node_info = LiveNodeInfo::compute(graph, entry);
 
-        let domtree = BlockDomTree::compute(block_cfg, block_cfg.containing_block(entry).unwrap());
-        let loop_forest = LoopForest::compute(block_cfg, &domtree);
-
         let ctx = ScheduleCtx::new(graph, &live_node_info, valgraph_cfg_preorder);
-        let depth_map = get_cfg_depth_map(&domtree, &loop_forest);
+        let depth_map = get_cfg_depth_map(cfg_ctx.domtree(), cfg_ctx.loop_forest());
 
         let mut schedule = Self {
             nodes_by_block: SecondaryMap::new(),
@@ -48,8 +41,7 @@ impl Schedule {
         };
 
         let mut scheduler = Scheduler {
-            block_cfg,
-            domtree: &domtree,
+            cfg_ctx,
             depth_map: &depth_map,
             blocks_by_node: SecondaryMap::new(),
             schedule: &mut schedule,
@@ -77,7 +69,7 @@ impl Schedule {
         &'a self,
         module: &'a Module,
         graph: &'a ValGraph,
-        cfg: &'a FunctionCfg,
+        cfg: &'a BlockCfg,
         entry: Block,
     ) -> Display<'a> {
         Display {
@@ -122,18 +114,18 @@ fn is_block_backedge(graph: &ValGraph, succ: Node, use_idx: u32) -> bool {
 }
 
 struct Scheduler<'a> {
-    block_cfg: &'a FunctionCfg,
-    domtree: &'a BlockDomTree,
+    cfg_ctx: &'a CfgContext,
     depth_map: &'a CfgDepthMap,
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
     schedule: &'a mut Schedule,
 }
 
-impl Scheduler<'_> {
+impl<'a> Scheduler<'a> {
     fn pin_nodes(&mut self, ctx: &ScheduleCtx<'_>) {
         for &cfg_node in ctx.cfg_preorder() {
             let block = self
-                .block_cfg
+                .cfg_ctx
+                .block_map()
                 .containing_block(cfg_node)
                 .expect("live CFG node not in block CFG");
 
@@ -159,8 +151,8 @@ impl Scheduler<'_> {
         let mut per_block_visited = EntitySet::new();
 
         // Get a reverse-topological sort of all nodes placed into each block.
-        for block in self.domtree.preorder() {
-            let block = self.domtree.get_cfg_node(block);
+        for block in self.domtree().preorder() {
+            let block = self.domtree().get_cfg_node(block);
             let succs = SingleBlockSuccs {
                 graph,
                 blocks_by_node: &self.blocks_by_node,
@@ -210,7 +202,7 @@ impl Scheduler<'_> {
             self.depth_map[late_loc].loop_depth,
         );
 
-        debug_assert!(self.domtree.cfg_dominates(early_loc, late_loc));
+        debug_assert!(self.domtree().cfg_dominates(early_loc, late_loc));
 
         // Select a node between `early_loc` and `late_loc` on the dominator
         // tree that has minimal loop depth, favoring deeper nodes (those closer to `late_loc`).
@@ -237,11 +229,11 @@ impl Scheduler<'_> {
                 break;
             }
 
-            cur_loc = self.domtree.cfg_idom(cur_loc).unwrap();
+            cur_loc = self.domtree().cfg_idom(cur_loc).unwrap();
             i += 1;
         }
 
-        debug_assert!(self.domtree.cfg_dominates(early_loc, best_loc));
+        debug_assert!(self.domtree().cfg_dominates(early_loc, best_loc));
 
         trace!("place: node {} -> {best_loc}", node.as_u32());
         best_loc
@@ -258,13 +250,13 @@ impl Scheduler<'_> {
             .reduce(|acc, cur| {
                 // Find the deepest input schedule location in the dominator tree, assuming they are
                 // totally ordered by dominance.
-                if self.domtree.cfg_dominates(acc, cur) {
+                if self.domtree().cfg_dominates(acc, cur) {
                     cur
                 } else {
                     acc
                 }
             })
-            .unwrap_or(self.domtree.get_cfg_node(self.domtree.root()));
+            .unwrap_or(self.cfg_ctx.domtree().get_cfg_node(self.domtree().root()));
         trace!("early: node {} -> {loc}", node.as_u32());
         loc
     }
@@ -291,12 +283,12 @@ impl Scheduler<'_> {
                     // split critical edge. We don't just index into the region's `block_preds`
                     // directly with `input_idx` because `block_preds` will not include any dead
                     // inputs.
-                    let loc = self.block_cfg.cfg_pred_block(graph, ctrl_input);
+                    let loc = self.block_map().cfg_pred_block(graph, ctrl_input);
 
                     if let Some(loc) = loc {
                         debug_assert!(self
-                            .block_cfg
-                            .block_preds(self.block_cfg.containing_block(region).unwrap())
+                            .cfg()
+                            .block_preds(self.block_map().containing_block(region).unwrap())
                             .contains(&loc));
                         trace!(
                             "    succ: phi {} input {} ({loc})",
@@ -314,7 +306,7 @@ impl Scheduler<'_> {
                     Some(loc)
                 }
             })
-            .reduce(|acc, cur| domtree_lca(self.domtree, self.depth_map, acc, cur))
+            .reduce(|acc, cur| domtree_lca(self.domtree(), self.depth_map, acc, cur))
             .expect("live non-pinned node has no data uses");
 
         trace!("late: node {} -> {loc}", node.as_u32());
@@ -328,6 +320,18 @@ impl Scheduler<'_> {
 
     fn assign_block(&mut self, block: Block, node: Node) {
         self.blocks_by_node[node] = block.into();
+    }
+
+    fn cfg(&self) -> &'a BlockCfg {
+        self.cfg_ctx.cfg()
+    }
+
+    fn domtree(&self) -> &'a BlockDomTree {
+        self.cfg_ctx.domtree()
+    }
+
+    fn block_map(&self) -> &'a FunctionBlockMap {
+        self.cfg_ctx.block_map()
     }
 }
 

@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::Result;
-use codegen::{cfg::FunctionCfg, schedule::Schedule};
+use codegen::{cfg::CfgContext, schedule::Schedule};
 use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{module::Module, valwalk::cfg_preorder};
@@ -26,8 +26,8 @@ impl TestProvider for ScheduleProvider {
 
             let graph = &func.graph;
             let cfg_preorder: Vec<_> = cfg_preorder(graph, func.entry).collect();
-            let block_cfg = FunctionCfg::compute(graph, cfg_preorder.iter().copied());
-            let schedule = Schedule::compute(graph, &cfg_preorder, &block_cfg);
+            let cfg_ctx = CfgContext::compute(graph, &cfg_preorder);
+            let schedule = Schedule::compute(graph, &cfg_preorder, &cfg_ctx);
 
             write!(
                 output,
@@ -35,8 +35,8 @@ impl TestProvider for ScheduleProvider {
                 schedule.display(
                     module,
                     graph,
-                    &block_cfg,
-                    block_cfg.containing_block(func.entry).unwrap()
+                    cfg_ctx.cfg(),
+                    cfg_ctx.block_map().containing_block(func.entry).unwrap()
                 )
             )
             .unwrap();

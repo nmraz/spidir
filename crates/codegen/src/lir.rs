@@ -4,7 +4,7 @@ use fx_utils::FxHashMap;
 
 use cranelift_entity::SecondaryMap;
 
-use crate::cfg::Block;
+use crate::cfg::{Block, BlockCfg};
 
 mod display;
 
@@ -323,9 +323,16 @@ impl<I: fmt::Debug> Lir<I> {
         }
     }
 
-    pub fn display<'a>(&'a self, reg_names: &'a dyn RegNames) -> Display<'a, I> {
+    pub fn display<'a>(
+        &'a self,
+        cfg: &'a BlockCfg,
+        block_order: &'a [Block],
+        reg_names: &'a dyn RegNames,
+    ) -> Display<'a, I> {
         Display {
             lir: self,
+            cfg,
+            block_order,
             reg_names,
         }
     }

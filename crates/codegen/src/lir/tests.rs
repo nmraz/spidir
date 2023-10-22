@@ -1,7 +1,6 @@
-use cranelift_entity::EntityRef;
 use expect_test::{expect, Expect};
 
-use crate::cfg::Block;
+use crate::cfg::{Block, BlockCfg};
 
 use super::{
     Builder, DefOperand, DefOperandConstraint, Lir, OperandPos, PhysReg, RegClass, RegNames,
@@ -62,13 +61,16 @@ fn push_instr<const U: usize>(
     use_regs
 }
 
-fn check_lir(lir: Lir<DummyInstr>, expected: Expect) {
-    expected.assert_eq(&lir.display(&DummyRegNames).to_string());
+fn check_lir(lir: Lir<DummyInstr>, cfg: &BlockCfg, block_order: &[Block], expected: Expect) {
+    expected.assert_eq(&lir.display(cfg, block_order, &DummyRegNames).to_string());
 }
 
 #[test]
 fn build_simple_tied() {
-    let block_order = [Block::new(0)];
+    let mut cfg = BlockCfg::new();
+    let block = cfg.create_block();
+    let block_order = [block];
+
     let mut builder = Builder::new(&block_order);
     let [retval] = push_instr(
         &mut builder,
@@ -76,7 +78,7 @@ fn build_simple_tied() {
         [],
         [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
     );
-    push_instr(
+    let [a, b] = push_instr(
         &mut builder,
         DummyInstr::Add,
         [DefOperand::new(
@@ -89,21 +91,28 @@ fn build_simple_tied() {
             (UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
+    builder.set_block_params(block, [a, b]);
     builder.finish_block();
     let lir = builder.finish();
 
     check_lir(
         lir,
+        &cfg,
+        &block_order,
         expect![[r#"
-            %0:gpr(any)[late] = Add %1:gpr(tied:0)[early], %2:gpr(reg)[early]
-            Ret %0:gpr($r0)[early]
+            block0[%1:gpr, %2:gpr]:
+                %0:gpr(any)[late] = Add %1:gpr(tied:0)[early], %2:gpr(reg)[early]
+                Ret %0:gpr($r0)[early]
         "#]],
     );
 }
 
 #[test]
 fn build_simple_3addr() {
-    let block_order = [Block::new(0)];
+    let mut cfg = BlockCfg::new();
+    let block = cfg.create_block();
+    let block_order = [block];
+
     let mut builder = Builder::new(&block_order);
     let [retval] = push_instr(
         &mut builder,
@@ -111,7 +120,7 @@ fn build_simple_3addr() {
         [],
         [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
     );
-    push_instr(
+    let [a, b] = push_instr(
         &mut builder,
         DummyInstr::Lea,
         [DefOperand::new(
@@ -124,14 +133,18 @@ fn build_simple_3addr() {
             (UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
+    builder.set_block_params(block, [a, b]);
     builder.finish_block();
     let lir = builder.finish();
 
     check_lir(
         lir,
+        &cfg,
+        &block_order,
         expect![[r#"
-            %0:gpr(reg)[late] = Lea %1:gpr(reg)[early], %2:gpr(reg)[early]
-            Ret %0:gpr($r0)[early]
+            block0[%1:gpr, %2:gpr]:
+                %0:gpr(reg)[late] = Lea %1:gpr(reg)[early], %2:gpr(reg)[early]
+                Ret %0:gpr($r0)[early]
         "#]],
     );
 }

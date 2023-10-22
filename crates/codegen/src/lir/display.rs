@@ -2,6 +2,8 @@ use core::fmt;
 
 use itertools::Itertools;
 
+use crate::cfg::{Block, BlockCfg};
+
 use super::{
     DefOperand, DefOperandConstraint, Instr, Lir, PhysReg, RegClass, UseOperand,
     UseOperandConstraint, VirtReg,
@@ -101,18 +103,41 @@ impl<I: fmt::Debug> fmt::Display for DisplayInstr<'_, I> {
 
 pub struct Display<'a, I> {
     pub(super) lir: &'a Lir<I>,
+    pub(super) cfg: &'a BlockCfg,
+    pub(super) block_order: &'a [Block],
     pub(super) reg_names: &'a dyn RegNames,
 }
 
 impl<I: fmt::Debug> fmt::Display for Display<'_, I> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // TODO: include block labels/params here.
-        for i in 0..self.lir.instrs.len() {
+        for &block in self.block_order {
             writeln!(
                 f,
-                "{}",
-                self.lir.display_instr(self.reg_names, Instr::from_usize(i))
+                "{block}[{}]:",
+                self.lir
+                    .block_params(block)
+                    .iter()
+                    .format_with(", ", |param, f| f(&param.display(self.reg_names)))
             )?;
+            for instr in self.lir.block_instrs(block) {
+                writeln!(f, "    {}", self.lir.display_instr(self.reg_names, instr))?;
+            }
+            let succs = self.cfg.block_succs(block);
+            if !succs.is_empty() {
+                write!(
+                    f,
+                    "=> {}",
+                    succs.iter().enumerate().format_with(", ", |(i, succ), f| {
+                        f(&format_args!(
+                            "{succ}[{}]",
+                            self.lir
+                                .outgoing_block_params(block, i as u32)
+                                .iter()
+                                .format_with(", ", |param, f| f(&param.display(self.reg_names)))
+                        ))
+                    })
+                )?;
+            }
         }
 
         Ok(())

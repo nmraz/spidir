@@ -412,10 +412,10 @@ mod tests {
                     %10:ctrl, %11:ctrl = brcond %4, %1
                     %6:ctrl, %7:phisel = region %10
                     %8:ctrl, %9:phisel = region %11
-                    %12:i32 = iadd %2, %3
-                    return %6, %12
                     %13:i32 = imul %2, %3
                     return %8, %13
+                    %12:i32 = iadd %2, %3
+                    return %6, %12
                 }"#]],
         );
     }
@@ -496,16 +496,16 @@ mod tests {
                     %4:i64 = iconst 0
                     %5:i32 = icmp eq %1, %4
                     %10:ctrl, %11:ctrl = brcond %2, %5
-                    %17:i32 = icmp eq %16, %4
-                    %18:ctrl, %19:ctrl = brcond %8, %17
-                    %6:ctrl, %7:phisel = region %10, %18
                     %8:ctrl, %9:phisel = region %11, %19
                     %12:i64 = phi %9, %1, %16
                     %16:i64 = isub %12, %15
-                    %13:i64 = phi %9, %4, %14
+                    %17:i32 = icmp eq %16, %4
+                    %18:ctrl, %19:ctrl = brcond %8, %17
+                    %6:ctrl, %7:phisel = region %10, %18
                     %14:i64 = iadd %13, %12
                     %20:i64 = phi %7, %4, %14
                     return %6, %20
+                    %13:i64 = phi %9, %4, %14
                 }"#]],
         );
     }

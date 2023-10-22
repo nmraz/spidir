@@ -1,6 +1,8 @@
 use core::{ops::Index, slice};
 
-use cranelift_entity::{entity_impl, EntityList, ListPool, PrimaryMap};
+use cranelift_entity::{
+    entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap,
+};
 use smallvec::SmallVec;
 
 use crate::node::{DepValueKind, NodeKind};
@@ -141,17 +143,16 @@ impl<'a> ExactSizeIterator for OutputIter<'a> {}
 
 pub struct UseIter<'a> {
     graph: &'a ValGraph,
-    iter: slice::Iter<'a, Use>,
+    cur_use: Option<Use>,
 }
 
 impl<'a> Iterator for UseIter<'a> {
     type Item = (Node, u32);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|&use_id| {
-            let use_data = &self.graph.uses[use_id];
-            (use_data.user, use_data.input_index)
-        })
+        let use_data = &self.graph.uses[self.cur_use?];
+        self.cur_use = use_data.next.expand();
+        Some((use_data.user, use_data.input_index))
     }
 }
 
@@ -170,13 +171,14 @@ struct DepValueData {
     kind: DepValueKind,
     source: Node,
     output_index: u32,
-    uses: UseList,
+    first_use: PackedOption<Use>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct UseData {
+    prev: PackedOption<Use>,
+    next: PackedOption<Use>,
     value: DepValue,
-    use_list_index: u32,
     user: Node,
     input_index: u32,
 }
@@ -224,8 +226,9 @@ impl ValGraph {
             .enumerate()
             .map(|(index, value)| {
                 self.uses.push(UseData {
+                    prev: None.into(),
+                    next: None.into(),
                     value,
-                    use_list_index: 0,
                     user: node,
                     input_index: index as u32,
                 })
@@ -241,7 +244,7 @@ impl ValGraph {
                 kind,
                 source: node,
                 output_index: index as u32,
-                uses: UseList::new(),
+                first_use: None.into(),
             })
         });
 
@@ -271,8 +274,9 @@ impl ValGraph {
     pub fn add_node_input(&mut self, node: Node, input: DepValue) {
         let input_index = self.nodes[node].inputs.len(&self.use_pool) as u32;
         let input_use = self.uses.push(UseData {
+            prev: None.into(),
+            next: None.into(),
             value: input,
-            use_list_index: 0,
             user: node,
             input_index,
         });
@@ -314,66 +318,63 @@ impl ValGraph {
     pub fn value_uses(&self, value: DepValue) -> UseIter<'_> {
         UseIter {
             graph: self,
-            iter: self.values[value].uses.as_slice(&self.use_pool).iter(),
+            cur_use: self.values[value].first_use.expand(),
         }
     }
 
     #[inline]
     pub fn has_one_use(&self, value: DepValue) -> bool {
-        self.use_count(value) == 1
-    }
-
-    #[inline]
-    pub fn use_count(&self, value: DepValue) -> u32 {
-        self.values[value].uses.len(&self.use_pool) as u32
+        let mut uses = self.value_uses(value);
+        uses.next().is_some() && uses.next().is_none()
     }
 
     pub fn replace_all_uses(&mut self, old: DepValue, new: DepValue) {
-        // Note: empty out `self.values[old].uses` before we start updating `self.values[new].uses`,
-        // so that nothing bad happens if `old == new`.
-        let mut old_uses = self.values[old].uses.take();
-        let old_use_len = old_uses.len(&self.use_pool);
+        let first_use = self.values[old].first_use.take();
 
-        let new_uses = &mut self.values[new].uses;
-        let orig_new_use_len = new_uses.len(&self.use_pool);
-
-        // Move all existing use objects to the new value and location in the use list.
-        for &value_use in old_uses.as_slice(&self.use_pool) {
-            self.uses[value_use].value = new;
-            self.uses[value_use].use_list_index += orig_new_use_len as u32;
+        let mut cursor = first_use;
+        let mut last_use = None;
+        while let Some(cur_use) = cursor {
+            last_use = Some(cur_use);
+            self.uses[cur_use].value = new;
+            cursor = self.uses[cur_use].next.expand();
         }
 
-        new_uses.grow_at(orig_new_use_len, old_use_len, &mut self.use_pool);
-
-        // Effectively `new_uses.extend` but without borrowing issues.
-        for i in 0..old_use_len {
-            let old_use = old_uses.as_slice(&self.use_pool)[i];
-            new_uses.as_mut_slice(&mut self.use_pool)[orig_new_use_len + i] = old_use;
+        if let Some(last_use) = last_use {
+            let orig_new_first_use = self.values[new].first_use;
+            self.values[new].first_use = first_use.into();
+            self.uses[last_use].next = orig_new_first_use;
+            if let Some(orig_new_first_use) = orig_new_first_use.expand() {
+                self.uses[orig_new_first_use].prev = last_use.into();
+            }
         }
-
-        old_uses.clear(&mut self.use_pool);
     }
 
     fn link_use(&mut self, value_use: Use) {
+        assert!(self.uses[value_use].next.is_none());
+        assert!(self.uses[value_use].prev.is_none());
+
         let value = self.uses[value_use].value;
-        let uses = &mut self.values[value].uses;
-        let value_use_index = uses.len(&self.use_pool) as u32;
-        uses.push(value_use, &mut self.use_pool);
-        self.uses[value_use].use_list_index = value_use_index;
+        let next_use = self.values[value].first_use;
+        self.uses[value_use].next = next_use;
+        if let Some(next_use) = next_use.expand() {
+            self.uses[next_use].prev = value_use.into();
+        }
+        self.values[value].first_use = value_use.into();
     }
 
     fn unlink_use(&mut self, value_use: Use) {
-        let value = self.uses[value_use].value;
-        let use_index = self.uses[value_use].use_list_index;
-        let use_list = &mut self.values[value].uses;
-        let use_list_len = use_list.len(&self.use_pool);
+        let use_data = self.uses[value_use];
+        let value = use_data.value;
+        if self.values[value].first_use.expand() == Some(value_use) {
+            self.values[value].first_use = use_data.next;
+        }
 
-        use_list.swap_remove(use_index as usize, &mut self.use_pool);
+        if let Some(prev) = use_data.prev.expand() {
+            self.uses[prev].next = use_data.next;
+        }
 
-        if use_index as usize != use_list_len - 1 {
-            // Patch in the correct index for the newly-moved use.
-            self.uses[use_list.as_mut_slice(&mut self.use_pool)[use_index as usize]]
-                .use_list_index = use_index;
+        if let Some(next) = use_data.next.expand() {
+            self.uses[next].prev = use_data.prev;
         }
     }
 }
@@ -401,7 +402,7 @@ mod tests {
 
     #[test]
     fn use_size() {
-        assert_eq!(mem::size_of::<UseData>(), 16);
+        assert_eq!(mem::size_of::<UseData>(), 20);
     }
 
     #[test]
@@ -463,13 +464,12 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
 
-        assert_eq!(graph.use_count(const1), 3);
         assert!(!graph.has_one_use(const1));
         assert!(graph.has_one_use(const2));
 
         assert_eq!(
             Vec::from_iter(graph.value_uses(const1)),
-            vec![(add, 0), (add, 1), (add2, 0)]
+            vec![(add2, 0), (add, 1), (add, 0)]
         );
         assert_eq!(Vec::from_iter(graph.value_uses(const2)), vec![(add2, 1)]);
     }
@@ -499,10 +499,9 @@ mod tests {
         let seven_val = graph.node_outputs(seven)[0];
         graph.replace_all_uses(old_const_val, seven_val);
 
-        assert_eq!(graph.use_count(old_const_val), 0);
         assert_eq!(
             Vec::from_iter(graph.value_uses(seven_val)),
-            vec![(add, 0), (add, 1), (add2, 0)]
+            vec![(add2, 0), (add, 1), (add, 0)]
         );
         assert_eq!(
             graph
@@ -555,13 +554,13 @@ mod tests {
         graph.replace_all_uses(const1, const2);
         assert_eq!(
             Vec::from_iter(graph.value_uses(const2)),
-            vec![(add1, 1), (add3, 0), (add1, 0), (add2, 0), (add4, 0)]
+            vec![(add4, 0), (add2, 0), (add1, 0), (add3, 0), (add1, 1)]
         );
 
         graph.remove_node_input(add2, 0);
         assert_eq!(
             Vec::from_iter(graph.value_uses(const2)),
-            vec![(add1, 1), (add3, 0), (add1, 0), (add4, 0)]
+            vec![(add4, 0), (add1, 0), (add3, 0), (add1, 1)]
         );
     }
 
@@ -593,7 +592,7 @@ mod tests {
         graph.replace_all_uses(const1, const1);
         assert_eq!(
             Vec::from_iter(graph.value_uses(const1)),
-            vec![(add1, 0), (add2, 0), (add3, 1)]
+            vec![(add3, 1), (add2, 0), (add1, 0)]
         );
 
         graph.remove_node_input(add1, 0);
@@ -625,7 +624,7 @@ mod tests {
         assert_eq!(Vec::from_iter(graph.value_uses(const1)), vec![(add1, 0)]);
         assert_eq!(
             Vec::from_iter(graph.value_uses(const2)),
-            vec![(add1, 1), (add2, 0)]
+            vec![(add2, 0), (add1, 1)]
         );
     }
 
@@ -709,24 +708,24 @@ mod tests {
 
         assert_eq!(
             Vec::from_iter(graph.value_uses(a)),
-            vec![(ab, 0), (ac, 0), (abc, 0)]
+            vec![(abc, 0), (ac, 0), (ab, 0)]
         );
         assert_eq!(
             Vec::from_iter(graph.value_uses(b)),
-            vec![(ab, 1), (bc, 0), (abc, 1)]
+            vec![(abc, 1), (bc, 0), (ab, 1)]
         );
         assert_eq!(
             Vec::from_iter(graph.value_uses(c)),
-            vec![(bc, 1), (ac, 1), (abc, 2)]
+            vec![(abc, 2), (ac, 1), (bc, 1)]
         );
 
         // Start by removing a use from the middle of the use list
         graph.remove_node_input(ac, 0);
         assert_eq!(Vec::from_iter(graph.node_inputs(ac)), vec![c]);
-        assert_eq!(Vec::from_iter(graph.value_uses(a)), vec![(ab, 0), (abc, 0)]);
+        assert_eq!(Vec::from_iter(graph.value_uses(a)), vec![(abc, 0), (ab, 0)]);
         assert_eq!(
             Vec::from_iter(graph.value_uses(c)),
-            vec![(bc, 1), (ac, 0), (abc, 2)]
+            vec![(abc, 2), (ac, 0), (bc, 1)]
         );
 
         // Remove a use from the end of the use list
@@ -735,16 +734,16 @@ mod tests {
         assert_eq!(Vec::from_iter(graph.value_uses(a)), vec![(ab, 0)]);
         assert_eq!(
             Vec::from_iter(graph.value_uses(b)),
-            vec![(ab, 1), (bc, 0), (abc, 0)]
+            vec![(abc, 0), (bc, 0), (ab, 1)]
         );
 
         // Remove a use from the end of the use list
         graph.remove_node_input(abc, 0);
         assert_eq!(Vec::from_iter(graph.node_inputs(abc)), vec![c]);
-        assert_eq!(Vec::from_iter(graph.value_uses(b)), vec![(ab, 1), (bc, 0)]);
+        assert_eq!(Vec::from_iter(graph.value_uses(b)), vec![(bc, 0), (ab, 1)]);
         assert_eq!(
             Vec::from_iter(graph.value_uses(c)),
-            vec![(bc, 1), (ac, 0), (abc, 0)]
+            vec![(abc, 0), (ac, 0), (bc, 1)]
         );
 
         // Remove a use from the beginning of the use list

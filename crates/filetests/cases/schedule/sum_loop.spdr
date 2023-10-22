@@ -13,10 +13,10 @@ func @sum_to_n:i32(i32) {
     # nextln: => block4
     # nextln: block4:
     # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond1, $(brcond2=$val)
-    # nextln:     $(phi0=$val):i32 = phi $region1, $entry1, $(isub0=$val)
-    # nextln:     $(phi1=$val):i32 = phi $region1, $iconst0, $(iadd0=$val)
-    # nextln:     $iadd0:i32 = iadd $phi1, $phi0
-    # nextln:     $isub0:i32 = isub $phi0, $iconst1
+    # nextln:     $(phi0=$val):i32 = phi $region1, $iconst0, $(iadd0=$val)
+    # nextln:     $(phi1=$val):i32 = phi $region1, $entry1, $(isub0=$val)
+    # nextln:     $iadd0:i32 = iadd $phi0, $phi1
+    # nextln:     $isub0:i32 = isub $phi1, $iconst1
     # nextln:     $(icmp1=$val):i32 = icmp eq $isub0, $iconst0
     # nextln:     $(brcond3=$val):ctrl, $brcond2:ctrl = brcond $region0, $icmp1
     # nextln: => block5, block6
@@ -72,9 +72,9 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln:     $(region4=$val):ctrl, $(region5=$val):phisel = region $brcond1
     # nextln:     $(load2=$val):ctrl, $(load3=$val):i32 = load.4 $region4, $stackslot1
     # nextln:     $(load4=$val):ctrl, $(load5=$val):i32 = load.4 $load2, $stackslot0
-    # nextln:     $(iadd0=$val):i32 = iadd $load5, $load3
     # nextln:     $(isub0=$val):i32 = isub $load3, $iconst0
     # nextln:     $(store3=$val):ctrl = store.4 $load4, $isub0, $stackslot1
+    # nextln:     $(iadd0=$val):i32 = iadd $load5, $load3
     # nextln:     $store2:ctrl = store.4 $store3, $iadd0, $stackslot0
     # nextln: => block2
     # nextln: block3:

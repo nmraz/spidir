@@ -782,24 +782,24 @@ mod tests {
             &module,
             expect![[r#"
 
-            func @sum_to_n:i32(i32) {
-                %0:ctrl, %1:i32 = entry
-                %2:i32 = iconst 1
-                %3:i32 = iconst 0
-                %4:i32 = icmp eq %1, %3
-                %5:ctrl, %6:ctrl = brcond %0, %4
-                %7:i32 = icmp eq %15, %3
-                %8:ctrl, %9:ctrl = brcond %12, %7
-                %10:ctrl, %11:phisel = region %5, %8
-                %12:ctrl, %13:phisel = region %6, %9
-                %14:i32 = phi %13, %1, %15
-                %15:i32 = isub %14, %2
-                %16:i32 = phi %13, %3, %17
-                %17:i32 = iadd %16, %14
-                %18:i32 = phi %11, %3, %17
-                return %10, %18
-            }
-        "#]],
+                func @sum_to_n:i32(i32) {
+                    %0:ctrl, %1:i32 = entry
+                    %2:i32 = iconst 1
+                    %3:i32 = iconst 0
+                    %4:i32 = icmp eq %1, %3
+                    %5:ctrl, %6:ctrl = brcond %0, %4
+                    %12:ctrl, %13:phisel = region %6, %9
+                    %14:i32 = phi %13, %1, %15
+                    %17:i32 = iadd %16, %14
+                    %16:i32 = phi %13, %3, %17
+                    %15:i32 = isub %14, %2
+                    %7:i32 = icmp eq %15, %3
+                    %8:ctrl, %9:ctrl = brcond %12, %7
+                    %10:ctrl, %11:phisel = region %5, %8
+                    %18:i32 = phi %11, %3, %17
+                    return %10, %18
+                }
+            "#]],
         );
     }
 
@@ -908,9 +908,9 @@ mod tests {
                     %2:i32 = iconst 0
                     %3:i32 = icmp eq %1, %2
                     %4:ctrl, %5:ctrl = brcond %0, %3
+                    return %4, %2
                     %6:ctrl, %7:i32 = call @g %5, %1
                     return %6, %7
-                    return %4, %2
                 }
 
                 func @g:i32(i32) {
@@ -920,9 +920,9 @@ mod tests {
                     %2:i32 = iconst 0
                     %3:i32 = icmp eq %1, %2
                     %4:ctrl, %5:ctrl = brcond %0, %3
+                    return %4, %2
                     %8:ctrl, %9:i32 = call @f %5, %7
                     return %8, %9
-                    return %4, %2
                 }
             "#]],
         );

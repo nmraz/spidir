@@ -604,6 +604,32 @@ mod tests {
     }
 
     #[test]
+    fn replace_all_uses_with_self_reused_uses() {
+        let mut graph = ValGraph::new();
+        let const1 = create_const32(&mut graph);
+        let const2 = create_const32(&mut graph);
+        let add1 = graph.create_node(
+            NodeKind::Iadd,
+            [const1, const2],
+            [DepValueKind::Value(Type::I32)],
+        );
+        graph.replace_all_uses(const1, const1);
+        assert_eq!(Vec::from_iter(graph.value_uses(const1)), vec![(add1, 0)]);
+
+        let const3 = create_const32(&mut graph);
+        let add2 = graph.create_node(
+            NodeKind::Iadd,
+            [const2, const3],
+            [DepValueKind::Value(Type::I32)],
+        );
+        assert_eq!(Vec::from_iter(graph.value_uses(const1)), vec![(add1, 0)]);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(const2)),
+            vec![(add1, 1), (add2, 0)]
+        );
+    }
+
+    #[test]
     fn add_node_input() {
         let mut graph = ValGraph::new();
         let (_, _, [param1, param2]) = create_entry(&mut graph, [Type::I32, Type::I32]);

@@ -480,9 +480,8 @@ mod tests {
 
         let old_const_val = create_const32(&mut graph);
 
-        let new_const =
-            graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Value(Type::I32)]);
-        let new_const_val = graph.node_outputs(new_const)[0];
+        let three = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Value(Type::I32)]);
+        let three_val = graph.node_outputs(three)[0];
 
         let add = graph.create_node(
             NodeKind::Iadd,
@@ -491,14 +490,16 @@ mod tests {
         );
         let add2 = graph.create_node(
             NodeKind::Iadd,
-            [old_const_val, new_const_val],
+            [old_const_val, three_val],
             [DepValueKind::Value(Type::I32)],
         );
 
         let seven = graph.create_node(NodeKind::IConst(7), [], [DepValueKind::Value(Type::I32)]);
         let seven_val = graph.node_outputs(seven)[0];
+
         graph.replace_all_uses(old_const_val, seven_val);
 
+        assert_eq!(Vec::from_iter(graph.value_uses(old_const_val)), vec![]);
         assert_eq!(
             Vec::from_iter(graph.value_uses(seven_val)),
             vec![(add2, 0), (add, 1), (add, 0)]
@@ -517,7 +518,7 @@ mod tests {
                 .into_iter()
                 .map(|input| graph.value_def(input))
                 .collect::<Vec<_>>(),
-            vec![(seven, 0), (new_const, 0)]
+            vec![(seven, 0), (three, 0)]
         );
     }
 
@@ -552,6 +553,7 @@ mod tests {
         );
 
         graph.replace_all_uses(const1, const2);
+        assert_eq!(Vec::from_iter(graph.value_uses(const1)), vec![]);
         assert_eq!(
             Vec::from_iter(graph.value_uses(const2)),
             vec![(add4, 0), (add2, 0), (add1, 0), (add3, 0), (add1, 1)]
@@ -625,6 +627,42 @@ mod tests {
         assert_eq!(
             Vec::from_iter(graph.value_uses(const2)),
             vec![(add2, 0), (add1, 1)]
+        );
+    }
+
+    #[test]
+    fn replace_all_uses_unused() {
+        let mut graph = ValGraph::new();
+        let const1 = create_const32(&mut graph);
+        let const2 = create_const32(&mut graph);
+        let add = graph.create_node(
+            NodeKind::Iadd,
+            [const2, const2],
+            [DepValueKind::Value(Type::I32)],
+        );
+        graph.replace_all_uses(const1, const2);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(const2)),
+            vec![(add, 1), (add, 0)]
+        );
+    }
+
+    #[test]
+    fn replace_all_uses_fresh() {
+        let mut graph = ValGraph::new();
+        let const1 = create_const32(&mut graph);
+        let add = graph.create_node(
+            NodeKind::Iadd,
+            [const1, const1],
+            [DepValueKind::Value(Type::I32)],
+        );
+
+        let const2 = create_const32(&mut graph);
+        graph.replace_all_uses(const1, const2);
+        assert_eq!(Vec::from_iter(graph.value_uses(const1)), vec![]);
+        assert_eq!(
+            Vec::from_iter(graph.value_uses(const2)),
+            vec![(add, 1), (add, 0)]
         );
     }
 

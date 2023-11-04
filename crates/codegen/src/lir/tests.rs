@@ -91,7 +91,7 @@ fn build_simple_tied() {
             (UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
-    builder.set_block_params(block, [a, b]);
+    builder.set_incoming_block_params([a, b]);
     builder.finish_block();
     builder.set_live_in_regs(vec![REG_R0, REG_R1]);
     let lir = builder.finish();
@@ -134,7 +134,7 @@ fn build_simple_3addr() {
             (UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
-    builder.set_block_params(block, [a, b]);
+    builder.set_incoming_block_params([a, b]);
     builder.finish_block();
     builder.set_live_in_regs(vec![REG_R0, REG_R1]);
     let lir = builder.finish();

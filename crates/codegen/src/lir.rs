@@ -403,26 +403,12 @@ impl<I> InstrBuilder<'_, '_, I> {
     }
 }
 
-pub struct OutgoingBlockParamBuilder<'b> {
-    outgoing_block_param_indices: &'b mut Vec<(u32, u32)>,
-    block_param_pool: &'b mut Vec<VirtReg>,
-}
-
-impl<'b> OutgoingBlockParamBuilder<'b> {
-    pub fn push_succ_block_params(&mut self, outgoing_params: impl Iterator<Item = VirtReg>) {
-        let base = self.block_param_pool.len();
-        self.block_param_pool.extend(outgoing_params);
-        let len = self.block_param_pool.len() - base;
-        self.outgoing_block_param_indices
-            .push((base.try_into().unwrap(), len.try_into().unwrap()));
-    }
-}
-
 pub struct Builder<'o, I> {
     lir: Lir<I>,
     block_order: &'o [Block],
     vreg_copies: FxHashMap<VirtReg, VirtReg>,
     next_vreg: u32,
+    outgoing_block_param_base: u32,
     last_finished_block: usize,
 }
 
@@ -443,8 +429,9 @@ impl<'o, I> Builder<'o, I> {
             },
             block_order,
             vreg_copies: FxHashMap::default(),
-            last_finished_block: block_order.len(),
             next_vreg: 0,
+            outgoing_block_param_base: 0,
+            last_finished_block: block_order.len(),
         };
         builder.lir.block_instr_ranges[*block_order.last().unwrap()].1 = Instr::new(0);
         builder
@@ -452,9 +439,27 @@ impl<'o, I> Builder<'o, I> {
 
     pub fn finish_block(&mut self) {
         assert!(self.last_finished_block > 0);
+
+        let block = self.cur_block();
         let next_instr = self.next_instr();
+
         self.last_finished_block -= 1;
         let last_finished_block = self.last_finished_block;
+
+        // Finish recording outgoing block parameters.
+        let outgoing_block_param_base = self.outgoing_block_param_base;
+        let outgoing_block_param_end: u32 = self
+            .lir
+            .outgoing_block_param_indices
+            .len()
+            .try_into()
+            .unwrap();
+        self.lir.block_params[block].outgoing_base = outgoing_block_param_base;
+        self.lir.block_params[block].outgoing_len = (outgoing_block_param_end
+            - outgoing_block_param_base)
+            .try_into()
+            .unwrap();
+        self.outgoing_block_param_base = outgoing_block_param_end;
 
         // Note: we always want `.0` to be greater than `.1` for every block, so that when we
         // reverse everything later we'll end up with `.0 < .1`.
@@ -480,7 +485,8 @@ impl<'o, I> Builder<'o, I> {
         self.lir.live_in_regs = live_in_regs;
     }
 
-    pub fn set_block_params(&mut self, block: Block, params: impl IntoIterator<Item = VirtReg>) {
+    pub fn set_incoming_block_params(&mut self, params: impl IntoIterator<Item = VirtReg>) {
+        let block = self.cur_block();
         let base = self.lir.block_param_pool.len();
         self.lir.block_param_pool.extend(params);
         let len = self.lir.block_param_pool.len() - base;
@@ -488,19 +494,16 @@ impl<'o, I> Builder<'o, I> {
         self.lir.block_params[block].incoming_len = len.try_into().unwrap();
     }
 
-    pub fn set_outgoing_block_params(
+    pub fn add_succ_outgoing_block_params(
         &mut self,
-        block: Block,
-        f: impl FnOnce(OutgoingBlockParamBuilder<'_>),
+        outgoing_params: impl IntoIterator<Item = VirtReg>,
     ) {
-        let base = self.lir.outgoing_block_param_indices.len();
-        f(OutgoingBlockParamBuilder {
-            outgoing_block_param_indices: &mut self.lir.outgoing_block_param_indices,
-            block_param_pool: &mut self.lir.block_param_pool,
-        });
-        let len = self.lir.outgoing_block_param_indices.len() - base;
-        self.lir.block_params[block].outgoing_base = base.try_into().unwrap();
-        self.lir.block_params[block].outgoing_len = len.try_into().unwrap();
+        let base = self.lir.block_param_pool.len();
+        self.lir.block_param_pool.extend(outgoing_params);
+        let len = self.lir.block_param_pool.len() - base;
+        self.lir
+            .outgoing_block_param_indices
+            .push((base.try_into().unwrap(), len.try_into().unwrap()));
     }
 
     pub fn build_instrs(&mut self, f: impl FnOnce(InstrBuilder<'_, '_, I>)) {

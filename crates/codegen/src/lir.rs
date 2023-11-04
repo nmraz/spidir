@@ -453,6 +453,7 @@ impl<'o, I> Builder<'o, I> {
     }
 
     pub fn finish_block(&mut self) {
+        assert!(self.last_finished_block > 0);
         let next_instr = self.next_instr();
         self.last_finished_block -= 1;
         let last_finished_block = self.last_finished_block;
@@ -464,6 +465,11 @@ impl<'o, I> Builder<'o, I> {
         if last_finished_block > 0 {
             self.lir.block_instr_ranges[self.block_order[last_finished_block - 1]].1 = next_instr;
         }
+    }
+
+    pub fn cur_block(&self) -> Block {
+        assert!(self.last_finished_block > 0);
+        self.block_order[self.last_finished_block - 1]
     }
 
     pub fn set_live_in_regs(&mut self, live_in_regs: Vec<PhysReg>) {

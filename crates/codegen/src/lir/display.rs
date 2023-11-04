@@ -110,15 +110,35 @@ pub struct Display<'a, I> {
 
 impl<I: fmt::Debug> fmt::Display for Display<'_, I> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut first_block = true;
+
         for &block in self.block_order {
-            writeln!(
-                f,
-                "{block}[{}]:",
-                self.lir
-                    .block_params(block)
-                    .iter()
-                    .format_with(", ", |param, f| f(&param.display(self.reg_names)))
-            )?;
+            if first_block {
+                writeln!(
+                    f,
+                    "{block}[{}]:",
+                    self.lir
+                        .block_params(block)
+                        .iter()
+                        .zip(&self.lir.live_in_regs)
+                        .format_with(", ", |(param, reg), f| f(&format_args!(
+                            "{}(${})",
+                            param.display(self.reg_names),
+                            self.reg_names.reg_name(*reg)
+                        )))
+                )?;
+            } else {
+                writeln!(
+                    f,
+                    "{block}[{}]:",
+                    self.lir
+                        .block_params(block)
+                        .iter()
+                        .format_with(", ", |param, f| f(&param.display(self.reg_names)))
+                )?;
+            }
+            first_block = false;
+
             for instr in self.lir.block_instrs(block) {
                 writeln!(f, "    {}", self.lir.display_instr(self.reg_names, instr))?;
             }

@@ -93,6 +93,7 @@ fn build_simple_tied() {
     );
     builder.set_block_params(block, [a, b]);
     builder.finish_block();
+    builder.set_live_in_regs(vec![REG_R0, REG_R1]);
     let lir = builder.finish();
 
     check_lir(
@@ -100,7 +101,7 @@ fn build_simple_tied() {
         &cfg,
         &block_order,
         expect![[r#"
-            block0[%1:gpr, %2:gpr]:
+            block0[%1:gpr($r0), %2:gpr($r1)]:
                 %0:gpr(any)[late] = Add %1:gpr(tied:0)[early], %2:gpr(reg)[early]
                 Ret %0:gpr($r0)[early]
         "#]],
@@ -135,6 +136,7 @@ fn build_simple_3addr() {
     );
     builder.set_block_params(block, [a, b]);
     builder.finish_block();
+    builder.set_live_in_regs(vec![REG_R0, REG_R1]);
     let lir = builder.finish();
 
     check_lir(
@@ -142,7 +144,7 @@ fn build_simple_3addr() {
         &cfg,
         &block_order,
         expect![[r#"
-            block0[%1:gpr, %2:gpr]:
+            block0[%1:gpr($r0), %2:gpr($r1)]:
                 %0:gpr(reg)[late] = Lea %1:gpr(reg)[early], %2:gpr(reg)[early]
                 Ret %0:gpr($r0)[early]
         "#]],

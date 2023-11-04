@@ -263,6 +263,7 @@ struct BlockParamData {
 pub struct Lir<I> {
     block_instr_ranges: SecondaryMap<Block, (Instr, Instr)>,
     block_params: SecondaryMap<Block, BlockParamData>,
+    live_in_regs: Vec<PhysReg>,
     outgoing_block_param_indices: Vec<(u32, u32)>,
     block_param_pool: Vec<VirtReg>,
     instrs: Vec<I>,
@@ -291,6 +292,10 @@ impl<I> Lir<I> {
         let operands = &self.instr_operands[instr.as_usize()];
         let base = operands.def_base as usize;
         &self.def_pool[base..base + operands.def_len as usize]
+    }
+
+    pub fn live_in_regs(&self) -> &[PhysReg] {
+        &self.live_in_regs
     }
 
     pub fn block_params(&self, block: Block) -> &[VirtReg] {
@@ -430,6 +435,7 @@ impl<'o, I> Builder<'o, I> {
             lir: Lir {
                 block_instr_ranges: SecondaryMap::new(),
                 block_params: SecondaryMap::new(),
+                live_in_regs: Vec::new(),
                 outgoing_block_param_indices: Vec::new(),
                 block_param_pool: Vec::new(),
                 instrs: Vec::new(),
@@ -458,6 +464,10 @@ impl<'o, I> Builder<'o, I> {
         if last_finished_block > 0 {
             self.lir.block_instr_ranges[self.block_order[last_finished_block - 1]].1 = next_instr;
         }
+    }
+
+    pub fn set_live_in_regs(&mut self, live_in_regs: Vec<PhysReg>) {
+        self.lir.live_in_regs = live_in_regs;
     }
 
     pub fn set_block_params(&mut self, block: Block, params: impl IntoIterator<Item = VirtReg>) {
@@ -493,6 +503,7 @@ impl<'o, I> Builder<'o, I> {
 
     pub fn finish(mut self) -> Lir<I> {
         assert!(self.last_finished_block == 0);
+        assert!(self.lir.block_params(self.block_order[0]).len() == self.lir.live_in_regs.len());
 
         let instr_count = self.lir.instrs.len();
 

@@ -349,9 +349,7 @@ pub struct InstrBuilder<'b, 'o, I> {
 
 impl<I> InstrBuilder<'_, '_, I> {
     pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
-        let num = self.builder.next_vreg;
-        self.builder.next_vreg += 1;
-        VirtReg::new(num, class)
+        self.builder.create_vreg(class)
     }
 
     pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
@@ -470,6 +468,12 @@ impl<'o, I> Builder<'o, I> {
     pub fn cur_block(&self) -> Block {
         assert!(self.last_finished_block > 0);
         self.block_order[self.last_finished_block - 1]
+    }
+
+    pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
+        let num = self.next_vreg;
+        self.next_vreg += 1;
+        VirtReg::new(num, class)
     }
 
     pub fn set_live_in_regs(&mut self, live_in_regs: Vec<PhysReg>) {

@@ -144,7 +144,7 @@ impl<I: fmt::Debug> fmt::Display for Display<'_, I> {
             }
             let succs = self.cfg.block_succs(block);
             if !succs.is_empty() {
-                write!(
+                writeln!(
                     f,
                     "=> {}",
                     succs.iter().enumerate().format_with(", ", |(i, succ), f| {

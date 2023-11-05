@@ -353,27 +353,7 @@ impl<I> InstrBuilder<'_, '_, I> {
     }
 
     pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
-        let src = resolve_vreg_copy(&mut self.builder.vreg_copies, src).unwrap_or(src);
-        assert!(
-            dest != src,
-            "vreg copy cycle on register {}",
-            dest.reg_num()
-        );
-        assert!(
-            src.class() == dest.class(),
-            "attempted to copy vreg of class {} into vreg of class {}",
-            src.class().as_u8(),
-            dest.class().as_u8()
-        );
-
-        let prev = self.builder.vreg_copies.insert(dest, src);
-        if let Some(prev) = prev {
-            panic!(
-                "vreg {} already copied from {}",
-                dest.reg_num(),
-                prev.reg_num()
-            );
-        }
+        self.builder.copy_vreg(dest, src)
     }
 
     pub fn push_instr(
@@ -479,6 +459,30 @@ impl<'o, I> Builder<'o, I> {
         let num = self.next_vreg;
         self.next_vreg += 1;
         VirtReg::new(num, class)
+    }
+
+    pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
+        let src = resolve_vreg_copy(&mut self.vreg_copies, src).unwrap_or(src);
+        assert!(
+            dest != src,
+            "vreg copy cycle on register {}",
+            dest.reg_num()
+        );
+        assert!(
+            src.class() == dest.class(),
+            "attempted to copy vreg of class {} into vreg of class {}",
+            src.class().as_u8(),
+            dest.class().as_u8()
+        );
+
+        let prev = self.vreg_copies.insert(dest, src);
+        if let Some(prev) = prev {
+            panic!(
+                "vreg {} already copied from {}",
+                dest.reg_num(),
+                prev.reg_num()
+            );
+        }
     }
 
     pub fn set_live_in_regs(&mut self, live_in_regs: Vec<PhysReg>) {

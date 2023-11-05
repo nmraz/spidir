@@ -9,9 +9,13 @@ use super::{
 
 #[derive(Debug, Clone, Copy)]
 enum DummyInstr {
+    MovI(u64),
     Add,
     Lea,
+    Cmp,
     Ret,
+    Jump(Block),
+    JmpEq(Block, Block),
 }
 
 const RC_GPR: RegClass = RegClass::new(0);
@@ -146,6 +150,125 @@ fn build_simple_3addr() {
         expect![[r#"
             block0[%1:gpr($r0), %2:gpr($r1)]:
                 %0:gpr(reg)[late] = Lea %1:gpr(reg)[early], %2:gpr(reg)[early]
+                Ret %0:gpr($r0)[early]
+        "#]],
+    );
+}
+
+#[test]
+fn multi_block() {
+    let mut cfg = BlockCfg::new();
+
+    let entry = cfg.create_block();
+    let left = cfg.create_block();
+    let right = cfg.create_block();
+    let exit = cfg.create_block();
+    cfg.add_block_edge(entry, left);
+    cfg.add_block_edge(entry, right);
+    cfg.add_block_edge(left, exit);
+    cfg.add_block_edge(right, exit);
+
+    let block_order = [entry, left, right, exit];
+    let mut builder = Builder::new(&block_order);
+
+    // `exit`
+    let [retval] = push_instr(
+        &mut builder,
+        DummyInstr::Ret,
+        [],
+        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+    );
+    builder.set_incoming_block_params([retval]);
+    builder.finish_block();
+
+    // `right`
+    let add5 = builder.create_vreg(RC_GPR);
+    builder.add_succ_outgoing_block_params([add5]);
+    push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
+    let [right_param2, five] = push_instr(
+        &mut builder,
+        DummyInstr::Add,
+        [DefOperand::new(
+            add5,
+            DefOperandConstraint::Any,
+            OperandPos::Late,
+        )],
+        [
+            (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
+            (UseOperandConstraint::AnyReg, OperandPos::Early),
+        ],
+    );
+    push_instr(
+        &mut builder,
+        DummyInstr::MovI(5),
+        [DefOperand::new(
+            five,
+            DefOperandConstraint::AnyReg,
+            OperandPos::Late,
+        )],
+        [],
+    );
+    builder.finish_block();
+
+    // `left`
+    let add_params = builder.create_vreg(RC_GPR);
+    builder.add_succ_outgoing_block_params([add_params]);
+    push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
+    let [left_param2, left_param3] = push_instr(
+        &mut builder,
+        DummyInstr::Add,
+        [DefOperand::new(
+            add_params,
+            DefOperandConstraint::Any,
+            OperandPos::Late,
+        )],
+        [
+            (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
+            (UseOperandConstraint::AnyReg, OperandPos::Early),
+        ],
+    );
+    builder.finish_block();
+
+    // `entry`
+    builder.add_succ_outgoing_block_params([]);
+    builder.add_succ_outgoing_block_params([]);
+    push_instr(&mut builder, DummyInstr::JmpEq(left, right), [], []);
+    let [param1, param2] = push_instr(
+        &mut builder,
+        DummyInstr::Cmp,
+        [],
+        [
+            (UseOperandConstraint::Any, OperandPos::Early),
+            (UseOperandConstraint::AnyReg, OperandPos::Early),
+        ],
+    );
+    builder.copy_vreg(right_param2, param2);
+    builder.copy_vreg(left_param2, param2);
+
+    builder.set_incoming_block_params([param1, param2, left_param3]);
+    builder.finish_block();
+    builder.set_live_in_regs(vec![REG_R0, REG_R1, REG_R2]);
+    let lir = builder.finish();
+
+    check_lir(
+        lir,
+        &cfg,
+        &block_order,
+        expect![[r#"
+            block0[%7:gpr($r0), %8:gpr($r1), %6:gpr($r2)]:
+                Cmp %7:gpr(any)[early], %8:gpr(reg)[early]
+                JmpEq(block1, block2)
+            => block1[], block2[]
+            block1[]:
+                %4:gpr(any)[late] = Add %8:gpr(tied:0)[early], %6:gpr(reg)[early]
+                Jump(block3)
+            => block3[%4:gpr]
+            block2[]:
+                %3:gpr(reg)[late] = MovI(5)
+                %1:gpr(any)[late] = Add %8:gpr(tied:0)[early], %3:gpr(reg)[early]
+                Jump(block3)
+            => block3[%1:gpr]
+            block3[%0:gpr]:
                 Ret %0:gpr($r0)[early]
         "#]],
     );

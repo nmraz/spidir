@@ -553,6 +553,28 @@ impl<'o, I> Builder<'o, I> {
                 vreg_use.reg = def;
             }
         }
+
+        // Replace any outgoing block parameter values that are copies.
+        for &block in self.block_order {
+            let params = &self.lir.block_params[block];
+            let outgoing_base = params.outgoing_base as usize;
+            let outgoing_len = params.outgoing_len as usize;
+
+            for &(succ_param_base, succ_param_len) in
+                &self.lir.outgoing_block_param_indices[outgoing_base..outgoing_base + outgoing_len]
+            {
+                let succ_param_base = succ_param_base as usize;
+                let succ_param_len = succ_param_len as usize;
+
+                for param in &mut self.lir.block_param_pool
+                    [succ_param_base..succ_param_base + succ_param_len]
+                {
+                    if let Some(def) = resolve_vreg_copy(&mut self.vreg_copies, *param) {
+                        *param = def;
+                    }
+                }
+            }
+        }
     }
 }
 

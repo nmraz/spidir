@@ -273,3 +273,60 @@ fn multi_block() {
         "#]],
     );
 }
+
+#[test]
+fn block_param_vreg_copies() {
+    let mut cfg = BlockCfg::new();
+
+    let entry = cfg.create_block();
+    let exit = cfg.create_block();
+    cfg.add_block_edge(entry, exit);
+
+    let block_order = [entry, exit];
+    let mut builder = Builder::new(&block_order);
+
+    let [retval] = push_instr(
+        &mut builder,
+        DummyInstr::Ret,
+        [],
+        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+    );
+    builder.set_incoming_block_params([retval]);
+    builder.finish_block();
+
+    let outgoing_param = builder.create_vreg(RC_GPR);
+    builder.add_succ_outgoing_block_params([outgoing_param]);
+
+    push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
+
+    let five = builder.create_vreg(RC_GPR);
+    push_instr(
+        &mut builder,
+        DummyInstr::MovI(5),
+        [DefOperand::new(
+            five,
+            DefOperandConstraint::AnyReg,
+            OperandPos::Late,
+        )],
+        [],
+    );
+
+    builder.copy_vreg(outgoing_param, five);
+    builder.finish_block();
+
+    let lir = builder.finish();
+
+    check_lir(
+        lir,
+        &cfg,
+        &block_order,
+        expect![[r#"
+            block0[]:
+                %2:gpr(reg)[late] = MovI(5)
+                Jump(block1)
+            => block1[%2:gpr]
+            block1[%0:gpr]:
+                Ret %0:gpr($r0)[early]
+        "#]],
+    );
+}

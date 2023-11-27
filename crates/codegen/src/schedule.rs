@@ -70,14 +70,14 @@ impl Schedule {
         module: &'a Module,
         graph: &'a ValGraph,
         cfg: &'a BlockCfg,
-        entry: Block,
+        block_order: &'a [Block],
     ) -> Display<'a> {
         Display {
             module,
             graph,
             cfg,
             schedule: self,
-            entry,
+            block_order,
         }
     }
 }

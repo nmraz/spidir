@@ -8,6 +8,8 @@ func @sum_to_n:i32(i32) {
     # nextln:     $(icmp0=$val):i32 = icmp eq $entry1, $iconst0
     # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $icmp0
     # nextln: => block1, block3
+    # nextln: block1:
+    # nextln: => block2
     # nextln: block3:
     # nextln:     $(iconst1=$val):i32 = iconst 1
     # nextln: => block4
@@ -28,8 +30,6 @@ func @sum_to_n:i32(i32) {
     # nextln:     $(region2=$val):ctrl, $(region3=$val):phisel = region $brcond0, $brcond3
     # nextln:     $(phi2=$val):i32 = phi $region3, $iconst0, $iadd0
     # nextln:     return $region2, $phi2
-    # nextln: block1:
-    # nextln: => block2
 
     %0:ctrl, %1:i32 = entry
     %10:i32 = iconst 1

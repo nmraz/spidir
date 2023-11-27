@@ -19,8 +19,6 @@ func @licm_chain(ptr, i64) {
     # nextln:     $(icmp0=$val):i32 = icmp eq $phi0, $load1
     # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $region0, $icmp0
     # nextln: => block2, block3
-    # nextln: block3:
-    # nextln:     return $brcond1
     # nextln: block2:
     # nextln:     $(shl0=$val):i64 = shl $phi0, $iconst0
     # nextln:     $(ptroff1=$val):ptr = ptroff $ptroff0, $shl0
@@ -28,6 +26,8 @@ func @licm_chain(ptr, i64) {
     # nextln:     $call0:ctrl = call @f $load2, $load3
     # nextln:     $iadd0:i64 = iadd $phi0, $iconst1
     # nextln: => block1
+    # nextln: block3:
+    # nextln:     return $brcond1
 
     %ent:ctrl, %p1:ptr, %p2:i64 = entry
     %preheader:ctrl, %len:i64 = load.8 %ent, %p1

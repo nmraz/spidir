@@ -1,6 +1,5 @@
 use core::fmt;
 
-use graphwalk::entity_preorder;
 use ir::{module::Module, valgraph::ValGraph, write::display_node};
 use itertools::Itertools;
 
@@ -13,12 +12,12 @@ pub struct Display<'a> {
     pub(super) graph: &'a ValGraph,
     pub(super) cfg: &'a BlockCfg,
     pub(super) schedule: &'a Schedule,
-    pub(super) entry: Block,
+    pub(super) block_order: &'a [Block],
 }
 
 impl fmt::Display for Display<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for block in entity_preorder(self.cfg, [self.entry]) {
+        for &block in self.block_order {
             writeln!(f, "{block}:")?;
             for &attached_node in self.schedule.scheduled_nodes_rev(block).iter().rev() {
                 writeln!(

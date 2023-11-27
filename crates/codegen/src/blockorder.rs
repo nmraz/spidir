@@ -1,8 +1,11 @@
+use core::cell::RefCell;
+
 use alloc::vec::Vec;
 
 use dominators::loops::LoopForest;
 use graphwalk::{entity_postorder, GraphRef};
 use log::trace;
+use smallvec::SmallVec;
 
 use crate::cfg::{Block, BlockCfg, BlockDomTree};
 
@@ -17,6 +20,7 @@ pub fn compute_block_order(
         cfg,
         domtree,
         loop_forest,
+        other_loop_succ_cache: RefCell::new(SmallVec::new()),
     };
 
     // Take the RPO, but cluster loops together.
@@ -29,6 +33,7 @@ struct LoopGroupedCfg<'a> {
     cfg: &'a BlockCfg,
     domtree: &'a BlockDomTree,
     loop_forest: &'a LoopForest,
+    other_loop_succ_cache: RefCell<SmallVec<[Block; 4]>>,
 }
 
 impl GraphRef for LoopGroupedCfg<'_> {
@@ -47,8 +52,11 @@ impl GraphRef for LoopGroupedCfg<'_> {
 
         trace!("examining succs for {node}:");
 
-        let mut same_loop = Vec::new();
-        let mut other_loop = Vec::new();
+        let mut other_loop = self.other_loop_succ_cache.borrow_mut();
+        other_loop.clear();
+
+        // Report successors in two passes: during the first (run online as successors are being
+        // traversed), successors belonging to the same or nested loops are reported.
 
         for &succ in self.cfg.block_succs(node) {
             let tree_succ = self.domtree.get_tree_node(succ).unwrap();
@@ -58,7 +66,7 @@ impl GraphRef for LoopGroupedCfg<'_> {
 
             if succ_loop == containing_loop {
                 trace!("    same loop");
-                same_loop.push(succ);
+                f(succ);
                 continue;
             }
 
@@ -72,16 +80,13 @@ impl GraphRef for LoopGroupedCfg<'_> {
             // a child loop without passing through its header.
             if tree_succ == self.loop_forest.loop_header(succ_loop) {
                 trace!("    entering child loop");
-                same_loop.push(succ);
+                f(succ);
             } else {
                 trace!("    sibling or parent loop");
                 other_loop.push(succ);
             }
         }
 
-        // Take successors from the same/child loops first, which will guarantee that they will
-        // be visited *later* by the DFS, ultimately causing them show up earlier in the RPO.
-        same_loop.iter().copied().for_each(&mut f);
         other_loop.iter().copied().for_each(f);
     }
 }

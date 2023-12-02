@@ -128,14 +128,24 @@ pub fn select_instrs<B: Backend>(
     cfg_ctx: &CfgContext,
     backend: &B,
 ) -> Result<Lir<B::Instr>, IselFailed> {
-    // TODO: Classify side effects and count uses.
+    // TODO: Classify side effects.
     // TODO: Collect stack slots and prepare dedicated stack slot mapping.
     // TODO: Gather phis and convert to block params.
 
-    let mut lir_builder = LirBuilder::new(&cfg_ctx.block_order);
     let mut value_reg_map = ValueRegMap::default();
     let mut reg_node_map = RegNodeMap::default();
     let mut node_use_counts = NodeUseCountMap::new();
+
+    // Count original node uses before we start selection.
+    for &block in &cfg_ctx.block_order {
+        for &node in schedule.scheduled_nodes_rev(block) {
+            for pred in dataflow_preds(valgraph, node) {
+                node_use_counts[pred] += 1;
+            }
+        }
+    }
+
+    let mut lir_builder = LirBuilder::new(&cfg_ctx.block_order);
 
     while let Some(block) = lir_builder.advance_block() {
         // TODO: Branch at end of block if necessary.

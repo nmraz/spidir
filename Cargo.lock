@@ -167,6 +167,7 @@ dependencies = [
  "expect-test",
  "fx-utils",
  "graphwalk",
+ "hashbrown",
  "ir",
  "itertools",
  "log",

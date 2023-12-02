@@ -16,8 +16,7 @@ func @conditional_uses(i32, i32, ptr) {
     # nextln:     $(store1=$val):ctrl = store.4 $brcond1, $iadd0, $entry3
     # nextln: => block3
     # nextln: block3:
-    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $store0, $store1
-    # nextln:     return $region0
+    # nextln:     return $(region0=$val)
 
     %entry:ctrl, %p1:i32, %p2:i32, %p3:ptr = entry
     %p1t:ctrl, %p1f:ctrl = brcond %entry, %p1

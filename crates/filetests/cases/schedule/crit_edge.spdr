@@ -11,9 +11,8 @@ func @select:i32(i32, i32, i32) {
     # nextln: block3:
     # nextln: => block2
     # nextln: block2:
-    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond0, $brcond1
-    # nextln:     $(phi0=$val):i32 = phi $region1, $entry2, $entry3
-    # nextln:     return $region0, $phi0
+    # nextln:     $(phi0=$val):i32 = phi $(region0=$val), $entry2, $entry3
+    # nextln:     return $(region1=$val), $phi0
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
     %8:ctrl, %9:ctrl = brcond %0, %1
@@ -35,9 +34,8 @@ func @select_sink:i32(i32, i32, i32) {
     # nextln:     $(imul0=$val):i32 = imul $entry2, $entry3
     # nextln: => block2
     # nextln: block2:
-    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond0, $brcond1
-    # nextln:     $(phi0=$val):i32 = phi $region1, $iadd0, $imul0
-    # nextln:     return $region0, $phi0
+    # nextln:     $(phi0=$val):i32 = phi $(region0=$val), $iadd0, $imul0
+    # nextln:     return $(region1=$val), $phi0
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
     %4:i32 = iadd %2, %3

@@ -22,8 +22,14 @@ use crate::cfg::{Block, BlockCfg, BlockDomTree, CfgContext, FunctionBlockMap};
 /// behavior.
 const MAX_HOIST_DEPTH: usize = 50;
 
+#[derive(Clone, Copy, Default)]
+struct BlockData {
+    phis: EntityList<Node>,
+    scheduled_nodes_rev: EntityList<Node>,
+}
+
 pub struct Schedule {
-    nodes_by_block: SecondaryMap<Block, EntityList<Node>>,
+    block_data: SecondaryMap<Block, BlockData>,
     node_list_pool: ListPool<Node>,
 }
 
@@ -36,7 +42,7 @@ impl Schedule {
         let depth_map = get_cfg_depth_map(&cfg_ctx.domtree, &cfg_ctx.loop_forest);
 
         let mut schedule = Self {
-            nodes_by_block: SecondaryMap::new(),
+            block_data: SecondaryMap::new(),
             node_list_pool: ListPool::new(),
         };
 
@@ -62,7 +68,13 @@ impl Schedule {
     }
 
     pub fn scheduled_nodes_rev(&self, block: Block) -> &[Node] {
-        self.nodes_by_block[block].as_slice(&self.node_list_pool)
+        self.block_data[block]
+            .scheduled_nodes_rev
+            .as_slice(&self.node_list_pool)
+    }
+
+    pub fn block_phis(&self, block: Block) -> &[Node] {
+        self.block_data[block].phis.as_slice(&self.node_list_pool)
     }
 
     pub fn display<'a>(
@@ -128,16 +140,21 @@ impl<'a> Scheduler<'a> {
                 .containing_block(cfg_node)
                 .expect("live CFG node not in block CFG");
 
-            // Note: we guarantee that the block header comes first and that any attached phis
-            // follow it immediately, so they will will show up first in that order when
-            // `scheduled_nodes_rev` is reversed.
-
-            trace!("pinned: node {} -> {block}", cfg_node.as_u32());
-            self.assign_and_append(block, cfg_node);
+            // Exclude region nodes from the final schedule, since their purpose was just to
+            // delineate block boundaries.
+            // This won't break any scheduling assumptions made later because regions don't have
+            // any data outputs.
+            if !matches!(ctx.graph().node_kind(cfg_node), NodeKind::Region) {
+                trace!("pinned: node {} -> {block}", cfg_node.as_u32());
+                self.assign_and_append(block, cfg_node);
+            }
 
             for phi in ctx.get_attached_phis(cfg_node) {
                 trace!("phi: node {} -> {block}", phi.as_u32());
-                self.assign_and_append(block, phi);
+                self.assign_block(block, phi);
+                self.schedule.block_data[block]
+                    .phis
+                    .push(phi, &mut self.schedule.node_list_pool);
             }
         }
     }
@@ -158,11 +175,11 @@ impl<'a> Scheduler<'a> {
                 block,
             };
 
-            let nodes = &mut self.schedule.nodes_by_block[block];
+            let nodes = &mut self.schedule.block_data[block].scheduled_nodes_rev;
 
             // Note: the topological sort of the block ultimately obtained here will be stable with
-            // respect to the original `nodes` slice. In particular, the block header and phi nodes
-            // will come first (since we ignore backedges) and the block terminator will come last.
+            // respect to the original `nodes` slice. In particular, the block terminator will come
+            // last.
             scratch_postorder.reset(
                 nodes
                     .as_slice(&self.schedule.node_list_pool)
@@ -203,8 +220,8 @@ impl<'a> Scheduler<'a> {
 
         debug_assert!(self.domtree().cfg_dominates(early_loc, late_loc));
 
-        // Select a node between `early_loc` and `late_loc` on the dominator
-        // tree that has minimal loop depth, favoring deeper nodes (those closer to `late_loc`).
+        // Select a node between `early_loc` and `late_loc` on the dominator tree that has minimal
+        // loop depth, favoring deeper nodes (those closer to `late_loc`).
         let mut cur_loc = late_loc;
         let mut best_loc = cur_loc;
         let mut i = 0;
@@ -314,7 +331,9 @@ impl<'a> Scheduler<'a> {
 
     fn assign_and_append(&mut self, block: Block, node: Node) {
         self.assign_block(block, node);
-        self.schedule.nodes_by_block[block].push(node, &mut self.schedule.node_list_pool);
+        self.schedule.block_data[block]
+            .scheduled_nodes_rev
+            .push(node, &mut self.schedule.node_list_pool);
     }
 
     fn assign_block(&mut self, block: Block, node: Node) {

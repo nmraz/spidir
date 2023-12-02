@@ -19,12 +19,11 @@ impl fmt::Display for Display<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for &block in self.block_order {
             writeln!(f, "{block}:")?;
-            for &attached_node in self.schedule.scheduled_nodes_rev(block).iter().rev() {
-                writeln!(
-                    f,
-                    "    {}",
-                    display_node(self.module, self.graph, attached_node)
-                )?;
+            for &phi in self.schedule.block_phis(block) {
+                writeln!(f, "    {}", display_node(self.module, self.graph, phi))?;
+            }
+            for &node in self.schedule.scheduled_nodes_rev(block).iter().rev() {
+                writeln!(f, "    {}", display_node(self.module, self.graph, node))?;
             }
             let succs = self.cfg.block_succs(block);
             if !succs.is_empty() {

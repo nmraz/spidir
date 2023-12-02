@@ -6,7 +6,6 @@ func @arith_stuff:i32(i32, i32) {
     # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
     # nextln: => block1
     # nextln: block1:
-    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $entry0
     # nextln:     $(iadd0=$val):i32 = iadd $entry1, $entry1
     # nextln:     $(isub0=$val):i32 = isub $iadd0, $entry1
     # nextln:     $(and0=$val):i32 = and $isub0, $entry1
@@ -16,7 +15,7 @@ func @arith_stuff:i32(i32, i32) {
     # nextln:     $(lshr0=$val):i32 = lshr $shl0, $entry1
     # nextln:     $(ashr0=$val):i32 = ashr $lshr0, $entry1
     # nextln:     $(imul0=$val):i32 = imul $ashr0, $entry1
-    # nextln:     $(sdiv0=$val):ctrl, $(sdiv1=$val):i32 = sdiv $region0, $imul0, $entry1
+    # nextln:     $(sdiv0=$val):ctrl, $(sdiv1=$val):i32 = sdiv $(region0=$val), $imul0, $entry1
     # nextln:     $(udiv0=$val):ctrl, $(udiv1=$val):i32 = udiv $sdiv0, $sdiv1, $entry1
     # nextln:     $(srem0=$val):ctrl, $(srem1=$val):i32 = srem $udiv0, $udiv1, $entry1
     # nextln:     $(urem0=$val):ctrl, $(urem1=$val):i32 = urem $srem0, $srem1, $entry1
@@ -64,7 +63,6 @@ func @arith_stuff_juggled:i32(i32, i32) {
     # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
     # nextln: => block1
     # nextln: block1:
-    # nextln:     $(region0=$val):ctrl, $(region1=$val):phisel = region $entry0
     # nextln:     $(iadd0=$val):i32 = iadd $entry1, $entry1
     # nextln:     $(isub0=$val):i32 = isub $iadd0, $entry1
     # nextln:     $(and0=$val):i32 = and $isub0, $entry1
@@ -74,7 +72,7 @@ func @arith_stuff_juggled:i32(i32, i32) {
     # nextln:     $(lshr0=$val):i32 = lshr $shl0, $entry1
     # nextln:     $(ashr0=$val):i32 = ashr $lshr0, $entry1
     # nextln:     $(imul0=$val):i32 = imul $ashr0, $entry1
-    # nextln:     $(sdiv0=$val):ctrl, $(sdiv1=$val):i32 = sdiv $region0, $imul0, $entry1
+    # nextln:     $(sdiv0=$val):ctrl, $(sdiv1=$val):i32 = sdiv $(region0=$val), $imul0, $entry1
     # nextln:     $(udiv0=$val):ctrl, $(udiv1=$val):i32 = udiv $sdiv0, $sdiv1, $entry1
     # nextln:     $(srem0=$val):ctrl, $(srem1=$val):i32 = srem $udiv0, $udiv1, $entry1
     # nextln:     $(urem0=$val):ctrl, $(urem1=$val):i32 = urem $srem0, $srem1, $entry1

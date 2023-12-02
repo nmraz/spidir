@@ -273,6 +273,10 @@ pub struct Lir<I> {
 }
 
 impl<I> Lir<I> {
+    pub fn all_instrs(&self) -> InstrRange {
+        InstrRange::new(Instr(0), Instr(self.instrs.len() as u32))
+    }
+
     pub fn block_instrs(&self, block: Block) -> InstrRange {
         let (start, end) = self.block_instr_ranges[block];
         InstrRange::new(start, end)
@@ -383,6 +387,12 @@ impl<I> InstrBuilder<'_, '_, I> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FinishBlockStatus {
+    MoreBlocks,
+    Finished,
+}
+
 pub struct Builder<'o, I> {
     lir: Lir<I>,
     block_order: &'o [Block],
@@ -417,7 +427,7 @@ impl<'o, I> Builder<'o, I> {
         builder
     }
 
-    pub fn finish_block(&mut self) {
+    pub fn finish_block(&mut self) -> FinishBlockStatus {
         assert!(self.last_finished_block > 0);
 
         let block = self.cur_block();
@@ -447,6 +457,9 @@ impl<'o, I> Builder<'o, I> {
 
         if last_finished_block > 0 {
             self.lir.block_instr_ranges[self.block_order[last_finished_block - 1]].1 = next_instr;
+            FinishBlockStatus::MoreBlocks
+        } else {
+            FinishBlockStatus::Finished
         }
     }
 
@@ -510,12 +523,13 @@ impl<'o, I> Builder<'o, I> {
             .push((base.try_into().unwrap(), len.try_into().unwrap()));
     }
 
-    pub fn build_instrs(&mut self, f: impl FnOnce(InstrBuilder<'_, '_, I>)) {
+    pub fn build_instrs<R>(&mut self, f: impl FnOnce(InstrBuilder<'_, '_, I>) -> R) -> R {
         let orig_len = self.lir.instrs.len();
-        f(InstrBuilder { builder: self });
+        let retval = f(InstrBuilder { builder: self });
         // We're building the LIR in reverse order, but the sequence of instructions should end up
         // in insertion order, so reverse this tail sequence we've just built.
         self.reverse_instrs(orig_len..self.lir.instrs.len());
+        retval
     }
 
     pub fn finish(mut self) -> Lir<I> {

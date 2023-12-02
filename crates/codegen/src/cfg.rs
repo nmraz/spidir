@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use cranelift_entity::{
     entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap, SecondaryMap,
 };
@@ -11,6 +12,8 @@ use ir::{
 };
 use log::trace;
 use smallvec::SmallVec;
+
+use crate::blockorder::compute_block_order;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Block(u32);
@@ -150,6 +153,7 @@ pub fn compute_block_cfg(graph: &ValGraph, cfg_preorder: &[Node]) -> (BlockCfg, 
 
 pub struct CfgContext {
     pub cfg: BlockCfg,
+    pub block_order: Vec<Block>,
     pub block_map: FunctionBlockMap,
     pub domtree: BlockDomTree,
     pub loop_forest: LoopForest,
@@ -163,8 +167,11 @@ impl CfgContext {
             BlockDomTree::compute(&cfg, block_map.containing_block(cfg_preorder[0]).unwrap());
         let loop_forest = LoopForest::compute(&cfg, &domtree);
 
+        let block_order = compute_block_order(&cfg, &domtree, &loop_forest);
+
         CfgContext {
             cfg,
+            block_order,
             block_map,
             domtree,
             loop_forest,

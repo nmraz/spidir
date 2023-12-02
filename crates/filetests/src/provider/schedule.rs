@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::Result;
-use codegen::{blockorder::compute_block_order, cfg::CfgContext, schedule::Schedule};
+use codegen::{cfg::CfgContext, schedule::Schedule};
 use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{module::Module, valwalk::cfg_preorder};
@@ -29,13 +29,10 @@ impl TestProvider for ScheduleProvider {
             let cfg_ctx = CfgContext::compute(graph, &cfg_preorder);
             let schedule = Schedule::compute(graph, &cfg_preorder, &cfg_ctx);
 
-            let block_order =
-                compute_block_order(&cfg_ctx.cfg, &cfg_ctx.domtree, &cfg_ctx.loop_forest);
-
             write!(
                 output,
                 "{}",
-                schedule.display(module, graph, &cfg_ctx.cfg, &block_order)
+                schedule.display(module, graph, &cfg_ctx.cfg, &cfg_ctx.block_order)
             )
             .unwrap();
         }

@@ -143,12 +143,22 @@ impl LiveNodeInfo {
     }
 }
 
-pub fn dataflow_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+pub fn dataflow_inputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = DepValue> + '_ {
     graph
         .node_inputs(node)
         .into_iter()
         .filter(move |&input| graph.value_kind(input).is_value())
-        .map(|input| graph.value_def(input).0)
+}
+
+pub fn dataflow_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+    dataflow_inputs(graph, node).map(|input| graph.value_def(input).0)
+}
+
+pub fn dataflow_outputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = DepValue> + '_ {
+    graph
+        .node_outputs(node)
+        .into_iter()
+        .filter(move |&output| graph.value_kind(output).is_value())
 }
 
 pub fn dataflow_succs<'a>(
@@ -156,10 +166,7 @@ pub fn dataflow_succs<'a>(
     live_nodes: &'a EntitySet<Node>,
     node: Node,
 ) -> impl Iterator<Item = (Node, u32)> + 'a {
-    graph
-        .node_outputs(node)
-        .into_iter()
-        .filter(move |&output| graph.value_kind(output).is_value())
+    dataflow_outputs(graph, node)
         .flat_map(move |output| graph.value_uses(output))
         .filter(move |&(succ, _input_idx)| live_nodes.contains(succ))
 }

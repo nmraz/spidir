@@ -11,10 +11,7 @@ use ir::{
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{
-        Builder as LirBuilder, DefOperand, FinishBlockStatus, InstrBuilder, Lir, RegClass,
-        UseOperand, VirtReg,
-    },
+    lir::{Builder as LirBuilder, DefOperand, InstrBuilder, Lir, RegClass, UseOperand, VirtReg},
     schedule::Schedule,
 };
 
@@ -140,9 +137,7 @@ pub fn select_instrs<B: Backend>(
     let mut reg_node_map = RegNodeMap::default();
     let mut node_use_counts = NodeUseCountMap::new();
 
-    loop {
-        let block = lir_builder.cur_block();
-
+    while let Some(block) = lir_builder.advance_block() {
         // TODO: Branch at end of block if necessary.
 
         for &node in schedule.scheduled_nodes_rev(block) {
@@ -168,10 +163,6 @@ pub fn select_instrs<B: Backend>(
             })?;
 
             detach_node_inputs(valgraph, node, &mut node_use_counts);
-        }
-
-        if lir_builder.finish_block() == FinishBlockStatus::Finished {
-            break;
         }
     }
 

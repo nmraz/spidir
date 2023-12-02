@@ -387,25 +387,19 @@ impl<I> InstrBuilder<'_, '_, I> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FinishBlockStatus {
-    MoreBlocks,
-    Finished,
-}
-
 pub struct Builder<'o, I> {
     lir: Lir<I>,
     block_order: &'o [Block],
     vreg_copies: FxHashMap<VirtReg, VirtReg>,
     next_vreg: u32,
     outgoing_block_param_base: u32,
-    last_finished_block: usize,
+    cur_block: isize,
 }
 
 impl<'o, I> Builder<'o, I> {
     pub fn new(block_order: &'o [Block]) -> Self {
         assert!(!block_order.is_empty());
-        let mut builder = Self {
+        Self {
             lir: Lir {
                 block_instr_ranges: SecondaryMap::new(),
                 block_params: SecondaryMap::new(),
@@ -421,51 +415,45 @@ impl<'o, I> Builder<'o, I> {
             vreg_copies: FxHashMap::default(),
             next_vreg: 0,
             outgoing_block_param_base: 0,
-            last_finished_block: block_order.len(),
-        };
-        builder.lir.block_instr_ranges[*block_order.last().unwrap()].1 = Instr::new(0);
-        builder
-    }
-
-    pub fn finish_block(&mut self) -> FinishBlockStatus {
-        assert!(self.last_finished_block > 0);
-
-        let block = self.cur_block();
-        let next_instr = self.next_instr();
-
-        self.last_finished_block -= 1;
-        let last_finished_block = self.last_finished_block;
-
-        // Finish recording outgoing block parameters.
-        let outgoing_block_param_base = self.outgoing_block_param_base;
-        let outgoing_block_param_end: u32 = self
-            .lir
-            .outgoing_block_param_indices
-            .len()
-            .try_into()
-            .unwrap();
-        self.lir.block_params[block].outgoing_base = outgoing_block_param_base;
-        self.lir.block_params[block].outgoing_len = (outgoing_block_param_end
-            - outgoing_block_param_base)
-            .try_into()
-            .unwrap();
-        self.outgoing_block_param_base = outgoing_block_param_end;
-
-        // Note: we always want `.0` to be greater than `.1` for every block, so that when we
-        // reverse everything later we'll end up with `.0 < .1`.
-        self.lir.block_instr_ranges[self.block_order[last_finished_block]].0 = next_instr;
-
-        if last_finished_block > 0 {
-            self.lir.block_instr_ranges[self.block_order[last_finished_block - 1]].1 = next_instr;
-            FinishBlockStatus::MoreBlocks
-        } else {
-            FinishBlockStatus::Finished
+            cur_block: block_order.len() as isize,
         }
     }
 
-    pub fn cur_block(&self) -> Block {
-        assert!(self.last_finished_block > 0);
-        self.block_order[self.last_finished_block - 1]
+    pub fn advance_block(&mut self) -> Option<Block> {
+        assert!(self.cur_block >= 0);
+
+        let next_instr = self.next_instr();
+
+        if self.cur_block < self.block_order.len() as isize {
+            // Finish recording outgoing block parameters.
+            let block = self.cur_block();
+            let outgoing_block_param_base = self.outgoing_block_param_base;
+            let outgoing_block_param_end: u32 = self
+                .lir
+                .outgoing_block_param_indices
+                .len()
+                .try_into()
+                .unwrap();
+            self.lir.block_params[block].outgoing_base = outgoing_block_param_base;
+            self.lir.block_params[block].outgoing_len = (outgoing_block_param_end
+                - outgoing_block_param_base)
+                .try_into()
+                .unwrap();
+            self.outgoing_block_param_base = outgoing_block_param_end;
+
+            // Note: we always want `.0` to be greater than `.1` for every block, so that when we
+            // reverse everything later we'll end up with `.0 < .1`.
+            self.lir.block_instr_ranges[block].0 = next_instr;
+        }
+
+        self.cur_block -= 1;
+        if self.cur_block >= 0 {
+            let block = self.cur_block();
+            self.lir.block_instr_ranges[block].1 = next_instr;
+            Some(block)
+        } else {
+            None
+        }
     }
 
     pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
@@ -533,7 +521,7 @@ impl<'o, I> Builder<'o, I> {
     }
 
     pub fn finish(mut self) -> Lir<I> {
-        assert!(self.last_finished_block == 0);
+        assert!(self.cur_block == -1);
         assert!(self.lir.block_params(self.block_order[0]).len() == self.lir.live_in_regs.len());
 
         let instr_count = self.lir.instrs.len();
@@ -550,6 +538,10 @@ impl<'o, I> Builder<'o, I> {
         self.propagate_vreg_copies();
 
         self.lir
+    }
+
+    fn cur_block(&self) -> Block {
+        self.block_order[self.cur_block as usize]
     }
 
     fn next_instr(&self) -> Instr {

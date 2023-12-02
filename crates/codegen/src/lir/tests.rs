@@ -76,6 +76,8 @@ fn build_simple_tied() {
     let block_order = [block];
 
     let mut builder = Builder::new(&block_order);
+    builder.advance_block();
+
     let [retval] = push_instr(
         &mut builder,
         DummyInstr::Ret,
@@ -96,7 +98,7 @@ fn build_simple_tied() {
         ],
     );
     builder.set_incoming_block_params([a, b]);
-    builder.finish_block();
+    builder.advance_block();
     builder.set_live_in_regs(vec![REG_R0, REG_R1]);
     let lir = builder.finish();
 
@@ -119,6 +121,8 @@ fn build_simple_3addr() {
     let block_order = [block];
 
     let mut builder = Builder::new(&block_order);
+    builder.advance_block();
+
     let [retval] = push_instr(
         &mut builder,
         DummyInstr::Ret,
@@ -139,7 +143,7 @@ fn build_simple_3addr() {
         ],
     );
     builder.set_incoming_block_params([a, b]);
-    builder.finish_block();
+    builder.advance_block();
     builder.set_live_in_regs(vec![REG_R0, REG_R1]);
     let lir = builder.finish();
 
@@ -170,6 +174,7 @@ fn multi_block() {
 
     let block_order = [entry, left, right, exit];
     let mut builder = Builder::new(&block_order);
+    builder.advance_block();
 
     // `exit`
     let [retval] = push_instr(
@@ -179,7 +184,7 @@ fn multi_block() {
         [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
     );
     builder.set_incoming_block_params([retval]);
-    builder.finish_block();
+    builder.advance_block();
 
     // `right`
     let add5 = builder.create_vreg(RC_GPR);
@@ -208,7 +213,7 @@ fn multi_block() {
         )],
         [],
     );
-    builder.finish_block();
+    builder.advance_block();
 
     // `left`
     let add_params = builder.create_vreg(RC_GPR);
@@ -227,7 +232,7 @@ fn multi_block() {
             (UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
-    builder.finish_block();
+    builder.advance_block();
 
     // `entry`
     builder.add_succ_outgoing_block_params([]);
@@ -246,7 +251,7 @@ fn multi_block() {
     builder.copy_vreg(left_param2, param2);
 
     builder.set_incoming_block_params([param1, param2, left_param3]);
-    builder.finish_block();
+    builder.advance_block();
     builder.set_live_in_regs(vec![REG_R0, REG_R1, REG_R2]);
     let lir = builder.finish();
 
@@ -284,6 +289,7 @@ fn block_param_vreg_copies() {
 
     let block_order = [entry, exit];
     let mut builder = Builder::new(&block_order);
+    builder.advance_block();
 
     let [retval] = push_instr(
         &mut builder,
@@ -292,7 +298,7 @@ fn block_param_vreg_copies() {
         [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
     );
     builder.set_incoming_block_params([retval]);
-    builder.finish_block();
+    builder.advance_block();
 
     let outgoing_param = builder.create_vreg(RC_GPR);
     builder.add_succ_outgoing_block_params([outgoing_param]);
@@ -312,7 +318,7 @@ fn block_param_vreg_copies() {
     );
 
     builder.copy_vreg(outgoing_param, five);
-    builder.finish_block();
+    builder.advance_block();
 
     let lir = builder.finish();
 

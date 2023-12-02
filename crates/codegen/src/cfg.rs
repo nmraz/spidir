@@ -96,63 +96,68 @@ impl FunctionBlockMap {
     }
 }
 
+pub fn compute_block_cfg(graph: &ValGraph, cfg_preorder: &[Node]) -> (BlockCfg, FunctionBlockMap) {
+    let mut ctrl_outputs = SmallVec::<[DepValue; 4]>::new();
+    let mut cfg = BlockCfg::new();
+    let mut block_map = FunctionBlockMap {
+        blocks_by_node: SecondaryMap::new(),
+        critical_edges: FxHashMap::default(),
+    };
+
+    let mut cur_block: Option<Block> = None;
+    for &node in cfg_preorder {
+        let block = match cur_block {
+            Some(cur_block) => {
+                block_map.blocks_by_node[node] = cur_block.into();
+                cur_block
+            }
+            None => {
+                let block = get_headed_block(&mut cfg, &mut block_map, node);
+                cur_block = Some(block);
+                block
+            }
+        };
+
+        ctrl_outputs.clear();
+        ctrl_outputs.extend(cfg_outputs(graph, node));
+
+        if should_terminate_block(graph, &ctrl_outputs) {
+            trace!("terminating {block} with node {}", node.as_u32());
+            for &output in &ctrl_outputs {
+                let mut pred_block = block;
+                let succ = graph.value_uses(output).next().unwrap().0;
+
+                if ctrl_outputs.len() > 1 && !has_single_cfg_input(graph, succ) {
+                    let split_block = cfg.create_block();
+                    cfg.add_block_edge(block, split_block);
+                    block_map.critical_edges.insert(output, split_block);
+                    pred_block = split_block;
+                    trace!(
+                        "split critical edge {} -> {} with {split_block}",
+                        node.as_u32(),
+                        succ.as_u32()
+                    );
+                }
+
+                let succ = get_headed_block(&mut cfg, &mut block_map, succ);
+                cfg.add_block_edge(pred_block, succ);
+            }
+            cur_block = None;
+        }
+    }
+    (cfg, block_map)
+}
+
 pub struct CfgContext {
-    cfg: BlockCfg,
-    block_map: FunctionBlockMap,
-    domtree: BlockDomTree,
-    loop_forest: LoopForest,
+    pub cfg: BlockCfg,
+    pub block_map: FunctionBlockMap,
+    pub domtree: BlockDomTree,
+    pub loop_forest: LoopForest,
 }
 
 impl CfgContext {
     pub fn compute(graph: &ValGraph, cfg_preorder: &[Node]) -> Self {
-        let mut ctrl_outputs = SmallVec::<[DepValue; 4]>::new();
-        let mut cfg = BlockCfg::new();
-        let mut block_map = FunctionBlockMap {
-            blocks_by_node: SecondaryMap::new(),
-            critical_edges: FxHashMap::default(),
-        };
-
-        let mut cur_block: Option<Block> = None;
-        for &node in cfg_preorder {
-            let block = match cur_block {
-                Some(cur_block) => {
-                    block_map.blocks_by_node[node] = cur_block.into();
-                    cur_block
-                }
-                None => {
-                    let block = get_headed_block(&mut cfg, &mut block_map, node);
-                    cur_block = Some(block);
-                    block
-                }
-            };
-
-            ctrl_outputs.clear();
-            ctrl_outputs.extend(cfg_outputs(graph, node));
-
-            if should_terminate_block(graph, &ctrl_outputs) {
-                trace!("terminating {block} with node {}", node.as_u32());
-                for &output in &ctrl_outputs {
-                    let mut pred_block = block;
-                    let succ = graph.value_uses(output).next().unwrap().0;
-
-                    if ctrl_outputs.len() > 1 && !has_single_cfg_input(graph, succ) {
-                        let split_block = cfg.create_block();
-                        cfg.add_block_edge(block, split_block);
-                        block_map.critical_edges.insert(output, split_block);
-                        pred_block = split_block;
-                        trace!(
-                            "split critical edge {} -> {} with {split_block}",
-                            node.as_u32(),
-                            succ.as_u32()
-                        );
-                    }
-
-                    let succ = get_headed_block(&mut cfg, &mut block_map, succ);
-                    cfg.add_block_edge(pred_block, succ);
-                }
-                cur_block = None;
-            }
-        }
+        let (cfg, block_map) = compute_block_cfg(graph, cfg_preorder);
 
         let domtree =
             BlockDomTree::compute(&cfg, block_map.containing_block(cfg_preorder[0]).unwrap());
@@ -164,26 +169,6 @@ impl CfgContext {
             domtree,
             loop_forest,
         }
-    }
-
-    #[inline]
-    pub fn cfg(&self) -> &BlockCfg {
-        &self.cfg
-    }
-
-    #[inline]
-    pub fn block_map(&self) -> &FunctionBlockMap {
-        &self.block_map
-    }
-
-    #[inline]
-    pub fn domtree(&self) -> &BlockDomTree {
-        &self.domtree
-    }
-
-    #[inline]
-    pub fn loop_forest(&self) -> &LoopForest {
-        &self.loop_forest
     }
 }
 

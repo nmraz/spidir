@@ -30,12 +30,12 @@ impl TestProvider for ScheduleProvider {
             let schedule = Schedule::compute(graph, &cfg_preorder, &cfg_ctx);
 
             let block_order =
-                compute_block_order(cfg_ctx.cfg(), cfg_ctx.domtree(), cfg_ctx.loop_forest());
+                compute_block_order(&cfg_ctx.cfg, &cfg_ctx.domtree, &cfg_ctx.loop_forest);
 
             write!(
                 output,
                 "{}",
-                schedule.display(module, graph, cfg_ctx.cfg(), &block_order)
+                schedule.display(module, graph, &cfg_ctx.cfg, &block_order)
             )
             .unwrap();
         }

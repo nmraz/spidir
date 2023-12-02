@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::Result;
-use codegen::cfg::CfgContext;
+use codegen::cfg::compute_block_cfg;
 use cranelift_entity::EntitySet;
 use ir::{module::Module, valwalk::cfg_preorder};
 use itertools::Itertools;
@@ -17,18 +17,18 @@ impl TestProvider for CfgProvider {
 
         for func in module.functions.values() {
             let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
-            let cfg_ctx = CfgContext::compute(&func.graph, &cfg_preorder);
+            let (cfg, block_map) = compute_block_cfg(&func.graph, &cfg_preorder);
             let mut seen_blocks = EntitySet::new();
             write_graph_with_trailing_comments(&mut output, module, func, |s, node| {
-                if let Some(block) = cfg_ctx.block_map().containing_block(node) {
+                if let Some(block) = block_map.containing_block(node) {
                     write!(s, "{block}; ").unwrap();
 
                     if !seen_blocks.contains(block) {
-                        let preds = cfg_ctx.cfg().block_preds(block);
+                        let preds = cfg.block_preds(block);
                         if !preds.is_empty() {
                             write!(s, "preds {}; ", preds.iter().format(", ")).unwrap();
                         }
-                        let succs = cfg_ctx.cfg().block_succs(block);
+                        let succs = cfg.block_succs(block);
                         if !succs.is_empty() {
                             write!(s, "succs {}; ", succs.iter().format(", ")).unwrap();
                         }

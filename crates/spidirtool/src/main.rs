@@ -242,13 +242,12 @@ fn get_module_schedule_str(module: &Module) -> String {
         let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
         let cfg_ctx = CfgContext::compute(&func.graph, &cfg_preorder);
         let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx);
-        let block_order =
-            compute_block_order(cfg_ctx.cfg(), cfg_ctx.domtree(), cfg_ctx.loop_forest());
+        let block_order = compute_block_order(&cfg_ctx.cfg, &cfg_ctx.domtree, &cfg_ctx.loop_forest);
 
         writeln!(
             output,
             " {{\n{}}}\n",
-            schedule.display(module, &func.graph, cfg_ctx.cfg(), &block_order)
+            schedule.display(module, &func.graph, &cfg_ctx.cfg, &block_order)
         )
         .unwrap();
     }

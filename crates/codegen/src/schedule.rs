@@ -33,7 +33,7 @@ impl Schedule {
         let live_node_info = LiveNodeInfo::compute(graph, entry);
 
         let ctx = ScheduleCtx::new(graph, &live_node_info, valgraph_cfg_preorder);
-        let depth_map = get_cfg_depth_map(cfg_ctx.domtree(), cfg_ctx.loop_forest());
+        let depth_map = get_cfg_depth_map(&cfg_ctx.domtree, &cfg_ctx.loop_forest);
 
         let mut schedule = Self {
             nodes_by_block: SecondaryMap::new(),
@@ -124,7 +124,6 @@ impl<'a> Scheduler<'a> {
     fn pin_nodes(&mut self, ctx: &ScheduleCtx<'_>) {
         for &cfg_node in ctx.cfg_preorder() {
             let block = self
-                .cfg_ctx
                 .block_map()
                 .containing_block(cfg_node)
                 .expect("live CFG node not in block CFG");
@@ -256,7 +255,7 @@ impl<'a> Scheduler<'a> {
                     acc
                 }
             })
-            .unwrap_or(self.cfg_ctx.domtree().get_cfg_node(self.domtree().root()));
+            .unwrap_or(self.domtree().get_cfg_node(self.domtree().root()));
         trace!("early: node {} -> {loc}", node.as_u32());
         loc
     }
@@ -323,15 +322,15 @@ impl<'a> Scheduler<'a> {
     }
 
     fn cfg(&self) -> &'a BlockCfg {
-        self.cfg_ctx.cfg()
+        &self.cfg_ctx.cfg
     }
 
     fn domtree(&self) -> &'a BlockDomTree {
-        self.cfg_ctx.domtree()
+        &self.cfg_ctx.domtree
     }
 
     fn block_map(&self) -> &'a FunctionBlockMap {
-        self.cfg_ctx.block_map()
+        &self.cfg_ctx.block_map
     }
 }
 

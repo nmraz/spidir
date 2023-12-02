@@ -6,7 +6,7 @@ use ir::{
     loops::LoopForest,
     module::Module,
     node::NodeKind,
-    schedule::{schedule_early, schedule_late, ScheduleCtx},
+    schedule::{schedule_early, schedule_late, ScheduleContext},
     valgraph::{Node, ValGraph},
     valwalk::{dataflow_preds, dataflow_succs, raw_def_use_succs, LiveNodeInfo},
 };
@@ -32,7 +32,7 @@ impl Schedule {
         let entry = valgraph_cfg_preorder[0];
         let live_node_info = LiveNodeInfo::compute(graph, entry);
 
-        let ctx = ScheduleCtx::new(graph, &live_node_info, valgraph_cfg_preorder);
+        let ctx = ScheduleContext::new(graph, &live_node_info, valgraph_cfg_preorder);
         let depth_map = get_cfg_depth_map(&cfg_ctx.domtree, &cfg_ctx.loop_forest);
 
         let mut schedule = Self {
@@ -121,7 +121,7 @@ struct Scheduler<'a> {
 }
 
 impl<'a> Scheduler<'a> {
-    fn pin_nodes(&mut self, ctx: &ScheduleCtx<'_>) {
+    fn pin_nodes(&mut self, ctx: &ScheduleContext<'_>) {
         for &cfg_node in ctx.cfg_preorder() {
             let block = self
                 .block_map()
@@ -179,12 +179,12 @@ impl<'a> Scheduler<'a> {
         }
     }
 
-    fn schedule_early(&mut self, ctx: &ScheduleCtx<'_>, node: Node) {
+    fn schedule_early(&mut self, ctx: &ScheduleContext<'_>, node: Node) {
         assert!(self.blocks_by_node[node].is_none());
         self.assign_block(self.early_schedule_location(ctx, node), node);
     }
 
-    fn schedule_late(&mut self, ctx: &ScheduleCtx<'_>, node: Node) {
+    fn schedule_late(&mut self, ctx: &ScheduleContext<'_>, node: Node) {
         let early_loc = self.blocks_by_node[node].expect("node should have been scheduled early");
         let late_loc = self.late_schedule_location(ctx, node);
         let loc = self.best_schedule_location(node, early_loc, late_loc);
@@ -238,7 +238,7 @@ impl<'a> Scheduler<'a> {
         best_loc
     }
 
-    fn early_schedule_location(&self, ctx: &ScheduleCtx<'_>, node: Node) -> Block {
+    fn early_schedule_location(&self, ctx: &ScheduleContext<'_>, node: Node) -> Block {
         trace!("early: node {}", node.as_u32());
         let loc = dataflow_preds(ctx.graph(), node)
             .map(|pred| {
@@ -260,7 +260,7 @@ impl<'a> Scheduler<'a> {
         loc
     }
 
-    fn late_schedule_location(&self, ctx: &ScheduleCtx<'_>, node: Node) -> Block {
+    fn late_schedule_location(&self, ctx: &ScheduleContext<'_>, node: Node) -> Block {
         let graph = ctx.graph();
 
         trace!("late: node {}", node.as_u32());

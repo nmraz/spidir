@@ -9,13 +9,13 @@ use crate::{
     valwalk::{dataflow_preds, dataflow_succs, get_attached_phis, LiveNodeInfo},
 };
 
-pub struct ScheduleCtx<'a> {
+pub struct ScheduleContext<'a> {
     graph: &'a ValGraph,
     cfg_preorder: &'a [Node],
     live_node_info: &'a LiveNodeInfo,
 }
 
-impl<'a> ScheduleCtx<'a> {
+impl<'a> ScheduleContext<'a> {
     pub fn new(
         graph: &'a ValGraph,
         live_node_info: &'a LiveNodeInfo,
@@ -65,9 +65,9 @@ impl<'a> ScheduleCtx<'a> {
 }
 
 pub fn schedule_early(
-    ctx: &ScheduleCtx<'_>,
+    ctx: &ScheduleContext<'_>,
     scratch_postorder: &mut PostOrderContext<Node>,
-    mut schedule: impl FnMut(&ScheduleCtx<'_>, Node),
+    mut schedule: impl FnMut(&ScheduleContext<'_>, Node),
 ) {
     let mut visited = EntitySet::new();
     let unpinned_data_preds = UnpinnedDataPreds::new(ctx.graph());
@@ -82,9 +82,9 @@ pub fn schedule_early(
 }
 
 pub fn schedule_late(
-    ctx: &ScheduleCtx<'_>,
+    ctx: &ScheduleContext<'_>,
     scratch_postorder: &mut PostOrderContext<Node>,
-    mut schedule: impl FnMut(&ScheduleCtx<'_>, Node),
+    mut schedule: impl FnMut(&ScheduleContext<'_>, Node),
 ) {
     let mut visited = EntitySet::new();
     let unpinned_data_succs = UnpinnedDataSuccs::new(ctx.graph(), ctx.live_nodes());

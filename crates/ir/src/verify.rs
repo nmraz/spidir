@@ -12,7 +12,7 @@ use crate::{
     domtree::{DomTree, DomTreeNode},
     module::{Function, FunctionData, Module},
     node::{DepValueKind, NodeKind},
-    schedule::{schedule_early, ScheduleCtx},
+    schedule::{schedule_early, ScheduleContext},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{cfg_preorder, walk_live_nodes, LiveNodeInfo},
     write::display_node,
@@ -325,7 +325,7 @@ type ByNodeSchedule = SecondaryMap<Node, PackedOption<DomTreeNode>>;
 fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
     let live_node_info = LiveNodeInfo::compute(graph, entry);
     let cfg_preorder: Vec<_> = cfg_preorder(graph, entry).collect();
-    let ctx = ScheduleCtx::new(graph, &live_node_info, &cfg_preorder);
+    let ctx = ScheduleContext::new(graph, &live_node_info, &cfg_preorder);
 
     let domtree = DomTree::compute(graph, entry);
     let mut scheduler = VerifierScheduler {
@@ -364,7 +364,7 @@ struct VerifierScheduler<'a> {
 }
 
 impl VerifierScheduler<'_> {
-    fn pin_nodes(&mut self, ctx: &ScheduleCtx<'_>) {
+    fn pin_nodes(&mut self, ctx: &ScheduleContext<'_>) {
         for &cfg_node in ctx.cfg_preorder() {
             let domtree_node = self
                 .domtree
@@ -380,7 +380,7 @@ impl VerifierScheduler<'_> {
 
     fn verify_dataflow_cfg_node_inputs(
         &mut self,
-        ctx: &ScheduleCtx<'_>,
+        ctx: &ScheduleContext<'_>,
         domtree_node: DomTreeNode,
     ) {
         let cfg_node = self.domtree.get_cfg_node(domtree_node);
@@ -401,7 +401,7 @@ impl VerifierScheduler<'_> {
 
     fn verify_dataflow_phi_node_inputs(
         &mut self,
-        ctx: &ScheduleCtx<'_>,
+        ctx: &ScheduleContext<'_>,
         cfg_node: Node,
         phi: Node,
     ) {
@@ -447,7 +447,7 @@ impl VerifierScheduler<'_> {
 
     fn get_last_scheduled_input(
         &mut self,
-        ctx: &ScheduleCtx<'_>,
+        ctx: &ScheduleContext<'_>,
         node: Node,
     ) -> Option<(DomTreeNode, u32)> {
         let graph = ctx.graph();

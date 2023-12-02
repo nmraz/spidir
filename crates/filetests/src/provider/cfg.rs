@@ -26,7 +26,20 @@ impl TestProvider for CfgProvider {
                     if !seen_blocks.contains(block) {
                         let preds = cfg.block_preds(block);
                         if !preds.is_empty() {
-                            write!(s, "preds {}; ", preds.iter().format(", ")).unwrap();
+                            write!(
+                                s,
+                                "preds {}; ",
+                                preds.iter().enumerate().format_with(", ", |(i, &pred), f| {
+                                    f(&pred)?;
+                                    if let Some(valgraph_pred_index) =
+                                        block_map.valgraph_pred_index(block, i)
+                                    {
+                                        f(&format_args!(" (#{valgraph_pred_index})"))?;
+                                    }
+                                    Ok(())
+                                })
+                            )
+                            .unwrap();
                         }
                         let succs = cfg.block_succs(block);
                         if !succs.is_empty() {

@@ -5,11 +5,11 @@ func @conditional_uses(i32, i32, ptr) {
     # nextln: %0:ctrl, %1:i32, %2:i32, %3:ptr = entry         # block0; succs block1, block2; x
     # nextln: %4:ctrl, %5:ctrl = brcond %0, %1        # block0; x
     # nextln: %6:i32 = imul %1, %2                    # x
-    # nextln: %7:ctrl = store.4 %4, %6, %3            # block1; preds block0; succs block3; x
+    # nextln: %7:ctrl = store.4 %4, %6, %3            # block1; preds block0 (#0); succs block3; x
     # nextln: %8:i32 = iconst 5                       # x
     # nextln: %9:i32 = iadd %1, %8                    # x
-    # nextln: %10:ctrl = store.4 %5, %9, %3           # block2; preds block0; succs block3; x
-    # nextln: %11:ctrl, %12:phisel = region %7, %10   # block3; preds block2, block1; x
+    # nextln: %10:ctrl = store.4 %5, %9, %3           # block2; preds block0 (#0); succs block3; x
+    # nextln: %11:ctrl, %12:phisel = region %7, %10   # block3; preds block2 (#1), block1 (#0); x
     # nextln: return %11                              # block3; x
 
     %entry:ctrl, %p1:i32, %p2:i32, %p3:ptr = entry

@@ -3,7 +3,7 @@
 func @arith_stuff:i32(i32, i32) {
     # check: function `arith_stuff`:
     # nextln: %0:ctrl, %1:i32, %2:i32 = entry         # block0; succs block1; x
-    # nextln: %3:ctrl, %4:phisel = region %0          # block1; preds block0; x
+    # nextln: %3:ctrl, %4:phisel = region %0          # block1; preds block0 (#0); x
     # nextln: %5:i32 = iadd %1, %1                    # x
     # nextln: %6:i32 = isub %5, %1                    # x
     # nextln: %7:i32 = and %6, %1                     # x

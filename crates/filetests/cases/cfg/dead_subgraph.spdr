@@ -6,7 +6,7 @@ func @dead_subgraph(i32) {
     # nextln: %2:ctrl, %3:phisel = region             # x
     # nextln: %4:ctrl, %5:ctrl = brcond %2, %1        # x
     # nextln: %6:ctrl, %7:phisel = region %4, %5      # x
-    # nextln: %8:ctrl, %9:phisel = region %0, %6      # block1; preds block0; x
+    # nextln: %8:ctrl, %9:phisel = region %0, %6      # block1; preds block0 (#0); x
     # nextln: return %8                               # block1; x
 
     %ent:ctrl, %p1:i32 = entry
@@ -14,5 +14,41 @@ func @dead_subgraph(i32) {
     %e:ctrl, %f:ctrl = brcond %d, %p1
     %g:ctrl, %gp:phisel = region %e, %f
     %exit:ctrl, %exitp:phisel = region %ent, %g
+    return %exit
+}
+
+func @dead_subgraph_input_mid(i32) {
+    # check: function `dead_subgraph_input_mid`:
+    # nextln: %0:ctrl, %1:i32 = entry                 # block0; succs block1, block3; x
+    # nextln: %2:ctrl, %3:ctrl = brcond %0, %1        # block0; x
+    # nextln: %4:ctrl, %5:phisel = region             # x
+    # nextln: %6:ctrl, %7:ctrl = brcond %4, %1        # x
+    # nextln: %8:ctrl, %9:phisel = region %6, %7      # x
+    # nextln: %10:ctrl, %11:phisel = region %2, %8, %3        # block2; preds block1 (#0), block3 (#2); x
+    # nextln: return %10                              # block2; x
+
+    %ent:ctrl, %p1:i32 = entry
+    %a:ctrl, %b:ctrl = brcond %ent, %p1
+    %d:ctrl, %dp:phisel = region
+    %e:ctrl, %f:ctrl = brcond %d, %p1
+    %g:ctrl, %gp:phisel = region %e, %f
+    %exit:ctrl, %exitp:phisel = region %a, %g, %b
+    return %exit
+}
+
+func @dead_subgraph_input_1(i32) {
+    # check: function `dead_subgraph_input_1`:
+    # nextln: %0:ctrl, %1:i32 = entry                 # block0; succs block1; x
+    # nextln: %2:ctrl, %3:phisel = region             # x
+    # nextln: %4:ctrl, %5:ctrl = brcond %2, %1        # x
+    # nextln: %6:ctrl, %7:phisel = region %4, %5      # x
+    # nextln: %8:ctrl, %9:phisel = region %6, %0      # block1; preds block0 (#1); x
+    # nextln: return %8                               # block1; x
+
+    %ent:ctrl, %p1:i32 = entry
+    %d:ctrl, %dp:phisel = region
+    %e:ctrl, %f:ctrl = brcond %d, %p1
+    %g:ctrl, %gp:phisel = region %e, %f
+    %exit:ctrl, %exitp:phisel = region %g, %ent
     return %exit
 }

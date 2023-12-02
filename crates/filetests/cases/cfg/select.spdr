@@ -4,7 +4,7 @@ func @select:i32(i32, i32, i32) {
     # check: function `select`:
     # nextln: %0:ctrl, %1:i32, %2:i32, %3:i32 = entry         # block0; succs block1, block3; x
     # nextln: %4:ctrl, %5:ctrl = brcond %0, %1        # block0; x
-    # nextln: %6:ctrl, %7:phisel = region %4, %5      # block2; preds block1, block3; x
+    # nextln: %6:ctrl, %7:phisel = region %4, %5      # block2; preds block1 (#0), block3 (#1); x
     # nextln: %8:i32 = phi %7, %2, %3                 # x
     # nextln: return %6, %8                           # block2; x
 

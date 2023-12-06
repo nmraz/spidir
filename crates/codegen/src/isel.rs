@@ -4,7 +4,7 @@ use cranelift_entity::SecondaryMap;
 use fx_utils::FxHashMap;
 use hashbrown::hash_map::Entry;
 use ir::{
-    node::NodeKind,
+    node::{NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{dataflow_inputs, dataflow_outputs, dataflow_preds},
 };
@@ -28,6 +28,10 @@ pub struct IselContext<'a, 'o, I> {
 }
 
 impl<'a, 'b, I> IselContext<'a, 'b, I> {
+    pub fn value_type(&self, value: DepValue) -> Type {
+        self.valgraph.value_kind(value).as_value().unwrap()
+    }
+
     pub fn value_def(&self, value: DepValue) -> Option<(Node, u32)> {
         // TODO: Only look through when allowed based on side effects
         Some(self.valgraph.value_def(value))

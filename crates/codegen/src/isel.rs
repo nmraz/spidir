@@ -67,24 +67,19 @@ impl<'a, 'b, I> IselContext<'a, 'b, I> {
         ret
     }
 
-    pub fn get_value_vreg(&mut self, value: DepValue, class: RegClass) -> VirtReg {
-        match self.value_reg_map.entry(value) {
-            Entry::Occupied(occupied) => {
-                let vreg = *occupied.get();
-                assert!(
-                    vreg.class() == class,
-                    "attempted to redefine vreg with different class"
-                );
-                vreg
-            }
-            Entry::Vacant(vacant) => {
+    pub fn get_value_vreg(&mut self, backend: &impl Backend, value: DepValue) -> VirtReg {
+        get_value_vreg_helper(
+            |value, class| {
                 let vreg = self.builder.create_vreg(class);
                 self.reg_node_map
                     .insert(vreg, self.valgraph.value_def(value).0);
-                vacant.insert(vreg);
                 vreg
-            }
-        }
+            },
+            self.value_reg_map,
+            backend,
+            self.valgraph,
+            value,
+        )
     }
 
     pub fn create_temp_vreg(&mut self, class: RegClass) -> VirtReg {
@@ -111,6 +106,8 @@ pub struct IselFailed;
 
 pub trait Backend {
     type Instr;
+
+    fn reg_class_for_type(&self, ty: Type) -> RegClass;
 
     fn select(
         &self,
@@ -181,6 +178,31 @@ pub fn select_instrs<B: Backend>(
     }
 
     Ok(lir_builder.finish())
+}
+
+fn get_value_vreg_helper<B: Backend>(
+    builder: impl FnOnce(DepValue, RegClass) -> VirtReg,
+    value_reg_map: &mut ValueRegMap,
+    backend: &B,
+    valgraph: &ValGraph,
+    value: DepValue,
+) -> VirtReg {
+    let class = backend.reg_class_for_type(valgraph.value_kind(value).as_value().unwrap());
+    match value_reg_map.entry(value) {
+        Entry::Occupied(occupied) => {
+            let vreg = *occupied.get();
+            assert!(
+                vreg.class() == class,
+                "attempted to redefine vreg with different class"
+            );
+            vreg
+        }
+        Entry::Vacant(vacant) => {
+            let vreg = builder(value, class);
+            vacant.insert(vreg);
+            vreg
+        }
+    }
 }
 
 fn detach_node_inputs(valgraph: &ValGraph, node: Node, node_use_counts: &mut NodeUseCountMap) {

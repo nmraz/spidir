@@ -1,0 +1,109 @@
+# run: schedule
+
+func @irreducible(i32, i32, i32) {
+    # check: function `irreducible`:
+    # nextln: block0:
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32, $(entry3=$val):i32 = entry
+    # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $entry1
+    # nextln: => block1, block3
+    # nextln: block1:
+    # nextln: => block2
+    # nextln: block3:
+    # nextln: => block4
+    # nextln: block4:
+    # nextln:     $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $(region0=$val), $entry3
+    # nextln: => block5, block7
+    # nextln: block5:
+    # nextln: => block6
+    # nextln: block7:
+    # nextln: => block2
+    # nextln: block2:
+    # nextln:     $(brcond4=$val):ctrl, $(brcond5=$val):ctrl = brcond $(region1=$val), $entry1
+    # nextln: => block8, block9
+    # nextln: block8:
+    # nextln: => block6
+    # nextln: block6:
+    # nextln:     return $(region2=$val)
+    # nextln: block9:
+    # nextln: => block4
+
+    %ent:ctrl, %p1:i32, %p2:i32, %p3:i32 = entry
+    %to_cycle1:ctrl, %to_cycle2:ctrl = brcond %ent, %p1
+    %cycle1:ctrl, %c1p:phisel = region %to_cycle1, %c2_to_c1
+    %c1_to_exit:ctrl, %c1_to_c2:ctrl = brcond %cycle1, %p1
+    %cycle2:ctrl, %c2p:phisel = region %to_cycle2, %c1_to_c2
+    %c2_to_exit:ctrl, %c2_to_c1:ctrl = brcond %cycle2, %p3
+    %exit:ctrl, %ep:phisel = region %c1_to_exit, %c2_to_exit
+    return %exit
+}
+
+func @header_in_irreducible_cycle(i32, i32, i32, i32) {
+    # check: function `header_in_irreducible_cycle`:
+    # nextln: block0:
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32, $(entry3=$val):i32, $(entry4=$val):i32 = entry
+    # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $entry1
+    # nextln: => block1, block3
+    # nextln: block1:
+    # nextln: => block2
+    # nextln: block3:
+    # nextln: => block4
+    # nextln: block4:
+    # nextln: => block2
+    # nextln: block2:
+    # nextln:     $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $(region0=$val), $entry2
+    # nextln: => block5, block6
+    # nextln: block6:
+    # nextln:     $(brcond4=$val):ctrl, $(brcond5=$val):ctrl = brcond $brcond3, $entry3
+    # nextln: => block7, block8
+    # nextln: block7:
+    # nextln: => block2
+    # nextln: block8:
+    # nextln:     return $brcond5
+    # nextln: block5:
+    # nextln: => block4
+
+    %ent:ctrl, %p1:i32, %p2:i32, %p3:i32, %p4:i32 = entry
+    %to_header:ctrl, %to_cycle2:ctrl = brcond %ent, %p1
+    %header:ctrl, %hp:phisel = region %backedge, %to_header, %cycle2_to_header
+    %header_to_cycle2:ctrl, %to_body:ctrl = brcond %header, %p2
+    %backedge:ctrl, %exit:ctrl = brcond %to_body, %p3
+    %cycle2_to_header:ctrl, %c2p:phisel = region %to_cycle2, %header_to_cycle2
+    return %exit
+}
+
+func @irreducible_cycle_in_body(i32, i32, i32) {
+    # check: function `irreducible_cycle_in_body`:
+    # nextln: block0:
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32, $(entry3=$val):i32 = entry
+    # nextln: => block1
+    # nextln: block1:
+    # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $(region0=$val), $entry1
+    # nextln: => block2, block4
+    # nextln: block2:
+    # nextln: => block3
+    # nextln: block4:
+    # nextln: => block5
+    # nextln: block5:
+    # nextln:     $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $(region1=$val), $entry3
+    # nextln: => block6, block7
+    # nextln: block6:
+    # nextln: => block3
+    # nextln: block3:
+    # nextln:     $(brcond4=$val):ctrl, $(brcond5=$val):ctrl = brcond $(region2=$val), $entry2
+    # nextln: => block8, block9
+    # nextln: block8:
+    # nextln: => block1
+    # nextln: block9:
+    # nextln: => block5
+    # nextln: block7:
+    # nextln:     return $brcond3
+
+    %ent:ctrl, %p1:i32, %p2:i32, %p3:i32 = entry
+    %header:ctrl, %hp:phisel = region %ent, %backedge
+    %to_latch:ctrl, %to_other:ctrl = brcond %header, %p1
+    %latch:ctrl, %lp:phisel = region %to_latch, %other_to_latch
+    %backedge:ctrl, %latch_to_other:ctrl = brcond %latch, %p2
+    %other:ctrl, %op:phisel = region %latch_to_other, %to_other
+    %other_to_latch:ctrl, %exit:ctrl = brcond %other, %p3
+    return %exit
+}

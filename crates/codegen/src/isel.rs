@@ -20,38 +20,35 @@ type ValueRegMap = FxHashMap<DepValue, VirtReg>;
 type RegNodeMap = FxHashMap<VirtReg, Node>;
 type NodeUseCountMap = SecondaryMap<Node, u32>;
 
-pub struct IselContext<'a, 'o, I> {
-    valgraph: &'a ValGraph,
-    builder: InstrBuilder<'a, 'o, I>,
-    value_reg_map: &'a mut ValueRegMap,
-    reg_node_map: &'a mut RegNodeMap,
-    node_use_counts: &'a mut NodeUseCountMap,
+pub struct IselContext<'ctx, 's, B: Backend> {
+    state: &'s mut IselState<'ctx, B>,
+    builder: InstrBuilder<'ctx, 's, B::Instr>,
 }
 
-impl<'a, 'b, I> IselContext<'a, 'b, I> {
+impl<'ctx, 's, B: Backend> IselContext<'ctx, 's, B> {
     pub fn value_type(&self, value: DepValue) -> Type {
-        self.valgraph.value_kind(value).as_value().unwrap()
+        self.state.valgraph.value_kind(value).as_value().unwrap()
     }
 
     pub fn value_def(&self, value: DepValue) -> Option<(Node, u32)> {
         // TODO: Only look through when allowed based on side effects
-        Some(self.valgraph.value_def(value))
+        Some(self.state.valgraph.value_def(value))
     }
 
     pub fn node_use_count(&self, node: Node) -> u32 {
-        self.node_use_counts[node]
+        self.state.node_use_counts[node]
     }
 
     pub fn node_kind(&self, node: Node) -> NodeKind {
-        *self.valgraph.node_kind(node)
+        *self.state.valgraph.node_kind(node)
     }
 
-    pub fn node_inputs(&self, node: Node) -> impl Iterator<Item = DepValue> + 'a {
-        dataflow_inputs(self.valgraph, node)
+    pub fn node_inputs(&self, node: Node) -> impl Iterator<Item = DepValue> + 'ctx {
+        dataflow_inputs(self.state.valgraph, node)
     }
 
-    pub fn node_outputs(&self, node: Node) -> impl Iterator<Item = DepValue> + 'a {
-        dataflow_outputs(self.valgraph, node)
+    pub fn node_outputs(&self, node: Node) -> impl Iterator<Item = DepValue> + 'ctx {
+        dataflow_outputs(self.state.valgraph, node)
     }
 
     pub fn node_inputs_exact<const N: usize>(&self, node: Node) -> [DepValue; N] {
@@ -72,13 +69,14 @@ impl<'a, 'b, I> IselContext<'a, 'b, I> {
         get_value_vreg_helper(
             |value, class| {
                 let vreg = self.builder.create_vreg(class);
-                self.reg_node_map
-                    .insert(vreg, self.valgraph.value_def(value).0);
+                self.state
+                    .reg_node_map
+                    .insert(vreg, self.state.valgraph.value_def(value).0);
                 vreg
             },
-            self.value_reg_map,
+            &mut self.state.value_reg_map,
             backend,
-            self.valgraph,
+            self.state.valgraph,
             value,
         )
     }
@@ -91,11 +89,11 @@ impl<'a, 'b, I> IselContext<'a, 'b, I> {
         self.builder.copy_vreg(dest, src)
     }
 
-    pub fn emit_instr(&mut self, instr: I, defs: &[DefOperand], uses: &[UseOperand]) {
+    pub fn emit_instr(&mut self, instr: B::Instr, defs: &[DefOperand], uses: &[UseOperand]) {
         // Bump the use count for any operands that came from nodes in the original graph.
         for &use_op in uses {
-            if let Some(&node) = self.reg_node_map.get(&use_op.reg()) {
-                self.node_use_counts[node] += 1;
+            if let Some(&node) = self.state.reg_node_map.get(&use_op.reg()) {
+                self.state.node_use_counts[node] += 1;
             }
         }
         self.builder
@@ -105,19 +103,18 @@ impl<'a, 'b, I> IselContext<'a, 'b, I> {
 
 pub struct IselFailed;
 
-pub trait Backend {
+pub trait Backend: Sized {
     type Instr;
 
     fn reg_class_for_type(&self, ty: Type) -> RegClass;
+    fn create_jump(&self, target: Block) -> Self::Instr;
 
     fn select(
         &self,
         instr: Node,
         targets: &[Block],
-        ctx: &mut IselContext<'_, '_, Self::Instr>,
+        ctx: &mut IselContext<'_, '_, Self>,
     ) -> Result<(), IselFailed>;
-
-    fn emit_jump(&self, target: Block, ctx: &mut IselContext<'_, '_, Self::Instr>);
 }
 
 pub fn select_instrs<B: Backend>(
@@ -126,175 +123,203 @@ pub fn select_instrs<B: Backend>(
     cfg_ctx: &CfgContext,
     backend: &B,
 ) -> Result<Lir<B::Instr>, IselFailed> {
-    // TODO: Classify side effects.
-    // TODO: Collect stack slots and prepare dedicated stack slot mapping.
+    let mut state = IselState::new(valgraph, schedule, cfg_ctx, backend);
+    let mut builder = LirBuilder::new(&cfg_ctx.block_order);
+    state.prepare_for_isel(&mut builder);
 
-    let mut value_reg_map = ValueRegMap::default();
-    let mut reg_node_map = RegNodeMap::default();
-    let mut node_use_counts = NodeUseCountMap::new();
+    while let Some(block) = builder.advance_block() {
+        state.select_block(&mut builder, block)?;
+    }
 
-    let mut lir_builder = LirBuilder::new(&cfg_ctx.block_order);
+    Ok(builder.finish())
+}
 
-    // Count original node uses before we start selection.
-    for &block in &cfg_ctx.block_order {
-        for &phi in schedule.block_phis(block) {
-            // Values flowing into block parameters are always live.
-            // TODO: Except for values from dead control inputs?
-            for pred in dataflow_preds(valgraph, phi) {
-                node_use_counts[pred] += 1;
+struct IselState<'ctx, B: Backend> {
+    valgraph: &'ctx ValGraph,
+    schedule: &'ctx Schedule,
+    cfg_ctx: &'ctx CfgContext,
+    backend: &'ctx B,
+    value_reg_map: ValueRegMap,
+    reg_node_map: RegNodeMap,
+    node_use_counts: NodeUseCountMap,
+}
+
+impl<'ctx, B: Backend> IselState<'ctx, B> {
+    fn new(
+        valgraph: &'ctx ValGraph,
+        schedule: &'ctx Schedule,
+        cfg_ctx: &'ctx CfgContext,
+        backend: &'ctx B,
+    ) -> Self {
+        Self {
+            valgraph,
+            schedule,
+            cfg_ctx,
+            backend,
+            value_reg_map: Default::default(),
+            reg_node_map: Default::default(),
+            node_use_counts: Default::default(),
+        }
+    }
+
+    fn prepare_for_isel(&mut self, builder: &mut LirBuilder<'ctx, B::Instr>) {
+        // TODO: Classify side effects.
+        // TODO: Collect stack slots and prepare dedicated stack slot mapping.
+
+        for &block in &self.cfg_ctx.block_order {
+            for &phi in self.schedule.block_phis(block) {
+                // Values flowing into block parameters are always live.
+                // TODO: Except for values from dead control inputs?
+                for pred in dataflow_preds(self.valgraph, phi) {
+                    self.node_use_counts[pred] += 1;
+                }
+
+                // Create a fresh register for every incoming block parameter (phi output).
+                let output = self.valgraph.node_outputs(phi)[0];
+                self.create_phi_vreg(builder, output);
             }
 
-            // Create a fresh register for every incoming block parameter (phi output).
-            let output = valgraph.node_outputs(phi)[0];
-            create_phi_vreg(
-                &mut lir_builder,
-                &mut value_reg_map,
-                backend,
-                valgraph,
-                output,
-            );
-        }
-
-        for &node in schedule.scheduled_nodes_rev(block) {
-            // Values flowing into scheduled nodes start live, but may be made dead by the
-            // instruction selection process.
-            for pred in dataflow_preds(valgraph, node) {
-                node_use_counts[pred] += 1;
+            for &node in self.schedule.scheduled_nodes_rev(block) {
+                // Values flowing into scheduled nodes start live, but may be made dead by the
+                // instruction selection process.
+                for pred in dataflow_preds(self.valgraph, node) {
+                    self.node_use_counts[pred] += 1;
+                }
             }
         }
     }
 
-    while let Some(block) = lir_builder.advance_block() {
-        lir_builder.set_incoming_block_params(
-            schedule
+    fn select_block(
+        &mut self,
+        builder: &mut LirBuilder<'ctx, B::Instr>,
+        block: Block,
+    ) -> Result<(), IselFailed> {
+        self.lower_block_params(builder, block);
+
+        let is_terminated = self
+            .schedule
+            .scheduled_nodes_rev(block)
+            .first()
+            .map_or(false, |&node| self.valgraph.node_kind(node).is_terminator());
+
+        if !is_terminated {
+            let succs = self.cfg_ctx.cfg.block_succs(block);
+            assert!(
+                succs.len() == 1,
+                "unterminated block does not have 1 successor"
+            );
+            builder.build_instrs(|mut builder| {
+                builder.push_instr(self.backend.create_jump(succs[0]), [], []);
+            });
+        }
+
+        for &node in self.schedule.scheduled_nodes_rev(block) {
+            // Note: node inputs should be detached after selection so the selector sees correct use
+            // counts for the current node's inputs.
+
+            let node_kind = self.valgraph.node_kind(node);
+            if !node_kind.has_control_flow() && self.node_use_counts[node] == 0 {
+                self.detach_node_inputs(node);
+                continue;
+            }
+
+            builder.build_instrs(|builder| {
+                let targets = if node_kind.is_terminator() {
+                    self.cfg_ctx.cfg.block_succs(block)
+                } else {
+                    &[]
+                };
+                let backend = self.backend;
+
+                let mut context = IselContext {
+                    builder,
+                    state: self,
+                };
+                backend.select(node, targets, &mut context)
+            })?;
+
+            self.detach_node_inputs(node);
+        }
+
+        Ok(())
+    }
+
+    fn lower_block_params(&mut self, builder: &mut LirBuilder<'ctx, B::Instr>, block: Block) {
+        builder.set_incoming_block_params(
+            self.schedule
                 .block_phis(block)
                 .iter()
-                .map(|&phi| value_reg_map[&valgraph.node_outputs(phi)[0]]),
+                .map(|&phi| self.value_reg_map[&self.valgraph.node_outputs(phi)[0]]),
         );
 
-        for &succ in cfg_ctx.cfg.block_succs(block).iter() {
+        for &succ in self.cfg_ctx.cfg.block_succs(block).iter() {
             // TODO: Avoid linear search to deal with pathological cases?
-            let pred_idx = cfg_ctx
+            let pred_idx = self
+                .cfg_ctx
                 .cfg
                 .block_preds(succ)
                 .iter()
                 .position(|&pred| pred == block)
                 .unwrap();
 
-            let Some(valgraph_pred_idx) = cfg_ctx.block_map.valgraph_pred_index(succ, pred_idx)
+            let Some(valgraph_pred_idx) =
+                self.cfg_ctx.block_map.valgraph_pred_index(succ, pred_idx)
             else {
                 // This successor didn't come from the valgraph (it was a split critical edge).
                 continue;
             };
 
-            let outgoing_params: SmallVec<[_; 4]> = schedule
+            let outgoing_params: SmallVec<[_; 4]> = self
+                .schedule
                 .block_phis(succ)
                 .iter()
                 .map(|&phi| {
-                    let input = valgraph.node_inputs(phi)[valgraph_pred_idx as usize];
-                    get_value_vreg(
-                        &mut lir_builder,
-                        &mut value_reg_map,
-                        &mut reg_node_map,
-                        backend,
-                        valgraph,
-                        input,
-                    )
+                    let input = self.valgraph.node_inputs(phi)[valgraph_pred_idx as usize];
+                    self.get_value_vreg(builder, input)
                 })
                 .collect();
 
-            lir_builder.add_succ_outgoing_block_params(outgoing_params)
-        }
-
-        let is_terminated = schedule
-            .scheduled_nodes_rev(block)
-            .first()
-            .map_or(false, |&node| valgraph.node_kind(node).is_terminator());
-
-        if !is_terminated {
-            let succs = cfg_ctx.cfg.block_succs(block);
-            assert!(
-                succs.len() == 1,
-                "unterminated block does not have 1 successor"
-            );
-            lir_builder.build_instrs(|builder| {
-                let mut context = IselContext {
-                    valgraph,
-                    builder,
-                    value_reg_map: &mut value_reg_map,
-                    node_use_counts: &mut node_use_counts,
-                    reg_node_map: &mut reg_node_map,
-                };
-                backend.emit_jump(succs[0], &mut context);
-            });
-        }
-
-        for &node in schedule.scheduled_nodes_rev(block) {
-            // Note: node inputs should be detached after selection so the selector sees correct use
-            // counts for the current node's inputs.
-
-            let node_kind = valgraph.node_kind(node);
-            if !node_kind.has_control_flow() && node_use_counts[node] == 0 {
-                detach_node_inputs(valgraph, node, &mut node_use_counts);
-                continue;
-            }
-
-            lir_builder.build_instrs(|builder| {
-                let mut context = IselContext {
-                    valgraph,
-                    builder,
-                    value_reg_map: &mut value_reg_map,
-                    node_use_counts: &mut node_use_counts,
-                    reg_node_map: &mut reg_node_map,
-                };
-
-                let targets = if node_kind.is_terminator() {
-                    cfg_ctx.cfg.block_succs(block)
-                } else {
-                    &[]
-                };
-                backend.select(node, targets, &mut context)
-            })?;
-
-            detach_node_inputs(valgraph, node, &mut node_use_counts);
+            builder.add_succ_outgoing_block_params(outgoing_params);
         }
     }
 
-    Ok(lir_builder.finish())
-}
+    fn get_value_vreg(
+        &mut self,
+        builder: &mut LirBuilder<'ctx, B::Instr>,
+        value: DepValue,
+    ) -> VirtReg {
+        get_value_vreg_helper(
+            |value, class| {
+                let vreg = builder.create_vreg(class);
+                self.reg_node_map
+                    .insert(vreg, self.valgraph.value_def(value).0);
+                vreg
+            },
+            &mut self.value_reg_map,
+            self.backend,
+            self.valgraph,
+            value,
+        )
+    }
 
-fn get_value_vreg<B: Backend>(
-    lir_builder: &mut LirBuilder<'_, B::Instr>,
-    value_reg_map: &mut ValueRegMap,
-    reg_node_map: &mut RegNodeMap,
-    backend: &B,
-    valgraph: &ValGraph,
-    value: DepValue,
-) -> VirtReg {
-    get_value_vreg_helper(
-        |value, class| {
-            let vreg = lir_builder.create_vreg(class);
-            reg_node_map.insert(vreg, valgraph.value_def(value).0);
-            vreg
-        },
-        value_reg_map,
-        backend,
-        valgraph,
-        value,
-    )
-}
+    fn create_phi_vreg(
+        &mut self,
+        builder: &mut LirBuilder<'ctx, B::Instr>,
+        value: DepValue,
+    ) -> VirtReg {
+        let class = self
+            .backend
+            .reg_class_for_type(self.valgraph.value_kind(value).as_value().unwrap());
+        let vreg = builder.create_vreg(class);
+        self.value_reg_map.insert(value, vreg);
+        vreg
+    }
 
-fn create_phi_vreg<B: Backend>(
-    lir_builder: &mut LirBuilder<'_, B::Instr>,
-    value_reg_map: &mut ValueRegMap,
-    backend: &B,
-    valgraph: &ValGraph,
-    value: DepValue,
-) -> VirtReg {
-    let class = backend.reg_class_for_type(valgraph.value_kind(value).as_value().unwrap());
-    let vreg = lir_builder.create_vreg(class);
-    value_reg_map.insert(value, vreg);
-    vreg
+    fn detach_node_inputs(&mut self, node: Node) {
+        for pred in dataflow_preds(self.valgraph, node) {
+            self.node_use_counts[pred] -= 1;
+        }
+    }
 }
 
 fn get_value_vreg_helper<B: Backend>(
@@ -319,11 +344,5 @@ fn get_value_vreg_helper<B: Backend>(
             vacant.insert(vreg);
             vreg
         }
-    }
-}
-
-fn detach_node_inputs(valgraph: &ValGraph, node: Node, node_use_counts: &mut NodeUseCountMap) {
-    for pred in dataflow_preds(valgraph, node) {
-        node_use_counts[pred] -= 1;
     }
 }

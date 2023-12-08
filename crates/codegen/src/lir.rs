@@ -347,7 +347,7 @@ impl<I: fmt::Debug> Lir<I> {
     }
 }
 
-pub struct InstrBuilder<'b, 'o, I> {
+pub struct InstrBuilder<'o, 'b, I> {
     builder: &'b mut Builder<'o, I>,
 }
 
@@ -511,7 +511,7 @@ impl<'o, I> Builder<'o, I> {
             .push((base.try_into().unwrap(), len.try_into().unwrap()));
     }
 
-    pub fn build_instrs<R>(&mut self, f: impl FnOnce(InstrBuilder<'_, '_, I>) -> R) -> R {
+    pub fn build_instrs<R>(&mut self, f: impl FnOnce(InstrBuilder<'o, '_, I>) -> R) -> R {
         let orig_len = self.lir.instrs.len();
         let retval = f(InstrBuilder { builder: self });
         // We're building the LIR in reverse order, but the sequence of instructions should end up

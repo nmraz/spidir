@@ -210,13 +210,35 @@ pub fn select_instrs<B: Backend>(
             lir_builder.add_succ_outgoing_block_params(outgoing_params)
         }
 
-        // TODO: Branch at end of block if necessary.
+        let is_terminated = schedule
+            .scheduled_nodes_rev(block)
+            .first()
+            .map_or(false, |&node| valgraph.node_kind(node).is_terminator());
+
+        if !is_terminated {
+            let succs = cfg_ctx.cfg.block_succs(block);
+            assert!(
+                succs.len() == 1,
+                "unterminated block does not have 1 successor"
+            );
+            lir_builder.build_instrs(|builder| {
+                let mut context = IselContext {
+                    valgraph,
+                    builder,
+                    value_reg_map: &mut value_reg_map,
+                    node_use_counts: &mut node_use_counts,
+                    reg_node_map: &mut reg_node_map,
+                };
+                backend.emit_jump(succs[0], &mut context)
+            })?;
+        }
 
         for &node in schedule.scheduled_nodes_rev(block) {
             // Note: node inputs should be detached after selection so the selector sees correct use
             // counts for the current node's inputs.
 
-            if !valgraph.node_kind(node).has_control_flow() && node_use_counts[node] == 0 {
+            let node_kind = valgraph.node_kind(node);
+            if !node_kind.has_control_flow() && node_use_counts[node] == 0 {
                 detach_node_inputs(valgraph, node, &mut node_use_counts);
                 continue;
             }
@@ -230,8 +252,12 @@ pub fn select_instrs<B: Backend>(
                     reg_node_map: &mut reg_node_map,
                 };
 
-                // TODO: Branches need special handling.
-                backend.select(node, &[], &mut context)
+                let targets = if node_kind.is_terminator() {
+                    cfg_ctx.cfg.block_succs(block)
+                } else {
+                    &[]
+                };
+                backend.select(node, targets, &mut context)
             })?;
 
             detach_node_inputs(valgraph, node, &mut node_use_counts);

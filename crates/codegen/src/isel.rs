@@ -117,11 +117,7 @@ pub trait Backend {
         ctx: &mut IselContext<'_, '_, Self::Instr>,
     ) -> Result<(), IselFailed>;
 
-    fn emit_jump(
-        &self,
-        target: Block,
-        ctx: &mut IselContext<'_, '_, Self::Instr>,
-    ) -> Result<(), IselFailed>;
+    fn emit_jump(&self, target: Block, ctx: &mut IselContext<'_, '_, Self::Instr>);
 }
 
 pub fn select_instrs<B: Backend>(
@@ -229,8 +225,8 @@ pub fn select_instrs<B: Backend>(
                     node_use_counts: &mut node_use_counts,
                     reg_node_map: &mut reg_node_map,
                 };
-                backend.emit_jump(succs[0], &mut context)
-            })?;
+                backend.emit_jump(succs[0], &mut context);
+            });
         }
 
         for &node in schedule.scheduled_nodes_rev(block) {

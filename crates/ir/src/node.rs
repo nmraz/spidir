@@ -175,6 +175,11 @@ impl NodeKind {
                 | Self::Call(..)
         )
     }
+
+    #[inline]
+    pub fn is_terminator(&self) -> bool {
+        matches!(self, Self::Return | Self::Unreachable | Self::BrCond)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

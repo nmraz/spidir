@@ -16,10 +16,6 @@ use crate::{
     schedule::Schedule,
 };
 
-type ValueRegMap = FxHashMap<DepValue, VirtReg>;
-type RegNodeMap = FxHashMap<VirtReg, Node>;
-type NodeUseCountMap = SecondaryMap<Node, u32>;
-
 pub struct IselContext<'ctx, 's, B: Backend> {
     state: &'s mut IselState<'ctx, B>,
     builder: InstrBuilder<'ctx, 's, B::Instr>,
@@ -133,6 +129,10 @@ pub fn select_instrs<B: Backend>(
 
     Ok(builder.finish())
 }
+
+type ValueRegMap = FxHashMap<DepValue, VirtReg>;
+type RegNodeMap = FxHashMap<VirtReg, Node>;
+type NodeUseCountMap = SecondaryMap<Node, u32>;
 
 struct IselState<'ctx, B: Backend> {
     valgraph: &'ctx ValGraph,

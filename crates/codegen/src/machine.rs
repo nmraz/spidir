@@ -17,7 +17,7 @@ pub trait MachineCore {
     fn usable_regs(&self, class: RegClass) -> &[PhysReg];
 }
 
-pub struct SingleIselFailed;
+pub struct MachineIselError;
 
 pub trait MachineLower: MachineCore {
     fn reg_class_for_type(&self, ty: Type) -> RegClass;
@@ -29,7 +29,7 @@ pub trait MachineLower: MachineCore {
         instr: Node,
         targets: &[Block],
         ctx: &mut IselContext<'_, '_, Self>,
-    ) -> Result<(), SingleIselFailed>
+    ) -> Result<(), MachineIselError>
     where
         Self: Sized;
 }

@@ -102,7 +102,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     }
 }
 
-pub struct IselFailed {
+pub struct IselError {
     pub node: Node,
 }
 
@@ -111,7 +111,7 @@ pub fn select_instrs<M: MachineLower>(
     schedule: &Schedule,
     cfg_ctx: &CfgContext,
     machine: &M,
-) -> Result<Lir<M>, IselFailed> {
+) -> Result<Lir<M>, IselError> {
     let mut state = IselState::new(valgraph, schedule, cfg_ctx, machine);
     let mut builder = LirBuilder::new(&cfg_ctx.block_order);
     state.prepare_for_isel(&mut builder);
@@ -187,7 +187,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         &mut self,
         builder: &mut LirBuilder<'ctx, M>,
         block: Block,
-    ) -> Result<(), IselFailed> {
+    ) -> Result<(), IselError> {
         self.lower_block_params(builder, block);
 
         let is_terminated = self
@@ -234,7 +234,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                     };
                     machine.select_instr(node, targets, &mut context)
                 })
-                .map_err(|_| IselFailed { node })?;
+                .map_err(|_| IselError { node })?;
 
             self.detach_node_inputs(node);
         }

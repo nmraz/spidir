@@ -3,7 +3,10 @@ use core::fmt;
 use alloc::{borrow::Cow, format};
 
 use crate::{
-    module::{ExternFunction, ExternFunctionData, Function, FunctionData, Module, Signature},
+    module::{
+        ExternFunction, ExternFunctionData, Function, FunctionData, FunctionMetadata, Module,
+        Signature,
+    },
     node::{FunctionRef, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::LiveNodeInfo,
@@ -125,13 +128,12 @@ pub fn write_function(w: &mut dyn fmt::Write, module: &Module, func: &FunctionDa
 }
 
 pub fn write_annotated_function<W: fmt::Write + ?Sized>(
-    mut w: &mut W,
+    w: &mut W,
     annotator: &mut (impl AnnotateGraph<W> + ?Sized),
     module: &Module,
     func: &FunctionData,
 ) -> fmt::Result {
-    write!(w, "func @{}", quote_ident(&func.name))?;
-    write_signature(&mut w, &func.sig)?;
+    write!(w, "func {}", func.metadata())?;
     w.write_str(" {\n")?;
     write_annotated_graph(w, annotator, module, &func.graph, func.entry, 4)?;
     w.write_str("}\n")
@@ -268,8 +270,7 @@ pub fn write_node_kind(
 }
 
 pub fn write_extern_function(w: &mut dyn fmt::Write, func: &ExternFunctionData) -> fmt::Result {
-    write!(w, "extfunc @{}", quote_ident(&func.name))?;
-    write_signature(w, &func.sig)?;
+    write!(w, "extfunc {}", func.metadata())?;
     writeln!(w)
 }
 
@@ -279,6 +280,14 @@ pub fn quote_ident(ident: &str) -> Cow<'_, str> {
     } else {
         ident.into()
     }
+}
+
+pub fn write_function_metadata(
+    w: &mut dyn fmt::Write,
+    metadata: &FunctionMetadata<'_>,
+) -> fmt::Result {
+    write!(w, "@{}", quote_ident(metadata.name))?;
+    write_signature(w, metadata.sig)
 }
 
 pub fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {

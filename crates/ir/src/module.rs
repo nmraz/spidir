@@ -7,7 +7,7 @@ use crate::{
     builder::{BuilderExt, SimpleBuilder},
     node::{FunctionRef, Type},
     valgraph::{Node, ValGraph},
-    write::write_module,
+    write::{write_function_metadata, write_module},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -43,6 +43,13 @@ impl FunctionData {
             entry: entry.node,
         }
     }
+
+    pub fn metadata(&self) -> FunctionMetadata<'_> {
+        FunctionMetadata {
+            name: &self.name,
+            sig: &self.sig,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -51,10 +58,25 @@ pub struct ExternFunctionData {
     pub sig: Signature,
 }
 
+impl ExternFunctionData {
+    pub fn metadata(&self) -> FunctionMetadata<'_> {
+        FunctionMetadata {
+            name: &self.name,
+            sig: &self.sig,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct FunctionMetadata<'a> {
     pub name: &'a str,
     pub sig: &'a Signature,
+}
+
+impl fmt::Display for FunctionMetadata<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_function_metadata(f, self)
+    }
 }
 
 #[derive(Clone)]
@@ -74,20 +96,8 @@ impl Module {
 
     pub fn resolve_funcref(&self, funcref: FunctionRef) -> FunctionMetadata<'_> {
         match funcref {
-            FunctionRef::Internal(func) => {
-                let func = &self.functions[func];
-                FunctionMetadata {
-                    name: &func.name,
-                    sig: &func.sig,
-                }
-            }
-            FunctionRef::External(func) => {
-                let func = &self.extern_functions[func];
-                FunctionMetadata {
-                    name: &func.name,
-                    sig: &func.sig,
-                }
-            }
+            FunctionRef::Internal(func) => self.functions[func].metadata(),
+            FunctionRef::External(func) => self.extern_functions[func].metadata(),
         }
     }
 }

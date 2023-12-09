@@ -4,6 +4,7 @@ use cranelift_entity::SecondaryMap;
 use fx_utils::FxHashMap;
 use hashbrown::hash_map::Entry;
 use ir::{
+    module::{FunctionData, Module},
     node::{NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{dataflow_inputs, dataflow_outputs},
@@ -24,11 +25,11 @@ pub struct IselContext<'ctx, 's, M: MachineLower> {
 
 impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     pub fn value_type(&self, value: DepValue) -> Type {
-        self.state.valgraph.value_kind(value).as_value().unwrap()
+        self.state.func.graph.value_kind(value).as_value().unwrap()
     }
 
     pub fn value_def(&self, value: DepValue) -> Option<(Node, u32)> {
-        let (node, input_idx) = self.state.valgraph.value_def(value);
+        let (node, input_idx) = self.state.func.graph.value_def(value);
 
         // Only allow pure nodes to be looked through for pattern matching.
         if !self.node_kind(node).has_side_effects() {
@@ -43,15 +44,15 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     }
 
     pub fn node_kind(&self, node: Node) -> NodeKind {
-        *self.state.valgraph.node_kind(node)
+        *self.state.func.graph.node_kind(node)
     }
 
     pub fn node_inputs(&self, node: Node) -> impl Iterator<Item = DepValue> + 'ctx {
-        dataflow_inputs(self.state.valgraph, node)
+        dataflow_inputs(&self.state.func.graph, node)
     }
 
     pub fn node_outputs(&self, node: Node) -> impl Iterator<Item = DepValue> + 'ctx {
-        dataflow_outputs(self.state.valgraph, node)
+        dataflow_outputs(&self.state.func.graph, node)
     }
 
     pub fn node_inputs_exact<const N: usize>(&self, node: Node) -> [DepValue; N] {
@@ -77,7 +78,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
             },
             &mut self.state.value_reg_map,
             self.state.machine,
-            self.state.valgraph,
+            &self.state.func.graph,
             value,
         )
     }
@@ -107,12 +108,13 @@ pub struct IselError {
 }
 
 pub fn select_instrs<M: MachineLower>(
-    valgraph: &ValGraph,
+    module: &Module,
+    func: &FunctionData,
     schedule: &Schedule,
     cfg_ctx: &CfgContext,
     machine: &M,
 ) -> Result<Lir<M>, IselError> {
-    let mut state = IselState::new(valgraph, schedule, cfg_ctx, machine);
+    let mut state = IselState::new(module, func, schedule, cfg_ctx, machine);
     let mut builder = LirBuilder::new(&cfg_ctx.block_order);
     state.prepare_for_isel(&mut builder);
 
@@ -128,7 +130,8 @@ type RegValueMap = FxHashMap<VirtReg, DepValue>;
 type ValueUseCounts = SecondaryMap<DepValue, u32>;
 
 struct IselState<'ctx, M: MachineLower> {
-    valgraph: &'ctx ValGraph,
+    _module: &'ctx Module,
+    func: &'ctx FunctionData,
     schedule: &'ctx Schedule,
     cfg_ctx: &'ctx CfgContext,
     machine: &'ctx M,
@@ -139,13 +142,15 @@ struct IselState<'ctx, M: MachineLower> {
 
 impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     fn new(
-        valgraph: &'ctx ValGraph,
+        module: &'ctx Module,
+        func: &'ctx FunctionData,
         schedule: &'ctx Schedule,
         cfg_ctx: &'ctx CfgContext,
         backend: &'ctx M,
     ) -> Self {
         Self {
-            valgraph,
+            _module: module,
+            func,
             schedule,
             cfg_ctx,
             machine: backend,
@@ -163,19 +168,19 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             for &phi in self.schedule.block_phis(block) {
                 // Values flowing into block parameters are always live.
                 // TODO: Except for values from dead control inputs?
-                for input in dataflow_inputs(self.valgraph, phi) {
+                for input in dataflow_inputs(&self.func.graph, phi) {
                     self.value_use_counts[input] += 1;
                 }
 
                 // Create a fresh register for every incoming block parameter (phi output).
-                let output = self.valgraph.node_outputs(phi)[0];
+                let output = self.func.graph.node_outputs(phi)[0];
                 self.create_phi_vreg(builder, output);
             }
 
             for &node in self.schedule.scheduled_nodes_rev(block) {
                 // Values flowing into scheduled nodes start live, but may be made dead by the
                 // instruction selection process.
-                for input in dataflow_inputs(self.valgraph, node) {
+                for input in dataflow_inputs(&self.func.graph, node) {
                     self.value_use_counts[input] += 1;
                 }
             }
@@ -193,7 +198,9 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             .schedule
             .scheduled_nodes_rev(block)
             .first()
-            .map_or(false, |&node| self.valgraph.node_kind(node).is_terminator());
+            .map_or(false, |&node| {
+                self.func.graph.node_kind(node).is_terminator()
+            });
 
         if !is_terminated {
             let succs = self.cfg_ctx.cfg.block_succs(block);
@@ -211,7 +218,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             // Note: node inputs should be detached after selection so the selector sees correct use
             // counts for the current node's inputs.
 
-            if !self.valgraph.node_kind(node).has_side_effects() && !self.is_node_used(node) {
+            if !self.func.graph.node_kind(node).has_side_effects() && !self.is_node_used(node) {
                 // This node is now dead as it was folded into a previous computation.
                 self.detach_node_inputs(node);
                 continue;
@@ -230,7 +237,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         block: Block,
         node: Node,
     ) -> Result<(), IselError> {
-        let node_kind = self.valgraph.node_kind(node);
+        let node_kind = self.func.graph.node_kind(node);
         match node_kind {
             NodeKind::Entry => {
                 assert!(block == self.cfg_ctx.block_order[0], "misplaced entry node");
@@ -266,7 +273,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             self.schedule
                 .block_phis(block)
                 .iter()
-                .map(|&phi| self.value_reg_map[&self.valgraph.node_outputs(phi)[0]]),
+                .map(|&phi| self.value_reg_map[&self.func.graph.node_outputs(phi)[0]]),
         );
 
         for &succ in self.cfg_ctx.cfg.block_succs(block).iter() {
@@ -291,7 +298,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 .block_phis(succ)
                 .iter()
                 .map(|&phi| {
-                    let input = self.valgraph.node_inputs(phi)[valgraph_pred_idx as usize];
+                    let input = self.func.graph.node_inputs(phi)[valgraph_pred_idx as usize];
                     self.get_value_vreg(builder, input)
                 })
                 .collect();
@@ -309,7 +316,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             },
             &mut self.value_reg_map,
             self.machine,
-            self.valgraph,
+            &self.func.graph,
             value,
         )
     }
@@ -317,14 +324,14 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     fn create_phi_vreg(&mut self, builder: &mut LirBuilder<'ctx, M>, value: DepValue) -> VirtReg {
         let class = self
             .machine
-            .reg_class_for_type(self.valgraph.value_kind(value).as_value().unwrap());
+            .reg_class_for_type(self.func.graph.value_kind(value).as_value().unwrap());
         let vreg = builder.create_vreg(class);
         self.value_reg_map.insert(value, vreg);
         vreg
     }
 
     fn is_node_used(&self, node: Node) -> bool {
-        dataflow_outputs(self.valgraph, node).any(|output| self.is_value_used(output))
+        dataflow_outputs(&self.func.graph, node).any(|output| self.is_value_used(output))
     }
 
     fn is_value_used(&self, value: DepValue) -> bool {
@@ -332,7 +339,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn detach_node_inputs(&mut self, node: Node) {
-        for input in dataflow_inputs(self.valgraph, node) {
+        for input in dataflow_inputs(&self.func.graph, node) {
             self.value_use_counts[input] -= 1;
         }
     }

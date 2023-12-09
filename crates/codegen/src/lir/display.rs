@@ -62,6 +62,50 @@ impl<M: MachineCore> fmt::Display for DisplayDefOperand<'_, M> {
     }
 }
 
+pub fn display_instr_data<'a, M: MachineCore>(
+    instr: M::Instr,
+    defs: &'a [DefOperand],
+    uses: &'a [UseOperand],
+) -> DisplayInstrData<'a, M> {
+    DisplayInstrData { instr, defs, uses }
+}
+
+pub struct DisplayInstrData<'a, M: MachineCore> {
+    instr: M::Instr,
+    defs: &'a [DefOperand],
+    uses: &'a [UseOperand],
+}
+
+impl<M: MachineCore> fmt::Display for DisplayInstrData<'_, M> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if !self.defs.is_empty() {
+            write!(
+                f,
+                "{}",
+                self.defs
+                    .iter()
+                    .format_with(", ", |def, f| { f(&def.display::<M>()) })
+            )?;
+            f.write_str(" = ")?;
+        }
+
+        write!(f, "{:?}", self.instr)?;
+
+        if !self.uses.is_empty() {
+            f.write_str(" ")?;
+            write!(
+                f,
+                "{}",
+                self.uses
+                    .iter()
+                    .format_with(", ", |use_op, f| { f(&use_op.display::<M>()) })
+            )?;
+        }
+
+        Ok(())
+    }
+}
+
 pub struct DisplayInstr<'a, M: MachineCore> {
     pub(super) lir: &'a Lir<M>,
     pub(super) instr: Instr,
@@ -69,31 +113,15 @@ pub struct DisplayInstr<'a, M: MachineCore> {
 
 impl<M: MachineCore> fmt::Display for DisplayInstr<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let defs = self.lir.instr_defs(self.instr);
-        if !defs.is_empty() {
-            write!(
-                f,
-                "{}",
-                defs.iter()
-                    .format_with(", ", |def, f| { f(&def.display::<M>()) })
-            )?;
-            f.write_str(" = ")?;
-        }
-
-        write!(f, "{:?}", self.lir.instr_data(self.instr))?;
-
-        let uses = self.lir.instr_uses(self.instr);
-        if !uses.is_empty() {
-            f.write_str(" ")?;
-            write!(
-                f,
-                "{}",
-                uses.iter()
-                    .format_with(", ", |use_op, f| { f(&use_op.display::<M>()) })
-            )?;
-        }
-
-        Ok(())
+        write!(
+            f,
+            "{}",
+            display_instr_data::<M>(
+                *self.lir.instr_data(self.instr),
+                self.lir.instr_defs(self.instr),
+                self.lir.instr_uses(self.instr)
+            )
+        )
     }
 }
 

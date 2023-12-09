@@ -1,10 +1,13 @@
 use expect_test::{expect, Expect};
 
-use crate::cfg::{Block, BlockCfg};
+use crate::{
+    cfg::{Block, BlockCfg},
+    machine::{MachineCore, MachineInstr},
+};
 
 use super::{
-    Builder, DefOperand, DefOperandConstraint, Lir, OperandPos, PhysReg, RegClass, RegNames,
-    UseOperand, UseOperandConstraint, VirtReg,
+    Builder, DefOperand, DefOperandConstraint, Lir, OperandPos, PhysReg, RegClass, UseOperand,
+    UseOperandConstraint, VirtReg,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -18,22 +21,30 @@ enum DummyInstr {
     JmpEq(Block, Block),
 }
 
+impl MachineInstr for DummyInstr {
+    fn make_jump(block: Block) -> Self {
+        Self::Jump(block)
+    }
+}
+
 const RC_GPR: RegClass = RegClass::new(0);
 
 const REG_R0: PhysReg = PhysReg::new(0);
 const REG_R1: PhysReg = PhysReg::new(1);
 const REG_R2: PhysReg = PhysReg::new(2);
 
-struct DummyRegNames;
-impl RegNames for DummyRegNames {
-    fn reg_class_name(&self, class: RegClass) -> &str {
+struct DummyMachine;
+impl MachineCore for DummyMachine {
+    type Instr = DummyInstr;
+
+    fn reg_class_name(class: RegClass) -> &'static str {
         match class {
             RC_GPR => "gpr",
             _ => unreachable!(),
         }
     }
 
-    fn reg_name(&self, reg: PhysReg) -> &str {
+    fn reg_name(reg: PhysReg) -> &'static str {
         match reg {
             REG_R0 => "r0",
             REG_R1 => "r1",
@@ -41,10 +52,17 @@ impl RegNames for DummyRegNames {
             _ => unreachable!(),
         }
     }
+
+    fn usable_regs(&self, class: RegClass) -> &[PhysReg] {
+        match class {
+            RC_GPR => &[REG_R0, REG_R1, REG_R2],
+            _ => unreachable!(),
+        }
+    }
 }
 
 fn push_instr<const U: usize>(
-    builder: &mut Builder<DummyInstr>,
+    builder: &mut Builder<DummyMachine>,
     instr: DummyInstr,
     defs: impl IntoIterator<Item = DefOperand>,
     uses: [(UseOperandConstraint, OperandPos); U],
@@ -65,8 +83,8 @@ fn push_instr<const U: usize>(
     use_regs
 }
 
-fn check_lir(lir: Lir<DummyInstr>, cfg: &BlockCfg, block_order: &[Block], expected: Expect) {
-    expected.assert_eq(&lir.display(cfg, block_order, &DummyRegNames).to_string());
+fn check_lir(lir: Lir<DummyMachine>, cfg: &BlockCfg, block_order: &[Block], expected: Expect) {
+    expected.assert_eq(&lir.display(cfg, block_order).to_string());
 }
 
 #[test]

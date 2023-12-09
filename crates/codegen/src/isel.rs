@@ -13,15 +13,16 @@ use smallvec::SmallVec;
 use crate::{
     cfg::{Block, CfgContext},
     lir::{Builder as LirBuilder, DefOperand, InstrBuilder, Lir, RegClass, UseOperand, VirtReg},
+    machine::{MachineInstr, MachineLower},
     schedule::Schedule,
 };
 
-pub struct IselContext<'ctx, 's, B: Backend> {
-    state: &'s mut IselState<'ctx, B>,
-    builder: InstrBuilder<'ctx, 's, B::Instr>,
+pub struct IselContext<'ctx, 's, M: MachineLower> {
+    state: &'s mut IselState<'ctx, M>,
+    builder: InstrBuilder<'ctx, 's, M>,
 }
 
-impl<'ctx, 's, B: Backend> IselContext<'ctx, 's, B> {
+impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     pub fn value_type(&self, value: DepValue) -> Type {
         self.state.valgraph.value_kind(value).as_value().unwrap()
     }
@@ -67,7 +68,7 @@ impl<'ctx, 's, B: Backend> IselContext<'ctx, 's, B> {
         ret
     }
 
-    pub fn get_value_vreg(&mut self, backend: &impl Backend, value: DepValue) -> VirtReg {
+    pub fn get_value_vreg(&mut self, value: DepValue) -> VirtReg {
         get_value_vreg_helper(
             |value, class| {
                 let vreg = self.builder.create_vreg(class);
@@ -75,7 +76,7 @@ impl<'ctx, 's, B: Backend> IselContext<'ctx, 's, B> {
                 vreg
             },
             &mut self.state.value_reg_map,
-            backend,
+            self.state.machine,
             self.state.valgraph,
             value,
         )
@@ -89,7 +90,7 @@ impl<'ctx, 's, B: Backend> IselContext<'ctx, 's, B> {
         self.builder.copy_vreg(dest, src)
     }
 
-    pub fn emit_instr(&mut self, instr: B::Instr, defs: &[DefOperand], uses: &[UseOperand]) {
+    pub fn emit_instr(&mut self, instr: M::Instr, defs: &[DefOperand], uses: &[UseOperand]) {
         // Bump the use count for any operands that came from values in the original graph.
         for &use_op in uses {
             if let Some(&value) = self.state.reg_value_map.get(&use_op.reg()) {
@@ -101,29 +102,17 @@ impl<'ctx, 's, B: Backend> IselContext<'ctx, 's, B> {
     }
 }
 
-pub struct IselFailed;
-
-pub trait Backend: Sized {
-    type Instr;
-
-    fn reg_class_for_type(&self, ty: Type) -> RegClass;
-    fn create_jump(&self, target: Block) -> Self::Instr;
-
-    fn select(
-        &self,
-        instr: Node,
-        targets: &[Block],
-        ctx: &mut IselContext<'_, '_, Self>,
-    ) -> Result<(), IselFailed>;
+pub struct IselFailed {
+    pub node: Node,
 }
 
-pub fn select_instrs<B: Backend>(
+pub fn select_instrs<M: MachineLower>(
     valgraph: &ValGraph,
     schedule: &Schedule,
     cfg_ctx: &CfgContext,
-    backend: &B,
-) -> Result<Lir<B::Instr>, IselFailed> {
-    let mut state = IselState::new(valgraph, schedule, cfg_ctx, backend);
+    machine: &M,
+) -> Result<Lir<M>, IselFailed> {
+    let mut state = IselState::new(valgraph, schedule, cfg_ctx, machine);
     let mut builder = LirBuilder::new(&cfg_ctx.block_order);
     state.prepare_for_isel(&mut builder);
 
@@ -139,35 +128,35 @@ type ValueRegMap = FxHashMap<DepValue, VirtReg>;
 type RegValueMap = FxHashMap<VirtReg, DepValue>;
 type ValueUseCounts = SecondaryMap<DepValue, u32>;
 
-struct IselState<'ctx, B: Backend> {
+struct IselState<'ctx, M: MachineLower> {
     valgraph: &'ctx ValGraph,
     schedule: &'ctx Schedule,
     cfg_ctx: &'ctx CfgContext,
-    backend: &'ctx B,
+    machine: &'ctx M,
     value_reg_map: ValueRegMap,
     reg_value_map: RegValueMap,
     value_use_counts: ValueUseCounts,
 }
 
-impl<'ctx, B: Backend> IselState<'ctx, B> {
+impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     fn new(
         valgraph: &'ctx ValGraph,
         schedule: &'ctx Schedule,
         cfg_ctx: &'ctx CfgContext,
-        backend: &'ctx B,
+        backend: &'ctx M,
     ) -> Self {
         Self {
             valgraph,
             schedule,
             cfg_ctx,
-            backend,
+            machine: backend,
             value_reg_map: Default::default(),
             reg_value_map: Default::default(),
             value_use_counts: Default::default(),
         }
     }
 
-    fn prepare_for_isel(&mut self, builder: &mut LirBuilder<'ctx, B::Instr>) {
+    fn prepare_for_isel(&mut self, builder: &mut LirBuilder<'ctx, M>) {
         // TODO: Classify side effects.
         // TODO: Collect stack slots and prepare dedicated stack slot mapping.
 
@@ -196,7 +185,7 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
 
     fn select_block(
         &mut self,
-        builder: &mut LirBuilder<'ctx, B::Instr>,
+        builder: &mut LirBuilder<'ctx, M>,
         block: Block,
     ) -> Result<(), IselFailed> {
         self.lower_block_params(builder, block);
@@ -214,7 +203,7 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
                 "unterminated block does not have 1 successor"
             );
             builder.build_instrs(|mut builder| {
-                builder.push_instr(self.backend.create_jump(succs[0]), [], []);
+                builder.push_instr(M::Instr::make_jump(succs[0]), [], []);
             });
         }
 
@@ -229,20 +218,22 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
                 continue;
             }
 
-            builder.build_instrs(|builder| {
-                let targets = if node_kind.is_terminator() {
-                    self.cfg_ctx.cfg.block_succs(block)
-                } else {
-                    &[]
-                };
-                let backend = self.backend;
+            builder
+                .build_instrs(|builder| {
+                    let targets = if node_kind.is_terminator() {
+                        self.cfg_ctx.cfg.block_succs(block)
+                    } else {
+                        &[]
+                    };
+                    let machine = self.machine;
 
-                let mut context = IselContext {
-                    builder,
-                    state: self,
-                };
-                backend.select(node, targets, &mut context)
-            })?;
+                    let mut context = IselContext {
+                        builder,
+                        state: self,
+                    };
+                    machine.select_instr(node, targets, &mut context)
+                })
+                .map_err(|_| IselFailed { node })?;
 
             self.detach_node_inputs(node);
         }
@@ -250,7 +241,7 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
         Ok(())
     }
 
-    fn lower_block_params(&mut self, builder: &mut LirBuilder<'ctx, B::Instr>, block: Block) {
+    fn lower_block_params(&mut self, builder: &mut LirBuilder<'ctx, M>, block: Block) {
         builder.set_incoming_block_params(
             self.schedule
                 .block_phis(block)
@@ -289,11 +280,7 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
         }
     }
 
-    fn get_value_vreg(
-        &mut self,
-        builder: &mut LirBuilder<'ctx, B::Instr>,
-        value: DepValue,
-    ) -> VirtReg {
+    fn get_value_vreg(&mut self, builder: &mut LirBuilder<'ctx, M>, value: DepValue) -> VirtReg {
         get_value_vreg_helper(
             |value, class| {
                 let vreg = builder.create_vreg(class);
@@ -301,19 +288,15 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
                 vreg
             },
             &mut self.value_reg_map,
-            self.backend,
+            self.machine,
             self.valgraph,
             value,
         )
     }
 
-    fn create_phi_vreg(
-        &mut self,
-        builder: &mut LirBuilder<'ctx, B::Instr>,
-        value: DepValue,
-    ) -> VirtReg {
+    fn create_phi_vreg(&mut self, builder: &mut LirBuilder<'ctx, M>, value: DepValue) -> VirtReg {
         let class = self
-            .backend
+            .machine
             .reg_class_for_type(self.valgraph.value_kind(value).as_value().unwrap());
         let vreg = builder.create_vreg(class);
         self.value_reg_map.insert(value, vreg);
@@ -331,14 +314,14 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
     }
 }
 
-fn get_value_vreg_helper<B: Backend>(
+fn get_value_vreg_helper<M: MachineLower>(
     builder: impl FnOnce(DepValue, RegClass) -> VirtReg,
     value_reg_map: &mut ValueRegMap,
-    backend: &B,
+    machine: &M,
     valgraph: &ValGraph,
     value: DepValue,
 ) -> VirtReg {
-    let class = backend.reg_class_for_type(valgraph.value_kind(value).as_value().unwrap());
+    let class = machine.reg_class_for_type(valgraph.value_kind(value).as_value().unwrap());
     match value_reg_map.entry(value) {
         Entry::Occupied(occupied) => {
             let vreg = *occupied.get();

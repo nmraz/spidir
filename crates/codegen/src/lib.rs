@@ -6,4 +6,5 @@ pub mod blockorder;
 pub mod cfg;
 pub mod isel;
 pub mod lir;
+pub mod machine;
 pub mod schedule;

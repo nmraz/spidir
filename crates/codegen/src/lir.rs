@@ -1,16 +1,18 @@
 use alloc::vec::Vec;
-use core::{fmt, iter, ops::Range};
+use core::{fmt, iter, marker::PhantomData, ops::Range};
 use fx_utils::FxHashMap;
 
 use cranelift_entity::SecondaryMap;
 
-use crate::cfg::{Block, BlockCfg};
+use crate::{
+    cfg::{Block, BlockCfg},
+    machine::MachineCore,
+};
 
 mod display;
 
-pub use display::{
-    Display, DisplayDefOperand, DisplayInstr, DisplayUseOperand, DisplayVirtReg, RegNames,
-};
+pub use display::{Display, DisplayDefOperand, DisplayInstr, DisplayUseOperand, DisplayVirtReg};
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RegClass(u8);
 
@@ -53,10 +55,10 @@ impl VirtReg {
         Self(value)
     }
 
-    pub fn display<R: RegNames>(self, reg_names: &R) -> DisplayVirtReg<'_, R> {
+    pub fn display<M: MachineCore>(self) -> DisplayVirtReg<M> {
         DisplayVirtReg {
             reg: self,
-            reg_names,
+            _marker: PhantomData,
         }
     }
 }
@@ -138,10 +140,10 @@ impl UseOperand {
         self.pos
     }
 
-    pub fn display<'a, R>(&'a self, reg_names: &'a R) -> DisplayUseOperand<'a, R> {
+    pub fn display<M: MachineCore>(&self) -> DisplayUseOperand<'_, M> {
         DisplayUseOperand {
             operand: self,
-            reg_names,
+            _marker: PhantomData,
         }
     }
 }
@@ -174,10 +176,10 @@ impl DefOperand {
         self.pos
     }
 
-    pub fn display<'a, R: RegNames>(&'a self, reg_names: &'a R) -> DisplayDefOperand<'a, R> {
+    pub fn display<M: MachineCore>(&self) -> DisplayDefOperand<'_, M> {
         DisplayDefOperand {
             operand: self,
-            reg_names,
+            _marker: PhantomData,
         }
     }
 }
@@ -260,19 +262,19 @@ struct BlockParamData {
 }
 
 #[derive(Clone)]
-pub struct Lir<I> {
+pub struct Lir<M: MachineCore> {
     block_instr_ranges: SecondaryMap<Block, (Instr, Instr)>,
     block_params: SecondaryMap<Block, BlockParamData>,
     live_in_regs: Vec<PhysReg>,
     outgoing_block_param_indices: Vec<(u32, u32)>,
     block_param_pool: Vec<VirtReg>,
-    instrs: Vec<I>,
+    instrs: Vec<M::Instr>,
     instr_operands: Vec<InstrOperands>,
     def_pool: Vec<DefOperand>,
     use_pool: Vec<UseOperand>,
 }
 
-impl<I> Lir<I> {
+impl<M: MachineCore> Lir<M> {
     pub fn all_instrs(&self) -> InstrRange {
         InstrRange::new(Instr(0), Instr(self.instrs.len() as u32))
     }
@@ -282,7 +284,7 @@ impl<I> Lir<I> {
         InstrRange::new(start, end)
     }
 
-    pub fn instr_data(&self, instr: Instr) -> &I {
+    pub fn instr_data(&self, instr: Instr) -> &M::Instr {
         &self.instrs[instr.as_usize()]
     }
 
@@ -319,39 +321,25 @@ impl<I> Lir<I> {
     }
 }
 
-impl<I: fmt::Debug> Lir<I> {
-    pub fn display_instr<'a, R: RegNames>(
-        &'a self,
-        reg_names: &'a R,
-        instr: Instr,
-    ) -> DisplayInstr<'a, I, R> {
-        DisplayInstr {
-            lir: self,
-            reg_names,
-            instr,
-        }
+impl<M: MachineCore> Lir<M> {
+    pub fn display_instr(&self, instr: Instr) -> DisplayInstr<'_, M> {
+        DisplayInstr { lir: self, instr }
     }
 
-    pub fn display<'a, R: RegNames>(
-        &'a self,
-        cfg: &'a BlockCfg,
-        block_order: &'a [Block],
-        reg_names: &'a R,
-    ) -> Display<'a, I, R> {
+    pub fn display<'a>(&'a self, cfg: &'a BlockCfg, block_order: &'a [Block]) -> Display<'a, M> {
         Display {
             lir: self,
             cfg,
             block_order,
-            reg_names,
         }
     }
 }
 
-pub struct InstrBuilder<'o, 'b, I> {
-    builder: &'b mut Builder<'o, I>,
+pub struct InstrBuilder<'o, 'b, M: MachineCore> {
+    builder: &'b mut Builder<'o, M>,
 }
 
-impl<I> InstrBuilder<'_, '_, I> {
+impl<M: MachineCore> InstrBuilder<'_, '_, M> {
     pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
         self.builder.create_vreg(class)
     }
@@ -362,7 +350,7 @@ impl<I> InstrBuilder<'_, '_, I> {
 
     pub fn push_instr(
         &mut self,
-        data: I,
+        data: M::Instr,
         defs: impl IntoIterator<Item = DefOperand>,
         uses: impl IntoIterator<Item = UseOperand>,
     ) {
@@ -387,8 +375,8 @@ impl<I> InstrBuilder<'_, '_, I> {
     }
 }
 
-pub struct Builder<'o, I> {
-    lir: Lir<I>,
+pub struct Builder<'o, M: MachineCore> {
+    lir: Lir<M>,
     block_order: &'o [Block],
     vreg_copies: FxHashMap<VirtReg, VirtReg>,
     next_vreg: u32,
@@ -396,7 +384,7 @@ pub struct Builder<'o, I> {
     cur_block: isize,
 }
 
-impl<'o, I> Builder<'o, I> {
+impl<'o, M: MachineCore> Builder<'o, M> {
     pub fn new(block_order: &'o [Block]) -> Self {
         assert!(!block_order.is_empty());
         Self {
@@ -511,7 +499,7 @@ impl<'o, I> Builder<'o, I> {
             .push((base.try_into().unwrap(), len.try_into().unwrap()));
     }
 
-    pub fn build_instrs<R>(&mut self, f: impl FnOnce(InstrBuilder<'o, '_, I>) -> R) -> R {
+    pub fn build_instrs<R>(&mut self, f: impl FnOnce(InstrBuilder<'o, '_, M>) -> R) -> R {
         let orig_len = self.lir.instrs.len();
         let retval = f(InstrBuilder { builder: self });
         // We're building the LIR in reverse order, but the sequence of instructions should end up
@@ -520,7 +508,7 @@ impl<'o, I> Builder<'o, I> {
         retval
     }
 
-    pub fn finish(mut self) -> Lir<I> {
+    pub fn finish(mut self) -> Lir<M> {
         assert!(self.cur_block == -1);
         assert!(self.lir.block_params(self.block_order[0]).len() == self.lir.live_in_regs.len());
 

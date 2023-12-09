@@ -1,77 +1,73 @@
-use core::fmt;
+use core::{fmt, marker::PhantomData};
 
 use itertools::Itertools;
 
-use crate::cfg::{Block, BlockCfg};
-
-use super::{
-    DefOperand, DefOperandConstraint, Instr, Lir, PhysReg, RegClass, UseOperand,
-    UseOperandConstraint, VirtReg,
+use crate::{
+    cfg::{Block, BlockCfg},
+    machine::MachineCore,
 };
 
-pub trait RegNames {
-    fn reg_class_name(&self, class: RegClass) -> &str;
-    fn reg_name(&self, reg: PhysReg) -> &str;
-}
+use super::{
+    DefOperand, DefOperandConstraint, Instr, Lir, UseOperand, UseOperandConstraint, VirtReg,
+};
 
-pub struct DisplayVirtReg<'a, R> {
+pub struct DisplayVirtReg<M> {
     pub(super) reg: VirtReg,
-    pub(super) reg_names: &'a R,
+    pub(super) _marker: PhantomData<M>,
 }
 
-impl<R: RegNames> fmt::Display for DisplayVirtReg<'_, R> {
+impl<M: MachineCore> fmt::Display for DisplayVirtReg<M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "%{}:{}",
             self.reg.reg_num(),
-            self.reg_names.reg_class_name(self.reg.class())
+            M::reg_class_name(self.reg.class())
         )
     }
 }
 
-pub struct DisplayUseOperand<'a, R> {
+pub struct DisplayUseOperand<'a, M> {
     pub(super) operand: &'a UseOperand,
-    pub(super) reg_names: &'a R,
+    pub(super) _marker: PhantomData<M>,
 }
 
-impl<R: RegNames> fmt::Display for DisplayUseOperand<'_, R> {
+impl<M: MachineCore> fmt::Display for DisplayUseOperand<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.operand.reg.display(self.reg_names))?;
+        write!(f, "{}", self.operand.reg.display::<M>())?;
         match self.operand.constraint {
             UseOperandConstraint::Any => f.write_str("(any)")?,
             UseOperandConstraint::AnyReg => f.write_str("(reg)")?,
-            UseOperandConstraint::Fixed(reg) => write!(f, "(${})", self.reg_names.reg_name(reg))?,
+            UseOperandConstraint::Fixed(reg) => write!(f, "(${})", M::reg_name(reg))?,
             UseOperandConstraint::TiedToDef(def) => write!(f, "(tied:{def})")?,
         }
         write!(f, "[{}]", self.operand.pos)
     }
 }
 
-pub struct DisplayDefOperand<'a, R> {
+pub struct DisplayDefOperand<'a, M> {
     pub(super) operand: &'a DefOperand,
-    pub(super) reg_names: &'a R,
+    pub(super) _marker: PhantomData<M>,
 }
 
-impl<R: RegNames> fmt::Display for DisplayDefOperand<'_, R> {
+impl<M: MachineCore> fmt::Display for DisplayDefOperand<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.operand.reg.display(self.reg_names))?;
+        write!(f, "{}", self.operand.reg.display::<M>())?;
         match self.operand.constraint {
             DefOperandConstraint::Any => f.write_str("(any)")?,
             DefOperandConstraint::AnyReg => f.write_str("(reg)")?,
-            DefOperandConstraint::Fixed(reg) => write!(f, "(${})", self.reg_names.reg_name(reg))?,
+            DefOperandConstraint::Fixed(reg) => write!(f, "(${})", M::reg_name(reg))?,
         }
         write!(f, "[{}]", self.operand.pos)
     }
 }
 
-pub struct DisplayInstr<'a, I, R> {
-    pub(super) lir: &'a Lir<I>,
-    pub(super) reg_names: &'a R,
+pub struct DisplayInstr<'a, M: MachineCore> {
+    pub(super) lir: &'a Lir<M>,
     pub(super) instr: Instr,
 }
 
-impl<I: fmt::Debug, R: RegNames> fmt::Display for DisplayInstr<'_, I, R> {
+impl<M: MachineCore> fmt::Display for DisplayInstr<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let defs = self.lir.instr_defs(self.instr);
         if !defs.is_empty() {
@@ -79,7 +75,7 @@ impl<I: fmt::Debug, R: RegNames> fmt::Display for DisplayInstr<'_, I, R> {
                 f,
                 "{}",
                 defs.iter()
-                    .format_with(", ", |def, f| { f(&def.display(self.reg_names)) })
+                    .format_with(", ", |def, f| { f(&def.display::<M>()) })
             )?;
             f.write_str(" = ")?;
         }
@@ -93,7 +89,7 @@ impl<I: fmt::Debug, R: RegNames> fmt::Display for DisplayInstr<'_, I, R> {
                 f,
                 "{}",
                 uses.iter()
-                    .format_with(", ", |use_op, f| { f(&use_op.display(self.reg_names)) })
+                    .format_with(", ", |use_op, f| { f(&use_op.display::<M>()) })
             )?;
         }
 
@@ -101,14 +97,13 @@ impl<I: fmt::Debug, R: RegNames> fmt::Display for DisplayInstr<'_, I, R> {
     }
 }
 
-pub struct Display<'a, I, R> {
-    pub(super) lir: &'a Lir<I>,
+pub struct Display<'a, M: MachineCore> {
+    pub(super) lir: &'a Lir<M>,
     pub(super) cfg: &'a BlockCfg,
     pub(super) block_order: &'a [Block],
-    pub(super) reg_names: &'a R,
 }
 
-impl<I: fmt::Debug, R: RegNames> fmt::Display for Display<'_, I, R> {
+impl<M: MachineCore> fmt::Display for Display<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut first_block = true;
 
@@ -123,8 +118,8 @@ impl<I: fmt::Debug, R: RegNames> fmt::Display for Display<'_, I, R> {
                         .zip(&self.lir.live_in_regs)
                         .format_with(", ", |(param, reg), f| f(&format_args!(
                             "{}(${})",
-                            param.display(self.reg_names),
-                            self.reg_names.reg_name(*reg)
+                            param.display::<M>(),
+                            M::reg_name(*reg)
                         )))
                 )?;
             } else {
@@ -134,13 +129,13 @@ impl<I: fmt::Debug, R: RegNames> fmt::Display for Display<'_, I, R> {
                     self.lir
                         .block_params(block)
                         .iter()
-                        .format_with(", ", |param, f| f(&param.display(self.reg_names)))
+                        .format_with(", ", |param, f| f(&param.display::<M>()))
                 )?;
             }
             first_block = false;
 
             for instr in self.lir.block_instrs(block) {
-                writeln!(f, "    {}", self.lir.display_instr(self.reg_names, instr))?;
+                writeln!(f, "    {}", self.lir.display_instr(instr))?;
             }
             let succs = self.cfg.block_succs(block);
             if !succs.is_empty() {
@@ -153,7 +148,7 @@ impl<I: fmt::Debug, R: RegNames> fmt::Display for Display<'_, I, R> {
                             self.lir
                                 .outgoing_block_params(block, i as u32)
                                 .iter()
-                                .format_with(", ", |param, f| f(&param.display(self.reg_names)))
+                                .format_with(", ", |param, f| f(&param.display::<M>()))
                         ))
                     })
                 )?;

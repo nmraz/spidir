@@ -53,7 +53,7 @@ impl VirtReg {
         Self(value)
     }
 
-    pub fn display(self, reg_names: &dyn RegNames) -> DisplayVirtReg<'_> {
+    pub fn display<R: RegNames>(self, reg_names: &R) -> DisplayVirtReg<'_, R> {
         DisplayVirtReg {
             reg: self,
             reg_names,
@@ -138,7 +138,7 @@ impl UseOperand {
         self.pos
     }
 
-    pub fn display<'a>(&'a self, reg_names: &'a dyn RegNames) -> DisplayUseOperand<'a> {
+    pub fn display<'a, R>(&'a self, reg_names: &'a R) -> DisplayUseOperand<'a, R> {
         DisplayUseOperand {
             operand: self,
             reg_names,
@@ -174,7 +174,7 @@ impl DefOperand {
         self.pos
     }
 
-    pub fn display<'a>(&'a self, reg_names: &'a dyn RegNames) -> DisplayDefOperand<'a> {
+    pub fn display<'a, R: RegNames>(&'a self, reg_names: &'a R) -> DisplayDefOperand<'a, R> {
         DisplayDefOperand {
             operand: self,
             reg_names,
@@ -320,11 +320,11 @@ impl<I> Lir<I> {
 }
 
 impl<I: fmt::Debug> Lir<I> {
-    pub fn display_instr<'a>(
+    pub fn display_instr<'a, R: RegNames>(
         &'a self,
-        reg_names: &'a dyn RegNames,
+        reg_names: &'a R,
         instr: Instr,
-    ) -> DisplayInstr<'a, I> {
+    ) -> DisplayInstr<'a, I, R> {
         DisplayInstr {
             lir: self,
             reg_names,
@@ -332,12 +332,12 @@ impl<I: fmt::Debug> Lir<I> {
         }
     }
 
-    pub fn display<'a>(
+    pub fn display<'a, R: RegNames>(
         &'a self,
         cfg: &'a BlockCfg,
         block_order: &'a [Block],
-        reg_names: &'a dyn RegNames,
-    ) -> Display<'a, I> {
+        reg_names: &'a R,
+    ) -> Display<'a, I, R> {
         Display {
             lir: self,
             cfg,

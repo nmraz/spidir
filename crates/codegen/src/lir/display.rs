@@ -14,12 +14,12 @@ pub trait RegNames {
     fn reg_name(&self, reg: PhysReg) -> &str;
 }
 
-pub struct DisplayVirtReg<'a> {
+pub struct DisplayVirtReg<'a, R> {
     pub(super) reg: VirtReg,
-    pub(super) reg_names: &'a dyn RegNames,
+    pub(super) reg_names: &'a R,
 }
 
-impl fmt::Display for DisplayVirtReg<'_> {
+impl<R: RegNames> fmt::Display for DisplayVirtReg<'_, R> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -30,12 +30,12 @@ impl fmt::Display for DisplayVirtReg<'_> {
     }
 }
 
-pub struct DisplayUseOperand<'a> {
+pub struct DisplayUseOperand<'a, R> {
     pub(super) operand: &'a UseOperand,
-    pub(super) reg_names: &'a dyn RegNames,
+    pub(super) reg_names: &'a R,
 }
 
-impl fmt::Display for DisplayUseOperand<'_> {
+impl<R: RegNames> fmt::Display for DisplayUseOperand<'_, R> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.operand.reg.display(self.reg_names))?;
         match self.operand.constraint {
@@ -48,12 +48,12 @@ impl fmt::Display for DisplayUseOperand<'_> {
     }
 }
 
-pub struct DisplayDefOperand<'a> {
+pub struct DisplayDefOperand<'a, R> {
     pub(super) operand: &'a DefOperand,
-    pub(super) reg_names: &'a dyn RegNames,
+    pub(super) reg_names: &'a R,
 }
 
-impl fmt::Display for DisplayDefOperand<'_> {
+impl<R: RegNames> fmt::Display for DisplayDefOperand<'_, R> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.operand.reg.display(self.reg_names))?;
         match self.operand.constraint {
@@ -65,13 +65,13 @@ impl fmt::Display for DisplayDefOperand<'_> {
     }
 }
 
-pub struct DisplayInstr<'a, I> {
+pub struct DisplayInstr<'a, I, R> {
     pub(super) lir: &'a Lir<I>,
-    pub(super) reg_names: &'a dyn RegNames,
+    pub(super) reg_names: &'a R,
     pub(super) instr: Instr,
 }
 
-impl<I: fmt::Debug> fmt::Display for DisplayInstr<'_, I> {
+impl<I: fmt::Debug, R: RegNames> fmt::Display for DisplayInstr<'_, I, R> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let defs = self.lir.instr_defs(self.instr);
         if !defs.is_empty() {
@@ -101,14 +101,14 @@ impl<I: fmt::Debug> fmt::Display for DisplayInstr<'_, I> {
     }
 }
 
-pub struct Display<'a, I> {
+pub struct Display<'a, I, R> {
     pub(super) lir: &'a Lir<I>,
     pub(super) cfg: &'a BlockCfg,
     pub(super) block_order: &'a [Block],
-    pub(super) reg_names: &'a dyn RegNames,
+    pub(super) reg_names: &'a R,
 }
 
-impl<I: fmt::Debug> fmt::Display for Display<'_, I> {
+impl<I: fmt::Debug, R: RegNames> fmt::Display for Display<'_, I, R> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut first_block = true;
 

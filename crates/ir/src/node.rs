@@ -177,6 +177,12 @@ impl NodeKind {
     }
 
     #[inline]
+    pub fn has_side_effects(&self) -> bool {
+        // For now
+        self.has_control_flow()
+    }
+
+    #[inline]
     pub fn is_terminator(&self) -> bool {
         matches!(self, Self::Return | Self::Unreachable | Self::BrCond)
     }

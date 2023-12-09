@@ -30,7 +30,7 @@ impl<'ctx, 's, B: Backend> IselContext<'ctx, 's, B> {
         let (node, input_idx) = self.state.valgraph.value_def(value);
 
         // Only allow pure nodes to be looked through for pattern matching.
-        if !self.node_kind(node).has_control_flow() {
+        if !self.node_kind(node).has_side_effects() {
             Some((node, input_idx))
         } else {
             None
@@ -224,7 +224,7 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
             // counts for the current node's inputs.
 
             let node_kind = self.valgraph.node_kind(node);
-            if !node_kind.has_control_flow() && self.node_use_counts[node] == 0 {
+            if !node_kind.has_side_effects() && self.node_use_counts[node] == 0 {
                 // This node is now dead as it was folded into a previous computation.
                 self.detach_node_inputs(node);
                 continue;

@@ -6,7 +6,7 @@ use hashbrown::hash_map::Entry;
 use ir::{
     node::{NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::{dataflow_inputs, dataflow_outputs, dataflow_preds},
+    valwalk::{dataflow_inputs, dataflow_outputs},
 };
 use smallvec::SmallVec;
 
@@ -37,8 +37,8 @@ impl<'ctx, 's, B: Backend> IselContext<'ctx, 's, B> {
         }
     }
 
-    pub fn node_use_count(&self, node: Node) -> u32 {
-        self.state.node_use_counts[node]
+    pub fn value_use_count(&self, value: DepValue) -> u32 {
+        self.state.value_use_counts[value]
     }
 
     pub fn node_kind(&self, node: Node) -> NodeKind {
@@ -71,9 +71,7 @@ impl<'ctx, 's, B: Backend> IselContext<'ctx, 's, B> {
         get_value_vreg_helper(
             |value, class| {
                 let vreg = self.builder.create_vreg(class);
-                self.state
-                    .reg_node_map
-                    .insert(vreg, self.state.valgraph.value_def(value).0);
+                self.state.reg_value_map.insert(vreg, value);
                 vreg
             },
             &mut self.state.value_reg_map,
@@ -92,10 +90,10 @@ impl<'ctx, 's, B: Backend> IselContext<'ctx, 's, B> {
     }
 
     pub fn emit_instr(&mut self, instr: B::Instr, defs: &[DefOperand], uses: &[UseOperand]) {
-        // Bump the use count for any operands that came from nodes in the original graph.
+        // Bump the use count for any operands that came from values in the original graph.
         for &use_op in uses {
-            if let Some(&node) = self.state.reg_node_map.get(&use_op.reg()) {
-                self.state.node_use_counts[node] += 1;
+            if let Some(&value) = self.state.reg_value_map.get(&use_op.reg()) {
+                self.state.value_use_counts[value] += 1;
             }
         }
         self.builder
@@ -129,6 +127,7 @@ pub fn select_instrs<B: Backend>(
     let mut builder = LirBuilder::new(&cfg_ctx.block_order);
     state.prepare_for_isel(&mut builder);
 
+    // TODO: Handle entry node
     while let Some(block) = builder.advance_block() {
         state.select_block(&mut builder, block)?;
     }
@@ -137,8 +136,8 @@ pub fn select_instrs<B: Backend>(
 }
 
 type ValueRegMap = FxHashMap<DepValue, VirtReg>;
-type RegNodeMap = FxHashMap<VirtReg, Node>;
-type NodeUseCountMap = SecondaryMap<Node, u32>;
+type RegValueMap = FxHashMap<VirtReg, DepValue>;
+type ValueUseCounts = SecondaryMap<DepValue, u32>;
 
 struct IselState<'ctx, B: Backend> {
     valgraph: &'ctx ValGraph,
@@ -146,8 +145,8 @@ struct IselState<'ctx, B: Backend> {
     cfg_ctx: &'ctx CfgContext,
     backend: &'ctx B,
     value_reg_map: ValueRegMap,
-    reg_node_map: RegNodeMap,
-    node_use_counts: NodeUseCountMap,
+    reg_value_map: RegValueMap,
+    value_use_counts: ValueUseCounts,
 }
 
 impl<'ctx, B: Backend> IselState<'ctx, B> {
@@ -163,8 +162,8 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
             cfg_ctx,
             backend,
             value_reg_map: Default::default(),
-            reg_node_map: Default::default(),
-            node_use_counts: Default::default(),
+            reg_value_map: Default::default(),
+            value_use_counts: Default::default(),
         }
     }
 
@@ -176,8 +175,8 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
             for &phi in self.schedule.block_phis(block) {
                 // Values flowing into block parameters are always live.
                 // TODO: Except for values from dead control inputs?
-                for pred in dataflow_preds(self.valgraph, phi) {
-                    self.node_use_counts[pred] += 1;
+                for input in dataflow_inputs(self.valgraph, phi) {
+                    self.value_use_counts[input] += 1;
                 }
 
                 // Create a fresh register for every incoming block parameter (phi output).
@@ -188,8 +187,8 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
             for &node in self.schedule.scheduled_nodes_rev(block) {
                 // Values flowing into scheduled nodes start live, but may be made dead by the
                 // instruction selection process.
-                for pred in dataflow_preds(self.valgraph, node) {
-                    self.node_use_counts[pred] += 1;
+                for input in dataflow_inputs(self.valgraph, node) {
+                    self.value_use_counts[input] += 1;
                 }
             }
         }
@@ -224,7 +223,7 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
             // counts for the current node's inputs.
 
             let node_kind = self.valgraph.node_kind(node);
-            if !node_kind.has_side_effects() && self.node_use_counts[node] == 0 {
+            if !node_kind.has_side_effects() && !self.is_node_used(node) {
                 // This node is now dead as it was folded into a previous computation.
                 self.detach_node_inputs(node);
                 continue;
@@ -298,8 +297,7 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
         get_value_vreg_helper(
             |value, class| {
                 let vreg = builder.create_vreg(class);
-                self.reg_node_map
-                    .insert(vreg, self.valgraph.value_def(value).0);
+                self.reg_value_map.insert(vreg, value);
                 vreg
             },
             &mut self.value_reg_map,
@@ -322,9 +320,13 @@ impl<'ctx, B: Backend> IselState<'ctx, B> {
         vreg
     }
 
+    fn is_node_used(&self, node: Node) -> bool {
+        dataflow_outputs(self.valgraph, node).any(|output| self.value_use_counts[output] > 0)
+    }
+
     fn detach_node_inputs(&mut self, node: Node) {
-        for pred in dataflow_preds(self.valgraph, node) {
-            self.node_use_counts[pred] -= 1;
+        for input in dataflow_inputs(self.valgraph, node) {
+            self.value_use_counts[input] -= 1;
         }
     }
 }

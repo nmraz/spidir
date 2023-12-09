@@ -305,7 +305,11 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn is_node_used(&self, node: Node) -> bool {
-        dataflow_outputs(self.valgraph, node).any(|output| self.value_use_counts[output] > 0)
+        dataflow_outputs(self.valgraph, node).any(|output| self.is_value_used(output))
+    }
+
+    fn is_value_used(&self, value: DepValue) -> bool {
+        self.value_use_counts[value] > 0
     }
 
     fn detach_node_inputs(&mut self, node: Node) {

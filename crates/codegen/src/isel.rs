@@ -13,7 +13,7 @@ use smallvec::SmallVec;
 use crate::{
     cfg::{Block, CfgContext},
     lir::{Builder as LirBuilder, DefOperand, InstrBuilder, Lir, RegClass, UseOperand, VirtReg},
-    machine::{MachineInstr, MachineLower},
+    machine::MachineLower,
     schedule::Schedule,
 };
 
@@ -202,8 +202,9 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 succs.len() == 1,
                 "unterminated block does not have 1 successor"
             );
+            let machine = self.machine;
             builder.build_instrs(|mut builder| {
-                builder.push_instr(M::Instr::make_jump(succs[0]), [], []);
+                builder.push_instr(machine.make_jump(succs[0]), [], []);
             });
         }
 

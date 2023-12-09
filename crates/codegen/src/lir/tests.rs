@@ -2,7 +2,7 @@ use expect_test::{expect, Expect};
 
 use crate::{
     cfg::{Block, BlockCfg},
-    machine::{MachineCore, MachineInstr},
+    machine::MachineCore,
 };
 
 use super::{
@@ -19,12 +19,6 @@ enum DummyInstr {
     Ret,
     Jump(Block),
     JmpEq(Block, Block),
-}
-
-impl MachineInstr for DummyInstr {
-    fn make_jump(block: Block) -> Self {
-        Self::Jump(block)
-    }
 }
 
 const RC_GPR: RegClass = RegClass::new(0);

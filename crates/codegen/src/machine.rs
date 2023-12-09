@@ -8,12 +8,8 @@ use crate::{
     lir::{PhysReg, RegClass},
 };
 
-pub trait MachineInstr: Copy + Debug {
-    fn make_jump(block: Block) -> Self;
-}
-
 pub trait MachineCore {
-    type Instr: MachineInstr;
+    type Instr: Copy + Debug;
 
     fn reg_class_name(class: RegClass) -> &'static str;
     fn reg_name(reg: PhysReg) -> &'static str;
@@ -25,6 +21,8 @@ pub struct SingleIselFailed;
 
 pub trait MachineLower: MachineCore {
     fn reg_class_for_type(&self, ty: Type) -> RegClass;
+
+    fn make_jump(&self, block: Block) -> Self::Instr;
 
     fn select_instr(
         &self,

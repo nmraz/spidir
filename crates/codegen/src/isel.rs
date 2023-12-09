@@ -116,7 +116,6 @@ pub fn select_instrs<M: MachineLower>(
     let mut builder = LirBuilder::new(&cfg_ctx.block_order);
     state.prepare_for_isel(&mut builder);
 
-    // TODO: Handle entry node
     while let Some(block) = builder.advance_block() {
         state.select_block(&mut builder, block)?;
     }
@@ -212,14 +211,36 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             // Note: node inputs should be detached after selection so the selector sees correct use
             // counts for the current node's inputs.
 
-            let node_kind = self.valgraph.node_kind(node);
-            if !node_kind.has_side_effects() && !self.is_node_used(node) {
+            if !self.valgraph.node_kind(node).has_side_effects() && !self.is_node_used(node) {
                 // This node is now dead as it was folded into a previous computation.
                 self.detach_node_inputs(node);
                 continue;
             }
 
-            builder
+            self.select_node(builder, block, node)?;
+            self.detach_node_inputs(node);
+        }
+
+        Ok(())
+    }
+
+    fn select_node(
+        &mut self,
+        builder: &mut LirBuilder<'ctx, M>,
+        block: Block,
+        node: Node,
+    ) -> Result<(), IselError> {
+        let node_kind = self.valgraph.node_kind(node);
+        match node_kind {
+            NodeKind::Entry => {
+                assert!(block == self.cfg_ctx.block_order[0], "misplaced entry node");
+                todo!()
+            }
+            NodeKind::StackSlot { .. } => {
+                // We have nothing to do here for stack slots; they need to be collected and
+                // prepared in advance.
+            }
+            _ => builder
                 .build_instrs(|builder| {
                     let targets = if node_kind.is_terminator() {
                         self.cfg_ctx.cfg.block_succs(block)
@@ -234,9 +255,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                     };
                     machine.select_instr(node, targets, &mut context)
                 })
-                .map_err(|_| IselError { node })?;
-
-            self.detach_node_inputs(node);
+                .map_err(|_| IselError { node })?,
         }
 
         Ok(())

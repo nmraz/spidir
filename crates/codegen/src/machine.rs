@@ -6,7 +6,7 @@ use ir::{node::Type, valgraph::Node};
 use crate::{
     cfg::Block,
     isel::IselContext,
-    lir::{PhysReg, RegClass, VirtReg},
+    lir::{PhysReg, RegClass},
 };
 
 pub trait MachineCore {

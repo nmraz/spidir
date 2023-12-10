@@ -8,12 +8,17 @@ use ir::{
     node::{NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{dataflow_inputs, dataflow_outputs},
+    write::display_node,
 };
+use log::{debug, trace};
 use smallvec::SmallVec;
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Builder as LirBuilder, DefOperand, InstrBuilder, Lir, RegClass, UseOperand, VirtReg},
+    lir::{
+        display_instr_data, Builder as LirBuilder, DefOperand, InstrBuilder, Lir, RegClass,
+        UseOperand, VirtReg,
+    },
     machine::MachineLower,
     schedule::Schedule,
 };
@@ -98,6 +103,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
                 self.state.value_use_counts[value] += 1;
             }
         }
+        trace!("    {}", display_instr_data::<M>(instr, defs, uses));
         self.builder
             .push_instr(instr, defs.iter().copied(), uses.iter().copied());
     }
@@ -114,6 +120,8 @@ pub fn select_instrs<M: MachineLower>(
     cfg_ctx: &CfgContext,
     machine: &M,
 ) -> Result<Lir<M>, IselError> {
+    debug!("selecting instructions for: {}", func.metadata());
+
     let mut state = IselState::new(module, func, schedule, cfg_ctx, machine);
     let mut builder = LirBuilder::new(&cfg_ctx.block_order);
     state.prepare_for_isel(&mut builder);
@@ -130,7 +138,7 @@ type RegValueMap = FxHashMap<VirtReg, DepValue>;
 type ValueUseCounts = SecondaryMap<DepValue, u32>;
 
 struct IselState<'ctx, M: MachineLower> {
-    _module: &'ctx Module,
+    module: &'ctx Module,
     func: &'ctx FunctionData,
     schedule: &'ctx Schedule,
     cfg_ctx: &'ctx CfgContext,
@@ -149,7 +157,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         backend: &'ctx M,
     ) -> Self {
         Self {
-            _module: module,
+            module,
             func,
             schedule,
             cfg_ctx,
@@ -215,11 +223,14 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         }
 
         for &node in self.schedule.scheduled_nodes_rev(block) {
+            trace!("  {}:", display_node(self.module, &self.func.graph, node));
+
             // Note: node inputs should be detached after selection so the selector sees correct use
             // counts for the current node's inputs.
 
             if !self.func.graph.node_kind(node).has_side_effects() && !self.is_node_used(node) {
                 // This node is now dead as it was folded into a previous computation.
+                trace!("    (dead)");
                 self.detach_node_inputs(node);
                 continue;
             }

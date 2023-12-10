@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use core::array;
 
 use cranelift_entity::SecondaryMap;
@@ -10,16 +11,17 @@ use ir::{
     valwalk::{dataflow_inputs, dataflow_outputs},
     write::display_node,
 };
+use itertools::izip;
 use log::{debug, trace};
 use smallvec::SmallVec;
 
 use crate::{
     cfg::{Block, CfgContext},
     lir::{
-        display_instr_data, Builder as LirBuilder, DefOperand, InstrBuilder, Lir, RegClass,
-        UseOperand, VirtReg,
+        display_instr_data, Builder as LirBuilder, DefOperand, DefOperandConstraint, InstrBuilder,
+        Lir, OperandPos, RegClass, UseOperand, VirtReg,
     },
-    machine::MachineLower,
+    machine::{MachineLower, ParamLoc},
     schedule::Schedule,
 };
 
@@ -252,7 +254,36 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         match node_kind {
             NodeKind::Entry => {
                 assert!(block == self.cfg_ctx.block_order[0], "misplaced entry node");
-                todo!()
+                let param_locs = self.machine.param_locs(&self.func.sig.param_types);
+                let entry_outputs = self.func.graph.node_outputs(node);
+                assert!(param_locs.len() == entry_outputs.len());
+
+                let mut param_regs = SmallVec::<[VirtReg; 8]>::new();
+                let mut live_in_regs = Vec::new();
+                for (value, loc) in izip!(entry_outputs, param_locs) {
+                    if !self.is_value_used(value) {
+                        continue;
+                    }
+
+                    let vreg = self.get_value_vreg(builder, value);
+                    match loc {
+                        ParamLoc::Reg { reg } => {
+                            param_regs.push(vreg);
+                            live_in_regs.push(reg);
+                        }
+                        ParamLoc::Stack { fp_offset } => builder.build_instrs(|mut builder| {
+                            builder.push_instr(
+                                self.machine.make_fp_relative_load(fp_offset),
+                                [DefOperand::new(
+                                    vreg,
+                                    DefOperandConstraint::AnyReg,
+                                    OperandPos::Late,
+                                )],
+                                [],
+                            );
+                        }),
+                    }
+                }
             }
             NodeKind::StackSlot { .. } => {
                 // We have nothing to do here for stack slots; they need to be collected and

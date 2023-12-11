@@ -36,11 +36,11 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     }
 
     pub fn value_def(&self, value: DepValue) -> Option<(Node, u32)> {
-        let (node, input_idx) = self.state.func.graph.value_def(value);
+        let (node, output_idx) = self.state.func.graph.value_def(value);
 
         // Only allow pure nodes to be looked through for pattern matching.
         if !self.node_kind(node).has_side_effects() {
-            Some((node, input_idx))
+            Some((node, output_idx))
         } else {
             None
         }

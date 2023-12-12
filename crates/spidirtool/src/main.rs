@@ -9,14 +9,16 @@ use std::{
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use codegen::{cfg::CfgContext, schedule::Schedule};
+use codegen::{
+    cfg::CfgContext, isel::select_instrs, lir::Lir, schedule::Schedule, target::x86_64::X86Machine,
+};
 use ir::{
     domtree::DomTree,
     loops::LoopForest,
     module::{FunctionData, Module},
     valwalk::cfg_preorder,
     verify::{verify_func, verify_module},
-    write::{quote_ident, write_signature},
+    write::{display_node, quote_ident, write_signature},
 };
 use ir_graphviz::{
     annotate::{Annotate, ColoredAnnotator, DomTreeAnnotator, ErrorAnnotator, LoopAnnotator},
@@ -100,6 +102,11 @@ enum ToolCommand {
         /// The input IR file
         input_file: PathBuf,
     },
+    /// Schedule and instruction-select an IR module, then dump the resulting LIR
+    Lir {
+        /// The input IR file
+        input_file: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -175,6 +182,10 @@ fn main() -> Result<()> {
         ToolCommand::Schedule { input_file } => {
             let module = read_module(&input_file)?;
             io::stdout().write_all(get_module_schedule_str(&module).as_bytes())?;
+        }
+        ToolCommand::Lir { input_file } => {
+            let module = read_module(&input_file)?;
+            io::stdout().write_all(get_module_lir_str(&module)?.as_bytes())?;
         }
     }
 
@@ -252,6 +263,40 @@ fn get_module_schedule_str(module: &Module) -> String {
     }
 
     output
+}
+
+fn get_module_lir_str(module: &Module) -> Result<String> {
+    let mut output = String::new();
+
+    for func in module.functions.values() {
+        writeln!(output, "func @{} {{", quote_ident(&func.name)).unwrap();
+        let (cfg_ctx, lir) = get_function_lir(module, func)?;
+
+        write!(
+            output,
+            "{}",
+            lir.display(&cfg_ctx.cfg, &cfg_ctx.block_order)
+        )
+        .unwrap();
+        writeln!(output, "}}\n").unwrap();
+    }
+
+    Ok(output)
+}
+
+fn get_function_lir(module: &Module, func: &FunctionData) -> Result<(CfgContext, Lir<X86Machine>)> {
+    let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
+    let cfg_ctx = CfgContext::compute(&func.graph, &cfg_preorder);
+    let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx);
+    let machine = X86Machine;
+    let lir = select_instrs(module, func, &schedule, &cfg_ctx, &machine).map_err(|err| {
+        anyhow!(
+            "failed to select `{}`: `{}`",
+            func.name,
+            display_node(module, &func.graph, err.node)
+        )
+    })?;
+    Ok((cfg_ctx, lir))
 }
 
 fn get_graphviz_str(

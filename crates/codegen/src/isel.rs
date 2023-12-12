@@ -11,7 +11,6 @@ use ir::{
     valwalk::{dataflow_inputs, dataflow_outputs},
     write::display_node,
 };
-use itertools::izip;
 use log::{debug, trace};
 use smallvec::SmallVec;
 
@@ -256,11 +255,11 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 assert!(block == self.cfg_ctx.block_order[0], "misplaced entry node");
                 let param_locs = self.machine.param_locs(&self.func.sig.param_types);
                 let entry_outputs = self.func.graph.node_outputs(node);
-                assert!(param_locs.len() == entry_outputs.len());
+                assert!(param_locs.len() == entry_outputs.len() - 1);
 
                 let mut param_regs = SmallVec::<[VirtReg; 8]>::new();
                 let mut live_in_regs = Vec::new();
-                for (value, loc) in izip!(entry_outputs, param_locs) {
+                for (value, loc) in entry_outputs.into_iter().skip(1).zip(param_locs) {
                     if !self.is_value_used(value) {
                         continue;
                     }
@@ -284,6 +283,9 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                         }),
                     }
                 }
+
+                builder.set_incoming_block_params(param_regs);
+                builder.set_live_in_regs(live_in_regs);
             }
             NodeKind::StackSlot { .. } => {
                 // We have nothing to do here for stack slots; they need to be collected and

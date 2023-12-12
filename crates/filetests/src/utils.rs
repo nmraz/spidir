@@ -98,6 +98,10 @@ pub fn find_comment_start(line: &str) -> Option<usize> {
     line.find('#')
 }
 
+pub fn sanitize_raw_output(output: &str) -> String {
+    output.replace('$', "$$")
+}
+
 pub fn generalize_value_names(module: &Module, output_str: &str) -> Result<String> {
     let mut new_output = String::new();
     let mut cur_func = None;

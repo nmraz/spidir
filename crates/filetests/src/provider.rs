@@ -11,6 +11,7 @@ use self::{
     cfg::CfgProvider,
     domtree::DomTreeProvider,
     graphviz::{AnnotatorKind, GraphvizTestProvider},
+    isel::IselProvider,
     loops::LoopForestProvider,
     schedule::ScheduleProvider,
     verify::{VerifyErrProvider, VerifyOkProvider},
@@ -19,6 +20,7 @@ use self::{
 mod cfg;
 mod domtree;
 mod graphviz;
+mod isel;
 mod loops;
 mod schedule;
 mod verify;
@@ -44,6 +46,7 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> 
         ))),
         "graphviz[domtree]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::DomTree))),
         "graphviz[loops]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Loops))),
+        "isel" => Ok(Box::new(IselProvider)),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),
         "schedule" => Ok(Box::new(ScheduleProvider)),
         "verify-err" => Ok(Box::new(VerifyErrProvider)),

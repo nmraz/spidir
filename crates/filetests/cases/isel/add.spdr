@@ -1,0 +1,12 @@
+# run: isel
+
+func @add:i64(i64, i64) {
+    # check: function `add`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = AddRr8 %1:gpr(tied:0)[early], %2:gpr(reg)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %val:i64 = iadd %a, %b
+    return %c, %val
+}

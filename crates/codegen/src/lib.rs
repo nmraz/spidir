@@ -8,3 +8,4 @@ pub mod isel;
 pub mod lir;
 pub mod machine;
 pub mod schedule;
+pub mod target;

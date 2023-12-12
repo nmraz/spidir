@@ -34,7 +34,7 @@ pub trait MachineLower: MachineCore {
 
     fn select_instr(
         &self,
-        instr: Node,
+        node: Node,
         targets: &[Block],
         ctx: &mut IselContext<'_, '_, Self>,
     ) -> Result<(), MachineIselError>

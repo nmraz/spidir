@@ -34,9 +34,28 @@ pub const REG_R14: PhysReg = PhysReg::new(14);
 pub const REG_R15: PhysReg = PhysReg::new(15);
 
 #[derive(Debug, Clone, Copy)]
+pub enum OperandSize {
+    S8,
+    S16,
+    S32,
+    S64,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum AluOp {
+    Add,
+    And,
+    Cmp,
+    Or,
+    Sub,
+    Test,
+    Xor,
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum X86Instr {
     LoadRbp { offset: i32 },
-    AddRr8,
+    AluRr(OperandSize, AluOp),
     Ret,
     Jump(Block),
 }
@@ -155,12 +174,14 @@ impl MachineLower for X86Machine {
                 let [output] = ctx.node_outputs_exact(node);
                 let [op1, op2] = ctx.node_inputs_exact(node);
 
+                let ty = ctx.value_type(output);
+
                 let output = ctx.get_value_vreg(output);
                 let op1 = ctx.get_value_vreg(op1);
                 let op2 = ctx.get_value_vreg(op2);
 
                 ctx.emit_instr(
-                    X86Instr::AddRr8,
+                    X86Instr::AluRr(operand_size_for_ty(ty), AluOp::Add),
                     &[DefOperand::new(
                         output,
                         DefOperandConstraint::Any,
@@ -194,5 +215,14 @@ impl MachineLower for X86Machine {
             }
             _ => Err(MachineIselError),
         }
+    }
+}
+
+fn operand_size_for_ty(ty: Type) -> OperandSize {
+    match ty {
+        Type::I32 => OperandSize::S32,
+        Type::I64 => OperandSize::S64,
+        Type::F64 => OperandSize::S64,
+        Type::Ptr => OperandSize::S64,
     }
 }

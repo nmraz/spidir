@@ -5,7 +5,8 @@ use anyhow::{anyhow, bail, Context, Ok, Result};
 use filecheck::{Checker, CheckerBuilder, Value, VariableMap};
 use fx_utils::FxHashMap;
 use hooks::catch_panic_message;
-use ir::module::Module;
+use ir::{module::Module, verify::verify_module};
+use itertools::Itertools;
 use parser::parse_module;
 
 use provider::{select_test_provider, TestProvider};
@@ -63,6 +64,9 @@ pub fn run_test(
     update_mode: UpdateMode,
 ) -> Result<TestOutcome<String>> {
     let module = parse_module(input).context("failed to parse module")?;
+    if provider.expects_valid_module() {
+        verify_parsed_module(&module)?;
+    }
     let output = provider.output_for(&module)?;
 
     match update_mode {
@@ -82,6 +86,16 @@ pub fn run_test(
             provider, input, &module, &output,
         )?)),
     }
+}
+
+fn verify_parsed_module(module: &Module) -> Result<()> {
+    verify_module(module).map_err(|errs| {
+        let message = errs
+            .iter()
+            .map(|err| err.display_with_context(module))
+            .format("\n");
+        anyhow!("{}", message)
+    })
 }
 
 struct HashMapEnv<'a>(FxHashMap<String, Value<'a>>);

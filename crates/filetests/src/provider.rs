@@ -26,6 +26,10 @@ mod schedule;
 mod verify;
 
 pub trait TestProvider {
+    fn expects_valid_module(&self) -> bool {
+        true
+    }
+
     fn env(&self) -> FxHashMap<String, Value<'_>> {
         FxHashMap::default()
     }

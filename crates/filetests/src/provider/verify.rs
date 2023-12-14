@@ -18,6 +18,10 @@ use super::{TestProvider, Updater};
 
 pub struct VerifyOkProvider;
 impl TestProvider for VerifyOkProvider {
+    fn expects_valid_module(&self) -> bool {
+        false
+    }
+
     fn output_for(&self, module: &Module) -> Result<String> {
         verify_module(module).map_err(|errs| {
             let errs = errs
@@ -37,6 +41,10 @@ impl TestProvider for VerifyOkProvider {
 
 pub struct VerifyErrProvider;
 impl TestProvider for VerifyErrProvider {
+    fn expects_valid_module(&self) -> bool {
+        false
+    }
+
     fn env(&self) -> FxHashMap<String, Value<'_>> {
         [("val".to_owned(), Value::Regex(VAL_REGEX.into()))]
             .into_iter()

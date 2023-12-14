@@ -35,6 +35,11 @@ impl GraphvizTestProvider {
 }
 
 impl TestProvider for GraphvizTestProvider {
+    fn expects_valid_module(&self) -> bool {
+        // Some of the test cases are intentionally invalid, to trigger error display on the graph.
+        false
+    }
+
     fn output_for(&self, module: &Module) -> Result<String> {
         let mut output = String::new();
         for func in module.functions.values() {

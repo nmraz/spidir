@@ -35,6 +35,7 @@ pub const REG_R15: PhysReg = PhysReg::new(15);
 
 #[derive(Debug, Clone, Copy)]
 pub enum X86Instr {
+    LoadRbp { offset: i32 },
     AddRr8,
     Ret,
     Jump(Block),
@@ -92,27 +93,51 @@ impl MachineLower for X86Machine {
     }
 
     fn param_locs(&self, param_types: &[Type]) -> Vec<ParamLoc> {
-        assert!(
-            param_types.len() <= 6,
-            "arguments on stack not supported yet"
-        );
-        assert!(param_types
-            .iter()
-            .all(|&ty| self.reg_class_for_type(ty) == RC_GPR));
+        const FIXED_ARG_REGS: [PhysReg; 6] = [REG_RDI, REG_RSI, REG_RDX, REG_RCX, REG_R8, REG_R9];
 
-        [REG_RDI, REG_RSI, REG_RDX, REG_RCX, REG_R8, REG_R9]
+        assert!(
+            param_types
+                .iter()
+                .all(|&ty| self.reg_class_for_type(ty) == RC_GPR),
+            "non-integer arguments not supported"
+        );
+
+        let mut args: Vec<_> = FIXED_ARG_REGS
             .into_iter()
             .take(param_types.len())
             .map(|reg| ParamLoc::Reg { reg })
-            .collect()
+            .collect();
+
+        if param_types.len() > FIXED_ARG_REGS.len() {
+            for i in 0..param_types.len() - FIXED_ARG_REGS.len() {
+                // Frame layout recap:
+                //
+                // +-------+
+                // |  ...  |
+                // +-------+
+                // |  A7   |
+                // +-------+
+                // |  A6   |
+                // +-------+ < rbp + 16
+                // |  RA   |
+                // +-------+ < rbp + 8
+                // |  RBP  |
+                // +-------+ < rbp
+                args.push(ParamLoc::Stack {
+                    fp_offset: 16 + 8 * i as i32,
+                });
+            }
+        }
+
+        args
     }
 
     fn make_jump(&self, block: Block) -> Self::Instr {
         X86Instr::Jump(block)
     }
 
-    fn make_fp_relative_load(&self, _offset: i32) -> Self::Instr {
-        todo!()
+    fn make_fp_relative_load(&self, offset: i32) -> Self::Instr {
+        X86Instr::LoadRbp { offset }
     }
 
     fn select_instr(

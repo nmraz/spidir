@@ -1,0 +1,10 @@
+# run: isel
+
+func @ret_void() {
+    # check: function `ret_void`:
+    # nextln: block0[]:
+    # nextln:     Ret
+
+    %0:ctrl = entry
+    return %0
+}

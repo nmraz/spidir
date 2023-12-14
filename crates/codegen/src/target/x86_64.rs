@@ -195,22 +195,28 @@ impl MachineLower for X86Machine {
                 Ok(())
             }
             NodeKind::Return => {
-                let [retval] = ctx.node_inputs_exact(node);
-                if !ctx.value_type(retval).is_integer() {
-                    return Err(MachineIselError);
+                match ctx.node_inputs(node).next() {
+                    Some(retval) => {
+                        if !ctx.value_type(retval).is_integer() {
+                            return Err(MachineIselError);
+                        }
+
+                        let retval = ctx.get_value_vreg(retval);
+
+                        ctx.emit_instr(
+                            X86Instr::Ret,
+                            &[],
+                            &[UseOperand::new(
+                                retval,
+                                UseOperandConstraint::Fixed(REG_RAX),
+                                OperandPos::Early,
+                            )],
+                        );
+                    }
+                    None => {
+                        ctx.emit_instr(X86Instr::Ret, &[], &[]);
+                    }
                 }
-
-                let retval = ctx.get_value_vreg(retval);
-
-                ctx.emit_instr(
-                    X86Instr::Ret,
-                    &[],
-                    &[UseOperand::new(
-                        retval,
-                        UseOperandConstraint::Fixed(REG_RAX),
-                        OperandPos::Early,
-                    )],
-                );
                 Ok(())
             }
             _ => Err(MachineIselError),

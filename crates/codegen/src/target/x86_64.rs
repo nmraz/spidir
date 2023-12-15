@@ -214,26 +214,11 @@ impl MachineLower for X86Machine {
     {
         let _ = targets;
         match ctx.node_kind(node) {
-            NodeKind::Iadd => {
-                emit_alu_rr(ctx, node, AluOp::Add);
-                Ok(())
-            }
-            NodeKind::And => {
-                emit_alu_rr(ctx, node, AluOp::And);
-                Ok(())
-            }
-            NodeKind::Or => {
-                emit_alu_rr(ctx, node, AluOp::Or);
-                Ok(())
-            }
-            NodeKind::Isub => {
-                emit_alu_rr(ctx, node, AluOp::Sub);
-                Ok(())
-            }
-            NodeKind::Xor => {
-                emit_alu_rr(ctx, node, AluOp::Xor);
-                Ok(())
-            }
+            NodeKind::Iadd => emit_alu_rr(ctx, node, AluOp::Add),
+            NodeKind::And => emit_alu_rr(ctx, node, AluOp::And),
+            NodeKind::Or => emit_alu_rr(ctx, node, AluOp::Or),
+            NodeKind::Isub => emit_alu_rr(ctx, node, AluOp::Sub),
+            NodeKind::Xor => emit_alu_rr(ctx, node, AluOp::Xor),
             NodeKind::Icmp(kind) => {
                 emit_alu_rr_discarded(ctx, node, AluOp::Cmp);
                 let [output] = ctx.node_outputs_exact(node);
@@ -251,27 +236,23 @@ impl MachineLower for X86Machine {
                     &[DefOperand::any_reg(output)],
                     &[UseOperand::any_reg(temp)],
                 );
-
-                Ok(())
             }
-            NodeKind::Return => {
-                match ctx.node_inputs(node).next() {
-                    Some(retval) => {
-                        if !ctx.value_type(retval).is_integer() {
-                            return Err(MachineIselError);
-                        }
+            NodeKind::Return => match ctx.node_inputs(node).next() {
+                Some(retval) => {
+                    if !ctx.value_type(retval).is_integer() {
+                        return Err(MachineIselError);
+                    }
 
-                        let retval = ctx.get_value_vreg(retval);
-                        ctx.emit_instr(X86Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
-                    }
-                    None => {
-                        ctx.emit_instr(X86Instr::Ret, &[], &[]);
-                    }
+                    let retval = ctx.get_value_vreg(retval);
+                    ctx.emit_instr(X86Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
                 }
-                Ok(())
-            }
-            _ => Err(MachineIselError),
+                None => {
+                    ctx.emit_instr(X86Instr::Ret, &[], &[]);
+                }
+            },
+            _ => return Err(MachineIselError),
         }
+        Ok(())
     }
 }
 

@@ -398,6 +398,17 @@ impl<M: MachineCore> InstrBuilder<'_, '_, M> {
         self.builder.lir.use_pool.extend(uses);
         let use_len = self.builder.lir.use_pool.len() - use_base;
 
+        if cfg!(debug_assertions) {
+            for use_op in &self.builder.lir.use_pool[use_base..use_base + use_len] {
+                if let UseOperandConstraint::TiedToDef(def_idx) = use_op.constraint() {
+                    assert!(
+                        (def_idx as usize) < def_len,
+                        "use tied to nonexistent def {def_idx}"
+                    );
+                }
+            }
+        }
+
         self.builder.lir.instr_operands.push(InstrOperands {
             def_base: def_base.try_into().unwrap(),
             def_len: def_len.try_into().unwrap(),

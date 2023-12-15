@@ -50,6 +50,10 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
         self.state.value_use_counts[value]
     }
 
+    pub fn has_one_use(&self, value: DepValue) -> bool {
+        self.value_use_count(value) == 1
+    }
+
     pub fn node_kind(&self, node: Node) -> NodeKind {
         *self.state.func.graph.node_kind(node)
     }

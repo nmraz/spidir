@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 
 use ir::{
     node::{IcmpKind, NodeKind, Type},
-    valgraph::Node,
+    valgraph::{DepValue, Node},
 };
 
 use crate::{
@@ -102,6 +102,7 @@ pub enum X86Instr {
     Setcc(CondCode),
     Ret,
     Jump(Block),
+    Jumpcc(CondCode, Block, Block),
 }
 
 pub struct X86Machine;
@@ -220,8 +221,11 @@ impl MachineLower for X86Machine {
             NodeKind::Isub => emit_alu_rr(ctx, node, AluOp::Sub),
             NodeKind::Xor => emit_alu_rr(ctx, node, AluOp::Xor),
             NodeKind::Icmp(kind) => {
-                emit_alu_rr_discarded(ctx, node, AluOp::Cmp);
+                let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
+
+                emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
+
                 let output_ty = ctx.value_type(output);
                 let output = ctx.get_value_vreg(output);
 
@@ -235,6 +239,16 @@ impl MachineLower for X86Machine {
                     X86Instr::MovzxRR(byte_ext_width_for_ty(output_ty)),
                     &[DefOperand::any_reg(output)],
                     &[UseOperand::any_reg(temp)],
+                );
+            }
+            NodeKind::BrCond => {
+                let [cond] = ctx.node_inputs_exact(node);
+
+                emit_alu_rr_discarded(ctx, cond, cond, AluOp::Test);
+                ctx.emit_instr(
+                    X86Instr::Jumpcc(CondCode::NE, targets[0], targets[1]),
+                    &[],
+                    &[],
                 );
             }
             NodeKind::Return => match ctx.node_inputs(node).next() {
@@ -271,9 +285,12 @@ fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, op: AluOp)
     );
 }
 
-fn emit_alu_rr_discarded(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, op: AluOp) {
-    let [op1, op2] = ctx.node_inputs_exact(node);
-
+fn emit_alu_rr_discarded(
+    ctx: &mut IselContext<'_, '_, X86Machine>,
+    op1: DepValue,
+    op2: DepValue,
+    op: AluOp,
+) {
     let ty = ctx.value_type(op1);
 
     let op1 = ctx.get_value_vreg(op1);

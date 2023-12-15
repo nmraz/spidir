@@ -52,33 +52,33 @@ pub enum CondCode {
     /// Overflow (OF = 1)
     O,
     /// No Overflow (OF = 0)
-    NO,
+    No,
     /// Below (CF = 1)
     B,
     /// Above or Equal (CF = 0)
-    AE,
+    Ae,
     /// Equal (ZF = 1)
     E,
     /// Not Equal (ZF = 0)
-    NE,
+    Ne,
     /// Below or Equal ((CF | ZF) = 1)
-    BE,
+    Be,
     /// Above ((CF | ZF) = 0)
     A,
     /// Sign (SF = 1)
     S,
     /// No Sign (SF = 0)
-    NS,
+    Ns,
     /// Parity (PF = 1)
     P,
     /// No Parity (PF = 0)
-    NP,
+    Np,
     /// Less ((SF ^ OF) = 1)
     L,
     /// Greater or Equal ((SF ^ OF) = 0)
-    GE,
+    Ge,
     /// Less or Equal (((SF ^ OF) | ZF) = 1)
-    LE,
+    Le,
     /// Greater (((SF ^ OF) | ZF) = 0)
     G,
 }
@@ -271,7 +271,7 @@ impl MachineLower for X86Machine {
 
                 emit_alu_rr_discarded(ctx, cond, cond, AluOp::Test);
                 ctx.emit_instr(
-                    X86Instr::Jumpcc(CondCode::NE, targets[0], targets[1]),
+                    X86Instr::Jumpcc(CondCode::Ne, targets[0], targets[1]),
                     &[],
                     &[],
                 );
@@ -331,11 +331,11 @@ fn emit_alu_rr_discarded(
 fn cond_code_for_icmp(icmp: IcmpKind) -> CondCode {
     match icmp {
         IcmpKind::Eq => CondCode::E,
-        IcmpKind::Ne => CondCode::LE,
+        IcmpKind::Ne => CondCode::Le,
         IcmpKind::Slt => CondCode::L,
-        IcmpKind::Sle => CondCode::LE,
+        IcmpKind::Sle => CondCode::Le,
         IcmpKind::Ult => CondCode::B,
-        IcmpKind::Ule => CondCode::BE,
+        IcmpKind::Ule => CondCode::Be,
     }
 }
 

@@ -27,7 +27,7 @@ func @select_ne:i32(i32, i32, i32, i32) {
     # check: function `select_ne`:
     # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
     # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
-    # nextln:     Jumpcc(LE, block1, block3)
+    # nextln:     Jumpcc(Le, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
     # nextln:     Jump(block2)
@@ -73,7 +73,7 @@ func @select_sle:i32(i32, i32, i32, i32) {
     # check: function `select_sle`:
     # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
     # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
-    # nextln:     Jumpcc(LE, block1, block3)
+    # nextln:     Jumpcc(Le, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
     # nextln:     Jump(block2)
@@ -119,7 +119,7 @@ func @select_ule:i32(i32, i32, i32, i32) {
     # check: function `select_ule`:
     # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
     # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
-    # nextln:     Jumpcc(BE, block1, block3)
+    # nextln:     Jumpcc(Be, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
     # nextln:     Jump(block2)
@@ -145,7 +145,7 @@ func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # nextln:     %9:gpr(reg)[late] = Setcc(L)
     # nextln:     %3:gpr(reg)[late] = MovzxRR(S8S32) %9:gpr(reg)[early]
     # nextln:     AluRmR(S32, Test) %3:gpr(any)[early], %3:gpr(reg)[early]
-    # nextln:     Jumpcc(NE, block1, block3)
+    # nextln:     Jumpcc(Ne, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
     # nextln:     Jump(block2)

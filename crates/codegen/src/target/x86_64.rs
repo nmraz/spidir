@@ -97,8 +97,8 @@ pub enum AluOp {
 #[derive(Debug, Clone, Copy)]
 pub enum X86Instr {
     LoadRbp { offset: i32 },
-    AluRr(OperandSize, AluOp),
-    MovzxRr(ExtWidth),
+    AluRmR(OperandSize, AluOp),
+    MovzxRR(ExtWidth),
     Setcc(CondCode),
     Ret,
     Jump(Block),
@@ -247,7 +247,7 @@ impl MachineLower for X86Machine {
                     &[],
                 );
                 ctx.emit_instr(
-                    X86Instr::MovzxRr(byte_ext_width_for_ty(output_ty)),
+                    X86Instr::MovzxRR(byte_ext_width_for_ty(output_ty)),
                     &[DefOperand::any_reg(output)],
                     &[UseOperand::any_reg(temp)],
                 );
@@ -286,7 +286,7 @@ fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, op: AluOp)
     let op2 = ctx.get_value_vreg(op2);
 
     ctx.emit_instr(
-        X86Instr::AluRr(operand_size_for_ty(ty), op),
+        X86Instr::AluRmR(operand_size_for_ty(ty), op),
         &[DefOperand::any(output)],
         &[UseOperand::tied(op1, 0), UseOperand::any_reg(op2)],
     );
@@ -301,7 +301,7 @@ fn emit_alu_rr_discarded(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, 
     let op2 = ctx.get_value_vreg(op2);
 
     ctx.emit_instr(
-        X86Instr::AluRr(operand_size_for_ty(ty), op),
+        X86Instr::AluRmR(operand_size_for_ty(ty), op),
         &[],
         &[UseOperand::tied(op1, 0), UseOperand::any_reg(op2)],
     );

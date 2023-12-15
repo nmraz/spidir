@@ -254,6 +254,20 @@ impl MachineLower for X86Machine {
             }
             NodeKind::BrCond => {
                 let [cond] = ctx.node_inputs_exact(node);
+                if ctx.has_one_use(cond) {
+                    if let Some((cond_node, 0)) = ctx.value_def(cond) {
+                        if let NodeKind::Icmp(kind) = ctx.node_kind(cond_node) {
+                            let [op1, op2] = ctx.node_inputs_exact(cond_node);
+                            emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
+                            ctx.emit_instr(
+                                X86Instr::Jumpcc(cond_code_for_icmp(kind), targets[0], targets[1]),
+                                &[],
+                                &[],
+                            );
+                            return Ok(());
+                        }
+                    }
+                }
 
                 emit_alu_rr_discarded(ctx, cond, cond, AluOp::Test);
                 ctx.emit_instr(

@@ -98,6 +98,7 @@ pub enum AluOp {
 pub enum X86Instr {
     LoadRbp { offset: i32 },
     AluRmR(OperandSize, AluOp),
+    MovRI(OperandSize, u64),
     MovzxRR(ExtWidth),
     Setcc(CondCode),
     Ret,
@@ -215,6 +216,16 @@ impl MachineLower for X86Machine {
     {
         let _ = targets;
         match ctx.node_kind(node) {
+            NodeKind::IConst(val) => {
+                let [output] = ctx.node_outputs_exact(node);
+                let op_size = operand_size_for_ty(ctx.value_type(output));
+                let output = ctx.get_value_vreg(output);
+                ctx.emit_instr(
+                    X86Instr::MovRI(op_size, val),
+                    &[DefOperand::any_reg(output)],
+                    &[],
+                );
+            }
             NodeKind::Iadd => emit_alu_rr(ctx, node, AluOp::Add),
             NodeKind::And => emit_alu_rr(ctx, node, AluOp::And),
             NodeKind::Or => emit_alu_rr(ctx, node, AluOp::Or),

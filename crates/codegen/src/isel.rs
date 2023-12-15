@@ -1,5 +1,6 @@
 use alloc::vec::Vec;
 use core::array;
+use itertools::Itertools;
 
 use cranelift_entity::SecondaryMap;
 use fx_utils::FxHashMap;
@@ -201,6 +202,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         builder: &mut LirBuilder<'ctx, M>,
         block: Block,
     ) -> Result<(), IselError> {
+        trace!("{block}:");
         self.lower_block_params(builder, block);
 
         let is_terminated = self
@@ -309,12 +311,11 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn lower_block_params(&mut self, builder: &mut LirBuilder<'ctx, M>, block: Block) {
-        builder.set_incoming_block_params(
-            self.schedule
-                .block_phis(block)
-                .iter()
-                .map(|&phi| self.value_reg_map[&self.func.graph.node_outputs(phi)[0]]),
-        );
+        builder.set_incoming_block_params(self.schedule.block_phis(block).iter().map(|&phi| {
+            let val = self.value_reg_map[&self.func.graph.node_outputs(phi)[0]];
+            trace!("  {}", display_node(self.module, &self.func.graph, phi));
+            val
+        }));
 
         for &succ in self.cfg_ctx.cfg.block_succs(block).iter() {
             // TODO: Avoid linear search to deal with pathological cases?
@@ -343,6 +344,15 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                     self.get_value_vreg(builder, input)
                 })
                 .collect();
+
+            trace!(
+                "     => {}[{}]",
+                succ,
+                outgoing_params
+                    .iter()
+                    .map(|&param| param.display::<M>())
+                    .format(", ")
+            );
 
             builder.add_succ_outgoing_block_params(outgoing_params);
         }

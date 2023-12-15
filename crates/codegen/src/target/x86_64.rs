@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 
 use ir::{
-    node::{IcmpKind, NodeKind, Type},
+    node::{IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node},
 };
 
@@ -99,6 +99,9 @@ pub enum X64Instr {
     LoadRbp { offset: i32 },
     AluRmR(OperandSize, AluOp),
     MovRI(OperandSize, u64),
+    MovRM(OperandSize),
+    MovMR(OperandSize),
+    MovzxRM(ExtWidth),
     MovzxRR(ExtWidth),
     Setcc(CondCode),
     Ret,
@@ -252,6 +255,43 @@ impl MachineLower for X64Machine {
                     &[UseOperand::any_reg(temp)],
                 );
             }
+            NodeKind::Load(mem_size) => {
+                let [addr] = ctx.node_inputs_exact(node);
+                let [output] = ctx.node_outputs_exact(node);
+                let ty = ctx.value_type(output);
+
+                let addr = ctx.get_value_vreg(addr);
+                let output = ctx.get_value_vreg(output);
+
+                match (ty, mem_size) {
+                    (Type::I32, MemSize::S4) => ctx.emit_instr(
+                        X64Instr::MovRM(OperandSize::S32),
+                        &[DefOperand::any_reg(output)],
+                        &[UseOperand::any_reg(addr)],
+                    ),
+                    (Type::I64 | Type::Ptr, MemSize::S8) => ctx.emit_instr(
+                        X64Instr::MovRM(OperandSize::S64),
+                        &[DefOperand::any_reg(output)],
+                        &[UseOperand::any_reg(addr)],
+                    ),
+                    _ => ctx.emit_instr(
+                        X64Instr::MovzxRM(load_ext_width_for_ty(ty, mem_size)),
+                        &[DefOperand::any_reg(output)],
+                        &[UseOperand::any_reg(addr)],
+                    ),
+                }
+            }
+            NodeKind::Store(mem_size) => {
+                let [value, addr] = ctx.node_inputs_exact(node);
+                let value = ctx.get_value_vreg(value);
+                let addr = ctx.get_value_vreg(addr);
+
+                ctx.emit_instr(
+                    X64Instr::MovMR(operand_size_for_mem_size(mem_size)),
+                    &[],
+                    &[UseOperand::any_reg(addr), UseOperand::any_reg(value)],
+                );
+            }
             NodeKind::BrCond => {
                 let [cond] = ctx.node_inputs_exact(node);
                 if ctx.has_one_use(cond) {
@@ -339,6 +379,17 @@ fn cond_code_for_icmp(icmp: IcmpKind) -> CondCode {
     }
 }
 
+fn load_ext_width_for_ty(ty: Type, mem_size: MemSize) -> ExtWidth {
+    match (ty, mem_size) {
+        (Type::I32, MemSize::S1) => ExtWidth::S8S32,
+        (Type::I32, MemSize::S2) => ExtWidth::S16S32,
+        (Type::I64, MemSize::S1) => ExtWidth::S8S64,
+        (Type::I64, MemSize::S2) => ExtWidth::S16S64,
+        (Type::I64, MemSize::S4) => ExtWidth::S32S64,
+        _ => panic!("unsupported extending load type ({ty}, {mem_size:?})"),
+    }
+}
+
 fn byte_ext_width_for_ty(ty: Type) -> ExtWidth {
     match ty {
         Type::I32 => ExtWidth::S8S32,
@@ -353,5 +404,14 @@ fn operand_size_for_ty(ty: Type) -> OperandSize {
         Type::I64 => OperandSize::S64,
         Type::F64 => OperandSize::S64,
         Type::Ptr => OperandSize::S64,
+    }
+}
+
+fn operand_size_for_mem_size(mem_size: MemSize) -> OperandSize {
+    match mem_size {
+        MemSize::S1 => OperandSize::S8,
+        MemSize::S2 => OperandSize::S16,
+        MemSize::S4 => OperandSize::S32,
+        MemSize::S8 => OperandSize::S64,
     }
 }

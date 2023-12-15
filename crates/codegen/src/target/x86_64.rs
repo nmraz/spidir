@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 
 use ir::{
-    node::{NodeKind, Type},
+    node::{IcmpKind, NodeKind, Type},
     valgraph::Node,
 };
 
@@ -39,6 +39,51 @@ pub enum OperandSize {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub enum ExtWidth {
+    S8S32,
+    S8S64,
+    S16S32,
+    S16S64,
+    S32S64,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum CondCode {
+    /// Overflow (OF = 1)
+    O,
+    /// No Overflow (OF = 0)
+    NO,
+    /// Below (CF = 1)
+    B,
+    /// Above or Equal (CF = 0)
+    AE,
+    /// Equal (ZF = 1)
+    E,
+    /// Not Equal (ZF = 0)
+    NE,
+    /// Below or Equal ((CF | ZF) = 1)
+    BE,
+    /// Above ((CF | ZF) = 0)
+    A,
+    /// Sign (SF = 1)
+    S,
+    /// No Sign (SF = 0)
+    NS,
+    /// Parity (PF = 1)
+    P,
+    /// No Parity (PF = 0)
+    NP,
+    /// Less ((SF ^ OF) = 1)
+    L,
+    /// Greater or Equal ((SF ^ OF) = 0)
+    GE,
+    /// Less or Equal (((SF ^ OF) | ZF) = 1)
+    LE,
+    /// Greater (((SF ^ OF) | ZF) = 0)
+    G,
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum AluOp {
     Add,
     And,
@@ -53,6 +98,8 @@ pub enum AluOp {
 pub enum X86Instr {
     LoadRbp { offset: i32 },
     AluRr(OperandSize, AluOp),
+    MovzxRr(ExtWidth),
+    Setcc(CondCode),
     Ret,
     Jump(Block),
 }
@@ -187,6 +234,26 @@ impl MachineLower for X86Machine {
                 emit_alu_rr(ctx, node, AluOp::Xor);
                 Ok(())
             }
+            NodeKind::Icmp(kind) => {
+                emit_alu_rr_discarded(ctx, node, AluOp::Cmp);
+                let [output] = ctx.node_outputs_exact(node);
+                let output_ty = ctx.value_type(output);
+                let output = ctx.get_value_vreg(output);
+
+                let temp = ctx.create_temp_vreg(RC_GPR);
+                ctx.emit_instr(
+                    X86Instr::Setcc(cond_code_for_icmp(kind)),
+                    &[DefOperand::any_reg(temp)],
+                    &[],
+                );
+                ctx.emit_instr(
+                    X86Instr::MovzxRr(byte_ext_width_for_ty(output_ty)),
+                    &[DefOperand::any_reg(output)],
+                    &[UseOperand::any_reg(temp)],
+                );
+
+                Ok(())
+            }
             NodeKind::Return => {
                 match ctx.node_inputs(node).next() {
                     Some(retval) => {
@@ -195,7 +262,6 @@ impl MachineLower for X86Machine {
                         }
 
                         let retval = ctx.get_value_vreg(retval);
-
                         ctx.emit_instr(X86Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
                     }
                     None => {
@@ -224,6 +290,40 @@ fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, op: AluOp)
         &[DefOperand::any(output)],
         &[UseOperand::tied(op1, 0), UseOperand::any_reg(op2)],
     );
+}
+
+fn emit_alu_rr_discarded(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, op: AluOp) {
+    let [op1, op2] = ctx.node_inputs_exact(node);
+
+    let ty = ctx.value_type(op1);
+
+    let op1 = ctx.get_value_vreg(op1);
+    let op2 = ctx.get_value_vreg(op2);
+
+    ctx.emit_instr(
+        X86Instr::AluRr(operand_size_for_ty(ty), op),
+        &[],
+        &[UseOperand::tied(op1, 0), UseOperand::any_reg(op2)],
+    );
+}
+
+fn cond_code_for_icmp(icmp: IcmpKind) -> CondCode {
+    match icmp {
+        IcmpKind::Eq => CondCode::E,
+        IcmpKind::Ne => CondCode::LE,
+        IcmpKind::Slt => CondCode::L,
+        IcmpKind::Sle => CondCode::LE,
+        IcmpKind::Ult => CondCode::B,
+        IcmpKind::Ule => CondCode::BE,
+    }
+}
+
+fn byte_ext_width_for_ty(ty: Type) -> ExtWidth {
+    match ty {
+        Type::I32 => ExtWidth::S8S32,
+        Type::I64 => ExtWidth::S8S64,
+        _ => panic!("unexpected extension target {ty}"),
+    }
 }
 
 fn operand_size_for_ty(ty: Type) -> OperandSize {

@@ -26,7 +26,8 @@ impl TestProvider for IselProvider {
             let lir =
                 select_instrs(module, func, &schedule, &cfg_ctx, &machine).map_err(|err| {
                     anyhow!(
-                        "failed to select: `{}`",
+                        "failed to select `{}`: `{}`",
+                        func.name,
                         display_node(module, &func.graph, err.node)
                     )
                 })?;

@@ -284,7 +284,7 @@ fn emit_alu_rr_discarded(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, 
     ctx.emit_instr(
         X86Instr::AluRmR(operand_size_for_ty(ty), op),
         &[],
-        &[UseOperand::tied(op1, 0), UseOperand::any_reg(op2)],
+        &[UseOperand::any(op1), UseOperand::any_reg(op2)],
     );
 }
 

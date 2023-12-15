@@ -331,6 +331,9 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 self.cfg_ctx.block_map.valgraph_pred_index(succ, pred_idx)
             else {
                 // This successor didn't come from the valgraph (it was a split critical edge).
+                // Make sure to still add its (empty) outgoing param list.
+                trace!("     => {}[]", succ);
+                builder.add_succ_outgoing_block_params([]);
                 continue;
             };
 

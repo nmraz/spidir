@@ -279,7 +279,7 @@ impl MachineLower for X64Machine {
             NodeKind::Return => match ctx.node_inputs(node).next() {
                 None => ctx.emit_instr(X64Instr::Ret, &[], &[]),
                 Some(retval) => {
-                    if !ctx.value_type(retval).is_integer() {
+                    if !ctx.value_type(retval).is_integer_or_pointer() {
                         return Err(MachineIselError);
                     }
 

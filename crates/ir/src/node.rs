@@ -28,6 +28,11 @@ impl Type {
     pub fn is_integer(self) -> bool {
         matches!(self, Type::I32 | Type::I64)
     }
+
+    #[inline]
+    pub fn is_integer_or_pointer(self) -> bool {
+        self.is_integer() || matches!(self, Type::Ptr)
+    }
 }
 
 impl fmt::Display for Type {

@@ -17,8 +17,8 @@ use smallvec::SmallVec;
 use crate::{
     cfg::{Block, CfgContext},
     lir::{
-        display_instr_data, Builder as LirBuilder, DefOperand, DefOperandConstraint, InstrBuilder,
-        Lir, OperandPos, RegClass, UseOperand, VirtReg,
+        display_instr_data, Builder as LirBuilder, DefOperand, InstrBuilder, Lir, RegClass,
+        UseOperand, VirtReg,
     },
     machine::{MachineLower, ParamLoc},
     schedule::Schedule,
@@ -273,11 +273,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                         ParamLoc::Stack { fp_offset } => builder.build_instrs(|mut builder| {
                             builder.push_instr(
                                 self.machine.make_fp_relative_load(fp_offset),
-                                [DefOperand::new(
-                                    vreg,
-                                    DefOperandConstraint::AnyReg,
-                                    OperandPos::Late,
-                                )],
+                                [DefOperand::any_reg(vreg)],
                                 [],
                             );
                         }),

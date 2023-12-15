@@ -6,8 +6,8 @@ use crate::{
 };
 
 use super::{
-    Builder, DefOperand, DefOperandConstraint, Lir, OperandPos, PhysReg, RegClass, UseOperand,
-    UseOperandConstraint, VirtReg,
+    Builder, DefOperand, Lir, OperandPos, PhysReg, RegClass, UseOperand, UseOperandConstraint,
+    VirtReg,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -99,11 +99,7 @@ fn build_simple_tied() {
     let [a, b] = push_instr(
         &mut builder,
         DummyInstr::Add,
-        [DefOperand::new(
-            retval,
-            DefOperandConstraint::Any,
-            OperandPos::Late,
-        )],
+        [DefOperand::any(retval)],
         [
             (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
             (UseOperandConstraint::AnyReg, OperandPos::Early),
@@ -144,11 +140,7 @@ fn build_simple_3addr() {
     let [a, b] = push_instr(
         &mut builder,
         DummyInstr::Lea,
-        [DefOperand::new(
-            retval,
-            DefOperandConstraint::AnyReg,
-            OperandPos::Late,
-        )],
+        [DefOperand::any_reg(retval)],
         [
             (UseOperandConstraint::AnyReg, OperandPos::Early),
             (UseOperandConstraint::AnyReg, OperandPos::Early),
@@ -205,11 +197,7 @@ fn multi_block() {
     let [right_param2, five] = push_instr(
         &mut builder,
         DummyInstr::Add,
-        [DefOperand::new(
-            add5,
-            DefOperandConstraint::Any,
-            OperandPos::Late,
-        )],
+        [DefOperand::any(add5)],
         [
             (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
             (UseOperandConstraint::AnyReg, OperandPos::Early),
@@ -218,11 +206,7 @@ fn multi_block() {
     push_instr(
         &mut builder,
         DummyInstr::MovI(5),
-        [DefOperand::new(
-            five,
-            DefOperandConstraint::AnyReg,
-            OperandPos::Late,
-        )],
+        [DefOperand::any_reg(five)],
         [],
     );
     builder.advance_block();
@@ -234,11 +218,7 @@ fn multi_block() {
     let [left_param2, left_param3] = push_instr(
         &mut builder,
         DummyInstr::Add,
-        [DefOperand::new(
-            add_params,
-            DefOperandConstraint::Any,
-            OperandPos::Late,
-        )],
+        [DefOperand::any(add_params)],
         [
             (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
             (UseOperandConstraint::AnyReg, OperandPos::Early),
@@ -321,11 +301,7 @@ fn block_param_vreg_copies() {
     push_instr(
         &mut builder,
         DummyInstr::MovI(5),
-        [DefOperand::new(
-            five,
-            DefOperandConstraint::AnyReg,
-            OperandPos::Late,
-        )],
+        [DefOperand::any_reg(five)],
         [],
     );
 

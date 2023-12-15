@@ -130,6 +130,26 @@ impl UseOperand {
         }
     }
 
+    pub fn any(reg: VirtReg) -> Self {
+        Self::new(reg, UseOperandConstraint::Any, OperandPos::Early)
+    }
+
+    pub fn any_reg(reg: VirtReg) -> Self {
+        Self::new(reg, UseOperandConstraint::AnyReg, OperandPos::Early)
+    }
+
+    pub fn fixed(reg: VirtReg, phys: PhysReg) -> Self {
+        Self::new(reg, UseOperandConstraint::Fixed(phys), OperandPos::Early)
+    }
+
+    pub fn tied(reg: VirtReg, def_idx: u8) -> Self {
+        Self::new(
+            reg,
+            UseOperandConstraint::TiedToDef(def_idx),
+            OperandPos::Early,
+        )
+    }
+
     pub fn reg(&self) -> VirtReg {
         self.reg
     }
@@ -164,6 +184,18 @@ impl DefOperand {
             constraint,
             pos,
         }
+    }
+
+    pub fn any(reg: VirtReg) -> Self {
+        Self::new(reg, DefOperandConstraint::Any, OperandPos::Late)
+    }
+
+    pub fn any_reg(reg: VirtReg) -> Self {
+        Self::new(reg, DefOperandConstraint::AnyReg, OperandPos::Late)
+    }
+
+    pub fn fixed(reg: VirtReg, phys: PhysReg) -> Self {
+        Self::new(reg, DefOperandConstraint::Fixed(phys), OperandPos::Late)
     }
 
     pub fn reg(&self) -> VirtReg {

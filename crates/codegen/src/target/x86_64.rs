@@ -8,10 +8,7 @@ use ir::{
 use crate::{
     cfg::Block,
     isel::IselContext,
-    lir::{
-        DefOperand, DefOperandConstraint, OperandPos, PhysReg, RegClass, UseOperand,
-        UseOperandConstraint,
-    },
+    lir::{DefOperand, PhysReg, RegClass, UseOperand},
     machine::{MachineCore, MachineIselError, MachineLower, ParamLoc},
 };
 
@@ -199,15 +196,7 @@ impl MachineLower for X86Machine {
 
                         let retval = ctx.get_value_vreg(retval);
 
-                        ctx.emit_instr(
-                            X86Instr::Ret,
-                            &[],
-                            &[UseOperand::new(
-                                retval,
-                                UseOperandConstraint::Fixed(REG_RAX),
-                                OperandPos::Early,
-                            )],
-                        );
+                        ctx.emit_instr(X86Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
                     }
                     None => {
                         ctx.emit_instr(X86Instr::Ret, &[], &[]);
@@ -232,15 +221,8 @@ fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, op: AluOp)
 
     ctx.emit_instr(
         X86Instr::AluRr(operand_size_for_ty(ty), op),
-        &[DefOperand::new(
-            output,
-            DefOperandConstraint::Any,
-            OperandPos::Late,
-        )],
-        &[
-            UseOperand::new(op1, UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-            UseOperand::new(op2, UseOperandConstraint::AnyReg, OperandPos::Early),
-        ],
+        &[DefOperand::any(output)],
+        &[UseOperand::tied(op1, 0), UseOperand::any_reg(op2)],
     );
 }
 

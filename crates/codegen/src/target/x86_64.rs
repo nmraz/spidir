@@ -95,7 +95,7 @@ pub enum AluOp {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum X86Instr {
+pub enum X64Instr {
     LoadRbp { offset: i32 },
     AluRmR(OperandSize, AluOp),
     MovRI(OperandSize, u64),
@@ -106,10 +106,10 @@ pub enum X86Instr {
     Jumpcc(CondCode, Block, Block),
 }
 
-pub struct X86Machine;
+pub struct X64Machine;
 
-impl MachineCore for X86Machine {
-    type Instr = X86Instr;
+impl MachineCore for X64Machine {
+    type Instr = X64Instr;
 
     fn reg_class_name(class: RegClass) -> &'static str {
         match class {
@@ -149,7 +149,7 @@ impl MachineCore for X86Machine {
     }
 }
 
-impl MachineLower for X86Machine {
+impl MachineLower for X64Machine {
     fn reg_class_for_type(&self, ty: Type) -> RegClass {
         match ty {
             Type::I32 | Type::I64 | Type::Ptr => RC_GPR,
@@ -198,11 +198,11 @@ impl MachineLower for X86Machine {
     }
 
     fn make_jump(&self, block: Block) -> Self::Instr {
-        X86Instr::Jump(block)
+        X64Instr::Jump(block)
     }
 
     fn make_fp_relative_load(&self, offset: i32) -> Self::Instr {
-        X86Instr::LoadRbp { offset }
+        X64Instr::LoadRbp { offset }
     }
 
     fn select_instr(
@@ -221,7 +221,7 @@ impl MachineLower for X86Machine {
                 let op_size = operand_size_for_ty(ctx.value_type(output));
                 let output = ctx.get_value_vreg(output);
                 ctx.emit_instr(
-                    X86Instr::MovRI(op_size, val),
+                    X64Instr::MovRI(op_size, val),
                     &[DefOperand::any_reg(output)],
                     &[],
                 );
@@ -242,12 +242,12 @@ impl MachineLower for X86Machine {
 
                 let temp = ctx.create_temp_vreg(RC_GPR);
                 ctx.emit_instr(
-                    X86Instr::Setcc(cond_code_for_icmp(kind)),
+                    X64Instr::Setcc(cond_code_for_icmp(kind)),
                     &[DefOperand::any_reg(temp)],
                     &[],
                 );
                 ctx.emit_instr(
-                    X86Instr::MovzxRR(byte_ext_width_for_ty(output_ty)),
+                    X64Instr::MovzxRR(byte_ext_width_for_ty(output_ty)),
                     &[DefOperand::any_reg(output)],
                     &[UseOperand::any_reg(temp)],
                 );
@@ -260,7 +260,7 @@ impl MachineLower for X86Machine {
                             let [op1, op2] = ctx.node_inputs_exact(cond_node);
                             emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
                             ctx.emit_instr(
-                                X86Instr::Jumpcc(cond_code_for_icmp(kind), targets[0], targets[1]),
+                                X64Instr::Jumpcc(cond_code_for_icmp(kind), targets[0], targets[1]),
                                 &[],
                                 &[],
                             );
@@ -271,20 +271,20 @@ impl MachineLower for X86Machine {
 
                 emit_alu_rr_discarded(ctx, cond, cond, AluOp::Test);
                 ctx.emit_instr(
-                    X86Instr::Jumpcc(CondCode::Ne, targets[0], targets[1]),
+                    X64Instr::Jumpcc(CondCode::Ne, targets[0], targets[1]),
                     &[],
                     &[],
                 );
             }
             NodeKind::Return => match ctx.node_inputs(node).next() {
-                None => ctx.emit_instr(X86Instr::Ret, &[], &[]),
+                None => ctx.emit_instr(X64Instr::Ret, &[], &[]),
                 Some(retval) => {
                     if !ctx.value_type(retval).is_integer() {
                         return Err(MachineIselError);
                     }
 
                     let retval = ctx.get_value_vreg(retval);
-                    ctx.emit_instr(X86Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
+                    ctx.emit_instr(X64Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
                 }
             },
             _ => return Err(MachineIselError),
@@ -293,7 +293,7 @@ impl MachineLower for X86Machine {
     }
 }
 
-fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, op: AluOp) {
+fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp) {
     let [output] = ctx.node_outputs_exact(node);
     let [op1, op2] = ctx.node_inputs_exact(node);
 
@@ -304,14 +304,14 @@ fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, op: AluOp)
     let op2 = ctx.get_value_vreg(op2);
 
     ctx.emit_instr(
-        X86Instr::AluRmR(operand_size_for_ty(ty), op),
+        X64Instr::AluRmR(operand_size_for_ty(ty), op),
         &[DefOperand::any(output)],
         &[UseOperand::tied(op1, 0), UseOperand::any_reg(op2)],
     );
 }
 
 fn emit_alu_rr_discarded(
-    ctx: &mut IselContext<'_, '_, X86Machine>,
+    ctx: &mut IselContext<'_, '_, X64Machine>,
     op1: DepValue,
     op2: DepValue,
     op: AluOp,
@@ -322,7 +322,7 @@ fn emit_alu_rr_discarded(
     let op2 = ctx.get_value_vreg(op2);
 
     ctx.emit_instr(
-        X86Instr::AluRmR(operand_size_for_ty(ty), op),
+        X64Instr::AluRmR(operand_size_for_ty(ty), op),
         &[],
         &[UseOperand::any(op1), UseOperand::any_reg(op2)],
     );

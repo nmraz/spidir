@@ -10,7 +10,7 @@ use std::{
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use codegen::{
-    cfg::CfgContext, isel::select_instrs, lir::Lir, schedule::Schedule, target::x86_64::X86Machine,
+    cfg::CfgContext, isel::select_instrs, lir::Lir, schedule::Schedule, target::x86_64::X64Machine,
 };
 use ir::{
     domtree::DomTree,
@@ -284,11 +284,11 @@ fn get_module_lir_str(module: &Module) -> Result<String> {
     Ok(output)
 }
 
-fn get_function_lir(module: &Module, func: &FunctionData) -> Result<(CfgContext, Lir<X86Machine>)> {
+fn get_function_lir(module: &Module, func: &FunctionData) -> Result<(CfgContext, Lir<X64Machine>)> {
     let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
     let cfg_ctx = CfgContext::compute(&func.graph, &cfg_preorder);
     let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx);
-    let machine = X86Machine;
+    let machine = X64Machine;
     let lir = select_instrs(module, func, &schedule, &cfg_ctx, &machine).map_err(|err| {
         anyhow!(
             "failed to select `{}`: `{}`",

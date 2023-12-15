@@ -2,7 +2,7 @@ use core::fmt::Write;
 
 use anyhow::{anyhow, Result};
 use codegen::{
-    cfg::CfgContext, isel::select_instrs, schedule::Schedule, target::x86_64::X86Machine,
+    cfg::CfgContext, isel::select_instrs, schedule::Schedule, target::x86_64::X64Machine,
 };
 use ir::{module::Module, valwalk::cfg_preorder, write::display_node};
 
@@ -22,7 +22,7 @@ impl TestProvider for IselProvider {
             let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
             let cfg_ctx = CfgContext::compute(&func.graph, &cfg_preorder);
             let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx);
-            let machine = X86Machine;
+            let machine = X64Machine;
             let lir =
                 select_instrs(module, func, &schedule, &cfg_ctx, &machine).map_err(|err| {
                     anyhow!(

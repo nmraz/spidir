@@ -338,7 +338,8 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 .block_phis(succ)
                 .iter()
                 .map(|&phi| {
-                    let input = self.func.graph.node_inputs(phi)[valgraph_pred_idx as usize];
+                    // Note: input 0 is the selector from the containing block.
+                    let input = self.func.graph.node_inputs(phi)[valgraph_pred_idx as usize + 1];
                     self.get_value_vreg(builder, input)
                 })
                 .collect();

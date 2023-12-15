@@ -171,27 +171,23 @@ impl MachineLower for X86Machine {
         let _ = targets;
         match ctx.node_kind(node) {
             NodeKind::Iadd => {
-                let [output] = ctx.node_outputs_exact(node);
-                let [op1, op2] = ctx.node_inputs_exact(node);
-
-                let ty = ctx.value_type(output);
-
-                let output = ctx.get_value_vreg(output);
-                let op1 = ctx.get_value_vreg(op1);
-                let op2 = ctx.get_value_vreg(op2);
-
-                ctx.emit_instr(
-                    X86Instr::AluRr(operand_size_for_ty(ty), AluOp::Add),
-                    &[DefOperand::new(
-                        output,
-                        DefOperandConstraint::Any,
-                        OperandPos::Late,
-                    )],
-                    &[
-                        UseOperand::new(op1, UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-                        UseOperand::new(op2, UseOperandConstraint::AnyReg, OperandPos::Early),
-                    ],
-                );
+                emit_alu_rr(ctx, node, AluOp::Add);
+                Ok(())
+            }
+            NodeKind::And => {
+                emit_alu_rr(ctx, node, AluOp::And);
+                Ok(())
+            }
+            NodeKind::Or => {
+                emit_alu_rr(ctx, node, AluOp::Or);
+                Ok(())
+            }
+            NodeKind::Isub => {
+                emit_alu_rr(ctx, node, AluOp::Sub);
+                Ok(())
+            }
+            NodeKind::Xor => {
+                emit_alu_rr(ctx, node, AluOp::Xor);
                 Ok(())
             }
             NodeKind::Return => {
@@ -222,6 +218,30 @@ impl MachineLower for X86Machine {
             _ => Err(MachineIselError),
         }
     }
+}
+
+fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X86Machine>, node: Node, op: AluOp) {
+    let [output] = ctx.node_outputs_exact(node);
+    let [op1, op2] = ctx.node_inputs_exact(node);
+
+    let ty = ctx.value_type(output);
+
+    let output = ctx.get_value_vreg(output);
+    let op1 = ctx.get_value_vreg(op1);
+    let op2 = ctx.get_value_vreg(op2);
+
+    ctx.emit_instr(
+        X86Instr::AluRr(operand_size_for_ty(ty), op),
+        &[DefOperand::new(
+            output,
+            DefOperandConstraint::Any,
+            OperandPos::Late,
+        )],
+        &[
+            UseOperand::new(op1, UseOperandConstraint::TiedToDef(0), OperandPos::Early),
+            UseOperand::new(op2, UseOperandConstraint::AnyReg, OperandPos::Early),
+        ],
+    );
 }
 
 fn operand_size_for_ty(ty: Type) -> OperandSize {

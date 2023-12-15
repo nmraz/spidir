@@ -1,0 +1,171 @@
+# run: isel
+
+func @select_eq:i32(i32, i32, i32, i32) {
+    # check: function `select_eq`:
+    # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
+    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     Jumpcc(E, block1, block3)
+    # nextln: => block1[], block3[]
+    # nextln: block1[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%2:gpr]
+    # nextln: block3[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%1:gpr]
+    # nextln: block2[%0:gpr]:
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
+    %1:i32 = icmp eq %a, %b
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_ne:i32(i32, i32, i32, i32) {
+    # check: function `select_ne`:
+    # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
+    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     Jumpcc(LE, block1, block3)
+    # nextln: => block1[], block3[]
+    # nextln: block1[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%2:gpr]
+    # nextln: block3[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%1:gpr]
+    # nextln: block2[%0:gpr]:
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
+    %1:i32 = icmp ne %a, %b
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_slt:i32(i32, i32, i32, i32) {
+    # check: function `select_slt`:
+    # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
+    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     Jumpcc(L, block1, block3)
+    # nextln: => block1[], block3[]
+    # nextln: block1[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%2:gpr]
+    # nextln: block3[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%1:gpr]
+    # nextln: block2[%0:gpr]:
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
+    %1:i32 = icmp slt %a, %b
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_sle:i32(i32, i32, i32, i32) {
+    # check: function `select_sle`:
+    # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
+    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     Jumpcc(LE, block1, block3)
+    # nextln: => block1[], block3[]
+    # nextln: block1[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%2:gpr]
+    # nextln: block3[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%1:gpr]
+    # nextln: block2[%0:gpr]:
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
+    %1:i32 = icmp sle %a, %b
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_ult:i32(i32, i32, i32, i32) {
+    # check: function `select_ult`:
+    # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
+    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     Jumpcc(B, block1, block3)
+    # nextln: => block1[], block3[]
+    # nextln: block1[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%2:gpr]
+    # nextln: block3[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%1:gpr]
+    # nextln: block2[%0:gpr]:
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
+    %1:i32 = icmp ult %a, %b
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_ule:i32(i32, i32, i32, i32) {
+    # check: function `select_ule`:
+    # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
+    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     Jumpcc(BE, block1, block3)
+    # nextln: => block1[], block3[]
+    # nextln: block1[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%2:gpr]
+    # nextln: block3[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%1:gpr]
+    # nextln: block2[%0:gpr]:
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
+    %1:i32 = icmp ule %a, %b
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
+    # check: function `select_slt_cond_reused`:
+    # nextln: block0[%7:gpr($$rdi), %8:gpr($$rsi), %6:gpr($$rdx), %5:gpr($$rcx)]:
+    # nextln:     AluRmR(S32, Cmp) %7:gpr(any)[early], %8:gpr(reg)[early]
+    # nextln:     %9:gpr(reg)[late] = Setcc(L)
+    # nextln:     %3:gpr(reg)[late] = MovzxRR(S8S32) %9:gpr(reg)[early]
+    # nextln:     AluRmR(S32, Test) %3:gpr(any)[early], %3:gpr(reg)[early]
+    # nextln:     Jumpcc(NE, block1, block3)
+    # nextln: => block1[], block3[]
+    # nextln: block1[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%6:gpr]
+    # nextln: block3[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%5:gpr]
+    # nextln: block2[%0:gpr]:
+    # nextln:     %4:gpr(reg)[late] = MovRI(S32, 5)
+    # nextln:     %2:gpr(any)[late] = AluRmR(S32, Xor) %3:gpr(tied:0)[early], %4:gpr(reg)[early]
+    # nextln:     %1:gpr(any)[late] = AluRmR(S32, Add) %0:gpr(tied:0)[early], %2:gpr(reg)[early]
+    # nextln:     Ret %1:gpr($$rax)[early]
+
+    %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
+    %1:i32 = icmp slt %a, %b
+    %five:i32 = iconst 5
+    %thing:i32 = xor %1, %five
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    %retval:i32 = iadd %10, %thing
+    return %6, %retval
+}

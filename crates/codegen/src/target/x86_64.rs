@@ -99,6 +99,7 @@ pub enum AluOp {
 pub enum X64Instr {
     LoadRbp { offset: i32 },
     AluRRm(OperandSize, AluOp),
+    Div(OperandSize),
     // Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,
     MovRI(OperandSize, u64),
@@ -238,6 +239,32 @@ impl MachineLower for X64Machine {
             NodeKind::Isub => emit_alu_rr(ctx, node, AluOp::Sub),
             NodeKind::Xor => emit_alu_rr(ctx, node, AluOp::Xor),
             NodeKind::Imul => emit_alu_rr(ctx, node, AluOp::Imul),
+            NodeKind::Udiv => {
+                let [op1, op2] = ctx.node_inputs_exact(node);
+                let [output] = ctx.node_outputs_exact(node);
+                let ty = ctx.value_type(output);
+
+                let op1 = ctx.get_value_vreg(op1);
+                let op2 = ctx.get_value_vreg(op2);
+                let output = ctx.get_value_vreg(output);
+
+                let rdx_in = ctx.create_temp_vreg(RC_GPR);
+                ctx.emit_instr(X64Instr::MovRZ, &[DefOperand::any_reg(rdx_in)], &[]);
+
+                let rdx_out = ctx.create_temp_vreg(RC_GPR);
+                ctx.emit_instr(
+                    X64Instr::Div(operand_size_for_ty(ty)),
+                    &[
+                        DefOperand::fixed(output, REG_RAX),
+                        DefOperand::fixed(rdx_out, REG_RDX),
+                    ],
+                    &[
+                        UseOperand::fixed(op1, REG_RAX),
+                        UseOperand::fixed(rdx_in, REG_RDX),
+                        UseOperand::any(op2),
+                    ],
+                );
+            }
             NodeKind::Icmp(kind) => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);

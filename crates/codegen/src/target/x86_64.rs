@@ -40,11 +40,11 @@ pub enum OperandSize {
 
 #[derive(Debug, Clone, Copy)]
 pub enum ExtWidth {
-    S8S32,
-    S8S64,
-    S16S32,
-    S16S64,
-    S32S64,
+    Ext8_32,
+    Ext8_64,
+    Ext16_32,
+    Ext16_64,
+    Ext32_64,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -381,19 +381,19 @@ fn cond_code_for_icmp(icmp: IcmpKind) -> CondCode {
 
 fn load_ext_width_for_ty(ty: Type, mem_size: MemSize) -> ExtWidth {
     match (ty, mem_size) {
-        (Type::I32, MemSize::S1) => ExtWidth::S8S32,
-        (Type::I32, MemSize::S2) => ExtWidth::S16S32,
-        (Type::I64, MemSize::S1) => ExtWidth::S8S64,
-        (Type::I64, MemSize::S2) => ExtWidth::S16S64,
-        (Type::I64, MemSize::S4) => ExtWidth::S32S64,
+        (Type::I32, MemSize::S1) => ExtWidth::Ext8_32,
+        (Type::I32, MemSize::S2) => ExtWidth::Ext16_32,
+        (Type::I64, MemSize::S1) => ExtWidth::Ext8_64,
+        (Type::I64, MemSize::S2) => ExtWidth::Ext16_64,
+        (Type::I64, MemSize::S4) => ExtWidth::Ext32_64,
         _ => panic!("unsupported extending load type ({ty}, {mem_size:?})"),
     }
 }
 
 fn byte_ext_width_for_ty(ty: Type) -> ExtWidth {
     match ty {
-        Type::I32 => ExtWidth::S8S32,
-        Type::I64 => ExtWidth::S8S64,
+        Type::I32 => ExtWidth::Ext8_32,
+        Type::I64 => ExtWidth::Ext8_64,
         _ => panic!("unexpected extension target {ty}"),
     }
 }

@@ -5,7 +5,7 @@ func @icmp_eq64_64:i64(i64, i64) {
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln:     AluRmR(S64, Cmp) %1:gpr(any)[early], %2:gpr(reg)[early]
     # nextln:     %3:gpr(reg)[late] = Setcc(E)
-    # nextln:     %0:gpr(reg)[late] = MovzxRR(S8S64) %3:gpr(reg)[early]
+    # nextln:     %0:gpr(reg)[late] = MovzxRR(Ext8_64) %3:gpr(reg)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
@@ -18,7 +18,7 @@ func @icmp_eq64_32:i32(i64, i64) {
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln:     AluRmR(S64, Cmp) %1:gpr(any)[early], %2:gpr(reg)[early]
     # nextln:     %3:gpr(reg)[late] = Setcc(E)
-    # nextln:     %0:gpr(reg)[late] = MovzxRR(S8S32) %3:gpr(reg)[early]
+    # nextln:     %0:gpr(reg)[late] = MovzxRR(Ext8_32) %3:gpr(reg)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
@@ -31,7 +31,7 @@ func @icmp_eq32_64:i64(i32, i32) {
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln:     AluRmR(S32, Cmp) %1:gpr(any)[early], %2:gpr(reg)[early]
     # nextln:     %3:gpr(reg)[late] = Setcc(E)
-    # nextln:     %0:gpr(reg)[late] = MovzxRR(S8S64) %3:gpr(reg)[early]
+    # nextln:     %0:gpr(reg)[late] = MovzxRR(Ext8_64) %3:gpr(reg)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %c:ctrl, %a:i32, %b:i32 = entry
@@ -44,7 +44,7 @@ func @icmp_ne64_64:i64(i64, i64) {
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln:     AluRmR(S64, Cmp) %1:gpr(any)[early], %2:gpr(reg)[early]
     # nextln:     %3:gpr(reg)[late] = Setcc(Le)
-    # nextln:     %0:gpr(reg)[late] = MovzxRR(S8S64) %3:gpr(reg)[early]
+    # nextln:     %0:gpr(reg)[late] = MovzxRR(Ext8_64) %3:gpr(reg)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
@@ -57,7 +57,7 @@ func @icmp_slt64_64:i64(i64, i64) {
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln:     AluRmR(S64, Cmp) %1:gpr(any)[early], %2:gpr(reg)[early]
     # nextln:     %3:gpr(reg)[late] = Setcc(L)
-    # nextln:     %0:gpr(reg)[late] = MovzxRR(S8S64) %3:gpr(reg)[early]
+    # nextln:     %0:gpr(reg)[late] = MovzxRR(Ext8_64) %3:gpr(reg)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
@@ -70,7 +70,7 @@ func @icmp_sle64_64:i64(i64, i64) {
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln:     AluRmR(S64, Cmp) %1:gpr(any)[early], %2:gpr(reg)[early]
     # nextln:     %3:gpr(reg)[late] = Setcc(Le)
-    # nextln:     %0:gpr(reg)[late] = MovzxRR(S8S64) %3:gpr(reg)[early]
+    # nextln:     %0:gpr(reg)[late] = MovzxRR(Ext8_64) %3:gpr(reg)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
@@ -83,7 +83,7 @@ func @icmp_ult64_64:i64(i64, i64) {
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln:     AluRmR(S64, Cmp) %1:gpr(any)[early], %2:gpr(reg)[early]
     # nextln:     %3:gpr(reg)[late] = Setcc(B)
-    # nextln:     %0:gpr(reg)[late] = MovzxRR(S8S64) %3:gpr(reg)[early]
+    # nextln:     %0:gpr(reg)[late] = MovzxRR(Ext8_64) %3:gpr(reg)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
@@ -96,7 +96,7 @@ func @icmp_ule64_64:i64(i64, i64) {
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln:     AluRmR(S64, Cmp) %1:gpr(any)[early], %2:gpr(reg)[early]
     # nextln:     %3:gpr(reg)[late] = Setcc(Be)
-    # nextln:     %0:gpr(reg)[late] = MovzxRR(S8S64) %3:gpr(reg)[early]
+    # nextln:     %0:gpr(reg)[late] = MovzxRR(Ext8_64) %3:gpr(reg)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry

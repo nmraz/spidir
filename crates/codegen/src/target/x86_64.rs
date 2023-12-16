@@ -92,6 +92,7 @@ pub enum AluOp {
     Sub,
     Test,
     Xor,
+    Imul,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -236,6 +237,7 @@ impl MachineLower for X64Machine {
             NodeKind::Or => emit_alu_rr(ctx, node, AluOp::Or),
             NodeKind::Isub => emit_alu_rr(ctx, node, AluOp::Sub),
             NodeKind::Xor => emit_alu_rr(ctx, node, AluOp::Xor),
+            NodeKind::Imul => emit_alu_rr(ctx, node, AluOp::Imul),
             NodeKind::Icmp(kind) => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);

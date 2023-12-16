@@ -297,6 +297,7 @@ impl MachineLower for X64Machine {
                     &[UseOperand::tied(temp, 0)],
                 );
             }
+            NodeKind::PtrOff => emit_alu_rr(ctx, node, AluOp::Add),
             NodeKind::Load(mem_size) => {
                 let [addr] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);

@@ -1,0 +1,12 @@
+# run: isel
+
+func @offset_ptr:ptr(ptr, i64) {
+    # check: function `offset_ptr`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(reg)[late] = AluRRm(S64, Add) %1:gpr(tied:0)[early], %2:gpr(any)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:ptr, %2:i64 = entry
+    %3:ptr = ptroff %1, %2
+    return %0, %3
+}

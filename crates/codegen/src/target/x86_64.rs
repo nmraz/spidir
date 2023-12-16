@@ -96,9 +96,17 @@ pub enum AluOp {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub enum ShiftOp {
+    Shl,
+    Shr,
+    Sar,
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum X64Instr {
     LoadRbp { offset: i32 },
     AluRRm(OperandSize, AluOp),
+    ShiftRmR(OperandSize, ShiftOp),
     Div(OperandSize),
     // Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,
@@ -238,6 +246,9 @@ impl MachineLower for X64Machine {
             NodeKind::Or => emit_alu_rr(ctx, node, AluOp::Or),
             NodeKind::Isub => emit_alu_rr(ctx, node, AluOp::Sub),
             NodeKind::Xor => emit_alu_rr(ctx, node, AluOp::Xor),
+            NodeKind::Shl => emit_shift_rr(ctx, node, ShiftOp::Shl),
+            NodeKind::Lshr => emit_shift_rr(ctx, node, ShiftOp::Shr),
+            NodeKind::Ashr => emit_shift_rr(ctx, node, ShiftOp::Sar),
             NodeKind::Imul => emit_alu_rr(ctx, node, AluOp::Imul),
             NodeKind::Udiv => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
@@ -362,6 +373,25 @@ impl MachineLower for X64Machine {
         }
         Ok(())
     }
+}
+
+fn emit_shift_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: ShiftOp) {
+    let [value, amount] = ctx.node_inputs_exact(node);
+    let [output] = ctx.node_outputs_exact(node);
+    let ty = ctx.value_type(output);
+
+    let value = ctx.get_value_vreg(value);
+    let amount = ctx.get_value_vreg(amount);
+    let output = ctx.get_value_vreg(output);
+
+    ctx.emit_instr(
+        X64Instr::ShiftRmR(operand_size_for_ty(ty), op),
+        &[DefOperand::any(output)],
+        &[
+            UseOperand::any_reg(value),
+            UseOperand::fixed(amount, REG_RCX),
+        ],
+    );
 }
 
 fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp) {

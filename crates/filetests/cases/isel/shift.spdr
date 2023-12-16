@@ -1,0 +1,133 @@
+# run: isel
+
+func @shl_i32_i32:i32(i32, i32) {
+    # check: function `shl_i32_i32`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S32, Shl) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i32, %2:i32 = entry
+    %3:i32 = shl %1, %2
+    return %0, %3
+}
+
+func @shl_i64_i64:i64(i64, i64) {
+    # check: function `shl_i64_i64`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S64, Shl) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i64, %2:i64 = entry
+    %3:i64 = shl %1, %2
+    return %0, %3
+}
+
+func @shl_i32_i64:i32(i32, i64) {
+    # check: function `shl_i32_i64`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S32, Shl) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i32, %2:i64 = entry
+    %3:i32 = shl %1, %2
+    return %0, %3
+}
+
+func @shl_i64_i32:i64(i64, i32) {
+    # check: function `shl_i64_i32`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S64, Shl) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i64, %2:i32 = entry
+    %3:i64 = shl %1, %2
+    return %0, %3
+}
+
+func @lshr_i32_i32:i32(i32, i32) {
+    # check: function `lshr_i32_i32`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S32, Shr) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i32, %2:i32 = entry
+    %3:i32 = lshr %1, %2
+    return %0, %3
+}
+
+func @lshr_i64_i64:i64(i64, i64) {
+    # check: function `lshr_i64_i64`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S64, Shr) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i64, %2:i64 = entry
+    %3:i64 = lshr %1, %2
+    return %0, %3
+}
+
+func @lshr_i32_i64:i32(i32, i64) {
+    # check: function `lshr_i32_i64`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S32, Shr) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i32, %2:i64 = entry
+    %3:i32 = lshr %1, %2
+    return %0, %3
+}
+
+func @lshr_i64_i32:i64(i64, i32) {
+    # check: function `lshr_i64_i32`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S64, Shr) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i64, %2:i32 = entry
+    %3:i64 = lshr %1, %2
+    return %0, %3
+}
+
+func @ashr_i32_i32:i32(i32, i32) {
+    # check: function `ashr_i32_i32`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S32, Sar) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i32, %2:i32 = entry
+    %3:i32 = ashr %1, %2
+    return %0, %3
+}
+
+func @ashr_i64_i64:i64(i64, i64) {
+    # check: function `ashr_i64_i64`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S64, Sar) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i64, %2:i64 = entry
+    %3:i64 = ashr %1, %2
+    return %0, %3
+}
+
+func @ashr_i32_i64:i32(i32, i64) {
+    # check: function `ashr_i32_i64`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S32, Sar) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i32, %2:i64 = entry
+    %3:i32 = ashr %1, %2
+    return %0, %3
+}
+
+func @ashr_i64_i32:i64(i64, i32) {
+    # check: function `ashr_i64_i32`:
+    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmR(S64, Sar) %1:gpr(reg)[early], %2:gpr($$rcx)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i64, %2:i32 = entry
+    %3:i64 = ashr %1, %2
+    return %0, %3
+}

@@ -98,6 +98,8 @@ pub enum AluOp {
 pub enum X64Instr {
     LoadRbp { offset: i32 },
     AluRmR(OperandSize, AluOp),
+    // Special version of `MovRI` for zero, when clobbering flags is allowed
+    MovRZ,
     MovRI(OperandSize, u64),
     MovRM(OperandSize),
     MovMR(OperandSize),
@@ -237,22 +239,22 @@ impl MachineLower for X64Machine {
             NodeKind::Icmp(kind) => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
-
-                emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
-
-                let output_ty = ctx.value_type(output);
                 let output = ctx.get_value_vreg(output);
 
+                // Generate an `xor; cmp; setcc`. This is preferable to `cmp; setcc; movzx` because
+                // `setcc` modifies only the low byte of its output operand, so clearing the
+                // register first avoids the (false) partial dependency on the previous value of the
+                // `setcc` output register.
+
                 let temp = ctx.create_temp_vreg(RC_GPR);
+
+                // Note: the `xor` must precede the `cmp` because it clobbers flags.
+                ctx.emit_instr(X64Instr::MovRZ, &[DefOperand::any_reg(temp)], &[]);
+                emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
                 ctx.emit_instr(
                     X64Instr::Setcc(cond_code_for_icmp(kind)),
-                    &[DefOperand::any_reg(temp)],
-                    &[],
-                );
-                ctx.emit_instr(
-                    X64Instr::MovzxRR(byte_ext_width_for_ty(output_ty)),
                     &[DefOperand::any_reg(output)],
-                    &[UseOperand::any_reg(temp)],
+                    &[UseOperand::tied(temp, 0)],
                 );
             }
             NodeKind::Load(mem_size) => {
@@ -387,14 +389,6 @@ fn load_ext_width_for_ty(ty: Type, mem_size: MemSize) -> ExtWidth {
         (Type::I64, MemSize::S2) => ExtWidth::Ext16_64,
         (Type::I64, MemSize::S4) => ExtWidth::Ext32_64,
         _ => panic!("unsupported extending load type ({ty}, {mem_size:?})"),
-    }
-}
-
-fn byte_ext_width_for_ty(ty: Type) -> ExtWidth {
-    match ty {
-        Type::I32 => ExtWidth::Ext8_32,
-        Type::I64 => ExtWidth::Ext8_64,
-        _ => panic!("unexpected extension target {ty}"),
     }
 }
 

@@ -97,7 +97,7 @@ pub enum AluOp {
 #[derive(Debug, Clone, Copy)]
 pub enum X64Instr {
     LoadRbp { offset: i32 },
-    AluRmR(OperandSize, AluOp),
+    AluRRm(OperandSize, AluOp),
     // Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,
     MovRI(OperandSize, u64),
@@ -346,9 +346,9 @@ fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp)
     let op2 = ctx.get_value_vreg(op2);
 
     ctx.emit_instr(
-        X64Instr::AluRmR(operand_size_for_ty(ty), op),
-        &[DefOperand::any(output)],
-        &[UseOperand::tied(op1, 0), UseOperand::any_reg(op2)],
+        X64Instr::AluRRm(operand_size_for_ty(ty), op),
+        &[DefOperand::any_reg(output)],
+        &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
 }
 
@@ -364,9 +364,9 @@ fn emit_alu_rr_discarded(
     let op2 = ctx.get_value_vreg(op2);
 
     ctx.emit_instr(
-        X64Instr::AluRmR(operand_size_for_ty(ty), op),
+        X64Instr::AluRRm(operand_size_for_ty(ty), op),
         &[],
-        &[UseOperand::any(op1), UseOperand::any_reg(op2)],
+        &[UseOperand::any_reg(op1), UseOperand::any(op2)],
     );
 }
 

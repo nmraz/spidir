@@ -4,7 +4,7 @@ func @sum_to_n:i32(i32) {
     # check: function `sum_to_n`:
     # nextln: block0[%7:gpr($$rdi)]:
     # nextln:     %5:gpr(reg)[late] = MovRI(S32, 0)
-    # nextln:     AluRmR(S32, Cmp) %7:gpr(any)[early], %5:gpr(reg)[early]
+    # nextln:     AluRRm(S32, Cmp) %7:gpr(reg)[early], %5:gpr(any)[early]
     # nextln:     Jumpcc(E, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
@@ -15,9 +15,9 @@ func @sum_to_n:i32(i32) {
     # nextln:     Jump(block4)
     # nextln: => block4[%5:gpr, %7:gpr]
     # nextln: block4[%0:gpr, %1:gpr]:
-    # nextln:     %3:gpr(any)[late] = AluRmR(S32, Add) %0:gpr(tied:0)[early], %1:gpr(reg)[early]
-    # nextln:     %4:gpr(any)[late] = AluRmR(S32, Sub) %1:gpr(tied:0)[early], %6:gpr(reg)[early]
-    # nextln:     AluRmR(S32, Cmp) %4:gpr(any)[early], %5:gpr(reg)[early]
+    # nextln:     %3:gpr(reg)[late] = AluRRm(S32, Add) %0:gpr(tied:0)[early], %1:gpr(any)[early]
+    # nextln:     %4:gpr(reg)[late] = AluRRm(S32, Sub) %1:gpr(tied:0)[early], %6:gpr(any)[early]
+    # nextln:     AluRRm(S32, Cmp) %4:gpr(reg)[early], %5:gpr(any)[early]
     # nextln:     Jumpcc(E, block5, block6)
     # nextln: => block5[], block6[]
     # nextln: block6[]:

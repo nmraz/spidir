@@ -3,7 +3,7 @@
 func @and64:i64(i64, i64) {
     # check: function `and64`:
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln:     %0:gpr(any)[late] = AluRmR(S64, And) %1:gpr(tied:0)[early], %2:gpr(reg)[early]
+    # nextln:     %0:gpr(reg)[late] = AluRRm(S64, And) %1:gpr(tied:0)[early], %2:gpr(any)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
@@ -14,7 +14,7 @@ func @and64:i64(i64, i64) {
 func @and32:i32(i32, i32) {
     # check: function `and32`:
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln:     %0:gpr(any)[late] = AluRmR(S32, And) %1:gpr(tied:0)[early], %2:gpr(reg)[early]
+    # nextln:     %0:gpr(reg)[late] = AluRRm(S32, And) %1:gpr(tied:0)[early], %2:gpr(any)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %c:ctrl, %a:i32, %b:i32 = entry

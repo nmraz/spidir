@@ -3,7 +3,7 @@
 func @select_eq:i32(i32, i32, i32, i32) {
     # check: function `select_eq`:
     # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
-    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     AluRRm(S32, Cmp) %3:gpr(reg)[early], %4:gpr(any)[early]
     # nextln:     Jumpcc(E, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
@@ -26,7 +26,7 @@ func @select_eq:i32(i32, i32, i32, i32) {
 func @select_ne:i32(i32, i32, i32, i32) {
     # check: function `select_ne`:
     # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
-    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     AluRRm(S32, Cmp) %3:gpr(reg)[early], %4:gpr(any)[early]
     # nextln:     Jumpcc(Le, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
@@ -49,7 +49,7 @@ func @select_ne:i32(i32, i32, i32, i32) {
 func @select_slt:i32(i32, i32, i32, i32) {
     # check: function `select_slt`:
     # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
-    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     AluRRm(S32, Cmp) %3:gpr(reg)[early], %4:gpr(any)[early]
     # nextln:     Jumpcc(L, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
@@ -72,7 +72,7 @@ func @select_slt:i32(i32, i32, i32, i32) {
 func @select_sle:i32(i32, i32, i32, i32) {
     # check: function `select_sle`:
     # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
-    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     AluRRm(S32, Cmp) %3:gpr(reg)[early], %4:gpr(any)[early]
     # nextln:     Jumpcc(Le, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
@@ -95,7 +95,7 @@ func @select_sle:i32(i32, i32, i32, i32) {
 func @select_ult:i32(i32, i32, i32, i32) {
     # check: function `select_ult`:
     # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
-    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     AluRRm(S32, Cmp) %3:gpr(reg)[early], %4:gpr(any)[early]
     # nextln:     Jumpcc(B, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
@@ -118,7 +118,7 @@ func @select_ult:i32(i32, i32, i32, i32) {
 func @select_ule:i32(i32, i32, i32, i32) {
     # check: function `select_ule`:
     # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
-    # nextln:     AluRmR(S32, Cmp) %3:gpr(any)[early], %4:gpr(reg)[early]
+    # nextln:     AluRRm(S32, Cmp) %3:gpr(reg)[early], %4:gpr(any)[early]
     # nextln:     Jumpcc(Be, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
@@ -142,9 +142,9 @@ func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # check: function `select_slt_cond_reused`:
     # nextln: block0[%8:gpr($$rdi), %9:gpr($$rsi), %6:gpr($$rdx), %5:gpr($$rcx)]:
     # nextln:     %7:gpr(reg)[late] = MovRZ
-    # nextln:     AluRmR(S32, Cmp) %8:gpr(any)[early], %9:gpr(reg)[early]
+    # nextln:     AluRRm(S32, Cmp) %8:gpr(reg)[early], %9:gpr(any)[early]
     # nextln:     %3:gpr(reg)[late] = Setcc(L) %7:gpr(tied:0)[early]
-    # nextln:     AluRmR(S32, Test) %3:gpr(any)[early], %3:gpr(reg)[early]
+    # nextln:     AluRRm(S32, Test) %3:gpr(reg)[early], %3:gpr(any)[early]
     # nextln:     Jumpcc(Ne, block1, block3)
     # nextln: => block1[], block3[]
     # nextln: block1[]:
@@ -155,8 +155,8 @@ func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # nextln: => block2[%5:gpr]
     # nextln: block2[%0:gpr]:
     # nextln:     %4:gpr(reg)[late] = MovRI(S32, 5)
-    # nextln:     %2:gpr(any)[late] = AluRmR(S32, Xor) %3:gpr(tied:0)[early], %4:gpr(reg)[early]
-    # nextln:     %1:gpr(any)[late] = AluRmR(S32, Add) %0:gpr(tied:0)[early], %2:gpr(reg)[early]
+    # nextln:     %2:gpr(reg)[late] = AluRRm(S32, Xor) %3:gpr(tied:0)[early], %4:gpr(any)[early]
+    # nextln:     %1:gpr(reg)[late] = AluRRm(S32, Add) %0:gpr(tied:0)[early], %2:gpr(any)[early]
     # nextln:     Ret %1:gpr($$rax)[early]
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry

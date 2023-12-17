@@ -108,6 +108,9 @@ pub enum X64Instr {
     AluRRm(OperandSize, AluOp),
     ShiftRmR(OperandSize, ShiftOp),
     Div(OperandSize),
+    Idiv(OperandSize),
+    Cdq,
+    Cqo,
     // Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,
     MovRI(OperandSize, u64),
@@ -265,6 +268,36 @@ impl MachineLower for X64Machine {
                 let rdx_out = ctx.create_temp_vreg(RC_GPR);
                 ctx.emit_instr(
                     X64Instr::Div(operand_size_for_ty(ty)),
+                    &[
+                        DefOperand::fixed(output, REG_RAX),
+                        DefOperand::fixed(rdx_out, REG_RDX),
+                    ],
+                    &[
+                        UseOperand::fixed(op1, REG_RAX),
+                        UseOperand::fixed(rdx_in, REG_RDX),
+                        UseOperand::any(op2),
+                    ],
+                );
+            }
+            NodeKind::Sdiv => {
+                let [op1, op2] = ctx.node_inputs_exact(node);
+                let [output] = ctx.node_outputs_exact(node);
+                let ty = ctx.value_type(output);
+
+                let op1 = ctx.get_value_vreg(op1);
+                let op2 = ctx.get_value_vreg(op2);
+                let output = ctx.get_value_vreg(output);
+
+                let rdx_in = ctx.create_temp_vreg(RC_GPR);
+                ctx.emit_instr(
+                    cdo_op_for_ty(ty),
+                    &[DefOperand::fixed(rdx_in, REG_RDX)],
+                    &[UseOperand::fixed(op1, REG_RAX)],
+                );
+
+                let rdx_out = ctx.create_temp_vreg(RC_GPR);
+                ctx.emit_instr(
+                    X64Instr::Idiv(operand_size_for_ty(ty)),
                     &[
                         DefOperand::fixed(output, REG_RAX),
                         DefOperand::fixed(rdx_out, REG_RDX),
@@ -449,6 +482,14 @@ fn load_ext_width_for_ty(ty: Type, mem_size: MemSize) -> ExtWidth {
         (Type::I64, MemSize::S2) => ExtWidth::Ext16_64,
         (Type::I64, MemSize::S4) => ExtWidth::Ext32_64,
         _ => panic!("unsupported extending load type ({ty}, {mem_size:?})"),
+    }
+}
+
+fn cdo_op_for_ty(ty: Type) -> X64Instr {
+    match ty {
+        Type::I32 => X64Instr::Cdq,
+        Type::I64 => X64Instr::Cqo,
+        _ => panic!("unexpected type {ty}"),
     }
 }
 

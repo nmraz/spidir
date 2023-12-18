@@ -113,7 +113,6 @@ pub enum X64Instr {
     /// Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,
     MovRI(OperandSize, u64),
-    MovzxRM(ExtWidth),
     MovzxRR(ExtWidth),
     Setcc(CondCode),
     /// Load from [rbp + offset]
@@ -123,6 +122,7 @@ pub enum X64Instr {
     StackAddr(StackSlot),
     MovRM(OperandSize),
     MovMR(OperandSize),
+    MovzxRM(ExtWidth),
     Ret,
     Jump(Block),
     Jumpcc(CondCode, Block, Block),

@@ -3,8 +3,8 @@
 func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
     # check: function `many_params`:
     # nextln: block0[%13:gpr($$rdi), %14:gpr($$rsi), %12:gpr($$rdx), %10:gpr($$rcx), %8:gpr($$r8), %6:gpr($$r9)]:
-    # nextln:     %2:gpr(reg)[late] = LoadRbp { offset: 24 }
-    # nextln:     %4:gpr(reg)[late] = LoadRbp { offset: 16 }
+    # nextln:     %2:gpr(reg)[late] = MovRRbp { offset: 24 }
+    # nextln:     %4:gpr(reg)[late] = MovRRbp { offset: 16 }
     # nextln:     %11:gpr(reg)[late] = AluRRm(S64, Add) %13:gpr(tied:0)[early], %14:gpr(any)[early]
     # nextln:     %9:gpr(reg)[late] = AluRRm(S64, Add) %11:gpr(tied:0)[early], %12:gpr(any)[early]
     # nextln:     %7:gpr(reg)[late] = AluRRm(S64, Add) %9:gpr(tied:0)[early], %10:gpr(any)[early]

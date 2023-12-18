@@ -104,16 +104,19 @@ pub enum ShiftOp {
 
 #[derive(Debug, Clone, Copy)]
 pub enum X64Instr {
-    LoadRbp { offset: i32 },
     AluRRm(OperandSize, AluOp),
     ShiftRmR(OperandSize, ShiftOp),
     Div(OperandSize),
     Idiv(OperandSize),
     Cdq,
     Cqo,
-    // Special version of `MovRI` for zero, when clobbering flags is allowed
+    /// Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,
     MovRI(OperandSize, u64),
+    /// Load from [rbp + offset]
+    MovRRbp {
+        offset: i32,
+    },
     MovRM(OperandSize),
     MovMR(OperandSize),
     MovzxRM(ExtWidth),
@@ -220,7 +223,7 @@ impl MachineLower for X64Machine {
     }
 
     fn make_fp_relative_load(&self, offset: i32) -> Self::Instr {
-        X64Instr::LoadRbp { offset }
+        X64Instr::MovRRbp { offset }
     }
 
     fn select_instr(

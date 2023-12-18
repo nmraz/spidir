@@ -8,7 +8,7 @@ use ir::{
 use crate::{
     cfg::Block,
     isel::IselContext,
-    lir::{DefOperand, PhysReg, RegClass, UseOperand},
+    lir::{DefOperand, PhysReg, RegClass, StackSlot, UseOperand},
     machine::{MachineCore, MachineIselError, MachineLower, ParamLoc},
 };
 
@@ -113,15 +113,16 @@ pub enum X64Instr {
     /// Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,
     MovRI(OperandSize, u64),
+    MovzxRM(ExtWidth),
+    MovzxRR(ExtWidth),
+    Setcc(CondCode),
     /// Load from [rbp + offset]
     MovRRbp {
         offset: i32,
     },
+    StackAddr(StackSlot),
     MovRM(OperandSize),
     MovMR(OperandSize),
-    MovzxRM(ExtWidth),
-    MovzxRR(ExtWidth),
-    Setcc(CondCode),
     Ret,
     Jump(Block),
     Jumpcc(CondCode, Block, Block),
@@ -369,6 +370,16 @@ impl MachineLower for X64Machine {
                     X64Instr::MovMR(operand_size_for_mem_size(mem_size)),
                     &[],
                     &[UseOperand::any_reg(addr), UseOperand::any_reg(value)],
+                );
+            }
+            NodeKind::StackSlot { .. } => {
+                let [output] = ctx.node_outputs_exact(node);
+                let output = ctx.get_value_vreg(output);
+                let slot = ctx.node_stack_slot(node);
+                ctx.emit_instr(
+                    X64Instr::StackAddr(slot),
+                    &[DefOperand::any_reg(output)],
+                    &[],
                 );
             }
             NodeKind::BrCond => {

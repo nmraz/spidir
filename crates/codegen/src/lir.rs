@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use core::{fmt, iter, marker::PhantomData, ops::Range};
 use fx_utils::FxHashMap;
 
-use cranelift_entity::SecondaryMap;
+use cranelift_entity::{entity_impl, PrimaryMap, SecondaryMap};
 
 use crate::{
     cfg::{Block, BlockCfg},
@@ -218,6 +218,25 @@ impl DefOperand {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct StackSlotData {
+    pub size: u32,
+    pub align: u32,
+}
+
+impl fmt::Debug for StackSlotData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("StackSlot")
+            .field("size", &self.size)
+            .field("align", &self.align)
+            .finish()
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct StackSlot(u32);
+entity_impl!(StackSlot, "!");
+
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Instr(u32);
 
@@ -306,6 +325,7 @@ pub struct Lir<M: MachineCore> {
     instr_operands: Vec<InstrOperands>,
     def_pool: Vec<DefOperand>,
     use_pool: Vec<UseOperand>,
+    stack_slots: PrimaryMap<StackSlot, StackSlotData>,
 }
 
 impl<M: MachineCore> Lir<M> {
@@ -352,6 +372,10 @@ impl<M: MachineCore> Lir<M> {
         let (base, len) = indices[succ as usize];
         let base = base as usize;
         &self.block_param_pool[base..base + len as usize]
+    }
+
+    pub fn stack_slot_data(&self, slot: StackSlot) -> StackSlotData {
+        self.stack_slots[slot]
     }
 }
 
@@ -443,6 +467,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
                 instr_operands: Vec::new(),
                 def_pool: Vec::new(),
                 use_pool: Vec::new(),
+                stack_slots: PrimaryMap::new(),
             },
             block_order,
             vreg_copies: FxHashMap::default(),
@@ -517,6 +542,10 @@ impl<'o, M: MachineCore> Builder<'o, M> {
                 prev.reg_num()
             );
         }
+    }
+
+    pub fn create_stack_slot(&mut self, data: StackSlotData) -> StackSlot {
+        self.lir.stack_slots.push(data)
     }
 
     pub fn set_live_in_regs(&mut self, live_in_regs: Vec<PhysReg>) {

@@ -6,8 +6,8 @@ use crate::{
 };
 
 use super::{
-    Builder, DefOperand, Lir, OperandPos, PhysReg, RegClass, UseOperand, UseOperandConstraint,
-    VirtReg,
+    Builder, DefOperand, Lir, OperandPos, PhysReg, RegClass, StackSlotData, UseOperand,
+    UseOperandConstraint, VirtReg,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -320,6 +320,43 @@ fn block_param_vreg_copies() {
                 Jump(block1)
             => block1[%2:gpr]
             block1[%0:gpr]:
+                Ret %0:gpr($r0)[early]
+        "#]],
+    );
+}
+
+#[test]
+fn stack_slots() {
+    let mut cfg = BlockCfg::new();
+    let block = cfg.create_block();
+    let block_order = [block];
+
+    let mut builder = Builder::new(&block_order);
+
+    builder.create_stack_slot(StackSlotData { size: 4, align: 4 });
+    builder.create_stack_slot(StackSlotData { size: 16, align: 8 });
+
+    builder.advance_block();
+
+    let [retval] = push_instr(
+        &mut builder,
+        DummyInstr::Ret,
+        [],
+        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+    );
+    builder.set_incoming_block_params([retval]);
+    builder.advance_block();
+    builder.set_live_in_regs(vec![REG_R0]);
+    let lir = builder.finish();
+
+    check_lir(
+        lir,
+        &cfg,
+        &block_order,
+        expect![[r#"
+                !0 = StackSlot { size: 4, align: 4 }
+                !1 = StackSlot { size: 16, align: 8 }
+            block0[%0:gpr($r0)]:
                 Ret %0:gpr($r0)[early]
         "#]],
     );

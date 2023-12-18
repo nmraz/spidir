@@ -133,6 +133,10 @@ pub struct Display<'a, M: MachineCore> {
 
 impl<M: MachineCore> fmt::Display for Display<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for (stack_slot, data) in self.lir.stack_slots.iter() {
+            writeln!(f, "    {} = {:?}", stack_slot, data)?;
+        }
+
         let mut first_block = true;
 
         for &block in self.block_order {

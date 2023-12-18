@@ -19,7 +19,7 @@ use crate::{
     cfg::{Block, CfgContext},
     lir::{
         display_instr_data, Builder as LirBuilder, DefOperand, InstrBuilder, Lir, RegClass,
-        UseOperand, VirtReg,
+        StackSlot, StackSlotData, UseOperand, VirtReg,
     },
     machine::{MachineLower, ParamLoc},
     schedule::Schedule,
@@ -56,6 +56,14 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
 
     pub fn node_kind(&self, node: Node) -> NodeKind {
         *self.state.func.graph.node_kind(node)
+    }
+
+    pub fn node_stack_slot(&self, node: Node) -> StackSlot {
+        *self
+            .state
+            .stack_slot_map
+            .get(&node)
+            .expect("node is not a stack slot")
     }
 
     pub fn node_inputs(&self, node: Node) -> impl Iterator<Item = DepValue> + 'ctx {
@@ -142,6 +150,7 @@ pub fn select_instrs<M: MachineLower>(
 type ValueRegMap = FxHashMap<DepValue, VirtReg>;
 type RegValueMap = FxHashMap<VirtReg, DepValue>;
 type ValueUseCounts = SecondaryMap<DepValue, u32>;
+type NodeStackSlotMap = FxHashMap<Node, StackSlot>;
 
 struct IselState<'ctx, M: MachineLower> {
     module: &'ctx Module,
@@ -152,6 +161,7 @@ struct IselState<'ctx, M: MachineLower> {
     value_reg_map: ValueRegMap,
     reg_value_map: RegValueMap,
     value_use_counts: ValueUseCounts,
+    stack_slot_map: NodeStackSlotMap,
 }
 
 impl<'ctx, M: MachineLower> IselState<'ctx, M> {
@@ -171,12 +181,12 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             value_reg_map: Default::default(),
             reg_value_map: Default::default(),
             value_use_counts: Default::default(),
+            stack_slot_map: Default::default(),
         }
     }
 
     fn prepare_for_isel(&mut self, builder: &mut LirBuilder<'ctx, M>) {
         // TODO: Classify side effects.
-        // TODO: Collect stack slots and prepare dedicated stack slot mapping.
 
         for &block in &self.cfg_ctx.block_order {
             for &phi in self.schedule.block_phis(block) {
@@ -196,6 +206,11 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 // instruction selection process.
                 for input in dataflow_inputs(&self.func.graph, node) {
                     self.value_use_counts[input] += 1;
+                }
+
+                if let &NodeKind::StackSlot { size, align } = self.func.graph.node_kind(node) {
+                    let stack_slot = builder.create_stack_slot(StackSlotData { size, align });
+                    self.stack_slot_map.insert(node, stack_slot);
                 }
             }
         }
@@ -288,10 +303,6 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
 
                 builder.set_incoming_block_params(param_regs);
                 builder.set_live_in_regs(live_in_regs);
-            }
-            NodeKind::StackSlot { .. } => {
-                // We have nothing to do here for stack slots; they need to be collected and
-                // prepared in advance.
             }
             _ => builder
                 .build_instrs(|builder| {

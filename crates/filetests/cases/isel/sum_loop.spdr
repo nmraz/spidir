@@ -45,3 +45,59 @@ func @sum_to_n:i32(i32) {
     %18:i32 = phi %17, %2, %12
     return %16, %18
 }
+
+func @sum_to_n_with_stack:i32(i32) {
+    # check: function `sum_to_n_with_stack`:
+    # nextln:     !0 = StackSlot { size: 4, align: 4 }
+    # nextln:     !1 = StackSlot { size: 4, align: 4 }
+    # nextln: block0[%8:gpr($$rdi)]:
+    # nextln:     Jump(block1)
+    # nextln: => block1[]
+    # nextln: block1[]:
+    # nextln:     MovStackR(!0, S32) %8:gpr(reg)[early]
+    # nextln:     %5:gpr(reg)[late] = MovRI(S32, 1)
+    # nextln:     %7:gpr(reg)[late] = MovRI(S32, 0)
+    # nextln:     MovStackR(!1, S32) %7:gpr(reg)[early]
+    # nextln:     Jump(block2)
+    # nextln: => block2[]
+    # nextln: block2[]:
+    # nextln:     %6:gpr(reg)[late] = MovRStack(!0, S32)
+    # nextln:     AluRRm(S32, Cmp) %6:gpr(reg)[early], %7:gpr(any)[early]
+    # nextln:     Jumpcc(E, block3, block4)
+    # nextln: => block3[], block4[]
+    # nextln: block4[]:
+    # nextln:     %3:gpr(reg)[late] = MovRStack(!0, S32)
+    # nextln:     %2:gpr(reg)[late] = MovRStack(!1, S32)
+    # nextln:     %4:gpr(reg)[late] = AluRRm(S32, Sub) %3:gpr(tied:0)[early], %5:gpr(any)[early]
+    # nextln:     MovStackR(!0, S32) %4:gpr(reg)[early]
+    # nextln:     %1:gpr(reg)[late] = AluRRm(S32, Add) %2:gpr(tied:0)[early], %3:gpr(any)[early]
+    # nextln:     MovStackR(!1, S32) %1:gpr(reg)[early]
+    # nextln:     Jump(block2)
+    # nextln: => block2[]
+    # nextln: block3[]:
+    # nextln:     %0:gpr(reg)[late] = MovRStack(!1, S32)
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:phisel = region %0
+    %5:ptr = stackslot 4:4
+    %4:ptr = stackslot 4:4
+    %6:ctrl = store.4 %2, %1, %4
+    %24:i32 = iconst 1
+    %7:i32 = iconst 0
+    %8:ctrl = store.4 %6, %7, %5
+    %13:i32 = icmp eq %12, %7
+    %18:ctrl, %19:ctrl = brcond %11, %13
+    %14:ctrl, %15:phisel = region %18
+    %29:ctrl, %30:i32 = load.4 %14, %5
+    return %29, %30
+    %16:ctrl, %17:phisel = region %19
+    %20:ctrl, %21:i32 = load.4 %16, %4
+    %22:ctrl, %23:i32 = load.4 %20, %5
+    %25:i32 = isub %21, %24
+    %27:ctrl = store.4 %22, %25, %4
+    %26:i32 = iadd %23, %21
+    %28:ctrl = store.4 %27, %26, %5
+    %9:ctrl, %10:phisel = region %8, %28
+    %11:ctrl, %12:i32 = load.4 %9, %4
+}

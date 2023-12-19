@@ -120,6 +120,8 @@ pub enum X64Instr {
         offset: i32,
     },
     StackAddr(StackSlot),
+    MovRStack(StackSlot, OperandSize),
+    MovStackR(StackSlot, OperandSize),
     MovRM(OperandSize),
     MovMR(OperandSize),
     MovzxRM(ExtWidth),

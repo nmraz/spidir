@@ -4,8 +4,7 @@ func @use_simple_stackslot(i32) {
     # check: function `use_simple_stackslot`:
     # nextln:     !0 = StackSlot { size: 4, align: 4 }
     # nextln: block0[%0:gpr($$rdi)]:
-    # nextln:     %1:gpr(reg)[late] = StackAddr(!0)
-    # nextln:     MovMR(S32) %1:gpr(reg)[early], %0:gpr(reg)[early]
+    # nextln:     MovStackR(!0, S32) %0:gpr(reg)[early]
     # nextln:     Ret
 
     %0:ctrl, %1:i32 = entry

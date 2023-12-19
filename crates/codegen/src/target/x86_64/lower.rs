@@ -8,7 +8,7 @@ use ir::{
 use crate::{
     cfg::Block,
     isel::IselContext,
-    lir::{DefOperand, PhysReg, RegClass, UseOperand},
+    lir::{DefOperand, PhysReg, RegClass, StackSlot, UseOperand, VirtReg},
     machine::{MachineIselError, MachineLower, ParamLoc},
 };
 
@@ -181,43 +181,8 @@ impl MachineLower for X64Machine {
                 );
             }
             NodeKind::PtrOff => emit_alu_rr(ctx, node, AluOp::Add),
-            NodeKind::Load(mem_size) => {
-                let [addr] = ctx.node_inputs_exact(node);
-                let [output] = ctx.node_outputs_exact(node);
-                let ty = ctx.value_type(output);
-
-                let addr = ctx.get_value_vreg(addr);
-                let output = ctx.get_value_vreg(output);
-
-                match (ty, mem_size) {
-                    (Type::I32, MemSize::S4) => ctx.emit_instr(
-                        X64Instr::MovRM(OperandSize::S32),
-                        &[DefOperand::any_reg(output)],
-                        &[UseOperand::any_reg(addr)],
-                    ),
-                    (Type::I64 | Type::Ptr, MemSize::S8) => ctx.emit_instr(
-                        X64Instr::MovRM(OperandSize::S64),
-                        &[DefOperand::any_reg(output)],
-                        &[UseOperand::any_reg(addr)],
-                    ),
-                    _ => ctx.emit_instr(
-                        X64Instr::MovzxRM(load_ext_width_for_ty(ty, mem_size)),
-                        &[DefOperand::any_reg(output)],
-                        &[UseOperand::any_reg(addr)],
-                    ),
-                }
-            }
-            NodeKind::Store(mem_size) => {
-                let [value, addr] = ctx.node_inputs_exact(node);
-                let value = ctx.get_value_vreg(value);
-                let addr = ctx.get_value_vreg(addr);
-
-                ctx.emit_instr(
-                    X64Instr::MovMR(operand_size_for_mem_size(mem_size)),
-                    &[],
-                    &[UseOperand::any_reg(addr), UseOperand::any_reg(value)],
-                );
-            }
+            NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
+            NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
             NodeKind::StackSlot { .. } => {
                 let [output] = ctx.node_outputs_exact(node);
                 let output = ctx.get_value_vreg(output);
@@ -269,6 +234,77 @@ impl MachineLower for X64Machine {
     }
 }
 
+fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {
+    let [addr] = ctx.node_inputs_exact(node);
+    let [output] = ctx.node_outputs_exact(node);
+    let ty = ctx.value_type(output);
+
+    let output = ctx.get_value_vreg(output);
+    match (ty, mem_size) {
+        (Type::I32, mem_size @ MemSize::S4) | (Type::I64 | Type::Ptr, mem_size @ MemSize::S8) => {
+            select_exact_load(ctx, addr, mem_size, output)
+        }
+        _ => {
+            let addr = ctx.get_value_vreg(addr);
+            ctx.emit_instr(
+                X64Instr::MovzxRM(load_ext_width_for_ty(ty, mem_size)),
+                &[DefOperand::any_reg(output)],
+                &[UseOperand::any_reg(addr)],
+            )
+        }
+    }
+}
+
+fn select_exact_load(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    addr: DepValue,
+    mem_size: MemSize,
+    output: VirtReg,
+) {
+    let op_size = operand_size_for_mem_size(mem_size);
+    match match_stack_slot(ctx, addr) {
+        Some(stack_slot) => {
+            ctx.emit_instr(
+                X64Instr::MovRStack(stack_slot, op_size),
+                &[DefOperand::any_reg(output)],
+                &[],
+            );
+        }
+        None => {
+            let addr = ctx.get_value_vreg(addr);
+            ctx.emit_instr(
+                X64Instr::MovRM(op_size),
+                &[DefOperand::any_reg(output)],
+                &[UseOperand::any_reg(addr)],
+            )
+        }
+    }
+}
+
+fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {
+    let [value, addr] = ctx.node_inputs_exact(node);
+    let value = ctx.get_value_vreg(value);
+    let op_size = operand_size_for_mem_size(mem_size);
+
+    match match_stack_slot(ctx, addr) {
+        Some(stack_slot) => {
+            ctx.emit_instr(
+                X64Instr::MovStackR(stack_slot, op_size),
+                &[],
+                &[UseOperand::any_reg(value)],
+            );
+        }
+        None => {
+            let addr = ctx.get_value_vreg(addr);
+            ctx.emit_instr(
+                X64Instr::MovMR(op_size),
+                &[],
+                &[UseOperand::any_reg(addr), UseOperand::any_reg(value)],
+            );
+        }
+    }
+}
+
 fn emit_shift_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: ShiftOp) {
     let [value, amount] = ctx.node_inputs_exact(node);
     let [output] = ctx.node_outputs_exact(node);
@@ -286,6 +322,19 @@ fn emit_shift_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: Shif
             UseOperand::fixed(amount, REG_RCX),
         ],
     );
+}
+
+fn match_stack_slot(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    value: DepValue,
+) -> Option<StackSlot> {
+    if let Some((node, 0)) = ctx.value_def(value) {
+        if matches!(ctx.node_kind(node), NodeKind::StackSlot { .. }) {
+            return Some(ctx.node_stack_slot(node));
+        }
+    }
+
+    None
 }
 
 fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp) {

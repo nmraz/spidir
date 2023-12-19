@@ -42,6 +42,13 @@ pub enum ExtWidth {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub enum ConvertWordWidth {
+    Cwd,
+    Cdq,
+    Cqo,
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum CondCode {
     /// Overflow (OF = 1)
     O,
@@ -102,8 +109,7 @@ pub enum X64Instr {
     ShiftRmR(OperandSize, ShiftOp),
     Div(OperandSize),
     Idiv(OperandSize),
-    Cdq,
-    Cqo,
+    ConvertWord(ConvertWordWidth),
     /// Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,
     MovRI(OperandSize, u64),

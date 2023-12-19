@@ -3,7 +3,7 @@
 func @sdiv64:i64(i64, i64) {
     # check: function `sdiv64`:
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln:     %3:gpr($$rdx)[late] = Cqo %1:gpr($$rax)[early]
+    # nextln:     %3:gpr($$rdx)[late] = ConvertWord(Cqo) %1:gpr($$rax)[early]
     # nextln:     %0:gpr($$rax)[late], %4:gpr($$rdx)[late] = Idiv(S64) %1:gpr($$rax)[early], %3:gpr($$rdx)[early], %2:gpr(any)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 
@@ -15,7 +15,7 @@ func @sdiv64:i64(i64, i64) {
 func @sdiv32:i32(i32, i32) {
     # check: function `sdiv32`:
     # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln:     %3:gpr($$rdx)[late] = Cdq %1:gpr($$rax)[early]
+    # nextln:     %3:gpr($$rdx)[late] = ConvertWord(Cdq) %1:gpr($$rax)[early]
     # nextln:     %0:gpr($$rax)[late], %4:gpr($$rdx)[late] = Idiv(S32) %1:gpr($$rax)[early], %3:gpr($$rdx)[early], %2:gpr(any)[early]
     # nextln:     Ret %0:gpr($$rax)[early]
 

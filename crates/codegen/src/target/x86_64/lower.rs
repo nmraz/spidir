@@ -13,8 +13,8 @@ use crate::{
 };
 
 use super::{
-    AluOp, CondCode, ExtWidth, OperandSize, ShiftOp, X64Instr, X64Machine, RC_GPR, REG_R8, REG_R9,
-    REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI,
+    AluOp, CondCode, ConvertWordWidth, ExtWidth, OperandSize, ShiftOp, X64Instr, X64Machine,
+    RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI,
 };
 
 impl MachineLower for X64Machine {
@@ -140,7 +140,7 @@ impl MachineLower for X64Machine {
 
                 let rdx_in = ctx.create_temp_vreg(RC_GPR);
                 ctx.emit_instr(
-                    cdo_op_for_ty(ty),
+                    X64Instr::ConvertWord(cw_width_for_ty(ty)),
                     &[DefOperand::fixed(rdx_in, REG_RDX)],
                     &[UseOperand::fixed(op1, REG_RAX)],
                 );
@@ -345,10 +345,10 @@ fn load_ext_width_for_ty(ty: Type, mem_size: MemSize) -> ExtWidth {
     }
 }
 
-fn cdo_op_for_ty(ty: Type) -> X64Instr {
+fn cw_width_for_ty(ty: Type) -> ConvertWordWidth {
     match ty {
-        Type::I32 => X64Instr::Cdq,
-        Type::I64 => X64Instr::Cqo,
+        Type::I32 => ConvertWordWidth::Cdq,
+        Type::I64 => ConvertWordWidth::Cqo,
         _ => panic!("unexpected type {ty}"),
     }
 }

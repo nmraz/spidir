@@ -395,7 +395,7 @@ fn clobbers() {
         DummyInstr::Call,
         [DefOperand::fixed(retval, REG_R0)],
         [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
-        PhysRegSet::from_iter([REG_R0, REG_R2]),
+        PhysRegSet::from_iter([REG_R1, REG_R2]),
     );
     builder.set_incoming_block_params([param]);
     builder.advance_block();
@@ -408,7 +408,7 @@ fn clobbers() {
         &block_order,
         expect![[r#"
             block0[%1:gpr($r0)]:
-                %0:gpr($r0)[late] = Call %1:gpr($r0)[early] ^($r0, $r2)
+                %0:gpr($r0)[late] = Call %1:gpr($r0)[early] ^($r1, $r2)
                 Ret %0:gpr($r0)[early]
         "#]],
     );

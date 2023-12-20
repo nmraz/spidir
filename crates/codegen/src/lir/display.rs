@@ -8,7 +8,8 @@ use crate::{
 };
 
 use super::{
-    DefOperand, DefOperandConstraint, Instr, Lir, UseOperand, UseOperandConstraint, VirtReg,
+    DefOperand, DefOperandConstraint, Instr, Lir, PhysRegSet, UseOperand, UseOperandConstraint,
+    VirtReg,
 };
 
 pub struct DisplayVirtReg<M> {
@@ -66,14 +67,21 @@ pub fn display_instr_data<'a, M: MachineCore>(
     instr: M::Instr,
     defs: &'a [DefOperand],
     uses: &'a [UseOperand],
+    clobbers: PhysRegSet,
 ) -> DisplayInstrData<'a, M> {
-    DisplayInstrData { instr, defs, uses }
+    DisplayInstrData {
+        instr,
+        defs,
+        uses,
+        clobbers,
+    }
 }
 
 pub struct DisplayInstrData<'a, M: MachineCore> {
     instr: M::Instr,
     defs: &'a [DefOperand],
     uses: &'a [UseOperand],
+    clobbers: PhysRegSet,
 }
 
 impl<M: MachineCore> fmt::Display for DisplayInstrData<'_, M> {
@@ -102,6 +110,19 @@ impl<M: MachineCore> fmt::Display for DisplayInstrData<'_, M> {
             )?;
         }
 
+        if !self.clobbers.is_empty() {
+            write!(
+                f,
+                " ^({})",
+                self.clobbers
+                    .iter()
+                    .format_with(", ", |clobber, f| f(&format_args!(
+                        "${}",
+                        M::reg_name(clobber)
+                    )))
+            )?;
+        }
+
         Ok(())
     }
 }
@@ -119,7 +140,8 @@ impl<M: MachineCore> fmt::Display for DisplayInstr<'_, M> {
             display_instr_data::<M>(
                 *self.lir.instr_data(self.instr),
                 self.lir.instr_defs(self.instr),
-                self.lir.instr_uses(self.instr)
+                self.lir.instr_uses(self.instr),
+                self.lir.instr_clobbers(self.instr),
             )
         )
     }

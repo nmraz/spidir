@@ -18,8 +18,8 @@ use smallvec::SmallVec;
 use crate::{
     cfg::{Block, CfgContext},
     lir::{
-        display_instr_data, Builder as LirBuilder, DefOperand, InstrBuilder, Lir, RegClass,
-        StackSlot, StackSlotData, UseOperand, VirtReg,
+        display_instr_data, Builder as LirBuilder, DefOperand, InstrBuilder, Lir, PhysRegSet,
+        RegClass, StackSlot, StackSlotData, UseOperand, VirtReg,
     },
     machine::{MachineLower, ParamLoc},
     schedule::Schedule,
@@ -111,15 +111,28 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     }
 
     pub fn emit_instr(&mut self, instr: M::Instr, defs: &[DefOperand], uses: &[UseOperand]) {
+        self.emit_instr_with_clobbers(instr, defs, uses, PhysRegSet::empty());
+    }
+
+    pub fn emit_instr_with_clobbers(
+        &mut self,
+        instr: M::Instr,
+        defs: &[DefOperand],
+        uses: &[UseOperand],
+        clobbers: PhysRegSet,
+    ) {
         // Bump the use count for any operands that came from values in the original graph.
         for &use_op in uses {
             if let Some(&value) = self.state.reg_value_map.get(&use_op.reg()) {
                 self.state.value_use_counts[value] += 1;
             }
         }
-        trace!("    {}", display_instr_data::<M>(instr, defs, uses));
+        trace!(
+            "    {}",
+            display_instr_data::<M>(instr, defs, uses, clobbers)
+        );
         self.builder
-            .push_instr(instr, defs.iter().copied(), uses.iter().copied());
+            .push_instr(instr, defs.iter().copied(), uses.iter().copied(), clobbers);
     }
 }
 
@@ -240,7 +253,13 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             );
             let machine = self.machine;
             builder.build_instrs(|mut builder| {
-                builder.push_instr(machine.make_jump(succs[0]), [], []);
+                emit_instr(
+                    &mut builder,
+                    machine.make_jump(succs[0]),
+                    &[],
+                    &[],
+                    PhysRegSet::empty(),
+                );
             });
         }
 
@@ -292,10 +311,12 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                             live_in_regs.push(reg);
                         }
                         ParamLoc::Stack { fp_offset } => builder.build_instrs(|mut builder| {
-                            builder.push_instr(
+                            emit_instr(
+                                &mut builder,
                                 self.machine.make_fp_relative_load(fp_offset),
-                                [DefOperand::any_reg(vreg)],
-                                [],
+                                &[DefOperand::any_reg(vreg)],
+                                &[],
+                                PhysRegSet::empty(),
                             );
                         }),
                     }
@@ -412,6 +433,20 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             self.value_use_counts[input] -= 1;
         }
     }
+}
+
+fn emit_instr<M: MachineLower>(
+    builder: &mut InstrBuilder<'_, '_, M>,
+    instr: M::Instr,
+    defs: &[DefOperand],
+    uses: &[UseOperand],
+    clobbers: PhysRegSet,
+) {
+    trace!(
+        "    {}",
+        display_instr_data::<M>(instr, defs, uses, clobbers)
+    );
+    builder.push_instr(instr, defs.iter().copied(), uses.iter().copied(), clobbers);
 }
 
 fn get_value_vreg_helper<M: MachineLower>(

@@ -6,7 +6,7 @@ use crate::{
 };
 
 use super::{
-    Builder, DefOperand, Lir, OperandPos, PhysReg, RegClass, StackSlotData, UseOperand,
+    Builder, DefOperand, Lir, OperandPos, PhysReg, PhysRegSet, RegClass, StackSlotData, UseOperand,
     UseOperandConstraint, VirtReg,
 };
 
@@ -17,6 +17,7 @@ enum DummyInstr {
     Lea,
     Cmp,
     Ret,
+    Call,
     Jump(Block),
     JmpEq(Block, Block),
 }
@@ -55,11 +56,12 @@ impl MachineCore for DummyMachine {
     }
 }
 
-fn push_instr<const U: usize>(
-    builder: &mut Builder<DummyMachine>,
+fn push_instr_with_clobbers<const U: usize>(
+    builder: &mut Builder<'_, DummyMachine>,
     instr: DummyInstr,
     defs: impl IntoIterator<Item = DefOperand>,
     uses: [(UseOperandConstraint, OperandPos); U],
+    clobbers: PhysRegSet,
 ) -> [VirtReg; U] {
     let mut use_regs = [VirtReg::new(0, RC_GPR); U];
     builder.build_instrs(|mut b| {
@@ -72,9 +74,19 @@ fn push_instr<const U: usize>(
             uses.iter()
                 .enumerate()
                 .map(|(i, &(constraint, pos))| UseOperand::new(use_regs[i], constraint, pos)),
+            clobbers,
         );
     });
     use_regs
+}
+
+fn push_instr<const U: usize>(
+    builder: &mut Builder<DummyMachine>,
+    instr: DummyInstr,
+    defs: impl IntoIterator<Item = DefOperand>,
+    uses: [(UseOperandConstraint, OperandPos); U],
+) -> [VirtReg; U] {
+    push_instr_with_clobbers(builder, instr, defs, uses, PhysRegSet::empty())
 }
 
 fn check_lir(lir: Lir<DummyMachine>, cfg: &BlockCfg, block_order: &[Block], expected: Expect) {
@@ -357,6 +369,46 @@ fn stack_slots() {
                 !0 = StackSlot { size: 4, align: 4 }
                 !1 = StackSlot { size: 16, align: 8 }
             block0[%0:gpr($r0)]:
+                Ret %0:gpr($r0)[early]
+        "#]],
+    );
+}
+
+#[test]
+fn clobbers() {
+    let mut cfg = BlockCfg::new();
+    let block = cfg.create_block();
+    let block_order = [block];
+
+    let mut builder = Builder::new(&block_order);
+
+    builder.advance_block();
+
+    let [retval] = push_instr(
+        &mut builder,
+        DummyInstr::Ret,
+        [],
+        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+    );
+    let [param] = push_instr_with_clobbers(
+        &mut builder,
+        DummyInstr::Call,
+        [DefOperand::fixed(retval, REG_R0)],
+        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+        PhysRegSet::from_iter([REG_R0, REG_R2]),
+    );
+    builder.set_incoming_block_params([param]);
+    builder.advance_block();
+    builder.set_live_in_regs(vec![REG_R0]);
+    let lir = builder.finish();
+
+    check_lir(
+        lir,
+        &cfg,
+        &block_order,
+        expect![[r#"
+            block0[%1:gpr($r0)]:
+                %0:gpr($r0)[late] = Call %1:gpr($r0)[early] ^($r0, $r2)
                 Ret %0:gpr($r0)[early]
         "#]],
     );

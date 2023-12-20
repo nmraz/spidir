@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use core::{fmt, iter, marker::PhantomData, ops::Range};
 use fx_utils::FxHashMap;
 
-use cranelift_entity::{entity_impl, PrimaryMap, SecondaryMap};
+use cranelift_entity::{entity_impl, packed_option::PackedOption, PrimaryMap, SecondaryMap};
 
 use crate::{
     cfg::{Block, BlockCfg},
@@ -364,6 +364,10 @@ struct BlockParamData {
     outgoing_len: u16,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct ClobberIndex(u32);
+entity_impl!(ClobberIndex);
+
 #[derive(Clone)]
 pub struct Lir<M: MachineCore> {
     block_instr_ranges: SecondaryMap<Block, (Instr, Instr)>,
@@ -373,8 +377,10 @@ pub struct Lir<M: MachineCore> {
     block_param_pool: Vec<VirtReg>,
     instrs: Vec<M::Instr>,
     instr_operands: Vec<InstrOperands>,
+    instr_clobbers: Vec<PackedOption<ClobberIndex>>,
     def_pool: Vec<DefOperand>,
     use_pool: Vec<UseOperand>,
+    clobbers: PrimaryMap<ClobberIndex, PhysRegSet>,
     stack_slots: PrimaryMap<StackSlot, StackSlotData>,
 }
 
@@ -402,6 +408,12 @@ impl<M: MachineCore> Lir<M> {
         let operands = &self.instr_operands[instr.as_usize()];
         let base = operands.def_base as usize;
         &self.def_pool[base..base + operands.def_len as usize]
+    }
+
+    pub fn instr_clobbers(&self, instr: Instr) -> PhysRegSet {
+        self.instr_clobbers[instr.as_usize()]
+            .expand()
+            .map_or(PhysRegSet::empty(), |clobbers| self.clobbers[clobbers])
     }
 
     pub fn live_in_regs(&self) -> &[PhysReg] {
@@ -461,6 +473,7 @@ impl<M: MachineCore> InstrBuilder<'_, '_, M> {
         data: M::Instr,
         defs: impl IntoIterator<Item = DefOperand>,
         uses: impl IntoIterator<Item = UseOperand>,
+        clobbers: PhysRegSet,
     ) {
         self.builder.lir.instrs.push(data);
 
@@ -490,7 +503,16 @@ impl<M: MachineCore> InstrBuilder<'_, '_, M> {
             use_len: use_len.try_into().unwrap(),
         });
 
+        let clobbers = if !clobbers.is_empty() {
+            PackedOption::from(self.builder.lir.clobbers.push(clobbers))
+        } else {
+            None.into()
+        };
+
+        self.builder.lir.instr_clobbers.push(clobbers);
+
         assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_operands.len());
+        assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_clobbers.len());
     }
 }
 
@@ -515,8 +537,10 @@ impl<'o, M: MachineCore> Builder<'o, M> {
                 block_param_pool: Vec::new(),
                 instrs: Vec::new(),
                 instr_operands: Vec::new(),
+                instr_clobbers: Vec::new(),
                 def_pool: Vec::new(),
                 use_pool: Vec::new(),
+                clobbers: PrimaryMap::new(),
                 stack_slots: PrimaryMap::new(),
             },
             block_order,
@@ -662,7 +686,8 @@ impl<'o, M: MachineCore> Builder<'o, M> {
 
     fn reverse_instrs(&mut self, range: Range<usize>) {
         self.lir.instrs[range.clone()].reverse();
-        self.lir.instr_operands[range].reverse();
+        self.lir.instr_operands[range.clone()].reverse();
+        self.lir.instr_clobbers[range].reverse();
     }
 
     fn propagate_vreg_copies(&mut self) {

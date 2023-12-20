@@ -65,16 +65,66 @@ impl VirtReg {
     }
 }
 
+const PHYS_REG_COUNT: u8 = 128;
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PhysReg(u8);
 
 impl PhysReg {
     pub const fn new(r: u8) -> Self {
+        assert!(r < PHYS_REG_COUNT, "physical register number too large");
         Self(r)
     }
 
     pub fn as_u8(self) -> u8 {
         self.0
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct PhysRegSet(u128);
+
+impl PhysRegSet {
+    pub const fn empty() -> Self {
+        Self(0)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0 == 0
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = PhysReg> + '_ {
+        (0..PHYS_REG_COUNT)
+            .map(PhysReg)
+            .filter(move |&reg| self.contains(reg))
+    }
+
+    pub fn contains(&self, reg: PhysReg) -> bool {
+        (self.0 & (1 << reg.0)) != 0
+    }
+
+    pub fn add(&mut self, reg: PhysReg) {
+        self.0 |= 1 << reg.0;
+    }
+
+    pub fn remove(&mut self, reg: PhysReg) {
+        self.0 &= !(1 << reg.0);
+    }
+}
+
+impl FromIterator<PhysReg> for PhysRegSet {
+    fn from_iter<I: IntoIterator<Item = PhysReg>>(iter: I) -> Self {
+        let mut retval = Self::empty();
+        retval.extend(iter);
+        retval
+    }
+}
+
+impl Extend<PhysReg> for PhysRegSet {
+    fn extend<I: IntoIterator<Item = PhysReg>>(&mut self, iter: I) {
+        for reg in iter {
+            self.add(reg);
+        }
     }
 }
 

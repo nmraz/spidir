@@ -1,3 +1,5 @@
+use ir::node::FunctionRef;
+
 use crate::{
     cfg::Block,
     lir::{PhysReg, RegClass, StackSlot},
@@ -122,10 +124,13 @@ pub enum X64Instr {
     StackAddr(StackSlot),
     MovRStack(StackSlot, OperandSize),
     MovStackR(StackSlot, OperandSize),
+    Push(OperandSize),
+    AddSp(i32),
     MovRM(OperandSize),
     MovMR(OperandSize),
     MovzxRM(ExtWidth),
     Ret,
+    Call(FunctionRef),
     Jump(Block),
     Jumpcc(CondCode, Block, Block),
 }

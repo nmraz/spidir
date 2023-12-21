@@ -1,21 +1,32 @@
+use core::slice;
+
 use alloc::vec::Vec;
 
 use ir::{
-    node::{IcmpKind, MemSize, NodeKind, Type},
+    node::{FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node},
 };
+use smallvec::SmallVec;
 
 use crate::{
     cfg::Block,
     isel::IselContext,
-    lir::{DefOperand, PhysReg, RegClass, StackSlot, UseOperand, VirtReg},
+    lir::{DefOperand, PhysReg, PhysRegSet, RegClass, StackSlot, UseOperand, VirtReg},
     machine::{MachineIselError, MachineLower, ParamLoc},
 };
 
 use super::{
     AluOp, CondCode, ConvertWordWidth, ExtWidth, OperandSize, ShiftOp, X64Instr, X64Machine,
-    RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI,
+    RC_GPR, REG_R10, REG_R11, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI,
 };
+
+const FIXED_ARG_COUNT: usize = 6;
+const FIXED_ARG_REGS: [PhysReg; FIXED_ARG_COUNT] =
+    [REG_RDI, REG_RSI, REG_RDX, REG_RCX, REG_R8, REG_R9];
+
+const CALL_CLOBBERS: [PhysReg; 9] = [
+    REG_RAX, REG_RCX, REG_RDX, REG_RSI, REG_RDI, REG_R8, REG_R9, REG_R10, REG_R11,
+];
 
 impl MachineLower for X64Machine {
     fn reg_class_for_type(&self, ty: Type) -> RegClass {
@@ -26,8 +37,6 @@ impl MachineLower for X64Machine {
     }
 
     fn param_locs(&self, param_types: &[Type]) -> Vec<ParamLoc> {
-        const FIXED_ARG_REGS: [PhysReg; 6] = [REG_RDI, REG_RSI, REG_RDX, REG_RCX, REG_R8, REG_R9];
-
         assert!(
             param_types
                 .iter()
@@ -228,9 +237,48 @@ impl MachineLower for X64Machine {
                     ctx.emit_instr(X64Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
                 }
             },
+            NodeKind::Call(func) => emit_call(ctx, node, func),
             _ => return Err(MachineIselError),
         }
         Ok(())
+    }
+}
+
+fn emit_call(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
+    let mut args = ctx.node_inputs(node);
+
+    let reg_args: SmallVec<[_; FIXED_ARG_COUNT]> = args
+        .by_ref()
+        .zip(FIXED_ARG_REGS)
+        .map(|(arg, reg)| {
+            let arg = ctx.get_value_vreg(arg);
+            UseOperand::fixed(arg, reg)
+        })
+        .collect();
+
+    let mut stack_size = 0;
+    for stack_arg in args {
+        let stack_arg = ctx.get_value_vreg(stack_arg);
+        ctx.emit_instr(
+            X64Instr::Push(OperandSize::S64),
+            &[],
+            &[UseOperand::any_reg(stack_arg)],
+        );
+        stack_size += 8;
+    }
+
+    let clobbers = PhysRegSet::from_iter(CALL_CLOBBERS);
+
+    let retval = ctx.node_outputs(node).next().map(|retval| {
+        let retval = ctx.get_value_vreg(retval);
+        DefOperand::fixed(retval, REG_RAX)
+    });
+
+    let call_defs = retval.as_ref().map(slice::from_ref).unwrap_or_default();
+    ctx.emit_instr_with_clobbers(X64Instr::Call(func), call_defs, &reg_args, clobbers);
+
+    if stack_size > 0 {
+        ctx.emit_instr(X64Instr::AddSp(stack_size), &[], &[]);
     }
 }
 

@@ -1,0 +1,93 @@
+# run: isel
+
+extfunc @extfunc(ptr, i32)
+extfunc @extfunc2:i32(ptr, i32)
+
+func @infunc(ptr, i32) {
+    # check: function `infunc`:
+    # nextln: block0[]:
+    # nextln:     Jump(block1)
+    # nextln: => block1[]
+    # nextln: block1[]:
+    # nextln:     Ret
+
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    return %3
+}
+
+func @infunc2:i32(ptr, i32) {
+    # check: function `infunc2`:
+    # nextln: block0[%0:gpr($$rsi)]:
+    # nextln:     Jump(block1)
+    # nextln: => block1[]
+    # nextln: block1[]:
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    return %3, %2
+}
+
+func @no_params() {
+    # check: function `no_params`:
+    # nextln: block0[]:
+    # nextln:     Ret
+
+    %0:ctrl = entry
+    return %0
+}
+
+func @many_params(i32, i64, ptr, i64, i32, i32, i64, ptr, i32, i64, ptr) {
+    # check: function `many_params`:
+    # nextln: block0[]:
+    # nextln:     Ret
+
+    %0:ctrl, %1:i32, %2:i64, %3:ptr, %4:i64, %5:i32, %6:i32, %7:i64, %8:ptr, %9:i32, %10:i64, %11:ptr = entry
+    return %0
+}
+
+func @caller:i32(ptr, i32) {
+    # check: function `caller`:
+    # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi)]:
+    # nextln:     Jump(block1)
+    # nextln: => block1[]
+    # nextln: block1[]:
+    # nextln:     Call(External(extfunc0)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     %1:gpr($$rax)[late] = Call(External(extfunc1)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     Call(Internal(func0)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     %2:gpr($$rax)[late] = Call(Internal(func1)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     Call(Internal(func2)) ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     %0:gpr(reg)[late] = AluRRm(S32, Add) %1:gpr(tied:0)[early], %2:gpr(any)[early]
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    %5:ctrl = call @extfunc %3, %1, %2
+    %6:ctrl, %7:i32 = call @extfunc2 %5, %1, %2
+    %8:ctrl = call @infunc %6, %1, %2
+    %9:ctrl, %10:i32 = call @infunc2 %8, %1, %2
+    %11:i32 = iadd %7, %10
+    %12:ctrl = call @no_params %9
+    return %12, %11
+}
+
+func @call_many_params(ptr) {
+    # check: function `call_many_params`:
+    # nextln: block0[%2:gpr($$rdi)]:
+    # nextln:     %1:gpr(reg)[late] = MovRI(S64, 0)
+    # nextln:     %0:gpr(reg)[late] = MovRI(S32, 0)
+    # nextln:     Push(S64) %2:gpr(reg)[early]
+    # nextln:     Push(S64) %0:gpr(reg)[early]
+    # nextln:     Push(S64) %1:gpr(reg)[early]
+    # nextln:     Push(S64) %2:gpr(reg)[early]
+    # nextln:     Call(Internal(func3)) %0:gpr($$rdi)[early], %1:gpr($$rsi)[early], %2:gpr($$rdx)[early], %1:gpr($$rcx)[early], %0:gpr($$r8)[early], %0:gpr($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     AddSp(32)
+    # nextln:     Ret
+
+    %0:ctrl, %p:ptr = entry
+    %zero32:i32 = iconst 0
+    %zero64:i64 = iconst 0
+    %1:ctrl = call @many_params %0, %zero32, %zero64, %p, %zero64, %zero32, %zero32, %zero64, %p, %zero32, %zero64, %p
+    return %1
+}

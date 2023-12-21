@@ -31,6 +31,10 @@ pub struct IselContext<'ctx, 's, M: MachineLower> {
 }
 
 impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
+    pub fn module(&self) -> &'ctx Module {
+        self.state.module
+    }
+
     pub fn value_type(&self, value: DepValue) -> Type {
         self.state.func.graph.value_kind(value).as_value().unwrap()
     }

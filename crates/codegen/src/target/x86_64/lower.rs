@@ -247,8 +247,12 @@ impl MachineLower for X64Machine {
 fn emit_call(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
     let mut args = ctx.node_inputs(node);
 
+    // The `take` here is important, because `zip` will advance the argument iterator before
+    // realizing it has run out of physical registers, causing the first stack argument to be
+    // dropped.
     let reg_args: SmallVec<[_; FIXED_ARG_COUNT]> = args
         .by_ref()
+        .take(FIXED_ARG_COUNT)
         .zip(FIXED_ARG_REGS)
         .map(|(arg, reg)| {
             let arg = ctx.get_value_vreg(arg);

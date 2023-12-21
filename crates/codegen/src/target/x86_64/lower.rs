@@ -256,9 +256,16 @@ fn emit_call(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Functi
         })
         .collect();
 
+    let stack_args: SmallVec<[_; 4]> = args.map(|arg| ctx.get_value_vreg(arg)).collect();
+
     let mut stack_size = 0;
-    for stack_arg in args {
-        let stack_arg = ctx.get_value_vreg(stack_arg);
+    if stack_args.len() % 2 != 0 {
+        // Just pushing these arguments would misalign the stack, so make sure to compensate.
+        ctx.emit_instr(X64Instr::AddSp(-8), &[], &[]);
+        stack_size += 8;
+    }
+
+    for &stack_arg in &stack_args {
         ctx.emit_instr(
             X64Instr::Push(OperandSize::S64),
             &[],

@@ -168,23 +168,14 @@ fn main() -> Result<()> {
             }
         }
         ToolCommand::Verify { input_file } => {
-            let module = read_module(&input_file)?;
-            match verify_module(&module) {
-                Ok(_) => eprintln!("Module valid"),
-                Err(errors) => {
-                    for error in errors {
-                        eprintln!("error: {}", error.display_with_context(&module));
-                    }
-                    bail!("module contained errors")
-                }
-            }
+            read_and_verify_module(&input_file)?;
         }
         ToolCommand::Schedule { input_file } => {
-            let module = read_module(&input_file)?;
+            let module = read_and_verify_module(&input_file)?;
             io::stdout().write_all(get_module_schedule_str(&module).as_bytes())?;
         }
         ToolCommand::Lir { input_file } => {
-            let module = read_module(&input_file)?;
+            let module = read_and_verify_module(&input_file)?;
             io::stdout().write_all(get_module_lir_str(&module)?.as_bytes())?;
         }
     }
@@ -309,6 +300,20 @@ fn get_graphviz_str(
         .context("failed to format dot graph")?;
 
     Ok(s)
+}
+
+fn read_and_verify_module(input_file: &Path) -> Result<Module> {
+    let module = read_module(input_file)?;
+    match verify_module(&module) {
+        Ok(_) => eprintln!("Module valid"),
+        Err(errors) => {
+            for error in errors {
+                eprintln!("error: {}", error.display_with_context(&module));
+            }
+            bail!("module contained errors")
+        }
+    };
+    Ok(module)
 }
 
 fn read_module(input_file: &Path) -> Result<Module> {

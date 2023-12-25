@@ -131,12 +131,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
                 self.state.value_use_counts[value] += 1;
             }
         }
-        trace!(
-            "    {}",
-            display_instr_data::<M>(instr, defs, uses, clobbers)
-        );
-        self.builder
-            .push_instr(instr, defs.iter().copied(), uses.iter().copied(), clobbers);
+        emit_instr(&mut self.builder, instr, defs, uses, clobbers);
     }
 }
 

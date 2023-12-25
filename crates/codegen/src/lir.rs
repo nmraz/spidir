@@ -269,6 +269,39 @@ impl DefOperand {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
+pub struct DefOperandDesc {
+    pub constraint: DefOperandConstraint,
+    pub pos: OperandPos,
+}
+
+impl DefOperandDesc {
+    pub fn make_operand(self, reg: VirtReg) -> DefOperand {
+        DefOperand::new(reg, self.constraint, self.pos)
+    }
+
+    pub const fn any() -> Self {
+        Self {
+            constraint: DefOperandConstraint::Any,
+            pos: OperandPos::Early,
+        }
+    }
+
+    pub const fn any_reg() -> Self {
+        Self {
+            constraint: DefOperandConstraint::AnyReg,
+            pos: OperandPos::Early,
+        }
+    }
+
+    pub const fn fixed(reg: PhysReg) -> Self {
+        Self {
+            constraint: DefOperandConstraint::Fixed(reg),
+            pos: OperandPos::Early,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct StackSlotData {
     pub size: u32,
     pub align: u32,

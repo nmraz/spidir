@@ -169,6 +169,7 @@ fn main() -> Result<()> {
         }
         ToolCommand::Verify { input_file } => {
             read_and_verify_module(&input_file)?;
+            eprintln!("Module valid");
         }
         ToolCommand::Schedule { input_file } => {
             let module = read_and_verify_module(&input_file)?;
@@ -304,14 +305,11 @@ fn get_graphviz_str(
 
 fn read_and_verify_module(input_file: &Path) -> Result<Module> {
     let module = read_module(input_file)?;
-    match verify_module(&module) {
-        Ok(_) => eprintln!("Module valid"),
-        Err(errors) => {
-            for error in errors {
-                eprintln!("error: {}", error.display_with_context(&module));
-            }
-            bail!("module contained errors")
+    if let Err(errors) = verify_module(&module) {
+        for error in errors {
+            eprintln!("error: {}", error.display_with_context(&module));
         }
+        bail!("module contained errors")
     };
     Ok(module)
 }

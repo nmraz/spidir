@@ -353,17 +353,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         }));
 
         for &succ in self.cfg_ctx.cfg.block_succs(block).iter() {
-            // TODO: Avoid linear search to deal with pathological cases?
-            let pred_idx = self
-                .cfg_ctx
-                .cfg
-                .block_preds(succ)
-                .iter()
-                .position(|&pred| pred == block)
-                .unwrap();
-
-            let Some(valgraph_pred_idx) =
-                self.cfg_ctx.block_map.valgraph_pred_index(succ, pred_idx)
+            let Some(valgraph_pred_idx) = self.cfg_ctx.block_map.valgraph_pred_index(succ, block)
             else {
                 // This successor didn't come from the valgraph (it was a split critical edge).
                 // Make sure to still add its (empty) outgoing param list.

@@ -77,16 +77,10 @@ impl PredGraphRef for &'_ BlockCfg {
     }
 }
 
-// Dummy entity for predecessor indices, just so we can store them in a `ListPool`.
-#[derive(Clone, Copy, PartialEq, Eq)]
-struct PredIndex(u32);
-entity_impl!(PredIndex);
-
 pub struct FunctionBlockMap {
     // If this is too sparse, we may want to consider a hashmap instead.
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
-    block_valgraph_pred_indices: SecondaryMap<Block, EntityList<PredIndex>>,
-    pred_index_pool: ListPool<PredIndex>,
+    block_valgraph_pred_indices: FxHashMap<(Block, Block), u32>,
     critical_edges: FxHashMap<DepValue, Block>,
 }
 
@@ -105,9 +99,10 @@ impl FunctionBlockMap {
             .or_else(|| self.containing_block(graph.value_def(edge).0))
     }
 
-    pub fn valgraph_pred_index(&self, block: Block, pred: usize) -> Option<u32> {
-        let pred_indices = self.block_valgraph_pred_indices[block].as_slice(&self.pred_index_pool);
-        pred_indices.get(pred).map(|&idx| idx.0)
+    pub fn valgraph_pred_index(&self, block: Block, pred: Block) -> Option<u32> {
+        self.block_valgraph_pred_indices
+            .get(&(block, pred))
+            .copied()
     }
 }
 
@@ -116,8 +111,7 @@ pub fn compute_block_cfg(graph: &ValGraph, cfg_preorder: &[Node]) -> (BlockCfg, 
     let mut cfg = BlockCfg::new();
     let mut block_map = FunctionBlockMap {
         blocks_by_node: SecondaryMap::new(),
-        block_valgraph_pred_indices: SecondaryMap::new(),
-        pred_index_pool: ListPool::new(),
+        block_valgraph_pred_indices: FxHashMap::default(),
         critical_edges: FxHashMap::default(),
     };
 
@@ -168,16 +162,13 @@ pub fn compute_block_cfg(graph: &ValGraph, cfg_preorder: &[Node]) -> (BlockCfg, 
 
                 let succ = get_headed_block(&mut cfg, &mut block_map, succ);
 
-                // As we add this edge to `succ`, remember the index of the corresponding
-                // predecessor in the valgraph so phi nodes can be converted to block params later.
-                //
-                // Correctness here depends on `succ`'s predecessor list and
-                // `block_valgraph_pred_indices` being updated in lockstep.
                 cfg.add_block_edge(pred_block, succ);
-                block_map.block_valgraph_pred_indices[succ].push(
-                    PredIndex::from_u32(succ_pred_index),
-                    &mut block_map.pred_index_pool,
-                );
+
+                // Remember the index of the corresponding predecessor in the valgraph so phi nodes
+                // can be converted to block params later.
+                block_map
+                    .block_valgraph_pred_indices
+                    .insert((succ, pred_block), succ_pred_index);
             }
             cur_block = None;
         }

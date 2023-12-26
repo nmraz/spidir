@@ -29,10 +29,10 @@ impl TestProvider for CfgProvider {
                             write!(
                                 s,
                                 "preds {}; ",
-                                preds.iter().enumerate().format_with(", ", |(i, &pred), f| {
+                                preds.iter().format_with(", ", |&pred, f| {
                                     f(&pred)?;
                                     if let Some(valgraph_pred_index) =
-                                        block_map.valgraph_pred_index(block, i)
+                                        block_map.valgraph_pred_index(block, pred)
                                     {
                                         f(&format_args!(" (#{valgraph_pred_index})"))?;
                                     }

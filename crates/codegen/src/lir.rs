@@ -2,7 +2,9 @@ use alloc::vec::Vec;
 use core::{fmt, iter, marker::PhantomData, ops::Range};
 use fx_utils::FxHashMap;
 
-use cranelift_entity::{entity_impl, packed_option::PackedOption, PrimaryMap, SecondaryMap};
+use cranelift_entity::{
+    entity_impl, packed_option::PackedOption, EntityRef, PrimaryMap, SecondaryMap,
+};
 
 use crate::{
     cfg::{Block, BlockCfg},
@@ -293,12 +295,9 @@ entity_impl!(StackSlot, "!");
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Instr(u32);
+entity_impl!(Instr, "i");
 
 impl Instr {
-    pub fn new(index: u32) -> Self {
-        Self(index)
-    }
-
     pub fn prev(self) -> Self {
         Self(self.0 - 1)
     }
@@ -306,41 +305,36 @@ impl Instr {
     pub fn next(self) -> Self {
         Self(self.0 + 1)
     }
-
-    pub fn from_usize(index: usize) -> Self {
-        Self::new(index.try_into().unwrap())
-    }
-
-    pub fn as_u32(self) -> u32 {
-        self.0
-    }
-
-    pub fn as_usize(self) -> usize {
-        self.0 as usize
-    }
 }
 
-pub struct InstrRange(Range<u32>);
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct InstrRange {
+    pub start: Instr,
+    pub end: Instr,
+}
 
 impl InstrRange {
     pub fn new(start: Instr, end: Instr) -> Self {
-        Self(start.0..end.0)
-    }
-
-    pub fn start(&self) -> Instr {
-        Instr(self.0.start)
-    }
-
-    pub fn end(&self) -> Instr {
-        Instr(self.0.end)
+        Self { start, end }
     }
 
     pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.start >= self.end
     }
 }
 
-impl Iterator for InstrRange {
+impl IntoIterator for InstrRange {
+    type Item = Instr;
+    type IntoIter = InstrRangeIter;
+
+    fn into_iter(self) -> InstrRangeIter {
+        InstrRangeIter(self.start.0..self.end.0)
+    }
+}
+
+pub struct InstrRangeIter(Range<u32>);
+
+impl Iterator for InstrRangeIter {
     type Item = Instr;
 
     fn next(&mut self) -> Option<Instr> {
@@ -352,13 +346,13 @@ impl Iterator for InstrRange {
     }
 }
 
-impl DoubleEndedIterator for InstrRange {
+impl DoubleEndedIterator for InstrRangeIter {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back().map(Instr)
     }
 }
 
-impl ExactSizeIterator for InstrRange {}
+impl ExactSizeIterator for InstrRangeIter {}
 
 #[derive(Debug, Clone, Copy)]
 struct InstrOperands {
@@ -408,23 +402,23 @@ impl<M: MachineCore> Lir<M> {
     }
 
     pub fn instr_data(&self, instr: Instr) -> &M::Instr {
-        &self.instrs[instr.as_usize()]
+        &self.instrs[instr.index()]
     }
 
     pub fn instr_uses(&self, instr: Instr) -> &[UseOperand] {
-        let operands = &self.instr_operands[instr.as_usize()];
+        let operands = &self.instr_operands[instr.index()];
         let base = operands.use_base as usize;
         &self.use_pool[base..base + operands.use_len as usize]
     }
 
     pub fn instr_defs(&self, instr: Instr) -> &[DefOperand] {
-        let operands = &self.instr_operands[instr.as_usize()];
+        let operands = &self.instr_operands[instr.index()];
         let base = operands.def_base as usize;
         &self.def_pool[base..base + operands.def_len as usize]
     }
 
     pub fn instr_clobbers(&self, instr: Instr) -> PhysRegSet {
-        self.instr_clobbers[instr.as_usize()]
+        self.instr_clobbers[instr.index()]
             .expand()
             .map_or(PhysRegSet::empty(), |clobbers| self.clobbers[clobbers])
     }
@@ -682,8 +676,8 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         self.reverse_instrs(0..instr_count);
         let instr_count: u32 = instr_count.try_into().unwrap();
         for (block_start, block_end) in self.lir.block_instr_ranges.values_mut() {
-            *block_start = Instr::new(instr_count - block_start.as_u32());
-            *block_end = Instr::new(instr_count - block_end.as_u32());
+            *block_start = Instr::from_u32(instr_count - block_start.as_u32());
+            *block_end = Instr::from_u32(instr_count - block_end.as_u32());
             assert!(*block_start <= *block_end);
         }
 
@@ -697,7 +691,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
     }
 
     fn next_instr(&self) -> Instr {
-        Instr::from_usize(self.lir.instrs.len())
+        Instr::new(self.lir.instrs.len())
     }
 
     fn reverse_instrs(&mut self, range: Range<usize>) {

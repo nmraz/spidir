@@ -7,5 +7,6 @@ pub mod cfg;
 pub mod isel;
 pub mod lir;
 pub mod machine;
+pub mod regalloc;
 pub mod schedule;
 pub mod target;

@@ -299,6 +299,14 @@ impl Instr {
         Self(index)
     }
 
+    pub fn prev(self) -> Self {
+        Self(self.0 - 1)
+    }
+
+    pub fn next(self) -> Self {
+        Self(self.0 + 1)
+    }
+
     pub fn from_usize(index: usize) -> Self {
         Self::new(index.try_into().unwrap())
     }

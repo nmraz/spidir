@@ -394,6 +394,7 @@ pub struct Lir<M: MachineCore> {
     use_pool: Vec<UseOperand>,
     clobbers: PrimaryMap<ClobberIndex, PhysRegSet>,
     stack_slots: PrimaryMap<StackSlot, StackSlotData>,
+    vreg_count: u32,
 }
 
 impl<M: MachineCore> Lir<M> {
@@ -450,6 +451,10 @@ impl<M: MachineCore> Lir<M> {
 
     pub fn stack_slot_data(&self, slot: StackSlot) -> StackSlotData {
         self.stack_slots[slot]
+    }
+
+    pub fn vreg_count(&self) -> u32 {
+        self.vreg_count
     }
 }
 
@@ -532,7 +537,6 @@ pub struct Builder<'o, M: MachineCore> {
     lir: Lir<M>,
     block_order: &'o [Block],
     vreg_copies: FxHashMap<VirtReg, VirtReg>,
-    next_vreg: u32,
     outgoing_block_param_base: u32,
     cur_block: isize,
 }
@@ -554,10 +558,10 @@ impl<'o, M: MachineCore> Builder<'o, M> {
                 use_pool: Vec::new(),
                 clobbers: PrimaryMap::new(),
                 stack_slots: PrimaryMap::new(),
+                vreg_count: 0,
             },
             block_order,
             vreg_copies: FxHashMap::default(),
-            next_vreg: 0,
             outgoing_block_param_base: 0,
             cur_block: block_order.len() as isize,
         }
@@ -601,8 +605,8 @@ impl<'o, M: MachineCore> Builder<'o, M> {
     }
 
     pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
-        let num = self.next_vreg;
-        self.next_vreg += 1;
+        let num = self.lir.vreg_count;
+        self.lir.vreg_count += 1;
         VirtReg::new(num, class)
     }
 

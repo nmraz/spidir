@@ -223,7 +223,12 @@ fn push_live_segment(
     end: ProgramPoint,
 ) {
     trace!("  extend {vreg}: {start:?}..{end:?}");
-    live_ranges[vreg].push(ProgramSegment { start, end });
+    debug_assert!(start < end);
+    let live_range = &mut live_ranges[vreg];
+    if let Some(last_segment) = live_range.last() {
+        debug_assert!(end < last_segment.start);
+    }
+    live_range.push(ProgramSegment { start, end });
 }
 
 fn make_block_vreg_map<M: MachineCore>(

@@ -33,6 +33,10 @@ const REG_NUM_START_BIT: usize = 8;
 const REG_NUM_BOUND: u32 = 1 << REG_NUM_BITS;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct VirtRegNum(u32);
+entity_impl!(VirtRegNum, "%");
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct VirtReg(u32);
 
 impl VirtReg {
@@ -41,8 +45,8 @@ impl VirtReg {
         Self(num << REG_NUM_START_BIT | class.as_u8() as u32)
     }
 
-    pub fn reg_num(self) -> u32 {
-        self.0 >> REG_NUM_START_BIT
+    pub fn reg_num(self) -> VirtRegNum {
+        VirtRegNum::from_u32(self.0 >> REG_NUM_START_BIT)
     }
 
     pub fn class(self) -> RegClass {

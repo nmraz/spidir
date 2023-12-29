@@ -21,7 +21,7 @@ impl<M: MachineCore> fmt::Display for DisplayVirtReg<M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "%{}:{}",
+            "{}:{}",
             self.reg.reg_num(),
             M::reg_class_name(self.reg.class())
         )

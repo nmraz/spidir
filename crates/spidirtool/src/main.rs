@@ -186,17 +186,20 @@ fn main() -> Result<()> {
 }
 
 fn init_logging() {
-    env_logger::builder()
-        .format(|buf, record| {
-            writeln!(
-                buf,
-                "[{} {}] {}",
-                record.level(),
-                record.module_path().unwrap_or_default(),
-                record.args()
-            )
-        })
-        .init()
+    #[cfg(not(feature = "no_logging"))]
+    {
+        env_logger::builder()
+            .format(|buf, record| {
+                writeln!(
+                    buf,
+                    "[{} {}] {}",
+                    record.level(),
+                    record.module_path().unwrap_or_default(),
+                    record.args()
+                )
+            })
+            .init()
+    }
 }
 
 fn run_command(command: &mut Command) -> Result<()> {

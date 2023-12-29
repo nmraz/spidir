@@ -13,6 +13,11 @@ parser = { workspace = true, features = ["std"] }
 
 clap.workspace = true
 anyhow.workspace = true
+log.workspace = true
 
 tempfile = "3.6.0"
 env_logger = { version = "0.10.1", default-features = false }
+
+[features]
+# Unfortunately, this feature has to be subtractive because of the underlying `log` crate.
+no_logging = ["log/max_level_off"]

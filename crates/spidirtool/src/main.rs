@@ -110,8 +110,9 @@ enum ToolCommand {
 }
 
 fn main() -> Result<()> {
-    let cli = Cli::parse();
+    init_logging();
 
+    let cli = Cli::parse();
     match cli.subcommand {
         ToolCommand::Graph {
             input_file,
@@ -182,6 +183,20 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn init_logging() {
+    env_logger::builder()
+        .format(|buf, record| {
+            writeln!(
+                buf,
+                "[{} {}] {}",
+                record.level(),
+                record.module_path().unwrap_or_default(),
+                record.args()
+            )
+        })
+        .init()
 }
 
 fn run_command(command: &mut Command) -> Result<()> {

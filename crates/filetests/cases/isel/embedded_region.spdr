@@ -1,0 +1,69 @@
+# run: isel
+
+func @embedded_region:i32(i32) {
+    # check: function `embedded_region`:
+    # nextln: block0[%0:gpr($$rdi)]:
+    # nextln:     Jump(block1)
+    # nextln: => block1[]
+    # nextln: block1[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[]
+    # nextln: block2[]:
+    # nextln:     Jump(block3)
+    # nextln: => block3[]
+    # nextln: block3[]:
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %ent:ctrl, %p1:i32 = entry
+    %c1:ctrl, %ph1:phisel = region %ent
+    %c2:ctrl, %ph2:phisel = region %c1
+    %c3:ctrl, %ph3:phisel = region %c2
+    return %c3, %p1
+}
+
+func @embedded_region_phi:i32(i32) {
+    # check: function `embedded_region_phi`:
+    # nextln: block0[%1:gpr($$rdi)]:
+    # nextln:     Jump(block1)
+    # nextln: => block1[]
+    # nextln: block1[]:
+    # nextln:     Jump(block2)
+    # nextln: => block2[%1:gpr]
+    # nextln: block2[%0:gpr]:
+    # nextln:     Jump(block3)
+    # nextln: => block3[]
+    # nextln: block3[]:
+    # nextln:     Ret %0:gpr($$rax)[early]
+
+    %ent:ctrl, %p1:i32 = entry
+    %c1:ctrl, %ph1:phisel = region %ent
+    %c2:ctrl, %ph2:phisel = region %c1
+    %p1c2:i32 = phi %ph2, %p1
+    %c3:ctrl, %ph3:phisel = region %c2
+    return %c3, %p1c2
+}
+
+func @embedded_region_phi_multi_succ:i32(i32, i32) {
+    # check: function `embedded_region_phi_multi_succ`:
+    # nextln: block0[%2:gpr($$rdi), %3:gpr($$rsi)]:
+    # nextln:     AluRRm(S32, Test) %3:gpr(reg)[early], %3:gpr(any)[early]
+    # nextln:     Jumpcc(Ne, block1, block2)
+    # nextln: => block1[%2:gpr], block2[%3:gpr]
+    # nextln: block1[%0:gpr]:
+    # nextln:     Jump(block3)
+    # nextln: => block3[]
+    # nextln: block3[]:
+    # nextln:     Ret %0:gpr($$rax)[early]
+    # nextln: block2[%1:gpr]:
+    # nextln:     Ret %1:gpr($$rax)[early]
+
+    %ent:ctrl, %p1:i32, %p2:i32 = entry
+    %c1:ctrl, %c2:ctrl = brcond %ent, %p2
+    %c3:ctrl, %ph3:phisel = region %c1
+    %p1c3:i32 = phi %ph3, %p1
+    %c4:ctrl, %ph4:phisel = region %c3
+    return %c4, %p1c3
+    %c5:ctrl, %ph5:phisel = region %c2
+    %p2c5:i32 = phi %ph5, %p2
+    return %c5, %p2c5
+}

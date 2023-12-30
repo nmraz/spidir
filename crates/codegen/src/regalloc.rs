@@ -94,12 +94,17 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
     let mut raw_block_uses = make_block_vreg_map(lir, cfg_ctx);
     let mut raw_block_defs = make_block_vreg_map(lir, cfg_ctx);
 
+    trace!("collecting block defs/uses");
+
     for &block in &cfg_ctx.block_order {
+        trace!("  {block}");
+
         let raw_uses = &mut raw_block_uses[block];
         let raw_defs = &mut raw_block_defs[block];
 
         for succ in 0..cfg_ctx.cfg.block_succs(block).len() {
             for &outgoing_vreg in lir.outgoing_block_params(block, succ as u32) {
+                trace!("    use {}", outgoing_vreg.reg_num());
                 raw_uses.add(outgoing_vreg.reg_num());
             }
         }
@@ -107,15 +112,18 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
         for instr in lir.block_instrs(block) {
             // We can process defs/uses in bulk here because everything is in SSA.
             for use_op in lir.instr_uses(instr) {
+                trace!("    use {}", use_op.reg().reg_num());
                 raw_uses.add(use_op.reg().reg_num());
             }
 
             for def_op in lir.instr_defs(instr) {
+                trace!("    def {}", def_op.reg().reg_num());
                 raw_defs.add(def_op.reg().reg_num());
             }
         }
 
         for &incoming_vreg in lir.block_params(block) {
+            trace!("    def {}", incoming_vreg.reg_num());
             raw_defs.add(incoming_vreg.reg_num());
         }
     }
@@ -126,10 +134,12 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
     let mut worklist: VecDeque<_> = cfg_ctx.block_order.iter().copied().rev().collect();
     let mut workset = FxHashSet::from_iter(worklist.iter().copied());
 
+    trace!("solving block liveness");
+
     while let Some(block) = worklist.pop_front() {
         workset.remove(&block);
 
-        trace!("propagating liveness in {block}");
+        trace!("  {block}");
 
         // Note: we can do the union/subtraction in bulk here instead of iterating over individual
         // instructions because the LIR is already in SSA.
@@ -141,7 +151,7 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
         for &pred in cfg_ctx.cfg.block_preds(block) {
             let status = live_outs[pred].union(live_in);
             if status.is_changed() && !workset.contains(&pred) {
-                trace!("  predecessor {pred} changed, requeuing");
+                trace!("    predecessor {pred} changed, requeuing");
                 worklist.push_back(pred);
                 workset.insert(pred);
             }
@@ -156,11 +166,22 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
     for &block in cfg_ctx.block_order.iter().rev() {
         active_segment_ends.clear();
 
+        trace!("  {block}");
+
         let block_range = lir.block_instrs(block);
         let last_instr = block_range.end.prev();
 
         for live_out in &live_outs[block] {
+            trace!("    live-out {live_out}");
             active_segment_ends[live_out] = Some(ProgramPoint::after(last_instr));
+        }
+
+        for succ in 0..cfg_ctx.cfg.block_succs(block).len() {
+            for &outgoing_vreg in lir.outgoing_block_params(block, succ as u32) {
+                let outgoing_vreg = outgoing_vreg.reg_num();
+                trace!("    outgoing param {outgoing_vreg}");
+                active_segment_ends[outgoing_vreg] = Some(ProgramPoint::after(last_instr));
+            }
         }
 
         for instr in block_range.into_iter().rev() {
@@ -185,7 +206,21 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
             }
         }
 
+        for &incoming_vreg in lir.block_params(block) {
+            let incoming_vreg = incoming_vreg.reg_num();
+            trace!("    incoming param {incoming_vreg}");
+            // TODO: This isn't actually correct for dead block params.
+            extend_to_def(
+                &mut live_ranges,
+                &active_segment_ends,
+                block_range.start,
+                incoming_vreg,
+                ProgramPoint::before(block_range.start),
+            );
+        }
+
         for live_in in &live_ins[block] {
+            trace!("    live-in {live_in}");
             let end = active_segment_ends[live_in].expect("block live-in is dead");
             let start = ProgramPoint::before(block_range.start);
             push_live_segment(&mut live_ranges, live_in, start, end);
@@ -222,8 +257,8 @@ fn push_live_segment(
     start: ProgramPoint,
     end: ProgramPoint,
 ) {
-    trace!("  extend {vreg}: {start:?}..{end:?}");
-    debug_assert!(start < end);
+    trace!("      extend {vreg}: {start:?}..{end:?}");
+    debug_assert!(start <= end);
     let live_range = &mut live_ranges[vreg];
     if let Some(last_segment) = live_range.last() {
         debug_assert!(end < last_segment.start);

@@ -191,7 +191,6 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
                 extend_to_def(
                     &mut live_ranges,
                     &active_segment_ends,
-                    instr,
                     def_op.reg().reg_num(),
                     ProgramPoint::for_operand(instr, def_op.pos()),
                 );
@@ -209,11 +208,9 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
         for &incoming_vreg in lir.block_params(block) {
             let incoming_vreg = incoming_vreg.reg_num();
             trace!("    incoming param {incoming_vreg}");
-            // TODO: This isn't actually correct for dead block params.
             extend_to_def(
                 &mut live_ranges,
                 &active_segment_ends,
-                block_range.start,
                 incoming_vreg,
                 ProgramPoint::before(block_range.start),
             );
@@ -239,15 +236,10 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
 fn extend_to_def(
     live_ranges: &mut LiveRanges,
     active_segment_ends: &ActiveSegmentEnds,
-    instr: Instr,
     vreg: VirtRegNum,
     start: ProgramPoint,
 ) {
-    let end = match active_segment_ends[vreg] {
-        Some(segment_end) => segment_end,
-        None => ProgramPoint::after(instr),
-    };
-
+    let end = active_segment_ends[vreg].unwrap_or(start);
     push_live_segment(live_ranges, vreg, start, end);
 }
 

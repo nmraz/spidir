@@ -589,6 +589,7 @@ dependencies = [
  "env_logger",
  "ir",
  "ir-graphviz",
+ "itertools",
  "log",
  "parser",
  "tempfile",

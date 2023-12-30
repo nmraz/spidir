@@ -9,8 +9,11 @@ use std::{
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use itertools::Itertools;
+
 use codegen::{
-    cfg::CfgContext, isel::select_instrs, lir::Lir, schedule::Schedule, target::x86_64::X64Machine,
+    cfg::CfgContext, isel::select_instrs, lir::Lir, regalloc::compute_live_ranges,
+    schedule::Schedule, target::x86_64::X64Machine,
 };
 use ir::{
     domtree::DomTree,
@@ -106,6 +109,10 @@ enum ToolCommand {
     Lir {
         /// The input IR file
         input_file: PathBuf,
+
+        /// Print live ranges at the end of each function
+        #[arg(long)]
+        liveranges: bool,
     },
 }
 
@@ -176,9 +183,12 @@ fn main() -> Result<()> {
             let module = read_and_verify_module(&input_file)?;
             io::stdout().write_all(get_module_schedule_str(&module).as_bytes())?;
         }
-        ToolCommand::Lir { input_file } => {
+        ToolCommand::Lir {
+            input_file,
+            liveranges,
+        } => {
             let module = read_and_verify_module(&input_file)?;
-            io::stdout().write_all(get_module_lir_str(&module)?.as_bytes())?;
+            io::stdout().write_all(get_module_lir_str(&module, liveranges)?.as_bytes())?;
         }
     }
 
@@ -275,7 +285,7 @@ fn get_module_schedule_str(module: &Module) -> String {
     output
 }
 
-fn get_module_lir_str(module: &Module) -> Result<String> {
+fn get_module_lir_str(module: &Module, liveranges: bool) -> Result<String> {
     let mut output = String::new();
 
     for func in module.functions.values() {
@@ -288,6 +298,28 @@ fn get_module_lir_str(module: &Module) -> Result<String> {
             lir.display(&cfg_ctx.cfg, &cfg_ctx.block_order)
         )
         .unwrap();
+
+        if liveranges {
+            writeln!(output).unwrap();
+
+            let ranges = compute_live_ranges(&lir, &cfg_ctx);
+            for (vreg, range) in ranges.iter() {
+                if range.is_empty() {
+                    continue;
+                }
+
+                writeln!(
+                    output,
+                    "{}: {}",
+                    vreg,
+                    range
+                        .iter()
+                        .format_with(" ", |segment, f| f(&format_args!("{segment:?}")))
+                )
+                .unwrap();
+            }
+        }
+
         writeln!(output, "}}\n").unwrap();
     }
 

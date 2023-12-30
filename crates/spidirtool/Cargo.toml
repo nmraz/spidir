@@ -13,6 +13,7 @@ parser = { workspace = true, features = ["std"] }
 
 clap.workspace = true
 anyhow.workspace = true
+itertools.workspace = true
 log.workspace = true
 
 tempfile = "3.6.0"

@@ -266,11 +266,11 @@ fn multi_block() {
                 Cmp %7:gpr(any)[early], %8:gpr(reg)[early]
                 JmpEq(block1, block2)
             => block1, block2
-            block1[]:
+            block1:
                 %4:gpr(any)[late] = Add %8:gpr(tied:0)[early], %6:gpr(reg)[early]
                 Jump(block3)
             => block3[%4:gpr]
-            block2[]:
+            block2:
                 %3:gpr(reg)[late] = MovI(5)
                 %1:gpr(any)[late] = Add %8:gpr(tied:0)[early], %3:gpr(reg)[early]
                 Jump(block3)

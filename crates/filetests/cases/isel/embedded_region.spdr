@@ -4,14 +4,14 @@ func @embedded_region:i32(i32) {
     # check: function `embedded_region`:
     # nextln: block0[%0:gpr($$rdi)]:
     # nextln:     Jump(block1)
-    # nextln: => block1[]
-    # nextln: block1[]:
+    # nextln: => block1
+    # nextln: block1:
     # nextln:     Jump(block2)
-    # nextln: => block2[]
-    # nextln: block2[]:
+    # nextln: => block2
+    # nextln: block2:
     # nextln:     Jump(block3)
-    # nextln: => block3[]
-    # nextln: block3[]:
+    # nextln: => block3
+    # nextln: block3:
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %ent:ctrl, %p1:i32 = entry
@@ -25,14 +25,14 @@ func @embedded_region_phi:i32(i32) {
     # check: function `embedded_region_phi`:
     # nextln: block0[%1:gpr($$rdi)]:
     # nextln:     Jump(block1)
-    # nextln: => block1[]
-    # nextln: block1[]:
+    # nextln: => block1
+    # nextln: block1:
     # nextln:     Jump(block2)
-    # nextln: => block2[]
-    # nextln: block2[]:
+    # nextln: => block2
+    # nextln: block2:
     # nextln:     Jump(block3)
-    # nextln: => block3[]
-    # nextln: block3[]:
+    # nextln: => block3
+    # nextln: block3:
     # nextln:     Ret %1:gpr($$rax)[early]
 
     %ent:ctrl, %p1:i32 = entry
@@ -49,12 +49,12 @@ func @embedded_region_phi_multi_succ:i32(i32, i32) {
     # nextln:     AluRRm(S32, Test) %2:gpr(reg)[early], %2:gpr(any)[early]
     # nextln:     Jumpcc(Ne, block1, block2)
     # nextln: => block1, block2
-    # nextln: block1[]:
+    # nextln: block1:
     # nextln:     Jump(block3)
-    # nextln: => block3[]
-    # nextln: block3[]:
+    # nextln: => block3
+    # nextln: block3:
     # nextln:     Ret %3:gpr($$rax)[early]
-    # nextln: block2[]:
+    # nextln: block2:
     # nextln:     Ret %2:gpr($$rax)[early]
 
     %ent:ctrl, %p1:i32, %p2:i32 = entry

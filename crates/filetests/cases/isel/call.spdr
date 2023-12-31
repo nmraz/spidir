@@ -7,8 +7,8 @@ func @infunc(ptr, i32) {
     # check: function `infunc`:
     # nextln: block0[]:
     # nextln:     Jump(block1)
-    # nextln: => block1[]
-    # nextln: block1[]:
+    # nextln: => block1
+    # nextln: block1:
     # nextln:     Ret
 
     %0:ctrl, %1:ptr, %2:i32 = entry
@@ -20,8 +20,8 @@ func @infunc2:i32(ptr, i32) {
     # check: function `infunc2`:
     # nextln: block0[%0:gpr($$rsi)]:
     # nextln:     Jump(block1)
-    # nextln: => block1[]
-    # nextln: block1[]:
+    # nextln: => block1
+    # nextln: block1:
     # nextln:     Ret %0:gpr($$rax)[early]
 
     %0:ctrl, %1:ptr, %2:i32 = entry
@@ -60,8 +60,8 @@ func @caller:i32(ptr, i32) {
     # check: function `caller`:
     # nextln: block0[%3:gpr($$rdi), %4:gpr($$rsi)]:
     # nextln:     Jump(block1)
-    # nextln: => block1[]
-    # nextln: block1[]:
+    # nextln: => block1
+    # nextln: block1:
     # nextln:     Call(External(extfunc0)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln:     %1:gpr($$rax)[late] = Call(External(extfunc1)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln:     Call(Internal(func0)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)

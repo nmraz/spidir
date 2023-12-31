@@ -7,10 +7,10 @@ func @iota(ptr, i64) {
     # nextln:     AluRRm(S64, Cmp) %2:gpr(reg)[early], %8:gpr(any)[early]
     # nextln:     Jumpcc(E, block1, block3)
     # nextln: => block1, block3
-    # nextln: block1[]:
+    # nextln: block1:
     # nextln:     Jump(block2)
-    # nextln: => block2[]
-    # nextln: block3[]:
+    # nextln: => block2
+    # nextln: block3:
     # nextln:     %3:gpr(reg)[late] = MovRI(S64, 1)
     # nextln:     %7:gpr(reg)[late] = MovRI(S64, 3)
     # nextln:     Jump(block4)
@@ -23,13 +23,13 @@ func @iota(ptr, i64) {
     # nextln:     AluRRm(S64, Cmp) %1:gpr(reg)[early], %2:gpr(any)[early]
     # nextln:     Jumpcc(E, block5, block6)
     # nextln: => block5, block6
-    # nextln: block6[]:
+    # nextln: block6:
     # nextln:     Jump(block4)
     # nextln: => block4[%1:gpr]
-    # nextln: block5[]:
+    # nextln: block5:
     # nextln:     Jump(block2)
-    # nextln: => block2[]
-    # nextln: block2[]:
+    # nextln: => block2
+    # nextln: block2:
     # nextln:     Ret
 
     %entry_ctrl:ctrl, %arr:ptr, %n:i64 = entry

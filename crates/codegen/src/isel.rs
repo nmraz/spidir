@@ -1,6 +1,5 @@
 use alloc::vec::Vec;
 use core::array;
-use itertools::Itertools;
 
 use cranelift_entity::SecondaryMap;
 use fx_utils::FxHashMap;
@@ -18,8 +17,8 @@ use smallvec::SmallVec;
 use crate::{
     cfg::{Block, CfgContext},
     lir::{
-        display_instr_data, Builder as LirBuilder, DefOperand, InstrBuilder, Lir, PhysRegSet,
-        RegClass, StackSlot, StackSlotData, UseOperand, VirtReg,
+        display_block_params, display_instr_data, Builder as LirBuilder, DefOperand, InstrBuilder,
+        Lir, PhysRegSet, RegClass, StackSlot, StackSlotData, UseOperand, VirtReg,
     },
     machine::{MachineLower, ParamLoc},
     schedule::Schedule,
@@ -401,12 +400,9 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 })
                 .collect();
             trace!(
-                "    => {}[{}]",
+                "    => {}{}",
                 succ,
-                outgoing_params
-                    .iter()
-                    .map(|&param| param.display::<M>())
-                    .format(", ")
+                display_block_params::<M>(&outgoing_params)
             );
             builder.set_outgoing_block_params(outgoing_params);
         }

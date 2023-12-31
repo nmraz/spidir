@@ -14,7 +14,8 @@ use crate::{
 mod display;
 
 pub use display::{
-    display_instr_data, Display, DisplayDefOperand, DisplayInstr, DisplayUseOperand, DisplayVirtReg,
+    display_block_params, display_instr_data, Display, DisplayDefOperand, DisplayInstr,
+    DisplayUseOperand, DisplayVirtReg,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

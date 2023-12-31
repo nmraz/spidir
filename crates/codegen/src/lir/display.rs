@@ -147,6 +147,33 @@ impl<M: MachineCore> fmt::Display for DisplayInstr<'_, M> {
     }
 }
 
+pub fn display_block_params<M: MachineCore>(block_params: &[VirtReg]) -> DisplayBlockParams<'_, M> {
+    DisplayBlockParams {
+        block_params,
+        _marker: PhantomData,
+    }
+}
+
+pub struct DisplayBlockParams<'a, M: MachineCore> {
+    block_params: &'a [VirtReg],
+    _marker: PhantomData<M>,
+}
+
+impl<M: MachineCore> fmt::Display for DisplayBlockParams<'_, M> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if !self.block_params.is_empty() {
+            write!(
+                f,
+                "[{}]",
+                self.block_params
+                    .iter()
+                    .format_with(", ", |param, f| f(&param.display::<M>()))
+            )?;
+        }
+        Ok(())
+    }
+}
+
 pub struct Display<'a, M: MachineCore> {
     pub(super) lir: &'a Lir<M>,
     pub(super) cfg: &'a BlockCfg,
@@ -179,11 +206,8 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
             } else {
                 writeln!(
                     f,
-                    "{block}[{}]:",
-                    self.lir
-                        .block_params(block)
-                        .iter()
-                        .format_with(", ", |param, f| f(&param.display::<M>()))
+                    "{block}{}:",
+                    display_block_params::<M>(self.lir.block_params(block))
                 )?;
             }
             first_block = false;
@@ -197,12 +221,9 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
                 // If we have a single successor, there might be outgoing block params.
                 writeln!(
                     f,
-                    "=> {}[{}]",
+                    "=> {}{}",
                     succs[0],
-                    self.lir
-                        .outgoing_block_params(block)
-                        .iter()
-                        .format_with(", ", |param, f| f(&param.display::<M>()))
+                    display_block_params::<M>(self.lir.outgoing_block_params(block))
                 )?;
             } else if !succs.is_empty() {
                 // If there are multiple successors, just list them all.

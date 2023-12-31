@@ -7,10 +7,10 @@ func @sum_to_n:i32(i32) {
     # nextln:     AluRRm(S32, Cmp) %7:gpr(reg)[early], %5:gpr(any)[early]
     # nextln:     Jumpcc(E, block1, block3)
     # nextln: => block1, block3
-    # nextln: block1[]:
+    # nextln: block1:
     # nextln:     Jump(block2)
     # nextln: => block2[%5:gpr]
-    # nextln: block3[]:
+    # nextln: block3:
     # nextln:     %6:gpr(reg)[late] = MovRI(S32, 1)
     # nextln:     Jump(block4)
     # nextln: => block4[%5:gpr, %7:gpr]
@@ -20,10 +20,10 @@ func @sum_to_n:i32(i32) {
     # nextln:     AluRRm(S32, Cmp) %4:gpr(reg)[early], %5:gpr(any)[early]
     # nextln:     Jumpcc(E, block5, block6)
     # nextln: => block5, block6
-    # nextln: block6[]:
+    # nextln: block6:
     # nextln:     Jump(block4)
     # nextln: => block4[%3:gpr, %4:gpr]
-    # nextln: block5[]:
+    # nextln: block5:
     # nextln:     Jump(block2)
     # nextln: => block2[%3:gpr]
     # nextln: block2[%2:gpr]:
@@ -52,20 +52,20 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln:     !1 = StackSlot { size: 4, align: 4 }
     # nextln: block0[%8:gpr($$rdi)]:
     # nextln:     Jump(block1)
-    # nextln: => block1[]
-    # nextln: block1[]:
+    # nextln: => block1
+    # nextln: block1:
     # nextln:     MovStackR(!0, S32) %8:gpr(reg)[early]
     # nextln:     %5:gpr(reg)[late] = MovRI(S32, 1)
     # nextln:     %7:gpr(reg)[late] = MovRI(S32, 0)
     # nextln:     MovStackR(!1, S32) %7:gpr(reg)[early]
     # nextln:     Jump(block2)
-    # nextln: => block2[]
-    # nextln: block2[]:
+    # nextln: => block2
+    # nextln: block2:
     # nextln:     %6:gpr(reg)[late] = MovRStack(!0, S32)
     # nextln:     AluRRm(S32, Cmp) %6:gpr(reg)[early], %7:gpr(any)[early]
     # nextln:     Jumpcc(E, block3, block4)
     # nextln: => block3, block4
-    # nextln: block4[]:
+    # nextln: block4:
     # nextln:     %3:gpr(reg)[late] = MovRStack(!0, S32)
     # nextln:     %2:gpr(reg)[late] = MovRStack(!1, S32)
     # nextln:     %4:gpr(reg)[late] = AluRRm(S32, Sub) %3:gpr(tied:0)[early], %5:gpr(any)[early]
@@ -73,8 +73,8 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln:     %1:gpr(reg)[late] = AluRRm(S32, Add) %2:gpr(tied:0)[early], %3:gpr(any)[early]
     # nextln:     MovStackR(!1, S32) %1:gpr(reg)[early]
     # nextln:     Jump(block2)
-    # nextln: => block2[]
-    # nextln: block3[]:
+    # nextln: => block2
+    # nextln: block3:
     # nextln:     %0:gpr(reg)[late] = MovRStack(!1, S32)
     # nextln:     Ret %0:gpr($$rax)[early]
 

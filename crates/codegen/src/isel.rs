@@ -364,24 +364,32 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             }));
         }
 
-        for &succ in self.cfg_ctx.cfg.block_succs(block).iter() {
-            if self.cfg_ctx.cfg.block_preds(succ).len() == 1 {
-                // This successor doesn't actually need block params because we are its only
-                // predecessor. This is the second half of the "single-predecessor" case above.
-                trace!("     => {}[]", succ);
-                builder.add_succ_outgoing_block_params([]);
-                continue;
+        let succs = self.cfg_ctx.cfg.block_succs(block);
+        if succs.len() != 1 {
+            // Make sure critical edges are split, because we depend on that fact for the LIR to
+            // even be correct.
+            for &succ in succs {
+                assert!(
+                    self.cfg_ctx.cfg.block_preds(succ).len() == 1,
+                    "critical edge not split"
+                );
+                trace!("    => {}", succ);
             }
+            return;
+        }
 
-            let Some(valgraph_pred_idx) = self.cfg_ctx.block_map.valgraph_pred_index(succ, block)
-            else {
-                // This successor didn't come from the valgraph (it was a split critical edge).
-                // Make sure to still add its (empty) outgoing param list.
-                trace!("     => {}[]", succ);
-                builder.add_succ_outgoing_block_params([]);
-                continue;
-            };
+        // We have a single successor; check if there are any outgoing params we need.
+        let succ = succs[0];
 
+        if self.cfg_ctx.cfg.block_preds(succ).len() == 1 {
+            // This successor doesn't actually need block params because we are its only
+            // predecessor. This is the second half of the "single-predecessor" case above.
+            return;
+        }
+
+        // Try to find the actual valgraph predecessor. If there isn't one, the successor is a
+        // split critical edge and not an IR-level block, so it can't have any parameters anyway.
+        if let Some(valgraph_pred_idx) = self.cfg_ctx.block_map.valgraph_pred_index(succ, block) {
             let outgoing_params: SmallVec<[_; 4]> = self
                 .schedule
                 .block_phis(succ)
@@ -392,17 +400,15 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                     self.get_value_vreg(builder, input)
                 })
                 .collect();
-
             trace!(
-                "     => {}[{}]",
+                "    => {}[{}]",
                 succ,
                 outgoing_params
                     .iter()
                     .map(|&param| param.display::<M>())
                     .format(", ")
             );
-
-            builder.add_succ_outgoing_block_params(outgoing_params);
+            builder.set_outgoing_block_params(outgoing_params);
         }
     }
 

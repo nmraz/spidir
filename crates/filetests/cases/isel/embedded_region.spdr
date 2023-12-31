@@ -48,7 +48,7 @@ func @embedded_region_phi_multi_succ:i32(i32, i32) {
     # nextln: block0[%3:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln:     AluRRm(S32, Test) %2:gpr(reg)[early], %2:gpr(any)[early]
     # nextln:     Jumpcc(Ne, block1, block2)
-    # nextln: => block1[], block2[]
+    # nextln: => block1, block2
     # nextln: block1[]:
     # nextln:     Jump(block3)
     # nextln: => block3[]

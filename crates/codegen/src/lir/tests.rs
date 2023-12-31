@@ -204,7 +204,7 @@ fn multi_block() {
 
     // `right`
     let add5 = builder.create_vreg(RC_GPR);
-    builder.add_succ_outgoing_block_params([add5]);
+    builder.set_outgoing_block_params([add5]);
     push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
     let [right_param2, five] = push_instr(
         &mut builder,
@@ -225,7 +225,7 @@ fn multi_block() {
 
     // `left`
     let add_params = builder.create_vreg(RC_GPR);
-    builder.add_succ_outgoing_block_params([add_params]);
+    builder.set_outgoing_block_params([add_params]);
     push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
     let [left_param2, left_param3] = push_instr(
         &mut builder,
@@ -239,8 +239,6 @@ fn multi_block() {
     builder.advance_block();
 
     // `entry`
-    builder.add_succ_outgoing_block_params([]);
-    builder.add_succ_outgoing_block_params([]);
     push_instr(&mut builder, DummyInstr::JmpEq(left, right), [], []);
     let [param1, param2] = push_instr(
         &mut builder,
@@ -267,7 +265,7 @@ fn multi_block() {
             block0[%7:gpr($r0), %8:gpr($r1), %6:gpr($r2)]:
                 Cmp %7:gpr(any)[early], %8:gpr(reg)[early]
                 JmpEq(block1, block2)
-            => block1[], block2[]
+            => block1, block2
             block1[]:
                 %4:gpr(any)[late] = Add %8:gpr(tied:0)[early], %6:gpr(reg)[early]
                 Jump(block3)
@@ -305,7 +303,7 @@ fn block_param_vreg_copies() {
     builder.advance_block();
 
     let outgoing_param = builder.create_vreg(RC_GPR);
-    builder.add_succ_outgoing_block_params([outgoing_param]);
+    builder.set_outgoing_block_params([outgoing_param]);
 
     push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
 

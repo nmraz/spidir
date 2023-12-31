@@ -5,7 +5,7 @@ func @select:i32(i32, i32, i32) {
     # nextln: block0[%3:gpr($$rdi), %2:gpr($$rsi), %1:gpr($$rdx)]:
     # nextln:     AluRRm(S32, Test) %3:gpr(reg)[early], %3:gpr(any)[early]
     # nextln:     Jumpcc(Ne, block1, block3)
-    # nextln: => block1[], block3[]
+    # nextln: => block1, block3
     # nextln: block1[]:
     # nextln:     Jump(block2)
     # nextln: => block2[%2:gpr]

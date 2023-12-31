@@ -102,11 +102,9 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
         let raw_uses = &mut raw_block_uses[block];
         let raw_defs = &mut raw_block_defs[block];
 
-        for succ in 0..cfg_ctx.cfg.block_succs(block).len() {
-            for &outgoing_vreg in lir.outgoing_block_params(block, succ as u32) {
-                trace!("    use {}", outgoing_vreg.reg_num());
-                raw_uses.add(outgoing_vreg.reg_num());
-            }
+        for &outgoing_vreg in lir.outgoing_block_params(block) {
+            trace!("    use {}", outgoing_vreg.reg_num());
+            raw_uses.add(outgoing_vreg.reg_num());
         }
 
         for instr in lir.block_instrs(block) {
@@ -176,12 +174,10 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
             active_segment_ends[live_out] = Some(ProgramPoint::after(last_instr));
         }
 
-        for succ in 0..cfg_ctx.cfg.block_succs(block).len() {
-            for &outgoing_vreg in lir.outgoing_block_params(block, succ as u32) {
-                let outgoing_vreg = outgoing_vreg.reg_num();
-                trace!("    outgoing param {outgoing_vreg}");
-                active_segment_ends[outgoing_vreg] = Some(ProgramPoint::after(last_instr));
-            }
+        for &outgoing_vreg in lir.outgoing_block_params(block) {
+            let outgoing_vreg = outgoing_vreg.reg_num();
+            trace!("    outgoing param {outgoing_vreg}");
+            active_segment_ends[outgoing_vreg] = Some(ProgramPoint::after(last_instr));
         }
 
         for instr in block_range.into_iter().rev() {

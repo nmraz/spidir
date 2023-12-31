@@ -191,21 +191,22 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
             for instr in self.lir.block_instrs(block) {
                 writeln!(f, "    {}", self.lir.display_instr(instr))?;
             }
+
             let succs = self.cfg.block_succs(block);
-            if !succs.is_empty() {
+            if succs.len() == 1 {
+                // If we have a single successor, there might be outgoing block params.
                 writeln!(
                     f,
-                    "=> {}",
-                    succs.iter().enumerate().format_with(", ", |(i, succ), f| {
-                        f(&format_args!(
-                            "{succ}[{}]",
-                            self.lir
-                                .outgoing_block_params(block, i as u32)
-                                .iter()
-                                .format_with(", ", |param, f| f(&param.display::<M>()))
-                        ))
-                    })
+                    "=> {}[{}]",
+                    succs[0],
+                    self.lir
+                        .outgoing_block_params(block)
+                        .iter()
+                        .format_with(", ", |param, f| f(&param.display::<M>()))
                 )?;
+            } else if !succs.is_empty() {
+                // If there are multiple successors, just list them all.
+                writeln!(f, "=> {}", succs.iter().format(", "))?;
             }
         }
 

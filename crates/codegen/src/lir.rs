@@ -491,7 +491,6 @@ pub struct Lir<M: MachineCore> {
     block_instr_ranges: SecondaryMap<Block, (Instr, Instr)>,
     block_params: SecondaryMap<Block, BlockParamData>,
     live_in_regs: Vec<PhysReg>,
-    outgoing_block_param_indices: Vec<(u32, u32)>,
     block_param_pool: Vec<VirtReg>,
     instrs: Vec<M::Instr>,
     instr_operands: Vec<InstrOperands>,
@@ -545,14 +544,10 @@ impl<M: MachineCore> Lir<M> {
         &self.block_param_pool[base..base + params.incoming_len as usize]
     }
 
-    pub fn outgoing_block_params(&self, block: Block, succ: u32) -> &[VirtReg] {
-        let block_param_data = &self.block_params[block];
-        let index_base = block_param_data.outgoing_base as usize;
-        let indices = &self.outgoing_block_param_indices
-            [index_base..index_base + block_param_data.outgoing_len as usize];
-        let (base, len) = indices[succ as usize];
-        let base = base as usize;
-        &self.block_param_pool[base..base + len as usize]
+    pub fn outgoing_block_params(&self, block: Block) -> &[VirtReg] {
+        let params = &self.block_params[block];
+        let base = params.outgoing_base as usize;
+        &self.block_param_pool[base..base + params.outgoing_len as usize]
     }
 
     pub fn stack_slot_data(&self, slot: StackSlot) -> StackSlotData {
@@ -643,7 +638,6 @@ pub struct Builder<'o, M: MachineCore> {
     lir: Lir<M>,
     block_order: &'o [Block],
     vreg_copies: FxHashMap<VirtReg, VirtReg>,
-    outgoing_block_param_base: u32,
     cur_block: isize,
 }
 
@@ -655,7 +649,6 @@ impl<'o, M: MachineCore> Builder<'o, M> {
                 block_instr_ranges: SecondaryMap::new(),
                 block_params: SecondaryMap::new(),
                 live_in_regs: Vec::new(),
-                outgoing_block_param_indices: Vec::new(),
                 block_param_pool: Vec::new(),
                 instrs: Vec::new(),
                 instr_operands: Vec::new(),
@@ -668,7 +661,6 @@ impl<'o, M: MachineCore> Builder<'o, M> {
             },
             block_order,
             vreg_copies: FxHashMap::default(),
-            outgoing_block_param_base: 0,
             cur_block: block_order.len() as isize,
         }
     }
@@ -679,22 +671,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         let next_instr = self.next_instr();
 
         if self.cur_block < self.block_order.len() as isize {
-            // Finish recording outgoing block parameters.
             let block = self.cur_block();
-            let outgoing_block_param_base = self.outgoing_block_param_base;
-            let outgoing_block_param_end: u32 = self
-                .lir
-                .outgoing_block_param_indices
-                .len()
-                .try_into()
-                .unwrap();
-            self.lir.block_params[block].outgoing_base = outgoing_block_param_base;
-            self.lir.block_params[block].outgoing_len = (outgoing_block_param_end
-                - outgoing_block_param_base)
-                .try_into()
-                .unwrap();
-            self.outgoing_block_param_base = outgoing_block_param_end;
-
             // Note: we always want `.0` to be greater than `.1` for every block, so that when we
             // reverse everything later we'll end up with `.0 < .1`.
             self.lir.block_instr_ranges[block].0 = next_instr;
@@ -757,16 +734,13 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         self.lir.block_params[block].incoming_len = len.try_into().unwrap();
     }
 
-    pub fn add_succ_outgoing_block_params(
-        &mut self,
-        outgoing_params: impl IntoIterator<Item = VirtReg>,
-    ) {
+    pub fn set_outgoing_block_params(&mut self, params: impl IntoIterator<Item = VirtReg>) {
+        let block = self.cur_block();
         let base = self.lir.block_param_pool.len();
-        self.lir.block_param_pool.extend(outgoing_params);
+        self.lir.block_param_pool.extend(params);
         let len = self.lir.block_param_pool.len() - base;
-        self.lir
-            .outgoing_block_param_indices
-            .push((base.try_into().unwrap(), len.try_into().unwrap()));
+        self.lir.block_params[block].outgoing_base = base.try_into().unwrap();
+        self.lir.block_params[block].outgoing_len = len.try_into().unwrap();
     }
 
     pub fn build_instrs<R>(&mut self, f: impl FnOnce(InstrBuilder<'o, '_, M>) -> R) -> R {
@@ -825,18 +799,10 @@ impl<'o, M: MachineCore> Builder<'o, M> {
             let outgoing_base = params.outgoing_base as usize;
             let outgoing_len = params.outgoing_len as usize;
 
-            for &(succ_param_base, succ_param_len) in
-                &self.lir.outgoing_block_param_indices[outgoing_base..outgoing_base + outgoing_len]
+            for param in &mut self.lir.block_param_pool[outgoing_base..outgoing_base + outgoing_len]
             {
-                let succ_param_base = succ_param_base as usize;
-                let succ_param_len = succ_param_len as usize;
-
-                for param in &mut self.lir.block_param_pool
-                    [succ_param_base..succ_param_base + succ_param_len]
-                {
-                    if let Some(def) = resolve_vreg_copy(&mut self.vreg_copies, *param) {
-                        *param = def;
-                    }
+                if let Some(def) = resolve_vreg_copy(&mut self.vreg_copies, *param) {
+                    *param = def;
                 }
             }
         }

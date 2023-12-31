@@ -346,13 +346,33 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn lower_block_params(&mut self, builder: &mut LirBuilder<'ctx, M>, block: Block) {
-        builder.set_incoming_block_params(self.schedule.block_phis(block).iter().map(|&phi| {
-            let val = self.value_reg_map[&self.func.graph.node_outputs(phi)[0]];
-            trace!("  {}", display_node(self.module, &self.func.graph, phi));
-            val
-        }));
+        if self.cfg_ctx.cfg.block_preds(block).len() == 1 {
+            // For single-predecessor blocks, just copy the values from the predecessor. This,
+            // combined with critical edge splitting, means that we can always place parallel copies
+            // for block param resolution in the predecessor later.
+            for &phi in self.schedule.block_phis(block) {
+                let input = self.get_value_vreg(builder, self.func.graph.node_inputs(phi)[1]);
+                let output = self.value_reg_map[&self.func.graph.node_outputs(phi)[0]];
+                builder.copy_vreg(output, input);
+            }
+        } else {
+            // Multiple predecessors - the phis are really necessary.
+            builder.set_incoming_block_params(self.schedule.block_phis(block).iter().map(|&phi| {
+                let val = self.value_reg_map[&self.func.graph.node_outputs(phi)[0]];
+                trace!("  {}", display_node(self.module, &self.func.graph, phi));
+                val
+            }));
+        }
 
         for &succ in self.cfg_ctx.cfg.block_succs(block).iter() {
+            if self.cfg_ctx.cfg.block_preds(succ).len() == 1 {
+                // This successor doesn't actually need block params because we are its only
+                // predecessor. This is the second half of the "single-predecessor" case above.
+                trace!("     => {}[]", succ);
+                builder.add_succ_outgoing_block_params([]);
+                continue;
+            }
+
             let Some(valgraph_pred_idx) = self.cfg_ctx.block_map.valgraph_pred_index(succ, block)
             else {
                 // This successor didn't come from the valgraph (it was a split critical edge).

@@ -26,7 +26,7 @@ impl TestProvider for ScheduleProvider {
 
             let graph = &func.graph;
             let cfg_preorder: Vec<_> = cfg_preorder(graph, func.entry).collect();
-            let cfg_ctx = CfgContext::compute(graph, &cfg_preorder);
+            let cfg_ctx = CfgContext::compute_for_valgraph(graph, &cfg_preorder);
             let schedule = Schedule::compute(graph, &cfg_preorder, &cfg_ctx);
 
             write!(

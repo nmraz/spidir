@@ -185,7 +185,7 @@ pub struct CfgContext {
 }
 
 impl CfgContext {
-    pub fn compute(graph: &ValGraph, cfg_preorder: &[Node]) -> Self {
+    pub fn compute_for_valgraph(graph: &ValGraph, cfg_preorder: &[Node]) -> Self {
         let (cfg, block_map) = compute_block_cfg(graph, cfg_preorder);
 
         let domtree =

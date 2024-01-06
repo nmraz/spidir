@@ -20,11 +20,11 @@ impl TestProvider for IselProvider {
             writeln!(output, "function `{}`:", func.name).unwrap();
 
             let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
-            let cfg_ctx = CfgContext::compute_for_valgraph(&func.graph, &cfg_preorder);
-            let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx);
+            let (cfg_ctx, block_map) = CfgContext::compute_for_valgraph(&func.graph, &cfg_preorder);
+            let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx, &block_map);
             let machine = X64Machine;
-            let lir =
-                select_instrs(module, func, &schedule, &cfg_ctx, &machine).map_err(|err| {
+            let lir = select_instrs(module, func, &schedule, &cfg_ctx, &block_map, &machine)
+                .map_err(|err| {
                     anyhow!(
                         "failed to select `{}`: `{}`",
                         func.name,

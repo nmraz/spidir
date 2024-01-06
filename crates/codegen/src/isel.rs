@@ -15,7 +15,7 @@ use log::{debug, trace};
 use smallvec::SmallVec;
 
 use crate::{
-    cfg::{Block, CfgContext},
+    cfg::{Block, CfgContext, FunctionBlockMap},
     lir::{
         display_block_params, display_instr_data, Builder as LirBuilder, DefOperand, InstrBuilder,
         Lir, PhysRegSet, RegClass, StackSlot, StackSlotData, UseOperand, VirtReg,
@@ -143,11 +143,12 @@ pub fn select_instrs<M: MachineLower>(
     func: &FunctionData,
     schedule: &Schedule,
     cfg_ctx: &CfgContext,
+    block_map: &FunctionBlockMap,
     machine: &M,
 ) -> Result<Lir<M>, IselError> {
     debug!("selecting instructions for: {}", func.metadata());
 
-    let mut state = IselState::new(module, func, schedule, cfg_ctx, machine);
+    let mut state = IselState::new(module, func, schedule, cfg_ctx, block_map, machine);
     let mut builder = LirBuilder::new(&cfg_ctx.block_order);
     state.prepare_for_isel(&mut builder);
 
@@ -168,6 +169,7 @@ struct IselState<'ctx, M: MachineLower> {
     func: &'ctx FunctionData,
     schedule: &'ctx Schedule,
     cfg_ctx: &'ctx CfgContext,
+    block_map: &'ctx FunctionBlockMap,
     machine: &'ctx M,
     value_reg_map: ValueRegMap,
     reg_value_map: RegValueMap,
@@ -181,14 +183,16 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         func: &'ctx FunctionData,
         schedule: &'ctx Schedule,
         cfg_ctx: &'ctx CfgContext,
-        backend: &'ctx M,
+        block_map: &'ctx FunctionBlockMap,
+        machine: &'ctx M,
     ) -> Self {
         Self {
             module,
             func,
             schedule,
             cfg_ctx,
-            machine: backend,
+            block_map,
+            machine,
             value_reg_map: Default::default(),
             reg_value_map: Default::default(),
             value_use_counts: Default::default(),
@@ -388,7 +392,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
 
         // Try to find the actual valgraph predecessor. If there isn't one, the successor is a
         // split critical edge and not an IR-level block, so it can't have any parameters anyway.
-        if let Some(valgraph_pred_idx) = self.cfg_ctx.block_map.valgraph_pred_index(succ, block) {
+        if let Some(valgraph_pred_idx) = self.block_map.valgraph_pred_index(succ, block) {
             let outgoing_params: SmallVec<[_; 4]> = self
                 .schedule
                 .block_phis(succ)

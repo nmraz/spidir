@@ -34,7 +34,12 @@ pub struct Schedule {
 }
 
 impl Schedule {
-    pub fn compute(graph: &ValGraph, valgraph_cfg_preorder: &[Node], cfg_ctx: &CfgContext) -> Self {
+    pub fn compute(
+        graph: &ValGraph,
+        valgraph_cfg_preorder: &[Node],
+        cfg_ctx: &CfgContext,
+        block_map: &FunctionBlockMap,
+    ) -> Self {
         let entry = valgraph_cfg_preorder[0];
         let live_node_info = LiveNodeInfo::compute(graph, entry);
 
@@ -48,6 +53,7 @@ impl Schedule {
 
         let mut scheduler = Scheduler {
             cfg_ctx,
+            block_map,
             depth_map: &depth_map,
             blocks_by_node: SecondaryMap::new(),
             schedule: &mut schedule,
@@ -127,6 +133,7 @@ fn is_block_backedge(graph: &ValGraph, succ: Node, use_idx: u32) -> bool {
 
 struct Scheduler<'a> {
     cfg_ctx: &'a CfgContext,
+    block_map: &'a FunctionBlockMap,
     depth_map: &'a CfgDepthMap,
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
     schedule: &'a mut Schedule,
@@ -136,7 +143,7 @@ impl<'a> Scheduler<'a> {
     fn pin_nodes(&mut self, ctx: &ScheduleContext<'_>) {
         for &cfg_node in ctx.cfg_preorder() {
             let block = self
-                .block_map()
+                .block_map
                 .containing_block(cfg_node)
                 .expect("live CFG node not in block CFG");
 
@@ -299,12 +306,12 @@ impl<'a> Scheduler<'a> {
                     // split critical edge. We don't just index into the region's `block_preds`
                     // directly with `input_idx` because `block_preds` will not include any dead
                     // inputs.
-                    let loc = self.block_map().cfg_pred_block(graph, ctrl_input);
+                    let loc = self.block_map.cfg_pred_block(graph, ctrl_input);
 
                     if let Some(loc) = loc {
                         debug_assert!(self
                             .cfg()
-                            .block_preds(self.block_map().containing_block(region).unwrap())
+                            .block_preds(self.block_map.containing_block(region).unwrap())
                             .contains(&loc));
                         trace!(
                             "    succ: phi {} input {} ({loc})",
@@ -346,10 +353,6 @@ impl<'a> Scheduler<'a> {
 
     fn domtree(&self) -> &'a BlockDomTree {
         &self.cfg_ctx.domtree
-    }
-
-    fn block_map(&self) -> &'a FunctionBlockMap {
-        &self.cfg_ctx.block_map
     }
 }
 

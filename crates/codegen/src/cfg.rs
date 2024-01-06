@@ -179,17 +179,13 @@ pub fn compute_block_cfg(graph: &ValGraph, cfg_preorder: &[Node]) -> (BlockCfg, 
 pub struct CfgContext {
     pub cfg: BlockCfg,
     pub block_order: Vec<Block>,
-    pub block_map: FunctionBlockMap,
     pub domtree: BlockDomTree,
     pub loop_forest: LoopForest,
 }
 
 impl CfgContext {
-    pub fn compute_for_valgraph(graph: &ValGraph, cfg_preorder: &[Node]) -> Self {
-        let (cfg, block_map) = compute_block_cfg(graph, cfg_preorder);
-
-        let domtree =
-            BlockDomTree::compute(&cfg, block_map.containing_block(cfg_preorder[0]).unwrap());
+    pub fn compute(cfg: BlockCfg, entry: Block) -> Self {
+        let domtree = BlockDomTree::compute(&cfg, entry);
         let loop_forest = LoopForest::compute(&cfg, &domtree);
 
         let block_order = compute_block_order(&cfg, &domtree, &loop_forest);
@@ -197,10 +193,18 @@ impl CfgContext {
         CfgContext {
             cfg,
             block_order,
-            block_map,
             domtree,
             loop_forest,
         }
+    }
+
+    pub fn compute_for_valgraph(
+        graph: &ValGraph,
+        cfg_preorder: &[Node],
+    ) -> (Self, FunctionBlockMap) {
+        let (cfg, block_map) = compute_block_cfg(graph, cfg_preorder);
+        let cfg_ctx = Self::compute(cfg, block_map.containing_block(cfg_preorder[0]).unwrap());
+        (cfg_ctx, block_map)
     }
 }
 

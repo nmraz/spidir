@@ -271,8 +271,8 @@ fn get_module_schedule_str(module: &Module) -> String {
         write_signature(&mut output, &func.sig).unwrap();
 
         let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
-        let cfg_ctx = CfgContext::compute_for_valgraph(&func.graph, &cfg_preorder);
-        let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx);
+        let (cfg_ctx, block_map) = CfgContext::compute_for_valgraph(&func.graph, &cfg_preorder);
+        let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx, &block_map);
 
         writeln!(
             output,
@@ -328,16 +328,17 @@ fn get_module_lir_str(module: &Module, liveranges: bool) -> Result<String> {
 
 fn get_function_lir(module: &Module, func: &FunctionData) -> Result<(CfgContext, Lir<X64Machine>)> {
     let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
-    let cfg_ctx = CfgContext::compute_for_valgraph(&func.graph, &cfg_preorder);
-    let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx);
+    let (cfg_ctx, block_map) = CfgContext::compute_for_valgraph(&func.graph, &cfg_preorder);
+    let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx, &block_map);
     let machine = X64Machine;
-    let lir = select_instrs(module, func, &schedule, &cfg_ctx, &machine).map_err(|err| {
-        anyhow!(
-            "failed to select `{}`: `{}`",
-            func.name,
-            display_node(module, &func.graph, err.node)
-        )
-    })?;
+    let lir =
+        select_instrs(module, func, &schedule, &cfg_ctx, &block_map, &machine).map_err(|err| {
+            anyhow!(
+                "failed to select `{}`: `{}`",
+                func.name,
+                display_node(module, &func.graph, err.node)
+            )
+        })?;
     Ok((cfg_ctx, lir))
 }
 

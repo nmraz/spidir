@@ -267,7 +267,7 @@ fn extend_to_def(
     vreg: VirtRegNum,
     start: ProgramPoint,
 ) {
-    let end = active_segment_ends[vreg].unwrap_or(start);
+    let end = active_segment_ends[vreg].unwrap_or(start.next());
     push_live_segment(live_ranges, vreg, start, end);
 }
 

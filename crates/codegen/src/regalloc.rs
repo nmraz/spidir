@@ -278,10 +278,15 @@ fn push_live_segment(
     end: ProgramPoint,
 ) {
     trace!("      extend {vreg}: {start:?}..{end:?}");
-    debug_assert!(start <= end);
+    assert!(start < end);
     let live_range = &mut live_ranges[vreg];
-    if let Some(last_segment) = live_range.last() {
-        debug_assert!(end < last_segment.start);
+    if let Some(last_segment) = live_range.last_mut() {
+        assert!(end <= last_segment.start);
+        if end == last_segment.start {
+            // Extend the next segment down instead of creating a new one.
+            last_segment.start = start;
+        }
+        return;
     }
     live_range.push(ProgramSegment { start, end });
 }

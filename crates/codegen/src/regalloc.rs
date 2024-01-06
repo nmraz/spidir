@@ -14,18 +14,14 @@ use crate::{
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ProgramPointDisp {
-    Before,
-    Early,
-    Late,
-    After,
+    Before = 0,
+    After = 1,
 }
 
 impl fmt::Debug for ProgramPointDisp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Before => write!(f, "B"),
-            Self::Early => write!(f, "E"),
-            Self::Late => write!(f, "L"),
             Self::After => write!(f, "A"),
         }
     }
@@ -33,37 +29,67 @@ impl fmt::Debug for ProgramPointDisp {
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ProgramPoint {
-    pub instr: Instr,
-    pub disp: ProgramPointDisp,
+    index: u32,
 }
 
 impl ProgramPoint {
-    pub fn before(instr: Instr) -> Self {
+    pub fn new(instr: Instr, disp: ProgramPointDisp) -> Self {
+        let instr = instr.as_u32();
+        let disp = disp as u32;
+        assert!(instr <= i32::MAX as u32);
         Self {
-            instr,
-            disp: ProgramPointDisp::Before,
+            index: instr << 1 | disp,
         }
     }
 
+    pub fn before(instr: Instr) -> Self {
+        Self::new(instr, ProgramPointDisp::Before)
+    }
+
     pub fn after(instr: Instr) -> Self {
-        Self {
-            instr,
-            disp: ProgramPointDisp::After,
-        }
+        Self::new(instr, ProgramPointDisp::After)
     }
 
     pub fn for_operand(instr: Instr, pos: OperandPos) -> Self {
         let disp = match pos {
-            OperandPos::Early => ProgramPointDisp::Early,
-            OperandPos::Late => ProgramPointDisp::Late,
+            OperandPos::Early => ProgramPointDisp::Before,
+            OperandPos::Late => ProgramPointDisp::After,
         };
-        Self { instr, disp }
+        Self::new(instr, disp)
+    }
+
+    pub fn next(self) -> Self {
+        Self {
+            index: self.index + 1,
+        }
+    }
+
+    pub fn prev(self) -> Self {
+        Self {
+            index: self.index - 1,
+        }
+    }
+
+    pub fn instr(self) -> Instr {
+        Instr::from_u32(self.index >> 1)
+    }
+
+    pub fn disp(self) -> ProgramPointDisp {
+        match self.index & 1 {
+            0 => ProgramPointDisp::Before,
+            1 => ProgramPointDisp::After,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn index(self) -> u32 {
+        self.index
     }
 }
 
 impl fmt::Debug for ProgramPoint {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}:{}", self.disp, self.instr)
+        write!(f, "{:?}:{}", self.disp(), self.instr())
     }
 }
 
@@ -195,8 +221,10 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
             for use_op in lir.instr_uses(instr) {
                 let vreg = use_op.reg().reg_num();
                 if active_segment_ends[vreg].is_none() {
-                    active_segment_ends[vreg] =
-                        Some(ProgramPoint::for_operand(instr, use_op.pos()));
+                    // Note: ranges are half-open, so we actually mark the use as extending to the
+                    // next program point.
+                    let pos = ProgramPoint::for_operand(instr, use_op.pos()).next();
+                    active_segment_ends[vreg] = Some(pos);
                 }
             }
         }
@@ -276,11 +304,11 @@ mod tests {
         assert_eq!(format!("{:?}", ProgramPoint::after(instr)), "A:i0");
         assert_eq!(
             format!("{:?}", ProgramPoint::for_operand(instr, OperandPos::Early)),
-            "E:i0"
+            "B:i0"
         );
         assert_eq!(
             format!("{:?}", ProgramPoint::for_operand(instr, OperandPos::Late)),
-            "L:i0"
+            "A:i0"
         );
     }
 
@@ -295,15 +323,13 @@ mod tests {
                     ProgramPoint::for_operand(instr.next(), OperandPos::Early)
                 )
             ),
-            "B:i5..E:i6"
+            "B:i5..B:i6"
         );
     }
 
     #[test]
     fn program_point_disp_order() {
-        assert!(ProgramPointDisp::Before < ProgramPointDisp::Early);
-        assert!(ProgramPointDisp::Early < ProgramPointDisp::Late);
-        assert!(ProgramPointDisp::Late < ProgramPointDisp::After);
+        assert!(ProgramPointDisp::Before < ProgramPointDisp::After);
     }
 
     #[test]
@@ -314,10 +340,6 @@ mod tests {
     #[test]
     fn program_point_same_instr_order() {
         assert!(ProgramPoint::after(Instr::new(7)) > ProgramPoint::before(Instr::new(7)));
-        assert!(
-            ProgramPoint::for_operand(Instr::new(7), OperandPos::Early)
-                > ProgramPoint::before(Instr::new(7))
-        );
         assert!(
             ProgramPoint::for_operand(Instr::new(7), OperandPos::Late)
                 > ProgramPoint::before(Instr::new(7))

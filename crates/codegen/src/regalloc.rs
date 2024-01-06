@@ -197,7 +197,11 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
 
         for live_out in &live_outs[block] {
             trace!("    live-out {live_out}");
-            active_segment_ends[live_out] = Some(ProgramPoint::after(last_instr));
+            // Note: ranges are half-open, and we want this range to end *after* the last
+            // instruction. Even if the last block in the function has live-outs (which is unusual
+            // but not technically disallowed by regalloc), the range will refer to the virtual
+            // past-the-end instruction.
+            active_segment_ends[live_out] = Some(ProgramPoint::before(last_instr.next()));
         }
 
         for &outgoing_vreg in lir.outgoing_block_params(block) {

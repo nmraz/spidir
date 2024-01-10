@@ -94,29 +94,29 @@ impl fmt::Debug for ProgramPoint {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct ProgramSegment {
+pub struct ProgramRange {
     pub start: ProgramPoint,
     pub end: ProgramPoint,
 }
 
-impl ProgramSegment {
+impl ProgramRange {
     pub fn new(start: ProgramPoint, end: ProgramPoint) -> Self {
         Self { start, end }
     }
 }
 
-impl fmt::Debug for ProgramSegment {
+impl fmt::Debug for ProgramRange {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}..{:?}", self.start, self.end)
     }
 }
 
-pub type LiveRange = SmallVec<[ProgramSegment; 2]>;
-pub type LiveRanges = SecondaryMap<VirtRegNum, LiveRange>;
+pub type LiveSet = SmallVec<[ProgramRange; 2]>;
+pub type LiveSets = SecondaryMap<VirtRegNum, LiveSet>;
 
-type ActiveSegmentEnds = SecondaryMap<VirtRegNum, Option<ProgramPoint>>;
+type ActiveRangeEnds = SecondaryMap<VirtRegNum, Option<ProgramPoint>>;
 
-pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -> LiveRanges {
+pub fn compute_live_sets<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -> LiveSets {
     let mut raw_block_uses = make_block_vreg_map(lir, cfg_ctx);
     let mut raw_block_defs = make_block_vreg_map(lir, cfg_ctx);
 
@@ -182,13 +182,13 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
         }
     }
 
-    let mut live_ranges = LiveRanges::new();
-    let mut active_segment_ends = ActiveSegmentEnds::new();
+    let mut live_sets = LiveSets::new();
+    let mut active_range_ends = ActiveRangeEnds::new();
 
-    trace!("computing precise liveranges");
+    trace!("computing precise live sets");
 
     for &block in cfg_ctx.block_order.iter().rev() {
-        active_segment_ends.clear();
+        active_range_ends.clear();
 
         trace!("  {block}");
 
@@ -201,13 +201,13 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
             // instruction. Even if the last block in the function has live-outs (which is unusual
             // but not technically disallowed by regalloc), the range will refer to the virtual
             // past-the-end instruction.
-            active_segment_ends[live_out] = Some(ProgramPoint::before(last_instr.next()));
+            active_range_ends[live_out] = Some(ProgramPoint::before(last_instr.next()));
         }
 
         for &outgoing_vreg in lir.outgoing_block_params(block) {
             let outgoing_vreg = outgoing_vreg.reg_num();
             trace!("    outgoing param {outgoing_vreg}");
-            active_segment_ends[outgoing_vreg] = Some(ProgramPoint::after(last_instr));
+            active_range_ends[outgoing_vreg] = Some(ProgramPoint::after(last_instr));
         }
 
         for instr in block_range.into_iter().rev() {
@@ -215,8 +215,8 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
 
             for def_op in lir.instr_defs(instr) {
                 extend_to_def(
-                    &mut live_ranges,
-                    &active_segment_ends,
+                    &mut live_sets,
+                    &active_range_ends,
                     def_op.reg().reg_num(),
                     ProgramPoint::for_operand(instr, def_op.pos()),
                 );
@@ -224,11 +224,11 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
 
             for use_op in lir.instr_uses(instr) {
                 let vreg = use_op.reg().reg_num();
-                if active_segment_ends[vreg].is_none() {
+                if active_range_ends[vreg].is_none() {
                     // Note: ranges are half-open, so we actually mark the use as extending to the
                     // next program point.
                     let pos = ProgramPoint::for_operand(instr, use_op.pos()).next();
-                    active_segment_ends[vreg] = Some(pos);
+                    active_range_ends[vreg] = Some(pos);
                 }
             }
         }
@@ -237,8 +237,8 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
             let incoming_vreg = incoming_vreg.reg_num();
             trace!("    incoming param {incoming_vreg}");
             extend_to_def(
-                &mut live_ranges,
-                &active_segment_ends,
+                &mut live_sets,
+                &active_range_ends,
                 incoming_vreg,
                 ProgramPoint::before(block_range.start),
             );
@@ -246,49 +246,49 @@ pub fn compute_live_ranges<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -
 
         for live_in in &live_ins[block] {
             trace!("    live-in {live_in}");
-            let end = active_segment_ends[live_in].expect("block live-in is dead");
+            let end = active_range_ends[live_in].expect("block live-in is dead");
             let start = ProgramPoint::before(block_range.start);
-            push_live_segment(&mut live_ranges, live_in, start, end);
+            push_live_range(&mut live_sets, live_in, start, end);
         }
     }
 
-    // The live ranges have their segments sorted from last to first at this point; get them sorted
+    // The live sets have their ranges sorted from last to first at this point; get them sorted
     // properly before returning them.
-    for live_range in live_ranges.values_mut() {
-        live_range.reverse();
+    for live_set in live_sets.values_mut() {
+        live_set.reverse();
     }
 
-    live_ranges
+    live_sets
 }
 
 fn extend_to_def(
-    live_ranges: &mut LiveRanges,
-    active_segment_ends: &ActiveSegmentEnds,
+    live_sets: &mut LiveSets,
+    active_range_ends: &ActiveRangeEnds,
     vreg: VirtRegNum,
     start: ProgramPoint,
 ) {
-    let end = active_segment_ends[vreg].unwrap_or(start.next());
-    push_live_segment(live_ranges, vreg, start, end);
+    let end = active_range_ends[vreg].unwrap_or(start.next());
+    push_live_range(live_sets, vreg, start, end);
 }
 
-fn push_live_segment(
-    live_ranges: &mut LiveRanges,
+fn push_live_range(
+    live_sets: &mut LiveSets,
     vreg: VirtRegNum,
     start: ProgramPoint,
     end: ProgramPoint,
 ) {
     trace!("      extend {vreg}: {start:?}..{end:?}");
     assert!(start < end);
-    let live_range = &mut live_ranges[vreg];
-    if let Some(last_segment) = live_range.last_mut() {
-        assert!(end <= last_segment.start);
-        if end == last_segment.start {
-            // Extend the next segment down instead of creating a new one.
-            last_segment.start = start;
+    let live_set = &mut live_sets[vreg];
+    if let Some(last_range) = live_set.last_mut() {
+        assert!(end <= last_range.start);
+        if end == last_range.start {
+            // Extend the next range down instead of creating a new one.
+            last_range.start = start;
         }
         return;
     }
-    live_range.push(ProgramSegment { start, end });
+    live_set.push(ProgramRange { start, end });
 }
 
 fn make_block_vreg_map<M: MachineCore>(
@@ -322,12 +322,12 @@ mod tests {
     }
 
     #[test]
-    fn format_program_segments() {
+    fn format_program_ranges() {
         let instr = Instr::new(5);
         assert_eq!(
             format!(
                 "{:?}",
-                ProgramSegment::new(
+                ProgramRange::new(
                     ProgramPoint::before(instr),
                     ProgramPoint::for_operand(instr.next(), OperandPos::Early)
                 )

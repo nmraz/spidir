@@ -12,7 +12,7 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 use itertools::Itertools;
 
 use codegen::{
-    cfg::CfgContext, isel::select_instrs, lir::Lir, regalloc::compute_live_ranges,
+    cfg::CfgContext, isel::select_instrs, lir::Lir, regalloc::compute_live_sets,
     schedule::Schedule, target::x86_64::X64Machine,
 };
 use ir::{
@@ -110,9 +110,9 @@ enum ToolCommand {
         /// The input IR file
         input_file: PathBuf,
 
-        /// Print live ranges at the end of each function
+        /// Print vreg liveness information at the end of each function
         #[arg(long)]
-        liveranges: bool,
+        liveness: bool,
     },
 }
 
@@ -185,10 +185,10 @@ fn main() -> Result<()> {
         }
         ToolCommand::Lir {
             input_file,
-            liveranges,
+            liveness,
         } => {
             let module = read_and_verify_module(&input_file)?;
-            io::stdout().write_all(get_module_lir_str(&module, liveranges)?.as_bytes())?;
+            io::stdout().write_all(get_module_lir_str(&module, liveness)?.as_bytes())?;
         }
     }
 
@@ -285,7 +285,7 @@ fn get_module_schedule_str(module: &Module) -> String {
     output
 }
 
-fn get_module_lir_str(module: &Module, liveranges: bool) -> Result<String> {
+fn get_module_lir_str(module: &Module, liveness: bool) -> Result<String> {
     let mut output = String::new();
 
     for func in module.functions.values() {
@@ -299,12 +299,12 @@ fn get_module_lir_str(module: &Module, liveranges: bool) -> Result<String> {
         )
         .unwrap();
 
-        if liveranges {
+        if liveness {
             writeln!(output).unwrap();
 
-            let ranges = compute_live_ranges(&lir, &cfg_ctx);
-            for (vreg, range) in ranges.iter() {
-                if range.is_empty() {
+            let live_sets = compute_live_sets(&lir, &cfg_ctx);
+            for (vreg, live_set) in live_sets.iter() {
+                if live_set.is_empty() {
                     continue;
                 }
 
@@ -312,7 +312,7 @@ fn get_module_lir_str(module: &Module, liveranges: bool) -> Result<String> {
                     output,
                     "{}: {}",
                     vreg,
-                    range
+                    live_set
                         .iter()
                         .format_with(" ", |segment, f| f(&format_args!("{segment:?}")))
                 )

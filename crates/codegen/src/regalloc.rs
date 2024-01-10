@@ -285,8 +285,8 @@ fn push_live_range(
         if end == last_range.start {
             // Extend the next range down instead of creating a new one.
             last_range.start = start;
+            return;
         }
-        return;
     }
     live_set.push(ProgramRange { start, end });
 }

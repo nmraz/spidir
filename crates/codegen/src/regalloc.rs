@@ -103,6 +103,10 @@ impl ProgramRange {
     pub fn new(start: ProgramPoint, end: ProgramPoint) -> Self {
         Self { start, end }
     }
+
+    pub fn intersects(self, other: ProgramRange) -> bool {
+        self.end > other.start && other.end > self.start
+    }
 }
 
 impl fmt::Debug for ProgramRange {
@@ -353,5 +357,61 @@ mod tests {
             ProgramPoint::for_operand(Instr::new(7), OperandPos::Late)
                 > ProgramPoint::before(Instr::new(7))
         );
+    }
+
+    #[test]
+    fn range_intersects_overlapping() {
+        let a = ProgramRange::new(
+            ProgramPoint::before(Instr::new(2)),
+            ProgramPoint::after(Instr::new(5)),
+        );
+        let b = ProgramRange::new(
+            ProgramPoint::after(Instr::new(2)),
+            ProgramPoint::before(Instr::new(20)),
+        );
+        assert!(a.intersects(b));
+        assert!(b.intersects(a));
+    }
+
+    #[test]
+    fn range_intersects_tangent() {
+        let a = ProgramRange::new(
+            ProgramPoint::before(Instr::new(2)),
+            ProgramPoint::after(Instr::new(5)),
+        );
+        let b = ProgramRange::new(
+            ProgramPoint::after(Instr::new(5)),
+            ProgramPoint::before(Instr::new(20)),
+        );
+        assert!(!a.intersects(b));
+        assert!(!b.intersects(a));
+    }
+
+    #[test]
+    fn range_intersects_disjoint() {
+        let a = ProgramRange::new(
+            ProgramPoint::before(Instr::new(2)),
+            ProgramPoint::after(Instr::new(5)),
+        );
+        let b = ProgramRange::new(
+            ProgramPoint::after(Instr::new(17)),
+            ProgramPoint::before(Instr::new(20)),
+        );
+        assert!(!a.intersects(b));
+        assert!(!b.intersects(a));
+    }
+
+    #[test]
+    fn range_intersects_nested() {
+        let a = ProgramRange::new(
+            ProgramPoint::before(Instr::new(2)),
+            ProgramPoint::after(Instr::new(30)),
+        );
+        let b = ProgramRange::new(
+            ProgramPoint::after(Instr::new(17)),
+            ProgramPoint::before(Instr::new(20)),
+        );
+        assert!(a.intersects(b));
+        assert!(b.intersects(a));
     }
 }

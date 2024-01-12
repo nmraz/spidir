@@ -132,8 +132,8 @@ fn build_simple_tied() {
         &block_order,
         expect![[r#"
             block0[%1:gpr($r0), %2:gpr($r1)]:
-                %0:gpr(any)[late] = Add %1:gpr(tied:0)[early], %2:gpr(reg)[early]
-                Ret %0:gpr($r0)[early]
+                %0:gpr(any)[late] = Add %1(tied:0)[early], %2(reg)[early]
+                Ret %0($r0)[early]
         "#]],
     );
 }
@@ -173,8 +173,8 @@ fn build_simple_3addr() {
         &block_order,
         expect![[r#"
             block0[%1:gpr($r0), %2:gpr($r1)]:
-                %0:gpr(reg)[late] = Lea %1:gpr(reg)[early], %2:gpr(reg)[early]
-                Ret %0:gpr($r0)[early]
+                %0:gpr(reg)[late] = Lea %1(reg)[early], %2(reg)[early]
+                Ret %0($r0)[early]
         "#]],
     );
 }
@@ -267,20 +267,20 @@ fn multi_block() {
         &block_order,
         expect![[r#"
             block0[%7:gpr($r0), %8:gpr($r1), %6:gpr($r2)]:
-                Cmp %7:gpr(any)[early], %8:gpr(reg)[early]
+                Cmp %7(any)[early], %8(reg)[early]
                 JmpEq(block1, block2)
             => block1, block2
             block1:
-                %4:gpr(any)[late] = Add %8:gpr(tied:0)[early], %6:gpr(reg)[early]
+                %4:gpr(any)[late] = Add %8(tied:0)[early], %6(reg)[early]
                 Jump(block3)
             => block3[%4:gpr]
             block2:
                 %3:gpr(reg)[late] = MovI(5)
-                %1:gpr(any)[late] = Add %8:gpr(tied:0)[early], %3:gpr(reg)[early]
+                %1:gpr(any)[late] = Add %8(tied:0)[early], %3(reg)[early]
                 Jump(block3)
             => block3[%1:gpr]
             block3[%0:gpr]:
-                Ret %0:gpr($r0)[early]
+                Ret %0($r0)[early]
         "#]],
     );
 }
@@ -334,7 +334,7 @@ fn block_param_vreg_copies() {
                 Jump(block1)
             => block1[%2:gpr]
             block1[%0:gpr]:
-                Ret %0:gpr($r0)[early]
+                Ret %0($r0)[early]
         "#]],
     );
 }
@@ -371,7 +371,7 @@ fn stack_slots() {
                 !0 = StackSlot { size: 4, align: 4 }
                 !1 = StackSlot { size: 16, align: 8 }
             block0[%0:gpr($r0)]:
-                Ret %0:gpr($r0)[early]
+                Ret %0($r0)[early]
         "#]],
     );
 }
@@ -410,8 +410,8 @@ fn clobbers() {
         &block_order,
         expect![[r#"
             block0[%1:gpr($r0)]:
-                %0:gpr($r0)[late] = Call %1:gpr($r0)[early] ^($r1, $r2)
-                Ret %0:gpr($r0)[early]
+                %0:gpr($r0)[late] = Call %1($r0)[early] ^($r1, $r2)
+                Ret %0($r0)[early]
         "#]],
     );
 }

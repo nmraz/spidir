@@ -35,7 +35,7 @@ pub struct DisplayUseOperand<'a, M> {
 
 impl<M: MachineCore> fmt::Display for DisplayUseOperand<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.operand.reg.display::<M>())?;
+        write!(f, "{}", self.operand.reg.reg_num())?;
         match self.operand.constraint {
             UseOperandConstraint::Any => f.write_str("(any)")?,
             UseOperandConstraint::AnyReg => f.write_str("(reg)")?,

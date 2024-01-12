@@ -22,7 +22,7 @@ func @infunc2:i32(ptr, i32) {
     # nextln:     Jump(block1)
     # nextln: => block1
     # nextln: block1:
-    # nextln:     Ret %0:gpr($$rax)[early]
+    # nextln:     Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr, %2:i32 = entry
     %3:ctrl, %4:phisel = region %0
@@ -62,13 +62,13 @@ func @caller:i32(ptr, i32) {
     # nextln:     Jump(block1)
     # nextln: => block1
     # nextln: block1:
-    # nextln:     Call(External(extfunc0)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
-    # nextln:     %1:gpr($$rax)[late] = Call(External(extfunc1)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
-    # nextln:     Call(Internal(func0)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
-    # nextln:     %2:gpr($$rax)[late] = Call(Internal(func1)) %3:gpr($$rdi)[early], %4:gpr($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     Call(External(extfunc0)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     %1:gpr($$rax)[late] = Call(External(extfunc1)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     Call(Internal(func0)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     %2:gpr($$rax)[late] = Call(Internal(func1)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln:     Call(Internal(func2)) ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
-    # nextln:     %0:gpr(reg)[late] = AluRRm(S32, Add) %1:gpr(tied:0)[early], %2:gpr(any)[early]
-    # nextln:     Ret %0:gpr($$rax)[early]
+    # nextln:     %0:gpr(reg)[late] = AluRRm(S32, Add) %1(tied:0)[early], %2(any)[early]
+    # nextln:     Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr, %2:i32 = entry
     %3:ctrl, %4:phisel = region %0
@@ -89,8 +89,8 @@ func @call_single_stack_arg() {
     # nextln: block0[]:
     # nextln:     %0:gpr(reg)[late] = MovRI(S64, 7)
     # nextln:     AddSp(-8)
-    # nextln:     Push(S64) %0:gpr(reg)[early]
-    # nextln:     Call(Internal(func3)) %0:gpr($$rdi)[early], %0:gpr($$rsi)[early], %0:gpr($$rdx)[early], %0:gpr($$rcx)[early], %0:gpr($$r8)[early], %0:gpr($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     Push(S64) %0(reg)[early]
+    # nextln:     Call(Internal(func3)) %0($$rdi)[early], %0($$rsi)[early], %0($$rdx)[early], %0($$rcx)[early], %0($$r8)[early], %0($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln:     AddSp(16)
     # nextln:     Ret
 
@@ -105,11 +105,11 @@ func @call_many_params(ptr) {
     # nextln: block0[%2:gpr($$rdi)]:
     # nextln:     %1:gpr(reg)[late] = MovRI(S64, 0)
     # nextln:     %0:gpr(reg)[late] = MovRI(S32, 0)
-    # nextln:     Push(S64) %1:gpr(reg)[early]
-    # nextln:     Push(S64) %2:gpr(reg)[early]
-    # nextln:     Push(S64) %0:gpr(reg)[early]
-    # nextln:     Push(S64) %1:gpr(reg)[early]
-    # nextln:     Call(Internal(func4)) %0:gpr($$rdi)[early], %1:gpr($$rsi)[early], %2:gpr($$rdx)[early], %1:gpr($$rcx)[early], %0:gpr($$r8)[early], %0:gpr($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:     Push(S64) %1(reg)[early]
+    # nextln:     Push(S64) %2(reg)[early]
+    # nextln:     Push(S64) %0(reg)[early]
+    # nextln:     Push(S64) %1(reg)[early]
+    # nextln:     Call(Internal(func4)) %0($$rdi)[early], %1($$rsi)[early], %2($$rdx)[early], %1($$rcx)[early], %0($$r8)[early], %0($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln:     AddSp(32)
     # nextln:     Ret
 

@@ -7,7 +7,7 @@ use crate::{
 
 use super::{
     Builder, DefOperand, Lir, OperandPos, PhysReg, PhysRegSet, RegClass, StackSlotData, UseOperand,
-    UseOperandConstraint, VirtReg,
+    UseOperandConstraint, VirtReg, VirtRegNum,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -67,7 +67,7 @@ fn push_instr_with_clobbers<const U: usize>(
     uses: [(UseOperandConstraint, OperandPos); U],
     clobbers: PhysRegSet,
 ) -> [VirtReg; U] {
-    let mut use_regs = [VirtReg::new(0, RC_GPR); U];
+    let mut use_regs = [VirtReg::new(VirtRegNum::from_u32(0), RC_GPR); U];
     builder.build_instrs(|mut b| {
         for use_reg in &mut use_regs {
             *use_reg = b.create_vreg(RC_GPR);

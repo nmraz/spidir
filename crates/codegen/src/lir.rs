@@ -43,7 +43,8 @@ entity_impl!(VirtRegNum, "%");
 pub struct VirtReg(u32);
 
 impl VirtReg {
-    pub fn new(num: u32, class: RegClass) -> Self {
+    pub fn new(num: VirtRegNum, class: RegClass) -> Self {
+        let num = num.as_u32();
         assert!(num < REG_NUM_BOUND);
         Self(num << REG_NUM_START_BIT | class.as_u8() as u32)
     }
@@ -560,7 +561,7 @@ impl<M: MachineCore> Lir<M> {
     }
 
     pub fn vreg_from_num(&self, vreg: VirtRegNum) -> VirtReg {
-        VirtReg::new(vreg.as_u32(), self.vreg_class(vreg))
+        VirtReg::new(vreg, self.vreg_class(vreg))
     }
 
     pub fn vreg_count(&self) -> u32 {
@@ -698,7 +699,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
 
     pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
         let num = self.lir.vreg_classes.push(class);
-        VirtReg::new(num.as_u32(), class)
+        VirtReg::new(num, class)
     }
 
     pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {

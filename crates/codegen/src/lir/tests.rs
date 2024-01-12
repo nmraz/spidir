@@ -54,6 +54,10 @@ impl MachineCore for DummyMachine {
             _ => unreachable!(),
         }
     }
+
+    fn phys_reg_count() -> u32 {
+        3
+    }
 }
 
 fn push_instr_with_clobbers<const U: usize>(

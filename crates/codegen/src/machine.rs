@@ -14,6 +14,7 @@ pub trait MachineCore {
 
     fn reg_class_name(class: RegClass) -> &'static str;
     fn reg_name(reg: PhysReg) -> &'static str;
+    fn phys_reg_count() -> u32;
 
     fn usable_regs(&self, class: RegClass) -> &[PhysReg];
 }

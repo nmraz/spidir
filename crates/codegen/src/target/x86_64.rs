@@ -167,6 +167,10 @@ impl MachineCore for X64Machine {
         }
     }
 
+    fn phys_reg_count() -> u32 {
+        16
+    }
+
     fn usable_regs(&self, class: RegClass) -> &[PhysReg] {
         match class {
             RC_GPR => &[

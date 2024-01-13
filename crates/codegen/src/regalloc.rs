@@ -225,70 +225,7 @@ fn live_set_intersects(live_set: &RangeSet, intersection_set: &MutableRangeSet) 
 type ActiveRangeEnds = SecondaryMap<VirtRegNum, Option<ProgramPoint>>;
 
 pub fn compute_live_sets<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -> LiveSets {
-    let mut raw_block_uses = make_block_vreg_map(lir, cfg_ctx);
-    let mut raw_block_defs = make_block_vreg_map(lir, cfg_ctx);
-
-    trace!("collecting block defs/uses");
-
-    for &block in &cfg_ctx.block_order {
-        trace!("  {block}");
-
-        let raw_uses = &mut raw_block_uses[block];
-        let raw_defs = &mut raw_block_defs[block];
-
-        for &outgoing_vreg in lir.outgoing_block_params(block) {
-            trace!("    use {}", outgoing_vreg.reg_num());
-            raw_uses.add(outgoing_vreg.reg_num());
-        }
-
-        for instr in lir.block_instrs(block) {
-            // We can process defs/uses in bulk here because everything is in SSA.
-            for use_op in lir.instr_uses(instr) {
-                trace!("    use {}", use_op.reg().reg_num());
-                raw_uses.add(use_op.reg().reg_num());
-            }
-
-            for def_op in lir.instr_defs(instr) {
-                trace!("    def {}", def_op.reg().reg_num());
-                raw_defs.add(def_op.reg().reg_num());
-            }
-        }
-
-        for &incoming_vreg in lir.block_params(block) {
-            trace!("    def {}", incoming_vreg.reg_num());
-            raw_defs.add(incoming_vreg.reg_num());
-        }
-    }
-
-    let mut live_ins = make_block_vreg_map(lir, cfg_ctx);
-    let mut live_outs = make_block_vreg_map(lir, cfg_ctx);
-
-    let mut worklist: VecDeque<_> = cfg_ctx.block_order.iter().copied().rev().collect();
-    let mut workset = FxHashSet::from_iter(worklist.iter().copied());
-
-    trace!("solving block liveness");
-
-    while let Some(block) = worklist.pop_front() {
-        workset.remove(&block);
-
-        trace!("  {block}");
-
-        // Note: we can do the union/subtraction in bulk here instead of iterating over individual
-        // instructions because the LIR is already in SSA.
-        let live_in = &mut live_ins[block];
-        live_in.clone_from(&live_outs[block]);
-        live_in.union(&raw_block_uses[block]);
-        live_in.subtract(&raw_block_defs[block]);
-
-        for &pred in cfg_ctx.cfg.block_preds(block) {
-            let status = live_outs[pred].union(live_in);
-            if status.is_changed() && !workset.contains(&pred) {
-                trace!("    predecessor {pred} changed, requeuing");
-                worklist.push_back(pred);
-                workset.insert(pred);
-            }
-        }
-    }
+    let (live_ins, live_outs) = compute_block_liveness(lir, cfg_ctx);
 
     let mut live_sets = LiveSets::new();
     let mut active_range_ends = ActiveRangeEnds::new();
@@ -367,6 +304,80 @@ pub fn compute_live_sets<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -> 
     }
 
     live_sets
+}
+
+fn compute_block_liveness<M: MachineCore>(
+    lir: &Lir<M>,
+    cfg_ctx: &CfgContext,
+) -> (
+    SecondaryMap<Block, VirtRegSet>,
+    SecondaryMap<Block, VirtRegSet>,
+) {
+    let mut raw_block_uses = make_block_vreg_map(lir, cfg_ctx);
+    let mut raw_block_defs = make_block_vreg_map(lir, cfg_ctx);
+
+    trace!("collecting block defs/uses");
+
+    for &block in &cfg_ctx.block_order {
+        trace!("  {block}");
+
+        let raw_uses = &mut raw_block_uses[block];
+        let raw_defs = &mut raw_block_defs[block];
+
+        for &outgoing_vreg in lir.outgoing_block_params(block) {
+            trace!("    use {}", outgoing_vreg.reg_num());
+            raw_uses.add(outgoing_vreg.reg_num());
+        }
+
+        for instr in lir.block_instrs(block) {
+            // We can process defs/uses in bulk here because everything is in SSA.
+            for use_op in lir.instr_uses(instr) {
+                trace!("    use {}", use_op.reg().reg_num());
+                raw_uses.add(use_op.reg().reg_num());
+            }
+
+            for def_op in lir.instr_defs(instr) {
+                trace!("    def {}", def_op.reg().reg_num());
+                raw_defs.add(def_op.reg().reg_num());
+            }
+        }
+
+        for &incoming_vreg in lir.block_params(block) {
+            trace!("    def {}", incoming_vreg.reg_num());
+            raw_defs.add(incoming_vreg.reg_num());
+        }
+    }
+
+    let mut live_ins = make_block_vreg_map(lir, cfg_ctx);
+    let mut live_outs = make_block_vreg_map(lir, cfg_ctx);
+
+    let mut worklist: VecDeque<_> = cfg_ctx.block_order.iter().copied().rev().collect();
+    let mut workset = FxHashSet::from_iter(worklist.iter().copied());
+
+    trace!("solving block liveness");
+
+    while let Some(block) = worklist.pop_front() {
+        workset.remove(&block);
+
+        trace!("  {block}");
+
+        // Note: we can do the union/subtraction in bulk here instead of iterating over individual
+        // instructions because the LIR is already in SSA.
+        let live_in = &mut live_ins[block];
+        live_in.clone_from(&live_outs[block]);
+        live_in.union(&raw_block_uses[block]);
+        live_in.subtract(&raw_block_defs[block]);
+
+        for &pred in cfg_ctx.cfg.block_preds(block) {
+            let status = live_outs[pred].union(live_in);
+            if status.is_changed() && !workset.contains(&pred) {
+                trace!("    predecessor {pred} changed, requeuing");
+                worklist.push_back(pred);
+                workset.insert(pred);
+            }
+        }
+    }
+    (live_ins, live_outs)
 }
 
 fn extend_to_def(

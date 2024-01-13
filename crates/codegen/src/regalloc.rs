@@ -1,6 +1,9 @@
-use core::fmt;
+use core::{cmp::Ordering, fmt};
 
-use alloc::collections::VecDeque;
+use alloc::{
+    collections::{BTreeSet, VecDeque},
+    vec,
+};
 use cranelift_entity::SecondaryMap;
 use fx_utils::FxHashSet;
 use log::trace;
@@ -8,7 +11,7 @@ use smallvec::SmallVec;
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Instr, Lir, OperandPos, VirtRegNum, VirtRegSet},
+    lir::{Instr, Lir, OperandPos, PhysReg, VirtReg, VirtRegNum, VirtRegSet},
     machine::MachineCore,
 };
 
@@ -104,6 +107,10 @@ impl ProgramRange {
         Self { start, end }
     }
 
+    pub fn point(point: ProgramPoint) -> Self {
+        Self::new(point, point.next())
+    }
+
     pub fn intersects(self, other: ProgramRange) -> bool {
         self.end > other.start && other.end > self.start
     }
@@ -115,8 +122,105 @@ impl fmt::Debug for ProgramRange {
     }
 }
 
-pub type LiveSet = SmallVec<[ProgramRange; 2]>;
-pub type LiveSets = SecondaryMap<VirtRegNum, LiveSet>;
+#[derive(Debug, Clone, Copy, Eq)]
+pub struct RangeEndKey(pub ProgramRange);
+
+impl RangeEndKey {
+    fn point(point: ProgramPoint) -> Self {
+        Self(ProgramRange::point(point))
+    }
+}
+
+impl PartialEq for RangeEndKey {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.end == other.0.end
+    }
+}
+
+impl PartialOrd for RangeEndKey {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for RangeEndKey {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.end.cmp(&other.0.end)
+    }
+}
+
+type MutableRangeSet = BTreeSet<RangeEndKey>;
+
+pub type RangeSet = SmallVec<[ProgramRange; 2]>;
+pub type LiveSets = SecondaryMap<VirtRegNum, RangeSet>;
+
+pub fn allocate_regs<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, machine: &M) {
+    let allocated_regs = vec![MutableRangeSet::new(); M::phys_reg_count() as usize];
+    let live_sets = compute_live_sets(lir, cfg_ctx);
+    for (reg_num, live_set) in live_sets.iter() {
+        let vreg = lir.vreg_from_num(reg_num);
+        match find_non_interfering_phys_reg(vreg, live_set, &allocated_regs, machine) {
+            Some(_reg) => todo!(),
+            None => todo!(),
+        }
+    }
+}
+
+fn find_non_interfering_phys_reg<M: MachineCore>(
+    vreg: VirtReg,
+    live_set: &RangeSet,
+    allocated_regs: &[MutableRangeSet],
+    machine: &M,
+) -> Option<PhysReg> {
+    machine
+        .usable_regs(vreg.class())
+        .iter()
+        .find(|phys_reg| !live_set_intersects(live_set, &allocated_regs[phys_reg.as_u8() as usize]))
+        .copied()
+}
+
+fn live_set_intersects(live_set: &RangeSet, intersection_set: &MutableRangeSet) -> bool {
+    // Assumption: `intersection_set` can generally be much larger than `live_set` (it tracks a
+    // physical register throughout the entire function). Avoid a complete linear search through
+    // `intersection_set` by starting with the first range inside it containing the bottom endpoint
+    // of `live_set`.
+    let search_key = RangeEndKey::point(live_set[0].start);
+
+    // Once we've found the first range, do a linear walk the rest of the way to avoid logarithmic
+    // complexity per iteration.
+    let mut intersection_ranges = intersection_set.range(search_key..).copied().peekable();
+    let mut live_ranges = live_set.iter().copied().peekable();
+
+    loop {
+        // If we've run out of either list without finding an intersection, there *is* no
+        // intersection.
+        let Some(&live_range) = live_ranges.peek() else {
+            break;
+        };
+        let Some(&RangeEndKey(intersection_range)) = intersection_ranges.peek() else {
+            break;
+        };
+
+        if live_range.intersects(intersection_range) {
+            return true;
+        }
+
+        match live_range.end.cmp(&intersection_range.end) {
+            Ordering::Less => {
+                live_ranges.next();
+            }
+            Ordering::Greater => {
+                intersection_ranges.next();
+            }
+            Ordering::Equal => {
+                // This is impossible if both ranges are non-degenerate, which we assume them to be.
+                unreachable!("non-intersecting ranges had same end point")
+            }
+        }
+    }
+
+    false
+}
 
 type ActiveRangeEnds = SecondaryMap<VirtRegNum, Option<ProgramPoint>>;
 

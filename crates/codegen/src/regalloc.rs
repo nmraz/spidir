@@ -149,13 +149,13 @@ impl Ord for RangeEndKey {
     }
 }
 
-type MutableRangeSet = BTreeSet<RangeEndKey>;
+type RangeSet = BTreeSet<RangeEndKey>;
 
-pub type RangeSet = SmallVec<[ProgramRange; 2]>;
-pub type LiveSets = SecondaryMap<VirtRegNum, RangeSet>;
+pub type RangeList = SmallVec<[ProgramRange; 2]>;
+pub type LiveSets = SecondaryMap<VirtRegNum, RangeList>;
 
 pub fn allocate_regs<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, machine: &M) {
-    let allocated_regs = vec![MutableRangeSet::new(); M::phys_reg_count() as usize];
+    let allocated_regs = vec![RangeSet::new(); M::phys_reg_count() as usize];
     let live_sets = compute_live_sets(lir, cfg_ctx);
     for (reg_num, live_set) in live_sets.iter() {
         let vreg = lir.vreg_from_num(reg_num);
@@ -168,8 +168,8 @@ pub fn allocate_regs<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, machine
 
 fn find_non_interfering_phys_reg<M: MachineCore>(
     vreg: VirtReg,
-    live_set: &RangeSet,
-    allocated_regs: &[MutableRangeSet],
+    live_set: &RangeList,
+    allocated_regs: &[RangeSet],
     machine: &M,
 ) -> Option<PhysReg> {
     machine
@@ -179,7 +179,7 @@ fn find_non_interfering_phys_reg<M: MachineCore>(
         .copied()
 }
 
-fn live_set_intersects(live_set: &RangeSet, intersection_set: &MutableRangeSet) -> bool {
+fn live_set_intersects(live_set: &RangeList, intersection_set: &RangeSet) -> bool {
     // Assumption: `intersection_set` can generally be much larger than `live_set` (it tracks a
     // physical register throughout the entire function). Avoid a complete linear search through
     // `intersection_set` by starting with the first range inside it containing the bottom endpoint

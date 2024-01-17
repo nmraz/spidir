@@ -123,7 +123,7 @@ impl fmt::Debug for ProgramRange {
 }
 
 #[derive(Debug, Clone, Copy, Eq)]
-pub struct RangeEndKey(pub ProgramRange);
+struct RangeEndKey(ProgramRange);
 
 impl RangeEndKey {
     fn point(point: ProgramPoint) -> Self {

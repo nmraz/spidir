@@ -4,14 +4,14 @@ use alloc::{
     collections::{BTreeSet, VecDeque},
     vec,
 };
-use cranelift_entity::SecondaryMap;
+use cranelift_entity::{packed_option::PackedOption, SecondaryMap};
 use fx_utils::FxHashSet;
 use log::trace;
 use smallvec::SmallVec;
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Instr, Lir, OperandPos, PhysReg, VirtReg, VirtRegNum, VirtRegSet},
+    lir::{Instr, Lir, OperandPos, PhysReg, RegClass, VirtRegNum, VirtRegSet},
     machine::MachineCore,
 };
 
@@ -155,25 +155,33 @@ pub type RangeList = SmallVec<[ProgramRange; 2]>;
 pub type LiveSets = SecondaryMap<VirtRegNum, RangeList>;
 
 pub fn allocate_regs<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, machine: &M) {
-    let allocated_regs = vec![RangeSet::new(); M::phys_reg_count() as usize];
+    let mut allocated_regs = vec![RangeSet::new(); M::phys_reg_count() as usize];
+    let mut vreg_allocations: SecondaryMap<_, PackedOption<PhysReg>> = SecondaryMap::new();
+
     let live_sets = compute_live_sets(lir, cfg_ctx);
-    for (reg_num, live_set) in live_sets.iter() {
-        let vreg = lir.vreg_from_num(reg_num);
-        match find_non_interfering_phys_reg(vreg, live_set, &allocated_regs, machine) {
-            Some(_reg) => todo!(),
+    for (vreg, live_set) in live_sets.iter() {
+        let class = lir.vreg_class(vreg);
+        match find_non_interfering_phys_reg(class, live_set, &allocated_regs, machine) {
+            Some(reg) => {
+                vreg_allocations[vreg] = reg.into();
+                let phys_set = &mut allocated_regs[reg.as_u8() as usize];
+                for &range in live_set {
+                    phys_set.insert(RangeEndKey(range));
+                }
+            }
             None => todo!(),
         }
     }
 }
 
 fn find_non_interfering_phys_reg<M: MachineCore>(
-    vreg: VirtReg,
+    class: RegClass,
     live_set: &RangeList,
     allocated_regs: &[RangeSet],
     machine: &M,
 ) -> Option<PhysReg> {
     machine
-        .usable_regs(vreg.class())
+        .usable_regs(class)
         .iter()
         .find(|phys_reg| !live_set_intersects(live_set, &allocated_regs[phys_reg.as_u8() as usize]))
         .copied()

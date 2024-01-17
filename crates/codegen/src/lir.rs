@@ -3,7 +3,9 @@ use core::{fmt, iter, marker::PhantomData, ops::Range};
 use fx_utils::FxHashMap;
 
 use cranelift_entity::{
-    entity_impl, packed_option::PackedOption, EntityRef, PrimaryMap, SecondaryMap,
+    entity_impl,
+    packed_option::{PackedOption, ReservedValue},
+    EntityRef, PrimaryMap, SecondaryMap,
 };
 
 use crate::{
@@ -201,6 +203,16 @@ impl PhysReg {
     }
 }
 
+impl ReservedValue for PhysReg {
+    fn reserved_value() -> Self {
+        Self(0xff)
+    }
+
+    fn is_reserved_value(&self) -> bool {
+        self.0 == 0xff
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct PhysRegSet(u128);
 
@@ -220,14 +232,17 @@ impl PhysRegSet {
     }
 
     pub fn contains(&self, reg: PhysReg) -> bool {
+        assert!(reg.0 < PHYS_REG_COUNT);
         (self.0 & (1 << reg.0)) != 0
     }
 
     pub fn add(&mut self, reg: PhysReg) {
+        assert!(reg.0 < PHYS_REG_COUNT);
         self.0 |= 1 << reg.0;
     }
 
     pub fn remove(&mut self, reg: PhysReg) {
+        assert!(reg.0 < PHYS_REG_COUNT);
         self.0 &= !(1 << reg.0);
     }
 }

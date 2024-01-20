@@ -16,16 +16,20 @@ use crate::{
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum ProgramPointDisp {
+pub enum InstrSlot {
     Before = 0,
-    After = 1,
+    PreCopy = 1,
+    Early = 2,
+    Late = 3,
 }
 
-impl fmt::Debug for ProgramPointDisp {
+impl fmt::Debug for InstrSlot {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Before => write!(f, "B"),
-            Self::After => write!(f, "A"),
+            Self::PreCopy => write!(f, "P"),
+            Self::Early => write!(f, "E"),
+            Self::Late => write!(f, "L"),
         }
     }
 }
@@ -36,29 +40,37 @@ pub struct ProgramPoint {
 }
 
 impl ProgramPoint {
-    pub fn new(instr: Instr, disp: ProgramPointDisp) -> Self {
+    pub fn new(instr: Instr, slot: InstrSlot) -> Self {
         let instr = instr.as_u32();
-        let disp = disp as u32;
-        assert!(instr <= i32::MAX as u32);
+        let slot = slot as u32;
+        assert!(instr <= u32::MAX >> 2);
         Self {
-            index: instr << 1 | disp,
+            index: instr << 2 | slot,
         }
     }
 
     pub fn before(instr: Instr) -> Self {
-        Self::new(instr, ProgramPointDisp::Before)
+        Self::new(instr, InstrSlot::Before)
     }
 
-    pub fn after(instr: Instr) -> Self {
-        Self::new(instr, ProgramPointDisp::After)
+    pub fn pre_copy(instr: Instr) -> Self {
+        Self::new(instr, InstrSlot::PreCopy)
+    }
+
+    pub fn early(instr: Instr) -> Self {
+        Self::new(instr, InstrSlot::Early)
+    }
+
+    pub fn late(instr: Instr) -> Self {
+        Self::new(instr, InstrSlot::Late)
     }
 
     pub fn for_operand(instr: Instr, pos: OperandPos) -> Self {
-        let disp = match pos {
-            OperandPos::Early => ProgramPointDisp::Before,
-            OperandPos::Late => ProgramPointDisp::After,
+        let slot = match pos {
+            OperandPos::Early => InstrSlot::Early,
+            OperandPos::Late => InstrSlot::Late,
         };
-        Self::new(instr, disp)
+        Self::new(instr, slot)
     }
 
     pub fn next(self) -> Self {
@@ -74,13 +86,15 @@ impl ProgramPoint {
     }
 
     pub fn instr(self) -> Instr {
-        Instr::from_u32(self.index >> 1)
+        Instr::from_u32(self.index >> 2)
     }
 
-    pub fn disp(self) -> ProgramPointDisp {
-        match self.index & 1 {
-            0 => ProgramPointDisp::Before,
-            1 => ProgramPointDisp::After,
+    pub fn slot(self) -> InstrSlot {
+        match self.index & 3 {
+            0 => InstrSlot::Before,
+            1 => InstrSlot::PreCopy,
+            2 => InstrSlot::Early,
+            3 => InstrSlot::Late,
             _ => unreachable!(),
         }
     }
@@ -92,7 +106,7 @@ impl ProgramPoint {
 
 impl fmt::Debug for ProgramPoint {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}:{}", self.disp(), self.instr())
+        write!(f, "{:?}:{}", self.slot(), self.instr())
     }
 }
 
@@ -260,7 +274,7 @@ pub fn compute_live_sets<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -> 
         for &outgoing_vreg in lir.outgoing_block_params(block) {
             let outgoing_vreg = outgoing_vreg.reg_num();
             trace!("    outgoing param {outgoing_vreg}");
-            active_range_ends[outgoing_vreg] = Some(ProgramPoint::after(last_instr));
+            active_range_ends[outgoing_vreg] = Some(ProgramPoint::pre_copy(last_instr));
         }
 
         for instr in block_range.into_iter().rev() {
@@ -436,15 +450,15 @@ mod tests {
     #[test]
     fn format_program_points() {
         let instr = Instr::new(0);
-        assert_eq!(format!("{:?}", ProgramPoint::before(instr)), "B:i0");
-        assert_eq!(format!("{:?}", ProgramPoint::after(instr)), "A:i0");
+        assert_eq!(format!("{:?}", ProgramPoint::early(instr)), "E:i0");
+        assert_eq!(format!("{:?}", ProgramPoint::late(instr)), "L:i0");
         assert_eq!(
             format!("{:?}", ProgramPoint::for_operand(instr, OperandPos::Early)),
-            "B:i0"
+            "E:i0"
         );
         assert_eq!(
             format!("{:?}", ProgramPoint::for_operand(instr, OperandPos::Late)),
-            "A:i0"
+            "L:i0"
         );
     }
 
@@ -455,42 +469,42 @@ mod tests {
             format!(
                 "{:?}",
                 ProgramRange::new(
-                    ProgramPoint::before(instr),
+                    ProgramPoint::early(instr),
                     ProgramPoint::for_operand(instr.next(), OperandPos::Early)
                 )
             ),
-            "B:i5..B:i6"
+            "E:i5..E:i6"
         );
     }
 
     #[test]
-    fn program_point_disp_order() {
-        assert!(ProgramPointDisp::Before < ProgramPointDisp::After);
+    fn program_point_slot_order() {
+        assert!(InstrSlot::Early < InstrSlot::Late);
     }
 
     #[test]
     fn program_point_distinct_instr_order() {
-        assert!(ProgramPoint::after(Instr::new(7)) < ProgramPoint::before(Instr::new(8)));
+        assert!(ProgramPoint::late(Instr::new(7)) < ProgramPoint::early(Instr::new(8)));
     }
 
     #[test]
     fn program_point_same_instr_order() {
-        assert!(ProgramPoint::after(Instr::new(7)) > ProgramPoint::before(Instr::new(7)));
+        assert!(ProgramPoint::late(Instr::new(7)) > ProgramPoint::early(Instr::new(7)));
         assert!(
             ProgramPoint::for_operand(Instr::new(7), OperandPos::Late)
-                > ProgramPoint::before(Instr::new(7))
+                > ProgramPoint::early(Instr::new(7))
         );
     }
 
     #[test]
     fn range_intersects_overlapping() {
         let a = ProgramRange::new(
-            ProgramPoint::before(Instr::new(2)),
-            ProgramPoint::after(Instr::new(5)),
+            ProgramPoint::early(Instr::new(2)),
+            ProgramPoint::late(Instr::new(5)),
         );
         let b = ProgramRange::new(
-            ProgramPoint::after(Instr::new(2)),
-            ProgramPoint::before(Instr::new(20)),
+            ProgramPoint::late(Instr::new(2)),
+            ProgramPoint::early(Instr::new(20)),
         );
         assert!(a.intersects(b));
         assert!(b.intersects(a));
@@ -499,12 +513,12 @@ mod tests {
     #[test]
     fn range_intersects_tangent() {
         let a = ProgramRange::new(
-            ProgramPoint::before(Instr::new(2)),
-            ProgramPoint::after(Instr::new(5)),
+            ProgramPoint::early(Instr::new(2)),
+            ProgramPoint::late(Instr::new(5)),
         );
         let b = ProgramRange::new(
-            ProgramPoint::after(Instr::new(5)),
-            ProgramPoint::before(Instr::new(20)),
+            ProgramPoint::late(Instr::new(5)),
+            ProgramPoint::early(Instr::new(20)),
         );
         assert!(!a.intersects(b));
         assert!(!b.intersects(a));
@@ -513,12 +527,12 @@ mod tests {
     #[test]
     fn range_intersects_disjoint() {
         let a = ProgramRange::new(
-            ProgramPoint::before(Instr::new(2)),
-            ProgramPoint::after(Instr::new(5)),
+            ProgramPoint::early(Instr::new(2)),
+            ProgramPoint::late(Instr::new(5)),
         );
         let b = ProgramRange::new(
-            ProgramPoint::after(Instr::new(17)),
-            ProgramPoint::before(Instr::new(20)),
+            ProgramPoint::late(Instr::new(17)),
+            ProgramPoint::early(Instr::new(20)),
         );
         assert!(!a.intersects(b));
         assert!(!b.intersects(a));
@@ -527,12 +541,12 @@ mod tests {
     #[test]
     fn range_intersects_nested() {
         let a = ProgramRange::new(
-            ProgramPoint::before(Instr::new(2)),
-            ProgramPoint::after(Instr::new(30)),
+            ProgramPoint::early(Instr::new(2)),
+            ProgramPoint::late(Instr::new(30)),
         );
         let b = ProgramRange::new(
-            ProgramPoint::after(Instr::new(17)),
-            ProgramPoint::before(Instr::new(20)),
+            ProgramPoint::late(Instr::new(17)),
+            ProgramPoint::early(Instr::new(20)),
         );
         assert!(a.intersects(b));
         assert!(b.intersects(a));

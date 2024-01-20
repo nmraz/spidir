@@ -271,10 +271,29 @@ pub fn compute_live_sets<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -> 
             active_range_ends[live_out] = Some(ProgramPoint::before(last_instr.next()));
         }
 
-        for &outgoing_vreg in lir.outgoing_block_params(block) {
-            let outgoing_vreg = outgoing_vreg.reg_num();
-            trace!("    outgoing param {outgoing_vreg}");
-            active_range_ends[outgoing_vreg] = Some(ProgramPoint::pre_copy(last_instr));
+        let outgoing_block_params = lir.outgoing_block_params(block);
+        if !outgoing_block_params.is_empty() {
+            // Note: when there are outgoing block params, we know there is exactly 1 successor.
+            let succ = cfg_ctx.cfg.block_succs(block)[0];
+            let incoming_succ_params = lir.block_params(succ);
+
+            for (&outgoing_vreg, &incoming_vreg) in
+                izip!(outgoing_block_params, incoming_succ_params)
+            {
+                let outgoing_vreg = outgoing_vreg.reg_num();
+                let incoming_vreg = incoming_vreg.reg_num();
+                trace!("    outgoing param {outgoing_vreg} -> {incoming_vreg}");
+
+                let pre_copy = ProgramPoint::pre_copy(last_instr);
+                active_range_ends[outgoing_vreg] = Some(pre_copy);
+
+                push_live_range(
+                    &mut live_sets,
+                    incoming_vreg,
+                    pre_copy,
+                    ProgramPoint::before(last_instr.next()),
+                );
+            }
         }
 
         for instr in block_range.into_iter().rev() {

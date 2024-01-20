@@ -6,6 +6,7 @@ use alloc::{
 };
 use cranelift_entity::{packed_option::PackedOption, SecondaryMap};
 use fx_utils::FxHashSet;
+use itertools::izip;
 use log::trace;
 use smallvec::SmallVec;
 

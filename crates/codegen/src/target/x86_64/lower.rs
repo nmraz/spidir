@@ -238,6 +238,7 @@ impl MachineLower for X64Machine {
                 }
             },
             NodeKind::Call(func) => emit_call(ctx, node, func),
+            NodeKind::Unreachable => ctx.emit_instr(X64Instr::Ud2, &[], &[]),
             _ => return Err(MachineIselError),
         }
         Ok(())

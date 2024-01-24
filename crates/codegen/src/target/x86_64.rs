@@ -133,6 +133,7 @@ pub enum X64Instr {
     Call(FunctionRef),
     Jump(Block),
     Jumpcc(CondCode, Block, Block),
+    Ud2,
 }
 
 pub struct X64Machine;

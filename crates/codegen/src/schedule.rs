@@ -56,6 +56,7 @@ impl Schedule {
             block_map,
             depth_map: &depth_map,
             blocks_by_node: SecondaryMap::new(),
+            block_terminators: SecondaryMap::new(),
             schedule: &mut schedule,
         };
 
@@ -113,21 +114,23 @@ impl GraphRef for SingleBlockSuccs<'_> {
         raw_def_use_succs(self.graph, node)
             .filter(|&(succ, use_idx)| {
                 // Take only outputs from the right block, and skip skip any cycle back edges coming
-                // from control/phi nodes.
+                // from control/phi nodes. We also skip terminators because they are manually placed
+                // last in the block.
                 self.blocks_by_node[succ].expand() == Some(self.block)
-                    && !is_block_backedge(self.graph, succ, use_idx)
+                    && !should_skip_block_edge(self.graph, succ, use_idx)
             })
             .for_each(|(node, _use_idx)| f(node));
     }
 }
 
-fn is_block_backedge(graph: &ValGraph, succ: Node, use_idx: u32) -> bool {
+fn should_skip_block_edge(graph: &ValGraph, succ: Node, use_idx: u32) -> bool {
     match graph.node_kind(succ) {
         // Data inputs to phi nodes from the same block are always back edges.
         NodeKind::Phi => use_idx != 0,
         // Control inputs to the block header region are always back edges.
         NodeKind::Region => true,
-        _ => false,
+        // Otherwise, skip just the block's terminator, because we tack it on manually at the end.
+        kind => kind.is_terminator(),
     }
 }
 
@@ -136,6 +139,7 @@ struct Scheduler<'a> {
     block_map: &'a FunctionBlockMap,
     depth_map: &'a CfgDepthMap,
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
+    block_terminators: SecondaryMap<Block, PackedOption<Node>>,
     schedule: &'a mut Schedule,
 }
 
@@ -147,21 +151,33 @@ impl<'a> Scheduler<'a> {
                 .containing_block(cfg_node)
                 .expect("live CFG node not in block CFG");
 
-            // Exclude region nodes from the final schedule, since their purpose was just to
-            // delineate block boundaries.
-            // This won't break any scheduling assumptions made later because regions don't have
-            // any data outputs.
-            if !matches!(ctx.graph().node_kind(cfg_node), NodeKind::Region) {
-                trace!("pinned: node {} -> {block}", cfg_node.as_u32());
-                self.assign_and_append(block, cfg_node);
-            }
+            match ctx.graph().node_kind(cfg_node) {
+                terminator_kind if terminator_kind.is_terminator() => {
+                    // Track terminators separately so we know to place them last during intra-block
+                    // scheduling.
+                    trace!("terminator: node {}", cfg_node.as_u32());
+                    self.assign_block(block, cfg_node);
+                    self.block_terminators[block] = cfg_node.into();
+                }
+                NodeKind::Region => {
+                    // Exclude region nodes from the final schedule, since their purpose was just to
+                    // delineate block boundaries.
+                    // This won't break any scheduling assumptions made later because regions don't have
+                    // any data outputs.
 
-            for phi in ctx.get_attached_phis(cfg_node) {
-                trace!("phi: node {} -> {block}", phi.as_u32());
-                self.assign_block(block, phi);
-                self.schedule.block_data[block]
-                    .phis
-                    .push(phi, &mut self.schedule.node_list_pool);
+                    for phi in ctx.get_attached_phis(cfg_node) {
+                        trace!("phi: node {} -> {block}", phi.as_u32());
+                        self.assign_block(block, phi);
+                        self.schedule.block_data[block]
+                            .phis
+                            .push(phi, &mut self.schedule.node_list_pool);
+                    }
+                }
+                _ => {
+                    // "Normal" control nodes just get pinned in place.
+                    trace!("pinned: node {} -> {block}", cfg_node.as_u32());
+                    self.assign_and_append(block, cfg_node);
+                }
             }
         }
     }
@@ -182,11 +198,14 @@ impl<'a> Scheduler<'a> {
                 block,
             };
 
+            // At this point, the scheduled node list for each block is partitioned into (almost
+            // all) control nodes at the front, followed by data-only nodes at the back. Still
+            // missing is the block terminator (if one exists), which will have been recorded in
+            // `pin_nodes` but not yet inserted because we want to make sure it comes last.
+
             let nodes = &mut self.schedule.block_data[block].scheduled_nodes_rev;
 
-            // Note: the topological sort of the block ultimately obtained here will be stable with
-            // respect to the original `nodes` slice. In particular, the block terminator will come
-            // last.
+            // Note: this postorder will not visit the terminator.
             scratch_postorder.reset(
                 nodes
                     .as_slice(&self.schedule.node_list_pool)
@@ -196,6 +215,14 @@ impl<'a> Scheduler<'a> {
             nodes.clear(&mut self.schedule.node_list_pool);
 
             trace!("sorting {block}");
+
+            // Place the terminator first in the reverse list (if it exists).
+            if let Some(terminator) = self.block_terminators[block].expand() {
+                trace!("    term {}", terminator.as_u32());
+                nodes.push(terminator, &mut self.schedule.node_list_pool);
+            }
+
+            // Topologically sort the rest of the nodes.
             while let Some(node) = scratch_postorder.next(&succs, &mut per_block_visited) {
                 trace!("    node {}", node.as_u32());
                 nodes.push(node, &mut self.schedule.node_list_pool);

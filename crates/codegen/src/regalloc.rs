@@ -189,6 +189,16 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             let block_range = self.lir.block_instrs(block);
             let last_instr = block_range.end.prev();
 
+            // In case we need to insert a copy just before a jump (either because of outgoing block
+            // params or because of a split live range), we don't model the small live range of the
+            // target block's vreg after the pre-copy before the jump to the target block, so we
+            // need to make sure no unaccounted-for ranges might interfere with that small range.
+            // For now, we achieve this by completely disallowing block terminators to define vregs.
+            assert!(
+                self.lir.instr_defs(last_instr).is_empty()
+                    && self.lir.instr_clobbers(last_instr).is_empty()
+            );
+
             for live_out in &live_outs[block] {
                 trace!("    live-out {live_out}");
                 self.open_live_out_range(live_out, block);
@@ -196,13 +206,6 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
 
             let outgoing_block_params = self.lir.outgoing_block_params(block);
             if !outgoing_block_params.is_empty() {
-                // We don't model the small live range of the target block's incoming parameter
-                // after the pre-copy before the jump to the target block, so make sure no new live
-                // ranges (which might interfere with the target register) are created by the jump.
-                assert!(
-                    self.lir.instr_defs(last_instr).is_empty()
-                        && self.lir.instr_clobbers(last_instr).is_empty()
-                );
                 for &outgoing_vreg in outgoing_block_params {
                     let outgoing_vreg = outgoing_vreg.reg_num();
                     trace!("    outgoing param {outgoing_vreg}");

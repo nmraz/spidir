@@ -1,18 +1,14 @@
-use core::{cmp::Ordering, fmt};
+use core::fmt;
 
-use alloc::{
-    collections::{BTreeSet, VecDeque},
-    vec,
-};
-use cranelift_entity::{packed_option::PackedOption, SecondaryMap};
+use alloc::collections::VecDeque;
+use cranelift_entity::{entity_impl, packed_option::ReservedValue, PrimaryMap, SecondaryMap};
 use fx_utils::FxHashSet;
-use itertools::izip;
 use log::trace;
-use smallvec::SmallVec;
+use smallvec::{smallvec, SmallVec};
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Instr, Lir, OperandPos, PhysReg, RegClass, VirtRegNum, VirtRegSet},
+    lir::{Instr, Lir, OperandPos, UseOperandConstraint, VirtRegNum, VirtRegSet},
     machine::MachineCore,
 };
 
@@ -137,224 +133,270 @@ impl fmt::Debug for ProgramRange {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq)]
-struct RangeEndKey(ProgramRange);
-
-impl RangeEndKey {
-    fn point(point: ProgramPoint) -> Self {
-        Self(ProgramRange::point(point))
-    }
+struct LiveRangeInstr {
+    pos: Instr,
+    _weight: f32,
 }
 
-impl PartialEq for RangeEndKey {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.end == other.0.end
-    }
+struct LiveRangeData {
+    prog_range: ProgramRange,
+    _vreg: VirtRegNum,
+    _fragment: LiveSetFragment,
+    instrs: SmallVec<[LiveRangeInstr; 4]>,
 }
 
-impl PartialOrd for RangeEndKey {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct LiveRange(u32);
+entity_impl!(LiveRange, "lr");
+
+#[derive(Debug, Clone, Copy)]
+pub struct TaggedLiveRange {
+    pub prog_range: ProgramRange,
+    live_range: LiveRange,
 }
 
-impl Ord for RangeEndKey {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.0.end.cmp(&other.0.end)
-    }
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct LiveSetFragment(u32);
+entity_impl!(LiveSetFragment, "lf");
+
+pub struct RegAllocContext<'a, M: MachineCore> {
+    lir: &'a Lir<M>,
+    cfg_ctx: &'a CfgContext,
+    live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
+    pub vreg_ranges: SecondaryMap<VirtRegNum, SmallVec<[TaggedLiveRange; 4]>>,
 }
 
-type RangeSet = BTreeSet<RangeEndKey>;
+impl<'a, M: MachineCore> RegAllocContext<'a, M> {
+    pub fn new(lir: &'a Lir<M>, cfg_ctx: &'a CfgContext) -> Self {
+        Self {
+            lir,
+            cfg_ctx,
+            live_ranges: PrimaryMap::new(),
+            vreg_ranges: SecondaryMap::new(),
+        }
+    }
 
-pub type RangeList = SmallVec<[ProgramRange; 2]>;
-pub type LiveSets = SecondaryMap<VirtRegNum, RangeList>;
+    pub fn compute_live_ranges(&mut self) {
+        let live_outs = compute_block_liveouts(self.lir, self.cfg_ctx);
 
-pub fn allocate_regs<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, machine: &M) {
-    let mut allocated_regs = vec![RangeSet::new(); M::phys_reg_count() as usize];
-    let mut vreg_allocations: SecondaryMap<_, PackedOption<PhysReg>> = SecondaryMap::new();
+        trace!("computing precise live ranges");
 
-    let live_sets = compute_live_sets(lir, cfg_ctx);
-    for (vreg, live_set) in live_sets.iter() {
-        let class = lir.vreg_class(vreg);
-        match find_non_interfering_phys_reg(class, live_set, &allocated_regs, machine) {
-            Some(reg) => {
-                vreg_allocations[vreg] = reg.into();
-                let phys_set = &mut allocated_regs[reg.as_u8() as usize];
-                for &range in live_set {
-                    phys_set.insert(RangeEndKey(range));
+        let mut tied_defs = SmallVec::<[bool; 4]>::new();
+
+        for &block in self.cfg_ctx.block_order.iter().rev() {
+            trace!("  {block}");
+
+            let block_range = self.lir.block_instrs(block);
+            let last_instr = block_range.end.prev();
+
+            for live_out in &live_outs[block] {
+                trace!("    live-out {live_out}");
+                self.open_live_out_range(live_out, block);
+            }
+
+            let outgoing_block_params = self.lir.outgoing_block_params(block);
+            if !outgoing_block_params.is_empty() {
+                // We don't model the small live range of the target block's incoming parameter
+                // after the pre-copy before the jump to the target block, so make sure no new live
+                // ranges (which might interfere with the target register) are created by the jump.
+                assert!(
+                    self.lir.instr_defs(last_instr).is_empty()
+                        && self.lir.instr_clobbers(last_instr).is_empty()
+                );
+                for &outgoing_vreg in outgoing_block_params {
+                    let outgoing_vreg = outgoing_vreg.reg_num();
+                    trace!("    outgoing param {outgoing_vreg}");
+
+                    // We can safely treat the last instruction in the block as using the value for
+                    // spill weight purposes, because we know the copy (if there is one) will
+                    // ultimately be placed here, as critical edges are already split.
+                    self.record_live_use(
+                        outgoing_vreg,
+                        last_instr,
+                        ProgramPoint::pre_copy(last_instr),
+                        block,
+                    );
                 }
             }
-            None => todo!(),
-        }
-    }
-}
 
-fn find_non_interfering_phys_reg<M: MachineCore>(
-    class: RegClass,
-    live_set: &RangeList,
-    allocated_regs: &[RangeSet],
-    machine: &M,
-) -> Option<PhysReg> {
-    machine
-        .usable_regs(class)
-        .iter()
-        .find(|phys_reg| !live_set_intersects(live_set, &allocated_regs[phys_reg.as_u8() as usize]))
-        .copied()
-}
+            for instr in block_range.into_iter().rev() {
+                // Note: we assume an instruction never uses vregs it defines.
 
-fn live_set_intersects(live_set: &RangeList, intersection_set: &RangeSet) -> bool {
-    // Assumption: `intersection_set` can generally be much larger than `live_set` (it tracks a
-    // physical register throughout the entire function). Avoid a complete linear search through
-    // `intersection_set` by starting with the first range inside it containing the bottom endpoint
-    // of `live_set`.
-    let search_key = RangeEndKey::point(live_set[0].start);
+                let defs = self.lir.instr_defs(instr);
+                let uses = self.lir.instr_uses(instr);
 
-    // Once we've found the first range, do a linear walk the rest of the way to avoid logarithmic
-    // complexity per iteration.
-    let mut intersection_ranges = intersection_set.range(search_key..).copied().peekable();
-    let mut live_ranges = live_set.iter().copied().peekable();
+                tied_defs.resize(defs.len(), false);
 
-    loop {
-        // If we've run out of either list without finding an intersection, there *is* no
-        // intersection.
-        let Some(&live_range) = live_ranges.peek() else {
-            break;
-        };
-        let Some(&RangeEndKey(intersection_range)) = intersection_ranges.peek() else {
-            break;
-        };
+                for use_op in uses {
+                    let vreg = use_op.reg().reg_num();
 
-        if live_range.intersects(intersection_range) {
-            return true;
-        }
+                    let pos = if let UseOperandConstraint::TiedToDef(i) = use_op.constraint() {
+                        let i = i as usize;
+                        let tied_def = defs[i];
 
-        match live_range.end.cmp(&intersection_range.end) {
-            Ordering::Less => {
-                live_ranges.next();
+                        assert!(use_op.pos() == OperandPos::Early);
+                        assert!(tied_def.pos() == OperandPos::Late);
+
+                        tied_defs[i] = true;
+
+                        ProgramPoint::pre_copy(instr)
+                    } else {
+                        // Note: ranges are half-open, so we actually mark the use as extending to the
+                        // next program point.
+                        ProgramPoint::for_operand(instr, use_op.pos()).next()
+                    };
+
+                    self.record_live_use(vreg, instr, pos, block);
+                }
+
+                for (i, def_op) in defs.iter().enumerate() {
+                    let start = if tied_defs[i] {
+                        ProgramPoint::pre_copy(instr)
+                    } else {
+                        ProgramPoint::for_operand(instr, def_op.pos())
+                    };
+
+                    self.record_def(
+                        def_op.reg().reg_num(),
+                        start,
+                        // If this def is dead, make sure its range always gets extended past the
+                        // end of the instruction so that dead early defs always interfere with
+                        // late defs.
+                        ProgramPoint::before(instr.next()),
+                    );
+                }
             }
-            Ordering::Greater => {
-                intersection_ranges.next();
-            }
-            Ordering::Equal => {
-                // This is impossible if both ranges are non-degenerate, which we assume them to be.
-                unreachable!("non-intersecting ranges had same end point")
-            }
-        }
-    }
 
-    false
-}
-
-type ActiveRangeEnds = SecondaryMap<VirtRegNum, Option<ProgramPoint>>;
-
-pub fn compute_live_sets<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) -> LiveSets {
-    let (live_ins, live_outs) = compute_block_liveness(lir, cfg_ctx);
-
-    let mut live_sets = LiveSets::new();
-    let mut active_range_ends = ActiveRangeEnds::new();
-
-    trace!("computing precise live sets");
-
-    for &block in cfg_ctx.block_order.iter().rev() {
-        active_range_ends.clear();
-
-        trace!("  {block}");
-
-        let block_range = lir.block_instrs(block);
-        let last_instr = block_range.end.prev();
-
-        for live_out in &live_outs[block] {
-            trace!("    live-out {live_out}");
-            // Note: ranges are half-open, and we want this range to end *after* the last
-            // instruction. Even if the last block in the function has live-outs (which is unusual
-            // but not technically disallowed by regalloc), the range will refer to the virtual
-            // past-the-end instruction.
-            active_range_ends[live_out] = Some(ProgramPoint::before(last_instr.next()));
-        }
-
-        let outgoing_block_params = lir.outgoing_block_params(block);
-        if !outgoing_block_params.is_empty() {
-            // Note: when there are outgoing block params, we know there is exactly 1 successor.
-            let succ = cfg_ctx.cfg.block_succs(block)[0];
-            let incoming_succ_params = lir.block_params(succ);
-
-            for (&outgoing_vreg, &incoming_vreg) in
-                izip!(outgoing_block_params, incoming_succ_params)
-            {
-                let outgoing_vreg = outgoing_vreg.reg_num();
+            for &incoming_vreg in self.lir.block_params(block) {
                 let incoming_vreg = incoming_vreg.reg_num();
-                trace!("    outgoing param {outgoing_vreg} -> {incoming_vreg}");
-
-                let pre_copy = ProgramPoint::pre_copy(last_instr);
-                active_range_ends[outgoing_vreg] = Some(pre_copy);
-
-                push_live_range(
-                    &mut live_sets,
+                trace!("    incoming param {incoming_vreg}");
+                self.record_def(
                     incoming_vreg,
-                    pre_copy,
-                    ProgramPoint::before(last_instr.next()),
+                    ProgramPoint::before(block_range.start),
+                    ProgramPoint::pre_copy(block_range.start),
                 );
             }
         }
 
-        for instr in block_range.into_iter().rev() {
-            // Note: we assume an instruction never uses vregs it defines.
-
-            for def_op in lir.instr_defs(instr) {
-                extend_to_def(
-                    &mut live_sets,
-                    &active_range_ends,
-                    def_op.reg().reg_num(),
-                    ProgramPoint::for_operand(instr, def_op.pos()),
-                );
-            }
-
-            for use_op in lir.instr_uses(instr) {
-                let vreg = use_op.reg().reg_num();
-                if active_range_ends[vreg].is_none() {
-                    // Note: ranges are half-open, so we actually mark the use as extending to the
-                    // next program point.
-                    let pos = ProgramPoint::for_operand(instr, use_op.pos()).next();
-                    active_range_ends[vreg] = Some(pos);
-                }
-            }
-        }
-
-        for &incoming_vreg in lir.block_params(block) {
-            let incoming_vreg = incoming_vreg.reg_num();
-            trace!("    incoming param {incoming_vreg}");
-            extend_to_def(
-                &mut live_sets,
-                &active_range_ends,
-                incoming_vreg,
-                ProgramPoint::before(block_range.start),
-            );
-        }
-
-        for live_in in &live_ins[block] {
-            trace!("    live-in {live_in}");
-            let end = active_range_ends[live_in].expect("block live-in is dead");
-            let start = ProgramPoint::before(block_range.start);
-            push_live_range(&mut live_sets, live_in, start, end);
+        // The live range lists have their ranges sorted from last to first at this point; get them
+        // sorted properly now.
+        for live_ranges in self.vreg_ranges.values_mut() {
+            live_ranges.reverse();
         }
     }
 
-    // The live sets have their ranges sorted from last to first at this point; get them sorted
-    // properly before returning them.
-    for live_set in live_sets.values_mut() {
-        live_set.reverse();
+    fn record_def(
+        &mut self,
+        vreg: VirtRegNum,
+        def_point: ProgramPoint,
+        dead_use_point: ProgramPoint,
+    ) {
+        if let Some(last_range) = self.vreg_ranges[vreg].last_mut() {
+            // This def is live *somewhere*, so it must be live in the current block as well. That
+            // means it should already have a block-covering range created by a use somewhere else
+            // in the block (possibly a live-out).
+            assert!(def_point >= last_range.prog_range.start);
+            last_range.prog_range.start = def_point;
+            self.live_ranges[last_range.live_range].prog_range.start = def_point;
+        } else {
+            self.create_vreg_live_range(vreg, def_point, dead_use_point);
+        }
     }
 
-    live_sets
+    fn record_live_use(
+        &mut self,
+        vreg: VirtRegNum,
+        instr: Instr,
+        use_point: ProgramPoint,
+        block: Block,
+    ) {
+        let live_range = self.create_use_range(vreg, use_point, block);
+        let range_instrs = &mut self.live_ranges[live_range].instrs;
+        if let Some(last_instr) = range_instrs.last() {
+            if last_instr.pos == instr {
+                // Avoid recording the same instruction multiple times if it uses this vreg in
+                // several operands.
+                return;
+            }
+        }
+
+        range_instrs.push(LiveRangeInstr {
+            pos: instr,
+            // TODO
+            _weight: 0.0,
+        });
+    }
+
+    fn create_use_range(
+        &mut self,
+        vreg: VirtRegNum,
+        use_point: ProgramPoint,
+        block: Block,
+    ) -> LiveRange {
+        let block_start = ProgramPoint::before(self.lir.block_instrs(block).start);
+        if let Some(last_range) = self.vreg_ranges[vreg].last() {
+            debug_assert!(last_range.prog_range.start >= block_start);
+            if last_range.prog_range.start == block_start {
+                // If a later use in this block has already "opened" a range, just use it.
+                return last_range.live_range;
+            }
+        }
+
+        self.create_vreg_live_range(vreg, block_start, use_point)
+    }
+
+    fn open_live_out_range(&mut self, vreg: VirtRegNum, block: Block) {
+        let block_range = self.lir.block_instrs(block);
+
+        // Note: ranges are half-open, and we want this range to end *after* the last
+        // instruction. Even if the last block in the function has live-outs (which is unusual
+        // but not technically disallowed by regalloc), the range will refer to the virtual
+        // past-the-end instruction.
+        self.create_vreg_live_range(
+            vreg,
+            ProgramPoint::before(block_range.start),
+            ProgramPoint::before(block_range.end),
+        );
+    }
+
+    fn create_vreg_live_range(
+        &mut self,
+        vreg: VirtRegNum,
+        start: ProgramPoint,
+        end: ProgramPoint,
+    ) -> LiveRange {
+        debug_assert!(end > start);
+        trace!("    assigning {start:?}..{end:?} to {vreg}");
+        if let Some(last_range) = self.vreg_ranges[vreg].last_mut() {
+            assert!(end <= last_range.prog_range.start);
+            // If possible, merge with the next range instead of creating a new one.
+            if end == last_range.prog_range.start {
+                last_range.prog_range.start = start;
+                self.live_ranges[last_range.live_range].prog_range.start = start;
+                return last_range.live_range;
+            }
+        }
+
+        let prog_range = ProgramRange::new(start, end);
+        let range_data = LiveRangeData {
+            prog_range,
+            _vreg: vreg,
+            _fragment: LiveSetFragment::reserved_value(),
+            instrs: smallvec![],
+        };
+        let live_range = self.live_ranges.push(range_data);
+        self.vreg_ranges[vreg].push(TaggedLiveRange {
+            prog_range,
+            live_range,
+        });
+        live_range
+    }
 }
 
-fn compute_block_liveness<M: MachineCore>(
+fn compute_block_liveouts<M: MachineCore>(
     lir: &Lir<M>,
     cfg_ctx: &CfgContext,
-) -> (
-    SecondaryMap<Block, VirtRegSet>,
-    SecondaryMap<Block, VirtRegSet>,
-) {
+) -> SecondaryMap<Block, VirtRegSet> {
     let mut raw_block_uses = make_block_vreg_map(lir, cfg_ctx);
     let mut raw_block_defs = make_block_vreg_map(lir, cfg_ctx);
 
@@ -419,37 +461,8 @@ fn compute_block_liveness<M: MachineCore>(
             }
         }
     }
-    (live_ins, live_outs)
-}
 
-fn extend_to_def(
-    live_sets: &mut LiveSets,
-    active_range_ends: &ActiveRangeEnds,
-    vreg: VirtRegNum,
-    start: ProgramPoint,
-) {
-    let end = active_range_ends[vreg].unwrap_or(start.next());
-    push_live_range(live_sets, vreg, start, end);
-}
-
-fn push_live_range(
-    live_sets: &mut LiveSets,
-    vreg: VirtRegNum,
-    start: ProgramPoint,
-    end: ProgramPoint,
-) {
-    trace!("      extend {vreg}: {start:?}..{end:?}");
-    assert!(start < end);
-    let live_set = &mut live_sets[vreg];
-    if let Some(last_range) = live_set.last_mut() {
-        assert!(end <= last_range.start);
-        if end == last_range.start {
-            // Extend the next range down instead of creating a new one.
-            last_range.start = start;
-            return;
-        }
-    }
-    live_set.push(ProgramRange { start, end });
+    live_outs
 }
 
 fn make_block_vreg_map<M: MachineCore>(

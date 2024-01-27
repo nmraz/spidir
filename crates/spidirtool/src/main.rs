@@ -9,11 +9,10 @@ use std::{
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use itertools::Itertools;
 
 use codegen::{
-    cfg::CfgContext, isel::select_instrs, lir::Lir, regalloc::compute_live_sets,
-    schedule::Schedule, target::x86_64::X64Machine,
+    cfg::CfgContext, isel::select_instrs, lir::Lir, regalloc::RegAllocContext, schedule::Schedule,
+    target::x86_64::X64Machine,
 };
 use ir::{
     domtree::DomTree,
@@ -27,6 +26,7 @@ use ir_graphviz::{
     annotate::{Annotate, ColoredAnnotator, DomTreeAnnotator, ErrorAnnotator, LoopAnnotator},
     write_graphviz,
 };
+use itertools::Itertools;
 use parser::parse_module;
 use tempfile::NamedTempFile;
 
@@ -302,9 +302,10 @@ fn get_module_lir_str(module: &Module, liveness: bool) -> Result<String> {
         if liveness {
             writeln!(output).unwrap();
 
-            let live_sets = compute_live_sets(&lir, &cfg_ctx);
-            for (vreg, live_set) in live_sets.iter() {
-                if live_set.is_empty() {
+            let mut regalloc = RegAllocContext::new(&lir, &cfg_ctx);
+            regalloc.compute_live_ranges();
+            for (vreg, ranges) in regalloc.vreg_ranges.iter() {
+                if ranges.is_empty() {
                     continue;
                 }
 
@@ -312,9 +313,9 @@ fn get_module_lir_str(module: &Module, liveness: bool) -> Result<String> {
                     output,
                     "{}: {}",
                     vreg,
-                    live_set
+                    ranges
                         .iter()
-                        .format_with(" ", |segment, f| f(&format_args!("{segment:?}")))
+                        .format_with(" ", |range, f| f(&format_args!("{:?}", range.prog_range)))
                 )
                 .unwrap();
             }

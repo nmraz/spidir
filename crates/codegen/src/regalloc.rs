@@ -1,14 +1,25 @@
-use core::fmt;
+use core::{cmp::Ordering, fmt};
 
-use alloc::collections::VecDeque;
-use cranelift_entity::{entity_impl, packed_option::ReservedValue, PrimaryMap, SecondaryMap};
+use alloc::{
+    collections::{BTreeMap, VecDeque},
+    vec,
+    vec::Vec,
+};
+use cranelift_entity::{
+    entity_impl,
+    packed_option::{PackedOption, ReservedValue},
+    PrimaryMap, SecondaryMap,
+};
 use fx_utils::FxHashSet;
 use log::trace;
 use smallvec::{smallvec, SmallVec};
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Instr, Lir, OperandPos, UseOperandConstraint, VirtRegNum, VirtRegSet},
+    lir::{
+        DefOperandConstraint, Instr, Lir, OperandPos, PhysReg, UseOperandConstraint, VirtRegNum,
+        VirtRegSet,
+    },
     machine::MachineCore,
 };
 
@@ -133,6 +144,33 @@ impl fmt::Debug for ProgramRange {
     }
 }
 
+#[derive(Debug, Clone, Copy, Eq)]
+struct RangeEndKey(ProgramRange);
+
+impl RangeEndKey {
+    fn point(point: ProgramPoint) -> Self {
+        Self(ProgramRange::point(point))
+    }
+}
+
+impl PartialEq for RangeEndKey {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.end == other.0.end
+    }
+}
+
+impl PartialOrd for RangeEndKey {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for RangeEndKey {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.end.cmp(&other.0.end)
+    }
+}
+
 struct LiveRangeInstr {
     pos: Instr,
     _weight: f32,
@@ -162,8 +200,9 @@ entity_impl!(LiveSetFragment, "lf");
 pub struct RegAllocContext<'a, M: MachineCore> {
     lir: &'a Lir<M>,
     cfg_ctx: &'a CfgContext,
-    live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
     pub vreg_ranges: SecondaryMap<VirtRegNum, SmallVec<[TaggedLiveRange; 4]>>,
+    live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
+    phys_reg_assignments: Vec<BTreeMap<RangeEndKey, PackedOption<LiveRange>>>,
 }
 
 impl<'a, M: MachineCore> RegAllocContext<'a, M> {
@@ -173,6 +212,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             cfg_ctx,
             live_ranges: PrimaryMap::new(),
             vreg_ranges: SecondaryMap::new(),
+            phys_reg_assignments: vec![BTreeMap::new(); M::phys_reg_count() as usize],
         }
     }
 
@@ -228,45 +268,81 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                 let defs = self.lir.instr_defs(instr);
                 let uses = self.lir.instr_uses(instr);
 
+                tied_defs.clear();
                 tied_defs.resize(defs.len(), false);
 
                 for use_op in uses {
                     let vreg = use_op.reg().reg_num();
 
-                    let pos = if let UseOperandConstraint::TiedToDef(i) = use_op.constraint() {
-                        let i = i as usize;
-                        let tied_def = defs[i];
+                    let op_pos = ProgramPoint::for_operand(instr, use_op.pos()).next();
+                    let pos = match use_op.constraint() {
+                        UseOperandConstraint::TiedToDef(i) => {
+                            let i = i as usize;
+                            assert!(
+                                !tied_defs[i],
+                                "multiple uses tied to same def in instr {instr}"
+                            );
 
-                        assert!(use_op.pos() == OperandPos::Early);
-                        assert!(tied_def.pos() == OperandPos::Late);
+                            let tied_def = defs[i];
+                            assert!(use_op.pos() == OperandPos::Early);
+                            assert!(tied_def.pos() == OperandPos::Late);
 
-                        tied_defs[i] = true;
-
-                        ProgramPoint::pre_copy(instr)
-                    } else {
-                        // Note: ranges are half-open, so we actually mark the use as extending to the
-                        // next program point.
-                        ProgramPoint::for_operand(instr, use_op.pos()).next()
+                            tied_defs[i] = true;
+                            ProgramPoint::pre_copy(instr)
+                        }
+                        UseOperandConstraint::Fixed(preg) => {
+                            // We model fixed register constraints as a pre-copy into the correct
+                            // physical register, and directly reserve the relevant register for
+                            // the correct range within the instruction.
+                            let pre_copy = ProgramPoint::pre_copy(instr);
+                            self.reserve_phys_reg(preg, ProgramRange::new(pre_copy, op_pos));
+                            pre_copy
+                        }
+                        _ => {
+                            // Note: ranges are half-open, so we actually mark the use as extending
+                            // to the next program point.
+                            op_pos
+                        }
                     };
 
                     self.record_live_use(vreg, instr, pos, block);
                 }
 
                 for (i, def_op) in defs.iter().enumerate() {
-                    let start = if tied_defs[i] {
+                    let mut def_point = if tied_defs[i] {
                         ProgramPoint::pre_copy(instr)
                     } else {
                         ProgramPoint::for_operand(instr, def_op.pos())
                     };
 
+                    // If the value is constrained to a single physical register, insert a copy
+                    // before the next instruction and start the live range there.
+                    if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
+                        let copy_point = ProgramPoint::before(instr.next());
+                        self.reserve_phys_reg(preg, ProgramRange::new(def_point, copy_point));
+                        def_point = copy_point;
+                    }
+
                     self.record_def(
                         def_op.reg().reg_num(),
-                        start,
+                        def_point,
                         // If this def is dead, make sure its range always gets extended past the
                         // end of the instruction so that dead early defs always interfere with
                         // late defs.
                         ProgramPoint::before(instr.next()),
                     );
+                }
+
+                let clobbers = self.lir.instr_clobbers(instr);
+                if !clobbers.is_empty() {
+                    // Clobbers are equivalent to dead late defs with physical register constraints.
+                    let clobber_range = ProgramRange::new(
+                        ProgramPoint::late(instr),
+                        ProgramPoint::before(instr.next()),
+                    );
+                    for clobber in clobbers.iter() {
+                        self.reserve_phys_reg(clobber, clobber_range);
+                    }
                 }
             }
 
@@ -288,6 +364,26 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         }
     }
 
+    fn reserve_phys_reg(&mut self, preg: PhysReg, range: ProgramRange) {
+        let assignments = &mut self.phys_reg_assignments[preg.as_u8() as usize];
+
+        // Recall that non-degenerate ranges intersect iff each range's start start point precedes
+        // the other's end point. Our allocation tree is keyed by end point, so start by performing
+        // the `new_range.start < other_ranges.end` comparison.
+        if let Some((intersection_candidate, _)) =
+            assignments.range(RangeEndKey::point(range.start)..).next()
+        {
+            // The ranges really will intersect if the reverse start/end comparison holds. If that
+            // is the case, report the incompatibility now.
+            assert!(
+                intersection_candidate.0.start >= range.end,
+                "attempted to reserve physical register with overlapping ranges"
+            );
+        }
+
+        assignments.insert(RangeEndKey(range), None.into());
+    }
+
     fn record_def(
         &mut self,
         vreg: VirtRegNum,
@@ -301,7 +397,10 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             assert!(def_point >= last_range.prog_range.start);
             last_range.prog_range.start = def_point;
             self.live_ranges[last_range.live_range].prog_range.start = def_point;
-        } else {
+        } else if def_point < dead_use_point {
+            // If the range for a dead def would be non-degenerate, create it now. The range might
+            // be degenerate for dead physical-register-constrained defs, which push the def point
+            // to before the next instruction.
             self.create_vreg_live_range(vreg, def_point, dead_use_point);
         }
     }

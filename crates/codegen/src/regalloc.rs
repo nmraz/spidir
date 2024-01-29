@@ -295,7 +295,8 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                             // physical register, and directly reserve the relevant register for
                             // the correct range within the instruction.
                             let pre_copy = ProgramPoint::pre_copy(instr);
-                            self.reserve_phys_reg(preg, ProgramRange::new(pre_copy, op_pos));
+                            // We completely disallow overlaps with reservations for any other uses.
+                            self.reserve_phys_reg(preg, ProgramRange::new(pre_copy, op_pos), false);
                             pre_copy
                         }
                         _ => {
@@ -319,7 +320,13 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                     // before the next instruction and start the live range there.
                     if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
                         let copy_point = ProgramPoint::before(instr.next());
-                        self.reserve_phys_reg(preg, ProgramRange::new(def_point, copy_point));
+                        // There isn't really a good reason for multiple defs to refer to the same
+                        // physical register - just use a single vreg instead.
+                        self.reserve_phys_reg(
+                            preg,
+                            ProgramRange::new(def_point, copy_point),
+                            false,
+                        );
                         def_point = copy_point;
                     }
 
@@ -341,7 +348,9 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                         ProgramPoint::before(instr.next()),
                     );
                     for clobber in clobbers.iter() {
-                        self.reserve_phys_reg(clobber, clobber_range);
+                        // We intentionally allow clobbers to overlap with existing late-out
+                        // operands, to make things like call return values easier to model.
+                        self.reserve_phys_reg(clobber, clobber_range, true);
                     }
                 }
             }
@@ -364,17 +373,29 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         }
     }
 
-    fn reserve_phys_reg(&mut self, preg: PhysReg, range: ProgramRange) {
+    fn reserve_phys_reg(
+        &mut self,
+        preg: PhysReg,
+        range: ProgramRange,
+        allow_identical_range: bool,
+    ) {
         let assignments = &mut self.phys_reg_assignments[preg.as_u8() as usize];
 
         // Recall that non-degenerate ranges intersect iff each range's start start point precedes
         // the other's end point. Our allocation tree is keyed by end point, so start by performing
         // the `new_range.start < other_ranges.end` comparison.
-        if let Some((intersection_candidate, _)) =
+        if let Some((intersection_candidate, candidate_live_range)) =
             assignments.range(RangeEndKey::point(range.start)..).next()
         {
-            // The ranges really will intersect if the reverse start/end comparison holds. If that
-            // is the case, report the incompatibility now.
+            // If we're allowing existing identical ranges (like what happens with register defs
+            // and clobbers), check for and ignore that case now.
+            if allow_identical_range && intersection_candidate.0 == range {
+                assert!(candidate_live_range.is_none());
+                return;
+            }
+
+            // Otherwise, we forbid intersection. The ranges really will intersect if the reverse
+            // start/end comparison holds. If that is the case, report the incompatibility now.
             assert!(
                 intersection_candidate.0.start >= range.end,
                 "attempted to reserve physical register with overlapping ranges"

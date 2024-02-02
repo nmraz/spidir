@@ -473,8 +473,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
 
         range_instrs.push(LiveRangeInstr {
             pos: instr,
-            // TODO
-            _weight: 0.0,
+            _weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
         });
 
         live_range
@@ -544,6 +543,14 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         });
         live_range
     }
+}
+
+fn get_instr_weight<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, instr: Instr) -> f32 {
+    let block = lir.instr_block(instr);
+    let loop_depth = cfg_ctx
+        .depth_map
+        .loop_depth(cfg_ctx.domtree.get_tree_node(block).unwrap());
+    1000f32 * ((loop_depth + 1) as f32)
 }
 
 fn compute_block_liveouts<M: MachineCore>(

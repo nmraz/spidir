@@ -197,10 +197,18 @@ pub struct TaggedLiveRange {
 struct LiveSetFragment(u32);
 entity_impl!(LiveSetFragment, "lf");
 
+#[derive(Clone, Copy)]
+struct PhysRegCopy {
+    _live_range: LiveRange,
+    _preg: PhysReg,
+}
+
 pub struct RegAllocContext<'a, M: MachineCore> {
     lir: &'a Lir<M>,
     cfg_ctx: &'a CfgContext,
     pub vreg_ranges: SecondaryMap<VirtRegNum, SmallVec<[TaggedLiveRange; 4]>>,
+    pre_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
+    post_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
     live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
     phys_reg_assignments: Vec<BTreeMap<RangeEndKey, PackedOption<LiveRange>>>,
 }
@@ -210,8 +218,10 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         Self {
             lir,
             cfg_ctx,
-            live_ranges: PrimaryMap::new(),
             vreg_ranges: SecondaryMap::new(),
+            pre_instr_preg_copies: SecondaryMap::new(),
+            post_instr_preg_copies: SecondaryMap::new(),
+            live_ranges: PrimaryMap::new(),
             phys_reg_assignments: vec![BTreeMap::new(); M::phys_reg_count() as usize],
         }
     }
@@ -306,7 +316,13 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                         }
                     };
 
-                    self.record_live_use(vreg, instr, pos, block);
+                    let live_range = self.record_live_use(vreg, instr, pos, block);
+                    if let UseOperandConstraint::Fixed(preg) = use_op.constraint() {
+                        self.pre_instr_preg_copies[instr].push(PhysRegCopy {
+                            _live_range: live_range,
+                            _preg: preg,
+                        });
+                    }
                 }
 
                 for (i, def_op) in defs.iter().enumerate() {
@@ -330,7 +346,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                         def_point = copy_point;
                     }
 
-                    self.record_def(
+                    let live_range = self.record_def(
                         def_op.reg().reg_num(),
                         def_point,
                         // If this def is dead, make sure its range always gets extended past the
@@ -338,6 +354,15 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                         // late defs.
                         ProgramPoint::before(instr.next()),
                     );
+
+                    if let (DefOperandConstraint::Fixed(preg), Some(live_range)) =
+                        (def_op.constraint(), live_range)
+                    {
+                        self.post_instr_preg_copies[instr].push(PhysRegCopy {
+                            _live_range: live_range,
+                            _preg: preg,
+                        });
+                    }
                 }
 
                 let clobbers = self.lir.instr_clobbers(instr);
@@ -410,7 +435,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         vreg: VirtRegNum,
         def_point: ProgramPoint,
         dead_use_point: ProgramPoint,
-    ) {
+    ) -> Option<LiveRange> {
         if let Some(last_range) = self.vreg_ranges[vreg].last_mut() {
             // This def is live *somewhere*, so it must be live in the current block as well. That
             // means it should already have a block-covering range created by a use somewhere else
@@ -418,11 +443,14 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             assert!(def_point >= last_range.prog_range.start);
             last_range.prog_range.start = def_point;
             self.live_ranges[last_range.live_range].prog_range.start = def_point;
+            Some(last_range.live_range)
         } else if def_point < dead_use_point {
-            // If the range for a dead def would be non-degenerate, create it now. The range might
-            // be degenerate for dead physical-register-constrained defs, which push the def point
-            // to before the next instruction.
-            self.create_vreg_live_range(vreg, def_point, dead_use_point);
+            // If the range for a dead def would be non-empty, create it now.
+            Some(self.create_vreg_live_range(vreg, def_point, dead_use_point))
+        } else {
+            // Otheriwse, the range is empty (degenerate). This can happen with dead physical-
+            // register-constrained defs, which push the def point to before the next instruction.
+            None
         }
     }
 
@@ -432,14 +460,14 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         instr: Instr,
         use_point: ProgramPoint,
         block: Block,
-    ) {
+    ) -> LiveRange {
         let live_range = self.create_use_range(vreg, use_point, block);
         let range_instrs = &mut self.live_ranges[live_range].instrs;
         if let Some(last_instr) = range_instrs.last() {
             if last_instr.pos == instr {
                 // Avoid recording the same instruction multiple times if it uses this vreg in
                 // several operands.
-                return;
+                return live_range;
             }
         }
 
@@ -448,6 +476,8 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             // TODO
             _weight: 0.0,
         });
+
+        live_range
     }
 
     fn create_use_range(

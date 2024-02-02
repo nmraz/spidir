@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use cranelift_entity::{
     entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap, SecondaryMap,
 };
-use dominators::{domtree::DomTree, loops::LoopForest};
+use dominators::{depth_map::DepthMap, domtree::DomTree, loops::LoopForest};
 use fx_utils::FxHashMap;
 use graphwalk::{GraphRef, PredGraphRef};
 use ir::{
@@ -181,12 +181,14 @@ pub struct CfgContext {
     pub block_order: Vec<Block>,
     pub domtree: BlockDomTree,
     pub loop_forest: LoopForest,
+    pub depth_map: DepthMap,
 }
 
 impl CfgContext {
     pub fn compute(cfg: BlockCfg, entry: Block) -> Self {
         let domtree = BlockDomTree::compute(&cfg, entry);
         let loop_forest = LoopForest::compute(&cfg, &domtree);
+        let depth_map = DepthMap::compute(&domtree, &loop_forest);
 
         let block_order = compute_block_order(&cfg, &domtree, &loop_forest);
 
@@ -195,6 +197,7 @@ impl CfgContext {
             block_order,
             domtree,
             loop_forest,
+            depth_map,
         }
     }
 

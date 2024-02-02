@@ -1,9 +1,9 @@
 use cranelift_entity::{
     packed_option::PackedOption, EntityList, EntitySet, ListPool, SecondaryMap,
 };
+use dominators::depth_map::DepthMap;
 use graphwalk::{GraphRef, PostOrderContext};
 use ir::{
-    loops::LoopForest,
     module::Module,
     node::NodeKind,
     schedule::{schedule_early, schedule_late, ScheduleContext},
@@ -44,7 +44,6 @@ impl Schedule {
         let live_node_info = LiveNodeInfo::compute(graph, entry);
 
         let ctx = ScheduleContext::new(graph, &live_node_info, valgraph_cfg_preorder);
-        let depth_map = get_cfg_depth_map(&cfg_ctx.domtree, &cfg_ctx.loop_forest);
 
         let mut schedule = Self {
             block_data: SecondaryMap::new(),
@@ -54,7 +53,6 @@ impl Schedule {
         let mut scheduler = Scheduler {
             cfg_ctx,
             block_map,
-            depth_map: &depth_map,
             blocks_by_node: SecondaryMap::new(),
             block_terminators: SecondaryMap::new(),
             schedule: &mut schedule,
@@ -137,7 +135,6 @@ fn should_skip_block_edge(graph: &ValGraph, succ: Node, use_idx: u32) -> bool {
 struct Scheduler<'a> {
     cfg_ctx: &'a CfgContext,
     block_map: &'a FunctionBlockMap,
-    depth_map: &'a CfgDepthMap,
     blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
     block_terminators: SecondaryMap<Block, PackedOption<Node>>,
     schedule: &'a mut Schedule,
@@ -243,21 +240,26 @@ impl<'a> Scheduler<'a> {
     }
 
     fn best_schedule_location(&self, node: Node, early_loc: Block, late_loc: Block) -> Block {
+        let domtree = self.domtree();
+        let depth_map = self.depth_map();
+
+        let early_tree_loc = domtree.get_tree_node(early_loc).unwrap();
+        let late_tree_loc = domtree.get_tree_node(late_loc).unwrap();
         trace!(
             "place: node {} in {early_loc} [domtree depth {}, loop depth {}] .. {late_loc} [domtree depth {}, loop depth {}]",
             node.as_u32(),
-            self.depth_map[early_loc].domtree_depth,
-            self.depth_map[early_loc].loop_depth,
-            self.depth_map[late_loc].domtree_depth,
-            self.depth_map[late_loc].loop_depth,
+            depth_map.domtree_depth(early_tree_loc),
+            depth_map.loop_depth(early_tree_loc),
+            depth_map.domtree_depth(late_tree_loc),
+            depth_map.loop_depth(late_tree_loc),
         );
 
-        debug_assert!(self.domtree().cfg_dominates(early_loc, late_loc));
+        debug_assert!(domtree.dominates(early_tree_loc, late_tree_loc));
 
         // Select a node between `early_loc` and `late_loc` on the dominator tree that has minimal
         // loop depth, favoring deeper nodes (those closer to `late_loc`).
-        let mut cur_loc = late_loc;
-        let mut best_loc = cur_loc;
+        let mut cur_tree_loc = late_tree_loc;
+        let mut best_tree_loc = cur_tree_loc;
         let mut i = 0;
 
         loop {
@@ -266,25 +268,27 @@ impl<'a> Scheduler<'a> {
                 break;
             }
 
-            if self.depth_map[cur_loc].loop_depth < self.depth_map[best_loc].loop_depth {
+            if depth_map.loop_depth(cur_tree_loc) < depth_map.loop_depth(best_tree_loc) {
                 trace!(
-                    "place: hoist to {cur_loc} [domtree depth {}, loop depth {}]",
-                    self.depth_map[cur_loc].domtree_depth,
-                    self.depth_map[cur_loc].loop_depth
+                    "place: hoist to {} [domtree depth {}, loop depth {}]",
+                    domtree.get_cfg_node(cur_tree_loc),
+                    depth_map.domtree_depth(cur_tree_loc),
+                    depth_map.loop_depth(cur_tree_loc),
                 );
-                best_loc = cur_loc;
+                best_tree_loc = cur_tree_loc;
             }
 
-            if cur_loc == early_loc {
+            if cur_tree_loc == early_tree_loc {
                 break;
             }
 
-            cur_loc = self.domtree().cfg_idom(cur_loc).unwrap();
+            cur_tree_loc = domtree.idom(cur_tree_loc).unwrap();
             i += 1;
         }
 
-        debug_assert!(self.domtree().cfg_dominates(early_loc, best_loc));
+        debug_assert!(domtree.dominates(early_tree_loc, best_tree_loc));
 
+        let best_loc = domtree.get_cfg_node(best_tree_loc);
         trace!("place: node {} -> {best_loc}", node.as_u32());
         best_loc
     }
@@ -356,7 +360,7 @@ impl<'a> Scheduler<'a> {
                     Some(loc)
                 }
             })
-            .reduce(|acc, cur| domtree_lca(self.domtree(), self.depth_map, acc, cur))
+            .reduce(|acc, cur| self.domtree_lca(acc, cur))
             .expect("live non-pinned node has no data uses");
 
         trace!("late: node {} -> {loc}", node.as_u32());
@@ -374,6 +378,15 @@ impl<'a> Scheduler<'a> {
         self.blocks_by_node[node] = block.into();
     }
 
+    fn domtree_lca(&self, a: Block, b: Block) -> Block {
+        let domtree = self.domtree();
+        domtree.get_cfg_node(self.depth_map().domtree_lca(
+            domtree,
+            domtree.get_tree_node(a).unwrap(),
+            domtree.get_tree_node(b).unwrap(),
+        ))
+    }
+
     fn cfg(&self) -> &'a BlockCfg {
         &self.cfg_ctx.cfg
     }
@@ -381,73 +394,8 @@ impl<'a> Scheduler<'a> {
     fn domtree(&self) -> &'a BlockDomTree {
         &self.cfg_ctx.domtree
     }
-}
 
-#[derive(Clone, Copy, Default)]
-struct CfgDepthData {
-    domtree_depth: u32,
-    loop_depth: u32,
-}
-
-type CfgDepthMap = SecondaryMap<Block, CfgDepthData>;
-
-fn get_cfg_depth_map(domtree: &BlockDomTree, loop_forest: &LoopForest) -> CfgDepthMap {
-    let mut depth_map = CfgDepthMap::new();
-
-    for domtree_node in domtree.preorder() {
-        // We make use of two facts here:
-        // 1. Loop headers dominate all nodes in the loop (including subloops).
-        // 2. We are walking down the dominator tree in preorder.
-        // This means that whenever we are walking through a loop, at least its parent's header will
-        // have been traversed and have correct depth information.
-        let cur_loop = loop_forest.containing_loop(domtree_node);
-        let loop_depth = match cur_loop {
-            Some(cur_loop) => {
-                let parent_loop = loop_forest.loop_parent(cur_loop);
-                let parent_depth = parent_loop.map_or(0, |parent_loop| {
-                    depth_map[domtree.get_cfg_node(loop_forest.loop_header(parent_loop))].loop_depth
-                });
-                parent_depth + 1
-            }
-            None => 0,
-        };
-
-        let domtree_depth = domtree.idom(domtree_node).map_or(0, |idom| {
-            let idom = domtree.get_cfg_node(idom);
-            depth_map[idom].domtree_depth + 1
-        });
-
-        let block = domtree.get_cfg_node(domtree_node);
-        depth_map[block] = CfgDepthData {
-            domtree_depth,
-            loop_depth,
-        };
+    fn depth_map(&self) -> &'a DepthMap {
+        &self.cfg_ctx.depth_map
     }
-
-    depth_map
-}
-
-fn domtree_lca(
-    domtree: &BlockDomTree,
-    depth_map: &CfgDepthMap,
-    mut a: Block,
-    mut b: Block,
-) -> Block {
-    while depth_map[a].domtree_depth > depth_map[b].domtree_depth {
-        // Note: `a` must have an immediate dominator here because its depth is nonzero.
-        a = domtree.cfg_idom(a).unwrap();
-    }
-
-    while depth_map[b].domtree_depth > depth_map[a].domtree_depth {
-        // Note: `b` must have an immediate dominator here because its depth is nonzero.
-        b = domtree.cfg_idom(b).unwrap();
-    }
-
-    debug_assert!(depth_map[a].domtree_depth == depth_map[b].domtree_depth);
-    while a != b {
-        a = domtree.cfg_idom(a).unwrap();
-        b = domtree.cfg_idom(b).unwrap();
-    }
-
-    a
 }

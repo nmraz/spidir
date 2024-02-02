@@ -11,7 +11,8 @@ use cranelift_entity::{
     PrimaryMap, SecondaryMap,
 };
 use fx_utils::FxHashSet;
-use log::trace;
+use itertools::Itertools;
+use log::{debug, log_enabled, trace};
 use smallvec::{smallvec, SmallVec};
 
 use crate::{
@@ -203,6 +204,12 @@ struct PhysRegCopy {
     _preg: PhysReg,
 }
 
+pub fn run<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) {
+    let mut ctx = RegAllocContext::new(lir, cfg_ctx);
+    ctx.compute_live_ranges();
+    ctx.dump();
+}
+
 pub struct RegAllocContext<'a, M: MachineCore> {
     lir: &'a Lir<M>,
     cfg_ctx: &'a CfgContext,
@@ -223,6 +230,27 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             post_instr_preg_copies: SecondaryMap::new(),
             live_ranges: PrimaryMap::new(),
             phys_reg_assignments: vec![BTreeMap::new(); M::phys_reg_count() as usize],
+        }
+    }
+
+    fn dump(&self) {
+        if !log_enabled!(log::Level::Debug) {
+            return;
+        }
+
+        debug!("liveranges:");
+        for (vreg, ranges) in self.vreg_ranges.iter() {
+            if ranges.is_empty() {
+                continue;
+            }
+
+            debug!(
+                "{}: {}",
+                vreg,
+                ranges
+                    .iter()
+                    .format_with(" ", |range, f| f(&format_args!("{:?}", range.prog_range)))
+            );
         }
     }
 

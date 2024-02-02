@@ -1,3 +1,6 @@
+// TODO: Remove this once enough of the allocator is implemented.
+#![allow(dead_code)]
+
 use core::{cmp::Ordering, fmt};
 
 use alloc::{
@@ -25,7 +28,7 @@ use crate::{
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum InstrSlot {
+enum InstrSlot {
     Before = 0,
     PreCopy = 1,
     Early = 2,
@@ -44,12 +47,12 @@ impl fmt::Debug for InstrSlot {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ProgramPoint {
+struct ProgramPoint {
     index: u32,
 }
 
 impl ProgramPoint {
-    pub fn new(instr: Instr, slot: InstrSlot) -> Self {
+    fn new(instr: Instr, slot: InstrSlot) -> Self {
         let instr = instr.as_u32();
         let slot = slot as u32;
         assert!(instr <= u32::MAX >> 2);
@@ -58,23 +61,23 @@ impl ProgramPoint {
         }
     }
 
-    pub fn before(instr: Instr) -> Self {
+    fn before(instr: Instr) -> Self {
         Self::new(instr, InstrSlot::Before)
     }
 
-    pub fn pre_copy(instr: Instr) -> Self {
+    fn pre_copy(instr: Instr) -> Self {
         Self::new(instr, InstrSlot::PreCopy)
     }
 
-    pub fn early(instr: Instr) -> Self {
+    fn early(instr: Instr) -> Self {
         Self::new(instr, InstrSlot::Early)
     }
 
-    pub fn late(instr: Instr) -> Self {
+    fn late(instr: Instr) -> Self {
         Self::new(instr, InstrSlot::Late)
     }
 
-    pub fn for_operand(instr: Instr, pos: OperandPos) -> Self {
+    fn for_operand(instr: Instr, pos: OperandPos) -> Self {
         let slot = match pos {
             OperandPos::Early => InstrSlot::Early,
             OperandPos::Late => InstrSlot::Late,
@@ -82,23 +85,23 @@ impl ProgramPoint {
         Self::new(instr, slot)
     }
 
-    pub fn next(self) -> Self {
+    fn next(self) -> Self {
         Self {
             index: self.index + 1,
         }
     }
 
-    pub fn prev(self) -> Self {
+    fn prev(self) -> Self {
         Self {
             index: self.index - 1,
         }
     }
 
-    pub fn instr(self) -> Instr {
+    fn instr(self) -> Instr {
         Instr::from_u32(self.index >> 2)
     }
 
-    pub fn slot(self) -> InstrSlot {
+    fn slot(self) -> InstrSlot {
         match self.index & 3 {
             0 => InstrSlot::Before,
             1 => InstrSlot::PreCopy,
@@ -108,7 +111,7 @@ impl ProgramPoint {
         }
     }
 
-    pub fn index(self) -> u32 {
+    fn index(self) -> u32 {
         self.index
     }
 }
@@ -120,21 +123,21 @@ impl fmt::Debug for ProgramPoint {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct ProgramRange {
-    pub start: ProgramPoint,
-    pub end: ProgramPoint,
+struct ProgramRange {
+    start: ProgramPoint,
+    end: ProgramPoint,
 }
 
 impl ProgramRange {
-    pub fn new(start: ProgramPoint, end: ProgramPoint) -> Self {
+    fn new(start: ProgramPoint, end: ProgramPoint) -> Self {
         Self { start, end }
     }
 
-    pub fn point(point: ProgramPoint) -> Self {
+    fn point(point: ProgramPoint) -> Self {
         Self::new(point, point.next())
     }
 
-    pub fn intersects(self, other: ProgramRange) -> bool {
+    fn intersects(self, other: ProgramRange) -> bool {
         self.end > other.start && other.end > self.start
     }
 }
@@ -174,13 +177,13 @@ impl Ord for RangeEndKey {
 
 struct LiveRangeInstr {
     pos: Instr,
-    _weight: f32,
+    weight: f32,
 }
 
 struct LiveRangeData {
     prog_range: ProgramRange,
-    _vreg: VirtRegNum,
-    _fragment: LiveSetFragment,
+    vreg: VirtRegNum,
+    fragment: LiveSetFragment,
     instrs: SmallVec<[LiveRangeInstr; 4]>,
 }
 
@@ -189,8 +192,8 @@ struct LiveRange(u32);
 entity_impl!(LiveRange, "lr");
 
 #[derive(Debug, Clone, Copy)]
-pub struct TaggedLiveRange {
-    pub prog_range: ProgramRange,
+struct TaggedLiveRange {
+    prog_range: ProgramRange,
     live_range: LiveRange,
 }
 
@@ -200,8 +203,8 @@ entity_impl!(LiveSetFragment, "lf");
 
 #[derive(Clone, Copy)]
 struct PhysRegCopy {
-    _live_range: LiveRange,
-    _preg: PhysReg,
+    live_range: LiveRange,
+    preg: PhysReg,
 }
 
 pub fn run<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) {
@@ -210,10 +213,10 @@ pub fn run<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) {
     ctx.dump();
 }
 
-pub struct RegAllocContext<'a, M: MachineCore> {
+struct RegAllocContext<'a, M: MachineCore> {
     lir: &'a Lir<M>,
     cfg_ctx: &'a CfgContext,
-    pub vreg_ranges: SecondaryMap<VirtRegNum, SmallVec<[TaggedLiveRange; 4]>>,
+    vreg_ranges: SecondaryMap<VirtRegNum, SmallVec<[TaggedLiveRange; 4]>>,
     pre_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
     post_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
     live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
@@ -221,7 +224,7 @@ pub struct RegAllocContext<'a, M: MachineCore> {
 }
 
 impl<'a, M: MachineCore> RegAllocContext<'a, M> {
-    pub fn new(lir: &'a Lir<M>, cfg_ctx: &'a CfgContext) -> Self {
+    fn new(lir: &'a Lir<M>, cfg_ctx: &'a CfgContext) -> Self {
         Self {
             lir,
             cfg_ctx,
@@ -254,7 +257,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         }
     }
 
-    pub fn compute_live_ranges(&mut self) {
+    fn compute_live_ranges(&mut self) {
         let live_outs = compute_block_liveouts(self.lir, self.cfg_ctx);
 
         trace!("computing precise live ranges");
@@ -346,10 +349,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
 
                     let live_range = self.record_live_use(vreg, instr, pos, block);
                     if let UseOperandConstraint::Fixed(preg) = use_op.constraint() {
-                        self.pre_instr_preg_copies[instr].push(PhysRegCopy {
-                            _live_range: live_range,
-                            _preg: preg,
-                        });
+                        self.pre_instr_preg_copies[instr].push(PhysRegCopy { live_range, preg });
                     }
                 }
 
@@ -386,10 +386,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                     if let (DefOperandConstraint::Fixed(preg), Some(live_range)) =
                         (def_op.constraint(), live_range)
                     {
-                        self.post_instr_preg_copies[instr].push(PhysRegCopy {
-                            _live_range: live_range,
-                            _preg: preg,
-                        });
+                        self.post_instr_preg_copies[instr].push(PhysRegCopy { live_range, preg });
                     }
                 }
 
@@ -501,7 +498,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
 
         range_instrs.push(LiveRangeInstr {
             pos: instr,
-            _weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
+            weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
         });
 
         live_range
@@ -560,8 +557,8 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         let prog_range = ProgramRange::new(start, end);
         let range_data = LiveRangeData {
             prog_range,
-            _vreg: vreg,
-            _fragment: LiveSetFragment::reserved_value(),
+            vreg,
+            fragment: LiveSetFragment::reserved_value(),
             instrs: smallvec![],
         };
         let live_range = self.live_ranges.push(range_data);

@@ -11,8 +11,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
 use codegen::{
-    cfg::CfgContext, isel::select_instrs, lir::Lir, regalloc::RegAllocContext, schedule::Schedule,
-    target::x86_64::X64Machine,
+    cfg::CfgContext, isel::select_instrs, lir::Lir, schedule::Schedule, target::x86_64::X64Machine,
 };
 use ir::{
     domtree::DomTree,
@@ -26,7 +25,6 @@ use ir_graphviz::{
     annotate::{Annotate, ColoredAnnotator, DomTreeAnnotator, ErrorAnnotator, LoopAnnotator},
     write_graphviz,
 };
-use itertools::Itertools;
 use parser::parse_module;
 use tempfile::NamedTempFile;
 
@@ -110,9 +108,9 @@ enum ToolCommand {
         /// The input IR file
         input_file: PathBuf,
 
-        /// Print vreg liveness information at the end of each function
+        /// Run register allocator on generated LIR
         #[arg(long)]
-        liveness: bool,
+        regalloc: bool,
     },
 }
 
@@ -185,10 +183,10 @@ fn main() -> Result<()> {
         }
         ToolCommand::Lir {
             input_file,
-            liveness,
+            regalloc,
         } => {
             let module = read_and_verify_module(&input_file)?;
-            io::stdout().write_all(get_module_lir_str(&module, liveness)?.as_bytes())?;
+            io::stdout().write_all(get_module_lir_str(&module, regalloc)?.as_bytes())?;
         }
     }
 
@@ -285,7 +283,7 @@ fn get_module_schedule_str(module: &Module) -> String {
     output
 }
 
-fn get_module_lir_str(module: &Module, liveness: bool) -> Result<String> {
+fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
     let mut output = String::new();
 
     for func in module.functions.values() {
@@ -299,26 +297,8 @@ fn get_module_lir_str(module: &Module, liveness: bool) -> Result<String> {
         )
         .unwrap();
 
-        if liveness {
-            writeln!(output).unwrap();
-
-            let mut regalloc = RegAllocContext::new(&lir, &cfg_ctx);
-            regalloc.compute_live_ranges();
-            for (vreg, ranges) in regalloc.vreg_ranges.iter() {
-                if ranges.is_empty() {
-                    continue;
-                }
-
-                writeln!(
-                    output,
-                    "{}: {}",
-                    vreg,
-                    ranges
-                        .iter()
-                        .format_with(" ", |range, f| f(&format_args!("{:?}", range.prog_range)))
-                )
-                .unwrap();
-            }
+        if regalloc {
+            codegen::regalloc::run(&lir, &cfg_ctx);
         }
 
         writeln!(output, "}}\n").unwrap();

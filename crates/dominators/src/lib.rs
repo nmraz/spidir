@@ -4,6 +4,7 @@ use graphwalk::{GraphRef, PredGraphRef};
 
 extern crate alloc;
 
+pub mod depth_map;
 pub mod domtree;
 pub mod loops;
 

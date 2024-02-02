@@ -510,6 +510,7 @@ pub struct Lir<M: MachineCore> {
     live_in_regs: Vec<PhysReg>,
     block_param_pool: Vec<VirtReg>,
     instrs: Vec<M::Instr>,
+    instr_blocks: Vec<Block>,
     instr_operands: Vec<InstrOperands>,
     instr_clobbers: Vec<PackedOption<ClobberIndex>>,
     def_pool: Vec<DefOperand>,
@@ -527,6 +528,10 @@ impl<M: MachineCore> Lir<M> {
     pub fn block_instrs(&self, block: Block) -> InstrRange {
         let (start, end) = self.block_instr_ranges[block];
         InstrRange::new(start, end)
+    }
+
+    pub fn instr_block(&self, instr: Instr) -> Block {
+        self.instr_blocks[instr.index()]
     }
 
     pub fn instr_data(&self, instr: Instr) -> &M::Instr {
@@ -620,6 +625,9 @@ impl<M: MachineCore> InstrBuilder<'_, '_, M> {
     ) {
         self.builder.lir.instrs.push(data);
 
+        let block = self.builder.block_order[self.builder.cur_block as usize];
+        self.builder.lir.instr_blocks.push(block);
+
         let def_base = self.builder.lir.def_pool.len();
         self.builder.lir.def_pool.extend(defs);
         let def_len = self.builder.lir.def_pool.len() - def_base;
@@ -654,6 +662,7 @@ impl<M: MachineCore> InstrBuilder<'_, '_, M> {
 
         self.builder.lir.instr_clobbers.push(clobbers);
 
+        assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_blocks.len());
         assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_operands.len());
         assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_clobbers.len());
     }
@@ -676,6 +685,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
                 live_in_regs: Vec::new(),
                 block_param_pool: Vec::new(),
                 instrs: Vec::new(),
+                instr_blocks: Vec::new(),
                 instr_operands: Vec::new(),
                 instr_clobbers: Vec::new(),
                 def_pool: Vec::new(),

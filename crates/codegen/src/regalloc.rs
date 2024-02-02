@@ -66,5 +66,30 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                     .format_with(" ", |range, f| f(&format_args!("{:?}", range.prog_range)))
             );
         }
+
+        debug!("phys copies:");
+        for instr in self.lir.all_instrs() {
+            let pre_copies = &self.pre_instr_preg_copies[instr];
+            if !pre_copies.is_empty() {
+                debug!(
+                    "B:{instr}: {}",
+                    pre_copies.iter().format_with(", ", |copy, f| {
+                        let vreg = self.live_ranges[copy.live_range].vreg;
+                        f(&format_args!("{vreg} -> {}", M::reg_name(copy.preg)))
+                    })
+                );
+            }
+
+            let post_copies = &self.post_instr_preg_copies[instr];
+            if !post_copies.is_empty() {
+                debug!(
+                    "A:{instr}: {}",
+                    post_copies.iter().format_with(", ", |copy, f| {
+                        let vreg = self.live_ranges[copy.live_range].vreg;
+                        f(&format_args!("{} -> {vreg}", M::reg_name(copy.preg)))
+                    })
+                )
+            }
+        }
     }
 }

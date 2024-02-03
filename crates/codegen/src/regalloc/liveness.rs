@@ -66,105 +66,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             }
 
             for instr in block_range.into_iter().rev() {
-                // Note: we assume an instruction never uses vregs it defines.
-
-                let defs = self.lir.instr_defs(instr);
-                let uses = self.lir.instr_uses(instr);
-
-                tied_defs.clear();
-                tied_defs.resize(defs.len(), false);
-
-                for use_op in uses {
-                    let vreg = use_op.reg().reg_num();
-
-                    let op_pos = ProgramPoint::for_operand(instr, use_op.pos()).next();
-                    let pos = match use_op.constraint() {
-                        UseOperandConstraint::TiedToDef(i) => {
-                            let i = i as usize;
-                            assert!(
-                                !tied_defs[i],
-                                "multiple uses tied to same def in instr {instr}"
-                            );
-
-                            let tied_def = defs[i];
-                            assert!(use_op.pos() == OperandPos::Early);
-                            assert!(tied_def.pos() == OperandPos::Late);
-
-                            tied_defs[i] = true;
-                            ProgramPoint::pre_copy(instr)
-                        }
-                        UseOperandConstraint::Fixed(preg) => {
-                            // We model fixed register constraints as a pre-copy into the correct
-                            // physical register, and directly reserve the relevant register for
-                            // the correct range within the instruction.
-                            let pre_copy = ProgramPoint::pre_copy(instr);
-                            // We completely disallow overlaps with reservations for any other uses.
-                            self.reserve_phys_reg(preg, ProgramRange::new(pre_copy, op_pos), false);
-                            pre_copy
-                        }
-                        _ => {
-                            // Note: ranges are half-open, so we actually mark the use as extending
-                            // to the next program point.
-                            op_pos
-                        }
-                    };
-
-                    let live_range = self.record_live_use(vreg, instr, pos, block);
-                    if let UseOperandConstraint::Fixed(preg) = use_op.constraint() {
-                        self.pre_instr_preg_copies[instr].push(PhysRegCopy { live_range, preg });
-                    }
-                }
-
-                for (i, def_op) in defs.iter().enumerate() {
-                    let mut def_point = if tied_defs[i] {
-                        ProgramPoint::pre_copy(instr)
-                    } else {
-                        ProgramPoint::for_operand(instr, def_op.pos())
-                    };
-
-                    // If the value is constrained to a single physical register, insert a copy
-                    // before the next instruction and start the live range there.
-                    if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
-                        let copy_point = ProgramPoint::before(instr.next());
-                        // There isn't really a good reason for multiple defs to refer to the same
-                        // physical register - just use a single vreg instead.
-                        self.reserve_phys_reg(
-                            preg,
-                            ProgramRange::new(def_point, copy_point),
-                            false,
-                        );
-                        def_point = copy_point;
-                    }
-
-                    let live_range = self.record_def(
-                        def_op.reg().reg_num(),
-                        def_point,
-                        // If this def is dead, make sure its range always gets extended past the
-                        // end of the instruction so that dead early defs always interfere with
-                        // late defs.
-                        ProgramPoint::before(instr.next()),
-                    );
-
-                    if let (DefOperandConstraint::Fixed(preg), Some(live_range)) =
-                        (def_op.constraint(), live_range)
-                    {
-                        self.post_instr_preg_copies[instr].push(PhysRegCopy { live_range, preg });
-                    }
-                }
-
-                let clobbers = self.lir.instr_clobbers(instr);
-                if !clobbers.is_empty() {
-                    // Clobbers are equivalent to dead late defs with physical register constraints.
-                    let clobber_range = ProgramRange::new(
-                        ProgramPoint::late(instr),
-                        ProgramPoint::before(instr.next()),
-                    );
-                    for clobber in clobbers.iter() {
-                        // We intentionally allow clobbers to overlap with existing late-out
-                        // operands, to make things like call return values easier to model.
-                        self.reserve_phys_reg(clobber, clobber_range, true);
-                    }
-                }
+                self.compute_instr_liveness(block, instr, &mut tied_defs);
             }
 
             for &incoming_vreg in self.lir.block_params(block) {
@@ -182,6 +84,109 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         // sorted properly now.
         for live_ranges in self.vreg_ranges.values_mut() {
             live_ranges.reverse();
+        }
+    }
+
+    fn compute_instr_liveness(
+        &mut self,
+        block: Block,
+        instr: Instr,
+        tied_defs: &mut SmallVec<[bool; 4]>,
+    ) {
+        // Note: we assume an instruction never uses vregs it defines.
+
+        let defs = self.lir.instr_defs(instr);
+        let uses = self.lir.instr_uses(instr);
+
+        tied_defs.clear();
+        tied_defs.resize(defs.len(), false);
+
+        for use_op in uses {
+            let vreg = use_op.reg().reg_num();
+
+            let op_pos = ProgramPoint::for_operand(instr, use_op.pos()).next();
+            let pos = match use_op.constraint() {
+                UseOperandConstraint::TiedToDef(i) => {
+                    let i = i as usize;
+                    assert!(
+                        !tied_defs[i],
+                        "multiple uses tied to same def in instr {instr}"
+                    );
+
+                    let tied_def = defs[i];
+                    assert!(use_op.pos() == OperandPos::Early);
+                    assert!(tied_def.pos() == OperandPos::Late);
+
+                    tied_defs[i] = true;
+                    ProgramPoint::pre_copy(instr)
+                }
+                UseOperandConstraint::Fixed(preg) => {
+                    // We model fixed register constraints as a pre-copy into the correct
+                    // physical register, and directly reserve the relevant register for
+                    // the correct range within the instruction.
+                    let pre_copy = ProgramPoint::pre_copy(instr);
+                    // We completely disallow overlaps with reservations for any other uses.
+                    self.reserve_phys_reg(preg, ProgramRange::new(pre_copy, op_pos), false);
+                    pre_copy
+                }
+                _ => {
+                    // Note: ranges are half-open, so we actually mark the use as extending
+                    // to the next program point.
+                    op_pos
+                }
+            };
+
+            let live_range = self.record_live_use(vreg, instr, pos, block);
+            if let UseOperandConstraint::Fixed(preg) = use_op.constraint() {
+                self.pre_instr_preg_copies[instr].push(PhysRegCopy { live_range, preg });
+            }
+        }
+
+        for (i, def_op) in defs.iter().enumerate() {
+            let mut def_point = if tied_defs[i] {
+                ProgramPoint::pre_copy(instr)
+            } else {
+                ProgramPoint::for_operand(instr, def_op.pos())
+            };
+
+            // If the value is constrained to a single physical register, insert a copy
+            // before the next instruction and start the live range there.
+            if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
+                let copy_point = ProgramPoint::before(instr.next());
+                // There isn't really a good reason for multiple defs to refer to the same
+                // physical register - just use a single vreg instead.
+                self.reserve_phys_reg(preg, ProgramRange::new(def_point, copy_point), false);
+                def_point = copy_point;
+            }
+
+            let live_range = self.record_def(
+                def_op.reg().reg_num(),
+                def_point,
+                // If this def is dead, make sure its range always gets extended past the
+                // end of the instruction so that dead early defs always interfere with
+                // late defs.
+                ProgramPoint::before(instr.next()),
+            );
+
+            if let (DefOperandConstraint::Fixed(preg), Some(live_range)) =
+                (def_op.constraint(), live_range)
+            {
+                self.post_instr_preg_copies[instr].push(PhysRegCopy { live_range, preg });
+            }
+        }
+
+        let clobbers = self.lir.instr_clobbers(instr);
+        if !clobbers.is_empty() {
+            // Clobbers are equivalent to dead late defs with physical register constraints.
+            let clobber_range = ProgramRange::new(
+                ProgramPoint::late(instr),
+                ProgramPoint::before(instr.next()),
+            );
+            for clobber in clobbers.iter() {
+                // We intentionally allow clobbers to overlap with existing late-out
+                // operands, to make things like call return values easier to model.
+                self.reserve_phys_reg(clobber, clobber_range, true);
+            }
         }
     }
 

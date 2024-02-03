@@ -228,6 +228,10 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             // means it should already have a block-covering range created by a use somewhere else
             // in the block (possibly a live-out).
             assert!(def_point >= last_range.prog_range.start);
+
+            // We're supposed to be doing a backward scan of the LIR, so this should always hold.
+            assert!(def_point < last_range.prog_range.end);
+
             last_range.prog_range.start = def_point;
             self.live_ranges[last_range.live_range].prog_range.start = def_point;
             Some(last_range.live_range)

@@ -50,22 +50,19 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                 self.open_live_out_range(live_out, block);
             }
 
-            let outgoing_block_params = self.lir.outgoing_block_params(block);
-            if !outgoing_block_params.is_empty() {
-                for &outgoing_vreg in outgoing_block_params {
-                    let outgoing_vreg = outgoing_vreg.reg_num();
-                    trace!("    outgoing param {outgoing_vreg}");
+            for &outgoing_vreg in self.lir.outgoing_block_params(block) {
+                let outgoing_vreg = outgoing_vreg.reg_num();
+                trace!("    outgoing param {outgoing_vreg}");
 
-                    // We can safely treat the last instruction in the block as using the value for
-                    // spill weight purposes, because we know the copy (if there is one) will
-                    // ultimately be placed here, as critical edges are already split.
-                    self.record_live_use(
-                        outgoing_vreg,
-                        last_instr,
-                        ProgramPoint::pre_copy(last_instr),
-                        block,
-                    );
-                }
+                // We can safely treat the last instruction in the block as using the value for
+                // spill weight purposes, because we know the copy (if there is one) will
+                // ultimately be placed here, as critical edges are already split.
+                self.record_live_use(
+                    outgoing_vreg,
+                    last_instr,
+                    ProgramPoint::pre_copy(last_instr),
+                    block,
+                );
             }
 
             for instr in block_range.into_iter().rev() {

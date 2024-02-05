@@ -68,6 +68,20 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         }
 
         debug!("phys copies:");
+
+        if !self.lir.live_in_regs().is_empty() {
+            debug!(
+                "E: {}",
+                self.lir
+                    .live_in_regs()
+                    .iter()
+                    .zip(self.lir.block_params(self.cfg_ctx.block_order[0]))
+                    .format_with(", ", |(&preg, &vreg), f| {
+                        f(&format_args!("{} -> {}", M::reg_name(preg), vreg.reg_num()))
+                    })
+            )
+        }
+
         for instr in self.lir.all_instrs() {
             let pre_copies = &self.pre_instr_preg_copies[instr];
             if !pre_copies.is_empty() {

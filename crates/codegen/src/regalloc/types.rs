@@ -1,6 +1,6 @@
 use core::{cmp::Ordering, fmt};
 
-use cranelift_entity::entity_impl;
+use cranelift_entity::{entity_impl, packed_option::PackedOption};
 use smallvec::SmallVec;
 
 use crate::lir::{Instr, OperandPos, PhysReg, VirtRegNum};
@@ -176,8 +176,24 @@ pub struct TaggedLiveRange {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct LiveSet(u32);
+entity_impl!(LiveSet, "ls");
+
+pub struct LiveSetData {
+    pub splill_ranges: SmallVec<[TaggedLiveRange; 2]>,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LiveSetFragment(u32);
 entity_impl!(LiveSetFragment, "lf");
+
+pub struct LiveSetFragmentData {
+    pub live_set: LiveSet,
+    pub ranges: SmallVec<[TaggedLiveRange; 4]>,
+    pub assignment: PackedOption<PhysReg>,
+    pub size: u32,
+    pub spill_weight: f32,
+}
 
 #[derive(Clone, Copy)]
 pub struct PhysRegCopy {

@@ -10,7 +10,10 @@ use crate::{
     machine::MachineCore,
 };
 
-use super::types::{LiveRange, LiveRangeData, PhysRegCopy, RangeEndKey, TaggedLiveRange};
+use super::types::{
+    LiveRange, LiveRangeData, LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData,
+    PhysRegCopy, RangeEndKey, TaggedLiveRange,
+};
 
 pub struct RegAllocContext<'a, M: MachineCore> {
     pub lir: &'a Lir<M>,
@@ -19,6 +22,8 @@ pub struct RegAllocContext<'a, M: MachineCore> {
     pub pre_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
     pub post_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
     pub live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
+    pub live_set_fragments: PrimaryMap<LiveSetFragment, LiveSetFragmentData>,
+    pub live_sets: PrimaryMap<LiveSet, LiveSetData>,
     pub phys_reg_assignments: Vec<BTreeMap<RangeEndKey, PackedOption<LiveRange>>>,
 }
 
@@ -31,6 +36,8 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             pre_instr_preg_copies: SecondaryMap::new(),
             post_instr_preg_copies: SecondaryMap::new(),
             live_ranges: PrimaryMap::new(),
+            live_set_fragments: PrimaryMap::new(),
+            live_sets: PrimaryMap::new(),
             phys_reg_assignments: vec![BTreeMap::new(); M::phys_reg_count() as usize],
         }
     }
@@ -92,6 +99,22 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                     })
                 )
             }
+        }
+
+        debug!("live fragments:");
+        for (fragment, fragment_data) in self.live_set_fragments.iter() {
+            if fragment_data.ranges.is_empty() {
+                continue;
+            }
+
+            debug!(
+                "[{}]: {}",
+                fragment.as_u32(),
+                fragment_data
+                    .ranges
+                    .iter()
+                    .format_with(" ", |range, f| f(&format_args!("{:?}", range.prog_range)))
+            );
         }
     }
 }

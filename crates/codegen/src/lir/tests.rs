@@ -94,6 +94,11 @@ fn push_instr<const U: usize>(
 }
 
 fn check_lir(lir: Lir<DummyMachine>, cfg: &BlockCfg, block_order: &[Block], expected: Expect) {
+    for &block in block_order {
+        for instr in lir.block_instrs(block) {
+            assert_eq!(lir.instr_block(instr), block);
+        }
+    }
     expected.assert_eq(&lir.display(cfg, block_order).to_string());
 }
 

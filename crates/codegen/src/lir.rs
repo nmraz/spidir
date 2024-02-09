@@ -816,6 +816,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
 
     fn reverse_instrs(&mut self, range: Range<usize>) {
         self.lir.instrs[range.clone()].reverse();
+        self.lir.instr_blocks[range.clone()].reverse();
         self.lir.instr_operands[range.clone()].reverse();
         self.lir.instr_clobbers[range].reverse();
     }

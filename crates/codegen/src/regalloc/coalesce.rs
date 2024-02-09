@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use core::{cmp::Ordering, mem};
 
 use cranelift_entity::{
@@ -14,13 +15,21 @@ use crate::{
 use super::{
     context::RegAllocContext,
     types::{LiveSet, LiveSetFragment, LiveSetFragmentData, TaggedLiveRange},
+    utils::get_instr_weight,
 };
 
 type VirtRegFragmentMap = SecondaryMap<VirtRegNum, PackedOption<LiveSetFragment>>;
 
+struct CopyCandidate {
+    src: VirtRegNum,
+    dest: VirtRegNum,
+    weight: f32,
+}
+
 impl<M: MachineCore> RegAllocContext<'_, M> {
     pub fn coalesce_live_sets(&mut self) {
         let mut fragments_by_vreg = VirtRegFragmentMap::new();
+        let mut candidates = Vec::new();
 
         for vreg in self.vreg_ranges.keys() {
             let fragment = self.live_set_fragments.push(LiveSetFragmentData {
@@ -38,11 +47,11 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 for &use_op in self.lir.instr_uses(instr) {
                     if let UseOperandConstraint::TiedToDef(i) = use_op.constraint() {
                         let def = self.lir.instr_defs(instr)[i as usize];
-                        self.try_coalesce(
-                            &mut fragments_by_vreg,
-                            def.reg().reg_num(),
-                            use_op.reg().reg_num(),
-                        );
+                        candidates.push(CopyCandidate {
+                            src: use_op.reg().reg_num(),
+                            dest: def.reg().reg_num(),
+                            weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
+                        });
                     }
                 }
             }
@@ -56,13 +65,35 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                     .iter()
                     .zip(self.lir.block_params(succ))
                 {
-                    self.try_coalesce(
-                        &mut fragments_by_vreg,
-                        incoming.reg_num(),
-                        outgoing.reg_num(),
-                    );
+                    // Since this block has a single successor, we can tack the copy itself onto the
+                    // terminator for weight purposes.
+                    let terminator = self.lir.block_instrs(block).end.prev();
+                    candidates.push(CopyCandidate {
+                        src: outgoing.reg_num(),
+                        dest: incoming.reg_num(),
+                        weight: get_instr_weight(self.lir, self.cfg_ctx, terminator),
+                    });
                 }
             }
+        }
+
+        // Now, greedily coalesce gathered candidates, processing in order of decreasing weight.
+        candidates.sort_unstable_by(|lhs_candidate, rhs_candidate| {
+            lhs_candidate
+                .weight
+                .partial_cmp(&rhs_candidate.weight)
+                .unwrap()
+                .reverse()
+        });
+
+        for candidate in &candidates {
+            trace!(
+                "coalesce candidate: {} -> {}, weight {}",
+                candidate.src,
+                candidate.dest,
+                candidate.weight
+            );
+            self.try_coalesce(&mut fragments_by_vreg, candidate.dest, candidate.src);
         }
     }
 

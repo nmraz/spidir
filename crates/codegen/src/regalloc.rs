@@ -11,6 +11,6 @@ mod types;
 
 pub fn run<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) {
     let mut ctx = RegAllocContext::new(lir, cfg_ctx);
-    ctx.compute_live_ranges();
+    ctx.compute_liveness();
     ctx.dump();
 }

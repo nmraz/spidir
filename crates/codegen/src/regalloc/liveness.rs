@@ -22,7 +22,7 @@ use super::{
 };
 
 impl<'a, M: MachineCore> RegAllocContext<'a, M> {
-    pub fn compute_live_ranges(&mut self) {
+    pub fn compute_liveness(&mut self) {
         let live_outs = compute_block_liveouts(self.lir, self.cfg_ctx);
 
         trace!("computing precise live ranges");

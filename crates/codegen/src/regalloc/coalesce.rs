@@ -6,6 +6,7 @@ use cranelift_entity::{
     SecondaryMap,
 };
 use log::trace;
+use smallvec::smallvec;
 
 use crate::{
     lir::{UseOperandConstraint, VirtRegNum},
@@ -14,7 +15,7 @@ use crate::{
 
 use super::{
     context::RegAllocContext,
-    types::{LiveSet, LiveSetFragment, LiveSetFragmentData, TaggedLiveRange},
+    types::{LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, TaggedLiveRange},
     utils::get_instr_weight,
 };
 
@@ -94,6 +95,19 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 candidate.weight
             );
             self.try_coalesce(&mut fragments_by_vreg, candidate.dest, candidate.src);
+        }
+
+        // Fill in per-fragment data now that we actually know what the fragments are.
+        for (fragment, fragment_data) in self.live_set_fragments.iter_mut() {
+            let live_set = self.live_sets.push(LiveSetData {
+                splill_ranges: smallvec![],
+            });
+
+            fragment_data.live_set = live_set;
+
+            for range in &fragment_data.ranges {
+                self.live_ranges[range.live_range].fragment = fragment;
+            }
         }
     }
 

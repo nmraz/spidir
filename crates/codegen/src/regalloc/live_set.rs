@@ -28,7 +28,7 @@ struct CopyCandidate {
 }
 
 impl<M: MachineCore> RegAllocContext<'_, M> {
-    pub fn coalesce_live_sets(&mut self) {
+    pub fn build_live_sets(&mut self) {
         let mut fragments_by_vreg = VirtRegFragmentMap::new();
         let mut candidates = Vec::new();
 

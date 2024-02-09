@@ -18,6 +18,7 @@ use super::{
         LiveRange, LiveRangeData, LiveRangeInstr, LiveSetFragment, PhysRegCopy, ProgramPoint,
         ProgramRange, RangeEndKey, TaggedLiveRange,
     },
+    utils::get_instr_weight,
     RegAllocContext,
 };
 
@@ -339,14 +340,6 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         });
         live_range
     }
-}
-
-fn get_instr_weight<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, instr: Instr) -> f32 {
-    let block = lir.instr_block(instr);
-    let loop_depth = cfg_ctx
-        .depth_map
-        .loop_depth(cfg_ctx.domtree.get_tree_node(block).unwrap());
-    1000f32 * ((loop_depth + 1) as f32)
 }
 
 fn compute_block_liveouts<M: MachineCore>(

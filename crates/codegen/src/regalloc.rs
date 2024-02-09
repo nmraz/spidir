@@ -9,6 +9,7 @@ mod coalesce;
 mod context;
 mod liveness;
 mod types;
+mod utils;
 
 pub fn run<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext) {
     let mut ctx = RegAllocContext::new(lir, cfg_ctx);

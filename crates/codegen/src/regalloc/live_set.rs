@@ -98,17 +98,30 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         }
 
         // Fill in per-fragment data now that we actually know what the fragments are.
-        for (fragment, fragment_data) in self.live_set_fragments.iter_mut() {
+        for fragment in self.live_set_fragments.keys() {
             let live_set = self.live_sets.push(LiveSetData {
                 splill_ranges: smallvec![],
             });
 
-            fragment_data.live_set = live_set;
-
-            for range in &fragment_data.ranges {
-                self.live_ranges[range.live_range].fragment = fragment;
-            }
+            self.live_set_fragments[fragment].live_set = live_set;
+            self.compute_live_fragment_properties(fragment);
         }
+    }
+
+    pub fn compute_live_fragment_properties(&mut self, fragment: LiveSetFragment) {
+        let mut size = 0;
+        let mut total_weight = 0.0;
+        for range in &self.live_set_fragments[fragment].ranges {
+            self.live_ranges[range.live_range].fragment = fragment;
+            size += range.prog_range.len();
+            total_weight += self.live_ranges[range.live_range]
+                .instrs
+                .iter()
+                .map(|instr| instr.weight)
+                .sum::<f32>();
+        }
+        self.live_set_fragments[fragment].size = size;
+        self.live_set_fragments[fragment].spill_weight = total_weight / (size as f32);
     }
 
     fn try_coalesce(

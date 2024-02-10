@@ -108,8 +108,10 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             }
 
             debug!(
-                "[{}]: {}",
+                "[{}] (size {}, weight {}): {}",
                 fragment.as_u32(),
+                fragment_data.size,
+                fragment_data.spill_weight,
                 fragment_data
                     .ranges
                     .iter()

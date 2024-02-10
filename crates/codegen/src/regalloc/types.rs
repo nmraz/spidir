@@ -115,6 +115,10 @@ impl ProgramRange {
         Self::new(point, point.next())
     }
 
+    pub fn len(self) -> u32 {
+        self.end.index() - self.start.index()
+    }
+
     pub fn intersects(self, other: ProgramRange) -> bool {
         self.end > other.start && other.end > self.start
     }

@@ -189,7 +189,19 @@ pub struct LiveSetData {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LiveSetFragment(u32);
-entity_impl!(LiveSetFragment, "lf");
+entity_impl!(LiveSetFragment);
+
+impl fmt::Display for LiveSetFragment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[{}]", self.0)
+    }
+}
+
+impl fmt::Debug for LiveSetFragment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
 
 pub struct LiveSetFragmentData {
     pub live_set: LiveSet,

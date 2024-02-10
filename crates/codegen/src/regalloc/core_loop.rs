@@ -1,6 +1,7 @@
 use core::cmp::Ordering;
 
 use alloc::collections::BinaryHeap;
+use log::trace;
 use smallvec::SmallVec;
 
 use crate::{lir::PhysReg, machine::MachineCore};
@@ -64,6 +65,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
         while let Some(fragment) = worklist.pop() {
             let fragment = fragment.fragment;
+            trace!("process: {fragment}");
             self.try_allocate(fragment);
         }
     }
@@ -79,18 +81,22 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         let mut lightest_soft_conflict_weight = f32::INFINITY;
 
         for &preg in probe_order {
+            trace!("  probe: {}", M::reg_name(preg));
             match self.probe_phys_reg(preg, fragment) {
                 None => {
+                    trace!("    no conflict");
                     no_conflict_reg = Some(preg);
                     break;
                 }
                 Some(ProbeConflict::Soft { fragments, weight }) => {
+                    trace!("    soft conflict (weight {weight})");
                     if weight < lightest_soft_conflict_weight {
                         lightest_soft_conflict = Some((preg, fragments));
                         lightest_soft_conflict_weight = weight;
                     }
                 }
-                Some(ProbeConflict::Hard { .. }) => {
+                Some(ProbeConflict::Hard { pos, .. }) => {
+                    trace!("    hard conflict at {pos:?}");
                     // TODO: use for split decisions.
                 }
             }
@@ -189,6 +195,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
     }
 
     fn assign_fragment_to_phys_reg(&mut self, preg: PhysReg, fragment: LiveSetFragment) {
+        trace!("  assign: {fragment} -> {}", M::reg_name(preg));
         let data = &mut self.live_set_fragments[fragment];
         let preg_assignments = &mut self.phys_reg_assignments[preg.as_u8() as usize];
         assert!(data.assignment.is_none());
@@ -201,6 +208,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
     fn evict_fragment(&mut self, fragment: LiveSetFragment) {
         let data = &mut self.live_set_fragments[fragment];
         let preg = data.assignment.take().unwrap();
+        trace!("  evict: {fragment} from {}", M::reg_name(preg));
         let preg_assignments = &mut self.phys_reg_assignments[preg.as_u8() as usize];
         for range in &data.ranges {
             preg_assignments

@@ -6,7 +6,7 @@ use smallvec::SmallVec;
 
 use crate::{
     cfg::CfgContext,
-    lir::{Instr, Lir, VirtRegNum},
+    lir::{Instr, Lir, PhysReg, VirtRegNum},
     machine::MachineCore,
 };
 
@@ -110,14 +110,36 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             }
 
             debug!(
-                "{fragment} (size {}, weight {}): {}",
+                "{fragment}({}): size {}, weight {}",
+                fragment_data
+                    .assignment
+                    .expand()
+                    .map_or("<none>", |reg| M::reg_name(reg)),
                 fragment_data.size,
                 fragment_data.spill_weight,
-                fragment_data
-                    .ranges
-                    .iter()
-                    .format_with(" ", |range, f| f(&format_args!("{:?}", range.prog_range)))
             );
+            for range in &fragment_data.ranges {
+                debug!("  {:?}", range.prog_range);
+            }
+        }
+
+        debug!("phys regs:");
+        for preg_num in 0..M::phys_reg_count() {
+            let assignments = &self.phys_reg_assignments[preg_num as usize];
+            if assignments.is_empty() {
+                continue;
+            }
+
+            debug!("{}:", M::reg_name(PhysReg::new(preg_num as u8)));
+
+            for (&range_key, &live_range) in assignments {
+                let range = range_key.0;
+                if let Some(live_range) = live_range.expand() {
+                    debug!("  {range:?} ({})", self.live_ranges[live_range].vreg);
+                } else {
+                    debug!("  {range:?}");
+                }
+            }
         }
     }
 }

@@ -298,7 +298,7 @@ fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
         .unwrap();
 
         if regalloc {
-            codegen::regalloc::run(&lir, &cfg_ctx);
+            codegen::regalloc::run(&lir, &cfg_ctx, &X64Machine);
         }
 
         writeln!(output, "}}\n").unwrap();

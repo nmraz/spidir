@@ -33,9 +33,11 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         let mut candidates = Vec::new();
 
         for vreg in self.vreg_ranges.keys() {
+            let class = self.lir.vreg_class(vreg);
             let fragment = self.live_set_fragments.push(LiveSetFragmentData {
                 live_set: LiveSet::reserved_value(),
                 ranges: self.vreg_ranges[vreg].clone(),
+                class,
                 assignment: None.into(),
                 size: 0,
                 spill_weight: 0.0,

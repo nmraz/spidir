@@ -18,6 +18,7 @@ use super::types::{
 pub struct RegAllocContext<'a, M: MachineCore> {
     pub lir: &'a Lir<M>,
     pub cfg_ctx: &'a CfgContext,
+    pub machine: &'a M,
     pub vreg_ranges: SecondaryMap<VirtRegNum, SmallVec<[TaggedLiveRange; 4]>>,
     pub pre_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
     pub post_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
@@ -28,10 +29,11 @@ pub struct RegAllocContext<'a, M: MachineCore> {
 }
 
 impl<'a, M: MachineCore> RegAllocContext<'a, M> {
-    pub fn new(lir: &'a Lir<M>, cfg_ctx: &'a CfgContext) -> Self {
+    pub fn new(lir: &'a Lir<M>, cfg_ctx: &'a CfgContext, machine: &'a M) -> Self {
         Self {
             lir,
             cfg_ctx,
+            machine,
             vreg_ranges: SecondaryMap::new(),
             pre_instr_preg_copies: SecondaryMap::new(),
             post_instr_preg_copies: SecondaryMap::new(),

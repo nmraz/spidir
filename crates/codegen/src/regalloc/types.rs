@@ -3,7 +3,7 @@ use core::{cmp::Ordering, fmt};
 use cranelift_entity::{entity_impl, packed_option::PackedOption};
 use smallvec::SmallVec;
 
-use crate::lir::{Instr, OperandPos, PhysReg, VirtRegNum};
+use crate::lir::{Instr, OperandPos, PhysReg, RegClass, VirtRegNum};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InstrSlot {
@@ -194,6 +194,7 @@ entity_impl!(LiveSetFragment, "lf");
 pub struct LiveSetFragmentData {
     pub live_set: LiveSet,
     pub ranges: SmallVec<[TaggedLiveRange; 4]>,
+    pub class: RegClass,
     pub assignment: PackedOption<PhysReg>,
     pub size: u32,
     pub spill_weight: f32,

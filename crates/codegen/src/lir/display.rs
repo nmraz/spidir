@@ -217,12 +217,12 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
             }
 
             let succs = self.cfg.block_succs(block);
-            if succs.len() == 1 {
+            if let &[succ] = succs {
                 // If we have a single successor, there might be outgoing block params.
                 writeln!(
                     f,
                     "=> {}{}",
-                    succs[0],
+                    succ,
                     display_block_params::<M>(self.lir.outgoing_block_params(block))
                 )?;
             } else if !succs.is_empty() {

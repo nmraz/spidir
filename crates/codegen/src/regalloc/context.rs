@@ -1,5 +1,6 @@
 use alloc::{collections::BTreeMap, vec, vec::Vec};
 use cranelift_entity::{packed_option::PackedOption, PrimaryMap, SecondaryMap};
+use fx_utils::FxHashMap;
 use itertools::Itertools;
 use log::{debug, log_enabled};
 use smallvec::SmallVec;
@@ -12,7 +13,7 @@ use crate::{
 
 use super::types::{
     LiveRange, LiveRangeData, LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData,
-    PhysRegCopy, RangeEndKey, TaggedLiveRange,
+    PhysRegCopy, PhysRegHint, RangeEndKey, TaggedLiveRange,
 };
 
 pub struct RegAllocContext<'a, M: MachineCore> {
@@ -23,6 +24,7 @@ pub struct RegAllocContext<'a, M: MachineCore> {
     pub pre_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
     pub post_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
     pub live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
+    pub live_range_hints: FxHashMap<LiveRange, SmallVec<[PhysRegHint; 2]>>,
     pub live_set_fragments: PrimaryMap<LiveSetFragment, LiveSetFragmentData>,
     pub live_sets: PrimaryMap<LiveSet, LiveSetData>,
     pub phys_reg_assignments: Vec<BTreeMap<RangeEndKey, PackedOption<LiveRange>>>,
@@ -38,6 +40,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             pre_instr_preg_copies: SecondaryMap::new(),
             post_instr_preg_copies: SecondaryMap::new(),
             live_ranges: PrimaryMap::new(),
+            live_range_hints: FxHashMap::default(),
             live_set_fragments: PrimaryMap::new(),
             live_sets: PrimaryMap::new(),
             phys_reg_assignments: vec![BTreeMap::new(); M::phys_reg_count() as usize],

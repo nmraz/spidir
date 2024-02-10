@@ -15,8 +15,8 @@ use crate::{
 
 use super::{
     types::{
-        LiveRange, LiveRangeData, LiveRangeInstr, LiveSetFragment, PhysRegCopy, ProgramPoint,
-        ProgramRange, RangeEndKey, TaggedLiveRange,
+        LiveRange, LiveRangeData, LiveRangeInstr, LiveSetFragment, PhysRegCopy, PhysRegHint,
+        ProgramPoint, ProgramRange, RangeEndKey, TaggedLiveRange,
     },
     utils::get_instr_weight,
     RegAllocContext,
@@ -140,6 +140,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             let live_range = self.record_live_use(vreg, instr, pos, block);
             if let UseOperandConstraint::Fixed(preg) = use_op.constraint() {
                 self.pre_instr_preg_copies[instr].push(PhysRegCopy { live_range, preg });
+                self.hint_live_range(live_range, preg, instr);
             }
         }
 
@@ -173,6 +174,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                 (def_op.constraint(), live_range)
             {
                 self.post_instr_preg_copies[instr].push(PhysRegCopy { live_range, preg });
+                self.hint_live_range(live_range, preg, instr);
             }
         }
 
@@ -189,6 +191,15 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                 self.reserve_phys_reg(clobber, clobber_range, true);
             }
         }
+    }
+
+    fn hint_live_range(&mut self, live_range: LiveRange, preg: PhysReg, instr: Instr) {
+        let hints = self.live_range_hints.entry(live_range).or_default();
+        hints.push(PhysRegHint {
+            preg,
+            instr,
+            weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
+        })
     }
 
     fn reserve_phys_reg(

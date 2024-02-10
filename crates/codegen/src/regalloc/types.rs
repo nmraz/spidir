@@ -218,6 +218,12 @@ pub struct PhysRegCopy {
     pub preg: PhysReg,
 }
 
+pub struct PhysRegHint {
+    pub preg: PhysReg,
+    pub instr: Instr,
+    pub weight: f32,
+}
+
 #[cfg(test)]
 mod tests {
     use cranelift_entity::EntityRef;

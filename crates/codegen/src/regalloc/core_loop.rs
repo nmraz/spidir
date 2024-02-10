@@ -35,6 +35,8 @@ impl Ord for QueuedFragment {
     }
 }
 
+type FragmentQueue = BinaryHeap<QueuedFragment>;
+
 enum ProbeConflict {
     Soft {
         fragments: SmallVec<[LiveSetFragment; 4]>,
@@ -51,7 +53,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         // Process fragments in order of decreasing size, to try to fill in the larger ranges before
         // moving on to smaller ones. Because of weight-based eviction, we can still end up
         // revisiting a larger fragment later.
-        let mut worklist = BinaryHeap::new();
+        let mut worklist = FragmentQueue::new();
         for (fragment, fragment_data) in self.live_set_fragments.iter() {
             if fragment_data.ranges.is_empty() {
                 continue;
@@ -66,11 +68,11 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         while let Some(fragment) = worklist.pop() {
             let fragment = fragment.fragment;
             trace!("process: {fragment}");
-            self.try_allocate(fragment);
+            self.try_allocate(fragment, &mut worklist);
         }
     }
 
-    fn try_allocate(&mut self, fragment: LiveSetFragment) {
+    fn try_allocate(&mut self, fragment: LiveSetFragment, worklist: &mut FragmentQueue) {
         let class = self.live_set_fragments[fragment].class;
 
         // TODO: Take register hints into account once they exist.
@@ -107,6 +109,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         } else if let Some((preg, soft_conflicts)) = lightest_soft_conflict {
             for conflicting_fragment in soft_conflicts {
                 self.evict_fragment(conflicting_fragment);
+                worklist.push(QueuedFragment {
+                    fragment,
+                    size: self.live_set_fragments[fragment].size,
+                });
             }
             self.assign_fragment_to_phys_reg(preg, fragment);
         } else {

@@ -12,8 +12,8 @@ use crate::{
 };
 
 use super::types::{
-    LiveRange, LiveRangeData, LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData,
-    PhysRegCopy, PhysRegHint, RangeEndKey, TaggedLiveRange,
+    AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveSet, LiveSetData, LiveSetFragment,
+    LiveSetFragmentData, PhysRegCopy, RangeEndKey, TaggedLiveRange,
 };
 
 pub struct RegAllocContext<'a, M: MachineCore> {
@@ -24,7 +24,7 @@ pub struct RegAllocContext<'a, M: MachineCore> {
     pub pre_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
     pub post_instr_preg_copies: SecondaryMap<Instr, SmallVec<[PhysRegCopy; 2]>>,
     pub live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
-    pub live_range_hints: FxHashMap<LiveRange, SmallVec<[PhysRegHint; 2]>>,
+    pub live_range_hints: FxHashMap<LiveRange, SmallVec<[AnnotatedPhysRegHint; 2]>>,
     pub live_set_fragments: PrimaryMap<LiveSetFragment, LiveSetFragmentData>,
     pub live_sets: PrimaryMap<LiveSet, LiveSetData>,
     pub phys_reg_assignments: Vec<BTreeMap<RangeEndKey, PackedOption<LiveRange>>>,

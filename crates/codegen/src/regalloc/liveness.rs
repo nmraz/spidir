@@ -15,8 +15,8 @@ use crate::{
 
 use super::{
     types::{
-        LiveRange, LiveRangeData, LiveRangeInstr, LiveSetFragment, PhysRegCopy, PhysRegHint,
-        ProgramPoint, ProgramRange, RangeEndKey, TaggedLiveRange,
+        AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeInstr, LiveSetFragment,
+        PhysRegCopy, PhysRegHint, ProgramPoint, ProgramRange, RangeEndKey, TaggedLiveRange,
     },
     utils::get_instr_weight,
     RegAllocContext,
@@ -85,6 +85,21 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         // sorted properly now.
         for live_ranges in self.vreg_ranges.values_mut() {
             live_ranges.reverse();
+        }
+
+        // Add register hints for all live-in values.
+        let first_instr = self.lir.all_instrs().start;
+        for (&preg, &vreg) in self
+            .lir
+            .live_in_regs()
+            .iter()
+            .zip(self.lir.block_params(self.cfg_ctx.block_order[0]))
+        {
+            let Some(first_range) = self.vreg_ranges[vreg.reg_num()].first() else {
+                continue;
+            };
+
+            self.hint_live_range(first_range.live_range, preg, first_instr);
         }
     }
 
@@ -195,10 +210,12 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
 
     fn hint_live_range(&mut self, live_range: LiveRange, preg: PhysReg, instr: Instr) {
         let hints = self.live_range_hints.entry(live_range).or_default();
-        hints.push(PhysRegHint {
-            preg,
+        hints.push(AnnotatedPhysRegHint {
+            hint: PhysRegHint {
+                preg,
+                weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
+            },
             instr,
-            weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
         })
     }
 

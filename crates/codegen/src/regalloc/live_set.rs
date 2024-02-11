@@ -15,8 +15,11 @@ use crate::{
 
 use super::{
     context::RegAllocContext,
-    types::{LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, TaggedLiveRange},
-    utils::get_instr_weight,
+    types::{
+        LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, PhysRegHint, PhysRegHints,
+        TaggedLiveRange,
+    },
+    utils::{coalesce_slice, get_instr_weight},
 };
 
 type VirtRegFragmentMap = SecondaryMap<VirtRegNum, PackedOption<LiveSetFragment>>;
@@ -38,6 +41,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 live_set: LiveSet::reserved_value(),
                 ranges: self.vreg_ranges[vreg].clone(),
                 class,
+                hints: smallvec![],
                 assignment: None.into(),
                 size: 0,
                 spill_weight: 0.0,
@@ -113,17 +117,30 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
     pub fn compute_live_fragment_properties(&mut self, fragment: LiveSetFragment) {
         let mut size = 0;
         let mut total_weight = 0.0;
-        for range in &self.live_set_fragments[fragment].ranges {
-            self.live_ranges[range.live_range].fragment = fragment;
+
+        let fragment_data = &mut self.live_set_fragments[fragment];
+        fragment_data.hints.clear();
+
+        for range in &fragment_data.ranges {
+            let range_data = &mut self.live_ranges[range.live_range];
+            range_data.fragment = fragment;
             size += range.prog_range.len();
-            total_weight += self.live_ranges[range.live_range]
+            total_weight += range_data
                 .instrs
                 .iter()
                 .map(|instr| instr.weight)
                 .sum::<f32>();
+            if let Some(range_hints) = self.live_range_hints.get(&range.live_range) {
+                fragment_data
+                    .hints
+                    .extend(range_hints.iter().map(|annotated_hint| annotated_hint.hint));
+            }
         }
-        self.live_set_fragments[fragment].size = size;
-        self.live_set_fragments[fragment].spill_weight = total_weight / (size as f32);
+
+        sort_reg_hints(&mut fragment_data.hints);
+
+        fragment_data.size = size;
+        fragment_data.spill_weight = total_weight / (size as f32);
     }
 
     fn try_coalesce(
@@ -200,4 +217,25 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
         false
     }
+}
+
+fn sort_reg_hints(hints: &mut PhysRegHints) {
+    // First: group the hints by physical register.
+    hints.sort_unstable_by_key(|hint| hint.preg.as_u8());
+
+    // Coalesce adjacent hints for the same register, recording total weight for each.
+    let new_len = coalesce_slice(hints, |prev_hint, cur_hint| {
+        if prev_hint.preg == cur_hint.preg {
+            Some(PhysRegHint {
+                preg: prev_hint.preg,
+                weight: prev_hint.weight + cur_hint.weight,
+            })
+        } else {
+            None
+        }
+    });
+    hints.truncate(new_len);
+
+    // Now, sort the hints in order of decreasing weight.
+    hints.sort_unstable_by(|lhs, rhs| lhs.weight.partial_cmp(&rhs.weight).unwrap().reverse());
 }

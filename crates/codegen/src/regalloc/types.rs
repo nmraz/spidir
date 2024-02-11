@@ -203,10 +203,25 @@ impl fmt::Debug for LiveSetFragment {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct PhysRegHint {
+    pub preg: PhysReg,
+    pub weight: f32,
+}
+
+#[derive(Clone, Copy)]
+pub struct AnnotatedPhysRegHint {
+    pub hint: PhysRegHint,
+    pub instr: Instr,
+}
+
+pub type PhysRegHints = SmallVec<[PhysRegHint; 2]>;
+
 pub struct LiveSetFragmentData {
     pub live_set: LiveSet,
     pub ranges: SmallVec<[TaggedLiveRange; 4]>,
     pub class: RegClass,
+    pub hints: PhysRegHints,
     pub assignment: PackedOption<PhysReg>,
     pub size: u32,
     pub spill_weight: f32,
@@ -216,12 +231,6 @@ pub struct LiveSetFragmentData {
 pub struct PhysRegCopy {
     pub live_range: LiveRange,
     pub preg: PhysReg,
-}
-
-pub struct PhysRegHint {
-    pub preg: PhysReg,
-    pub instr: Instr,
-    pub weight: f32,
 }
 
 #[cfg(test)]

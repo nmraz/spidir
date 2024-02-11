@@ -4,7 +4,10 @@ use alloc::collections::BinaryHeap;
 use log::trace;
 use smallvec::SmallVec;
 
-use crate::{lir::PhysReg, machine::MachineCore};
+use crate::{
+    lir::{PhysReg, PhysRegSet},
+    machine::MachineCore,
+};
 
 use super::{
     context::RegAllocContext,
@@ -75,14 +78,26 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
     fn try_allocate(&mut self, fragment: LiveSetFragment, worklist: &mut FragmentQueue) {
         let class = self.live_set_fragments[fragment].class;
 
-        // TODO: Take register hints into account once they exist.
-        let probe_order = self.machine.usable_regs(class);
+        // Start with hinted registers in order of decreasing weight, then move on to the default
+        // allocation order requested by the machine backend.
+        let probe_order = self.live_set_fragments[fragment]
+            .hints
+            .iter()
+            .map(|hint| hint.preg)
+            .chain(self.machine.usable_regs(class).iter().copied());
 
         let mut no_conflict_reg = None;
         let mut lightest_soft_conflict = None;
         let mut lightest_soft_conflict_weight = f32::INFINITY;
 
-        for &preg in probe_order {
+        let mut probed_regs = PhysRegSet::empty();
+        for preg in probe_order {
+            if probed_regs.contains(preg) {
+                continue;
+            }
+
+            probed_regs.add(preg);
+
             trace!("  probe: {}", M::reg_name(preg));
             match self.probe_phys_reg(preg, fragment) {
                 None => {

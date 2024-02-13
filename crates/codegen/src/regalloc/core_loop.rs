@@ -1,6 +1,6 @@
-use core::cmp::Ordering;
+use core::{cmp::Ordering, iter::Peekable, slice};
 
-use alloc::collections::BinaryHeap;
+use alloc::collections::{btree_map, BTreeMap, BinaryHeap};
 use log::trace;
 use smallvec::SmallVec;
 
@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     context::RegAllocContext,
-    types::{LiveSetFragment, ProgramPoint, RangeEndKey},
+    types::{LiveSetFragment, ProgramPoint, ProgramRange, RangeEndKey, TaggedLiveRange},
 };
 
 #[derive(Eq)]
@@ -49,6 +49,74 @@ enum ProbeConflict {
         pos: ProgramPoint,
         weight: Option<f32>,
     },
+}
+
+struct RangeConflict<T> {
+    fragment_range: TaggedLiveRange,
+    preg_range: ProgramRange,
+    value: T,
+}
+
+struct RangeConflictIter<'a, T> {
+    fragment_ranges: Peekable<slice::Iter<'a, TaggedLiveRange>>,
+    preg_ranges: Peekable<btree_map::Range<'a, RangeEndKey, T>>,
+}
+
+impl<'a, T> RangeConflictIter<'a, T> {
+    fn new(preg_map: &'a BTreeMap<RangeEndKey, T>, fragment_ranges: &'a [TaggedLiveRange]) -> Self {
+        // Assumption: `preg_map` can generally be much larger than `ranges` (it tracks a physical
+        // register throughout the entire function). Avoid a complete linear search through
+        // `preg_map` by starting with the first range inside it containing the bottom endpoint
+        // of `ranges`.
+        let search_key = RangeEndKey::point(fragment_ranges[0].prog_range.start);
+
+        let preg_ranges = preg_map.range(search_key..).peekable();
+        let fragment_ranges = fragment_ranges.iter().peekable();
+
+        Self {
+            fragment_ranges,
+            preg_ranges,
+        }
+    }
+}
+
+impl<'a, T: Copy> Iterator for RangeConflictIter<'a, T> {
+    type Item = RangeConflict<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let conflict = loop {
+            let fragment_range = **self.fragment_ranges.peek()?;
+            let (preg_range, &allocated_value) = self.preg_ranges.peek()?;
+
+            let preg_range = preg_range.0;
+
+            match fragment_range.prog_range.end.cmp(&preg_range.end) {
+                Ordering::Less => {
+                    self.fragment_ranges.next();
+                }
+                Ordering::Greater => {
+                    self.preg_ranges.next();
+                }
+                Ordering::Equal => {
+                    // If both ranges end at the same point, we can consume them both without
+                    // searching for more intersections, because we assume that the ranges are
+                    // non-intersecting in each of the separate lists.
+                    self.fragment_ranges.next();
+                    self.preg_ranges.next();
+                }
+            }
+
+            if fragment_range.prog_range.intersects(preg_range) {
+                break RangeConflict {
+                    fragment_range,
+                    preg_range,
+                    value: allocated_value,
+                };
+            }
+        };
+
+        Some(conflict)
+    }
 }
 
 impl<M: MachineCore> RegAllocContext<'_, M> {
@@ -140,69 +208,29 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         let fragment_weight = self.live_set_fragments[fragment].spill_weight;
         let fragment_ranges = &self.live_set_fragments[fragment].ranges;
 
-        // Assumption: `preg_map` can generally be much larger than `ranges` (it tracks a physical
-        // register throughout the entire function). Avoid a complete linear search through
-        // `preg_map` by starting with the first range inside it containing the bottom endpoint
-        // of `ranges`.
-        let search_key = RangeEndKey::point(fragment_ranges[0].prog_range.start);
-
-        // Once we've found the first range, do a linear walk the rest of the way to avoid logarithmic
-        // complexity per iteration.
-        let mut preg_ranges = preg_map.range(search_key..).peekable();
-        let mut fragment_ranges = fragment_ranges.iter().copied().peekable();
-
         let mut soft_conflicts = SmallVec::new();
         let mut soft_conflict_weight = 0f32;
 
-        loop {
-            // If we've run out of either list without finding an intersection, there *is* no
-            // intersection.
-            let Some(live_range) = fragment_ranges.peek() else {
-                break;
-            };
-            let Some((&preg_range, &allocated_live_range)) = preg_ranges.peek() else {
-                break;
-            };
+        for range_conflict in RangeConflictIter::new(preg_map, fragment_ranges) {
+            let pos = range_conflict.preg_range.start;
+            let allocated_live_range = range_conflict.value.expand();
 
-            let preg_range = preg_range.0;
-
-            if live_range.prog_range.intersects(preg_range) {
-                let pos = preg_range.start;
-
-                match allocated_live_range.expand() {
-                    Some(allocated_live_range) => {
-                        let allocated_fragment = self.live_ranges[allocated_live_range].fragment;
-                        let allocated_weight =
-                            self.live_set_fragments[allocated_fragment].spill_weight;
-                        if allocated_weight >= fragment_weight {
-                            return Some(ProbeConflict::Hard {
-                                pos,
-                                weight: Some(allocated_weight),
-                            });
-                        }
-
-                        soft_conflicts.push(allocated_fragment);
-                        soft_conflict_weight = soft_conflict_weight.max(allocated_weight);
+            match allocated_live_range {
+                Some(allocated_live_range) => {
+                    let allocated_fragment = self.live_ranges[allocated_live_range].fragment;
+                    let allocated_weight = self.live_set_fragments[allocated_fragment].spill_weight;
+                    if allocated_weight >= fragment_weight {
+                        return Some(ProbeConflict::Hard {
+                            pos,
+                            weight: Some(allocated_weight),
+                        });
                     }
-                    None => return Some(ProbeConflict::Hard { pos, weight: None }),
-                };
-            }
 
-            match live_range.prog_range.end.cmp(&preg_range.end) {
-                Ordering::Less => {
-                    fragment_ranges.next();
+                    soft_conflicts.push(allocated_fragment);
+                    soft_conflict_weight = soft_conflict_weight.max(allocated_weight);
                 }
-                Ordering::Greater => {
-                    preg_ranges.next();
-                }
-                Ordering::Equal => {
-                    // If both ranges end at the same point, we can consume them both without
-                    // searching for more intersections, because we assume that the ranges are
-                    // non-intersecting in each of the separate lists.
-                    fragment_ranges.next();
-                    preg_ranges.next();
-                }
-            }
+                None => return Some(ProbeConflict::Hard { pos, weight: None }),
+            };
         }
 
         if !soft_conflicts.is_empty() {

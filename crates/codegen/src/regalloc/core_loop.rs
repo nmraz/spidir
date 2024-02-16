@@ -136,6 +136,105 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
     }
 
     fn probe_phys_reg(&self, preg: PhysReg, fragment: LiveSetFragment) -> Option<ProbeConflict> {
+        // See if we conflict with a reservation (derived from an operand constraint) first. If
+        // everything there checks out, move on to comparing with other fragments assigned to the
+        // register.
+        self.probe_phys_reservation(preg, fragment)
+            .or_else(|| self.probe_phys_assignment(preg, fragment))
+    }
+
+    fn probe_phys_reservation(
+        &self,
+        preg: PhysReg,
+        fragment: LiveSetFragment,
+    ) -> Option<ProbeConflict> {
+        let reservations = &self.phys_reg_reservations[preg.as_u8() as usize];
+        let fragment_ranges = &self.live_set_fragments[fragment].ranges;
+
+        // Find the first reservation ending above our start point.
+        let first_reservation = reservations
+            .binary_search_by_key(&fragment_ranges[0].prog_range.start, |reservation| {
+                reservation.prog_range.end
+            })
+            .unwrap_or_else(|i| i);
+
+        let mut reservation_ranges = reservations[first_reservation..].iter().peekable();
+        let mut fragment_ranges = fragment_ranges.iter().peekable();
+
+        loop {
+            let Some(&fragment_range) = fragment_ranges.peek() else {
+                break;
+            };
+
+            let Some(&reservation_range) = reservation_ranges.peek() else {
+                break;
+            };
+
+            if fragment_range
+                .prog_range
+                .intersects(reservation_range.prog_range)
+            {
+                // Part of the fragment conflicts with a physical reservation. This is actually
+                // allowed if the reservation is copied out of the intersecting live range: that
+                // just means the range is live-through the instruction using it in a physical
+                // register, but we can keep using that register for the live range after the
+                // instruction as well.
+
+                // A simple example of this is signed division on x64. The LIR sequence for the
+                // division might look like this:
+                //
+                // func @sdiv64 {
+                // block0[%1:gpr($rdi), %2:gpr($rsi)]:
+                //     %3:gpr($rdx)[late] = ConvertWord(Cqo) %1($rax)[early]
+                //     %0:gpr($rax)[late], %4:gpr($rdx)[late] = Idiv(S64) %1($rax)[early], %3($rdx)[early], %2(any)[early]
+                //     Ret %0($rax)[early]
+                // }
+                //
+                // We want to place `%1` in `$rax` for both the `cqo` and the `div`, but `$rax` is
+                // reserved for the `cqo`, so a naive check would return a conflict. That case is
+                // okay, though, because the reservation of `$rax` is copied out of `%1`.
+
+                let copied_from_live_range =
+                    reservation_range
+                        .copied_live_range
+                        .is_some_and(|live_range_copy| {
+                            live_range_copy.live_range == fragment_range.live_range
+                        });
+                if !copied_from_live_range {
+                    let pos = reservation_range.prog_range.start;
+                    return Some(ProbeConflict::Hard { pos, weight: None });
+                }
+            }
+
+            match fragment_range
+                .prog_range
+                .end
+                .cmp(&reservation_range.prog_range.end)
+            {
+                Ordering::Less => {
+                    fragment_ranges.next();
+                }
+                Ordering::Greater => {
+                    reservation_ranges.next();
+                }
+                Ordering::Equal => {
+                    // If both ranges end at the same point, we can consume them both without
+                    // searching for more intersections, because we assume that the ranges are
+                    // non-intersecting in each of the separate lists.
+                    fragment_ranges.next();
+                    reservation_ranges.next();
+                }
+            }
+        }
+
+        None
+    }
+
+    fn probe_phys_assignment(
+        &self,
+        preg: PhysReg,
+        fragment: LiveSetFragment,
+    ) -> Option<ProbeConflict> {
         let preg_map = &self.phys_reg_assignments[preg.as_u8() as usize];
         let fragment_weight = self.live_set_fragments[fragment].spill_weight;
         let fragment_ranges = &self.live_set_fragments[fragment].ranges;
@@ -169,23 +268,17 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             if live_range.prog_range.intersects(preg_range) {
                 let pos = preg_range.start;
 
-                match allocated_live_range.expand() {
-                    Some(allocated_live_range) => {
-                        let allocated_fragment = self.live_ranges[allocated_live_range].fragment;
-                        let allocated_weight =
-                            self.live_set_fragments[allocated_fragment].spill_weight;
-                        if allocated_weight >= fragment_weight {
-                            return Some(ProbeConflict::Hard {
-                                pos,
-                                weight: Some(allocated_weight),
-                            });
-                        }
+                let allocated_fragment = self.live_ranges[allocated_live_range].fragment;
+                let allocated_weight = self.live_set_fragments[allocated_fragment].spill_weight;
+                if allocated_weight >= fragment_weight {
+                    return Some(ProbeConflict::Hard {
+                        pos,
+                        weight: Some(allocated_weight),
+                    });
+                }
 
-                        soft_conflicts.push(allocated_fragment);
-                        soft_conflict_weight = soft_conflict_weight.max(allocated_weight);
-                    }
-                    None => return Some(ProbeConflict::Hard { pos, weight: None }),
-                };
+                soft_conflicts.push(allocated_fragment);
+                soft_conflict_weight = soft_conflict_weight.max(allocated_weight);
             }
 
             match live_range.prog_range.end.cmp(&preg_range.end) {
@@ -222,7 +315,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         assert!(data.assignment.is_none());
         data.assignment = preg.into();
         for range in &data.ranges {
-            preg_assignments.insert(RangeEndKey(range.prog_range), range.live_range.into());
+            preg_assignments.insert(RangeEndKey(range.prog_range), range.live_range);
         }
     }
 

@@ -15,8 +15,9 @@ use crate::{
 
 use super::{
     types::{
-        AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeInstr, LiveSetFragment,
-        PhysRegCopy, PhysRegHint, ProgramPoint, ProgramRange, RangeEndKey, TaggedLiveRange,
+        AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeInstr, LiveRangePhysCopy,
+        LiveSetFragment, PhysRegCopyDir, PhysRegHint, PhysRegReservation, ProgramPoint,
+        ProgramRange, TaggedLiveRange,
     },
     utils::get_instr_weight,
     RegAllocContext,
@@ -87,6 +88,11 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             live_ranges.reverse();
         }
 
+        // Do the same thing for all physical register reservations.
+        for preg in 0..M::phys_reg_count() {
+            self.phys_reg_reservations[preg as usize].reverse();
+        }
+
         // Add register hints for all live-in values.
         let first_instr = self.lir.all_instrs().start;
         for (&preg, &vreg) in self
@@ -117,79 +123,63 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         tied_defs.clear();
         tied_defs.resize(defs.len(), false);
 
+        // Setup: find all uses tied to defs and mark those defs accordingly.
         for use_op in uses {
-            let vreg = use_op.reg().reg_num();
+            if let UseOperandConstraint::TiedToDef(i) = use_op.constraint() {
+                let i = i as usize;
+                assert!(
+                    !tied_defs[i],
+                    "multiple uses tied to same def in instr {instr}"
+                );
 
-            let op_pos = ProgramPoint::for_operand(instr, use_op.pos()).next();
-            let pos = match use_op.constraint() {
-                UseOperandConstraint::TiedToDef(i) => {
-                    let i = i as usize;
-                    assert!(
-                        !tied_defs[i],
-                        "multiple uses tied to same def in instr {instr}"
-                    );
+                let tied_def = defs[i];
+                assert!(use_op.pos() == OperandPos::Early);
+                assert!(tied_def.pos() == OperandPos::Late);
 
-                    let tied_def = defs[i];
-                    assert!(use_op.pos() == OperandPos::Early);
-                    assert!(tied_def.pos() == OperandPos::Late);
-
-                    tied_defs[i] = true;
-                    ProgramPoint::pre_copy(instr)
-                }
-                UseOperandConstraint::Fixed(preg) => {
-                    // We model fixed register constraints as a pre-copy into the correct
-                    // physical register, and directly reserve the relevant register for
-                    // the correct range within the instruction.
-                    let pre_copy = ProgramPoint::pre_copy(instr);
-                    // We completely disallow overlaps with reservations for any other uses.
-                    self.reserve_phys_reg(preg, ProgramRange::new(pre_copy, op_pos), false);
-                    pre_copy
-                }
-                _ => {
-                    // Note: ranges are half-open, so we actually mark the use as extending
-                    // to the next program point.
-                    op_pos
-                }
-            };
-
-            let live_range = self.record_live_use(vreg, instr, pos, block);
-            if let UseOperandConstraint::Fixed(preg) = use_op.constraint() {
-                self.pre_instr_preg_copies[instr].push(PhysRegCopy { live_range, preg });
-                self.hint_live_range(live_range, preg, instr);
+                tied_defs[i] = true;
             }
         }
 
+        // Process defs and clobbers first so our physical register reservations are always seen in
+        // descending order.
         for (i, def_op) in defs.iter().enumerate() {
-            let mut def_point = if tied_defs[i] {
+            let op_def_point = if tied_defs[i] {
                 ProgramPoint::pre_copy(instr)
             } else {
                 ProgramPoint::for_operand(instr, def_op.pos())
             };
 
-            // If the value is constrained to a single physical register, insert a copy
-            // before the next instruction and start the live range there.
-            if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
-                let copy_point = ProgramPoint::before(instr.next());
-                // There isn't really a good reason for multiple defs to refer to the same
-                // physical register - just use a single vreg instead.
-                self.reserve_phys_reg(preg, ProgramRange::new(def_point, copy_point), false);
-                def_point = copy_point;
-            }
+            let def_point = match def_op.constraint() {
+                // If the value is constrained to a single physical register, insert a copy
+                // before the next instruction and start the live range there.
+                DefOperandConstraint::Fixed(_) => ProgramPoint::before(instr.next()),
+                _ => op_def_point,
+            };
 
             let live_range = self.record_def(
                 def_op.reg().reg_num(),
                 def_point,
                 // If this def is dead, make sure its range always gets extended past the
-                // end of the instruction so that dead early defs always interfere with
-                // late defs.
+                // end of the instruction so that dead early defs interfere with late defs.
                 ProgramPoint::before(instr.next()),
             );
 
-            if let (DefOperandConstraint::Fixed(preg), Some(live_range)) =
-                (def_op.constraint(), live_range)
-            {
-                self.post_instr_preg_copies[instr].push(PhysRegCopy { live_range, preg });
-                self.hint_live_range(live_range, preg, instr);
+            if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
+                let copied_live_range = live_range.map(|live_range| LiveRangePhysCopy {
+                    live_range,
+                    direction: PhysRegCopyDir::FromPhys,
+                });
+
+                self.reserve_phys_reg(
+                    preg,
+                    ProgramRange::new(op_def_point, def_point),
+                    instr,
+                    copied_live_range,
+                    // There isn't really a good reason for multiple defs to refer to the same
+                    // physical register (the same vreg could just be reused later instead), and
+                    // allowing that would complicate our `phys_reg_reservations`.
+                    false,
+                );
             }
         }
 
@@ -203,8 +193,89 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             for clobber in clobbers.iter() {
                 // We intentionally allow clobbers to overlap with existing late-out
                 // operands, to make things like call return values easier to model.
-                self.reserve_phys_reg(clobber, clobber_range, true);
+                self.reserve_phys_reg(clobber, clobber_range, instr, None, true);
             }
+        }
+
+        // Now that defs have been processed, move on to the uses.
+        for use_op in uses {
+            let vreg = use_op.reg().reg_num();
+
+            let op_pos = ProgramPoint::for_operand(instr, use_op.pos()).next();
+            let pos = match use_op.constraint() {
+                UseOperandConstraint::TiedToDef(_) => ProgramPoint::pre_copy(instr),
+                UseOperandConstraint::Fixed(_) => {
+                    // We model fixed register constraints as a pre-copy into the correct
+                    // physical register, and directly reserve the relevant register for
+                    // the correct range within the instruction.
+                    ProgramPoint::pre_copy(instr)
+                }
+                _ => {
+                    // Note: ranges are half-open, so we actually mark the use as extending
+                    // to the next program point.
+                    op_pos
+                }
+            };
+
+            let live_range = self.record_live_use(vreg, instr, pos, block);
+            if let UseOperandConstraint::Fixed(preg) = use_op.constraint() {
+                self.reserve_phys_reg(
+                    preg,
+                    ProgramRange::new(pos, op_pos),
+                    instr,
+                    Some(LiveRangePhysCopy {
+                        live_range,
+                        direction: PhysRegCopyDir::ToPhys,
+                    }),
+                    // We completely disallow overlaps with reservations for any other uses.
+                    false,
+                );
+            }
+        }
+    }
+
+    fn reserve_phys_reg(
+        &mut self,
+        preg: PhysReg,
+        prog_range: ProgramRange,
+        instr: Instr,
+        copied_live_range: Option<LiveRangePhysCopy>,
+        allow_identical_range: bool,
+    ) {
+        let reservations = &mut self.phys_reg_reservations[preg.as_u8() as usize];
+
+        // We're adding reservations in reverse order, so the last reservation should be either
+        // above us or identical (when `allow_identical_range` is true).
+        if let Some(last_reservation) = reservations.last() {
+            if last_reservation.prog_range.intersects(prog_range) {
+                if allow_identical_range {
+                    // We don't support multiple live range copies per physical register reservation.
+                    debug_assert!(copied_live_range.is_none());
+                    assert!(
+                        last_reservation.prog_range == prog_range,
+                        "attempted to reserve physical register with overlapping ranges"
+                    );
+
+                    // We have nothing more to do in this case: the new reservation is "absorbed"
+                    // into the existing one.
+                    return;
+                } else {
+                    panic!("attempted to reserve physical register with overlapping ranges");
+                }
+            }
+
+            // At this point, we can safely verify our assumption that reservations are being added
+            // in reverse order.
+            debug_assert!(last_reservation.prog_range.start >= prog_range.end);
+        }
+
+        reservations.push(PhysRegReservation {
+            prog_range,
+            copied_live_range,
+        });
+
+        if let Some(copied_live_range) = copied_live_range {
+            self.hint_live_range(copied_live_range.live_range, preg, instr);
         }
     }
 
@@ -217,38 +288,6 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             },
             instr,
         })
-    }
-
-    fn reserve_phys_reg(
-        &mut self,
-        preg: PhysReg,
-        range: ProgramRange,
-        allow_identical_range: bool,
-    ) {
-        let assignments = &mut self.phys_reg_assignments[preg.as_u8() as usize];
-
-        // Recall that non-degenerate ranges intersect iff each range's start start point precedes
-        // the other's end point. Our allocation tree is keyed by end point, so start by performing
-        // the `new_range.start < other_ranges.end` comparison.
-        if let Some((intersection_candidate, candidate_live_range)) =
-            assignments.range(RangeEndKey::point(range.start)..).next()
-        {
-            // If we're allowing existing identical ranges (like what happens with register defs
-            // and clobbers), check for and ignore that case now.
-            if allow_identical_range && intersection_candidate.0 == range {
-                assert!(candidate_live_range.is_none());
-                return;
-            }
-
-            // Otherwise, we forbid intersection. The ranges really will intersect if the reverse
-            // start/end comparison holds. If that is the case, report the incompatibility now.
-            assert!(
-                intersection_candidate.0.start >= range.end,
-                "attempted to reserve physical register with overlapping ranges"
-            );
-        }
-
-        assignments.insert(RangeEndKey(range), None.into());
     }
 
     fn record_def(

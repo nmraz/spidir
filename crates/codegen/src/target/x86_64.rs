@@ -175,8 +175,10 @@ impl MachineCore for X64Machine {
     fn usable_regs(&self, class: RegClass) -> &[PhysReg] {
         match class {
             RC_GPR => &[
-                REG_RAX, REG_RBX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10,
-                REG_R11, REG_R12, REG_R13, REG_R14, REG_R15,
+                // Caller-saved registers are preferred, so they come first
+                REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11,
+                // Move on to callee-saved registers when we have to
+                REG_RBX, REG_R12, REG_R13, REG_R14, REG_R15,
             ],
             _ => panic!("unknown register class"),
         }

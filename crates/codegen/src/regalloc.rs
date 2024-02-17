@@ -5,6 +5,7 @@ use crate::{cfg::CfgContext, lir::Lir, machine::MachineCore};
 
 use self::context::RegAllocContext;
 
+mod conflict;
 mod context;
 mod core_loop;
 mod live_set;

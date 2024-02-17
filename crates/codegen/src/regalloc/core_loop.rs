@@ -10,6 +10,7 @@ use crate::{
 };
 
 use super::{
+    conflict::{iter_btree_ranges, iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{LiveSetFragment, ProgramPoint, RangeEndKey},
 };
@@ -148,82 +149,43 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         preg: PhysReg,
         fragment: LiveSetFragment,
     ) -> Option<ProbeConflict> {
-        let reservations = &self.phys_reg_reservations[preg.as_u8() as usize];
-        let fragment_ranges = &self.live_set_fragments[fragment].ranges;
+        let reservations = iter_slice_ranges(
+            &self.phys_reg_reservations[preg.as_u8() as usize],
+            |reservation| (reservation.prog_range, &reservation.copied_live_range),
+        );
+        let fragment_ranges = iter_slice_ranges(
+            &self.live_set_fragments[fragment].ranges,
+            |fragment_range| (fragment_range.prog_range, &fragment_range.live_range),
+        );
 
-        // Find the first reservation ending above our start point.
-        let first_reservation = reservations
-            .binary_search_by_key(&fragment_ranges[0].prog_range.start, |reservation| {
-                reservation.prog_range.end
-            })
-            .unwrap_or_else(|i| i);
+        for ((reservation_range, reservation_copy), (_, fragment_live_range)) in
+            iter_conflicts(reservations, fragment_ranges)
+        {
+            // Part of the fragment conflicts with a physical reservation. This is actually
+            // allowed if the reservation is copied out of the intersecting live range: that
+            // just means the range is live-through the instruction using it in a physical
+            // register, but we can keep using that register for the live range after the
+            // instruction as well.
 
-        let mut reservation_ranges = reservations[first_reservation..].iter().peekable();
-        let mut fragment_ranges = fragment_ranges.iter().peekable();
+            // A simple example of this is signed division on x64. The LIR sequence for the
+            // division might look like this:
+            //
+            // func @sdiv64 {
+            // block0[%1:gpr($rdi), %2:gpr($rsi)]:
+            //     %3:gpr($rdx)[late] = ConvertWord(Cqo) %1($rax)[early]
+            //     %0:gpr($rax)[late], %4:gpr($rdx)[late] = Idiv(S64) %1($rax)[early], %3($rdx)[early], %2(any)[early]
+            //     Ret %0($rax)[early]
+            // }
+            //
+            // We want to place `%1` in `$rax` for both the `cqo` and the `div`, but `$rax` is
+            // reserved for the `cqo`, so a naive check would return a conflict. That case is
+            // okay, though, because the reservation of `$rax` is copied out of `%1`.
 
-        loop {
-            let Some(&fragment_range) = fragment_ranges.peek() else {
-                break;
-            };
-
-            let Some(&reservation_range) = reservation_ranges.peek() else {
-                break;
-            };
-
-            if fragment_range
-                .prog_range
-                .intersects(reservation_range.prog_range)
-            {
-                // Part of the fragment conflicts with a physical reservation. This is actually
-                // allowed if the reservation is copied out of the intersecting live range: that
-                // just means the range is live-through the instruction using it in a physical
-                // register, but we can keep using that register for the live range after the
-                // instruction as well.
-
-                // A simple example of this is signed division on x64. The LIR sequence for the
-                // division might look like this:
-                //
-                // func @sdiv64 {
-                // block0[%1:gpr($rdi), %2:gpr($rsi)]:
-                //     %3:gpr($rdx)[late] = ConvertWord(Cqo) %1($rax)[early]
-                //     %0:gpr($rax)[late], %4:gpr($rdx)[late] = Idiv(S64) %1($rax)[early], %3($rdx)[early], %2(any)[early]
-                //     Ret %0($rax)[early]
-                // }
-                //
-                // We want to place `%1` in `$rax` for both the `cqo` and the `div`, but `$rax` is
-                // reserved for the `cqo`, so a naive check would return a conflict. That case is
-                // okay, though, because the reservation of `$rax` is copied out of `%1`.
-
-                let copied_from_live_range =
-                    reservation_range
-                        .copied_live_range
-                        .is_some_and(|live_range_copy| {
-                            live_range_copy.live_range == fragment_range.live_range
-                        });
-                if !copied_from_live_range {
-                    let pos = reservation_range.prog_range.start;
-                    return Some(ProbeConflict::Hard { pos, weight: None });
-                }
-            }
-
-            match fragment_range
-                .prog_range
-                .end
-                .cmp(&reservation_range.prog_range.end)
-            {
-                Ordering::Less => {
-                    fragment_ranges.next();
-                }
-                Ordering::Greater => {
-                    reservation_ranges.next();
-                }
-                Ordering::Equal => {
-                    // If both ranges end at the same point, we can consume them both without
-                    // searching for more intersections, because we assume that the ranges are
-                    // non-intersecting in each of the separate lists.
-                    fragment_ranges.next();
-                    reservation_ranges.next();
-                }
+            let copied_from_live_range = reservation_copy
+                .is_some_and(|live_range_copy| live_range_copy.live_range == fragment_live_range);
+            if !copied_from_live_range {
+                let pos = reservation_range.start;
+                return Some(ProbeConflict::Hard { pos, weight: None });
             }
         }
 
@@ -235,67 +197,31 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         preg: PhysReg,
         fragment: LiveSetFragment,
     ) -> Option<ProbeConflict> {
-        let preg_map = &self.phys_reg_assignments[preg.as_u8() as usize];
+        let preg_ranges = iter_btree_ranges(&self.phys_reg_assignments[preg.as_u8() as usize]);
+        let fragment_ranges = iter_slice_ranges(
+            &self.live_set_fragments[fragment].ranges,
+            |fragment_range| (fragment_range.prog_range, &fragment_range.live_range),
+        );
+
         let fragment_weight = self.live_set_fragments[fragment].spill_weight;
-        let fragment_ranges = &self.live_set_fragments[fragment].ranges;
-
-        // Assumption: `preg_map` can generally be much larger than `ranges` (it tracks a physical
-        // register throughout the entire function). Avoid a complete linear search through
-        // `preg_map` by starting with the first range inside it containing the bottom endpoint
-        // of `ranges`.
-        let search_key = RangeEndKey::point(fragment_ranges[0].prog_range.start);
-
-        // Once we've found the first range, do a linear walk the rest of the way to avoid logarithmic
-        // complexity per iteration.
-        let mut preg_ranges = preg_map.range(search_key..).peekable();
-        let mut fragment_ranges = fragment_ranges.iter().copied().peekable();
 
         let mut soft_conflicts = SmallVec::new();
         let mut soft_conflict_weight = 0f32;
 
-        loop {
-            // If we've run out of either list without finding an intersection, there *is* no
-            // intersection.
-            let Some(live_range) = fragment_ranges.peek() else {
-                break;
-            };
-            let Some((&preg_range, &allocated_live_range)) = preg_ranges.peek() else {
-                break;
-            };
+        for ((preg_range, preg_assignment), _) in iter_conflicts(preg_ranges, fragment_ranges) {
+            let pos = preg_range.start;
 
-            let preg_range = preg_range.0;
-
-            if live_range.prog_range.intersects(preg_range) {
-                let pos = preg_range.start;
-
-                let allocated_fragment = self.live_ranges[allocated_live_range].fragment;
-                let allocated_weight = self.live_set_fragments[allocated_fragment].spill_weight;
-                if allocated_weight >= fragment_weight {
-                    return Some(ProbeConflict::Hard {
-                        pos,
-                        weight: Some(allocated_weight),
-                    });
-                }
-
-                soft_conflicts.push(allocated_fragment);
-                soft_conflict_weight = soft_conflict_weight.max(allocated_weight);
+            let allocated_fragment = self.live_ranges[preg_assignment].fragment;
+            let allocated_weight = self.live_set_fragments[allocated_fragment].spill_weight;
+            if allocated_weight >= fragment_weight {
+                return Some(ProbeConflict::Hard {
+                    pos,
+                    weight: Some(allocated_weight),
+                });
             }
 
-            match live_range.prog_range.end.cmp(&preg_range.end) {
-                Ordering::Less => {
-                    fragment_ranges.next();
-                }
-                Ordering::Greater => {
-                    preg_ranges.next();
-                }
-                Ordering::Equal => {
-                    // If both ranges end at the same point, we can consume them both without
-                    // searching for more intersections, because we assume that the ranges are
-                    // non-intersecting in each of the separate lists.
-                    fragment_ranges.next();
-                    preg_ranges.next();
-                }
-            }
+            soft_conflicts.push(allocated_fragment);
+            soft_conflict_weight = soft_conflict_weight.max(allocated_weight);
         }
 
         if !soft_conflicts.is_empty() {

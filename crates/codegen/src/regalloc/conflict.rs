@@ -1,6 +1,5 @@
-use core::{cmp::Ordering, iter::Peekable, slice};
-
 use alloc::collections::{btree_map, BTreeMap};
+use core::{cmp::Ordering, iter::Peekable, slice};
 
 use super::types::{ProgramPoint, ProgramRange, RangeEndKey};
 
@@ -29,6 +28,9 @@ impl<'a, V: Copy> RangeKeyIter for BTreeRangeIter<'a, V> {
     }
 
     fn skip_to_endpoint_above(&mut self, pos: ProgramPoint) {
+        // Note: we want ranges that end strictly above pos. The key we chose here actually ends
+        // just *after* `pos` (because it is half-open), so we end up getting exactly what we
+        // wanted.
         self.iter = self.tree.range(RangeEndKey::point(pos)..).peekable();
     }
 }
@@ -61,8 +63,10 @@ where
 
     fn skip_to_endpoint_above(&mut self, pos: ProgramPoint) {
         let slice = self.iter.as_slice();
+        // To get first range ending above `pos` here, search for the first one ending at or above
+        // `pos.next()`.
         let i = slice
-            .binary_search_by_key(&pos, |range_obj| (self.key_func)(range_obj).0.end)
+            .binary_search_by_key(&pos.next(), |range_obj| (self.key_func)(range_obj).0.end)
             .unwrap_or_else(|i| i);
         self.iter = slice[i..].iter();
     }

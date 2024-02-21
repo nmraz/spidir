@@ -110,6 +110,9 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     }
 
     pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
+        // We assume that the destination register is live here, meaning that it's okay to just bump
+        // the use count of `src`.
+        self.state.bump_vreg_use_count(src);
         self.builder.copy_vreg(dest, src)
     }
 
@@ -126,9 +129,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     ) {
         // Bump the use count for any operands that came from values in the original graph.
         for &use_op in uses {
-            if let Some(&value) = self.state.reg_value_map.get(&use_op.reg()) {
-                self.state.value_use_counts[value] += 1;
-            }
+            self.state.bump_vreg_use_count(use_op.reg());
         }
         emit_instr(&mut self.builder, instr, defs, uses, clobbers);
     }
@@ -441,6 +442,12 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
 
     fn is_value_used(&self, value: DepValue) -> bool {
         self.value_use_counts[value] > 0
+    }
+
+    fn bump_vreg_use_count(&mut self, vreg: VirtReg) {
+        if let Some(&value) = self.reg_value_map.get(&vreg) {
+            self.value_use_counts[value] += 1;
+        }
     }
 
     fn detach_node_inputs(&mut self, node: Node) {

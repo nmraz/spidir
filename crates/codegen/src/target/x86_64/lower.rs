@@ -168,6 +168,13 @@ impl MachineLower for X64Machine {
                     ],
                 );
             }
+            NodeKind::Iext | NodeKind::Itrunc => {
+                let [input] = ctx.node_inputs_exact(node);
+                let [output] = ctx.node_outputs_exact(node);
+                let input = ctx.get_value_vreg(input);
+                let output = ctx.get_value_vreg(output);
+                ctx.copy_vreg(output, input);
+            }
             NodeKind::Icmp(kind) => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);

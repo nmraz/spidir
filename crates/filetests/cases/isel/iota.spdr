@@ -16,7 +16,7 @@ func @iota(ptr, i64) {
     # nextln:     Jump(block4)
     # nextln: => block4[%8:gpr]
     # nextln: block4[%0:gpr]:
-    # nextln:     %6:gpr(any)[late] = ShiftRmR(S64, Shl) %0(reg)[early], %7($$rcx)[early]
+    # nextln:     %6:gpr(any)[late] = ShiftRmR(S64, Shl) %0(tied:0)[early], %7($$rcx)[early]
     # nextln:     %4:gpr(reg)[late] = AluRRm(S64, Add) %5(tied:0)[early], %6(any)[early]
     # nextln:     MovMR(S64) %4(reg)[early], %0(reg)[early]
     # nextln:     %1:gpr(reg)[late] = AluRRm(S64, Add) %0(tied:0)[early], %3(any)[early]

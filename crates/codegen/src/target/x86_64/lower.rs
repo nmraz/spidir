@@ -436,7 +436,7 @@ fn emit_shift_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: Shif
         X64Instr::ShiftRmR(operand_size_for_ty(ty), op),
         &[DefOperand::any(output)],
         &[
-            UseOperand::any_reg(value),
+            UseOperand::tied(value, 0),
             UseOperand::fixed(amount, REG_RCX),
         ],
     );

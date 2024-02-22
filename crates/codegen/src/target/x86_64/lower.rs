@@ -119,12 +119,26 @@ impl MachineLower for X64Machine {
                 let (rax, _) = emit_udiv(ctx, op1, op2);
                 ctx.copy_vreg(output, rax);
             }
+            NodeKind::Urem => {
+                let [op1, op2] = ctx.node_inputs_exact(node);
+                let [output] = ctx.node_outputs_exact(node);
+                let output = ctx.get_value_vreg(output);
+                let (_, rdx) = emit_udiv(ctx, op1, op2);
+                ctx.copy_vreg(output, rdx);
+            }
             NodeKind::Sdiv => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
                 let output = ctx.get_value_vreg(output);
                 let (rax, _) = emit_sdiv(ctx, op1, op2);
                 ctx.copy_vreg(output, rax);
+            }
+            NodeKind::Srem => {
+                let [op1, op2] = ctx.node_inputs_exact(node);
+                let [output] = ctx.node_outputs_exact(node);
+                let output = ctx.get_value_vreg(output);
+                let (_, rdx) = emit_sdiv(ctx, op1, op2);
+                ctx.copy_vreg(output, rdx);
             }
             NodeKind::Iext | NodeKind::Itrunc => {
                 let [input] = ctx.node_inputs_exact(node);

@@ -33,6 +33,20 @@ impl Type {
     pub fn is_integer_or_pointer(self) -> bool {
         self.is_integer() || matches!(self, Type::Ptr)
     }
+
+    #[inline]
+    pub fn byte_size(self) -> Option<usize> {
+        match self {
+            Type::I32 => Some(4),
+            Type::I64 | Type::F64 => Some(8),
+            _ => None,
+        }
+    }
+
+    #[inline]
+    pub fn bit_width(self) -> Option<usize> {
+        self.byte_size().map(|s| s * 8)
+    }
 }
 
 impl fmt::Display for Type {

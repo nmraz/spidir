@@ -115,58 +115,16 @@ impl MachineLower for X64Machine {
             NodeKind::Udiv => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
-                let ty = ctx.value_type(output);
-
-                let op1 = ctx.get_value_vreg(op1);
-                let op2 = ctx.get_value_vreg(op2);
                 let output = ctx.get_value_vreg(output);
-
-                let rdx_in = ctx.create_temp_vreg(RC_GPR);
-                ctx.emit_instr(X64Instr::MovRZ, &[DefOperand::any_reg(rdx_in)], &[]);
-
-                let rdx_out = ctx.create_temp_vreg(RC_GPR);
-                ctx.emit_instr(
-                    X64Instr::Div(operand_size_for_ty(ty)),
-                    &[
-                        DefOperand::fixed(output, REG_RAX),
-                        DefOperand::fixed(rdx_out, REG_RDX),
-                    ],
-                    &[
-                        UseOperand::fixed(op1, REG_RAX),
-                        UseOperand::fixed(rdx_in, REG_RDX),
-                        UseOperand::any(op2),
-                    ],
-                );
+                let (rax, _) = emit_udiv(ctx, op1, op2);
+                ctx.copy_vreg(output, rax);
             }
             NodeKind::Sdiv => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
-                let ty = ctx.value_type(output);
-
-                let op1 = ctx.get_value_vreg(op1);
-                let op2 = ctx.get_value_vreg(op2);
                 let output = ctx.get_value_vreg(output);
-
-                let rdx_in = ctx.create_temp_vreg(RC_GPR);
-                ctx.emit_instr(
-                    X64Instr::ConvertWord(cw_width_for_ty(ty)),
-                    &[DefOperand::fixed(rdx_in, REG_RDX)],
-                    &[UseOperand::fixed(op1, REG_RAX)],
-                );
-
-                let rdx_out = ctx.create_temp_vreg(RC_GPR);
-                ctx.emit_instr(
-                    X64Instr::Idiv(operand_size_for_ty(ty)),
-                    &[
-                        DefOperand::fixed(output, REG_RAX),
-                        DefOperand::fixed(rdx_out, REG_RDX),
-                    ],
-                    &[
-                        UseOperand::fixed(op1, REG_RAX),
-                        UseOperand::fixed(rdx_in, REG_RDX),
-                        UseOperand::any(op2),
-                    ],
-                );
+                let (rax, _) = emit_sdiv(ctx, op1, op2);
+                ctx.copy_vreg(output, rax);
             }
             NodeKind::Iext | NodeKind::Itrunc => {
                 let [input] = ctx.node_inputs_exact(node);
@@ -389,6 +347,70 @@ fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size:
             );
         }
     }
+}
+
+fn emit_udiv(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    op1: DepValue,
+    op2: DepValue,
+) -> (VirtReg, VirtReg) {
+    let ty = ctx.value_type(op1);
+    let op1 = ctx.get_value_vreg(op1);
+    let op2 = ctx.get_value_vreg(op2);
+
+    let rdx_in = ctx.create_temp_vreg(RC_GPR);
+    ctx.emit_instr(X64Instr::MovRZ, &[DefOperand::any_reg(rdx_in)], &[]);
+
+    let rax_out = ctx.create_temp_vreg(RC_GPR);
+    let rdx_out = ctx.create_temp_vreg(RC_GPR);
+    ctx.emit_instr(
+        X64Instr::Div(operand_size_for_ty(ty)),
+        &[
+            DefOperand::fixed(rax_out, REG_RAX),
+            DefOperand::fixed(rdx_out, REG_RDX),
+        ],
+        &[
+            UseOperand::fixed(op1, REG_RAX),
+            UseOperand::fixed(rdx_in, REG_RDX),
+            UseOperand::any(op2),
+        ],
+    );
+
+    (rax_out, rdx_out)
+}
+
+fn emit_sdiv(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    op1: DepValue,
+    op2: DepValue,
+) -> (VirtReg, VirtReg) {
+    let ty = ctx.value_type(op1);
+    let op1 = ctx.get_value_vreg(op1);
+    let op2 = ctx.get_value_vreg(op2);
+
+    let rdx_in = ctx.create_temp_vreg(RC_GPR);
+    ctx.emit_instr(
+        X64Instr::ConvertWord(cw_width_for_ty(ty)),
+        &[DefOperand::fixed(rdx_in, REG_RDX)],
+        &[UseOperand::fixed(op1, REG_RAX)],
+    );
+
+    let rax_out = ctx.create_temp_vreg(RC_GPR);
+    let rdx_out = ctx.create_temp_vreg(RC_GPR);
+    ctx.emit_instr(
+        X64Instr::Idiv(operand_size_for_ty(ty)),
+        &[
+            DefOperand::fixed(rax_out, REG_RAX),
+            DefOperand::fixed(rdx_out, REG_RDX),
+        ],
+        &[
+            UseOperand::fixed(op1, REG_RAX),
+            UseOperand::fixed(rdx_in, REG_RDX),
+            UseOperand::any(op2),
+        ],
+    );
+
+    (rax_out, rdx_out)
 }
 
 fn emit_movsx_rr(

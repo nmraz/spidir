@@ -109,6 +109,7 @@ pub enum ShiftOp {
 pub enum X64Instr {
     AluRRm(OperandSize, AluOp),
     ShiftRmR(OperandSize, ShiftOp),
+    ShiftRmI(OperandSize, ShiftOp, u8),
     Div(OperandSize),
     Idiv(OperandSize),
     ConvertWord(ConvertWordWidth),

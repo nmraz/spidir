@@ -186,7 +186,12 @@ impl MachineLower for X64Machine {
                     (Type::I64, 8) => emit_movsx_rr(ctx, input, output, ExtWidth::Ext8_64),
                     (Type::I64, 16) => emit_movsx_rr(ctx, input, output, ExtWidth::Ext16_64),
                     (Type::I64, 32) => emit_movsx_rr(ctx, input, output, ExtWidth::Ext32_64),
-                    _ => todo!(),
+                    _ => {
+                        let full_width = ty.bit_width().unwrap() as u8;
+                        let shift_width = full_width - width;
+                        emit_shift_ri(ctx, ty, input, shift_width, output, ShiftOp::Shl);
+                        emit_shift_ri(ctx, ty, input, shift_width, output, ShiftOp::Sar);
+                    }
                 }
             }
             NodeKind::Icmp(kind) => {
@@ -398,6 +403,23 @@ fn emit_movsx_rr(
         X64Instr::MovsxRRm(width),
         &[DefOperand::any_reg(output)],
         &[UseOperand::any(input)],
+    );
+}
+
+fn emit_shift_ri(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    ty: Type,
+    input: DepValue,
+    amount: u8,
+    output: DepValue,
+    op: ShiftOp,
+) {
+    let input = ctx.get_value_vreg(input);
+    let output = ctx.get_value_vreg(output);
+    ctx.emit_instr(
+        X64Instr::ShiftRmI(operand_size_for_ty(ty), op, amount),
+        &[DefOperand::any(output)],
+        &[UseOperand::tied(input, 0)],
     );
 }
 

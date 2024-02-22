@@ -54,3 +54,63 @@ func @sfill_32_64:i64(i64) {
     %2:i64 = sfill 32 %1
     return %0, %2
 }
+
+func @sfill_weird_width_32:i32(i32) {
+    # check: function `sfill_weird_width_32`:
+    # nextln: block0[%1:gpr($$rdi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmI(S32, Shl, 15) %1(tied:0)[early]
+    # nextln:     %0:gpr(any)[late] = ShiftRmI(S32, Sar, 15) %1(tied:0)[early]
+    # nextln:     Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i32 = entry
+    %2:i32 = sfill 17 %1
+    return %0, %2
+}
+
+func @sfill_weird_width_64:i64(i64) {
+    # check: function `sfill_weird_width_64`:
+    # nextln: block0[%1:gpr($$rdi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmI(S64, Shl, 29) %1(tied:0)[early]
+    # nextln:     %0:gpr(any)[late] = ShiftRmI(S64, Sar, 29) %1(tied:0)[early]
+    # nextln:     Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i64 = entry
+    %2:i64 = sfill 35 %1
+    return %0, %2
+}
+
+func @sfill_min_width:i32(i32) {
+    # check: function `sfill_min_width`:
+    # nextln: block0[%1:gpr($$rdi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmI(S32, Shl, 31) %1(tied:0)[early]
+    # nextln:     %0:gpr(any)[late] = ShiftRmI(S32, Sar, 31) %1(tied:0)[early]
+    # nextln:     Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i32 = entry
+    %2:i32 = sfill 1 %1
+    return %0, %2
+}
+
+func @sfill_max_width_32:i32(i32) {
+    # check: function `sfill_max_width_32`:
+    # nextln: block0[%1:gpr($$rdi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmI(S32, Shl, 1) %1(tied:0)[early]
+    # nextln:     %0:gpr(any)[late] = ShiftRmI(S32, Sar, 1) %1(tied:0)[early]
+    # nextln:     Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i32 = entry
+    %2:i32 = sfill 31 %1
+    return %0, %2
+}
+
+func @sfill_max_width_64:i64(i64) {
+    # check: function `sfill_max_width_64`:
+    # nextln: block0[%1:gpr($$rdi)]:
+    # nextln:     %0:gpr(any)[late] = ShiftRmI(S64, Shl, 1) %1(tied:0)[early]
+    # nextln:     %0:gpr(any)[late] = ShiftRmI(S64, Sar, 1) %1(tied:0)[early]
+    # nextln:     Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i64 = entry
+    %2:i64 = sfill 63 %1
+    return %0, %2
+}

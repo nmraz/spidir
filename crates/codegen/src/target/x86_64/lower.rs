@@ -175,6 +175,20 @@ impl MachineLower for X64Machine {
                 let output = ctx.get_value_vreg(output);
                 ctx.copy_vreg(output, input);
             }
+            NodeKind::Sfill(width) => {
+                let [input] = ctx.node_inputs_exact(node);
+                let [output] = ctx.node_outputs_exact(node);
+                let ty = ctx.value_type(output);
+
+                match (ty, width) {
+                    (Type::I32, 8) => emit_movsx_rr(ctx, input, output, ExtWidth::Ext8_32),
+                    (Type::I32, 16) => emit_movsx_rr(ctx, input, output, ExtWidth::Ext16_32),
+                    (Type::I64, 8) => emit_movsx_rr(ctx, input, output, ExtWidth::Ext8_64),
+                    (Type::I64, 16) => emit_movsx_rr(ctx, input, output, ExtWidth::Ext16_64),
+                    (Type::I64, 32) => emit_movsx_rr(ctx, input, output, ExtWidth::Ext32_64),
+                    _ => todo!(),
+                }
+            }
             NodeKind::Icmp(kind) => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
@@ -370,6 +384,21 @@ fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size:
             );
         }
     }
+}
+
+fn emit_movsx_rr(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    input: DepValue,
+    output: DepValue,
+    width: ExtWidth,
+) {
+    let input = ctx.get_value_vreg(input);
+    let output = ctx.get_value_vreg(output);
+    ctx.emit_instr(
+        X64Instr::MovsxRRm(width),
+        &[DefOperand::any_reg(output)],
+        &[UseOperand::any(input)],
+    );
 }
 
 fn emit_shift_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: ShiftOp) {

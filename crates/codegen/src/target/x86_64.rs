@@ -116,6 +116,7 @@ pub enum X64Instr {
     MovRZ,
     MovRI(OperandSize, u64),
     MovzxRR(ExtWidth),
+    MovsxRRm(ExtWidth),
     Setcc(CondCode),
     /// Load from [rbp + offset]
     MovRRbp {

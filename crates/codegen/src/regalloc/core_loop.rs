@@ -126,8 +126,8 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             for conflicting_fragment in soft_conflicts {
                 self.evict_fragment(conflicting_fragment);
                 worklist.push(QueuedFragment {
-                    fragment,
-                    size: self.live_set_fragments[fragment].size,
+                    fragment: conflicting_fragment,
+                    size: self.live_set_fragments[conflicting_fragment].size,
                 });
             }
             self.assign_fragment_to_phys_reg(preg, fragment);

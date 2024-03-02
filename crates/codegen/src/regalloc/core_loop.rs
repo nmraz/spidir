@@ -1,18 +1,19 @@
 use core::cmp::Ordering;
 
 use alloc::collections::BinaryHeap;
+use itertools::Itertools;
 use log::trace;
 use smallvec::SmallVec;
 
 use crate::{
-    lir::{PhysReg, PhysRegSet},
+    lir::{Instr, PhysReg, PhysRegSet},
     machine::MachineCore,
 };
 
 use super::{
     conflict::{iter_btree_ranges, iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
-    types::{LiveSetFragment, ProgramPoint, RangeEndKey},
+    types::{LiveSetFragment, ProgramRange, RangeEndKey},
 };
 
 #[derive(Eq)]
@@ -41,13 +42,28 @@ impl Ord for QueuedFragment {
 
 type FragmentQueue = BinaryHeap<QueuedFragment>;
 
+#[derive(Debug, Clone, Copy)]
+enum ConflictBoundary {
+    StartsAt(Instr),
+    EndsAt(Instr),
+}
+
+impl ConflictBoundary {
+    fn instr(self) -> Instr {
+        match self {
+            ConflictBoundary::StartsAt(instr) => instr,
+            ConflictBoundary::EndsAt(instr) => instr,
+        }
+    }
+}
+
 enum ProbeConflict {
     Soft {
         fragments: SmallVec<[LiveSetFragment; 4]>,
         weight: f32,
     },
     Hard {
-        pos: ProgramPoint,
+        boundary: Option<ConflictBoundary>,
         weight: Option<f32>,
     },
 }
@@ -107,14 +123,17 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                     break;
                 }
                 Some(ProbeConflict::Soft { fragments, weight }) => {
-                    trace!("    soft conflict (weight {weight})");
+                    trace!(
+                        "    soft conflict with {} (weight {weight})",
+                        fragments.iter().format(", ")
+                    );
                     if weight < lightest_soft_conflict_weight {
                         lightest_soft_conflict = Some((preg, fragments));
                         lightest_soft_conflict_weight = weight;
                     }
                 }
-                Some(ProbeConflict::Hard { pos, .. }) => {
-                    trace!("    hard conflict at {pos:?}");
+                Some(ProbeConflict::Hard { boundary, .. }) => {
+                    trace!("    hard conflict with boundary {boundary:?}");
                     // TODO: use for split decisions.
                 }
             }
@@ -158,7 +177,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             |fragment_range| (fragment_range.prog_range, &fragment_range.live_range),
         );
 
-        for ((reservation_range, reservation_copy), (_, fragment_live_range)) in
+        for ((reservation_range, reservation_copy), (fragment_range, fragment_live_range)) in
             iter_conflicts(reservations, fragment_ranges)
         {
             // Part of the fragment conflicts with a physical reservation. This is actually
@@ -184,8 +203,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             let copied_from_live_range = reservation_copy
                 .is_some_and(|live_range_copy| live_range_copy.live_range == fragment_live_range);
             if !copied_from_live_range {
-                let pos = reservation_range.start;
-                return Some(ProbeConflict::Hard { pos, weight: None });
+                return Some(ProbeConflict::Hard {
+                    boundary: conflict_boundary(reservation_range, fragment_range),
+                    weight: None,
+                });
             }
         }
 
@@ -208,14 +229,14 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         let mut soft_conflicts = SmallVec::new();
         let mut soft_conflict_weight = 0f32;
 
-        for ((preg_range, preg_assignment), _) in iter_conflicts(preg_ranges, fragment_ranges) {
-            let pos = preg_range.start;
-
+        for ((preg_range, preg_assignment), (fragment_range, _)) in
+            iter_conflicts(preg_ranges, fragment_ranges)
+        {
             let allocated_fragment = self.live_ranges[preg_assignment].fragment;
             let allocated_weight = self.live_set_fragments[allocated_fragment].spill_weight;
             if allocated_weight >= fragment_weight {
                 return Some(ProbeConflict::Hard {
-                    pos,
+                    boundary: conflict_boundary(preg_range, fragment_range),
                     weight: Some(allocated_weight),
                 });
             }
@@ -255,5 +276,20 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 .remove(&RangeEndKey(range.prog_range))
                 .unwrap();
         }
+    }
+}
+
+fn conflict_boundary(
+    existing_range: ProgramRange,
+    conflicting_range: ProgramRange,
+) -> Option<ConflictBoundary> {
+    if conflicting_range.start < existing_range.start {
+        Some(ConflictBoundary::StartsAt(existing_range.start.instr()))
+    } else if conflicting_range.end > existing_range.end {
+        Some(ConflictBoundary::EndsAt(
+            existing_range.end.instr_rounded_up(),
+        ))
+    } else {
+        None
     }
 }

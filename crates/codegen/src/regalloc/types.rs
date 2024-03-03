@@ -79,6 +79,10 @@ impl ProgramPoint {
         Instr::from_u32(self.index >> 2)
     }
 
+    pub fn instr_rounded_up(self) -> Instr {
+        Instr::from_u32((self.index + 3) >> 2)
+    }
+
     pub fn slot(self) -> InstrSlot {
         match self.index & 3 {
             0 => InstrSlot::Before,
@@ -278,6 +282,26 @@ mod tests {
                 )
             ),
             "E:i5..E:i6"
+        );
+    }
+
+    #[test]
+    fn program_point_instr() {
+        assert_eq!(ProgramPoint::early(Instr::new(5)).instr(), Instr::new(5));
+        assert_eq!(ProgramPoint::late(Instr::new(5)).instr(), Instr::new(5));
+        assert_eq!(ProgramPoint::before(Instr::new(5)).instr(), Instr::new(5));
+
+        assert_eq!(
+            ProgramPoint::early(Instr::new(5)).instr_rounded_up(),
+            Instr::new(6)
+        );
+        assert_eq!(
+            ProgramPoint::late(Instr::new(5)).instr_rounded_up(),
+            Instr::new(6)
+        );
+        assert_eq!(
+            ProgramPoint::before(Instr::new(5)).instr_rounded_up(),
+            Instr::new(5)
         );
     }
 

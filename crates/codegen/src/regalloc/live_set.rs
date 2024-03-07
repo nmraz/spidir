@@ -105,6 +105,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
         // Fill in per-fragment data now that we actually know what the fragments are.
         for fragment in self.live_set_fragments.keys() {
+            if self.live_set_fragments[fragment].ranges.is_empty() {
+                continue;
+            }
+
             let live_set = self.live_sets.push(LiveSetData {
                 spill_ranges: smallvec![],
             });

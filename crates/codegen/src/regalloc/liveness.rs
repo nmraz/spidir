@@ -17,7 +17,7 @@ use super::{
     types::{
         AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeInstr, LiveRangePhysCopy,
         LiveSetFragment, PhysRegCopyDir, PhysRegHint, PhysRegReservation, ProgramPoint,
-        ProgramRange, TaggedLiveRange,
+        ProgramRange,
     },
     utils::get_instr_weight,
     RegAllocContext,
@@ -101,11 +101,11 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             .iter()
             .zip(self.lir.block_params(self.cfg_ctx.block_order[0]))
         {
-            let Some(first_range) = self.vreg_ranges[vreg.reg_num()].first() else {
+            let Some(&first_range) = self.vreg_ranges[vreg.reg_num()].first() else {
                 continue;
             };
 
-            self.hint_live_range(first_range.live_range, preg, first_instr);
+            self.hint_live_range(first_range, preg, first_instr);
         }
     }
 
@@ -296,18 +296,19 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         def_point: ProgramPoint,
         dead_use_point: ProgramPoint,
     ) -> Option<LiveRange> {
-        if let Some(last_range) = self.vreg_ranges[vreg].last_mut() {
+        if let Some(&last_range) = self.vreg_ranges[vreg].last() {
+            let last_range_data = &mut self.live_ranges[last_range];
+
             // This def is live *somewhere*, so it must be live in the current block as well. That
             // means it should already have a block-covering range created by a use somewhere else
             // in the block (possibly a live-out).
-            assert!(def_point >= last_range.prog_range.start);
+            assert!(def_point >= last_range_data.prog_range.start);
 
             // We're supposed to be doing a backward scan of the LIR, so this should always hold.
-            assert!(def_point < last_range.prog_range.end);
+            assert!(def_point < last_range_data.prog_range.end);
 
-            last_range.prog_range.start = def_point;
-            self.live_ranges[last_range.live_range].prog_range.start = def_point;
-            Some(last_range.live_range)
+            last_range_data.prog_range.start = def_point;
+            Some(last_range)
         } else if def_point < dead_use_point {
             // If the range for a dead def would be non-empty, create it now.
             Some(self.create_vreg_live_range(vreg, def_point, dead_use_point))
@@ -350,11 +351,12 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         block: Block,
     ) -> LiveRange {
         let block_start = ProgramPoint::before(self.lir.block_instrs(block).start);
-        if let Some(last_range) = self.vreg_ranges[vreg].last() {
-            debug_assert!(last_range.prog_range.start >= block_start);
-            if last_range.prog_range.start == block_start {
+        if let Some(&last_range) = self.vreg_ranges[vreg].last() {
+            let last_prog_range = self.live_ranges[last_range].prog_range;
+            debug_assert!(last_prog_range.start >= block_start);
+            if last_prog_range.start == block_start {
                 // If a later use in this block has already "opened" a range, just use it.
-                return last_range.live_range;
+                return last_range;
             }
         }
 
@@ -383,13 +385,13 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
     ) -> LiveRange {
         debug_assert!(end > start);
         trace!("    assigning {start:?}..{end:?} to {vreg}");
-        if let Some(last_range) = self.vreg_ranges[vreg].last_mut() {
-            assert!(end <= last_range.prog_range.start);
+        if let Some(&last_range) = self.vreg_ranges[vreg].last() {
+            let last_prog_range = &mut self.live_ranges[last_range].prog_range;
+            assert!(end <= last_prog_range.start);
             // If possible, merge with the next range instead of creating a new one.
-            if end == last_range.prog_range.start {
-                last_range.prog_range.start = start;
-                self.live_ranges[last_range.live_range].prog_range.start = start;
-                return last_range.live_range;
+            if end == last_prog_range.start {
+                last_prog_range.start = start;
+                return last_range;
             }
         }
 
@@ -401,10 +403,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             instrs: smallvec![],
         };
         let live_range = self.live_ranges.push(range_data);
-        self.vreg_ranges[vreg].push(TaggedLiveRange {
-            prog_range,
-            live_range,
-        });
+        self.vreg_ranges[vreg].push(live_range);
         live_range
     }
 }

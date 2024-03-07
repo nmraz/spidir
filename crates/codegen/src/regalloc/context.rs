@@ -14,14 +14,14 @@ use crate::{
 
 use super::types::{
     AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveSet, LiveSetData, LiveSetFragment,
-    LiveSetFragmentData, PhysRegReservation, RangeEndKey, TaggedLiveRange,
+    LiveSetFragmentData, PhysRegReservation, RangeEndKey,
 };
 
 pub struct RegAllocContext<'a, M: MachineCore> {
     pub lir: &'a Lir<M>,
     pub cfg_ctx: &'a CfgContext,
     pub machine: &'a M,
-    pub vreg_ranges: SecondaryMap<VirtRegNum, SmallVec<[TaggedLiveRange; 4]>>,
+    pub vreg_ranges: SecondaryMap<VirtRegNum, SmallVec<[LiveRange; 4]>>,
     pub live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
     pub live_range_hints: FxHashMap<LiveRange, SmallVec<[AnnotatedPhysRegHint; 2]>>,
     pub live_set_fragments: PrimaryMap<LiveSetFragment, LiveSetFragmentData>,
@@ -61,9 +61,10 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             debug!(
                 "{}: {}",
                 vreg,
-                ranges
-                    .iter()
-                    .format_with(" ", |range, f| f(&format_args!("{:?}", range.prog_range)))
+                ranges.iter().format_with(" ", |&range, f| f(&format_args!(
+                    "{:?}",
+                    self.live_ranges[range].prog_range
+                )))
             );
         }
 

@@ -39,7 +39,13 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             let class = self.lir.vreg_class(vreg);
             let fragment = self.live_set_fragments.push(LiveSetFragmentData {
                 live_set: LiveSet::reserved_value(),
-                ranges: self.vreg_ranges[vreg].clone(),
+                ranges: self.vreg_ranges[vreg]
+                    .iter()
+                    .map(|&live_range| TaggedLiveRange {
+                        prog_range: self.live_ranges[live_range].prog_range,
+                        live_range,
+                    })
+                    .collect(),
                 class,
                 hints: smallvec![],
                 assignment: None.into(),

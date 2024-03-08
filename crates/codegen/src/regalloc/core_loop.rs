@@ -1,13 +1,14 @@
-use core::cmp::Ordering;
+use core::{cmp::Ordering, mem};
 
 use alloc::collections::BinaryHeap;
 use itertools::Itertools;
 use log::trace;
-use smallvec::SmallVec;
+use smallvec::{smallvec, SmallVec};
 
 use crate::{
     lir::{Instr, PhysReg, PhysRegSet},
     machine::MachineCore,
+    regalloc::types::{LiveRangeData, ProgramPoint, TaggedLiveRange},
 };
 
 use super::{
@@ -106,6 +107,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         let mut no_conflict_reg = None;
         let mut lightest_soft_conflict = None;
         let mut lightest_soft_conflict_weight = f32::INFINITY;
+        let mut earliest_hard_conflict_boundary: Option<ConflictBoundary> = None;
 
         let mut probed_regs = PhysRegSet::empty();
         for preg in probe_order {
@@ -134,7 +136,27 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 }
                 Some(ProbeConflict::Hard { boundary, .. }) => {
                     trace!("    hard conflict with boundary {boundary:?}");
-                    // TODO: use for split decisions.
+
+                    // This boundary is interesting for splitting if it can non-degenerately split
+                    // the fragment in two.
+                    let split_boundary = boundary.filter(|boundary| {
+                        self.can_split_fragment_before(
+                            fragment,
+                            ProgramPoint::before(boundary.instr()),
+                        )
+                    });
+                    if let Some(split_boundary) = split_boundary {
+                        match earliest_hard_conflict_boundary {
+                            Some(cur_boundary) => {
+                                if split_boundary.instr() < cur_boundary.instr() {
+                                    earliest_hard_conflict_boundary = Some(split_boundary);
+                                }
+                            }
+                            None => {
+                                earliest_hard_conflict_boundary = Some(split_boundary);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -150,9 +172,131 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 });
             }
             self.assign_fragment_to_phys_reg(preg, fragment);
+        } else if let Some(boundary) = earliest_hard_conflict_boundary {
+            let new_fragment = self.split_at_boundary(fragment, boundary);
+            worklist.push(QueuedFragment {
+                fragment,
+                size: self.live_set_fragments[fragment].size,
+            });
+            worklist.push(QueuedFragment {
+                fragment: new_fragment,
+                size: self.live_set_fragments[new_fragment].size,
+            });
         } else {
-            todo!("split/spill");
+            todo!("spill");
         }
+    }
+
+    fn split_at_boundary(
+        &mut self,
+        fragment: LiveSetFragment,
+        boundary: ConflictBoundary,
+    ) -> LiveSetFragment {
+        // TODO: Search for a better split point by looking away from the boundary.
+        let instr = boundary.instr();
+        trace!("  split: {fragment} at {instr}");
+        let pos = ProgramPoint::before(instr);
+
+        debug_assert!(self.can_split_fragment_before(fragment, pos));
+
+        let (split_idx, split_boundary_range) = match self.live_set_fragments[fragment]
+            .ranges
+            .binary_search_by_key(&pos, |range| range.prog_range.start)
+        {
+            Ok(i) => {
+                // We've hit the exact start of a range, so move it and all ranges above it into the
+                // new fragment.
+                (i, false)
+            }
+            Err(i) => {
+                debug_assert!(i > 0, "split point should lie within some fragment range");
+                let prev_range_end = self.live_set_fragments[fragment].ranges[i - 1]
+                    .prog_range
+                    .end;
+
+                if pos.next() < prev_range_end {
+                    // We've hit the middle of a range, so leave everything below it unchanged,
+                    // split it appropriately, and move everything above it into the new fragment.
+                    // The splitting is performed by moving the range into the new fragment,
+                    // adjusting it there, and adding a new range to cover the first part to the
+                    // original fragment.
+                    (i - 1, true)
+                } else {
+                    // We lie outside the nearest range starting below us, so leave it intact
+                    // and move everything above it into the new fragment.
+                    (i, false)
+                }
+            }
+        };
+
+        let live_set = self.live_set_fragments[fragment].live_set;
+        let class = self.live_set_fragments[fragment].class;
+        let new_ranges = self.live_set_fragments[fragment]
+            .ranges
+            .drain(split_idx..)
+            .collect();
+        let new_fragment = self.create_live_fragment(live_set, class, new_ranges);
+
+        if split_boundary_range {
+            // The range to be split should already reside in the new fragment at this point.
+            let split_range = &mut self.live_set_fragments[new_fragment].ranges[0];
+            let split_live_range = split_range.live_range;
+            let split_prog_range = split_range.prog_range;
+
+            let low_range = ProgramRange::new(split_prog_range.start, pos);
+            let high_range = ProgramRange::new(pos, split_prog_range.end);
+
+            trace!("splitting range {split_prog_range:?} into {low_range:?} and {high_range:?}");
+
+            // Update the relevant fields in the original live range to describe the upper part of
+            // the split.
+            split_range.prog_range = high_range;
+            self.live_ranges[split_live_range].prog_range = high_range;
+            self.live_ranges[split_live_range].fragment = new_fragment;
+
+            // Split the attached instructions on the boundary using a simple linear traversal: we
+            // basically need to walk the entire instruction list anyway, and a linear traversal is
+            // probably better for cache locality.
+
+            let mut instrs = mem::take(&mut self.live_ranges[split_live_range].instrs);
+            let instr_split_idx = instrs
+                .iter()
+                // Note: we're splitting before `instr`, so we want `instr` itself to be part of
+                // the upper half of the range.
+                .position(|range_instr| range_instr.pos >= instr);
+            let high_instrs = if let Some(instr_split_idx) = instr_split_idx {
+                instrs.drain(instr_split_idx..).collect()
+            } else {
+                smallvec![]
+            };
+
+            self.live_ranges[split_live_range].instrs = high_instrs;
+            // `instrs` itself now contains the "low" instructions.
+
+            // Create a new live range to append to the end of the original `fragment`.
+            let vreg = self.live_ranges[split_live_range].vreg;
+            let new_live_range = self.live_ranges.push(LiveRangeData {
+                prog_range: low_range,
+                vreg,
+                fragment,
+                instrs,
+            });
+
+            // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but we
+            // don't care within the core loop.
+            self.vreg_ranges[vreg].push(new_live_range);
+            self.live_set_fragments[fragment]
+                .ranges
+                .push(TaggedLiveRange {
+                    prog_range: low_range,
+                    live_range: new_live_range,
+                });
+        }
+
+        self.compute_live_fragment_properties(fragment);
+        self.compute_live_fragment_properties(new_fragment);
+
+        new_fragment
     }
 
     fn probe_phys_reg(&self, preg: PhysReg, fragment: LiveSetFragment) -> Option<ProbeConflict> {
@@ -276,6 +420,18 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 .remove(&RangeEndKey(range.prog_range))
                 .unwrap();
         }
+    }
+
+    fn can_split_fragment_before(&self, fragment: LiveSetFragment, point: ProgramPoint) -> bool {
+        self.fragment_hull(fragment).can_split_before(point)
+    }
+
+    fn fragment_hull(&self, fragment: LiveSetFragment) -> ProgramRange {
+        let ranges = &self.live_set_fragments[fragment].ranges;
+        ProgramRange::new(
+            ranges.first().unwrap().prog_range.start,
+            ranges.last().unwrap().prog_range.end,
+        )
     }
 }
 

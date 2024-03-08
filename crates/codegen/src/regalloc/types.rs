@@ -123,6 +123,10 @@ impl ProgramRange {
         self.end.index() - self.start.index()
     }
 
+    pub fn can_split_before(self, point: ProgramPoint) -> bool {
+        point > self.start && point < self.end
+    }
+
     pub fn intersects(self, other: ProgramRange) -> bool {
         self.end > other.start && other.end > self.start
     }
@@ -378,5 +382,20 @@ mod tests {
         );
         assert!(a.intersects(b));
         assert!(b.intersects(a));
+    }
+
+    #[test]
+    fn range_can_split_before() {
+        let range = ProgramRange::new(
+            ProgramPoint::early(Instr::new(7)),
+            ProgramPoint::pre_copy(Instr::new(32)),
+        );
+        assert!(!range.can_split_before(range.start));
+        assert!(!range.can_split_before(range.end));
+        assert!(!range.can_split_before(ProgramPoint::before(Instr::new(32))));
+
+        assert!(range.can_split_before(ProgramPoint::late(Instr::new(7))));
+        assert!(range.can_split_before(ProgramPoint::before(Instr::new(10))));
+        assert!(range.can_split_before(ProgramPoint::late(Instr::new(31))));
     }
 }

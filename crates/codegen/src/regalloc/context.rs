@@ -13,8 +13,8 @@ use crate::{
 };
 
 use super::types::{
-    AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveSet, LiveSetData, LiveSetFragment,
-    LiveSetFragmentData, PhysRegReservation, RangeEndKey,
+    AnnotatedPhysRegHint, FragmentQueue, LiveRange, LiveRangeData, LiveSet, LiveSetData,
+    LiveSetFragment, LiveSetFragmentData, PhysRegReservation, RangeEndKey,
 };
 
 pub struct RegAllocContext<'a, M: MachineCore> {
@@ -28,6 +28,7 @@ pub struct RegAllocContext<'a, M: MachineCore> {
     pub live_sets: PrimaryMap<LiveSet, LiveSetData>,
     pub phys_reg_reservations: Vec<Vec<PhysRegReservation>>,
     pub phys_reg_assignments: Vec<BTreeMap<RangeEndKey, LiveRange>>,
+    pub worklist: FragmentQueue,
 }
 
 impl<'a, M: MachineCore> RegAllocContext<'a, M> {
@@ -44,6 +45,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             live_sets: PrimaryMap::new(),
             phys_reg_reservations: vec![Vec::new(); phys_reg_count],
             phys_reg_assignments: vec![BTreeMap::new(); phys_reg_count],
+            worklist: FragmentQueue::new(),
         }
     }
 

@@ -1,6 +1,5 @@
-use core::{cmp::Ordering, mem};
+use core::mem;
 
-use alloc::collections::BinaryHeap;
 use itertools::Itertools;
 use log::trace;
 use smallvec::{smallvec, SmallVec};
@@ -14,34 +13,8 @@ use crate::{
 use super::{
     conflict::{iter_btree_ranges, iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
-    types::{LiveSetFragment, ProgramRange, RangeEndKey},
+    types::{LiveSetFragment, ProgramRange, QueuedFragment, RangeEndKey},
 };
-
-#[derive(Eq)]
-struct QueuedFragment {
-    fragment: LiveSetFragment,
-    size: u32,
-}
-
-impl PartialEq for QueuedFragment {
-    fn eq(&self, other: &Self) -> bool {
-        self.size == other.size
-    }
-}
-
-impl PartialOrd for QueuedFragment {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for QueuedFragment {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.size.cmp(&other.size)
-    }
-}
-
-type FragmentQueue = BinaryHeap<QueuedFragment>;
 
 #[derive(Debug, Clone, Copy)]
 enum ConflictBoundary {
@@ -74,26 +47,22 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         // Process fragments in order of decreasing size, to try to fill in the larger ranges before
         // moving on to smaller ones. Because of weight-based eviction, we can still end up
         // revisiting a larger fragment later.
-        let mut worklist = FragmentQueue::new();
-        for (fragment, fragment_data) in self.live_set_fragments.iter() {
-            if fragment_data.ranges.is_empty() {
+        for fragment in self.live_set_fragments.keys() {
+            if self.live_set_fragments[fragment].ranges.is_empty() {
                 continue;
             }
 
-            worklist.push(QueuedFragment {
-                fragment,
-                size: fragment_data.size,
-            });
+            self.enqueue_fragment(fragment);
         }
 
-        while let Some(fragment) = worklist.pop() {
+        while let Some(fragment) = self.worklist.pop() {
             let fragment = fragment.fragment;
             trace!("process: {fragment}");
-            self.try_allocate(fragment, &mut worklist);
+            self.try_allocate(fragment);
         }
     }
 
-    fn try_allocate(&mut self, fragment: LiveSetFragment, worklist: &mut FragmentQueue) {
+    fn try_allocate(&mut self, fragment: LiveSetFragment) {
         let class = self.live_set_fragments[fragment].class;
 
         // Start with hinted registers in order of decreasing weight, then move on to the default
@@ -165,33 +134,21 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             self.assign_fragment_to_phys_reg(no_conflict_reg, fragment);
         } else if let Some((preg, soft_conflicts)) = lightest_soft_conflict {
             for conflicting_fragment in soft_conflicts {
-                self.evict_fragment(conflicting_fragment);
-                worklist.push(QueuedFragment {
-                    fragment: conflicting_fragment,
-                    size: self.live_set_fragments[conflicting_fragment].size,
-                });
+                self.evict_and_requeue_fragment(conflicting_fragment);
             }
             self.assign_fragment_to_phys_reg(preg, fragment);
         } else if let Some(boundary) = earliest_hard_conflict_boundary {
-            let new_fragment = self.split_at_boundary(fragment, boundary);
-            worklist.push(QueuedFragment {
-                fragment,
-                size: self.live_set_fragments[fragment].size,
-            });
-            worklist.push(QueuedFragment {
-                fragment: new_fragment,
-                size: self.live_set_fragments[new_fragment].size,
-            });
+            self.split_and_requeue_fragment(fragment, boundary);
         } else {
             todo!("spill");
         }
     }
 
-    fn split_at_boundary(
+    fn split_and_requeue_fragment(
         &mut self,
         fragment: LiveSetFragment,
         boundary: ConflictBoundary,
-    ) -> LiveSetFragment {
+    ) {
         // TODO: Search for a better split point by looking away from the boundary.
         let instr = boundary.instr();
         trace!("  split: {fragment} at {instr}");
@@ -296,7 +253,8 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         self.compute_live_fragment_properties(fragment);
         self.compute_live_fragment_properties(new_fragment);
 
-        new_fragment
+        self.enqueue_fragment(fragment);
+        self.enqueue_fragment(new_fragment);
     }
 
     fn probe_phys_reg(&self, preg: PhysReg, fragment: LiveSetFragment) -> Option<ProbeConflict> {
@@ -410,7 +368,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         }
     }
 
-    fn evict_fragment(&mut self, fragment: LiveSetFragment) {
+    fn evict_and_requeue_fragment(&mut self, fragment: LiveSetFragment) {
         let data = &mut self.live_set_fragments[fragment];
         let preg = data.assignment.take().unwrap();
         trace!("  evict: {fragment} from {}", M::reg_name(preg));
@@ -420,6 +378,13 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 .remove(&RangeEndKey(range.prog_range))
                 .unwrap();
         }
+        self.enqueue_fragment(fragment);
+    }
+
+    fn enqueue_fragment(&mut self, fragment: LiveSetFragment) {
+        let size = self.live_set_fragments[fragment].size;
+        trace!("enqueue: {fragment}, size {size}");
+        self.worklist.push(QueuedFragment { fragment, size });
     }
 
     fn can_split_fragment_before(&self, fragment: LiveSetFragment, point: ProgramPoint) -> bool {

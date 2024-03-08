@@ -1,5 +1,6 @@
 use core::{cmp::Ordering, fmt};
 
+use alloc::collections::BinaryHeap;
 use cranelift_entity::{entity_impl, packed_option::PackedOption};
 use smallvec::SmallVec;
 
@@ -252,6 +253,32 @@ pub struct PhysRegReservation {
     pub prog_range: ProgramRange,
     pub copied_live_range: Option<LiveRangePhysCopy>,
 }
+
+#[derive(Clone, Copy, Eq)]
+pub struct QueuedFragment {
+    pub fragment: LiveSetFragment,
+    pub size: u32,
+}
+
+impl PartialEq for QueuedFragment {
+    fn eq(&self, other: &Self) -> bool {
+        self.size == other.size
+    }
+}
+
+impl PartialOrd for QueuedFragment {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for QueuedFragment {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.size.cmp(&other.size)
+    }
+}
+
+pub type FragmentQueue = BinaryHeap<QueuedFragment>;
 
 #[cfg(test)]
 mod tests {

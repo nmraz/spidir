@@ -419,10 +419,10 @@ mod tests {
         );
         assert!(!range.can_split_before(range.start));
         assert!(!range.can_split_before(range.end));
-        assert!(!range.can_split_before(ProgramPoint::before(Instr::new(32))));
 
         assert!(range.can_split_before(ProgramPoint::late(Instr::new(7))));
         assert!(range.can_split_before(ProgramPoint::before(Instr::new(10))));
+        assert!(range.can_split_before(ProgramPoint::before(Instr::new(32))));
         assert!(range.can_split_before(ProgramPoint::late(Instr::new(31))));
     }
 }

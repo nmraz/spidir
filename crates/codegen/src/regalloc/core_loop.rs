@@ -38,7 +38,6 @@ enum ProbeConflict {
     },
     Hard {
         boundary: Option<ConflictBoundary>,
-        weight: Option<f32>,
     },
 }
 
@@ -314,7 +313,6 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             if !copied_from_live_range {
                 return Some(ProbeConflict::Hard {
                     boundary: conflict_boundary(reservation_range, fragment_range),
-                    weight: None,
                 });
             }
         }
@@ -346,7 +344,6 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             if allocated_weight >= fragment_weight {
                 return Some(ProbeConflict::Hard {
                     boundary: conflict_boundary(preg_range, fragment_range),
-                    weight: Some(allocated_weight),
                 });
             }
 

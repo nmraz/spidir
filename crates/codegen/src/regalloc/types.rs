@@ -57,22 +57,15 @@ impl ProgramPoint {
     }
 
     pub fn for_operand(instr: Instr, pos: OperandPos) -> Self {
-        let slot = match pos {
-            OperandPos::Early => InstrSlot::Early,
-            OperandPos::Late => InstrSlot::Late,
-        };
-        Self::new(instr, slot)
+        match pos {
+            OperandPos::Early => Self::early(instr),
+            OperandPos::Late => Self::late(instr),
+        }
     }
 
     pub fn next(self) -> Self {
         Self {
             index: self.index + 1,
-        }
-    }
-
-    pub fn prev(self) -> Self {
-        Self {
-            index: self.index - 1,
         }
     }
 

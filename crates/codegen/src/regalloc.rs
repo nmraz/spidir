@@ -1,6 +1,3 @@
-// TODO: Remove this once enough of the allocator is implemented.
-#![allow(dead_code)]
-
 use crate::{cfg::CfgContext, lir::Lir, machine::MachineCore};
 
 use self::context::RegAllocContext;

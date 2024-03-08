@@ -57,7 +57,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
         while let Some(fragment) = self.worklist.pop() {
             let fragment = fragment.fragment;
-            trace!("process: {fragment}");
+            trace!(
+                "process: {fragment}, weight {}",
+                self.live_set_fragments[fragment].spill_weight
+            );
             self.try_allocate(fragment);
         }
     }
@@ -140,6 +143,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         } else if let Some(boundary) = earliest_hard_conflict_boundary {
             self.split_and_requeue_fragment(fragment, boundary);
         } else {
+            self.dump();
             todo!("spill");
         }
     }
@@ -151,7 +155,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
     ) {
         // TODO: Search for a better split point by looking away from the boundary.
         let instr = boundary.instr();
-        trace!("  split: {fragment} at {instr}");
+        trace!(
+            "  split: {fragment} (hull {:?}) at {instr}",
+            self.fragment_hull(fragment)
+        );
         let pos = ProgramPoint::before(instr);
 
         debug_assert!(self.can_split_fragment_before(fragment, pos));

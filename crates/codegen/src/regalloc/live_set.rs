@@ -6,10 +6,10 @@ use cranelift_entity::{
     SecondaryMap,
 };
 use log::trace;
-use smallvec::smallvec;
+use smallvec::{smallvec, SmallVec};
 
 use crate::{
-    lir::{UseOperandConstraint, VirtRegNum},
+    lir::{RegClass, UseOperandConstraint, VirtRegNum},
     machine::MachineCore,
 };
 
@@ -37,21 +37,17 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
         for vreg in self.vreg_ranges.keys() {
             let class = self.lir.vreg_class(vreg);
-            let fragment = self.live_set_fragments.push(LiveSetFragmentData {
-                live_set: LiveSet::reserved_value(),
-                ranges: self.vreg_ranges[vreg]
+            let fragment = self.create_live_fragment(
+                LiveSet::reserved_value(),
+                class,
+                self.vreg_ranges[vreg]
                     .iter()
                     .map(|&live_range| TaggedLiveRange {
                         prog_range: self.live_ranges[live_range].prog_range,
                         live_range,
                     })
                     .collect(),
-                class,
-                hints: smallvec![],
-                assignment: None.into(),
-                size: 0,
-                spill_weight: 0.0,
-            });
+            );
             fragments_by_vreg[vreg] = fragment.into();
         }
 
@@ -122,6 +118,23 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             self.live_set_fragments[fragment].live_set = live_set;
             self.compute_live_fragment_properties(fragment);
         }
+    }
+
+    pub fn create_live_fragment(
+        &mut self,
+        live_set: LiveSet,
+        class: RegClass,
+        ranges: SmallVec<[TaggedLiveRange; 4]>,
+    ) -> LiveSetFragment {
+        self.live_set_fragments.push(LiveSetFragmentData {
+            live_set,
+            ranges,
+            class,
+            hints: smallvec![],
+            assignment: None.into(),
+            size: 0,
+            spill_weight: 0.0,
+        })
     }
 
     pub fn compute_live_fragment_properties(&mut self, fragment: LiveSetFragment) {

@@ -156,8 +156,9 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                 _ => op_def_point,
             };
 
-            let live_range = self.record_def(
+            let live_range = self.record_instr_def(
                 def_op.reg().reg_num(),
+                instr,
                 def_point,
                 // If this def is dead, make sure its range always gets extended past the
                 // end of the instruction so that dead early defs interfere with late defs.
@@ -288,6 +289,23 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             },
             instr,
         })
+    }
+
+    fn record_instr_def(
+        &mut self,
+        vreg: VirtRegNum,
+        instr: Instr,
+        def_point: ProgramPoint,
+        dead_use_point: ProgramPoint,
+    ) -> Option<LiveRange> {
+        let live_range = self.record_def(vreg, def_point, dead_use_point)?;
+        self.live_ranges[live_range]
+            .instrs
+            .push(LiveRangeInstr::new(
+                instr,
+                get_instr_weight(self.lir, self.cfg_ctx, instr),
+            ));
+        Some(live_range)
     }
 
     fn record_def(

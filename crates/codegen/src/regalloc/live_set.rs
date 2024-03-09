@@ -151,7 +151,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             total_weight += range_data
                 .instrs
                 .iter()
-                .map(|instr| instr.weight)
+                .map(|instr| instr.weight())
                 .sum::<f32>();
             if let Some(range_hints) = self.live_range_hints.get(&range.live_range) {
                 fragment_data

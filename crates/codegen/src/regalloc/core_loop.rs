@@ -226,7 +226,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 .iter()
                 // Note: we're splitting before `instr`, so we want `instr` itself to be part of
                 // the upper half of the range.
-                .position(|range_instr| range_instr.pos >= instr);
+                .position(|range_instr| range_instr.pos() >= instr);
             let high_instrs = if let Some(instr_split_idx) = instr_split_idx {
                 instrs.drain(instr_split_idx..).collect()
             } else {

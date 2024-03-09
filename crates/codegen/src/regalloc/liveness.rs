@@ -329,17 +329,17 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         let live_range = self.create_use_range(vreg, use_point, block);
         let range_instrs = &mut self.live_ranges[live_range].instrs;
         if let Some(last_instr) = range_instrs.last() {
-            if last_instr.pos == instr {
+            if last_instr.pos() == instr {
                 // Avoid recording the same instruction multiple times if it uses this vreg in
                 // several operands.
                 return live_range;
             }
         }
 
-        range_instrs.push(LiveRangeInstr {
-            pos: instr,
-            weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
-        });
+        range_instrs.push(LiveRangeInstr::new(
+            instr,
+            get_instr_weight(self.lir, self.cfg_ctx, instr),
+        ));
 
         live_range
     }

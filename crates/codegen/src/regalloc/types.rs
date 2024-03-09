@@ -159,9 +159,24 @@ impl Ord for RangeEndKey {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct LiveRangeInstr {
-    pub pos: Instr,
-    pub weight: f32,
+    pos: Instr,
+    weight: f32,
+}
+
+impl LiveRangeInstr {
+    pub fn new(pos: Instr, weight: f32) -> Self {
+        Self { pos, weight }
+    }
+
+    pub fn pos(self) -> Instr {
+        self.pos
+    }
+
+    pub fn weight(self) -> f32 {
+        self.weight
+    }
 }
 
 pub struct LiveRangeData {

@@ -336,10 +336,20 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         let mut soft_conflicts = SmallVec::new();
         let mut soft_conflict_weight = 0f32;
 
+        let mut conflict_scratch = self.fragment_conflict_scratch.borrow_mut();
+        conflict_scratch.clear();
+
         for ((preg_range, preg_assignment), (fragment_range, _)) in
             iter_conflicts(preg_ranges, fragment_ranges)
         {
             let allocated_fragment = self.live_ranges[preg_assignment].fragment;
+            if conflict_scratch.contains(allocated_fragment) {
+                // Conflict already recorded.
+                continue;
+            }
+
+            conflict_scratch.insert(allocated_fragment);
+
             let allocated_weight = self.live_set_fragments[allocated_fragment].spill_weight;
             if allocated_weight >= fragment_weight {
                 return Some(ProbeConflict::Hard {

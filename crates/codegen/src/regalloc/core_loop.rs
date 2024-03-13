@@ -177,7 +177,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                     .prog_range
                     .end;
 
-                if pos.next() < prev_range_end {
+                if pos < prev_range_end {
                     // We've hit the middle of a range, so leave everything below it unchanged,
                     // split it appropriately, and move everything above it into the new fragment.
                     // The splitting is performed by moving the range into the new fragment,

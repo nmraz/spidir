@@ -142,9 +142,13 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         } else if let Some(boundary) = earliest_hard_conflict_boundary {
             self.split_and_requeue_fragment(fragment, boundary);
         } else {
-            self.dump();
-            todo!("spill");
+            self.spill_fragment(fragment);
         }
+    }
+
+    fn spill_fragment(&mut self, fragment: LiveSetFragment) {
+        trace!("   spill: {fragment}");
+        // TODO: Perform the spill...
     }
 
     fn split_and_requeue_fragment(

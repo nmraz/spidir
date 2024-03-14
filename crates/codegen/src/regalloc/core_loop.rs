@@ -219,7 +219,6 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             // the split.
             split_range.prog_range = high_range;
             self.live_ranges[split_live_range].prog_range = high_range;
-            self.live_ranges[split_live_range].fragment = new_fragment;
 
             // Split the attached instructions on the boundary using a simple linear traversal: we
             // basically need to walk the entire instruction list anyway, and a linear traversal is

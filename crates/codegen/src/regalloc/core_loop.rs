@@ -148,7 +148,14 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
     fn spill_fragment(&mut self, fragment: LiveSetFragment) {
         trace!("   spill: {fragment}");
+        let ranges = &mut self.live_set_fragments[fragment].ranges;
+
         // TODO: Perform the spill...
+
+        for range in ranges.drain(..) {
+            // Remember we've spilled this range so we can clean it up later.
+            self.live_ranges[range.live_range].spilled = true;
+        }
     }
 
     fn split_and_requeue_fragment(
@@ -246,6 +253,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 vreg,
                 fragment,
                 instrs,
+                spilled: false,
             });
 
             // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but we

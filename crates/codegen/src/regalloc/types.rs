@@ -184,6 +184,7 @@ pub struct LiveRangeData {
     pub vreg: VirtRegNum,
     pub fragment: LiveSetFragment,
     pub instrs: SmallVec<[LiveRangeInstr; 4]>,
+    pub spilled: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

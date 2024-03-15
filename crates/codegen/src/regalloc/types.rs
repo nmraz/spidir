@@ -159,19 +159,77 @@ impl Ord for RangeEndKey {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum LiveRangeOpPos {
+    PreCopy = 0,
+    Early = 1,
+    Late = 2,
+    After = 3,
+}
+
+impl LiveRangeOpPos {
+    pub fn for_instr_slot(slot: InstrSlot) -> Self {
+        match slot {
+            InstrSlot::Before => panic!("attempted to create `LiveRangeOpPos` for 'Before' slot"),
+            InstrSlot::PreCopy => Self::PreCopy,
+            InstrSlot::Early => Self::Early,
+            InstrSlot::Late => Self::Late,
+        }
+    }
+
+    pub fn for_lir_op_pos(lir_op_pos: OperandPos) -> Self {
+        match lir_op_pos {
+            OperandPos::Early => Self::Early,
+            OperandPos::Late => Self::Late,
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct LiveRangeInstr {
-    pos: Instr,
+    // TODO: Pack things better here.
+    instr: Instr,
     weight: f32,
+    is_def: bool,
+    needs_reg: bool,
+    op_pos: LiveRangeOpPos,
 }
 
 impl LiveRangeInstr {
-    pub fn new(pos: Instr, weight: f32) -> Self {
-        Self { pos, weight }
+    pub fn new(
+        instr: Instr,
+        weight: f32,
+        is_def: bool,
+        needs_reg: bool,
+        op_pos: LiveRangeOpPos,
+    ) -> Self {
+        Self {
+            instr,
+            weight,
+            is_def,
+            needs_reg,
+            op_pos,
+        }
     }
 
-    pub fn pos(self) -> Instr {
-        self.pos
+    pub fn instr(self) -> Instr {
+        self.instr
+    }
+
+    pub fn is_def(self) -> bool {
+        self.is_def
+    }
+
+    pub fn set_needs_reg(&mut self, needs_reg: bool) {
+        self.needs_reg = needs_reg;
+    }
+
+    pub fn op_pos(self) -> LiveRangeOpPos {
+        self.op_pos
+    }
+
+    pub fn set_op_pos(&mut self, op_pos: LiveRangeOpPos) {
+        self.op_pos = op_pos;
     }
 
     pub fn weight(self) -> f32 {

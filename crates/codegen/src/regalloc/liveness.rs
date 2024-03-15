@@ -15,9 +15,9 @@ use crate::{
 
 use super::{
     types::{
-        AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeInstr, LiveRangePhysCopy,
-        LiveSetFragment, PhysRegCopyDir, PhysRegHint, PhysRegReservation, ProgramPoint,
-        ProgramRange,
+        AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeInstr, LiveRangeOpPos,
+        LiveRangePhysCopy, LiveSetFragment, PhysRegCopyDir, PhysRegHint, PhysRegReservation,
+        ProgramPoint, ProgramRange,
     },
     utils::get_instr_weight,
     RegAllocContext,
@@ -57,12 +57,14 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                 trace!("    outgoing param {outgoing_vreg}");
 
                 // We can safely treat the last instruction in the block as using the value for
-                // spill weight purposes, because we know the copy (if there is one) will
-                // ultimately be placed here, as critical edges are already split.
+                // spill weight purposes, because we know the copy (if there is one) will ultimately
+                // be placed here, as critical edges are already split.
                 self.record_live_use(
                     outgoing_vreg,
-                    last_instr,
                     ProgramPoint::pre_copy(last_instr),
+                    // We never consider outgoing params as needing registers because they represent
+                    // copies anyway.
+                    false,
                     block,
                 );
             }
@@ -143,22 +145,28 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         // Process defs and clobbers first so our physical register reservations are always seen in
         // descending order.
         for (i, def_op) in defs.iter().enumerate() {
-            let op_def_point = if tied_defs[i] {
-                ProgramPoint::pre_copy(instr)
+            let (op_def_point, mut range_op_pos) = if tied_defs[i] {
+                (ProgramPoint::pre_copy(instr), LiveRangeOpPos::PreCopy)
             } else {
-                ProgramPoint::for_operand(instr, def_op.pos())
+                let lir_op_pos = def_op.pos();
+                (
+                    ProgramPoint::for_operand(instr, lir_op_pos),
+                    LiveRangeOpPos::for_lir_op_pos(lir_op_pos),
+                )
             };
 
-            let def_point = match def_op.constraint() {
-                // If the value is constrained to a single physical register, insert a copy
-                // before the next instruction and start the live range there.
-                DefOperandConstraint::Fixed(_) => ProgramPoint::before(instr.next()),
-                _ => op_def_point,
+            let def_point = if let DefOperandConstraint::Fixed(_) = def_op.constraint() {
+                range_op_pos = LiveRangeOpPos::After;
+                ProgramPoint::before(instr.next())
+            } else {
+                op_def_point
             };
 
             let live_range = self.record_instr_def(
                 def_op.reg().reg_num(),
                 instr,
+                def_constraint_needs_reg(def_op.constraint()),
+                range_op_pos,
                 def_point,
                 // If this def is dead, make sure its range always gets extended past the
                 // end of the instruction so that dead early defs interfere with late defs.
@@ -218,7 +226,18 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                 }
             };
 
-            let live_range = self.record_live_use(vreg, instr, pos, block);
+            let needs_reg = match use_op.constraint() {
+                UseOperandConstraint::AnyReg => true,
+                UseOperandConstraint::TiedToDef(i) => {
+                    let tied_def_constraint = defs[i as usize].constraint();
+                    def_constraint_needs_reg(tied_def_constraint)
+                }
+                // Note: we don't consider fixed operands as needing registers as they are being
+                // rewritten to dedicated copies.
+                UseOperandConstraint::Any | UseOperandConstraint::Fixed(_) => false,
+            };
+
+            let live_range = self.record_live_use(vreg, pos, needs_reg, block);
             if let UseOperandConstraint::Fixed(preg) = use_op.constraint() {
                 self.reserve_phys_reg(
                     preg,
@@ -295,6 +314,8 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         &mut self,
         vreg: VirtRegNum,
         instr: Instr,
+        needs_reg: bool,
+        op_pos: LiveRangeOpPos,
         def_point: ProgramPoint,
         dead_use_point: ProgramPoint,
     ) -> Option<LiveRange> {
@@ -304,6 +325,9 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             .push(LiveRangeInstr::new(
                 instr,
                 get_instr_weight(self.lir, self.cfg_ctx, instr),
+                true,
+                needs_reg,
+                op_pos,
             ));
         Some(live_range)
     }
@@ -340,16 +364,29 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
     fn record_live_use(
         &mut self,
         vreg: VirtRegNum,
-        instr: Instr,
         use_point: ProgramPoint,
+        needs_reg: bool,
         block: Block,
     ) -> LiveRange {
+        let instr = use_point.instr();
+        let op_pos = LiveRangeOpPos::for_instr_slot(use_point.slot());
         let live_range = self.create_use_range(vreg, use_point, block);
         let range_instrs = &mut self.live_ranges[live_range].instrs;
-        if let Some(last_instr) = range_instrs.last() {
-            if last_instr.pos() == instr {
+        if let Some(last_instr) = range_instrs.last_mut() {
+            if last_instr.instr() == instr {
+                // This should be completely impossible because instructions can't use vregs they
+                // define.
+                assert!(!last_instr.is_def());
+
                 // Avoid recording the same instruction multiple times if it uses this vreg in
-                // several operands.
+                // several operands - just make sure to update the fields we'll need in case we want
+                // to spill later:
+                // * `op_pos` should always point to the latest use point in the instruction so
+                //   ranges for reloaded spills are correct.
+                // * `needs_reg` should be true so we avoid reloading things more than once.
+                last_instr.set_op_pos(last_instr.op_pos().max(op_pos));
+                last_instr.set_needs_reg(true);
+
                 return live_range;
             }
         }
@@ -357,6 +394,9 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         range_instrs.push(LiveRangeInstr::new(
             instr,
             get_instr_weight(self.lir, self.cfg_ctx, instr),
+            false,
+            needs_reg,
+            op_pos,
         ));
 
         live_range
@@ -425,6 +465,12 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         self.vreg_ranges[vreg].push(live_range);
         live_range
     }
+}
+
+fn def_constraint_needs_reg(constraint: DefOperandConstraint) -> bool {
+    // Note: we don't consider fixed operands as needing registers as they are being rewritten to
+    // dedicated copies.
+    constraint == DefOperandConstraint::AnyReg
 }
 
 fn compute_block_liveouts<M: MachineCore>(

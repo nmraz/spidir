@@ -74,6 +74,7 @@ pub fn def_use_succs<'a>(
 ) -> impl Iterator<Item = (Node, u32)> + 'a {
     raw_def_use_succs(graph, node).filter(move |&(succ, _use_idx)| live_nodes.contains(succ))
 }
+
 #[derive(Clone, Copy)]
 pub struct DefUseSuccs<'a> {
     graph: &'a ValGraph,
@@ -96,6 +97,13 @@ impl<'a> graphwalk::GraphRef for DefUseSuccs<'a> {
 }
 
 pub type DefUsePostorder<'a> = PostOrder<DefUseSuccs<'a>>;
+
+pub fn def_use_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+    graph
+        .node_inputs(node)
+        .into_iter()
+        .map(move |input| graph.value_def(input).0)
+}
 
 #[derive(Debug, Clone)]
 pub struct LiveNodeInfo {
@@ -161,14 +169,16 @@ pub fn dataflow_outputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = De
         .filter(move |&output| graph.value_kind(output).is_value())
 }
 
+pub fn raw_dataflow_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = (Node, u32)> + '_ {
+    dataflow_outputs(graph, node).flat_map(move |output| graph.value_uses(output))
+}
+
 pub fn dataflow_succs<'a>(
     graph: &'a ValGraph,
     live_nodes: &'a EntitySet<Node>,
     node: Node,
 ) -> impl Iterator<Item = (Node, u32)> + 'a {
-    dataflow_outputs(graph, node)
-        .flat_map(move |output| graph.value_uses(output))
-        .filter(move |&(succ, _input_idx)| live_nodes.contains(succ))
+    raw_dataflow_succs(graph, node).filter(move |&(succ, _input_idx)| live_nodes.contains(succ))
 }
 
 pub fn cfg_outputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = DepValue> + '_ {

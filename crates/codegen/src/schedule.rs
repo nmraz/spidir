@@ -25,7 +25,7 @@ const MAX_HOIST_DEPTH: usize = 50;
 #[derive(Clone, Copy, Default)]
 struct BlockData {
     phis: EntityList<Node>,
-    scheduled_nodes_rev: EntityList<Node>,
+    scheduled_nodes: EntityList<Node>,
 }
 
 pub struct Schedule {
@@ -72,9 +72,9 @@ impl Schedule {
         schedule
     }
 
-    pub fn scheduled_nodes_rev(&self, block: Block) -> &[Node] {
+    pub fn scheduled_nodes(&self, block: Block) -> &[Node] {
         self.block_data[block]
-            .scheduled_nodes_rev
+            .scheduled_nodes
             .as_slice(&self.node_list_pool)
     }
 
@@ -200,7 +200,7 @@ impl<'a> Scheduler<'a> {
             // missing is the block terminator (if one exists), which will have been recorded in
             // `pin_nodes` but not yet inserted because we want to make sure it comes last.
 
-            let nodes = &mut self.schedule.block_data[block].scheduled_nodes_rev;
+            let nodes = &mut self.schedule.block_data[block].scheduled_nodes;
 
             // Note: this postorder will not visit the terminator.
             scratch_postorder.reset(
@@ -224,6 +224,10 @@ impl<'a> Scheduler<'a> {
                 trace!("    node {}", node.as_u32());
                 nodes.push(node, &mut self.schedule.node_list_pool);
             }
+
+            nodes
+                .as_mut_slice(&mut self.schedule.node_list_pool)
+                .reverse();
         }
     }
 
@@ -370,7 +374,7 @@ impl<'a> Scheduler<'a> {
     fn assign_and_append(&mut self, block: Block, node: Node) {
         self.assign_block(block, node);
         self.schedule.block_data[block]
-            .scheduled_nodes_rev
+            .scheduled_nodes
             .push(node, &mut self.schedule.node_list_pool);
     }
 

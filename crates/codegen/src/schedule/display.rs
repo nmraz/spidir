@@ -22,7 +22,7 @@ impl fmt::Display for Display<'_> {
             for &phi in self.schedule.block_phis(block) {
                 writeln!(f, "    {}", display_node(self.module, self.graph, phi))?;
             }
-            for &node in self.schedule.scheduled_nodes_rev(block).iter().rev() {
+            for &node in self.schedule.scheduled_nodes(block) {
                 writeln!(f, "    {}", display_node(self.module, self.graph, node))?;
             }
             let succs = self.cfg.block_succs(block);

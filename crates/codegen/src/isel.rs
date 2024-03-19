@@ -217,7 +217,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 self.create_phi_vreg(builder, output);
             }
 
-            for &node in self.schedule.scheduled_nodes_rev(block) {
+            for &node in self.schedule.scheduled_nodes(block) {
                 // Values flowing into scheduled nodes start live, but may be made dead by the
                 // instruction selection process.
                 for input in dataflow_inputs(&self.func.graph, node) {
@@ -242,11 +242,9 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
 
         let is_terminated = self
             .schedule
-            .scheduled_nodes_rev(block)
-            .first()
-            .map_or(false, |&node| {
-                self.func.graph.node_kind(node).is_terminator()
-            });
+            .scheduled_nodes(block)
+            .last()
+            .is_some_and(|&node| self.func.graph.node_kind(node).is_terminator());
 
         if !is_terminated {
             let succs = self.cfg_ctx.cfg.block_succs(block);
@@ -266,7 +264,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             });
         }
 
-        for &node in self.schedule.scheduled_nodes_rev(block) {
+        for &node in self.schedule.scheduled_nodes(block).iter().rev() {
             trace!("  {}:", display_node(self.module, &self.func.graph, node));
 
             // Note: node inputs should be detached after selection so the selector sees correct use

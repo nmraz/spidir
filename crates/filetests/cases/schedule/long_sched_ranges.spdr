@@ -4,62 +4,62 @@ extfunc @func(i32)
 func @long_sched_ranges(i32) {
     # check: function `long_sched_ranges`:
     # nextln: block0:
+    # nextln:     $(iconst0=$val):i32 = iconst 0
+    # nextln:     $(iconst1=$val):i32 = iconst 2
+    # nextln:     $(iconst2=$val):i32 = iconst 6
+    # nextln:     $(iconst3=$val):i32 = iconst 14
+    # nextln:     $(iconst4=$val):i32 = iconst 30
     # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # nextln:     $(iconst0=$val):i32 = iconst 48
-    # nextln:     $(iconst1=$val):i32 = iconst 47
-    # nextln:     $(iconst2=$val):i32 = iconst 46
-    # nextln:     $(iconst3=$val):i32 = iconst 45
-    # nextln:     $(iconst4=$val):i32 = iconst 44
-    # nextln:     $(iconst5=$val):i32 = iconst 43
-    # nextln:     $(iconst6=$val):i32 = iconst 42
-    # nextln:     $(iconst7=$val):i32 = iconst 41
-    # nextln:     $(iconst8=$val):i32 = iconst 40
-    # nextln:     $(iconst9=$val):i32 = iconst 39
-    # nextln:     $(iconst10=$val):i32 = iconst 38
-    # nextln:     $(iconst11=$val):i32 = iconst 37
-    # nextln:     $(iconst12=$val):i32 = iconst 36
-    # nextln:     $(iconst13=$val):i32 = iconst 35
-    # nextln:     $(iconst14=$val):i32 = iconst 34
-    # nextln:     $(iconst15=$val):i32 = iconst 33
-    # nextln:     $(iconst16=$val):i32 = iconst 32
-    # nextln:     $(iconst17=$val):i32 = iconst 31
-    # nextln:     $(iconst18=$val):i32 = iconst 30
-    # nextln:     $(iconst19=$val):i32 = iconst 29
-    # nextln:     $(iconst20=$val):i32 = iconst 28
-    # nextln:     $(iconst21=$val):i32 = iconst 27
-    # nextln:     $(iconst22=$val):i32 = iconst 26
-    # nextln:     $(iconst23=$val):i32 = iconst 25
-    # nextln:     $(iconst24=$val):i32 = iconst 24
-    # nextln:     $(iconst25=$val):i32 = iconst 23
-    # nextln:     $(iconst26=$val):i32 = iconst 22
-    # nextln:     $(iconst27=$val):i32 = iconst 21
-    # nextln:     $(iconst28=$val):i32 = iconst 20
-    # nextln:     $(iconst29=$val):i32 = iconst 19
-    # nextln:     $(iconst30=$val):i32 = iconst 18
-    # nextln:     $(iconst31=$val):i32 = iconst 17
-    # nextln:     $(iconst32=$val):i32 = iconst 16
-    # nextln:     $(iconst33=$val):i32 = iconst 15
-    # nextln:     $(iconst34=$val):i32 = iconst 14
-    # nextln:     $(iconst35=$val):i32 = iconst 13
-    # nextln:     $(iconst36=$val):i32 = iconst 12
-    # nextln:     $(iconst37=$val):i32 = iconst 11
-    # nextln:     $(iconst38=$val):i32 = iconst 10
-    # nextln:     $(iconst39=$val):i32 = iconst 9
-    # nextln:     $(iconst40=$val):i32 = iconst 8
-    # nextln:     $(iconst41=$val):i32 = iconst 7
-    # nextln:     $(iconst42=$val):i32 = iconst 6
-    # nextln:     $(iconst43=$val):i32 = iconst 5
-    # nextln:     $(iconst44=$val):i32 = iconst 4
-    # nextln:     $(iconst45=$val):i32 = iconst 3
-    # nextln:     $(iconst46=$val):i32 = iconst 2
+    # nextln:     $(iconst5=$val):i32 = iconst 48
+    # nextln:     $(iconst6=$val):i32 = iconst 47
+    # nextln:     $(iconst7=$val):i32 = iconst 46
+    # nextln:     $(iconst8=$val):i32 = iconst 45
+    # nextln:     $(iconst9=$val):i32 = iconst 44
+    # nextln:     $(iconst10=$val):i32 = iconst 43
+    # nextln:     $(iconst11=$val):i32 = iconst 42
+    # nextln:     $(iconst12=$val):i32 = iconst 41
+    # nextln:     $(iconst13=$val):i32 = iconst 40
+    # nextln:     $(iconst14=$val):i32 = iconst 39
+    # nextln:     $(iconst15=$val):i32 = iconst 38
+    # nextln:     $(iconst16=$val):i32 = iconst 37
+    # nextln:     $(iconst17=$val):i32 = iconst 36
+    # nextln:     $(iconst18=$val):i32 = iconst 35
+    # nextln:     $(iconst19=$val):i32 = iconst 34
+    # nextln:     $(iconst20=$val):i32 = iconst 33
+    # nextln:     $(iconst21=$val):i32 = iconst 32
+    # nextln:     $(iconst22=$val):i32 = iconst 29
+    # nextln:     $(iconst23=$val):i32 = iconst 31
+    # nextln:     $(iconst24=$val):i32 = iconst 28
+    # nextln:     $(iconst25=$val):i32 = iconst 27
+    # nextln:     $(iconst26=$val):i32 = iconst 26
+    # nextln:     $(iconst27=$val):i32 = iconst 25
+    # nextln:     $(iconst28=$val):i32 = iconst 24
+    # nextln:     $(iconst29=$val):i32 = iconst 23
+    # nextln:     $(iconst30=$val):i32 = iconst 22
+    # nextln:     $(iconst31=$val):i32 = iconst 21
+    # nextln:     $(iconst32=$val):i32 = iconst 20
+    # nextln:     $(iconst33=$val):i32 = iconst 19
+    # nextln:     $(iconst34=$val):i32 = iconst 18
+    # nextln:     $(iconst35=$val):i32 = iconst 17
+    # nextln:     $(iconst36=$val):i32 = iconst 16
+    # nextln:     $(iconst37=$val):i32 = iconst 13
+    # nextln:     $(iconst38=$val):i32 = iconst 15
+    # nextln:     $(iconst39=$val):i32 = iconst 12
+    # nextln:     $(iconst40=$val):i32 = iconst 11
+    # nextln:     $(iconst41=$val):i32 = iconst 10
+    # nextln:     $(iconst42=$val):i32 = iconst 9
+    # nextln:     $(iconst43=$val):i32 = iconst 8
+    # nextln:     $(iconst44=$val):i32 = iconst 5
+    # nextln:     $(iconst45=$val):i32 = iconst 7
+    # nextln:     $(iconst46=$val):i32 = iconst 4
     # nextln:     $(iconst47=$val):i32 = iconst 1
-    # nextln:     $(iconst48=$val):i32 = iconst 0
+    # nextln:     $(iconst48=$val):i32 = iconst 3
     # nextln: => block1
     # nextln: block1:
     # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $(region0=$val), $entry1
     # nextln: => block2, block3
     # nextln: block2:
-    # nextln:     $(call0=$val):ctrl = call @func $brcond0, $iconst48
+    # nextln:     $(call0=$val):ctrl = call @func $brcond0, $iconst0
     # nextln:     $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $call0, $entry1
     # nextln: => block4, block5
     # nextln: block4:
@@ -67,191 +67,191 @@ func @long_sched_ranges(i32) {
     # nextln:     $(brcond4=$val):ctrl, $(brcond5=$val):ctrl = brcond $call1, $entry1
     # nextln: => block6, block7
     # nextln: block6:
-    # nextln:     $(call2=$val):ctrl = call @func $brcond4, $iconst46
+    # nextln:     $(call2=$val):ctrl = call @func $brcond4, $iconst1
     # nextln:     $(brcond6=$val):ctrl, $(brcond7=$val):ctrl = brcond $call2, $entry1
     # nextln: => block8, block9
     # nextln: block8:
-    # nextln:     $(call3=$val):ctrl = call @func $brcond6, $iconst45
+    # nextln:     $(call3=$val):ctrl = call @func $brcond6, $iconst48
     # nextln:     $(brcond8=$val):ctrl, $(brcond9=$val):ctrl = brcond $call3, $entry1
     # nextln: => block10, block11
     # nextln: block10:
-    # nextln:     $(call4=$val):ctrl = call @func $brcond8, $iconst44
+    # nextln:     $(call4=$val):ctrl = call @func $brcond8, $iconst46
     # nextln:     $(brcond10=$val):ctrl, $(brcond11=$val):ctrl = brcond $call4, $entry1
     # nextln: => block12, block13
     # nextln: block12:
-    # nextln:     $(call5=$val):ctrl = call @func $brcond10, $iconst43
+    # nextln:     $(call5=$val):ctrl = call @func $brcond10, $iconst44
     # nextln:     $(brcond12=$val):ctrl, $(brcond13=$val):ctrl = brcond $call5, $entry1
     # nextln: => block14, block15
     # nextln: block14:
-    # nextln:     $(call6=$val):ctrl = call @func $brcond12, $iconst42
+    # nextln:     $(call6=$val):ctrl = call @func $brcond12, $iconst2
     # nextln:     $(brcond14=$val):ctrl, $(brcond15=$val):ctrl = brcond $call6, $entry1
     # nextln: => block16, block17
     # nextln: block16:
-    # nextln:     $(call7=$val):ctrl = call @func $brcond14, $iconst41
+    # nextln:     $(call7=$val):ctrl = call @func $brcond14, $iconst45
     # nextln:     $(brcond16=$val):ctrl, $(brcond17=$val):ctrl = brcond $call7, $entry1
     # nextln: => block18, block19
     # nextln: block18:
-    # nextln:     $(call8=$val):ctrl = call @func $brcond16, $iconst40
+    # nextln:     $(call8=$val):ctrl = call @func $brcond16, $iconst43
     # nextln:     $(brcond18=$val):ctrl, $(brcond19=$val):ctrl = brcond $call8, $entry1
     # nextln: => block20, block21
     # nextln: block20:
-    # nextln:     $(call9=$val):ctrl = call @func $brcond18, $iconst39
+    # nextln:     $(call9=$val):ctrl = call @func $brcond18, $iconst42
     # nextln:     $(brcond20=$val):ctrl, $(brcond21=$val):ctrl = brcond $call9, $entry1
     # nextln: => block22, block23
     # nextln: block22:
-    # nextln:     $(call10=$val):ctrl = call @func $brcond20, $iconst38
+    # nextln:     $(call10=$val):ctrl = call @func $brcond20, $iconst41
     # nextln:     $(brcond22=$val):ctrl, $(brcond23=$val):ctrl = brcond $call10, $entry1
     # nextln: => block24, block25
     # nextln: block24:
-    # nextln:     $(call11=$val):ctrl = call @func $brcond22, $iconst37
+    # nextln:     $(call11=$val):ctrl = call @func $brcond22, $iconst40
     # nextln:     $(brcond24=$val):ctrl, $(brcond25=$val):ctrl = brcond $call11, $entry1
     # nextln: => block26, block27
     # nextln: block26:
-    # nextln:     $(call12=$val):ctrl = call @func $brcond24, $iconst36
+    # nextln:     $(call12=$val):ctrl = call @func $brcond24, $iconst39
     # nextln:     $(brcond26=$val):ctrl, $(brcond27=$val):ctrl = brcond $call12, $entry1
     # nextln: => block28, block29
     # nextln: block28:
-    # nextln:     $(call13=$val):ctrl = call @func $brcond26, $iconst35
+    # nextln:     $(call13=$val):ctrl = call @func $brcond26, $iconst37
     # nextln:     $(brcond28=$val):ctrl, $(brcond29=$val):ctrl = brcond $call13, $entry1
     # nextln: => block30, block31
     # nextln: block30:
-    # nextln:     $(call14=$val):ctrl = call @func $brcond28, $iconst34
+    # nextln:     $(call14=$val):ctrl = call @func $brcond28, $iconst3
     # nextln:     $(brcond30=$val):ctrl, $(brcond31=$val):ctrl = brcond $call14, $entry1
     # nextln: => block32, block33
     # nextln: block32:
-    # nextln:     $(call15=$val):ctrl = call @func $brcond30, $iconst33
+    # nextln:     $(call15=$val):ctrl = call @func $brcond30, $iconst38
     # nextln:     $(brcond32=$val):ctrl, $(brcond33=$val):ctrl = brcond $call15, $entry1
     # nextln: => block34, block35
     # nextln: block34:
-    # nextln:     $(call16=$val):ctrl = call @func $brcond32, $iconst32
+    # nextln:     $(call16=$val):ctrl = call @func $brcond32, $iconst36
     # nextln:     $(brcond34=$val):ctrl, $(brcond35=$val):ctrl = brcond $call16, $entry1
     # nextln: => block36, block37
     # nextln: block36:
-    # nextln:     $(call17=$val):ctrl = call @func $brcond34, $iconst31
+    # nextln:     $(call17=$val):ctrl = call @func $brcond34, $iconst35
     # nextln:     $(brcond36=$val):ctrl, $(brcond37=$val):ctrl = brcond $call17, $entry1
     # nextln: => block38, block39
     # nextln: block38:
-    # nextln:     $(call18=$val):ctrl = call @func $brcond36, $iconst30
+    # nextln:     $(call18=$val):ctrl = call @func $brcond36, $iconst34
     # nextln:     $(brcond38=$val):ctrl, $(brcond39=$val):ctrl = brcond $call18, $entry1
     # nextln: => block40, block41
     # nextln: block40:
-    # nextln:     $(call19=$val):ctrl = call @func $brcond38, $iconst29
+    # nextln:     $(call19=$val):ctrl = call @func $brcond38, $iconst33
     # nextln:     $(brcond40=$val):ctrl, $(brcond41=$val):ctrl = brcond $call19, $entry1
     # nextln: => block42, block43
     # nextln: block42:
-    # nextln:     $(call20=$val):ctrl = call @func $brcond40, $iconst28
+    # nextln:     $(call20=$val):ctrl = call @func $brcond40, $iconst32
     # nextln:     $(brcond42=$val):ctrl, $(brcond43=$val):ctrl = brcond $call20, $entry1
     # nextln: => block44, block45
     # nextln: block44:
-    # nextln:     $(call21=$val):ctrl = call @func $brcond42, $iconst27
+    # nextln:     $(call21=$val):ctrl = call @func $brcond42, $iconst31
     # nextln:     $(brcond44=$val):ctrl, $(brcond45=$val):ctrl = brcond $call21, $entry1
     # nextln: => block46, block47
     # nextln: block46:
-    # nextln:     $(call22=$val):ctrl = call @func $brcond44, $iconst26
+    # nextln:     $(call22=$val):ctrl = call @func $brcond44, $iconst30
     # nextln:     $(brcond46=$val):ctrl, $(brcond47=$val):ctrl = brcond $call22, $entry1
     # nextln: => block48, block49
     # nextln: block48:
-    # nextln:     $(call23=$val):ctrl = call @func $brcond46, $iconst25
+    # nextln:     $(call23=$val):ctrl = call @func $brcond46, $iconst29
     # nextln:     $(brcond48=$val):ctrl, $(brcond49=$val):ctrl = brcond $call23, $entry1
     # nextln: => block50, block51
     # nextln: block50:
-    # nextln:     $(call24=$val):ctrl = call @func $brcond48, $iconst24
+    # nextln:     $(call24=$val):ctrl = call @func $brcond48, $iconst28
     # nextln:     $(brcond50=$val):ctrl, $(brcond51=$val):ctrl = brcond $call24, $entry1
     # nextln: => block52, block53
     # nextln: block52:
-    # nextln:     $(call25=$val):ctrl = call @func $brcond50, $iconst23
+    # nextln:     $(call25=$val):ctrl = call @func $brcond50, $iconst27
     # nextln:     $(brcond52=$val):ctrl, $(brcond53=$val):ctrl = brcond $call25, $entry1
     # nextln: => block54, block55
     # nextln: block54:
-    # nextln:     $(call26=$val):ctrl = call @func $brcond52, $iconst22
+    # nextln:     $(call26=$val):ctrl = call @func $brcond52, $iconst26
     # nextln:     $(brcond54=$val):ctrl, $(brcond55=$val):ctrl = brcond $call26, $entry1
     # nextln: => block56, block57
     # nextln: block56:
-    # nextln:     $(call27=$val):ctrl = call @func $brcond54, $iconst21
+    # nextln:     $(call27=$val):ctrl = call @func $brcond54, $iconst25
     # nextln:     $(brcond56=$val):ctrl, $(brcond57=$val):ctrl = brcond $call27, $entry1
     # nextln: => block58, block59
     # nextln: block58:
-    # nextln:     $(call28=$val):ctrl = call @func $brcond56, $iconst20
+    # nextln:     $(call28=$val):ctrl = call @func $brcond56, $iconst24
     # nextln:     $(brcond58=$val):ctrl, $(brcond59=$val):ctrl = brcond $call28, $entry1
     # nextln: => block60, block61
     # nextln: block60:
-    # nextln:     $(call29=$val):ctrl = call @func $brcond58, $iconst19
+    # nextln:     $(call29=$val):ctrl = call @func $brcond58, $iconst22
     # nextln:     $(brcond60=$val):ctrl, $(brcond61=$val):ctrl = brcond $call29, $entry1
     # nextln: => block62, block63
     # nextln: block62:
-    # nextln:     $(call30=$val):ctrl = call @func $brcond60, $iconst18
+    # nextln:     $(call30=$val):ctrl = call @func $brcond60, $iconst4
     # nextln:     $(brcond62=$val):ctrl, $(brcond63=$val):ctrl = brcond $call30, $entry1
     # nextln: => block64, block65
     # nextln: block64:
-    # nextln:     $(call31=$val):ctrl = call @func $brcond62, $iconst17
+    # nextln:     $(call31=$val):ctrl = call @func $brcond62, $iconst23
     # nextln:     $(brcond64=$val):ctrl, $(brcond65=$val):ctrl = brcond $call31, $entry1
     # nextln: => block66, block67
     # nextln: block66:
-    # nextln:     $(call32=$val):ctrl = call @func $brcond64, $iconst16
+    # nextln:     $(call32=$val):ctrl = call @func $brcond64, $iconst21
     # nextln:     $(brcond66=$val):ctrl, $(brcond67=$val):ctrl = brcond $call32, $entry1
     # nextln: => block68, block69
     # nextln: block68:
-    # nextln:     $(call33=$val):ctrl = call @func $brcond66, $iconst15
+    # nextln:     $(call33=$val):ctrl = call @func $brcond66, $iconst20
     # nextln:     $(brcond68=$val):ctrl, $(brcond69=$val):ctrl = brcond $call33, $entry1
     # nextln: => block70, block71
     # nextln: block70:
-    # nextln:     $(call34=$val):ctrl = call @func $brcond68, $iconst14
+    # nextln:     $(call34=$val):ctrl = call @func $brcond68, $iconst19
     # nextln:     $(brcond70=$val):ctrl, $(brcond71=$val):ctrl = brcond $call34, $entry1
     # nextln: => block72, block73
     # nextln: block72:
-    # nextln:     $(call35=$val):ctrl = call @func $brcond70, $iconst13
+    # nextln:     $(call35=$val):ctrl = call @func $brcond70, $iconst18
     # nextln:     $(brcond72=$val):ctrl, $(brcond73=$val):ctrl = brcond $call35, $entry1
     # nextln: => block74, block75
     # nextln: block74:
-    # nextln:     $(call36=$val):ctrl = call @func $brcond72, $iconst12
+    # nextln:     $(call36=$val):ctrl = call @func $brcond72, $iconst17
     # nextln:     $(brcond74=$val):ctrl, $(brcond75=$val):ctrl = brcond $call36, $entry1
     # nextln: => block76, block77
     # nextln: block76:
-    # nextln:     $(call37=$val):ctrl = call @func $brcond74, $iconst11
+    # nextln:     $(call37=$val):ctrl = call @func $brcond74, $iconst16
     # nextln:     $(brcond76=$val):ctrl, $(brcond77=$val):ctrl = brcond $call37, $entry1
     # nextln: => block78, block79
     # nextln: block78:
-    # nextln:     $(call38=$val):ctrl = call @func $brcond76, $iconst10
+    # nextln:     $(call38=$val):ctrl = call @func $brcond76, $iconst15
     # nextln:     $(brcond78=$val):ctrl, $(brcond79=$val):ctrl = brcond $call38, $entry1
     # nextln: => block80, block81
     # nextln: block80:
-    # nextln:     $(call39=$val):ctrl = call @func $brcond78, $iconst9
+    # nextln:     $(call39=$val):ctrl = call @func $brcond78, $iconst14
     # nextln:     $(brcond80=$val):ctrl, $(brcond81=$val):ctrl = brcond $call39, $entry1
     # nextln: => block82, block83
     # nextln: block82:
-    # nextln:     $(call40=$val):ctrl = call @func $brcond80, $iconst8
+    # nextln:     $(call40=$val):ctrl = call @func $brcond80, $iconst13
     # nextln:     $(brcond82=$val):ctrl, $(brcond83=$val):ctrl = brcond $call40, $entry1
     # nextln: => block84, block85
     # nextln: block84:
-    # nextln:     $(call41=$val):ctrl = call @func $brcond82, $iconst7
+    # nextln:     $(call41=$val):ctrl = call @func $brcond82, $iconst12
     # nextln:     $(brcond84=$val):ctrl, $(brcond85=$val):ctrl = brcond $call41, $entry1
     # nextln: => block86, block87
     # nextln: block86:
-    # nextln:     $(call42=$val):ctrl = call @func $brcond84, $iconst6
+    # nextln:     $(call42=$val):ctrl = call @func $brcond84, $iconst11
     # nextln:     $(brcond86=$val):ctrl, $(brcond87=$val):ctrl = brcond $call42, $entry1
     # nextln: => block88, block89
     # nextln: block88:
-    # nextln:     $(call43=$val):ctrl = call @func $brcond86, $iconst5
+    # nextln:     $(call43=$val):ctrl = call @func $brcond86, $iconst10
     # nextln:     $(brcond88=$val):ctrl, $(brcond89=$val):ctrl = brcond $call43, $entry1
     # nextln: => block90, block91
     # nextln: block90:
-    # nextln:     $(call44=$val):ctrl = call @func $brcond88, $iconst4
+    # nextln:     $(call44=$val):ctrl = call @func $brcond88, $iconst9
     # nextln:     $(brcond90=$val):ctrl, $(brcond91=$val):ctrl = brcond $call44, $entry1
     # nextln: => block92, block93
     # nextln: block92:
-    # nextln:     $(call45=$val):ctrl = call @func $brcond90, $iconst3
+    # nextln:     $(call45=$val):ctrl = call @func $brcond90, $iconst8
     # nextln:     $(brcond92=$val):ctrl, $(brcond93=$val):ctrl = brcond $call45, $entry1
     # nextln: => block94, block95
     # nextln: block94:
-    # nextln:     $(call46=$val):ctrl = call @func $brcond92, $iconst2
+    # nextln:     $(call46=$val):ctrl = call @func $brcond92, $iconst7
     # nextln:     $(brcond94=$val):ctrl, $(brcond95=$val):ctrl = brcond $call46, $entry1
     # nextln: => block96, block97
     # nextln: block96:
-    # nextln:     $(call47=$val):ctrl = call @func $brcond94, $iconst1
+    # nextln:     $(call47=$val):ctrl = call @func $brcond94, $iconst6
     # nextln:     $(brcond96=$val):ctrl, $(brcond97=$val):ctrl = brcond $call47, $entry1
     # nextln: => block98, block99
     # nextln: block98:
-    # nextln:     $(call48=$val):ctrl = call @func $brcond96, $iconst0
+    # nextln:     $(call48=$val):ctrl = call @func $brcond96, $iconst5
     # nextln:     $(brcond98=$val):ctrl, $(brcond99=$val):ctrl = brcond $call48, $entry1
     # nextln: => block100, block101
     # nextln: block100:

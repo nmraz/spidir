@@ -1,14 +1,23 @@
+use core::cmp::Ordering;
+
+use alloc::{collections::BinaryHeap, vec::Vec};
+
 use cranelift_entity::{
-    packed_option::PackedOption, EntityList, EntitySet, ListPool, SecondaryMap,
+    packed_option::{PackedOption, ReservedValue},
+    EntityList, EntitySet, ListPool, SecondaryMap,
 };
 use dominators::depth_map::DepthMap;
+use fx_utils::FxHashMap;
 use graphwalk::{GraphRef, PostOrderContext};
 use ir::{
     module::Module,
     node::NodeKind,
     schedule::{schedule_early, schedule_late, ScheduleContext},
     valgraph::{Node, ValGraph},
-    valwalk::{dataflow_preds, dataflow_succs, raw_def_use_succs, LiveNodeInfo},
+    valwalk::{
+        dataflow_preds, dataflow_succs, def_use_preds, raw_dataflow_succs, raw_def_use_succs,
+        LiveNodeInfo,
+    },
 };
 use log::trace;
 
@@ -99,43 +108,12 @@ impl Schedule {
     }
 }
 
-struct SingleBlockSuccs<'a> {
-    graph: &'a ValGraph,
-    blocks_by_node: &'a SecondaryMap<Node, PackedOption<Block>>,
-    block: Block,
-}
-
-impl GraphRef for SingleBlockSuccs<'_> {
-    type Node = Node;
-
-    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
-        raw_def_use_succs(self.graph, node)
-            .filter(|&(succ, use_idx)| {
-                // Take only outputs from the right block, and skip skip any cycle back edges coming
-                // from control/phi nodes. We also skip terminators because they are manually placed
-                // last in the block.
-                self.blocks_by_node[succ].expand() == Some(self.block)
-                    && !should_skip_block_edge(self.graph, succ, use_idx)
-            })
-            .for_each(|(node, _use_idx)| f(node));
-    }
-}
-
-fn should_skip_block_edge(graph: &ValGraph, succ: Node, use_idx: u32) -> bool {
-    match graph.node_kind(succ) {
-        // Data inputs to phi nodes from the same block are always back edges.
-        NodeKind::Phi => use_idx != 0,
-        // Control inputs to the block header region are always back edges.
-        NodeKind::Region => true,
-        // Otherwise, skip just the block's terminator, because we tack it on manually at the end.
-        kind => kind.is_terminator(),
-    }
-}
+type BlocksByNode = SecondaryMap<Node, PackedOption<Block>>;
 
 struct Scheduler<'a> {
     cfg_ctx: &'a CfgContext,
     block_map: &'a FunctionBlockMap,
-    blocks_by_node: SecondaryMap<Node, PackedOption<Block>>,
+    blocks_by_node: BlocksByNode,
     block_terminators: SecondaryMap<Block, PackedOption<Node>>,
     schedule: &'a mut Schedule,
 }
@@ -184,50 +162,31 @@ impl<'a> Scheduler<'a> {
         graph: &ValGraph,
         scratch_postorder: &mut PostOrderContext<Node>,
     ) {
-        let mut per_block_visited = EntitySet::new();
+        let mut block_scheduler =
+            BlockScheduler::new(graph, &self.blocks_by_node, scratch_postorder);
 
-        // Get a reverse-topological sort of all nodes placed into each block.
-        for block in self.domtree().preorder() {
-            let block = self.domtree().get_cfg_node(block);
-            let succs = SingleBlockSuccs {
-                graph,
-                blocks_by_node: &self.blocks_by_node,
-                block,
-            };
-
-            // At this point, the scheduled node list for each block is partitioned into (almost
-            // all) control nodes at the front, followed by data-only nodes at the back. Still
-            // missing is the block terminator (if one exists), which will have been recorded in
-            // `pin_nodes` but not yet inserted because we want to make sure it comes last.
+        for &block in &self.cfg_ctx.block_order {
+            trace!("scheduling {block}");
 
             let nodes = &mut self.schedule.block_data[block].scheduled_nodes;
+            let orig_len = nodes.len(&self.schedule.node_list_pool);
 
-            // Note: this postorder will not visit the terminator.
-            scratch_postorder.reset(
-                nodes
-                    .as_slice(&self.schedule.node_list_pool)
-                    .iter()
-                    .copied(),
-            );
+            // Set up our local scheduler for this block.
+            block_scheduler.reset(block, nodes.as_slice(&self.schedule.node_list_pool));
+
+            // Schedule all interior nodes in the block.
             nodes.clear(&mut self.schedule.node_list_pool);
+            block_scheduler.schedule(|node| {
+                nodes.push(node, &mut self.schedule.node_list_pool);
+            });
 
-            trace!("sorting {block}");
+            debug_assert_eq!(nodes.len(&self.schedule.node_list_pool), orig_len);
 
-            // Place the terminator first in the reverse list (if it exists).
+            // Place the terminator last (if it exists).
             if let Some(terminator) = self.block_terminators[block].expand() {
-                trace!("    term {}", terminator.as_u32());
+                trace!("    term: node {}", terminator.as_u32());
                 nodes.push(terminator, &mut self.schedule.node_list_pool);
             }
-
-            // Topologically sort the rest of the nodes.
-            while let Some(node) = scratch_postorder.next(&succs, &mut per_block_visited) {
-                trace!("    node {}", node.as_u32());
-                nodes.push(node, &mut self.schedule.node_list_pool);
-            }
-
-            nodes
-                .as_mut_slice(&mut self.schedule.node_list_pool)
-                .reverse();
         }
     }
 
@@ -402,4 +361,227 @@ impl<'a> Scheduler<'a> {
     fn depth_map(&self) -> &'a DepthMap {
         &self.cfg_ctx.depth_map
     }
+}
+
+#[derive(Clone, Copy, Eq)]
+struct ReadyNode {
+    node: Node,
+    prio: i64,
+}
+
+impl PartialOrd for ReadyNode {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for ReadyNode {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.prio.cmp(&other.prio)
+    }
+}
+
+impl PartialEq for ReadyNode {
+    fn eq(&self, other: &Self) -> bool {
+        self.prio == other.prio
+    }
+}
+
+/// Holds auxiliary data for block-local scheduling of nodes.
+struct BlockNodeData {
+    /// The number of block-local predecessors of this node that have not yet been scheduled.
+    unscheduled_preds: u32,
+    /// The length of the longest data dependency chain in the block headed by this node.
+    cp_length: u32,
+}
+
+struct BlockScheduler<'a> {
+    graph: &'a ValGraph,
+    blocks_by_node: &'a BlocksByNode,
+    scratch_postorder: &'a mut PostOrderContext<Node>,
+    scheduled: EntitySet<Node>,
+    block: Block,
+    block_postorder: Vec<Node>,
+    block_node_data: FxHashMap<Node, BlockNodeData>,
+    ready_nodes: BinaryHeap<ReadyNode>,
+}
+
+impl<'a> BlockScheduler<'a> {
+    fn new(
+        graph: &'a ValGraph,
+        blocks_by_node: &'a BlocksByNode,
+        scratch_postorder: &'a mut PostOrderContext<Node>,
+    ) -> Self {
+        Self {
+            graph,
+            blocks_by_node,
+            scratch_postorder,
+            scheduled: EntitySet::new(),
+            block: Block::reserved_value(),
+            block_postorder: Vec::new(),
+            block_node_data: FxHashMap::default(),
+            ready_nodes: BinaryHeap::new(),
+        }
+    }
+
+    fn reset(&mut self, block: Block, nodes: &[Node]) {
+        self.block = block;
+        self.compute_postorder(nodes);
+        self.prepare_node_data();
+    }
+
+    fn schedule(&mut self, mut f: impl FnMut(Node)) {
+        self.scheduled.clear();
+        while let Some(ready_node) = self.ready_nodes.pop() {
+            let node = ready_node.node;
+            if self.scheduled.contains(node) {
+                // This will become possible once we start "increasing keys" for nodes that are
+                // already enqueued.
+                continue;
+            }
+
+            trace!(
+                "    place: node {} [cp {}]",
+                node.as_u32(),
+                self.block_node_data[&node].cp_length
+            );
+
+            self.scheduled.insert(node);
+            f(node);
+
+            for (succ, _use_idx) in raw_def_use_succs(self.graph, node) {
+                if !self.is_block_interior_node(succ) {
+                    continue;
+                }
+
+                let succ_data = self.block_node_data.get_mut(&succ).unwrap();
+                debug_assert!(succ_data.unscheduled_preds > 0);
+                debug_assert!(!self.scheduled.contains(succ));
+                succ_data.unscheduled_preds -= 1;
+                self.enqueue_if_ready(succ);
+            }
+        }
+    }
+
+    fn compute_postorder(&mut self, nodes: &[Node]) {
+        self.scratch_postorder.reset(nodes.iter().copied());
+
+        // Temporarily use `scheduled` here to track which nodes have already been visited by the
+        // postorder.
+        self.scheduled.clear();
+
+        let block_graph = self.block_graph();
+
+        self.block_postorder.clear();
+        while let Some(node) = self
+            .scratch_postorder
+            .next(&block_graph, &mut self.scheduled)
+        {
+            self.block_postorder.push(node);
+        }
+    }
+
+    fn prepare_node_data(&mut self) {
+        self.block_node_data.clear();
+
+        // Walk the block in postorder here so we have critical path lengths for successors before
+        // reaching the nodes themselves.
+        for i in 0..self.block_postorder.len() {
+            let node = self.block_postorder[i];
+
+            let cp_length = self.compute_node_cp_length(node);
+            let unscheduled_preds = self.count_unscheduled_preds(node);
+
+            self.block_node_data.insert(
+                node,
+                BlockNodeData {
+                    unscheduled_preds,
+                    cp_length,
+                },
+            );
+
+            self.enqueue_if_ready(node);
+        }
+    }
+
+    fn enqueue_if_ready(&mut self, node: Node) {
+        if self.block_node_data[&node].unscheduled_preds == 0 {
+            trace!("    ready: node {}", node.as_u32());
+            self.ready_nodes.push(ReadyNode {
+                node,
+                prio: self.node_prio(node),
+            })
+        }
+    }
+
+    fn count_unscheduled_preds(&self, node: Node) -> u32 {
+        let preds =
+            def_use_preds(self.graph, node).filter(|&pred| self.is_block_interior_node(pred));
+        preds.count() as u32
+    }
+
+    fn compute_node_cp_length(&self, node: Node) -> u32 {
+        let block_dataflow_succs = raw_dataflow_succs(self.graph, node)
+            .map(|(succ, _use_idx)| succ)
+            .filter(|&succ| self.is_block_interior_node(succ));
+
+        let exit_cp_length = block_dataflow_succs
+            .map(|succ| {
+                // Note: we expect node data to have been computed for all successors in the block.
+                self.block_node_data[&succ].cp_length
+            })
+            .max();
+
+        // If we have any users in the block, we lengthen the critical path by 1. Otherwise, all
+        // paths exiting the node have length 0.
+        exit_cp_length.map_or(0, |exit_cp_length| exit_cp_length + 1)
+    }
+
+    fn node_prio(&self, node: Node) -> i64 {
+        self.block_node_data[&node].cp_length as i64
+    }
+
+    fn is_block_interior_node(&self, node: Node) -> bool {
+        is_block_interior_node(self.graph, self.blocks_by_node, self.block, node)
+    }
+
+    fn block_graph(&self) -> BlockSubgraph<'a> {
+        BlockSubgraph {
+            graph: self.graph,
+            blocks_by_node: self.blocks_by_node,
+            block: self.block,
+        }
+    }
+}
+
+struct BlockSubgraph<'a> {
+    graph: &'a ValGraph,
+    blocks_by_node: &'a BlocksByNode,
+    block: Block,
+}
+
+impl GraphRef for BlockSubgraph<'_> {
+    type Node = Node;
+
+    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
+        raw_def_use_succs(self.graph, node)
+            .filter(|&(succ, _use_idx)| {
+                is_block_interior_node(self.graph, self.blocks_by_node, self.block, succ)
+            })
+            .for_each(|(node, _use_idx)| f(node));
+    }
+}
+
+fn is_block_interior_node(
+    graph: &ValGraph,
+    blocks_by_node: &BlocksByNode,
+    block: Block,
+    node: Node,
+) -> bool {
+    blocks_by_node[node].expand() == Some(block)
+        && is_block_interior_node_kind(graph.node_kind(node))
+}
+
+fn is_block_interior_node_kind(kind: &NodeKind) -> bool {
+    !kind.is_terminator() && !matches!(kind, NodeKind::Phi | NodeKind::Region)
 }

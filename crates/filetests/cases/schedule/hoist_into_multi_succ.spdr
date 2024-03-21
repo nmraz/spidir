@@ -3,8 +3,8 @@
 func @hoisted_into_multi_succ:i32(i32) {
     # check: function `hoisted_into_multi_succ`:
     # nextln: block0:
-    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
     # nextln:     $(iconst0=$val):i32 = iconst 1
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
     # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $entry1
     # nextln: => block1, block2
     # nextln: block1:

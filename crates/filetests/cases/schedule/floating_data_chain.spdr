@@ -3,8 +3,8 @@
 func @func:i64() {
     # check: function `func`:
     # nextln: block0:
-    # nextln:     $(entry0=$val):ctrl = entry
     # nextln:     $(iconst0=$val):i32 = iconst 1
+    # nextln:     $(entry0=$val):ctrl = entry
     # nextln:     $(iext0=$val):i64 = iext $iconst0
     # nextln:     return $entry0, $iext0
 

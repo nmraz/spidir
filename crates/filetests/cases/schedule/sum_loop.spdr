@@ -3,8 +3,8 @@
 func @sum_to_n:i32(i32) {
     # check: function `sum_to_n`:
     # nextln: block0:
-    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
     # nextln:     $(iconst0=$val):i32 = iconst 0
+    # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
     # nextln:     $(icmp0=$val):i32 = icmp eq $entry1, $iconst0
     # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $icmp0
     # nextln: => block1, block3
@@ -16,8 +16,8 @@ func @sum_to_n:i32(i32) {
     # nextln: block4:
     # nextln:     $(phi0=$val):i32 = phi $(region0=$val), $iconst0, $(iadd0=$val)
     # nextln:     $(phi1=$val):i32 = phi $region0, $entry1, $(isub0=$val)
-    # nextln:     $iadd0:i32 = iadd $phi0, $phi1
     # nextln:     $isub0:i32 = isub $phi1, $iconst1
+    # nextln:     $iadd0:i32 = iadd $phi0, $phi1
     # nextln:     $(icmp1=$val):i32 = icmp eq $isub0, $iconst0
     # nextln:     $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $(region1=$val), $icmp1
     # nextln: => block5, block6
@@ -52,28 +52,28 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln:     $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
     # nextln: => block1
     # nextln: block1:
+    # nextln:     $(iconst0=$val):i32 = iconst 0
     # nextln:     $(stackslot0=$val):ptr = stackslot 4:4
     # nextln:     $(stackslot1=$val):ptr = stackslot 4:4
-    # nextln:     $(store0=$val):ctrl = store.4 $(region0=$val), $entry1, $stackslot1
-    # nextln:     $(iconst0=$val):i32 = iconst 1
-    # nextln:     $(iconst1=$val):i32 = iconst 0
-    # nextln:     $(store1=$val):ctrl = store.4 $store0, $iconst1, $stackslot0
+    # nextln:     $(iconst1=$val):i32 = iconst 1
+    # nextln:     $(store0=$val):ctrl = store.4 $(region0=$val), $entry1, $stackslot0
+    # nextln:     $(store1=$val):ctrl = store.4 $store0, $iconst0, $stackslot1
     # nextln: => block2
     # nextln: block2:
-    # nextln:     $(load0=$val):ctrl, $(load1=$val):i32 = load.4 $(region1=$val), $stackslot1
-    # nextln:     $(icmp0=$val):i32 = icmp eq $load1, $iconst1
+    # nextln:     $(load0=$val):ctrl, $(load1=$val):i32 = load.4 $(region1=$val), $stackslot0
+    # nextln:     $(icmp0=$val):i32 = icmp eq $load1, $iconst0
     # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $load0, $icmp0
     # nextln: => block3, block4
     # nextln: block4:
-    # nextln:     $(load2=$val):ctrl, $(load3=$val):i32 = load.4 $(region2=$val), $stackslot1
-    # nextln:     $(load4=$val):ctrl, $(load5=$val):i32 = load.4 $load2, $stackslot0
-    # nextln:     $(isub0=$val):i32 = isub $load3, $iconst0
-    # nextln:     $(store2=$val):ctrl = store.4 $load4, $isub0, $stackslot1
+    # nextln:     $(load2=$val):ctrl, $(load3=$val):i32 = load.4 $(region2=$val), $stackslot0
+    # nextln:     $(load4=$val):ctrl, $(load5=$val):i32 = load.4 $load2, $stackslot1
+    # nextln:     $(isub0=$val):i32 = isub $load3, $iconst1
     # nextln:     $(iadd0=$val):i32 = iadd $load5, $load3
-    # nextln:     $(store3=$val):ctrl = store.4 $store2, $iadd0, $stackslot0
+    # nextln:     $(store2=$val):ctrl = store.4 $load4, $isub0, $stackslot0
+    # nextln:     $(store3=$val):ctrl = store.4 $store2, $iadd0, $stackslot1
     # nextln: => block2
     # nextln: block3:
-    # nextln:     $(load6=$val):ctrl, $(load7=$val):i32 = load.4 $(region3=$val), $stackslot0
+    # nextln:     $(load6=$val):ctrl, $(load7=$val):i32 = load.4 $(region3=$val), $stackslot1
     # nextln:     return $load6, $load7
 
     %0:ctrl, %1:i32 = entry

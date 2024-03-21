@@ -2,7 +2,7 @@
 
 func @iota(ptr, i64) {
     # check: function `iota`:
-    # nextln: block0[%5:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln: block0[%4:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln:     %8:gpr(reg)[late] = MovRI(S64, 0)
     # nextln:     AluRRm(S64, Cmp) %2(reg)[early], %8(any)[early]
     # nextln:     Jumpcc(E, block1, block3)
@@ -11,15 +11,15 @@ func @iota(ptr, i64) {
     # nextln:     Jump(block2)
     # nextln: => block2
     # nextln: block3:
-    # nextln:     %3:gpr(reg)[late] = MovRI(S64, 1)
     # nextln:     %7:gpr(reg)[late] = MovRI(S64, 3)
+    # nextln:     %6:gpr(reg)[late] = MovRI(S64, 1)
     # nextln:     Jump(block4)
     # nextln: => block4[%8:gpr]
     # nextln: block4[%0:gpr]:
-    # nextln:     %6:gpr(any)[late] = ShiftRmR(S64, Shl) %0(tied:0)[early], %7($$rcx)[early]
-    # nextln:     %4:gpr(reg)[late] = AluRRm(S64, Add) %5(tied:0)[early], %6(any)[early]
-    # nextln:     MovMR(S64) %4(reg)[early], %0(reg)[early]
-    # nextln:     %1:gpr(reg)[late] = AluRRm(S64, Add) %0(tied:0)[early], %3(any)[early]
+    # nextln:     %5:gpr(any)[late] = ShiftRmR(S64, Shl) %0(tied:0)[early], %7($$rcx)[early]
+    # nextln:     %1:gpr(reg)[late] = AluRRm(S64, Add) %0(tied:0)[early], %6(any)[early]
+    # nextln:     %3:gpr(reg)[late] = AluRRm(S64, Add) %4(tied:0)[early], %5(any)[early]
+    # nextln:     MovMR(S64) %3(reg)[early], %0(reg)[early]
     # nextln:     AluRRm(S64, Cmp) %1(reg)[early], %2(any)[early]
     # nextln:     Jumpcc(E, block5, block6)
     # nextln: => block5, block6

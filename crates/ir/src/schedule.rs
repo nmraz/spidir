@@ -103,11 +103,11 @@ pub fn schedule_late(
     let entry = ctx.cfg_preorder()[0];
     for &root in ctx.live_node_info().roots() {
         if root != entry {
-            debug_assert!(
-                !is_pinned_node(ctx.graph(), root),
-                "unscheduled liveness root has control outputs"
-            );
-            schedule(ctx, root);
+            scratch_postorder.reset([root]);
+            while let Some(succ) = scratch_postorder.next(&unpinned_data_succs, &mut visited) {
+                debug_assert!(!is_pinned_node(ctx.graph(), succ));
+                schedule(ctx, succ);
+            }
         }
     }
 }
@@ -167,3 +167,6 @@ impl<'a> graphwalk::GraphRef for UnpinnedDataSuccs<'a> {
             .for_each(|(succ, _input_idx)| f(succ));
     }
 }
+
+#[cfg(test)]
+mod tests;

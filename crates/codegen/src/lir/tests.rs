@@ -10,6 +10,10 @@ use super::{
     UseOperandConstraint, VirtReg, VirtRegNum,
 };
 
+// Work around a possible dead_code/traits issue (https://github.com/rust-lang/rust/issues/122833):
+// the compiler lints the variant fields here as never being read even though they are displayed
+// by the `Debug` implementation below.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 enum DummyInstr {
     MovI(u64),

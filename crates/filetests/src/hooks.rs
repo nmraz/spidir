@@ -26,7 +26,7 @@ pub fn catch_panic_message<R>(f: impl FnOnce() -> R + UnwindSafe) -> Result<R, S
 }
 
 thread_local! {
-    static CAPTURED_LOGS: RefCell<Vec<String>> = RefCell::new(Vec::new());
+    static CAPTURED_LOGS: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
 }
 
 fn clear_captured_logs() {
@@ -59,7 +59,7 @@ impl Log for CapturingLogger {
 }
 
 thread_local! {
-    static PANIC_MESSAGE: RefCell<Option<String>> = RefCell::new(None);
+    static PANIC_MESSAGE: RefCell<Option<String>> = const { RefCell::new(None) };
 }
 
 fn clear_panic_message() {

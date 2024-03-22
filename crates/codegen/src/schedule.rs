@@ -451,12 +451,13 @@ impl<'a> BlockScheduler<'a> {
     fn schedule(&mut self, mut f: impl FnMut(Node)) {
         self.scheduled.clear();
 
-        let mut new_last_users = SmallVec::<[Node; 4]>::new();
+        let mut updated_last_users = SmallVec::<[Node; 4]>::new();
         while let Some(ready_node) = self.ready_nodes.pop() {
             let node = ready_node.node;
             if self.scheduled.contains(node) {
-                // This will become possible once we start "increasing keys" for nodes that are
-                // already enqueued.
+                // This can happen if we have re-enqueued a node because its last-use-count has
+                // increased: we'll see the previous entries with the lower last-use-counts after
+                // the node has already been placed.
                 continue;
             }
 
@@ -470,9 +471,9 @@ impl<'a> BlockScheduler<'a> {
             self.scheduled.insert(node);
             f(node);
 
-            new_last_users.clear();
-            self.gather_new_last_users(node, &mut new_last_users);
-            for node in new_last_users.drain(..) {
+            updated_last_users.clear();
+            self.gather_updated_last_users(node, &mut updated_last_users);
+            for node in updated_last_users.drain(..) {
                 self.enqueue_if_ready(node);
             }
 
@@ -494,7 +495,11 @@ impl<'a> BlockScheduler<'a> {
         }
     }
 
-    fn gather_new_last_users(&mut self, node: Node, new_last_users: &mut SmallVec<[Node; 4]>) {
+    fn gather_updated_last_users(
+        &mut self,
+        node: Node,
+        updated_last_users: &mut SmallVec<[Node; 4]>,
+    ) {
         for &input in self.block_node_data[&node]
             .unique_inputs
             .as_slice(&self.unique_input_pool)
@@ -505,10 +510,10 @@ impl<'a> BlockScheduler<'a> {
             value_data.outstanding_uses -= 1;
             if value_data.outstanding_uses == 1 {
                 // The remaining user of this value is now the last in the block, so bump its
-                // last use count and move it forward in the ready queue if necessary.
+                // last use count and report it to the caller.
 
-                // This search happens at most once during scheduling of the block (and only
-                // walks edges leading into the block), so the total complexity here is still
+                // This search happens at most once per value during scheduling of the block (and
+                // only walks edges leading into the block), so the total complexity here is still
                 // linear.
                 let last_user = *value_data
                     .users
@@ -526,7 +531,7 @@ impl<'a> BlockScheduler<'a> {
                         .last_use_count += 1;
                     // Note: this node may be pushed multiple times if several of its inputs are
                     // last users.
-                    new_last_users.push(last_user);
+                    updated_last_users.push(last_user);
                 }
             }
         }

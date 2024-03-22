@@ -10,19 +10,19 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln:     $(stackslot1=$val):ptr = stackslot 4:4
     # nextln:     $(stackslot2=$val):ptr = stackslot 4:4
     # nextln:     $(iconst0=$val):i32 = iconst 0
-    # nextln:     $(stackslot3=$val):ptr = stackslot 4:4
     # nextln:     $(store0=$val):ctrl = store.4 $(region0=$val), $iconst0, $stackslot2
+    # nextln:     $(stackslot3=$val):ptr = stackslot 4:4
     # nextln:     $(store1=$val):ctrl = store.4 $store0, $iconst0, $stackslot3
     # nextln:     $(store2=$val):ctrl = store.4 $store1, $iconst0, $stackslot0
     # nextln:     $(store3=$val):ctrl = store.4 $store2, $iconst0, $stackslot1
     # nextln: => block2
     # nextln: block2:
-    # nextln:     $(iconst1=$val):i32 = iconst 2
-    # nextln:     $(iconst2=$val):i32 = iconst 3
     # nextln:     $(store4=$val):ctrl = store.4 $(region1=$val), $iconst0, $stackslot2
-    # nextln:     $(iconst3=$val):i32 = iconst 4
-    # nextln:     $(iconst4=$val):i32 = iconst 1
     # nextln:     $(store5=$val):ctrl = store.4 $store4, $iconst0, $stackslot3
+    # nextln:     $(iconst1=$val):i32 = iconst 4
+    # nextln:     $(iconst2=$val):i32 = iconst 2
+    # nextln:     $(iconst3=$val):i32 = iconst 3
+    # nextln:     $(iconst4=$val):i32 = iconst 1
     # nextln: => block3
     # nextln: block3:
     # nextln:     $(load0=$val):ctrl, $(load1=$val):i32 = load.4 $(region2=$val), $stackslot3
@@ -31,7 +31,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: => block4, block5
     # nextln: block4:
     # nextln:     $(load2=$val):ctrl, $(load3=$val):i32 = load.4 $(region3=$val), $stackslot3
-    # nextln:     $(and0=$val):i32 = and $load3, $iconst1
+    # nextln:     $(and0=$val):i32 = and $load3, $iconst2
     # nextln:     $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $load2, $and0
     # nextln: => block6, block7
     # nextln: block6:
@@ -44,7 +44,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: => block10, block11
     # nextln: block10:
     # nextln:     $(load6=$val):ctrl, $(load7=$val):i32 = load.4 $(region6=$val), $stackslot3
-    # nextln:     $(and1=$val):i32 = and $load7, $iconst2
+    # nextln:     $(and1=$val):i32 = and $load7, $iconst3
     # nextln:     $(brcond6=$val):ctrl, $(brcond7=$val):ctrl = brcond $load6, $and1
     # nextln: => block19, block20
     # nextln: block19:
@@ -70,7 +70,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: => block14, block15
     # nextln: block14:
     # nextln:     $(load16=$val):ctrl, $(load17=$val):i32 = load.4 $(region10=$val), $stackslot3
-    # nextln:     $(and2=$val):i32 = and $load17, $iconst3
+    # nextln:     $(and2=$val):i32 = and $load17, $iconst1
     # nextln:     $(brcond10=$val):ctrl, $(brcond11=$val):ctrl = brcond $load16, $and2
     # nextln: => block16, block17
     # nextln: block16:

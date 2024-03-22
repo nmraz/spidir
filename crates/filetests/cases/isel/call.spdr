@@ -66,8 +66,8 @@ func @caller:i32(ptr, i32) {
     # nextln:     %1:gpr($$rax)[late] = Call(External(extfunc1)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln:     Call(Internal(func0)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln:     %2:gpr($$rax)[late] = Call(Internal(func1)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
-    # nextln:     Call(Internal(func2)) ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln:     %0:gpr(reg)[late] = AluRRm(S32, Add) %1(tied:0)[early], %2(any)[early]
+    # nextln:     Call(Internal(func2)) ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln:     Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr, %2:i32 = entry

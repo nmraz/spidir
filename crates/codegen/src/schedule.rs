@@ -7,16 +7,16 @@ use cranelift_entity::{
     EntityList, EntitySet, ListPool, SecondaryMap,
 };
 use dominators::depth_map::DepthMap;
-use fx_utils::FxHashMap;
+use fx_utils::{FxHashMap, FxHashSet};
 use graphwalk::{GraphRef, PostOrderContext};
 use ir::{
     module::Module,
     node::NodeKind,
     schedule::{schedule_early, schedule_late, ScheduleContext},
-    valgraph::{Node, ValGraph},
+    valgraph::{DepValue, Node, ValGraph},
     valwalk::{
-        dataflow_preds, dataflow_succs, def_use_preds, raw_dataflow_succs, raw_def_use_succs,
-        LiveNodeInfo,
+        dataflow_inputs, dataflow_preds, dataflow_succs, def_use_preds, raw_dataflow_succs,
+        raw_def_use_succs, LiveNodeInfo,
     },
 };
 use log::trace;
@@ -24,6 +24,7 @@ use log::trace;
 mod display;
 
 pub use display::Display;
+use smallvec::SmallVec;
 
 use crate::cfg::{Block, BlockCfg, BlockDomTree, CfgContext, FunctionBlockMap};
 
@@ -366,7 +367,7 @@ impl<'a> Scheduler<'a> {
 #[derive(Clone, Copy, Eq)]
 struct ReadyNode {
     node: Node,
-    prio: i64,
+    prio: u64,
 }
 
 impl PartialOrd for ReadyNode {
@@ -393,6 +394,17 @@ struct BlockNodeData {
     unscheduled_preds: u32,
     /// The length of the longest data dependency chain in the block headed by this node.
     cp_length: u32,
+    /// The number of deduplicated data inputs for which this node is the last use point in the
+    /// block.
+    last_use_count: u32,
+    /// A deduplicated list of all data inputs to this node.
+    unique_inputs: EntityList<DepValue>,
+}
+
+#[derive(Default)]
+struct BlockValueData {
+    users: EntityList<Node>,
+    outstanding_uses: u32,
 }
 
 struct BlockScheduler<'a> {
@@ -403,6 +415,9 @@ struct BlockScheduler<'a> {
     block: Block,
     block_postorder: Vec<Node>,
     block_node_data: FxHashMap<Node, BlockNodeData>,
+    block_value_data: FxHashMap<DepValue, BlockValueData>,
+    unique_input_pool: ListPool<DepValue>,
+    value_use_pool: ListPool<Node>,
     ready_nodes: BinaryHeap<ReadyNode>,
 }
 
@@ -420,6 +435,9 @@ impl<'a> BlockScheduler<'a> {
             block: Block::reserved_value(),
             block_postorder: Vec::new(),
             block_node_data: FxHashMap::default(),
+            block_value_data: FxHashMap::default(),
+            unique_input_pool: ListPool::new(),
+            value_use_pool: ListPool::new(),
             ready_nodes: BinaryHeap::new(),
         }
     }
@@ -432,6 +450,8 @@ impl<'a> BlockScheduler<'a> {
 
     fn schedule(&mut self, mut f: impl FnMut(Node)) {
         self.scheduled.clear();
+
+        let mut new_last_users = SmallVec::<[Node; 4]>::new();
         while let Some(ready_node) = self.ready_nodes.pop() {
             let node = ready_node.node;
             if self.scheduled.contains(node) {
@@ -441,24 +461,73 @@ impl<'a> BlockScheduler<'a> {
             }
 
             trace!(
-                "    place: node {} [cp {}]",
+                "    place: node {} [luc {}, cp {}]",
                 node.as_u32(),
-                self.block_node_data[&node].cp_length
+                self.block_node_data[&node].last_use_count,
+                self.block_node_data[&node].cp_length,
             );
 
             self.scheduled.insert(node);
             f(node);
 
-            for (succ, _use_idx) in raw_def_use_succs(self.graph, node) {
-                if !self.is_block_interior_node(succ) {
-                    continue;
-                }
+            new_last_users.clear();
+            self.gather_new_last_users(node, &mut new_last_users);
+            for node in new_last_users.drain(..) {
+                self.enqueue_if_ready(node);
+            }
 
-                let succ_data = self.block_node_data.get_mut(&succ).unwrap();
-                debug_assert!(succ_data.unscheduled_preds > 0);
-                debug_assert!(!self.scheduled.contains(succ));
-                succ_data.unscheduled_preds -= 1;
-                self.enqueue_if_ready(succ);
+            self.enqeue_ready_succs(node);
+        }
+    }
+
+    fn enqeue_ready_succs(&mut self, node: Node) {
+        for (succ, _use_idx) in raw_def_use_succs(self.graph, node) {
+            if !self.is_block_interior_node(succ) {
+                continue;
+            }
+
+            let succ_data = self.block_node_data.get_mut(&succ).unwrap();
+            debug_assert!(succ_data.unscheduled_preds > 0);
+            debug_assert!(!self.scheduled.contains(succ));
+            succ_data.unscheduled_preds -= 1;
+            self.enqueue_if_ready(succ);
+        }
+    }
+
+    fn gather_new_last_users(&mut self, node: Node, new_last_users: &mut SmallVec<[Node; 4]>) {
+        for &input in self.block_node_data[&node]
+            .unique_inputs
+            .as_slice(&self.unique_input_pool)
+        {
+            // This input should always have an existing outstanding use count.
+            let value_data = self.block_value_data.get_mut(&input).unwrap();
+            debug_assert!(value_data.outstanding_uses > 0);
+            value_data.outstanding_uses -= 1;
+            if value_data.outstanding_uses == 1 {
+                // The remaining user of this value is now the last in the block, so bump its
+                // last use count and move it forward in the ready queue if necessary.
+
+                // This search happens at most once during scheduling of the block (and only
+                // walks edges leading into the block), so the total complexity here is still
+                // linear.
+                let last_user = *value_data
+                    .users
+                    .as_slice(&self.value_use_pool)
+                    .iter()
+                    .find(|&&user| !self.scheduled.contains(user))
+                    .expect("value should have outstanding user");
+
+                // Don't even bother with nodes that have already been scheduled. This can
+                // happen if `last_user` actually uses a value defined outside the block.
+                if !self.scheduled.contains(last_user) {
+                    self.block_node_data
+                        .get_mut(&last_user)
+                        .unwrap()
+                        .last_use_count += 1;
+                    // Note: this node may be pushed multiple times if several of its inputs are
+                    // last users.
+                    new_last_users.push(last_user);
+                }
             }
         }
     }
@@ -483,6 +552,10 @@ impl<'a> BlockScheduler<'a> {
 
     fn prepare_node_data(&mut self) {
         self.block_node_data.clear();
+        self.unique_input_pool.clear();
+        self.block_value_data.clear();
+
+        let mut recorded_inputs = FxHashSet::default();
 
         // Walk the block in postorder here so we have critical path lengths for successors before
         // reaching the nodes themselves.
@@ -497,9 +570,44 @@ impl<'a> BlockScheduler<'a> {
                 BlockNodeData {
                     unscheduled_preds,
                     cp_length,
+                    last_use_count: 0,
+                    unique_inputs: EntityList::new(),
                 },
             );
+            let node_data = self.block_node_data.get_mut(&node).unwrap();
 
+            // Record this node's deduplicated input list.
+            recorded_inputs.clear();
+            for input in dataflow_inputs(self.graph, node) {
+                if recorded_inputs.contains(&input) {
+                    continue;
+                }
+                recorded_inputs.insert(input);
+                node_data
+                    .unique_inputs
+                    .push(input, &mut self.unique_input_pool);
+            }
+
+            // Record outstanding uses for all incoming values.
+            for &input in node_data.unique_inputs.as_slice(&self.unique_input_pool) {
+                let value_data = self.block_value_data.entry(input).or_default();
+                value_data.users.push(node, &mut self.value_use_pool);
+                value_data.outstanding_uses += 1;
+            }
+        }
+
+        // Now that everything has been set up and outstanding uses have been counted, bump last use
+        // counts and enqueue nodes.
+        for i in 0..self.block_postorder.len() {
+            let node = self.block_postorder[i];
+            let node_data = self.block_node_data.get_mut(&node).unwrap();
+            for &input in node_data.unique_inputs.as_slice(&self.unique_input_pool) {
+                if self.block_value_data[&input].outstanding_uses == 1 {
+                    // This node is the only use of the input in the block, bump its last use count
+                    // now.
+                    node_data.last_use_count += 1;
+                }
+            }
             self.enqueue_if_ready(node);
         }
     }
@@ -537,8 +645,10 @@ impl<'a> BlockScheduler<'a> {
         exit_cp_length.map_or(0, |exit_cp_length| exit_cp_length + 1)
     }
 
-    fn node_prio(&self, node: Node) -> i64 {
-        self.block_node_data[&node].cp_length as i64
+    fn node_prio(&self, node: Node) -> u64 {
+        let node_data = &self.block_node_data[&node];
+        // Prefer last use count, and fall back to CP length when tied.
+        ((node_data.last_use_count as u64) << 32) | node_data.cp_length as u64
     }
 
     fn is_block_interior_node(&self, node: Node) -> bool {

@@ -5,8 +5,8 @@ func @func:i64() {
     # nextln: block0:
     # nextln:     $(iconst0=$val):i32 = iconst 1
     # nextln:     $(iext0=$val):i64 = iext $iconst0
-    # nextln:     $(entry0=$val):ctrl = entry
     # nextln:     $(sfill0=$val):i64 = sfill 32 $iext0
+    # nextln:     $(entry0=$val):ctrl = entry
     # nextln:     return $entry0, $sfill0
 
     %c:ctrl = entry

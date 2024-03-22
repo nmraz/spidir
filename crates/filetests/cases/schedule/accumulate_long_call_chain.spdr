@@ -1,0 +1,51 @@
+# run: schedule
+
+extfunc @f:i32()
+
+func @func:i32() {
+    # check: function `func`:
+    # nextln: block0:
+    # nextln:     $(entry0=$val):ctrl = entry
+    # nextln:     $(call0=$val):ctrl, $(call1=$val):i32 = call @f $entry0
+    # nextln:     $(call2=$val):ctrl, $(call3=$val):i32 = call @f $call0
+    # nextln:     $(and0=$val):i32 = and $call1, $call3
+    # nextln:     $(call4=$val):ctrl, $(call5=$val):i32 = call @f $call2
+    # nextln:     $(and1=$val):i32 = and $and0, $call5
+    # nextln:     $(call6=$val):ctrl, $(call7=$val):i32 = call @f $call4
+    # nextln:     $(and2=$val):i32 = and $and1, $call7
+    # nextln:     $(call8=$val):ctrl, $(call9=$val):i32 = call @f $call6
+    # nextln:     $(and3=$val):i32 = and $and2, $call9
+    # nextln:     $(call10=$val):ctrl, $(call11=$val):i32 = call @f $call8
+    # nextln:     $(and4=$val):i32 = and $and3, $call11
+    # nextln:     $(call12=$val):ctrl, $(call13=$val):i32 = call @f $call10
+    # nextln:     $(and5=$val):i32 = and $and4, $call13
+    # nextln:     $(call14=$val):ctrl, $(call15=$val):i32 = call @f $call12
+    # nextln:     $(and6=$val):i32 = and $and5, $call15
+    # nextln:     $(call16=$val):ctrl, $(call17=$val):i32 = call @f $call14
+    # nextln:     $(and7=$val):i32 = and $and6, $call17
+    # nextln:     $(call18=$val):ctrl, $(call19=$val):i32 = call @f $call16
+    # nextln:     $(and8=$val):i32 = and $and7, $call19
+    # nextln:     return $call18, $and8
+
+    %ent:ctrl = entry
+    %c0:ctrl, %v0:i32 = call @f %ent
+    %c1:ctrl, %v1:i32 = call @f %c0
+    %c2:ctrl, %v2:i32 = call @f %c1
+    %c3:ctrl, %v3:i32 = call @f %c2
+    %c4:ctrl, %v4:i32 = call @f %c3
+    %c5:ctrl, %v5:i32 = call @f %c4
+    %c6:ctrl, %v6:i32 = call @f %c5
+    %c7:ctrl, %v7:i32 = call @f %c6
+    %c8:ctrl, %v8:i32 = call @f %c7
+    %c9:ctrl, %v9:i32 = call @f %c8
+    %a1:i32 = and %v0, %v1
+    %a2:i32 = and %a1, %v2
+    %a3:i32 = and %a2, %v3
+    %a4:i32 = and %a3, %v4
+    %a5:i32 = and %a4, %v5
+    %a6:i32 = and %a5, %v6
+    %a7:i32 = and %a6, %v7
+    %a8:i32 = and %a7, %v8
+    %a9:i32 = and %a8, %v9
+    return %c9, %a9
+}

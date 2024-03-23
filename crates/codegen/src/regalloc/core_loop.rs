@@ -417,11 +417,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
     }
 
     fn fragment_hull(&self, fragment: LiveSetFragment) -> ProgramRange {
-        let ranges = &self.live_set_fragments[fragment].ranges;
-        ProgramRange::new(
-            ranges.first().unwrap().prog_range.start,
-            ranges.last().unwrap().prog_range.end,
-        )
+        self.live_set_fragments[fragment].hull()
     }
 }
 

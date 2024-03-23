@@ -303,6 +303,15 @@ pub struct LiveSetFragmentData {
     pub spill_weight: f32,
 }
 
+impl LiveSetFragmentData {
+    pub fn hull(&self) -> ProgramRange {
+        ProgramRange::new(
+            self.ranges.first().unwrap().prog_range.start,
+            self.ranges.last().unwrap().prog_range.end,
+        )
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum PhysRegCopyDir {
     ToPhys,

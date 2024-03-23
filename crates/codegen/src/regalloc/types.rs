@@ -230,6 +230,10 @@ impl LiveRangeInstr {
         self.needs_reg = needs_reg;
     }
 
+    pub fn needs_reg(self) -> bool {
+        self.needs_reg
+    }
+
     pub fn op_pos(self) -> LiveRangeOpPos {
         self.op_pos
     }

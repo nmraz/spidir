@@ -7,13 +7,16 @@ use smallvec::{smallvec, SmallVec};
 use crate::{
     lir::{Instr, PhysReg, PhysRegSet},
     machine::MachineCore,
-    regalloc::types::{LiveRangeData, ProgramPoint, TaggedLiveRange},
+    regalloc::types::{
+        InstrSlot, LiveRangeData, LiveRangeInstr, LiveRangeOpPos, ProgramPoint, TaggedLiveRange,
+    },
 };
 
 use super::{
     conflict::{iter_btree_ranges, iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{LiveSetFragment, ProgramRange, QueuedFragment, RangeEndKey},
+    Error,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -42,7 +45,7 @@ enum ProbeConflict {
 }
 
 impl<M: MachineCore> RegAllocContext<'_, M> {
-    pub fn run_core_loop(&mut self) {
+    pub fn run_core_loop(&mut self) -> Result<(), Error> {
         // Process fragments in order of decreasing size, to try to fill in the larger ranges before
         // moving on to smaller ones. Because of weight-based eviction, we can still end up
         // revisiting a larger fragment later.
@@ -60,11 +63,13 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 "process: {fragment}, weight {}",
                 self.live_set_fragments[fragment].spill_weight
             );
-            self.try_allocate(fragment);
+            self.try_allocate(fragment)?;
         }
+
+        Ok(())
     }
 
-    fn try_allocate(&mut self, fragment: LiveSetFragment) {
+    fn try_allocate(&mut self, fragment: LiveSetFragment) -> Result<(), Error> {
         let class = self.live_set_fragments[fragment].class;
 
         // Start with hinted registers in order of decreasing weight, then move on to the default
@@ -141,20 +146,102 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             self.assign_fragment_to_phys_reg(preg, fragment);
         } else if let Some(boundary) = earliest_hard_conflict_boundary {
             self.split_and_requeue_fragment(fragment, boundary);
-        } else {
+        } else if !self.is_fragment_atomic(fragment) {
             self.spill_fragment(fragment);
+        } else {
+            let instr = self.fragment_hull(fragment).start.instr();
+            return Err(Error::OutOfRegisters(instr));
         }
+
+        Ok(())
     }
 
     fn spill_fragment(&mut self, fragment: LiveSetFragment) {
-        trace!("   spill: {fragment}");
-        let ranges = &mut self.live_set_fragments[fragment].ranges;
+        trace!("  spill: {fragment}");
 
-        // TODO: Perform the spill...
+        let live_set = self.live_set_fragments[fragment].live_set;
+        let class = self.live_set_fragments[fragment].class;
+        let mut ranges = mem::take(&mut self.live_set_fragments[fragment].ranges);
 
+        let mut reg_instrs = SmallVec::<[LiveRangeInstr; 4]>::new();
+        let mut new_fragments = SmallVec::<[LiveSetFragment; 8]>::new();
+
+        let mut last_instr = None;
         for range in ranges.drain(..) {
+            let vreg = self.live_ranges[range.live_range].vreg;
+
+            reg_instrs.clear();
+            reg_instrs.extend(
+                self.live_ranges[range.live_range]
+                    .instrs
+                    .drain_filter(|instr| instr.needs_reg()),
+            );
+
+            // Note: we assume the instructions are all in sorted order here so that the
+            // `last_instr` checks inside make sense.
+            for instr in &reg_instrs {
+                trace!("    carve: {}", instr.instr());
+
+                let new_prog_range = if instr.is_def() {
+                    let end_slot = match instr.op_pos() {
+                        LiveRangeOpPos::PreCopy => InstrSlot::PreCopy,
+                        LiveRangeOpPos::Early => InstrSlot::Early,
+                        LiveRangeOpPos::Late => InstrSlot::Late,
+                        LiveRangeOpPos::After => unreachable!("use operands cannot happen `After`"),
+                    };
+                    ProgramRange::new(
+                        ProgramPoint::before(instr.instr()),
+                        ProgramPoint::new(instr.instr(), end_slot),
+                    )
+                } else {
+                    let start_slot = match instr.op_pos() {
+                        LiveRangeOpPos::PreCopy => InstrSlot::PreCopy,
+                        LiveRangeOpPos::Early => InstrSlot::Early,
+                        LiveRangeOpPos::Late => InstrSlot::Late,
+                        LiveRangeOpPos::After => {
+                            unreachable!("`After` definition cannot require register");
+                        }
+                    };
+                    ProgramRange::new(
+                        ProgramPoint::new(instr.instr(), start_slot),
+                        ProgramPoint::before(instr.instr().next()),
+                    )
+                };
+
+                let new_fragment = if last_instr == Some(instr.instr()) {
+                    // Having two ranges from the same instruction is possible for tied/coalesced
+                    // operands. Make sure to assign all
+                    *new_fragments.last().unwrap()
+                } else {
+                    let new_fragment = self.create_live_fragment(live_set, class, smallvec![]);
+                    new_fragments.push(new_fragment);
+                    new_fragment
+                };
+
+                let new_live_range = self.live_ranges.push(LiveRangeData {
+                    prog_range: new_prog_range,
+                    vreg,
+                    fragment,
+                    instrs: smallvec![*instr],
+                    spilled: false,
+                });
+                self.live_set_fragments[new_fragment]
+                    .ranges
+                    .push(TaggedLiveRange {
+                        prog_range: new_prog_range,
+                        live_range: new_live_range,
+                    });
+
+                last_instr = Some(instr.instr());
+            }
+
             // Remember we've spilled this range so we can clean it up later.
             self.live_ranges[range.live_range].spilled = true;
+        }
+
+        for &new_fragment in &new_fragments {
+            self.compute_live_fragment_properties(new_fragment);
+            self.enqueue_fragment(new_fragment);
         }
     }
 
@@ -414,6 +501,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
     fn can_split_fragment_before(&self, fragment: LiveSetFragment, point: ProgramPoint) -> bool {
         self.fragment_hull(fragment).can_split_before(point)
+    }
+
+    fn is_fragment_atomic(&self, fragment: LiveSetFragment) -> bool {
+        self.live_set_fragments[fragment].is_atomic
     }
 
     fn fragment_hull(&self, fragment: LiveSetFragment) -> ProgramRange {

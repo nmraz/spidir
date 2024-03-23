@@ -17,7 +17,7 @@ use super::{
     context::RegAllocContext,
     types::{
         LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, PhysRegHint, PhysRegHints,
-        TaggedLiveRange,
+        ProgramRange, TaggedLiveRange,
     },
     utils::{coalesce_slice, get_instr_weight},
 };
@@ -29,6 +29,15 @@ struct CopyCandidate {
     dest: VirtRegNum,
     weight: f32,
 }
+
+/// The spill weight assigned to all atomic fragments.
+///
+/// This is higher than all possible non-atomic fragment weights, so that atomic fragments always
+/// evict everything else.
+const ATOMIC_FRAGMENT_WEIGHT: f32 = (1 << f32::MANTISSA_DIGITS) as f32;
+
+/// The highest spill weight that can be assigned to non-atomic fragments.
+const MAX_NONATOMIC_FRAGMENT_WEIGHT: f32 = ATOMIC_FRAGMENT_WEIGHT - 1.0;
 
 impl<M: MachineCore> RegAllocContext<'_, M> {
     pub fn build_live_sets(&mut self) {
@@ -134,12 +143,14 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             assignment: None.into(),
             size: 0,
             spill_weight: 0.0,
+            is_atomic: false,
         })
     }
 
     pub fn compute_live_fragment_properties(&mut self, fragment: LiveSetFragment) {
         let mut size = 0;
         let mut total_weight = 0.0;
+        let mut some_instr_needs_reg = false;
 
         let fragment_data = &mut self.live_set_fragments[fragment];
         fragment_data.hints.clear();
@@ -148,11 +159,12 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             let range_data = &mut self.live_ranges[range.live_range];
             range_data.fragment = fragment;
             size += range.prog_range.len();
-            total_weight += range_data
-                .instrs
-                .iter()
-                .map(|instr| instr.weight())
-                .sum::<f32>();
+
+            for instr in &range_data.instrs {
+                total_weight += instr.weight();
+                some_instr_needs_reg |= instr.needs_reg();
+            }
+
             if let Some(range_hints) = self.live_range_hints.get(&range.live_range) {
                 fragment_data
                     .hints
@@ -163,7 +175,13 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         sort_reg_hints(&mut fragment_data.hints);
 
         fragment_data.size = size;
-        fragment_data.spill_weight = total_weight / (size as f32);
+        fragment_data.is_atomic = some_instr_needs_reg && covers_single_instr(fragment_data.hull());
+
+        fragment_data.spill_weight = if fragment_data.is_atomic {
+            ATOMIC_FRAGMENT_WEIGHT
+        } else {
+            (total_weight / (size as f32)).min(MAX_NONATOMIC_FRAGMENT_WEIGHT)
+        };
     }
 
     fn try_coalesce(
@@ -240,6 +258,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
         false
     }
+}
+
+fn covers_single_instr(range: ProgramRange) -> bool {
+    range.start.instr() == range.end.prev().instr()
 }
 
 fn sort_reg_hints(hints: &mut PhysRegHints) {

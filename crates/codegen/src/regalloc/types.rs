@@ -69,6 +69,12 @@ impl ProgramPoint {
         }
     }
 
+    pub fn prev(self) -> Self {
+        Self {
+            index: self.index - 1,
+        }
+    }
+
     pub fn instr(self) -> Instr {
         Instr::from_u32(self.index >> 2)
     }
@@ -301,6 +307,7 @@ pub struct LiveSetFragmentData {
     pub assignment: PackedOption<PhysReg>,
     pub size: u32,
     pub spill_weight: f32,
+    pub is_atomic: bool,
 }
 
 impl LiveSetFragmentData {

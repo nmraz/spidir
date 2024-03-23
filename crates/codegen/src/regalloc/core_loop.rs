@@ -1,7 +1,7 @@
 use core::mem;
 
 use itertools::Itertools;
-use log::trace;
+use log::{log_enabled, trace};
 use smallvec::{smallvec, SmallVec};
 
 use crate::{
@@ -170,6 +170,15 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         for range in ranges.drain(..) {
             let vreg = self.live_ranges[range.live_range].vreg;
 
+            if log_enabled!(log::Level::Trace) {
+                trace!("    range {:?}:", range.prog_range);
+                for instr in &self.live_ranges[range.live_range].instrs {
+                    let def_use_mark = if instr.is_def() { "D" } else { "U" };
+                    let mem_reg_mark = if instr.needs_reg() { "R" } else { "M" };
+                    trace!("      {} [{}{}]", instr.instr(), def_use_mark, mem_reg_mark);
+                }
+            }
+
             reg_instrs.clear();
             reg_instrs.extend(
                 self.live_ranges[range.live_range]
@@ -180,8 +189,6 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             // Note: we assume the instructions are all in sorted order here so that the
             // `last_instr` checks inside make sense.
             for instr in &reg_instrs {
-                trace!("    carve: {}", instr.instr());
-
                 let new_prog_range = if instr.is_def() {
                     let end_slot = match instr.op_pos() {
                         LiveRangeOpPos::PreCopy => InstrSlot::PreCopy,
@@ -217,6 +224,11 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                     new_fragments.push(new_fragment);
                     new_fragment
                 };
+
+                trace!(
+                    "    carve: {} ({new_prog_range:?}) -> {new_fragment}",
+                    instr.instr()
+                );
 
                 let new_live_range = self.live_ranges.push(LiveRangeData {
                     prog_range: new_prog_range,

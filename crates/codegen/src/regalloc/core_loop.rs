@@ -190,17 +190,6 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             // `last_instr` checks inside make sense.
             for instr in &reg_instrs {
                 let new_prog_range = if instr.is_def() {
-                    let end_slot = match instr.op_pos() {
-                        LiveRangeOpPos::PreCopy => InstrSlot::PreCopy,
-                        LiveRangeOpPos::Early => InstrSlot::Early,
-                        LiveRangeOpPos::Late => InstrSlot::Late,
-                        LiveRangeOpPos::After => unreachable!("use operands cannot happen `After`"),
-                    };
-                    ProgramRange::new(
-                        ProgramPoint::before(instr.instr()),
-                        ProgramPoint::new(instr.instr(), end_slot),
-                    )
-                } else {
                     let start_slot = match instr.op_pos() {
                         LiveRangeOpPos::PreCopy => InstrSlot::PreCopy,
                         LiveRangeOpPos::Early => InstrSlot::Early,
@@ -212,6 +201,17 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                     ProgramRange::new(
                         ProgramPoint::new(instr.instr(), start_slot),
                         ProgramPoint::before(instr.instr().next()),
+                    )
+                } else {
+                    let end_slot = match instr.op_pos() {
+                        LiveRangeOpPos::PreCopy => InstrSlot::PreCopy,
+                        LiveRangeOpPos::Early => InstrSlot::Early,
+                        LiveRangeOpPos::Late => InstrSlot::Late,
+                        LiveRangeOpPos::After => unreachable!("use operands cannot happen `After`"),
+                    };
+                    ProgramRange::new(
+                        ProgramPoint::before(instr.instr()),
+                        ProgramPoint::new(instr.instr(), end_slot),
                     )
                 };
 

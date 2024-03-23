@@ -1,0 +1,423 @@
+# run: schedule
+
+extfunc @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)":i32(i32, i32)
+extfunc @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)":i32(i32, i32)
+extfunc @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)":i32(ptr, i32)
+extfunc @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)":i32(i32, i32)
+extfunc @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)":i32(ptr, i32)
+extfunc @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)":i32(i32, i32)
+extfunc @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)":i32(ptr, i32)
+extfunc @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)":i32(i32, i32)
+extfunc @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)":i32(ptr, i32)
+extfunc @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)":i32(i64, i32)
+
+# This function performs a long sequence of calls to other functions and then bitwise ANDs their
+# results together. Make sure we schedule the ANDs within the sequence of calls instead of pushing
+# them all down, which needlessly creates very long live ranges.
+
+func @"System.Boolean Tests.BitTest::Run()":i32() {
+    # check: function `System.Boolean Tests.BitTest::Run()`:
+    # nextln: block0:
+    # nextln:     $(entry0=$val):ctrl = entry
+    # nextln: => block1
+    # nextln: block1:
+    # nextln:     $(iconst0=$val):i64 = iconst 0
+    # nextln:     $(stackslot0=$val):ptr = stackslot 1:1
+    # nextln:     $(stackslot1=$val):ptr = stackslot 2:2
+    # nextln:     $(iconst1=$val):i32 = iconst 0
+    # nextln:     $(stackslot2=$val):ptr = stackslot 8:8
+    # nextln:     $(stackslot3=$val):ptr = stackslot 8:8
+    # nextln:     $(stackslot4=$val):ptr = stackslot 4:4
+    # nextln:     $(stackslot5=$val):ptr = stackslot 2:2
+    # nextln:     $(stackslot6=$val):ptr = stackslot 4:4
+    # nextln:     $(stackslot7=$val):ptr = stackslot 2:2
+    # nextln:     $(stackslot8=$val):ptr = stackslot 1:1
+    # nextln:     $(store0=$val):ctrl = store.1 $(region0=$val), $iconst1, $stackslot8
+    # nextln:     $(store1=$val):ctrl = store.1 $store0, $iconst1, $stackslot0
+    # nextln:     $(stackslot9=$val):ptr = stackslot 1:1
+    # nextln:     $(store2=$val):ctrl = store.1 $store1, $iconst1, $stackslot9
+    # nextln:     $(store3=$val):ctrl = store.2 $store2, $iconst1, $stackslot7
+    # nextln:     $(store4=$val):ctrl = store.2 $store3, $iconst1, $stackslot5
+    # nextln:     $(store5=$val):ctrl = store.2 $store4, $iconst1, $stackslot1
+    # nextln:     $(store6=$val):ctrl = store.4 $store5, $iconst1, $stackslot6
+    # nextln:     $(store7=$val):ctrl = store.4 $store6, $iconst1, $stackslot4
+    # nextln:     $(store8=$val):ctrl = store.8 $store7, $iconst0, $stackslot3
+    # nextln:     $(store9=$val):ctrl = store.8 $store8, $iconst0, $stackslot2
+    # nextln: => block2
+    # nextln: block2:
+    # nextln:     $(iconst2=$val):i32 = iconst 7
+    # nextln:     $(iconst3=$val):i32 = iconst 8
+    # nextln:     $(iconst4=$val):i32 = iconst 1
+    # nextln:     $(iconst5=$val):i32 = iconst 32
+    # nextln:     $(iconst6=$val):i32 = iconst 15
+    # nextln:     $(iconst7=$val):i32 = iconst 16
+    # nextln:     $(iconst8=$val):i32 = iconst 3
+    # nextln:     $(iconst9=$val):i32 = iconst 64
+    # nextln:     $(iconst10=$val):i32 = iconst 2
+    # nextln:     $(iext0=$val):i64 = iext $iconst4
+    # nextln:     $(sfill0=$val):i64 = sfill 32 $iext0
+    # nextln:     $(iext1=$val):i64 = iext $iconst10
+    # nextln:     $(sfill1=$val):i64 = sfill 32 $iext1
+    # nextln:     $(iconst11=$val):i32 = iconst 4294967168
+    # nextln:     $(store10=$val):ctrl = store.1 $(region1=$val), $iconst11, $stackslot8
+    # nextln:     $(iconst12=$val):i32 = iconst 4294934528
+    # nextln:     $(store11=$val):ctrl = store.1 $store10, $iconst4, $stackslot0
+    # nextln:     $(store12=$val):ctrl = store.1 $store11, $iconst10, $stackslot9
+    # nextln:     $(store13=$val):ctrl = store.2 $store12, $iconst12, $stackslot7
+    # nextln:     $(store14=$val):ctrl = store.2 $store13, $iconst4, $stackslot5
+    # nextln:     $(store15=$val):ctrl = store.2 $store14, $iconst10, $stackslot1
+    # nextln:     $(store16=$val):ctrl = store.4 $store15, $iconst4, $stackslot6
+    # nextln:     $(store17=$val):ctrl = store.4 $store16, $iconst10, $stackslot4
+    # nextln:     $(store18=$val):ctrl = store.8 $store17, $sfill0, $stackslot3
+    # nextln:     $(store19=$val):ctrl = store.8 $store18, $sfill1, $stackslot2
+    # nextln:     $(load0=$val):ctrl, $(load1=$val):i32 = load.1 $store19, $stackslot8
+    # nextln:     $(sfill2=$val):i32 = sfill 8 $load1
+    # nextln:     $(call0=$val):ctrl, $(call1=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" $load0, $sfill2, $iconst2
+    # nextln:     $(and0=$val):i32 = and $iconst4, $call1
+    # nextln:     $(load2=$val):ctrl, $(load3=$val):i32 = load.1 $call0, $stackslot8
+    # nextln:     $(sfill3=$val):i32 = sfill 8 $load3
+    # nextln:     $(call2=$val):ctrl, $(call3=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" $load2, $sfill3, $iconst3
+    # nextln:     $(and1=$val):i32 = and $and0, $call3
+    # nextln:     $(load4=$val):ctrl, $(load5=$val):i32 = load.1 $call2, $stackslot0
+    # nextln:     $(sfill4=$val):i32 = sfill 8 $load5
+    # nextln:     $(call4=$val):ctrl, $(call5=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" $load4, $sfill4, $iconst1
+    # nextln:     $(and2=$val):i32 = and $and1, $call5
+    # nextln:     $(load6=$val):ctrl, $(load7=$val):i32 = load.1 $call4, $stackslot0
+    # nextln:     $(sfill5=$val):i32 = sfill 8 $load7
+    # nextln:     $(call6=$val):ctrl, $(call7=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" $load6, $sfill5, $iconst3
+    # nextln:     $(icmp0=$val):i32 = icmp eq $call7, $iconst1
+    # nextln:     $(and3=$val):i32 = and $and2, $icmp0
+    # nextln:     $(load8=$val):ctrl, $(load9=$val):i32 = load.1 $call6, $stackslot0
+    # nextln:     $(sfill6=$val):i32 = sfill 8 $load9
+    # nextln:     $(call8=$val):ctrl, $(call9=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" $load8, $sfill6, $iconst5
+    # nextln:     $(and4=$val):i32 = and $and3, $call9
+    # nextln:     $(load10=$val):ctrl, $(load11=$val):i32 = load.1 $call8, $stackslot9
+    # nextln:     $(sfill7=$val):i32 = sfill 8 $load11
+    # nextln:     $(call10=$val):ctrl, $(call11=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" $load10, $sfill7, $iconst1
+    # nextln:     $(icmp1=$val):i32 = icmp eq $call11, $iconst1
+    # nextln:     $(and5=$val):i32 = and $and4, $icmp1
+    # nextln:     $(call12=$val):ctrl, $(call13=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" $call10, $stackslot8, $iconst2
+    # nextln:     $(and6=$val):i32 = and $and5, $call13
+    # nextln:     $(call14=$val):ctrl, $(call15=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" $call12, $stackslot8, $iconst3
+    # nextln:     $(and7=$val):i32 = and $and6, $call15
+    # nextln:     $(call16=$val):ctrl, $(call17=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" $call14, $stackslot0, $iconst1
+    # nextln:     $(and8=$val):i32 = and $and7, $call17
+    # nextln:     $(call18=$val):ctrl, $(call19=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" $call16, $stackslot0, $iconst3
+    # nextln:     $(icmp2=$val):i32 = icmp eq $call19, $iconst1
+    # nextln:     $(and9=$val):i32 = and $and8, $icmp2
+    # nextln:     $(call20=$val):ctrl, $(call21=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" $call18, $stackslot0, $iconst5
+    # nextln:     $(and10=$val):i32 = and $and9, $call21
+    # nextln:     $(call22=$val):ctrl, $(call23=$val):i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" $call20, $stackslot9, $iconst1
+    # nextln:     $(icmp3=$val):i32 = icmp eq $call23, $iconst1
+    # nextln:     $(and11=$val):i32 = and $and10, $icmp3
+    # nextln:     $(load12=$val):ctrl, $(load13=$val):i32 = load.2 $call22, $stackslot7
+    # nextln:     $(sfill8=$val):i32 = sfill 16 $load13
+    # nextln:     $(call24=$val):ctrl, $(call25=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" $load12, $sfill8, $iconst6
+    # nextln:     $(and12=$val):i32 = and $and11, $call25
+    # nextln:     $(load14=$val):ctrl, $(load15=$val):i32 = load.2 $call24, $stackslot7
+    # nextln:     $(sfill9=$val):i32 = sfill 16 $load15
+    # nextln:     $(call26=$val):ctrl, $(call27=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" $load14, $sfill9, $iconst7
+    # nextln:     $(and13=$val):i32 = and $and12, $call27
+    # nextln:     $(load16=$val):ctrl, $(load17=$val):i32 = load.2 $call26, $stackslot5
+    # nextln:     $(sfill10=$val):i32 = sfill 16 $load17
+    # nextln:     $(call28=$val):ctrl, $(call29=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" $load16, $sfill10, $iconst1
+    # nextln:     $(and14=$val):i32 = and $and13, $call29
+    # nextln:     $(load18=$val):ctrl, $(load19=$val):i32 = load.2 $call28, $stackslot5
+    # nextln:     $(sfill11=$val):i32 = sfill 16 $load19
+    # nextln:     $(call30=$val):ctrl, $(call31=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" $load18, $sfill11, $iconst7
+    # nextln:     $(icmp4=$val):i32 = icmp eq $call31, $iconst1
+    # nextln:     $(and15=$val):i32 = and $and14, $icmp4
+    # nextln:     $(load20=$val):ctrl, $(load21=$val):i32 = load.2 $call30, $stackslot5
+    # nextln:     $(sfill12=$val):i32 = sfill 16 $load21
+    # nextln:     $(call32=$val):ctrl, $(call33=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" $load20, $sfill12, $iconst5
+    # nextln:     $(and16=$val):i32 = and $and15, $call33
+    # nextln:     $(load22=$val):ctrl, $(load23=$val):i32 = load.2 $call32, $stackslot1
+    # nextln:     $(sfill13=$val):i32 = sfill 16 $load23
+    # nextln:     $(call34=$val):ctrl, $(call35=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" $load22, $sfill13, $iconst1
+    # nextln:     $(icmp5=$val):i32 = icmp eq $call35, $iconst1
+    # nextln:     $(and17=$val):i32 = and $and16, $icmp5
+    # nextln:     $(call36=$val):ctrl, $(call37=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" $call34, $stackslot7, $iconst6
+    # nextln:     $(and18=$val):i32 = and $and17, $call37
+    # nextln:     $(call38=$val):ctrl, $(call39=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" $call36, $stackslot7, $iconst7
+    # nextln:     $(and19=$val):i32 = and $and18, $call39
+    # nextln:     $(call40=$val):ctrl, $(call41=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" $call38, $stackslot5, $iconst1
+    # nextln:     $(and20=$val):i32 = and $and19, $call41
+    # nextln:     $(call42=$val):ctrl, $(call43=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" $call40, $stackslot5, $iconst7
+    # nextln:     $(icmp6=$val):i32 = icmp eq $call43, $iconst1
+    # nextln:     $(and21=$val):i32 = and $and20, $icmp6
+    # nextln:     $(call44=$val):ctrl, $(call45=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" $call42, $stackslot5, $iconst5
+    # nextln:     $(and22=$val):i32 = and $and21, $call45
+    # nextln:     $(call46=$val):ctrl, $(call47=$val):i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" $call44, $stackslot1, $iconst1
+    # nextln:     $(icmp7=$val):i32 = icmp eq $call47, $iconst1
+    # nextln:     $(and23=$val):i32 = and $and22, $icmp7
+    # nextln:     $(load24=$val):ctrl, $(load25=$val):i32 = load.4 $call46, $stackslot6
+    # nextln:     $(call48=$val):ctrl, $(call49=$val):i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" $load24, $load25, $iconst1
+    # nextln:     $(and24=$val):i32 = and $and23, $call49
+    # nextln:     $(load26=$val):ctrl, $(load27=$val):i32 = load.4 $call48, $stackslot6
+    # nextln:     $(call50=$val):ctrl, $(call51=$val):i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" $load26, $load27, $iconst5
+    # nextln:     $(and25=$val):i32 = and $and24, $call51
+    # nextln:     $(load28=$val):ctrl, $(load29=$val):i32 = load.4 $call50, $stackslot4
+    # nextln:     $(call52=$val):ctrl, $(call53=$val):i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" $load28, $load29, $iconst1
+    # nextln:     $(icmp8=$val):i32 = icmp eq $call53, $iconst1
+    # nextln:     $(and26=$val):i32 = and $and25, $icmp8
+    # nextln:     $(load30=$val):ctrl, $(load31=$val):i32 = load.4 $call52, $stackslot6
+    # nextln:     $(call54=$val):ctrl, $(call55=$val):i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" $load30, $load31, $iconst1
+    # nextln:     $(icmp9=$val):i32 = icmp eq $call55, $iconst1
+    # nextln:     $(and27=$val):i32 = and $and26, $icmp9
+    # nextln:     $(load32=$val):ctrl, $(load33=$val):i32 = load.4 $call54, $stackslot6
+    # nextln:     $(call56=$val):ctrl, $(call57=$val):i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" $load32, $load33, $iconst5
+    # nextln:     $(icmp10=$val):i32 = icmp eq $call57, $iconst1
+    # nextln:     $(and28=$val):i32 = and $and27, $icmp10
+    # nextln:     $(load34=$val):ctrl, $(load35=$val):i32 = load.4 $call56, $stackslot4
+    # nextln:     $(call58=$val):ctrl, $(call59=$val):i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" $load34, $load35, $iconst1
+    # nextln:     $(and29=$val):i32 = and $and28, $call59
+    # nextln:     $(load36=$val):ctrl, $(load37=$val):i32 = load.4 $call58, $stackslot6
+    # nextln:     $(call60=$val):ctrl, $(call61=$val):i32 = call @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" $load36, $load37, $iconst1
+    # nextln:     $(icmp11=$val):i32 = icmp eq $call61, $iconst1
+    # nextln:     $(and30=$val):i32 = and $and29, $icmp11
+    # nextln:     $(load38=$val):ctrl, $(load39=$val):i32 = load.4 $call60, $stackslot6
+    # nextln:     $(call62=$val):ctrl, $(call63=$val):i32 = call @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" $load38, $load39, $iconst5
+    # nextln:     $(icmp12=$val):i32 = icmp eq $call63, $iconst1
+    # nextln:     $(and31=$val):i32 = and $and30, $icmp12
+    # nextln:     $(load40=$val):ctrl, $(load41=$val):i32 = load.4 $call62, $stackslot4
+    # nextln:     $(call64=$val):ctrl, $(call65=$val):i32 = call @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" $load40, $load41, $iconst1
+    # nextln:     $(icmp13=$val):i32 = icmp eq $call65, $iconst8
+    # nextln:     $(and32=$val):i32 = and $and31, $icmp13
+    # nextln:     $(call66=$val):ctrl, $(call67=$val):i32 = call @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" $call64, $stackslot6, $iconst1
+    # nextln:     $(and33=$val):i32 = and $and32, $call67
+    # nextln:     $(call68=$val):ctrl, $(call69=$val):i32 = call @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" $call66, $stackslot6, $iconst5
+    # nextln:     $(and34=$val):i32 = and $and33, $call69
+    # nextln:     $(call70=$val):ctrl, $(call71=$val):i32 = call @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" $call68, $stackslot4, $iconst1
+    # nextln:     $(icmp14=$val):i32 = icmp eq $call71, $iconst1
+    # nextln:     $(and35=$val):i32 = and $and34, $icmp14
+    # nextln:     $(load42=$val):ctrl, $(load43=$val):i64 = load.8 $call70, $stackslot3
+    # nextln:     $(call72=$val):ctrl, $(call73=$val):i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" $load42, $load43, $iconst1
+    # nextln:     $(and36=$val):i32 = and $and35, $call73
+    # nextln:     $(load44=$val):ctrl, $(load45=$val):i64 = load.8 $call72, $stackslot3
+    # nextln:     $(call74=$val):ctrl, $(call75=$val):i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" $load44, $load45, $iconst5
+    # nextln:     $(icmp15=$val):i32 = icmp eq $call75, $iconst1
+    # nextln:     $(and37=$val):i32 = and $and36, $icmp15
+    # nextln:     $(load46=$val):ctrl, $(load47=$val):i64 = load.8 $call74, $stackslot3
+    # nextln:     $(call76=$val):ctrl, $(call77=$val):i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" $load46, $load47, $iconst9
+    # nextln:     $(and38=$val):i32 = and $and37, $call77
+    # nextln:     $(load48=$val):ctrl, $(load49=$val):i64 = load.8 $call76, $stackslot2
+    # nextln:     $(call78=$val):ctrl, $(call79=$val):i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" $load48, $load49, $iconst1
+    # nextln:     $(icmp16=$val):i32 = icmp eq $call79, $iconst1
+    # nextln:     $(and39=$val):i32 = and $and38, $icmp16
+    # nextln:     $(call80=$val):ctrl, $(call81=$val):i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" $call78, $stackslot3, $iconst1
+    # nextln:     $(and40=$val):i32 = and $and39, $call81
+    # nextln:     $(call82=$val):ctrl, $(call83=$val):i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" $call80, $stackslot3, $iconst5
+    # nextln:     $(call84=$val):ctrl, $(call85=$val):i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" $call82, $stackslot3, $iconst9
+    # nextln:     $(icmp17=$val):i32 = icmp eq $call83, $iconst1
+    # nextln:     $(and41=$val):i32 = and $and40, $icmp17
+    # nextln:     $(and42=$val):i32 = and $and41, $call85
+    # nextln:     $(call86=$val):ctrl, $(call87=$val):i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" $call84, $stackslot2, $iconst1
+    # nextln:     $(icmp18=$val):i32 = icmp eq $call87, $iconst1
+    # nextln:     $(and43=$val):i32 = and $and42, $icmp18
+    # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $call86, $and43
+    # nextln: => block3, block4
+    # nextln: block3:
+    # nextln:     return $(region2=$val), $iconst4
+    # nextln: block4:
+    # nextln:     return $(region3=$val), $iconst1
+
+    %0:ctrl = entry
+    %1:ctrl, %2:phisel = region %0
+    %3:i32 = iconst 0
+    %4:i32 = iconst 1
+    %5:i64 = iext %4
+    %6:i64 = sfill 32 %5
+    %7:i32 = iconst 3
+    %8:ptr = stackslot 8:8
+    %9:i32 = iconst 64
+    %10:ptr = stackslot 8:8
+    %11:i32 = iconst 32
+    %12:ptr = stackslot 4:4
+    %13:ptr = stackslot 4:4
+    %14:ptr = stackslot 2:2
+    %15:ptr = stackslot 2:2
+    %16:i32 = iconst 16
+    %17:ptr = stackslot 2:2
+    %18:i32 = iconst 15
+    %19:ptr = stackslot 1:1
+    %20:ptr = stackslot 1:1
+    %21:i32 = iconst 8
+    %22:ptr = stackslot 1:1
+    %23:ctrl = store.1 %1, %3, %22
+    %24:ctrl = store.1 %23, %3, %20
+    %25:ctrl = store.1 %24, %3, %19
+    %26:ctrl = store.2 %25, %3, %17
+    %27:ctrl = store.2 %26, %3, %15
+    %28:ctrl = store.2 %27, %3, %14
+    %29:ctrl = store.4 %28, %3, %13
+    %30:ctrl = store.4 %29, %3, %12
+    %31:i32 = iconst 7
+    %32:i32 = iconst 2
+    %33:i64 = iext %32
+    %34:i64 = sfill 32 %33
+    %35:i32 = iconst 4294934528
+    %36:i32 = iconst 4294967168
+    %37:i64 = iconst 0
+    %38:ctrl = store.8 %30, %37, %10
+    %39:ctrl = store.8 %38, %37, %8
+    %40:ctrl, %41:phisel = region %39
+    %42:ctrl = store.1 %40, %36, %22
+    %43:ctrl = store.1 %42, %4, %20
+    %44:ctrl = store.1 %43, %32, %19
+    %45:ctrl = store.2 %44, %35, %17
+    %46:ctrl = store.2 %45, %4, %15
+    %47:ctrl = store.2 %46, %32, %14
+    %48:ctrl = store.4 %47, %4, %13
+    %49:ctrl = store.4 %48, %32, %12
+    %50:ctrl = store.8 %49, %6, %10
+    %51:ctrl = store.8 %50, %34, %8
+    %52:ctrl, %53:i32 = load.1 %51, %22
+    %54:i32 = sfill 8 %53
+    %55:ctrl, %56:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %52, %54, %31
+    %57:ctrl, %58:i32 = load.1 %55, %22
+    %59:i32 = sfill 8 %58
+    %60:ctrl, %61:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %57, %59, %21
+    %62:ctrl, %63:i32 = load.1 %60, %20
+    %64:i32 = sfill 8 %63
+    %65:ctrl, %66:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %62, %64, %3
+    %67:ctrl, %68:i32 = load.1 %65, %20
+    %69:i32 = sfill 8 %68
+    %70:ctrl, %71:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %67, %69, %21
+    %72:ctrl, %73:i32 = load.1 %70, %20
+    %74:i32 = sfill 8 %73
+    %75:ctrl, %76:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %72, %74, %11
+    %77:ctrl, %78:i32 = load.1 %75, %19
+    %79:i32 = sfill 8 %78
+    %80:ctrl, %81:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %77, %79, %3
+    %82:ctrl, %83:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %80, %22, %31
+    %84:ctrl, %85:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %82, %22, %21
+    %86:ctrl, %87:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %84, %20, %3
+    %88:ctrl, %89:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %86, %20, %21
+    %90:ctrl, %91:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %88, %20, %11
+    %92:ctrl, %93:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %90, %19, %3
+    %94:ctrl, %95:i32 = load.2 %92, %17
+    %96:i32 = sfill 16 %95
+    %97:ctrl, %98:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %94, %96, %18
+    %99:ctrl, %100:i32 = load.2 %97, %17
+    %101:i32 = sfill 16 %100
+    %102:ctrl, %103:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %99, %101, %16
+    %104:ctrl, %105:i32 = load.2 %102, %15
+    %106:i32 = sfill 16 %105
+    %107:ctrl, %108:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %104, %106, %3
+    %109:ctrl, %110:i32 = load.2 %107, %15
+    %111:i32 = sfill 16 %110
+    %112:ctrl, %113:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %109, %111, %16
+    %114:ctrl, %115:i32 = load.2 %112, %15
+    %116:i32 = sfill 16 %115
+    %117:ctrl, %118:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %114, %116, %11
+    %119:ctrl, %120:i32 = load.2 %117, %14
+    %121:i32 = sfill 16 %120
+    %122:ctrl, %123:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %119, %121, %3
+    %124:ctrl, %125:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %122, %17, %18
+    %126:ctrl, %127:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %124, %17, %16
+    %128:ctrl, %129:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %126, %15, %3
+    %130:ctrl, %131:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %128, %15, %16
+    %132:ctrl, %133:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %130, %15, %11
+    %134:ctrl, %135:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %132, %14, %3
+    %136:ctrl, %137:i32 = load.4 %134, %13
+    %138:ctrl, %139:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" %136, %137, %3
+    %140:ctrl, %141:i32 = load.4 %138, %13
+    %142:ctrl, %143:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" %140, %141, %11
+    %144:ctrl, %145:i32 = load.4 %142, %12
+    %146:ctrl, %147:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" %144, %145, %3
+    %148:ctrl, %149:i32 = load.4 %146, %13
+    %150:ctrl, %151:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" %148, %149, %3
+    %152:ctrl, %153:i32 = load.4 %150, %13
+    %154:ctrl, %155:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" %152, %153, %11
+    %156:ctrl, %157:i32 = load.4 %154, %12
+    %158:ctrl, %159:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" %156, %157, %3
+    %160:ctrl, %161:i32 = load.4 %158, %13
+    %162:ctrl, %163:i32 = call @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" %160, %161, %3
+    %164:ctrl, %165:i32 = load.4 %162, %13
+    %166:ctrl, %167:i32 = call @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" %164, %165, %11
+    %168:ctrl, %169:i32 = load.4 %166, %12
+    %170:ctrl, %171:i32 = call @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" %168, %169, %3
+    %172:ctrl, %173:i32 = call @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" %170, %13, %3
+    %174:ctrl, %175:i32 = call @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" %172, %13, %11
+    %176:ctrl, %177:i32 = call @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" %174, %12, %3
+    %178:ctrl, %179:i64 = load.8 %176, %10
+    %180:ctrl, %181:i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" %178, %179, %3
+    %182:ctrl, %183:i64 = load.8 %180, %10
+    %184:ctrl, %185:i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" %182, %183, %11
+    %186:ctrl, %187:i64 = load.8 %184, %10
+    %188:ctrl, %189:i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" %186, %187, %9
+    %190:ctrl, %191:i64 = load.8 %188, %8
+    %192:ctrl, %193:i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" %190, %191, %3
+    %194:ctrl, %195:i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" %192, %10, %3
+    %196:ctrl, %197:i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" %194, %10, %11
+    %198:ctrl, %199:i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" %196, %10, %9
+    %200:ctrl, %201:i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" %198, %8, %3
+    %202:i32 = icmp eq %201, %3
+    %203:i32 = icmp eq %197, %3
+    %204:i32 = icmp eq %193, %3
+    %205:i32 = icmp eq %185, %3
+    %206:i32 = icmp eq %177, %3
+    %207:i32 = icmp eq %171, %7
+    %208:i32 = icmp eq %167, %3
+    %209:i32 = icmp eq %163, %3
+    %210:i32 = icmp eq %155, %3
+    %211:i32 = icmp eq %151, %3
+    %212:i32 = icmp eq %147, %3
+    %213:i32 = icmp eq %135, %3
+    %214:i32 = icmp eq %131, %3
+    %215:i32 = icmp eq %123, %3
+    %216:i32 = icmp eq %113, %3
+    %217:i32 = icmp eq %93, %3
+    %218:i32 = icmp eq %89, %3
+    %219:i32 = icmp eq %81, %3
+    %220:i32 = icmp eq %71, %3
+    %221:i32 = and %4, %56
+    %222:i32 = and %221, %61
+    %223:i32 = and %222, %66
+    %224:i32 = and %223, %220
+    %225:i32 = and %224, %76
+    %226:i32 = and %225, %219
+    %227:i32 = and %226, %83
+    %228:i32 = and %227, %85
+    %229:i32 = and %228, %87
+    %230:i32 = and %229, %218
+    %231:i32 = and %230, %91
+    %232:i32 = and %231, %217
+    %233:i32 = and %232, %98
+    %234:i32 = and %233, %103
+    %235:i32 = and %234, %108
+    %236:i32 = and %235, %216
+    %237:i32 = and %236, %118
+    %238:i32 = and %237, %215
+    %239:i32 = and %238, %125
+    %240:i32 = and %239, %127
+    %241:i32 = and %240, %129
+    %242:i32 = and %241, %214
+    %243:i32 = and %242, %133
+    %244:i32 = and %243, %213
+    %245:i32 = and %244, %139
+    %246:i32 = and %245, %143
+    %247:i32 = and %246, %212
+    %248:i32 = and %247, %211
+    %249:i32 = and %248, %210
+    %250:i32 = and %249, %159
+    %251:i32 = and %250, %209
+    %252:i32 = and %251, %208
+    %253:i32 = and %252, %207
+    %254:i32 = and %253, %173
+    %255:i32 = and %254, %175
+    %256:i32 = and %255, %206
+    %257:i32 = and %256, %181
+    %258:i32 = and %257, %205
+    %259:i32 = and %258, %189
+    %260:i32 = and %259, %204
+    %261:i32 = and %260, %195
+    %262:i32 = and %261, %203
+    %263:i32 = and %262, %199
+    %264:i32 = and %263, %202
+    %265:ctrl, %266:ctrl = brcond %200, %264
+    %267:ctrl, %268:phisel = region %265
+    return %267, %4
+    %269:ctrl, %270:phisel = region %266
+    return %269, %3
+}

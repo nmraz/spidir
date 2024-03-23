@@ -55,7 +55,8 @@ pub type LiveNodeWalk<'a> = PreOrder<LiveNodeSuccs<'a>>;
 
 /// Walks the nodes currently live in `graph` given `entry` in an unspecified order.
 ///
-/// `entry` is guaranteed to be the first node returned.
+/// `entry` is guaranteed to be the last node returned if it has no inputs (as should be the case
+/// with every well-formed graph).
 pub fn walk_live_nodes(graph: &ValGraph, entry: Node) -> LiveNodeWalk<'_> {
     PreOrder::new(LiveNodeSuccs::new(graph), iter::once(entry))
 }

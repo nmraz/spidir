@@ -1,7 +1,7 @@
 use std::{
     ffi::OsStr,
     fmt::Write as _,
-    fs::{self, File},
+    fs::File,
     io::{self, Write as _},
     path::{Path, PathBuf},
     process::Command,
@@ -18,15 +18,18 @@ use ir::{
     loops::LoopForest,
     module::{FunctionData, Module},
     valwalk::cfg_preorder,
-    verify::{verify_func, verify_module},
+    verify::verify_func,
     write::{display_node, quote_ident, write_signature},
 };
 use ir_graphviz::{
     annotate::{Annotate, ColoredAnnotator, DomTreeAnnotator, ErrorAnnotator, LoopAnnotator},
     write_graphviz,
 };
-use parser::parse_module;
 use tempfile::NamedTempFile;
+
+use crate::utils::{function_by_name, read_and_verify_module, read_module};
+
+mod utils;
 
 #[derive(Parser)]
 struct Cli {
@@ -140,11 +143,7 @@ fn main() -> Result<()> {
             });
 
             let module = read_module(&input_file)?;
-            let func = module
-                .functions
-                .values()
-                .find(|func| func.name == function_name)
-                .ok_or_else(|| anyhow!("function `{}` not found in module", function_name))?;
+            let (_, func) = function_by_name(&module, &function_name)?;
 
             match format {
                 GraphFormat::Dot => {
@@ -333,21 +332,4 @@ fn get_graphviz_str(
         .context("failed to format dot graph")?;
 
     Ok(s)
-}
-
-fn read_and_verify_module(input_file: &Path) -> Result<Module> {
-    let module = read_module(input_file)?;
-    if let Err(errors) = verify_module(&module) {
-        for error in errors {
-            eprintln!("error: {}", error.display_with_context(&module));
-        }
-        bail!("module contained errors")
-    };
-    Ok(module)
-}
-
-fn read_module(input_file: &Path) -> Result<Module> {
-    let input_data = fs::read_to_string(input_file).context("failed to read input file")?;
-    let module = parse_module(&input_data).context("error parsing module")?;
-    Ok(module)
 }

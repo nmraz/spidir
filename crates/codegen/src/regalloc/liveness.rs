@@ -11,6 +11,7 @@ use crate::{
         VirtRegSet,
     },
     machine::MachineCore,
+    regalloc::utils::is_sorted_by_key,
 };
 
 use super::{
@@ -88,11 +89,31 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         // sorted properly now.
         for live_ranges in self.vreg_ranges.values_mut() {
             live_ranges.reverse();
+
+            debug_assert!(is_sorted_by_key(live_ranges, |&live_range| self
+                .live_ranges[live_range]
+                .prog_range
+                .start));
         }
 
-        // Do the same thing for all physical register reservations.
+        // Do the same thing for all physical register reservations...
         for preg in 0..M::phys_reg_count() {
             self.phys_reg_reservations[preg as usize].reverse();
+
+            debug_assert!(is_sorted_by_key(
+                &self.phys_reg_reservations[preg as usize],
+                |reservation| reservation.prog_range.start
+            ));
+        }
+
+        // ...and for instruction lists within each live range.
+        for live_range in self.live_ranges.values_mut() {
+            live_range.instrs.reverse();
+
+            debug_assert!(is_sorted_by_key(&live_range.instrs, |live_range_instr| {
+                // Require uses to appear before defs.
+                (live_range_instr.instr().as_u32() << 1) | (live_range_instr.is_def() as u32)
+            }));
         }
 
         // Add register hints for all live-in values.

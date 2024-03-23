@@ -27,8 +27,10 @@ use ir_graphviz::{
 };
 use tempfile::NamedTempFile;
 
+use crate::extract::extract_function;
 use crate::utils::{function_by_name, read_and_verify_module, read_module};
 
+mod extract;
 mod utils;
 
 #[derive(Parser)]
@@ -100,6 +102,13 @@ enum ToolCommand {
     Verify {
         /// The input IR file
         input_file: PathBuf,
+    },
+    /// Extract a single function into its own dedicated module, marking other functions as `extfunc`
+    Extract {
+        /// The input IR file
+        input_file: PathBuf,
+        /// The function to extract
+        function: String,
     },
     /// Schedule an IR module in preparation for codegen
     Schedule {
@@ -175,6 +184,14 @@ fn main() -> Result<()> {
         ToolCommand::Verify { input_file } => {
             read_and_verify_module(&input_file)?;
             eprintln!("Module valid");
+        }
+        ToolCommand::Extract {
+            input_file,
+            function,
+        } => {
+            let module = read_module(&input_file)?;
+            let extracted_module = extract_function(&module, &function)?;
+            write!(io::stdout(), "{extracted_module}")?;
         }
         ToolCommand::Schedule { input_file } => {
             let module = read_and_verify_module(&input_file)?;

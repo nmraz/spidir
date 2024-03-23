@@ -587,6 +587,8 @@ dependencies = [
  "clap",
  "codegen",
  "env_logger",
+ "expect-test",
+ "fx-utils",
  "ir",
  "ir-graphviz",
  "itertools",

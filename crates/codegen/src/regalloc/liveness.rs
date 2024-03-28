@@ -130,6 +130,12 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
 
             self.hint_live_range(first_range, preg, first_instr);
         }
+
+        // Make sure live range hints are sorted by instruction.
+        for hints in self.live_range_hints.values_mut() {
+            hints.reverse();
+            debug_assert!(is_sorted_by_key(hints, |hint| hint.instr));
+        }
     }
 
     fn compute_instr_liveness(

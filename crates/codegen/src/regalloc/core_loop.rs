@@ -1,5 +1,6 @@
 use core::mem;
 
+use hashbrown::hash_map::Entry;
 use itertools::Itertools;
 use log::{log_enabled, trace};
 use smallvec::{smallvec, SmallVec};
@@ -8,7 +9,8 @@ use crate::{
     lir::{Instr, PhysReg, PhysRegSet},
     machine::MachineCore,
     regalloc::types::{
-        InstrSlot, LiveRangeData, LiveRangeInstr, LiveRangeOpPos, ProgramPoint, TaggedLiveRange,
+        AnnotatedPhysRegHint, InstrSlot, LiveRangeData, LiveRangeInstr, LiveRangeOpPos,
+        ProgramPoint, TaggedLiveRange,
     },
 };
 
@@ -376,6 +378,31 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             instrs,
             spilled: false,
         });
+
+        // If this range came with any attached register hints, split them as well.
+        if let Entry::Occupied(mut entry) = self.live_range_hints.entry(split_live_range) {
+            // This will end up containing only the low range's hints once we drain the high ones
+            // below.
+            let mut low_hints = mem::take(entry.get_mut());
+
+            // Once again, hints pertaining to `instr` should end up in the upper half of the split
+            // range and not the lower half.
+            let split_idx = low_hints.iter().position(|hint| hint.instr >= instr);
+
+            if let Some(split_idx) = split_idx {
+                let high_hints: SmallVec<[AnnotatedPhysRegHint; 2]> =
+                    low_hints.drain(split_idx..).collect();
+                if !high_hints.is_empty() {
+                    *entry.get_mut() = high_hints;
+                } else {
+                    entry.remove();
+                }
+            };
+
+            if !low_hints.is_empty() {
+                self.live_range_hints.insert(new_live_range, low_hints);
+            }
+        }
 
         // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but we
         // don't care within the core loop.

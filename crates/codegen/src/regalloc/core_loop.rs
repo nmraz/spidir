@@ -145,7 +145,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             }
             self.assign_fragment_to_phys_reg(preg, fragment);
         } else if let Some(boundary) = earliest_hard_conflict_boundary {
-            self.split_and_requeue_fragment(fragment, boundary);
+            self.split_fragment_for_conflict(fragment, boundary);
         } else if !self.is_fragment_atomic(fragment) {
             self.spill_fragment(fragment);
         } else {
@@ -257,7 +257,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         }
     }
 
-    fn split_and_requeue_fragment(
+    fn split_fragment_for_conflict(
         &mut self,
         fragment: LiveSetFragment,
         boundary: ConflictBoundary,
@@ -268,6 +268,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             "  split: {fragment} (hull {:?}) at {instr}",
             self.fragment_hull(fragment)
         );
+        self.split_fragment_before(fragment, instr);
+    }
+
+    fn split_fragment_before(&mut self, fragment: LiveSetFragment, instr: Instr) {
         let pos = ProgramPoint::before(instr);
 
         debug_assert!(self.can_split_fragment_before(fragment, pos));
@@ -311,59 +315,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         let new_fragment = self.create_live_fragment(live_set, class, new_ranges);
 
         if split_boundary_range {
-            // The range to be split should already reside in the new fragment at this point.
-            let split_range = &mut self.live_set_fragments[new_fragment].ranges[0];
-            let split_live_range = split_range.live_range;
-            let split_prog_range = split_range.prog_range;
-
-            let low_range = ProgramRange::new(split_prog_range.start, pos);
-            let high_range = ProgramRange::new(pos, split_prog_range.end);
-
-            trace!("splitting range {split_prog_range:?} into {low_range:?} and {high_range:?}");
-
-            // Update the relevant fields in the original live range to describe the upper part of
-            // the split.
-            split_range.prog_range = high_range;
-            self.live_ranges[split_live_range].prog_range = high_range;
-
-            // Split the attached instructions on the boundary using a simple linear traversal: we
-            // basically need to walk the entire instruction list anyway, and a linear traversal is
-            // probably better for cache locality.
-
-            let mut instrs = mem::take(&mut self.live_ranges[split_live_range].instrs);
-            let instr_split_idx = instrs
-                .iter()
-                // Note: we're splitting before `instr`, so we want `instr` itself to be part of
-                // the upper half of the range.
-                .position(|range_instr| range_instr.instr() >= instr);
-            let high_instrs = if let Some(instr_split_idx) = instr_split_idx {
-                instrs.drain(instr_split_idx..).collect()
-            } else {
-                smallvec![]
-            };
-
-            self.live_ranges[split_live_range].instrs = high_instrs;
-            // `instrs` itself now contains the "low" instructions.
-
-            // Create a new live range to append to the end of the original `fragment`.
-            let vreg = self.live_ranges[split_live_range].vreg;
-            let new_live_range = self.live_ranges.push(LiveRangeData {
-                prog_range: low_range,
-                vreg,
-                fragment,
-                instrs,
-                spilled: false,
-            });
-
-            // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but we
-            // don't care within the core loop.
-            self.vreg_ranges[vreg].push(new_live_range);
-            self.live_set_fragments[fragment]
-                .ranges
-                .push(TaggedLiveRange {
-                    prog_range: low_range,
-                    live_range: new_live_range,
-                });
+            self.split_fragment_boundary_range_before(fragment, new_fragment, instr);
         }
 
         self.compute_live_fragment_properties(fragment);
@@ -371,6 +323,69 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
         self.enqueue_fragment(fragment);
         self.enqueue_fragment(new_fragment);
+    }
+
+    fn split_fragment_boundary_range_before(
+        &mut self,
+        old_fragment: LiveSetFragment,
+        new_fragment: LiveSetFragment,
+        instr: Instr,
+    ) {
+        let pos = ProgramPoint::before(instr);
+
+        // The range to be split should already reside in the new fragment at this point.
+        let split_range = &mut self.live_set_fragments[new_fragment].ranges[0];
+        let split_live_range = split_range.live_range;
+        let split_prog_range = split_range.prog_range;
+
+        let low_range = ProgramRange::new(split_prog_range.start, pos);
+        let high_range = ProgramRange::new(pos, split_prog_range.end);
+
+        trace!("splitting range {split_prog_range:?} into {low_range:?} and {high_range:?}");
+
+        // Update the relevant fields in the original live range to describe the upper part of
+        // the split.
+        split_range.prog_range = high_range;
+        self.live_ranges[split_live_range].prog_range = high_range;
+
+        // Split the attached instructions on the boundary using a simple linear traversal: we
+        // basically need to walk the entire instruction list anyway, and a linear traversal is
+        // probably better for cache locality.
+
+        let mut instrs = mem::take(&mut self.live_ranges[split_live_range].instrs);
+        let instr_split_idx = instrs
+            .iter()
+            // Note: we're splitting before `instr`, so we want `instr` itself to be part of
+            // the upper half of the range.
+            .position(|range_instr| range_instr.instr() >= instr);
+        let high_instrs = if let Some(instr_split_idx) = instr_split_idx {
+            instrs.drain(instr_split_idx..).collect()
+        } else {
+            smallvec![]
+        };
+
+        self.live_ranges[split_live_range].instrs = high_instrs;
+        // `instrs` itself now contains the "low" instructions.
+
+        // Create a new live range to append to the end of the original `fragment`.
+        let vreg = self.live_ranges[split_live_range].vreg;
+        let new_live_range = self.live_ranges.push(LiveRangeData {
+            prog_range: low_range,
+            vreg,
+            fragment: old_fragment,
+            instrs,
+            spilled: false,
+        });
+
+        // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but we
+        // don't care within the core loop.
+        self.vreg_ranges[vreg].push(new_live_range);
+        self.live_set_fragments[old_fragment]
+            .ranges
+            .push(TaggedLiveRange {
+                prog_range: low_range,
+                live_range: new_live_range,
+            });
     }
 
     fn probe_phys_reg(&self, preg: PhysReg, fragment: LiveSetFragment) -> Option<ProbeConflict> {

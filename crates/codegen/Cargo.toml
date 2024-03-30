@@ -16,6 +16,7 @@ cranelift-entity.workspace = true
 hashbrown.workspace = true
 itertools.workspace = true
 smallvec = { workspace = true, features = ["drain_filter"] }
+bitflags = { version = "2.5.0", default-features = false }
 
 [dev-dependencies]
 expect-test.workspace = true

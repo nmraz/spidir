@@ -1,6 +1,7 @@
 use core::{cmp::Ordering, fmt};
 
 use alloc::collections::BinaryHeap;
+use bitflags::bitflags;
 use cranelift_entity::{entity_impl, packed_option::PackedOption};
 use smallvec::SmallVec;
 
@@ -190,13 +191,19 @@ impl LiveRangeOpPos {
     }
 }
 
+bitflags! {
+    #[derive(Clone, Copy)]
+    struct LiveRangeInstrFlags: u8 {
+        const IS_DEF = 0b01;
+        const NEEDS_REG = 0b10;
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct LiveRangeInstr {
-    // TODO: Pack things better here.
     instr: Instr,
-    weight: f32,
-    is_def: bool,
-    needs_reg: bool,
+    weight: u16,
+    flags: LiveRangeInstrFlags,
     op_pos: Option<LiveRangeOpPos>,
 }
 
@@ -208,11 +215,14 @@ impl LiveRangeInstr {
         needs_reg: bool,
         op_pos: Option<LiveRangeOpPos>,
     ) -> Self {
+        let mut flags = LiveRangeInstrFlags::empty();
+        flags.set(LiveRangeInstrFlags::IS_DEF, is_def);
+        flags.set(LiveRangeInstrFlags::NEEDS_REG, needs_reg);
+
         Self {
             instr,
-            weight,
-            is_def,
-            needs_reg,
+            weight: encode_weight(weight),
+            flags,
             op_pos,
         }
     }
@@ -222,15 +232,15 @@ impl LiveRangeInstr {
     }
 
     pub fn is_def(self) -> bool {
-        self.is_def
+        self.flags.contains(LiveRangeInstrFlags::IS_DEF)
     }
 
     pub fn set_needs_reg(&mut self, needs_reg: bool) {
-        self.needs_reg = needs_reg;
+        self.flags.set(LiveRangeInstrFlags::NEEDS_REG, needs_reg);
     }
 
     pub fn needs_reg(self) -> bool {
-        self.needs_reg
+        self.flags.contains(LiveRangeInstrFlags::NEEDS_REG)
     }
 
     pub fn op_pos(self) -> Option<LiveRangeOpPos> {
@@ -242,8 +252,22 @@ impl LiveRangeInstr {
     }
 
     pub fn weight(self) -> f32 {
-        self.weight
+        decode_weight(self.weight)
     }
+}
+
+const F32_EXPONENT_BITS: u32 = 8;
+const F32_MANTISSA_BITS: u32 = 23;
+const WEIGHT_ENCODE_SHIFT: u32 = F32_EXPONENT_BITS + F32_MANTISSA_BITS - 16;
+
+fn encode_weight(weight: f32) -> u16 {
+    debug_assert!(weight >= 0.0);
+    let bits = weight.to_bits();
+    (bits >> WEIGHT_ENCODE_SHIFT) as u16
+}
+
+fn decode_weight(encoded_weight: u16) -> f32 {
+    f32::from_bits((encoded_weight as u32) << WEIGHT_ENCODE_SHIFT)
 }
 
 pub struct LiveRangeData {
@@ -510,5 +534,22 @@ mod tests {
         assert!(range.can_split_before(ProgramPoint::before(Instr::new(10))));
         assert!(range.can_split_before(ProgramPoint::before(Instr::new(32))));
         assert!(range.can_split_before(ProgramPoint::late(Instr::new(31))));
+    }
+
+    #[test]
+    fn encode_weight_precision() {
+        fn check(weight: f32) {
+            assert_eq!(weight, decode_weight(encode_weight(weight)));
+        }
+
+        check(1.0);
+        check(10.0);
+        check(500.0);
+        check(1000.0);
+        check(2000.0);
+        check(3000.0);
+        check(4000.0);
+        // We start losing precision around 5000, but 4 nested loops is pretty extreme...
+        check(8000.0);
     }
 }

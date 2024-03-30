@@ -173,17 +173,25 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         // descending order.
         for (i, def_op) in defs.iter().enumerate() {
             let (op_def_point, mut range_op_pos) = if tied_defs[i] {
-                (ProgramPoint::pre_copy(instr), LiveRangeOpPos::PreCopy)
+                (ProgramPoint::pre_copy(instr), Some(LiveRangeOpPos::PreCopy))
             } else {
                 let lir_op_pos = def_op.pos();
                 (
                     ProgramPoint::for_operand(instr, lir_op_pos),
-                    LiveRangeOpPos::for_lir_op_pos(lir_op_pos),
+                    Some(LiveRangeOpPos::for_lir_op_pos(lir_op_pos)),
                 )
             };
 
             let def_point = if let DefOperandConstraint::Fixed(_) = def_op.constraint() {
-                range_op_pos = LiveRangeOpPos::After;
+                // For spill/reload allocation later, treat the definition of the *vreg* as not
+                // happening in the instruction at all: the only thing that happens within the
+                // instruction itself is the assignment to the physical register, and that is then
+                // copied out after the instruction.
+
+                // If the vreg range starting right after the instruction ends up being spilled, we
+                // won't need to allocate a small "connector" range from the instruction to the
+                // spill point, since we can copy directly from the fixed register to the stack.
+                range_op_pos = None;
                 ProgramPoint::before(instr.next())
             } else {
                 op_def_point
@@ -342,7 +350,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         vreg: VirtRegNum,
         instr: Instr,
         needs_reg: bool,
-        op_pos: LiveRangeOpPos,
+        op_pos: Option<LiveRangeOpPos>,
         def_point: ProgramPoint,
         dead_use_point: ProgramPoint,
     ) -> Option<LiveRange> {
@@ -404,6 +412,9 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                 // This should be completely impossible because instructions can't use vregs they
                 // define.
                 assert!(!last_instr.is_def());
+                let prev_op_pos = last_instr
+                    .op_pos()
+                    .expect("uses must always have an operand pos");
 
                 // Avoid recording the same instruction multiple times if it uses this vreg in
                 // several operands - just make sure to update the fields we'll need in case we want
@@ -411,7 +422,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
                 // * `op_pos` should always point to the latest use point in the instruction so
                 //   ranges for reloaded spills are correct.
                 // * `needs_reg` should be true so we avoid reloading things more than once.
-                last_instr.set_op_pos(last_instr.op_pos().max(op_pos));
+                last_instr.set_op_pos(prev_op_pos.max(op_pos));
                 last_instr.set_needs_reg(true);
 
                 return live_range;
@@ -423,7 +434,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             get_instr_weight(self.lir, self.cfg_ctx, instr),
             false,
             needs_reg,
-            op_pos,
+            Some(op_pos),
         ));
 
         live_range

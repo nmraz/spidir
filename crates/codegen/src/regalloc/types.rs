@@ -170,7 +170,6 @@ pub enum LiveRangeOpPos {
     PreCopy = 0,
     Early = 1,
     Late = 2,
-    After = 3,
 }
 
 impl LiveRangeOpPos {
@@ -198,7 +197,7 @@ pub struct LiveRangeInstr {
     weight: f32,
     is_def: bool,
     needs_reg: bool,
-    op_pos: LiveRangeOpPos,
+    op_pos: Option<LiveRangeOpPos>,
 }
 
 impl LiveRangeInstr {
@@ -207,7 +206,7 @@ impl LiveRangeInstr {
         weight: f32,
         is_def: bool,
         needs_reg: bool,
-        op_pos: LiveRangeOpPos,
+        op_pos: Option<LiveRangeOpPos>,
     ) -> Self {
         Self {
             instr,
@@ -234,12 +233,12 @@ impl LiveRangeInstr {
         self.needs_reg
     }
 
-    pub fn op_pos(self) -> LiveRangeOpPos {
+    pub fn op_pos(self) -> Option<LiveRangeOpPos> {
         self.op_pos
     }
 
     pub fn set_op_pos(&mut self, op_pos: LiveRangeOpPos) {
-        self.op_pos = op_pos;
+        self.op_pos = Some(op_pos);
     }
 
     pub fn weight(self) -> f32 {

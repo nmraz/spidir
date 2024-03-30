@@ -191,25 +191,25 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             // Note: we assume the instructions are all in sorted order here so that the
             // `last_instr` checks inside make sense.
             for instr in &reg_instrs {
+                let op_pos = instr
+                    .op_pos()
+                    .expect("register operand must have a position");
+
                 let new_prog_range = if instr.is_def() {
-                    let start_slot = match instr.op_pos() {
+                    let start_slot = match op_pos {
                         LiveRangeOpPos::PreCopy => InstrSlot::PreCopy,
                         LiveRangeOpPos::Early => InstrSlot::Early,
                         LiveRangeOpPos::Late => InstrSlot::Late,
-                        LiveRangeOpPos::After => {
-                            unreachable!("`After` definition cannot require register");
-                        }
                     };
                     ProgramRange::new(
                         ProgramPoint::new(instr.instr(), start_slot),
                         ProgramPoint::before(instr.instr().next()),
                     )
                 } else {
-                    let end_slot = match instr.op_pos() {
+                    let end_slot = match op_pos {
                         LiveRangeOpPos::PreCopy => InstrSlot::PreCopy,
                         LiveRangeOpPos::Early => InstrSlot::Early,
                         LiveRangeOpPos::Late => InstrSlot::Late,
-                        LiveRangeOpPos::After => unreachable!("use operands cannot happen `After`"),
                     };
                     ProgramRange::new(
                         ProgramPoint::before(instr.instr()),

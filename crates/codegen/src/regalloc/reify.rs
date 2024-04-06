@@ -108,10 +108,15 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
 impl Assignment {
     fn empty_for_lir<M: MachineCore>(lir: &Lir<M>) -> Self {
+        let instr_count = lir.all_instrs().end.as_u32() as usize;
+
         let mut assignment = Assignment {
             spill_slots: PrimaryMap::new(),
-            instr_assignments: SecondaryMap::new(),
-            operand_assignment_pool: Vec::new(),
+            instr_assignments: SecondaryMap::with_capacity(instr_count),
+            // Estimate: every instruction has at least one use or def. This isn't actually true,
+            // but should usually be compensated for by the fact that many instructions have more
+            // than one operand.
+            operand_assignment_pool: Vec::with_capacity(instr_count),
         };
 
         for instr in lir.all_instrs() {

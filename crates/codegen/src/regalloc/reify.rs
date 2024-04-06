@@ -6,7 +6,7 @@ use cranelift_entity::{packed_option::ReservedValue, PrimaryMap, SecondaryMap};
 use smallvec::SmallVec;
 
 use crate::{
-    lir::{Instr, Lir, PhysReg},
+    lir::{DefOperandConstraint, Instr, Lir, PhysReg, UseOperandConstraint},
     machine::MachineCore,
 };
 
@@ -43,7 +43,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
                     let instr = range_instr.instr();
                     // An instruction can only define a vreg once.
-                    let (i, _def_op) = self
+                    let (i, def_op) = self
                         .lir
                         .instr_defs(instr)
                         .iter()
@@ -51,8 +51,12 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                         .find(|(_, def_op)| def_op.reg().reg_num() == vreg)
                         .unwrap();
 
-                    // TODO: Fixed operands.
-                    assignment.assign_instr_def(instr, i, range_assignment);
+                    let op_assignment = match def_op.constraint() {
+                        DefOperandConstraint::Fixed(preg) => OperandAssignment::Reg(preg),
+                        _ => range_assignment,
+                    };
+
+                    assignment.assign_instr_def(instr, i, op_assignment);
                 }
             }
 
@@ -71,8 +75,15 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                             continue;
                         }
 
-                        // TODO: Fixed/tied operands.
-                        assignment.assign_instr_use(instr, i, range_assignment);
+                        let op_assignment = match use_op.constraint() {
+                            UseOperandConstraint::Fixed(preg) => OperandAssignment::Reg(preg),
+                            UseOperandConstraint::TiedToDef(i) => {
+                                assignment.instr_def_assignments(instr)[i as usize]
+                            }
+                            _ => range_assignment,
+                        };
+
+                        assignment.assign_instr_use(instr, i, op_assignment);
                     }
                 }
             }

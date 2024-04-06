@@ -83,6 +83,11 @@ pub fn run<M: MachineCore>(
     ctx.compute_liveness();
     ctx.build_live_sets();
     ctx.run_core_loop()?;
+
+    let assignment = ctx.reify();
+
+    // Dump things as they were *after* reification, since that can change some things as well.
     ctx.dump();
-    Ok(ctx.reify())
+
+    Ok(assignment)
 }

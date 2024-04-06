@@ -1,9 +1,19 @@
-use cranelift_entity::packed_option::ReservedValue;
+use core::iter;
+
+use alloc::vec::Vec;
+
+use cranelift_entity::{packed_option::ReservedValue, PrimaryMap, SecondaryMap};
 use smallvec::SmallVec;
 
-use crate::machine::MachineCore;
+use crate::{
+    lir::{Instr, Lir, PhysReg},
+    machine::MachineCore,
+};
 
-use super::{context::RegAllocContext, types::LiveRange, Assignment, OperandAssignment, SpillSlot};
+use super::{
+    context::RegAllocContext, types::LiveRange, Assignment, InstrAssignmentData, OperandAssignment,
+    SpillSlot,
+};
 
 impl<M: MachineCore> RegAllocContext<'_, M> {
     pub fn reify(&mut self) -> Assignment {
@@ -82,5 +92,54 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 OperandAssignment::Spill(SpillSlot::reserved_value())
             }
         }
+    }
+}
+
+impl Assignment {
+    fn empty_for_lir<M: MachineCore>(lir: &Lir<M>) -> Self {
+        let mut assignment = Assignment {
+            spill_slots: PrimaryMap::new(),
+            instr_assignments: SecondaryMap::new(),
+            operand_assignment_pool: Vec::new(),
+        };
+
+        for instr in lir.all_instrs() {
+            let def_len = lir.instr_defs(instr).len();
+            let use_len = lir.instr_uses(instr).len();
+            let def_base = assignment.operand_assignment_pool.len();
+            let use_base = def_base + def_len;
+
+            assignment.operand_assignment_pool.extend(
+                iter::repeat(OperandAssignment::Reg(PhysReg::reserved_value()))
+                    .take(def_len + use_len),
+            );
+
+            assignment.instr_assignments[instr] = InstrAssignmentData {
+                def_base: def_base.try_into().unwrap(),
+                def_len: def_len.try_into().unwrap(),
+                use_base: use_base.try_into().unwrap(),
+                use_len: use_len.try_into().unwrap(),
+            };
+        }
+
+        assignment
+    }
+
+    fn assign_instr_def(&mut self, instr: Instr, idx: usize, assignment: OperandAssignment) {
+        let assignment_data = &self.instr_assignments[instr];
+        let base = assignment_data.def_base as usize;
+        let len = assignment_data.def_len as usize;
+
+        assert!(idx < len);
+        self.operand_assignment_pool[base + idx] = assignment;
+    }
+
+    fn assign_instr_use(&mut self, instr: Instr, idx: usize, assignment: OperandAssignment) {
+        let assignment_data = &self.instr_assignments[instr];
+        let base = assignment_data.use_base as usize;
+        let len = assignment_data.use_len as usize;
+
+        assert!(idx < len);
+        self.operand_assignment_pool[base + idx] = assignment;
     }
 }

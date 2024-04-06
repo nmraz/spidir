@@ -237,7 +237,6 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                     vreg,
                     fragment,
                     instrs: smallvec![*instr],
-                    spilled: false,
                 });
                 self.live_set_fragments[new_fragment]
                     .ranges
@@ -248,9 +247,6 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
                 last_instr = Some(instr.instr());
             }
-
-            // Remember we've spilled this range so we can clean it up later.
-            self.live_ranges[range.live_range].spilled = true;
         }
 
         for &new_fragment in &new_fragments {
@@ -376,7 +372,6 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             vreg,
             fragment: old_fragment,
             instrs,
-            spilled: false,
         });
 
         // If this range came with any attached register hints, split them as well.

@@ -497,7 +497,6 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             vreg,
             fragment: LiveSetFragment::reserved_value(),
             instrs: smallvec![],
-            spilled: false,
         };
         let live_range = self.live_ranges.push(range_data);
         self.vreg_ranges[vreg].push(live_range);

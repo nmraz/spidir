@@ -306,18 +306,18 @@ fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
         writeln!(output, "func @{} {{", quote_ident(&func.name)).unwrap();
         let (cfg_ctx, lir) = get_function_lir(module, func)?;
 
-        write!(
-            output,
-            "{}",
-            lir.display(&cfg_ctx.cfg, &cfg_ctx.block_order)
-        )
-        .unwrap();
-
         if regalloc {
-            codegen::regalloc::run(&lir, &cfg_ctx, &X64Machine)
+            let assignment = codegen::regalloc::run(&lir, &cfg_ctx, &X64Machine)
                 .map_err(|err| anyhow!("register allocation failed: {err:?}"))?;
+            write!(output, "{}", assignment.display(&cfg_ctx.block_order, &lir)).unwrap();
+        } else {
+            write!(
+                output,
+                "{}",
+                lir.display(&cfg_ctx.cfg, &cfg_ctx.block_order)
+            )
+            .unwrap();
         }
-
         writeln!(output, "}}\n").unwrap();
     }
 

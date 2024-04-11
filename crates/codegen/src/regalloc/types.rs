@@ -256,6 +256,14 @@ impl LiveRangeInstr {
     }
 }
 
+impl fmt::Debug for LiveRangeInstr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let def_use_mark = if self.is_def() { "D" } else { "U" };
+        let mem_reg_mark = if self.needs_reg() { "R" } else { "M" };
+        write!(f, "{} [{}{}]", self.instr(), def_use_mark, mem_reg_mark)
+    }
+}
+
 const F32_EXPONENT_BITS: u32 = 8;
 const F32_MANTISSA_BITS: u32 = 23;
 const WEIGHT_ENCODE_SHIFT: u32 = F32_EXPONENT_BITS + F32_MANTISSA_BITS - 16;

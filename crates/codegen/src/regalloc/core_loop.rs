@@ -175,9 +175,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             if log_enabled!(log::Level::Trace) {
                 trace!("    range {:?}:", range.prog_range);
                 for instr in &self.live_ranges[range.live_range].instrs {
-                    let def_use_mark = if instr.is_def() { "D" } else { "U" };
-                    let mem_reg_mark = if instr.needs_reg() { "R" } else { "M" };
-                    trace!("      {} [{}{}]", instr.instr(), def_use_mark, mem_reg_mark);
+                    trace!("      {:?}", instr);
                 }
             }
 

@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 use cranelift_entity::{entity_impl, PrimaryMap, SecondaryMap};
 
 use crate::{
-    cfg::CfgContext,
+    cfg::{Block, CfgContext},
     lir::{Instr, Lir, PhysReg},
     machine::MachineCore,
 };
@@ -13,11 +13,14 @@ use self::context::RegAllocContext;
 mod conflict;
 mod context;
 mod core_loop;
+mod display;
 mod live_set;
 mod liveness;
 mod reify;
 mod types;
 mod utils;
+
+pub use display::DisplayAssignment;
 
 #[derive(Debug, Clone)]
 pub enum Error {
@@ -71,6 +74,18 @@ impl Assignment {
         let base = assignment_data.use_base as usize;
         let len = assignment_data.use_len as usize;
         &self.operand_assignment_pool[base..base + len]
+    }
+
+    pub fn display<'a, M: MachineCore>(
+        &'a self,
+        block_order: &'a [Block],
+        lir: &'a Lir<M>,
+    ) -> DisplayAssignment<'a, M> {
+        DisplayAssignment {
+            assignment: self,
+            lir,
+            block_order,
+        }
     }
 }
 

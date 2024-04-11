@@ -33,7 +33,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                     | (fragment_data.assignment.is_some() as u64)
             });
 
-            // Resolve all defs first so tied uses are easier.
+            // Start by resolving all defs so tied uses are easier.
             for &range in vreg_ranges.iter() {
                 let range_assignment = self.get_range_assignment(range);
                 for &range_instr in &self.live_ranges[range].instrs {
@@ -59,8 +59,11 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                     assignment.assign_instr_def(instr, i, op_assignment);
                 }
             }
+        }
 
-            // Now that defs are resolved, do the same for uses.
+        // Now that all defs are resolved, do the same for uses.
+        for vreg in self.vreg_ranges.keys() {
+            vreg_ranges.clone_from(&self.vreg_ranges[vreg]);
             for &range in vreg_ranges.iter() {
                 let range_assignment = self.get_range_assignment(range);
                 for &range_instr in &self.live_ranges[range].instrs {

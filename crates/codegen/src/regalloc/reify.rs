@@ -92,6 +92,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             }
         }
 
+        if cfg!(debug_assertions) {
+            assignment.verify_all_assigned();
+        }
+
         assignment
     }
 
@@ -142,6 +146,23 @@ impl Assignment {
         }
 
         assignment
+    }
+
+    fn verify_all_assigned(&self) {
+        for instr in self.instr_assignments.keys() {
+            for (i, def_op) in self.instr_def_assignments(instr).iter().enumerate() {
+                assert!(
+                    def_op != &OperandAssignment::Reg(PhysReg::reserved_value()),
+                    "instr {instr} def {i} unset"
+                );
+            }
+            for (i, use_op) in self.instr_use_assignments(instr).iter().enumerate() {
+                assert!(
+                    use_op != &OperandAssignment::Reg(PhysReg::reserved_value()),
+                    "instr {instr} use {i} unset"
+                );
+            }
+        }
     }
 
     fn assign_instr_def(&mut self, instr: Instr, idx: usize, assignment: OperandAssignment) {

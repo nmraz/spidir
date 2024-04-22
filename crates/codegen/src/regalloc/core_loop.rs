@@ -62,8 +62,9 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         while let Some(fragment) = self.worklist.pop() {
             let fragment = fragment.fragment;
             trace!(
-                "process: {fragment}, weight {}",
-                self.live_set_fragments[fragment].spill_weight
+                "process: {fragment}, size {}, weight {}",
+                self.live_set_fragments[fragment].size,
+                self.live_set_fragments[fragment].spill_weight,
             );
             self.try_allocate(fragment)?;
         }
@@ -542,7 +543,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
     fn enqueue_fragment(&mut self, fragment: LiveSetFragment) {
         let size = self.live_set_fragments[fragment].size;
-        trace!("enqueue: {fragment}, size {size}");
+        trace!(
+            "enqueue: {fragment}, size {size}, weight {}",
+            self.live_set_fragments[fragment].spill_weight
+        );
         self.worklist.push(QueuedFragment { fragment, size });
     }
 

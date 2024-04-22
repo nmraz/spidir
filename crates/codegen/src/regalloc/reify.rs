@@ -21,9 +21,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         let mut vreg_ranges = SmallVec::<[LiveRange; 4]>::new();
 
         for vreg in self.vreg_ranges.keys() {
-            vreg_ranges.clone_from(&self.vreg_ranges[vreg]);
-
-            vreg_ranges.sort_unstable_by_key(|&range| {
+            self.vreg_ranges[vreg].sort_unstable_by_key(|&range| {
                 let range_data = &self.live_ranges[range];
                 let fragment_data = &self.live_set_fragments[range_data.fragment];
 
@@ -32,6 +30,8 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 ((range_data.prog_range.start.index() as u64) << 1)
                     | (fragment_data.assignment.is_some() as u64)
             });
+
+            vreg_ranges.clone_from(&self.vreg_ranges[vreg]);
 
             // Start by resolving all defs so tied uses are easier.
             for &range in vreg_ranges.iter() {
@@ -63,8 +63,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
         // Now that all defs are resolved, do the same for uses.
         for vreg in self.vreg_ranges.keys() {
-            vreg_ranges.clone_from(&self.vreg_ranges[vreg]);
-            for &range in vreg_ranges.iter() {
+            for &range in self.vreg_ranges[vreg].iter() {
                 let range_assignment = self.get_range_assignment(range);
                 for &range_instr in &self.live_ranges[range].instrs {
                     if range_instr.is_def() {

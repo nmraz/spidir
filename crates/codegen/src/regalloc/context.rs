@@ -4,7 +4,7 @@ use alloc::{collections::BTreeMap, vec, vec::Vec};
 use cranelift_entity::{EntitySet, PrimaryMap, SecondaryMap};
 use fx_utils::FxHashMap;
 use itertools::Itertools;
-use log::{debug, log_enabled, trace};
+use log::{debug, log_enabled};
 use smallvec::SmallVec;
 
 use crate::{
@@ -67,9 +67,9 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             debug!("{}:", vreg);
 
             for &range in ranges {
-                trace!("  {:?}", self.live_ranges[range].prog_range);
+                debug!("  {:?}", self.live_ranges[range].prog_range);
                 for instr in &self.live_ranges[range].instrs {
-                    trace!("    {instr:?}");
+                    debug!("    {instr:?}");
                 }
             }
         }

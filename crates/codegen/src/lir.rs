@@ -13,12 +13,9 @@ use crate::{
     machine::MachineCore,
 };
 
-mod display;
+use display::{Display, DisplayDefOperand, DisplayInstr, DisplayUseOperand, DisplayVirtReg};
 
-pub use display::{
-    display_block_params, display_instr_data, Display, DisplayDefOperand, DisplayInstr,
-    DisplayUseOperand, DisplayVirtReg,
-};
+pub mod display;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RegClass(u8);

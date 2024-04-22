@@ -17,8 +17,9 @@ use smallvec::SmallVec;
 use crate::{
     cfg::{Block, CfgContext, FunctionBlockMap},
     lir::{
-        display_block_params, display_instr_data, Builder as LirBuilder, DefOperand, InstrBuilder,
-        Lir, PhysRegSet, RegClass, StackSlot, StackSlotData, UseOperand, VirtReg,
+        display::{display_block_params, display_instr_data},
+        Builder as LirBuilder, DefOperand, InstrBuilder, Lir, PhysRegSet, RegClass, StackSlot,
+        StackSlotData, UseOperand, VirtReg,
     },
     machine::{MachineLower, ParamLoc},
     schedule::Schedule,

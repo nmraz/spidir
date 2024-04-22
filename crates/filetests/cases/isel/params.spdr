@@ -2,17 +2,17 @@
 
 func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
     # check: function `many_params`:
-    # nextln: block0[%13:gpr($$rdi), %14:gpr($$rsi), %12:gpr($$rdx), %10:gpr($$rcx), %8:gpr($$r8), %6:gpr($$r9)]:
-    # nextln:     %2:gpr(reg)[late] = MovRRbp { offset: 24 }
-    # nextln:     %4:gpr(reg)[late] = MovRRbp { offset: 16 }
-    # nextln:     %11:gpr(reg)[late] = AluRRm(S64, Add) %13(tied:0)[early], %14(any)[early]
-    # nextln:     %9:gpr(reg)[late] = AluRRm(S64, Add) %11(tied:0)[early], %12(any)[early]
-    # nextln:     %7:gpr(reg)[late] = AluRRm(S64, Add) %9(tied:0)[early], %10(any)[early]
-    # nextln:     %5:gpr(reg)[late] = AluRRm(S64, Add) %7(tied:0)[early], %8(any)[early]
-    # nextln:     %3:gpr(reg)[late] = AluRRm(S64, Add) %5(tied:0)[early], %6(any)[early]
-    # nextln:     %1:gpr(reg)[late] = AluRRm(S64, Add) %3(tied:0)[early], %4(any)[early]
-    # nextln:     %0:gpr(reg)[late] = AluRRm(S64, Add) %1(tied:0)[early], %2(any)[early]
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%13:gpr($$rdi), %14:gpr($$rsi), %12:gpr($$rdx), %10:gpr($$rcx), %8:gpr($$r8), %6:gpr($$r9)]:
+    # nextln: 0000:      %2:gpr(reg)[late] = MovRRbp { offset: 24 }
+    # nextln: 0001:      %4:gpr(reg)[late] = MovRRbp { offset: 16 }
+    # nextln: 0002:      %11:gpr(reg)[late] = AluRRm(S64, Add) %13(tied:0)[early], %14(any)[early]
+    # nextln: 0003:      %9:gpr(reg)[late] = AluRRm(S64, Add) %11(tied:0)[early], %12(any)[early]
+    # nextln: 0004:      %7:gpr(reg)[late] = AluRRm(S64, Add) %9(tied:0)[early], %10(any)[early]
+    # nextln: 0005:      %5:gpr(reg)[late] = AluRRm(S64, Add) %7(tied:0)[early], %8(any)[early]
+    # nextln: 0006:      %3:gpr(reg)[late] = AluRRm(S64, Add) %5(tied:0)[early], %6(any)[early]
+    # nextln: 0007:      %1:gpr(reg)[late] = AluRRm(S64, Add) %3(tied:0)[early], %4(any)[early]
+    # nextln: 0008:      %0:gpr(reg)[late] = AluRRm(S64, Add) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0009:      Ret %0($$rax)[early]
 
     %c:ctrl, %1:i64, %2:i64, %3:i64, %4:i64, %5:i64, %6:i64, %7:i64, %8:i64 = entry
     %val:i64 = iadd %1, %2
@@ -27,9 +27,9 @@ func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
 
 func @unused_param:i64(ptr, i64, i64) {
     # check: function `unused_param`:
-    # nextln: block0[%1:gpr($$rsi), %2:gpr($$rdx)]:
-    # nextln:     %0:gpr(reg)[late] = AluRRm(S64, Add) %1(tied:0)[early], %2(any)[early]
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%1:gpr($$rsi), %2:gpr($$rdx)]:
+    # nextln: 0000:      %0:gpr(reg)[late] = AluRRm(S64, Add) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %p:ptr, %a:i64, %b:i64 = entry
     %val:i64 = iadd %a, %b

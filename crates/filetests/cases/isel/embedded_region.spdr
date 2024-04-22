@@ -2,17 +2,17 @@
 
 func @embedded_region:i32(i32) {
     # check: function `embedded_region`:
-    # nextln: block0[%0:gpr($$rdi)]:
-    # nextln:     Jump(block1)
-    # nextln: => block1
-    # nextln: block1:
-    # nextln:     Jump(block2)
-    # nextln: => block2
-    # nextln: block2:
-    # nextln:     Jump(block3)
-    # nextln: => block3
-    # nextln: block3:
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%0:gpr($$rdi)]:
+    # nextln: 0000:      Jump(block1)
+    # nextln:       => block1
+    # nextln:       block1:
+    # nextln: 0001:      Jump(block2)
+    # nextln:       => block2
+    # nextln:       block2:
+    # nextln: 0002:      Jump(block3)
+    # nextln:       => block3
+    # nextln:       block3:
+    # nextln: 0003:      Ret %0($$rax)[early]
 
     %ent:ctrl, %p1:i32 = entry
     %c1:ctrl, %ph1:phisel = region %ent
@@ -23,17 +23,17 @@ func @embedded_region:i32(i32) {
 
 func @embedded_region_phi:i32(i32) {
     # check: function `embedded_region_phi`:
-    # nextln: block0[%1:gpr($$rdi)]:
-    # nextln:     Jump(block1)
-    # nextln: => block1
-    # nextln: block1:
-    # nextln:     Jump(block2)
-    # nextln: => block2
-    # nextln: block2:
-    # nextln:     Jump(block3)
-    # nextln: => block3
-    # nextln: block3:
-    # nextln:     Ret %1($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      Jump(block1)
+    # nextln:       => block1
+    # nextln:       block1:
+    # nextln: 0001:      Jump(block2)
+    # nextln:       => block2
+    # nextln:       block2:
+    # nextln: 0002:      Jump(block3)
+    # nextln:       => block3
+    # nextln:       block3:
+    # nextln: 0003:      Ret %1($$rax)[early]
 
     %ent:ctrl, %p1:i32 = entry
     %c1:ctrl, %ph1:phisel = region %ent
@@ -45,17 +45,17 @@ func @embedded_region_phi:i32(i32) {
 
 func @embedded_region_phi_multi_succ:i32(i32, i32) {
     # check: function `embedded_region_phi_multi_succ`:
-    # nextln: block0[%3:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln:     AluRRm(S32, Test) %2(reg)[early], %2(any)[early]
-    # nextln:     Jumpcc(Ne, block1, block2)
-    # nextln: => block1, block2
-    # nextln: block1:
-    # nextln:     Jump(block3)
-    # nextln: => block3
-    # nextln: block3:
-    # nextln:     Ret %3($$rax)[early]
-    # nextln: block2:
-    # nextln:     Ret %2($$rax)[early]
+    # nextln:       block0[%3:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln: 0000:      AluRRm(S32, Test) %2(reg)[early], %2(any)[early]
+    # nextln: 0001:      Jumpcc(Ne, block1, block2)
+    # nextln:       => block1, block2
+    # nextln:       block1:
+    # nextln: 0002:      Jump(block3)
+    # nextln:       => block3
+    # nextln:       block3:
+    # nextln: 0003:      Ret %3($$rax)[early]
+    # nextln:       block2:
+    # nextln: 0004:      Ret %2($$rax)[early]
 
     %ent:ctrl, %p1:i32, %p2:i32 = entry
     %c1:ctrl, %c2:ctrl = brcond %ent, %p2

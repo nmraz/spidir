@@ -2,9 +2,9 @@
 
 func @load1_i32:i32(ptr) {
     # check: function `load1_i32`:
-    # nextln: block0[%1:gpr($$rdi)]:
-    # nextln:     %0:gpr(reg)[late] = MovzxRM(Ext8_32) %1(reg)[early]
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(reg)[late] = MovzxRM(Ext8_32) %1(reg)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:i32 = load.1 %0, %1
@@ -13,9 +13,9 @@ func @load1_i32:i32(ptr) {
 
 func @load2_i32:i32(ptr) {
     # check: function `load2_i32`:
-    # nextln: block0[%1:gpr($$rdi)]:
-    # nextln:     %0:gpr(reg)[late] = MovzxRM(Ext16_32) %1(reg)[early]
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(reg)[late] = MovzxRM(Ext16_32) %1(reg)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:i32 = load.2 %0, %1
@@ -24,9 +24,9 @@ func @load2_i32:i32(ptr) {
 
 func @load4_i32:i32(ptr) {
     # check: function `load4_i32`:
-    # nextln: block0[%1:gpr($$rdi)]:
-    # nextln:     %0:gpr(reg)[late] = MovRM(S32) %1(reg)[early]
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(reg)[late] = MovRM(S32) %1(reg)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:i32 = load.4 %0, %1
@@ -35,9 +35,9 @@ func @load4_i32:i32(ptr) {
 
 func @load1_i64:i64(ptr) {
     # check: function `load1_i64`:
-    # nextln: block0[%1:gpr($$rdi)]:
-    # nextln:     %0:gpr(reg)[late] = MovzxRM(Ext8_64) %1(reg)[early]
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(reg)[late] = MovzxRM(Ext8_64) %1(reg)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:i64 = load.1 %0, %1
@@ -46,9 +46,9 @@ func @load1_i64:i64(ptr) {
 
 func @load2_i64:i64(ptr) {
     # check: function `load2_i64`:
-    # nextln: block0[%1:gpr($$rdi)]:
-    # nextln:     %0:gpr(reg)[late] = MovzxRM(Ext16_64) %1(reg)[early]
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(reg)[late] = MovzxRM(Ext16_64) %1(reg)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:i64 = load.2 %0, %1
@@ -57,9 +57,9 @@ func @load2_i64:i64(ptr) {
 
 func @load4_i64:i64(ptr) {
     # check: function `load4_i64`:
-    # nextln: block0[%1:gpr($$rdi)]:
-    # nextln:     %0:gpr(reg)[late] = MovzxRM(Ext32_64) %1(reg)[early]
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(reg)[late] = MovzxRM(Ext32_64) %1(reg)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:i64 = load.4 %0, %1
@@ -68,9 +68,9 @@ func @load4_i64:i64(ptr) {
 
 func @load8_i64:i64(ptr) {
     # check: function `load8_i64`:
-    # nextln: block0[%1:gpr($$rdi)]:
-    # nextln:     %0:gpr(reg)[late] = MovRM(S64) %1(reg)[early]
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(reg)[late] = MovRM(S64) %1(reg)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:i64 = load.8 %0, %1
@@ -79,9 +79,9 @@ func @load8_i64:i64(ptr) {
 
 func @load8_ptr:ptr(ptr) {
     # check: function `load8_ptr`:
-    # nextln: block0[%1:gpr($$rdi)]:
-    # nextln:     %0:gpr(reg)[late] = MovRM(S64) %1(reg)[early]
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(reg)[late] = MovRM(S64) %1(reg)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:ptr = load.8 %0, %1

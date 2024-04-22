@@ -140,9 +140,9 @@ fn build_simple_tied() {
         &cfg,
         &block_order,
         expect![[r#"
-            block0[%1:gpr($r0), %2:gpr($r1)]:
-                %0:gpr(any)[late] = Add %1(tied:0)[early], %2(reg)[early]
-                Ret %0($r0)[early]
+                  block0[%1:gpr($r0), %2:gpr($r1)]:
+            0000:      %0:gpr(any)[late] = Add %1(tied:0)[early], %2(reg)[early]
+            0001:      Ret %0($r0)[early]
         "#]],
     );
 }
@@ -181,9 +181,9 @@ fn build_simple_3addr() {
         &cfg,
         &block_order,
         expect![[r#"
-            block0[%1:gpr($r0), %2:gpr($r1)]:
-                %0:gpr(reg)[late] = Lea %1(reg)[early], %2(reg)[early]
-                Ret %0($r0)[early]
+                  block0[%1:gpr($r0), %2:gpr($r1)]:
+            0000:      %0:gpr(reg)[late] = Lea %1(reg)[early], %2(reg)[early]
+            0001:      Ret %0($r0)[early]
         "#]],
     );
 }
@@ -275,21 +275,21 @@ fn multi_block() {
         &cfg,
         &block_order,
         expect![[r#"
-            block0[%7:gpr($r0), %8:gpr($r1), %6:gpr($r2)]:
-                Cmp %7(any)[early], %8(reg)[early]
-                JmpEq(block1, block2)
-            => block1, block2
-            block1:
-                %4:gpr(any)[late] = Add %8(tied:0)[early], %6(reg)[early]
-                Jump(block3)
-            => block3[%4:gpr]
-            block2:
-                %3:gpr(reg)[late] = MovI(5)
-                %1:gpr(any)[late] = Add %8(tied:0)[early], %3(reg)[early]
-                Jump(block3)
-            => block3[%1:gpr]
-            block3[%0:gpr]:
-                Ret %0($r0)[early]
+                  block0[%7:gpr($r0), %8:gpr($r1), %6:gpr($r2)]:
+            0000:      Cmp %7(any)[early], %8(reg)[early]
+            0001:      JmpEq(block1, block2)
+                  => block1, block2
+                  block1:
+            0002:      %4:gpr(any)[late] = Add %8(tied:0)[early], %6(reg)[early]
+            0003:      Jump(block3)
+                  => block3[%4:gpr]
+                  block2:
+            0004:      %3:gpr(reg)[late] = MovI(5)
+            0005:      %1:gpr(any)[late] = Add %8(tied:0)[early], %3(reg)[early]
+            0006:      Jump(block3)
+                  => block3[%1:gpr]
+                  block3[%0:gpr]:
+            0007:      Ret %0($r0)[early]
         "#]],
     );
 }
@@ -338,12 +338,12 @@ fn block_param_vreg_copies() {
         &cfg,
         &block_order,
         expect![[r#"
-            block0[]:
-                %2:gpr(reg)[late] = MovI(5)
-                Jump(block1)
-            => block1[%2:gpr]
-            block1[%0:gpr]:
-                Ret %0($r0)[early]
+                  block0[]:
+            0000:      %2:gpr(reg)[late] = MovI(5)
+            0001:      Jump(block1)
+                  => block1[%2:gpr]
+                  block1[%0:gpr]:
+            0002:      Ret %0($r0)[early]
         "#]],
     );
 }
@@ -377,10 +377,10 @@ fn stack_slots() {
         &cfg,
         &block_order,
         expect![[r#"
-                !0 = StackSlot { size: 4, align: 4 }
-                !1 = StackSlot { size: 16, align: 8 }
-            block0[%0:gpr($r0)]:
-                Ret %0($r0)[early]
+            !0 = StackSlot { size: 4, align: 4 }
+            !1 = StackSlot { size: 16, align: 8 }
+                  block0[%0:gpr($r0)]:
+            0000:      Ret %0($r0)[early]
         "#]],
     );
 }
@@ -418,9 +418,9 @@ fn clobbers() {
         &cfg,
         &block_order,
         expect![[r#"
-            block0[%1:gpr($r0)]:
-                %0:gpr($r0)[late] = Call %1($r0)[early] ^($r1, $r2)
-                Ret %0($r0)[early]
+                  block0[%1:gpr($r0)]:
+            0000:      %0:gpr($r0)[late] = Call %1($r0)[early] ^($r1, $r2)
+            0001:      Ret %0($r0)[early]
         "#]],
     );
 }

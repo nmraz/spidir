@@ -2,10 +2,10 @@
 
 func @udiv64:i64(i64, i64) {
     # check: function `udiv64`:
-    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln:     %3:gpr(reg)[late] = MovRZ
-    # nextln:     %4:gpr($$rax)[late], %5:gpr($$rdx)[late] = Div(S64) %1($$rax)[early], %3($$rdx)[early], %2(any)[early]
-    # nextln:     Ret %4($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln: 0000:      %3:gpr(reg)[late] = MovRZ
+    # nextln: 0001:      %4:gpr($$rax)[late], %5:gpr($$rdx)[late] = Div(S64) %1($$rax)[early], %3($$rdx)[early], %2(any)[early]
+    # nextln: 0002:      Ret %4($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
     %c2:ctrl, %val:i64 = udiv %c, %a, %b
@@ -14,10 +14,10 @@ func @udiv64:i64(i64, i64) {
 
 func @udiv32:i32(i32, i32) {
     # check: function `udiv32`:
-    # nextln: block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln:     %3:gpr(reg)[late] = MovRZ
-    # nextln:     %4:gpr($$rax)[late], %5:gpr($$rdx)[late] = Div(S32) %1($$rax)[early], %3($$rdx)[early], %2(any)[early]
-    # nextln:     Ret %4($$rax)[early]
+    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln: 0000:      %3:gpr(reg)[late] = MovRZ
+    # nextln: 0001:      %4:gpr($$rax)[late], %5:gpr($$rdx)[late] = Div(S32) %1($$rax)[early], %3($$rdx)[early], %2(any)[early]
+    # nextln: 0002:      Ret %4($$rax)[early]
 
     %c:ctrl, %a:i32, %b:i32 = entry
     %c2:ctrl, %val:i32 = udiv %c, %a, %b

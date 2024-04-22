@@ -174,6 +174,31 @@ impl<M: MachineCore> fmt::Display for DisplayBlockParams<'_, M> {
     }
 }
 
+const INSTR_NUM_DIGITS: usize = 4;
+const INSTR_GUTTER_WIDTH: usize = INSTR_NUM_DIGITS + 2;
+
+pub fn display_instr_gutter(instr: Instr) -> impl fmt::Display {
+    // Note: we use a dedicated structure rather than `format_args!` because that macro takes all
+    // its parameters by reference.
+    struct DisplayInstrGutter(Instr);
+    impl fmt::Display for DisplayInstrGutter {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{:01$}: ", self.0.as_u32(), INSTR_NUM_DIGITS)
+        }
+    }
+    DisplayInstrGutter(instr)
+}
+
+pub fn display_instr_gutter_padding() -> impl fmt::Display {
+    struct InstrGutterPadding;
+    impl fmt::Display for InstrGutterPadding {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{:1$}", "", INSTR_GUTTER_WIDTH)
+        }
+    }
+    InstrGutterPadding
+}
+
 pub struct Display<'a, M: MachineCore> {
     pub(super) lir: &'a Lir<M>,
     pub(super) cfg: &'a BlockCfg,
@@ -183,7 +208,7 @@ pub struct Display<'a, M: MachineCore> {
 impl<M: MachineCore> fmt::Display for Display<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (stack_slot, data) in self.lir.stack_slots.iter() {
-            writeln!(f, "    {} = {:?}", stack_slot, data)?;
+            writeln!(f, "{} = {:?}", stack_slot, data)?;
         }
 
         let mut first_block = true;
@@ -192,7 +217,8 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
             if first_block {
                 writeln!(
                     f,
-                    "{block}[{}]:",
+                    "{}{block}[{}]:",
+                    display_instr_gutter_padding(),
                     self.lir
                         .block_params(block)
                         .iter()
@@ -201,19 +227,25 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
                             "{}(${})",
                             param.display::<M>(),
                             M::reg_name(*reg)
-                        )))
+                        ))),
                 )?;
             } else {
                 writeln!(
                     f,
-                    "{block}{}:",
-                    display_block_params::<M>(self.lir.block_params(block))
+                    "{}{block}{}:",
+                    display_instr_gutter_padding(),
+                    display_block_params::<M>(self.lir.block_params(block)),
                 )?;
             }
             first_block = false;
 
             for instr in self.lir.block_instrs(block) {
-                writeln!(f, "    {}", self.lir.display_instr(instr))?;
+                writeln!(
+                    f,
+                    "{}     {}",
+                    display_instr_gutter(instr),
+                    self.lir.display_instr(instr)
+                )?;
             }
 
             let succs = self.cfg.block_succs(block);
@@ -221,13 +253,19 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
                 // If we have a single successor, there might be outgoing block params.
                 writeln!(
                     f,
-                    "=> {}{}",
+                    "{}=> {}{}",
+                    display_instr_gutter_padding(),
                     succ,
                     display_block_params::<M>(self.lir.outgoing_block_params(block))
                 )?;
             } else if !succs.is_empty() {
                 // If there are multiple successors, just list them all.
-                writeln!(f, "=> {}", succs.iter().format(", "))?;
+                writeln!(
+                    f,
+                    "{}=> {}",
+                    display_instr_gutter_padding(),
+                    succs.iter().format(", ")
+                )?;
             }
         }
 

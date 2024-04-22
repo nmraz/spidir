@@ -2,18 +2,18 @@
 
 func @select:i32(i32, i32, i32) {
     # check: function `select`:
-    # nextln: block0[%3:gpr($$rdi), %2:gpr($$rsi), %1:gpr($$rdx)]:
-    # nextln:     AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
-    # nextln:     Jumpcc(Ne, block1, block3)
-    # nextln: => block1, block3
-    # nextln: block1:
-    # nextln:     Jump(block2)
-    # nextln: => block2[%2:gpr]
-    # nextln: block3:
-    # nextln:     Jump(block2)
-    # nextln: => block2[%1:gpr]
-    # nextln: block2[%0:gpr]:
-    # nextln:     Ret %0($$rax)[early]
+    # nextln:       block0[%3:gpr($$rdi), %2:gpr($$rsi), %1:gpr($$rdx)]:
+    # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0001:      Jumpcc(Ne, block1, block3)
+    # nextln:       => block1, block3
+    # nextln:       block1:
+    # nextln: 0002:      Jump(block2)
+    # nextln:       => block2[%2:gpr]
+    # nextln:       block3:
+    # nextln: 0003:      Jump(block2)
+    # nextln:       => block2[%1:gpr]
+    # nextln:       block2[%0:gpr]:
+    # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
     %8:ctrl, %9:ctrl = brcond %0, %1

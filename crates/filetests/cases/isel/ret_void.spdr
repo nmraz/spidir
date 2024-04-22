@@ -2,8 +2,8 @@
 
 func @ret_void() {
     # check: function `ret_void`:
-    # nextln: block0[]:
-    # nextln:     Ret
+    # nextln:       block0[]:
+    # nextln: 0000:      Ret
 
     %0:ctrl = entry
     return %0

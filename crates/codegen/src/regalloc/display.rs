@@ -2,7 +2,14 @@ use core::fmt::{self, Display};
 
 use itertools::Itertools;
 
-use crate::{cfg::Block, lir::Lir, machine::MachineCore};
+use crate::{
+    cfg::Block,
+    lir::{
+        display::{display_instr_gutter, display_instr_gutter_padding},
+        Lir,
+    },
+    machine::MachineCore,
+};
 
 use super::{Assignment, OperandAssignment};
 
@@ -15,9 +22,9 @@ pub struct DisplayAssignment<'a, M: MachineCore> {
 impl<M: MachineCore> fmt::Display for DisplayAssignment<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for &block in self.block_order {
-            writeln!(f, "{block}:")?;
+            writeln!(f, "{}{block}:", display_instr_gutter_padding())?;
             for instr in self.lir.block_instrs(block) {
-                write!(f, "    ")?;
+                write!(f, "{}    ", display_instr_gutter(instr))?;
                 let defs = self.assignment.instr_def_assignments(instr);
                 if !defs.is_empty() {
                     write!(f, "{} = ", format_op_assignments::<M>(defs))?;

@@ -6,18 +6,20 @@ use log::{log_enabled, trace};
 use smallvec::{smallvec, SmallVec};
 
 use crate::{
-    lir::{Instr, PhysReg, PhysRegSet},
+    lir::{Instr, PhysReg, PhysRegSet, VirtRegNum},
     machine::MachineCore,
     regalloc::types::{
-        AnnotatedPhysRegHint, InstrSlot, LiveRangeData, LiveRangeInstr, LiveRangeOpPos,
-        ProgramPoint, TaggedLiveRange,
+        AnnotatedPhysRegHint, InstrSlot, LiveRangeInstr, LiveRangeOpPos, ProgramPoint,
+        TaggedLiveRange,
     },
 };
 
 use super::{
     conflict::{iter_btree_ranges, iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
-    types::{LiveSetFragment, ProgramRange, QueuedFragment, RangeEndKey},
+    types::{
+        LiveRange, LiveRangeInstrs, LiveSetFragment, ProgramRange, QueuedFragment, RangeEndKey,
+    },
     Error,
 };
 
@@ -231,18 +233,14 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                     instr.instr()
                 );
 
-                let new_live_range = self.live_ranges.push(LiveRangeData {
-                    prog_range: new_prog_range,
+                // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but
+                // we don't care within the core loop.
+                self.push_vreg_fragment_live_range(
                     vreg,
-                    fragment,
-                    instrs: smallvec![*instr],
-                });
-                self.live_set_fragments[new_fragment]
-                    .ranges
-                    .push(TaggedLiveRange {
-                        prog_range: new_prog_range,
-                        live_range: new_live_range,
-                    });
+                    new_fragment,
+                    new_prog_range,
+                    smallvec![*instr],
+                );
 
                 last_instr = Some(instr.instr());
             }
@@ -362,16 +360,16 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         };
 
         self.live_ranges[split_live_range].instrs = high_instrs;
+
         // `instrs` itself now contains the "low" instructions.
 
-        // Create a new live range to append to the end of the original `fragment`.
         let vreg = self.live_ranges[split_live_range].vreg;
-        let new_live_range = self.live_ranges.push(LiveRangeData {
-            prog_range: low_range,
-            vreg,
-            fragment: old_fragment,
-            instrs,
-        });
+
+        // Create a new live range for the lower part at the end of the `old_fragment`.
+        // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but we
+        // don't care within the core loop.
+        let new_live_range =
+            self.push_vreg_fragment_live_range(vreg, old_fragment, low_range, instrs);
 
         // If this range came with any attached register hints, split them as well.
         if let Entry::Occupied(mut entry) = self.live_range_hints.entry(split_live_range) {
@@ -397,16 +395,6 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 self.live_range_hints.insert(new_live_range, low_hints);
             }
         }
-
-        // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but we
-        // don't care within the core loop.
-        self.vreg_ranges[vreg].push(new_live_range);
-        self.live_set_fragments[old_fragment]
-            .ranges
-            .push(TaggedLiveRange {
-                prog_range: low_range,
-                live_range: new_live_range,
-            });
     }
 
     fn probe_phys_reg(&self, preg: PhysReg, fragment: LiveSetFragment) -> Option<ProbeConflict> {
@@ -548,6 +536,23 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
             self.live_set_fragments[fragment].spill_weight
         );
         self.worklist.push(QueuedFragment { fragment, size });
+    }
+
+    fn push_vreg_fragment_live_range(
+        &mut self,
+        vreg: VirtRegNum,
+        fragment: LiveSetFragment,
+        prog_range: ProgramRange,
+        instrs: LiveRangeInstrs,
+    ) -> LiveRange {
+        let live_range = self.push_vreg_live_range(vreg, fragment, prog_range, instrs);
+        self.live_set_fragments[fragment]
+            .ranges
+            .push(TaggedLiveRange {
+                prog_range,
+                live_range,
+            });
+        live_range
     }
 
     fn can_split_fragment_before(&self, fragment: LiveSetFragment, point: ProgramPoint) -> bool {

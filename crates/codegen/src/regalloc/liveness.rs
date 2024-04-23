@@ -16,15 +16,32 @@ use crate::{
 
 use super::{
     types::{
-        AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeInstr, LiveRangeOpPos,
-        LiveRangePhysCopy, LiveSetFragment, PhysRegCopyDir, PhysRegHint, PhysRegReservation,
-        ProgramPoint, ProgramRange,
+        AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeInstr, LiveRangeInstrs,
+        LiveRangeOpPos, LiveRangePhysCopy, LiveSetFragment, PhysRegCopyDir, PhysRegHint,
+        PhysRegReservation, ProgramPoint, ProgramRange,
     },
     utils::get_instr_weight,
     RegAllocContext,
 };
 
 impl<'a, M: MachineCore> RegAllocContext<'a, M> {
+    pub fn push_vreg_live_range(
+        &mut self,
+        vreg: VirtRegNum,
+        fragment: LiveSetFragment,
+        prog_range: ProgramRange,
+        instrs: LiveRangeInstrs,
+    ) -> LiveRange {
+        let live_range = self.live_ranges.push(LiveRangeData {
+            prog_range,
+            vreg,
+            fragment,
+            instrs,
+        });
+        self.vreg_ranges[vreg].push(live_range);
+        live_range
+    }
+
     pub fn compute_liveness(&mut self) {
         let live_outs = compute_block_liveouts(self.lir, self.cfg_ctx);
 
@@ -388,7 +405,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             Some(last_range)
         } else if def_point < dead_use_point {
             // If the range for a dead def would be non-empty, create it now.
-            Some(self.create_vreg_live_range(vreg, def_point, dead_use_point))
+            Some(self.open_vreg_live_range(vreg, def_point, dead_use_point))
         } else {
             // Otheriwse, the range is empty (degenerate). This can happen with dead physical-
             // register-constrained defs, which push the def point to before the next instruction.
@@ -405,7 +422,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
     ) -> LiveRange {
         let instr = use_point.instr();
         let op_pos = LiveRangeOpPos::for_instr_slot(use_point.slot());
-        let live_range = self.create_use_range(vreg, use_point, block);
+        let live_range = self.open_use_range(vreg, use_point, block);
         let range_instrs = &mut self.live_ranges[live_range].instrs;
         if let Some(last_instr) = range_instrs.last_mut() {
             if last_instr.instr() == instr {
@@ -440,7 +457,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         live_range
     }
 
-    fn create_use_range(
+    fn open_use_range(
         &mut self,
         vreg: VirtRegNum,
         use_point: ProgramPoint,
@@ -456,7 +473,7 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             }
         }
 
-        self.create_vreg_live_range(vreg, block_start, use_point)
+        self.open_vreg_live_range(vreg, block_start, use_point)
     }
 
     fn open_live_out_range(&mut self, vreg: VirtRegNum, block: Block) {
@@ -466,14 +483,14 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
         // instruction. Even if the last block in the function has live-outs (which is unusual
         // but not technically disallowed by regalloc), the range will refer to the virtual
         // past-the-end instruction.
-        self.create_vreg_live_range(
+        self.open_vreg_live_range(
             vreg,
             ProgramPoint::before(block_range.start),
             ProgramPoint::before(block_range.end),
         );
     }
 
-    fn create_vreg_live_range(
+    fn open_vreg_live_range(
         &mut self,
         vreg: VirtRegNum,
         start: ProgramPoint,
@@ -491,16 +508,13 @@ impl<'a, M: MachineCore> RegAllocContext<'a, M> {
             }
         }
 
-        let prog_range = ProgramRange::new(start, end);
-        let range_data = LiveRangeData {
-            prog_range,
+        self.push_vreg_live_range(
             vreg,
-            fragment: LiveSetFragment::reserved_value(),
-            instrs: smallvec![],
-        };
-        let live_range = self.live_ranges.push(range_data);
-        self.vreg_ranges[vreg].push(live_range);
-        live_range
+            // This will be filled in later in `build_live_sets`.
+            LiveSetFragment::reserved_value(),
+            ProgramRange::new(start, end),
+            smallvec![],
+        )
     }
 }
 

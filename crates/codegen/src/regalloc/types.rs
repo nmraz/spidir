@@ -278,11 +278,13 @@ fn decode_weight(encoded_weight: u16) -> f32 {
     f32::from_bits((encoded_weight as u32) << WEIGHT_ENCODE_SHIFT)
 }
 
+pub type LiveRangeInstrs = SmallVec<[LiveRangeInstr; 4]>;
+
 pub struct LiveRangeData {
     pub prog_range: ProgramRange,
     pub vreg: VirtRegNum,
     pub fragment: LiveSetFragment,
-    pub instrs: SmallVec<[LiveRangeInstr; 4]>,
+    pub instrs: LiveRangeInstrs,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

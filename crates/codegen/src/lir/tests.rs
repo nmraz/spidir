@@ -366,8 +366,8 @@ fn stack_slots() {
         &cfg,
         &block_order,
         expect![[r#"
-            !0 = MemLayout { size: 4, align: 4 }
-            !1 = MemLayout { size: 16, align: 8 }
+            !0 = stackslot 4:4
+            !1 = stackslot 16:8
                   block0[%0:gpr($r0)]:
             0000:      Ret %0($r0)[early]
         "#]],

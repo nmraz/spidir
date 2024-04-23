@@ -3,10 +3,14 @@ use itertools::Itertools;
 use crate::{
     cfg::CfgContext,
     lir::{Instr, Lir},
-    machine::MachineCore,
+    machine::MachineRegalloc,
 };
 
-pub fn get_instr_weight<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, instr: Instr) -> f32 {
+pub fn get_instr_weight<M: MachineRegalloc>(
+    lir: &Lir<M>,
+    cfg_ctx: &CfgContext,
+    instr: Instr,
+) -> f32 {
     let block = lir.instr_block(instr);
     let loop_depth = cfg_ctx
         .depth_map

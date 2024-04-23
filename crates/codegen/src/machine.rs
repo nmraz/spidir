@@ -14,9 +14,6 @@ pub trait MachineCore {
 
     fn reg_class_name(class: RegClass) -> &'static str;
     fn reg_name(reg: PhysReg) -> &'static str;
-    fn phys_reg_count() -> u32;
-
-    fn usable_regs(&self, class: RegClass) -> &[PhysReg];
 }
 
 pub enum ParamLoc {
@@ -41,4 +38,9 @@ pub trait MachineLower: MachineCore {
     ) -> Result<(), MachineIselError>
     where
         Self: Sized;
+}
+
+pub trait MachineRegalloc: MachineCore {
+    fn phys_reg_count() -> u32;
+    fn usable_regs(&self, class: RegClass) -> &[PhysReg];
 }

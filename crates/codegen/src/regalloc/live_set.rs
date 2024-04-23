@@ -10,7 +10,7 @@ use smallvec::smallvec;
 
 use crate::{
     lir::{RegClass, UseOperandConstraint, VirtRegNum},
-    machine::MachineCore,
+    machine::MachineRegalloc,
 };
 
 use super::{
@@ -40,7 +40,7 @@ const ATOMIC_FRAGMENT_WEIGHT: f32 = (1 << f32::MANTISSA_DIGITS) as f32;
 /// The highest spill weight that can be assigned to non-atomic fragments.
 const MAX_NONATOMIC_FRAGMENT_WEIGHT: f32 = ATOMIC_FRAGMENT_WEIGHT - 1.0;
 
-impl<M: MachineCore> RegAllocContext<'_, M> {
+impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn build_live_sets(&mut self) {
         let mut fragments_by_vreg = VirtRegFragmentMap::new();
         let mut candidates = Vec::new();

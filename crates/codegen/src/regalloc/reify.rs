@@ -6,7 +6,7 @@ use cranelift_entity::{packed_option::ReservedValue, PrimaryMap, SecondaryMap};
 
 use crate::{
     lir::{DefOperandConstraint, Instr, Lir, PhysReg, UseOperandConstraint},
-    machine::MachineCore,
+    machine::MachineRegalloc,
 };
 
 use super::{
@@ -14,7 +14,7 @@ use super::{
     SpillSlot,
 };
 
-impl<M: MachineCore> RegAllocContext<'_, M> {
+impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn reify(&mut self) -> Assignment {
         let mut assignment = Assignment::empty_for_lir(self.lir);
 
@@ -140,7 +140,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 }
 
 impl Assignment {
-    fn empty_for_lir<M: MachineCore>(lir: &Lir<M>) -> Self {
+    fn empty_for_lir<M: MachineRegalloc>(lir: &Lir<M>) -> Self {
         let instr_count = lir.all_instrs().end.as_u32() as usize;
 
         let mut assignment = Assignment {

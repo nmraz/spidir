@@ -5,7 +5,7 @@ use cranelift_entity::{entity_impl, PrimaryMap, SecondaryMap};
 use crate::{
     cfg::{Block, CfgContext},
     lir::{Instr, Lir, PhysReg},
-    machine::MachineCore,
+    machine::{MachineCore, MachineRegalloc},
 };
 
 use self::context::RegAllocContext;
@@ -89,7 +89,7 @@ impl Assignment {
     }
 }
 
-pub fn run<M: MachineCore>(
+pub fn run<M: MachineRegalloc>(
     lir: &Lir<M>,
     cfg_ctx: &CfgContext,
     machine: &M,

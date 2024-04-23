@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 use crate::{
     cfg::CfgContext,
     lir::{Lir, PhysReg, VirtRegNum},
-    machine::MachineCore,
+    machine::MachineRegalloc,
     regalloc::types::PhysRegCopyDir,
 };
 
@@ -19,7 +19,7 @@ use super::types::{
     LiveSetFragment, LiveSetFragmentData, PhysRegReservation, RangeEndKey,
 };
 
-pub struct RegAllocContext<'a, M: MachineCore> {
+pub struct RegAllocContext<'a, M: MachineRegalloc> {
     pub lir: &'a Lir<M>,
     pub cfg_ctx: &'a CfgContext,
     pub machine: &'a M,
@@ -34,7 +34,7 @@ pub struct RegAllocContext<'a, M: MachineCore> {
     pub fragment_conflict_scratch: RefCell<EntitySet<LiveSetFragment>>,
 }
 
-impl<'a, M: MachineCore> RegAllocContext<'a, M> {
+impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
     pub fn new(lir: &'a Lir<M>, cfg_ctx: &'a CfgContext, machine: &'a M) -> Self {
         let phys_reg_count = M::phys_reg_count() as usize;
         Self {

@@ -10,7 +10,7 @@ use crate::{
         DefOperandConstraint, Instr, Lir, OperandPos, PhysReg, UseOperandConstraint, VirtRegNum,
         VirtRegSet,
     },
-    machine::MachineCore,
+    machine::MachineRegalloc,
     regalloc::utils::is_sorted_by_key,
 };
 
@@ -24,7 +24,7 @@ use super::{
     RegAllocContext,
 };
 
-impl<'a, M: MachineCore> RegAllocContext<'a, M> {
+impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
     pub fn push_vreg_live_range(
         &mut self,
         vreg: VirtRegNum,
@@ -524,7 +524,7 @@ fn def_constraint_needs_reg(constraint: DefOperandConstraint) -> bool {
     constraint == DefOperandConstraint::AnyReg
 }
 
-fn compute_block_liveouts<M: MachineCore>(
+fn compute_block_liveouts<M: MachineRegalloc>(
     lir: &Lir<M>,
     cfg_ctx: &CfgContext,
 ) -> SecondaryMap<Block, VirtRegSet> {
@@ -596,7 +596,7 @@ fn compute_block_liveouts<M: MachineCore>(
     live_outs
 }
 
-fn make_block_vreg_map<M: MachineCore>(
+fn make_block_vreg_map<M: MachineRegalloc>(
     lir: &Lir<M>,
     cfg_ctx: &CfgContext,
 ) -> SecondaryMap<Block, VirtRegSet> {

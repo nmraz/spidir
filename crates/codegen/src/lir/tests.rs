@@ -51,17 +51,6 @@ impl MachineCore for DummyMachine {
             _ => unreachable!(),
         }
     }
-
-    fn usable_regs(&self, class: RegClass) -> &[PhysReg] {
-        match class {
-            RC_GPR => &[REG_R0, REG_R1, REG_R2],
-            _ => unreachable!(),
-        }
-    }
-
-    fn phys_reg_count() -> u32 {
-        3
-    }
 }
 
 fn push_instr_with_clobbers<const U: usize>(

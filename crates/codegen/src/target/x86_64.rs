@@ -3,7 +3,7 @@ use ir::node::FunctionRef;
 use crate::{
     cfg::Block,
     lir::{PhysReg, RegClass, StackSlot},
-    machine::MachineCore,
+    machine::{MachineCore, MachineRegalloc},
 };
 
 mod lower;
@@ -169,7 +169,9 @@ impl MachineCore for X64Machine {
             _ => panic!("unknown physical register"),
         }
     }
+}
 
+impl MachineRegalloc for X64Machine {
     fn phys_reg_count() -> u32 {
         16
     }

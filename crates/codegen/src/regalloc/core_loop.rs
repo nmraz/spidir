@@ -7,7 +7,7 @@ use smallvec::{smallvec, SmallVec};
 
 use crate::{
     lir::{Instr, PhysReg, PhysRegSet, VirtRegNum},
-    machine::MachineCore,
+    machine::MachineRegalloc,
     regalloc::types::{
         AnnotatedPhysRegHint, InstrSlot, LiveRangeInstr, LiveRangeOpPos, ProgramPoint,
         TaggedLiveRange,
@@ -48,7 +48,7 @@ enum ProbeConflict {
     },
 }
 
-impl<M: MachineCore> RegAllocContext<'_, M> {
+impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn run_core_loop(&mut self) -> Result<(), Error> {
         // Process fragments in order of decreasing size, to try to fill in the larger ranges before
         // moving on to smaller ones. Because of weight-based eviction, we can still end up

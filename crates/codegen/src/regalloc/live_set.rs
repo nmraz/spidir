@@ -1,5 +1,5 @@
 use alloc::vec::Vec;
-use core::{cmp::Ordering, mem};
+use core::mem;
 
 use cranelift_entity::{
     packed_option::{PackedOption, ReservedValue},
@@ -14,6 +14,7 @@ use crate::{
 };
 
 use super::{
+    conflict::{iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{
         LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, PhysRegHint, PhysRegHints,
@@ -226,37 +227,9 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
     }
 
     fn live_sets_interfere(&self, a: &[TaggedLiveRange], b: &[TaggedLiveRange]) -> bool {
-        let mut a = a.iter().peekable();
-        let mut b = b.iter().peekable();
-
-        loop {
-            let Some(a_range) = a.peek() else {
-                break;
-            };
-
-            let Some(b_range) = b.peek() else {
-                break;
-            };
-
-            if a_range.prog_range.intersects(b_range.prog_range) {
-                return true;
-            }
-
-            match a_range.prog_range.end.cmp(&b_range.prog_range.end) {
-                Ordering::Less => {
-                    a.next();
-                }
-                Ordering::Greater => {
-                    b.next();
-                }
-                Ordering::Equal => {
-                    // This is impossible if both ranges are non-degenerate, which we assume them to be.
-                    unreachable!("non-intersecting ranges had same end point")
-                }
-            }
-        }
-
-        false
+        let a = iter_slice_ranges(a, |tagged_range| (tagged_range.prog_range, &()));
+        let b = iter_slice_ranges(b, |tagged_range| (tagged_range.prog_range, &()));
+        iter_conflicts(a, b).next().is_some()
     }
 }
 

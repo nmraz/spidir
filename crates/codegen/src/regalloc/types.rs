@@ -304,6 +304,7 @@ pub struct LiveSet(u32);
 entity_impl!(LiveSet, "ls");
 
 pub struct LiveSetData {
+    pub class: RegClass,
     pub spill_hull: Option<ProgramRange>,
 }
 
@@ -340,7 +341,6 @@ pub type PhysRegHints = SmallVec<[PhysRegHint; 2]>;
 pub struct LiveSetFragmentData {
     pub live_set: LiveSet,
     pub ranges: TaggedRangeList,
-    pub class: RegClass,
     pub hints: PhysRegHints,
     pub assignment: PackedOption<PhysReg>,
     pub size: u32,

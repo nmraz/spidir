@@ -75,7 +75,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     fn try_allocate(&mut self, fragment: LiveSetFragment) -> Result<(), Error> {
-        let class = self.live_set_fragments[fragment].class;
+        let live_set = self.live_set_fragments[fragment].live_set;
+        let class = self.live_sets[live_set].class;
 
         // Start with hinted registers in order of decreasing weight, then move on to the default
         // allocation order requested by the machine backend.
@@ -165,7 +166,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         trace!("  spill: {fragment}");
 
         let live_set = self.live_set_fragments[fragment].live_set;
-        let class = self.live_set_fragments[fragment].class;
         let fragment_hull = self.fragment_hull(fragment);
 
         let mut ranges = mem::take(&mut self.live_set_fragments[fragment].ranges);
@@ -226,7 +226,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     // potentially increased register usage and redundant copies.
                     *new_fragments.last().unwrap()
                 } else {
-                    let new_fragment = self.create_live_fragment(live_set, class, smallvec![]);
+                    let new_fragment = self.create_live_fragment(live_set, smallvec![]);
                     new_fragments.push(new_fragment);
                     new_fragment
                 };
@@ -316,12 +316,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         };
 
         let live_set = self.live_set_fragments[fragment].live_set;
-        let class = self.live_set_fragments[fragment].class;
         let new_ranges = self.live_set_fragments[fragment]
             .ranges
             .drain(split_idx..)
             .collect();
-        let new_fragment = self.create_live_fragment(live_set, class, new_ranges);
+        let new_fragment = self.create_live_fragment(live_set, new_ranges);
 
         if split_boundary_range {
             self.split_fragment_boundary_range_before(fragment, new_fragment, instr);

@@ -9,7 +9,7 @@ use log::trace;
 use smallvec::smallvec;
 
 use crate::{
-    lir::{RegClass, UseOperandConstraint, VirtRegNum},
+    lir::{UseOperandConstraint, VirtRegNum},
     machine::MachineRegalloc,
 };
 
@@ -46,10 +46,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let mut candidates = Vec::new();
 
         for vreg in self.vreg_ranges.keys() {
-            let class = self.lir.vreg_class(vreg);
             let fragment = self.create_live_fragment(
                 LiveSet::reserved_value(),
-                class,
                 self.vreg_ranges[vreg]
                     .iter()
                     .map(|&live_range| TaggedLiveRange {
@@ -117,11 +115,15 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         // Fill in per-fragment data now that we actually know what the fragments are.
         for fragment in self.live_set_fragments.keys() {
-            if self.live_set_fragments[fragment].ranges.is_empty() {
+            let Some(first_range) = self.live_set_fragments[fragment].ranges.first() else {
                 continue;
-            }
+            };
+            let vreg = self.live_ranges[first_range.live_range].vreg;
 
-            let live_set = self.live_sets.push(LiveSetData { spill_hull: None });
+            let live_set = self.live_sets.push(LiveSetData {
+                class: self.lir.vreg_class(vreg),
+                spill_hull: None,
+            });
 
             self.live_set_fragments[fragment].live_set = live_set;
             self.compute_live_fragment_properties(fragment);
@@ -131,13 +133,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn create_live_fragment(
         &mut self,
         live_set: LiveSet,
-        class: RegClass,
         ranges: TaggedRangeList,
     ) -> LiveSetFragment {
         self.live_set_fragments.push(LiveSetFragmentData {
             live_set,
             ranges,
-            class,
             hints: smallvec![],
             assignment: None.into(),
             size: 0,

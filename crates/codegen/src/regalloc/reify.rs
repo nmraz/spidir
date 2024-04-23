@@ -3,7 +3,6 @@ use core::iter;
 use alloc::vec::Vec;
 
 use cranelift_entity::{packed_option::ReservedValue, PrimaryMap, SecondaryMap};
-use smallvec::SmallVec;
 
 use crate::{
     lir::{DefOperandConstraint, Instr, Lir, PhysReg, UseOperandConstraint},
@@ -18,8 +17,22 @@ use super::{
 impl<M: MachineCore> RegAllocContext<'_, M> {
     pub fn reify(&mut self) -> Assignment {
         let mut assignment = Assignment::empty_for_lir(self.lir);
-        let mut vreg_ranges = SmallVec::<[LiveRange; 4]>::new();
 
+        // Assign all fixed operands first, since dead fixed outputs will not even have associated
+        // live ranges.
+        self.assign_fixed_operands(&mut assignment);
+
+        // Now, assign remaining operands based on live range allocations.
+        self.assign_allocated_operands(&mut assignment);
+
+        if cfg!(debug_assertions) {
+            assignment.verify_all_assigned();
+        }
+
+        assignment
+    }
+
+    fn assign_allocated_operands(&mut self, assignment: &mut Assignment) {
         for vreg in self.vreg_ranges.keys() {
             self.vreg_ranges[vreg].sort_unstable_by_key(|&range| {
                 let range_data = &self.live_ranges[range];
@@ -31,10 +44,8 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                     | (fragment_data.assignment.is_some() as u64)
             });
 
-            vreg_ranges.clone_from(&self.vreg_ranges[vreg]);
-
             // Start by resolving all defs so tied uses are easier.
-            for &range in vreg_ranges.iter() {
+            for &range in self.vreg_ranges[vreg].iter() {
                 let range_assignment = self.get_range_assignment(range);
                 for &range_instr in &self.live_ranges[range].instrs {
                     if !range_instr.is_def() {
@@ -52,7 +63,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                         .unwrap();
 
                     let op_assignment = match def_op.constraint() {
-                        DefOperandConstraint::Fixed(preg) => OperandAssignment::Reg(preg),
+                        DefOperandConstraint::Fixed(_) => {
+                            // Should be handled by `assign_fixed_operands`.
+                            continue;
+                        }
                         _ => range_assignment,
                     };
 
@@ -78,7 +92,10 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                         }
 
                         let op_assignment = match use_op.constraint() {
-                            UseOperandConstraint::Fixed(preg) => OperandAssignment::Reg(preg),
+                            UseOperandConstraint::Fixed(_) => {
+                                // Should be handled by `assign_fixed_operands`.
+                                continue;
+                            }
                             UseOperandConstraint::TiedToDef(i) => {
                                 assignment.instr_def_assignments(instr)[i as usize]
                             }
@@ -90,12 +107,22 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 }
             }
         }
+    }
 
-        if cfg!(debug_assertions) {
-            assignment.verify_all_assigned();
+    fn assign_fixed_operands(&self, assignment: &mut Assignment) {
+        for instr in self.lir.all_instrs() {
+            for (i, use_op) in self.lir.instr_uses(instr).iter().enumerate() {
+                if let UseOperandConstraint::Fixed(preg) = use_op.constraint() {
+                    assignment.assign_instr_use(instr, i, OperandAssignment::Reg(preg));
+                }
+            }
+
+            for (i, def_op) in self.lir.instr_defs(instr).iter().enumerate() {
+                if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
+                    assignment.assign_instr_def(instr, i, OperandAssignment::Reg(preg));
+                }
+            }
         }
-
-        assignment
     }
 
     fn get_range_assignment(&self, range: LiveRange) -> OperandAssignment {

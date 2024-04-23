@@ -7,6 +7,8 @@ use smallvec::SmallVec;
 
 use crate::lir::{Instr, OperandPos, PhysReg, RegClass, VirtRegNum};
 
+use super::SpillSlot;
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InstrSlot {
     Before = 0,
@@ -310,6 +312,7 @@ entity_impl!(LiveSet, "ls");
 pub struct LiveSetData {
     pub class: RegClass,
     pub spill_hull: Option<ProgramRange>,
+    pub spill_slot: PackedOption<SpillSlot>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

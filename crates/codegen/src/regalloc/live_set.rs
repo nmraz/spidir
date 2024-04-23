@@ -123,6 +123,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             let live_set = self.live_sets.push(LiveSetData {
                 class: self.lir.vreg_class(vreg),
                 spill_hull: None,
+                spill_slot: None.into(),
             });
 
             self.live_set_fragments[fragment].live_set = live_set;

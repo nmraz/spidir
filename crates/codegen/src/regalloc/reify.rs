@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 use cranelift_entity::{packed_option::ReservedValue, PrimaryMap, SecondaryMap};
 
 use crate::{
-    lir::{DefOperandConstraint, Instr, Lir, PhysReg, UseOperandConstraint},
+    lir::{DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, UseOperandConstraint},
     machine::MachineRegalloc,
 };
 
@@ -17,6 +17,8 @@ use super::{
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn reify(&mut self) -> Assignment {
         let mut assignment = Assignment::empty_for_lir(self.lir);
+
+        self.assign_spill_slots(&mut assignment);
 
         // Assign all fixed operands first, since dead fixed outputs will not even have associated
         // live ranges.
@@ -125,15 +127,38 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
+    fn assign_spill_slots(&mut self, assignment: &mut Assignment) {
+        for live_set_data in self.live_sets.values_mut() {
+            // TODO: Use the hulls to share spill slots where possible.
+            if live_set_data.spill_hull.is_some() {
+                let spill_slot = assignment
+                    .create_spill_slot(self.machine.reg_class_spill_layout(live_set_data.class));
+                live_set_data.spill_slot = spill_slot.into();
+            }
+        }
+    }
+
     fn get_range_assignment(&self, range: LiveRange) -> OperandAssignment {
-        match self.live_set_fragments[self.live_ranges[range].fragment]
-            .assignment
-            .expand()
-        {
+        let fragment_data = &self.live_set_fragments[self.live_ranges[range].fragment];
+        match fragment_data.assignment.expand() {
             Some(preg) => OperandAssignment::Reg(preg),
             None => {
-                // TODO: Get spill slot.
-                OperandAssignment::Spill(SpillSlot::reserved_value())
+                let live_set_data = &self.live_sets[fragment_data.live_set];
+
+                if cfg!(debug_assertions) {
+                    let prog_range = self.live_ranges[range].prog_range;
+                    let spill_hull = live_set_data
+                        .spill_hull
+                        .expect("non-reg live range should be spilled");
+                    assert!(
+                        spill_hull.contains(prog_range),
+                        "unassigned live range {:?} not contained in live-set spill hull {:?}",
+                        prog_range,
+                        spill_hull
+                    );
+                }
+
+                OperandAssignment::Spill(self.live_sets[fragment_data.live_set].spill_slot.unwrap())
             }
         }
     }
@@ -207,5 +232,9 @@ impl Assignment {
 
         assert!(idx < len);
         self.operand_assignment_pool[base + idx] = assignment;
+    }
+
+    fn create_spill_slot(&mut self, layout: MemLayout) -> SpillSlot {
+        self.spill_slots.push(layout)
     }
 }

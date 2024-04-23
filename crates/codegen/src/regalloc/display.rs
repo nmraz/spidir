@@ -46,9 +46,6 @@ fn format_op_assignments<M: MachineCore>(
 ) -> impl Display + '_ {
     op_assignments.iter().format_with(", ", |op, f| match op {
         &OperandAssignment::Reg(reg) => f(&format_args!("${}", M::reg_name(reg))),
-        OperandAssignment::Spill(_slot) => {
-            // TODO: use real stack slot value here
-            f(&"$stack")
-        }
+        OperandAssignment::Spill(slot) => f(&format_args!("${}", slot)),
     })
 }

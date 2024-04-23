@@ -220,7 +220,8 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
                 let new_fragment = if last_instr == Some(instr.instr()) {
                     // Having two ranges from the same instruction is possible for tied/coalesced
-                    // operands. Make sure to assign all
+                    // operands. Make sure to assign all those ranges to the same fragment to avoid
+                    // potentially increased register usage and redundant copies.
                     *new_fragments.last().unwrap()
                 } else {
                     let new_fragment = self.create_live_fragment(live_set, class, smallvec![]);

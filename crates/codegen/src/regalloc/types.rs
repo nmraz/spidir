@@ -131,6 +131,10 @@ impl ProgramRange {
     pub fn intersects(self, other: ProgramRange) -> bool {
         self.end > other.start && other.end > self.start
     }
+
+    pub fn contains(self, other: ProgramRange) -> bool {
+        other.start >= self.start && other.end <= self.end
+    }
 }
 
 impl fmt::Debug for ProgramRange {
@@ -530,6 +534,62 @@ mod tests {
         );
         assert!(a.intersects(b));
         assert!(b.intersects(a));
+    }
+
+    #[test]
+    fn range_contains_overlapping() {
+        let a = ProgramRange::new(
+            ProgramPoint::early(Instr::new(2)),
+            ProgramPoint::late(Instr::new(5)),
+        );
+        let b = ProgramRange::new(
+            ProgramPoint::late(Instr::new(2)),
+            ProgramPoint::early(Instr::new(20)),
+        );
+        assert!(!a.contains(b));
+        assert!(!b.contains(a));
+    }
+
+    #[test]
+    fn range_contains_tangent() {
+        let a = ProgramRange::new(
+            ProgramPoint::early(Instr::new(2)),
+            ProgramPoint::late(Instr::new(5)),
+        );
+        let b = ProgramRange::new(
+            ProgramPoint::late(Instr::new(5)),
+            ProgramPoint::early(Instr::new(20)),
+        );
+        assert!(!a.contains(b));
+        assert!(!b.contains(a));
+    }
+
+    #[test]
+    fn range_contains_disjoint() {
+        let a = ProgramRange::new(
+            ProgramPoint::early(Instr::new(2)),
+            ProgramPoint::late(Instr::new(5)),
+        );
+        let b = ProgramRange::new(
+            ProgramPoint::late(Instr::new(17)),
+            ProgramPoint::early(Instr::new(20)),
+        );
+        assert!(!a.contains(b));
+        assert!(!b.contains(a));
+    }
+
+    #[test]
+    fn range_contains_nested() {
+        let a = ProgramRange::new(
+            ProgramPoint::early(Instr::new(2)),
+            ProgramPoint::late(Instr::new(30)),
+        );
+        let b = ProgramRange::new(
+            ProgramPoint::late(Instr::new(17)),
+            ProgramPoint::early(Instr::new(20)),
+        );
+        assert!(a.contains(b));
+        assert!(!b.contains(a));
     }
 
     #[test]

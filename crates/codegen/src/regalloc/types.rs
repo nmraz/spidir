@@ -297,6 +297,8 @@ pub struct TaggedLiveRange {
     pub live_range: LiveRange,
 }
 
+pub type TaggedRangeList = SmallVec<[TaggedLiveRange; 4]>;
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LiveSet(u32);
 entity_impl!(LiveSet, "ls");
@@ -337,7 +339,7 @@ pub type PhysRegHints = SmallVec<[PhysRegHint; 2]>;
 
 pub struct LiveSetFragmentData {
     pub live_set: LiveSet,
-    pub ranges: SmallVec<[TaggedLiveRange; 4]>,
+    pub ranges: TaggedRangeList,
     pub class: RegClass,
     pub hints: PhysRegHints,
     pub assignment: PackedOption<PhysReg>,

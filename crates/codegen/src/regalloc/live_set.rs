@@ -6,7 +6,7 @@ use cranelift_entity::{
     SecondaryMap,
 };
 use log::trace;
-use smallvec::{smallvec, SmallVec};
+use smallvec::smallvec;
 
 use crate::{
     lir::{RegClass, UseOperandConstraint, VirtRegNum},
@@ -18,7 +18,7 @@ use super::{
     context::RegAllocContext,
     types::{
         LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, PhysRegHint, PhysRegHints,
-        ProgramRange, TaggedLiveRange,
+        ProgramRange, TaggedLiveRange, TaggedRangeList,
     },
     utils::{coalesce_slice, get_instr_weight},
 };
@@ -132,7 +132,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         &mut self,
         live_set: LiveSet,
         class: RegClass,
-        ranges: SmallVec<[TaggedLiveRange; 4]>,
+        ranges: TaggedRangeList,
     ) -> LiveSetFragment {
         self.live_set_fragments.push(LiveSetFragmentData {
             live_set,

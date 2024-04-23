@@ -48,8 +48,8 @@ func @sum_to_n:i32(i32) {
 
 func @sum_to_n_with_stack:i32(i32) {
     # check: function `sum_to_n_with_stack`:
-    # nextln: !0 = StackSlot { size: 4, align: 4 }
-    # nextln: !1 = StackSlot { size: 4, align: 4 }
+    # nextln: !0 = MemLayout { size: 4, align: 4 }
+    # nextln: !1 = MemLayout { size: 4, align: 4 }
     # nextln:       block0[%8:gpr($$rdi)]:
     # nextln: 0000:      Jump(block1)
     # nextln:       => block1

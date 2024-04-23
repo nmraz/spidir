@@ -6,7 +6,7 @@ use crate::{
 };
 
 use super::{
-    Builder, DefOperand, Lir, OperandPos, PhysReg, PhysRegSet, RegClass, StackSlotData, UseOperand,
+    Builder, DefOperand, Lir, MemLayout, OperandPos, PhysReg, PhysRegSet, RegClass, UseOperand,
     UseOperandConstraint, VirtReg, VirtRegNum,
 };
 
@@ -345,8 +345,8 @@ fn stack_slots() {
 
     let mut builder = Builder::new(&block_order);
 
-    builder.create_stack_slot(StackSlotData { size: 4, align: 4 });
-    builder.create_stack_slot(StackSlotData { size: 16, align: 8 });
+    builder.create_stack_slot(MemLayout { size: 4, align: 4 });
+    builder.create_stack_slot(MemLayout { size: 16, align: 8 });
 
     builder.advance_block();
 
@@ -366,8 +366,8 @@ fn stack_slots() {
         &cfg,
         &block_order,
         expect![[r#"
-            !0 = StackSlot { size: 4, align: 4 }
-            !1 = StackSlot { size: 16, align: 8 }
+            !0 = MemLayout { size: 4, align: 4 }
+            !1 = MemLayout { size: 16, align: 8 }
                   block0[%0:gpr($r0)]:
             0000:      Ret %0($r0)[early]
         "#]],

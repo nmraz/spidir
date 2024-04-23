@@ -18,8 +18,8 @@ use crate::{
     cfg::{Block, CfgContext, FunctionBlockMap},
     lir::{
         display::{display_block_params, display_instr_data},
-        Builder as LirBuilder, DefOperand, InstrBuilder, Lir, PhysRegSet, RegClass, StackSlot,
-        StackSlotData, UseOperand, VirtReg,
+        Builder as LirBuilder, DefOperand, InstrBuilder, Lir, MemLayout, PhysRegSet, RegClass,
+        StackSlot, UseOperand, VirtReg,
     },
     machine::{MachineLower, ParamLoc},
     schedule::Schedule,
@@ -226,7 +226,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 }
 
                 if let &NodeKind::StackSlot { size, align } = self.func.graph.node_kind(node) {
-                    let stack_slot = builder.create_stack_slot(StackSlotData { size, align });
+                    let stack_slot = builder.create_stack_slot(MemLayout { size, align });
                     self.stack_slot_map.insert(node, stack_slot);
                 }
             }

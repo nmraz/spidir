@@ -4,7 +4,7 @@ use cranelift_entity::{entity_impl, PrimaryMap, SecondaryMap};
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Instr, Lir, PhysReg},
+    lir::{Instr, Lir, MemLayout, PhysReg},
     machine::{MachineCore, MachineRegalloc},
 };
 
@@ -27,12 +27,6 @@ pub enum Error {
     OutOfRegisters(Instr),
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct SpillSlotData {
-    pub size: u32,
-    pub align: u32,
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SpillSlot(u32);
 entity_impl!(SpillSlot, "spill");
@@ -52,13 +46,13 @@ struct InstrAssignmentData {
 }
 
 pub struct Assignment {
-    spill_slots: PrimaryMap<SpillSlot, SpillSlotData>,
+    spill_slots: PrimaryMap<SpillSlot, MemLayout>,
     instr_assignments: SecondaryMap<Instr, InstrAssignmentData>,
     operand_assignment_pool: Vec<OperandAssignment>,
 }
 
 impl Assignment {
-    pub fn spill_slot_data(&self, slot: SpillSlot) -> SpillSlotData {
+    pub fn spill_slot_layout(&self, slot: SpillSlot) -> MemLayout {
         self.spill_slots[slot]
     }
 

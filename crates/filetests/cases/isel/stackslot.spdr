@@ -2,7 +2,7 @@
 
 func @use_simple_stackslot(i32) {
     # check: function `use_simple_stackslot`:
-    # nextln: !0 = StackSlot { size: 4, align: 4 }
+    # nextln: !0 = MemLayout { size: 4, align: 4 }
     # nextln:       block0[%0:gpr($$rdi)]:
     # nextln: 0000:      MovStackR(!0, S32) %0(reg)[early]
     # nextln: 0001:      Ret

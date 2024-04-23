@@ -400,19 +400,10 @@ impl DefOperand {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct StackSlotData {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MemLayout {
     pub size: u32,
     pub align: u32,
-}
-
-impl fmt::Debug for StackSlotData {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("StackSlot")
-            .field("size", &self.size)
-            .field("align", &self.align)
-            .finish()
-    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -513,7 +504,7 @@ pub struct Lir<M: MachineCore> {
     def_pool: Vec<DefOperand>,
     use_pool: Vec<UseOperand>,
     clobbers: PrimaryMap<ClobberIndex, PhysRegSet>,
-    stack_slots: PrimaryMap<StackSlot, StackSlotData>,
+    stack_slots: PrimaryMap<StackSlot, MemLayout>,
     vreg_classes: PrimaryMap<VirtRegNum, RegClass>,
 }
 
@@ -569,7 +560,7 @@ impl<M: MachineCore> Lir<M> {
         &self.block_param_pool[base..base + params.outgoing_len as usize]
     }
 
-    pub fn stack_slot_data(&self, slot: StackSlot) -> StackSlotData {
+    pub fn stack_slot_layout(&self, slot: StackSlot) -> MemLayout {
         self.stack_slots[slot]
     }
 
@@ -748,8 +739,8 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         }
     }
 
-    pub fn create_stack_slot(&mut self, data: StackSlotData) -> StackSlot {
-        self.lir.stack_slots.push(data)
+    pub fn create_stack_slot(&mut self, layout: MemLayout) -> StackSlot {
+        self.lir.stack_slots.push(layout)
     }
 
     pub fn set_live_in_regs(&mut self, live_in_regs: Vec<PhysReg>) {

@@ -2,7 +2,7 @@ use ir::node::FunctionRef;
 
 use crate::{
     cfg::Block,
-    lir::{PhysReg, RegClass, StackSlot},
+    lir::{MemLayout, PhysReg, RegClass, StackSlot},
     machine::{MachineCore, MachineRegalloc},
 };
 
@@ -184,6 +184,13 @@ impl MachineRegalloc for X64Machine {
                 // Move on to callee-saved registers when we have to
                 REG_RBX, REG_R12, REG_R13, REG_R14, REG_R15,
             ],
+            _ => panic!("unknown register class"),
+        }
+    }
+
+    fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout {
+        match class {
+            RC_GPR => MemLayout { size: 8, align: 8 },
             _ => panic!("unknown register class"),
         }
     }

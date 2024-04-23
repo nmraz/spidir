@@ -6,7 +6,7 @@ use ir::{node::Type, valgraph::Node};
 use crate::{
     cfg::Block,
     isel::IselContext,
-    lir::{PhysReg, RegClass},
+    lir::{MemLayout, PhysReg, RegClass},
 };
 
 pub trait MachineCore {
@@ -43,4 +43,5 @@ pub trait MachineLower: MachineCore {
 pub trait MachineRegalloc: MachineCore {
     fn phys_reg_count() -> u32;
     fn usable_regs(&self, class: RegClass) -> &[PhysReg];
+    fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout;
 }

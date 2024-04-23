@@ -302,7 +302,7 @@ pub struct LiveSet(u32);
 entity_impl!(LiveSet, "ls");
 
 pub struct LiveSetData {
-    pub spill_ranges: SmallVec<[TaggedLiveRange; 2]>,
+    pub spill_hull: Option<ProgramRange>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

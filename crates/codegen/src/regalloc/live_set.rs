@@ -121,9 +121,7 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
                 continue;
             }
 
-            let live_set = self.live_sets.push(LiveSetData {
-                spill_ranges: smallvec![],
-            });
+            let live_set = self.live_sets.push(LiveSetData { spill_hull: None });
 
             self.live_set_fragments[fragment].live_set = live_set;
             self.compute_live_fragment_properties(fragment);

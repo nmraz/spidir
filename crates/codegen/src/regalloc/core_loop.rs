@@ -166,6 +166,8 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
 
         let live_set = self.live_set_fragments[fragment].live_set;
         let class = self.live_set_fragments[fragment].class;
+        let fragment_hull = self.fragment_hull(fragment);
+
         let mut ranges = mem::take(&mut self.live_set_fragments[fragment].ranges);
 
         let mut reg_instrs = SmallVec::<[LiveRangeInstr; 4]>::new();
@@ -250,6 +252,17 @@ impl<M: MachineCore> RegAllocContext<'_, M> {
         for &new_fragment in &new_fragments {
             self.compute_live_fragment_properties(new_fragment);
             self.enqueue_fragment(new_fragment);
+        }
+
+        let set_spill_hull = &mut self.live_sets[live_set].spill_hull;
+        match set_spill_hull {
+            Some(existing_hull) => {
+                existing_hull.start = existing_hull.start.min(fragment_hull.start);
+                existing_hull.end = existing_hull.end.max(fragment_hull.end);
+            }
+            None => {
+                *set_spill_hull = Some(fragment_hull);
+            }
         }
     }
 

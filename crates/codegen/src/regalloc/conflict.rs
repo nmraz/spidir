@@ -82,20 +82,11 @@ where
     }
 }
 
-pub fn iter_conflicts<L, R>(mut lhs: L, mut rhs: R) -> ConflictIter<L, R>
+pub fn iter_conflicts<L, R>(lhs: L, rhs: R) -> ConflictIter<L, R>
 where
     L: RangeKeyIter,
     R: RangeKeyIter,
 {
-    // Discard "head" sequences on either list that completely precede the first item in the other
-    // list. At most one of these skips will do something.
-    if let Some((lhs_cur, _)) = lhs.current() {
-        rhs.skip_to_endpoint_above(lhs_cur.start);
-        if let Some((rhs_cur, _)) = rhs.current() {
-            lhs.skip_to_endpoint_above(rhs_cur.start);
-        }
-    }
-
     ConflictIter { lhs, rhs }
 }
 

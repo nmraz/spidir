@@ -14,9 +14,53 @@ use super::{
     SpillSlot,
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum AssignmentCopyPhase {
+    /// * Copies out of fixed def operands
+    /// * Copies into spill slots for def operands that have been spilled
+    PrevInstrCleanup,
+    /// * Intra-block copies between fragments belonging to the same vreg
+    /// * Copies for block live-ins when there is a unique predecessor
+    /// * Reloads from spill slots for use operands that have been spilled
+    CrossFragment,
+    /// * Copies into fixed use operands
+    /// * Copies into tied def operands
+    /// * Copies for block live-outs when there is a unique successor
+    /// * Copies for outgoing block params
+    InstrSetup,
+}
+
+#[derive(Clone, Copy)]
+struct AssignmentCopy {
+    instr: Instr,
+    phase: AssignmentCopyPhase,
+    _from: OperandAssignment,
+    _to: OperandAssignment,
+}
+
+type AssignmentCopies = Vec<AssignmentCopy>;
+
+fn record_assignment_copy(
+    copies: &mut AssignmentCopies,
+    instr: Instr,
+    prio: AssignmentCopyPhase,
+    from: OperandAssignment,
+    to: OperandAssignment,
+) {
+    if from != to {
+        copies.push(AssignmentCopy {
+            instr,
+            phase: prio,
+            _from: from,
+            _to: to,
+        });
+    }
+}
+
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn reify(&mut self) -> Assignment {
         let mut assignment = Assignment::empty_for_lir(self.lir);
+        let mut copies = AssignmentCopies::new();
 
         self.assign_spill_slots(&mut assignment);
 
@@ -25,7 +69,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.assign_fixed_operands(&mut assignment);
 
         // Now, assign remaining operands based on live range allocations.
-        self.assign_allocated_operands(&mut assignment);
+        self.assign_allocated_operands(&mut assignment, &mut copies);
+
+        copies.sort_unstable_by_key(|copy| (copy.instr, copy.phase));
 
         if cfg!(debug_assertions) {
             assignment.verify_all_assigned();
@@ -34,7 +80,14 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         assignment
     }
 
-    fn assign_allocated_operands(&mut self, assignment: &mut Assignment) {
+    fn assign_allocated_operands(
+        &mut self,
+        assignment: &mut Assignment,
+        copies: &mut AssignmentCopies,
+    ) {
+        // First pass: sort each register's live ranges and resolve all instruction def operands to
+        // the correct physical registers. While we're at it, record any copies connecting live
+        // ranges belonging to the same vreg.
         for vreg in self.vreg_ranges.keys() {
             self.vreg_ranges[vreg].sort_unstable_by_key(|&range| {
                 let range_data = &self.live_ranges[range];
@@ -46,10 +99,63 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     | (fragment_data.assignment.is_none() as u64)
             });
 
-            // Start by resolving all defs so tied uses are easier.
+            let mut last_spill: Option<(LiveRange, SpillSlot)> = None;
             for &range in self.vreg_ranges[vreg].iter() {
                 let range_assignment = self.get_range_assignment(range);
-                for &range_instr in &self.live_ranges[range].instrs {
+                let range_instrs = &self.live_ranges[range].instrs;
+
+                if let Some((spill_range, spill_slot)) = last_spill {
+                    let prog_range = self.live_ranges[range].prog_range;
+                    let spill_prog_range = self.live_ranges[spill_range].prog_range;
+
+                    // Note: we expect to start _strictly_ after the current spill because register
+                    // ranges should be sorted before spill ranges starting at the same point.
+                    debug_assert!(prog_range.start > spill_prog_range.start);
+
+                    // If we have a later range intersecting the current spill range, it should be a
+                    // small spill/reload connector; record the copy for that now.
+                    if prog_range.end <= spill_prog_range.end {
+                        // All such spill/reload connectors should be small ranges requiring
+                        // registers and covering a single instruction.
+                        debug_assert!(range_assignment.is_reg());
+                        debug_assert!(range_instrs.len() == 1);
+
+                        let range_instr = range_instrs[0];
+                        let instr = range_instr.instr();
+                        // We should never have inserted spills/reloads for non-`needs_reg`
+                        // operands.
+                        debug_assert!(range_instr.needs_reg());
+
+                        if range_instr.is_def() {
+                            // Spill
+                            record_assignment_copy(
+                                copies,
+                                instr.next(),
+                                AssignmentCopyPhase::PrevInstrCleanup,
+                                range_assignment,
+                                OperandAssignment::Spill(spill_slot),
+                            );
+                        } else {
+                            // Reload
+                            record_assignment_copy(
+                                copies,
+                                instr,
+                                AssignmentCopyPhase::CrossFragment,
+                                OperandAssignment::Spill(spill_slot),
+                                range_assignment,
+                            );
+                        };
+                    } else {
+                        // We've run off the end of the spill range, reset things.
+                        last_spill = None;
+                    }
+                }
+
+                if let OperandAssignment::Spill(spill_slot) = range_assignment {
+                    last_spill = Some((range, spill_slot));
+                }
+
+                for &range_instr in range_instrs {
                     if !range_instr.is_def() {
                         continue;
                     }
@@ -64,20 +170,25 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         .find(|(_, def_op)| def_op.reg().reg_num() == vreg)
                         .unwrap();
 
-                    let op_assignment = match def_op.constraint() {
-                        DefOperandConstraint::Fixed(_) => {
-                            // Should be handled by `assign_fixed_operands`.
-                            continue;
-                        }
-                        _ => range_assignment,
+                    if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
+                        // The assignment itself should have been handled by `assign_fixed_operands`.
+                        // Just make sure to record the appropriate copy.
+                        record_assignment_copy(
+                            copies,
+                            instr.next(),
+                            AssignmentCopyPhase::PrevInstrCleanup,
+                            OperandAssignment::Reg(preg),
+                            range_assignment,
+                        );
+                    } else {
+                        assignment.assign_instr_def(instr, i, range_assignment);
                     };
-
-                    assignment.assign_instr_def(instr, i, op_assignment);
                 }
             }
         }
 
-        // Now that all defs are resolved, do the same for uses.
+        // Second pass: resolve all uses now that we have all defs and can easily determine tied
+        // operands.
         for vreg in self.vreg_ranges.keys() {
             for &range in self.vreg_ranges[vreg].iter() {
                 let range_assignment = self.get_range_assignment(range);
@@ -93,18 +204,28 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             continue;
                         }
 
-                        let op_assignment = match use_op.constraint() {
-                            UseOperandConstraint::Fixed(_) => {
-                                // Should be handled by `assign_fixed_operands`.
-                                continue;
+                        match use_op.constraint() {
+                            UseOperandConstraint::Fixed(preg) => {
+                                // The assignment itself should have been handled by
+                                // `assign_fixed_operands`. Just make sure to record the appropriate
+                                // copy.
+                                record_assignment_copy(
+                                    copies,
+                                    instr,
+                                    AssignmentCopyPhase::InstrSetup,
+                                    range_assignment,
+                                    OperandAssignment::Reg(preg),
+                                );
                             }
-                            UseOperandConstraint::TiedToDef(i) => {
-                                assignment.instr_def_assignments(instr)[i as usize]
+                            UseOperandConstraint::TiedToDef(j) => {
+                                let def_assignment =
+                                    assignment.instr_def_assignments(instr)[j as usize];
+                                assignment.assign_instr_use(instr, i, def_assignment);
                             }
-                            _ => range_assignment,
+                            _ => {
+                                assignment.assign_instr_use(instr, i, range_assignment);
+                            }
                         };
-
-                        assignment.assign_instr_use(instr, i, op_assignment);
                     }
                 }
             }

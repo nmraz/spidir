@@ -43,7 +43,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 // Allow ranges to overlap, but when a spilled and a non-spilled range start at the
                 // same point, make sure the non-spilled range comes first.
                 ((range_data.prog_range.start.index() as u64) << 1)
-                    | (fragment_data.assignment.is_some() as u64)
+                    | (fragment_data.assignment.is_none() as u64)
             });
 
             // Start by resolving all defs so tied uses are easier.

@@ -37,6 +37,16 @@ pub enum OperandAssignment {
     Spill(SpillSlot),
 }
 
+impl OperandAssignment {
+    pub fn is_spill(self) -> bool {
+        matches!(self, Self::Spill(..))
+    }
+
+    pub fn is_reg(&self) -> bool {
+        matches!(self, Self::Reg(..))
+    }
+}
+
 #[derive(Clone, Copy, Default)]
 struct InstrAssignmentData {
     def_base: u32,

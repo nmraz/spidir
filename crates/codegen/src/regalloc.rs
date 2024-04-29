@@ -8,7 +8,7 @@ use crate::{
     machine::{MachineCore, MachineRegalloc},
 };
 
-use self::context::RegAllocContext;
+use self::{context::RegAllocContext, types::AssignmentCopies};
 
 mod conflict;
 mod context;
@@ -59,6 +59,8 @@ pub struct Assignment {
     spill_slots: PrimaryMap<SpillSlot, MemLayout>,
     instr_assignments: SecondaryMap<Instr, InstrAssignmentData>,
     operand_assignment_pool: Vec<OperandAssignment>,
+    // TODO: Replace this with fully-resolved single copies once we get there.
+    copies: AssignmentCopies,
 }
 
 impl Assignment {

@@ -1,13 +1,13 @@
 use core::{cmp::Ordering, fmt};
 
-use alloc::collections::BinaryHeap;
+use alloc::{collections::BinaryHeap, vec::Vec};
 use bitflags::bitflags;
 use cranelift_entity::{entity_impl, packed_option::PackedOption};
 use smallvec::SmallVec;
 
 use crate::lir::{Instr, OperandPos, PhysReg, RegClass, VirtRegNum};
 
-use super::SpillSlot;
+use super::{OperandAssignment, SpillSlot};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InstrSlot {
@@ -407,6 +407,34 @@ impl Ord for QueuedFragment {
 }
 
 pub type FragmentQueue = BinaryHeap<QueuedFragment>;
+
+// TODO: Move this `AssignmentCopy` stuff back to `reify.rs`.
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum AssignmentCopyPhase {
+    /// * Copies out of fixed def operands
+    /// * Copies into spill slots for def operands that have been spilled
+    PrevInstrCleanup,
+    /// * Intra-block copies between fragments belonging to the same vreg
+    /// * Copies for block live-ins when there is a unique predecessor
+    /// * Reloads from spill slots for use operands that have been spilled
+    CrossFragment,
+    /// * Copies into fixed use operands
+    /// * Copies into tied def operands
+    /// * Copies for block live-outs when there is a unique successor
+    /// * Copies for outgoing block params
+    InstrSetup,
+}
+
+#[derive(Clone, Copy)]
+pub struct AssignmentCopy {
+    pub instr: Instr,
+    pub phase: AssignmentCopyPhase,
+    pub from: OperandAssignment,
+    pub to: OperandAssignment,
+}
+
+pub type AssignmentCopies = Vec<AssignmentCopy>;
 
 #[cfg(test)]
 mod tests {

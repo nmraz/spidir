@@ -11,35 +11,10 @@ use crate::{
 };
 
 use super::{
-    context::RegAllocContext, types::LiveRange, Assignment, InstrAssignmentData, OperandAssignment,
-    SpillSlot,
+    context::RegAllocContext,
+    types::{AssignmentCopies, AssignmentCopy, AssignmentCopyPhase, LiveRange},
+    Assignment, InstrAssignmentData, OperandAssignment, SpillSlot,
 };
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-enum AssignmentCopyPhase {
-    /// * Copies out of fixed def operands
-    /// * Copies into spill slots for def operands that have been spilled
-    PrevInstrCleanup,
-    /// * Intra-block copies between fragments belonging to the same vreg
-    /// * Copies for block live-ins when there is a unique predecessor
-    /// * Reloads from spill slots for use operands that have been spilled
-    CrossFragment,
-    /// * Copies into fixed use operands
-    /// * Copies into tied def operands
-    /// * Copies for block live-outs when there is a unique successor
-    /// * Copies for outgoing block params
-    InstrSetup,
-}
-
-#[derive(Clone, Copy)]
-struct AssignmentCopy {
-    instr: Instr,
-    phase: AssignmentCopyPhase,
-    _from: OperandAssignment,
-    _to: OperandAssignment,
-}
-
-type AssignmentCopies = Vec<AssignmentCopy>;
 
 fn record_assignment_copy(
     copies: &mut AssignmentCopies,
@@ -52,8 +27,8 @@ fn record_assignment_copy(
         copies.push(AssignmentCopy {
             instr,
             phase,
-            _from: from,
-            _to: to,
+            from,
+            to,
         });
     }
 }
@@ -76,6 +51,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.collect_cross_fragment_copies(&mut copies);
 
         copies.sort_unstable_by_key(|copy| (copy.instr, copy.phase));
+
+        assignment.copies = copies;
 
         if cfg!(debug_assertions) {
             assignment.verify_all_assigned();
@@ -351,6 +328,7 @@ impl Assignment {
             // but should usually be compensated for by the fact that many instructions have more
             // than one operand.
             operand_assignment_pool: Vec::with_capacity(instr_count),
+            copies: AssignmentCopies::new(),
         };
 
         for instr in lir.all_instrs() {

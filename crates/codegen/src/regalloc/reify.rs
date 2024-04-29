@@ -43,14 +43,14 @@ type AssignmentCopies = Vec<AssignmentCopy>;
 fn record_assignment_copy(
     copies: &mut AssignmentCopies,
     instr: Instr,
-    prio: AssignmentCopyPhase,
+    phase: AssignmentCopyPhase,
     from: OperandAssignment,
     to: OperandAssignment,
 ) {
     if from != to {
         copies.push(AssignmentCopy {
             instr,
-            phase: prio,
+            phase,
             _from: from,
             _to: to,
         });
@@ -104,6 +104,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 let range_assignment = self.get_range_assignment(range);
                 let range_instrs = &self.live_ranges[range].instrs;
 
+                // Check if we have any spills/reloads to perform.
                 if let Some((spill_range, spill_slot)) = last_spill {
                     let prog_range = self.live_ranges[range].prog_range;
                     let spill_prog_range = self.live_ranges[spill_range].prog_range;
@@ -155,6 +156,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     last_spill = Some((range, spill_slot));
                 }
 
+                // Assign defs based on range data.
                 for &range_instr in range_instrs {
                     if !range_instr.is_def() {
                         continue;
@@ -220,6 +222,14 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             UseOperandConstraint::TiedToDef(j) => {
                                 let def_assignment =
                                     assignment.instr_def_assignments(instr)[j as usize];
+
+                                record_assignment_copy(
+                                    copies,
+                                    instr,
+                                    AssignmentCopyPhase::InstrSetup,
+                                    range_assignment,
+                                    def_assignment,
+                                );
                                 assignment.assign_instr_use(instr, i, def_assignment);
                             }
                             _ => {

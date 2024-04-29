@@ -6,7 +6,8 @@ use cranelift_entity::{packed_option::ReservedValue, PrimaryMap, SecondaryMap};
 
 use crate::{
     lir::{DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, UseOperandConstraint},
-    machine::MachineRegalloc,
+    machine::{MachineCore, MachineRegalloc},
+    regalloc::types::InstrSlot,
 };
 
 use super::{
@@ -86,13 +87,15 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn collect_cross_fragment_copies(&self, copies: &mut AssignmentCopies) {
         for vreg_ranges in self.vreg_ranges.values() {
             let mut last_spill: Option<(LiveRange, SpillSlot)> = None;
+            let mut prev_range: Option<(LiveRange, OperandAssignment)> = None;
+
             for &range in vreg_ranges {
                 let range_assignment = self.get_range_assignment(range);
                 let range_instrs = &self.live_ranges[range].instrs;
+                let prog_range = self.live_ranges[range].prog_range;
 
                 // Check if we have any spills/reloads to perform.
                 if let Some((spill_range, spill_slot)) = last_spill {
-                    let prog_range = self.live_ranges[range].prog_range;
                     let spill_prog_range = self.live_ranges[spill_range].prog_range;
 
                     // Note: we expect to start _strictly_ after the current spill because register
@@ -141,6 +144,34 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 if let OperandAssignment::Spill(spill_slot) = range_assignment {
                     last_spill = Some((range, spill_slot));
                 }
+
+                // Stitch together touching live ranges.
+                if let Some((prev_range, prev_assignment)) = prev_range {
+                    let prev_prog_range = self.live_ranges[prev_range].prog_range;
+                    if prev_prog_range.end == prog_range.start {
+                        let boundary = prog_range.start;
+                        let instr = boundary.instr();
+
+                        // Adjacent ranges belonging to the same vreg should only happen because of
+                        // basic block boundaries or splits, and both those cases use the `Before`
+                        // slot.
+                        debug_assert!(boundary.slot() == InstrSlot::Before);
+
+                        // Cross-block copies need to be handled more delicately, so do only
+                        // intra-block copies this way.
+                        if !is_block_header(self.lir, instr) {
+                            record_assignment_copy(
+                                copies,
+                                instr,
+                                AssignmentCopyPhase::CrossFragment,
+                                prev_assignment,
+                                range_assignment,
+                            );
+                        }
+                    }
+                }
+
+                prev_range = Some((range, range_assignment));
             }
         }
     }
@@ -382,4 +413,8 @@ impl Assignment {
     fn create_spill_slot(&mut self, layout: MemLayout) -> SpillSlot {
         self.spill_slots.push(layout)
     }
+}
+
+fn is_block_header<M: MachineCore>(lir: &Lir<M>, instr: Instr) -> bool {
+    instr == lir.block_instrs(lir.instr_block(instr)).start
 }

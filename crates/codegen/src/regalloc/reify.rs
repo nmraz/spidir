@@ -68,8 +68,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // live ranges.
         self.assign_fixed_operands(&mut assignment);
 
-        // Now, assign remaining operands based on live range allocations.
+        // Now, extract everything else we need (operand assignments, copies) out of the live range
+        // assignments.
+        self.sort_vreg_ranges();
         self.assign_allocated_operands(&mut assignment, &mut copies);
+        self.collect_cross_fragment_copies(&mut copies);
 
         copies.sort_unstable_by_key(|copy| (copy.instr, copy.phase));
 
@@ -80,27 +83,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         assignment
     }
 
-    fn assign_allocated_operands(
-        &mut self,
-        assignment: &mut Assignment,
-        copies: &mut AssignmentCopies,
-    ) {
-        // First pass: sort each register's live ranges and resolve all instruction def operands to
-        // the correct physical registers. While we're at it, record any copies connecting live
-        // ranges belonging to the same vreg.
-        for vreg in self.vreg_ranges.keys() {
-            self.vreg_ranges[vreg].sort_unstable_by_key(|&range| {
-                let range_data = &self.live_ranges[range];
-                let fragment_data = &self.live_set_fragments[range_data.fragment];
-
-                // Allow ranges to overlap, but when a spilled and a non-spilled range start at the
-                // same point, make sure the non-spilled range comes first.
-                ((range_data.prog_range.start.index() as u64) << 1)
-                    | (fragment_data.assignment.is_none() as u64)
-            });
-
+    fn collect_cross_fragment_copies(&self, copies: &mut AssignmentCopies) {
+        for vreg_ranges in self.vreg_ranges.values() {
             let mut last_spill: Option<(LiveRange, SpillSlot)> = None;
-            for &range in self.vreg_ranges[vreg].iter() {
+            for &range in vreg_ranges {
                 let range_assignment = self.get_range_assignment(range);
                 let range_instrs = &self.live_ranges[range].instrs;
 
@@ -155,9 +141,23 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 if let OperandAssignment::Spill(spill_slot) = range_assignment {
                     last_spill = Some((range, spill_slot));
                 }
+            }
+        }
+    }
+
+    fn assign_allocated_operands(
+        &self,
+        assignment: &mut Assignment,
+        copies: &mut AssignmentCopies,
+    ) {
+        // First pass: sort each register's live ranges and resolve all instruction def operands to
+        // the correct physical registers.
+        for (vreg, vreg_ranges) in self.vreg_ranges.iter() {
+            for &range in vreg_ranges {
+                let range_assignment = self.get_range_assignment(range);
 
                 // Assign defs based on range data.
-                for &range_instr in range_instrs {
+                for &range_instr in &self.live_ranges[range].instrs {
                     if !range_instr.is_def() {
                         continue;
                     }
@@ -191,8 +191,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         // Second pass: resolve all uses now that we have all defs and can easily determine tied
         // operands.
-        for vreg in self.vreg_ranges.keys() {
-            for &range in self.vreg_ranges[vreg].iter() {
+        for (vreg, vreg_ranges) in self.vreg_ranges.iter() {
+            for &range in vreg_ranges {
                 let range_assignment = self.get_range_assignment(range);
                 for &range_instr in &self.live_ranges[range].instrs {
                     if range_instr.is_def() {
@@ -239,6 +239,20 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     }
                 }
             }
+        }
+    }
+
+    fn sort_vreg_ranges(&mut self) {
+        for ranges in self.vreg_ranges.values_mut() {
+            ranges.sort_unstable_by_key(|&range| {
+                let range_data = &self.live_ranges[range];
+                let fragment_data = &self.live_set_fragments[range_data.fragment];
+
+                // Allow ranges to overlap, but when a spilled and a non-spilled range start at the
+                // same point, make sure the non-spilled range comes first.
+                ((range_data.prog_range.start.index() as u64) << 1)
+                    | (fragment_data.assignment.is_none() as u64)
+            });
         }
     }
 

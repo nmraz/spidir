@@ -79,9 +79,10 @@ fn write_instr_copies<M: MachineCore>(
 }
 
 fn consume_copies_for<'a>(copies: &mut &'a [AssignmentCopy], instr: Instr) -> &'a [AssignmentCopy] {
-    let Some(len) = (*copies).iter().position(|copy| copy.instr != instr) else {
-        return &[];
-    };
+    let len = (*copies)
+        .iter()
+        .position(|copy| copy.instr != instr)
+        .unwrap_or(copies.len());
 
     let (for_instr, after_instr) = copies.split_at(len);
     *copies = after_instr;

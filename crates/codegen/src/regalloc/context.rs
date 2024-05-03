@@ -11,7 +11,6 @@ use crate::{
     cfg::CfgContext,
     lir::{Lir, PhysReg, VirtRegNum},
     machine::MachineRegalloc,
-    regalloc::types::PhysRegCopyDir,
 };
 
 use super::types::{
@@ -119,15 +118,8 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
 
             for reservation in reservations {
                 let range = reservation.prog_range;
-                if let Some(copied_live_range) = reservation.copied_live_range {
-                    let dir_arrow = match copied_live_range.direction {
-                        PhysRegCopyDir::ToPhys => "<-",
-                        PhysRegCopyDir::FromPhys => "->",
-                    };
-                    debug!(
-                        "  {range:?} {} {}",
-                        dir_arrow, self.live_ranges[copied_live_range.live_range].vreg
-                    );
+                if let Some(copied_live_range) = reservation.copied_live_range.expand() {
+                    debug!("  {range:?} ({})", self.live_ranges[copied_live_range].vreg);
                 } else {
                     debug!("  {range:?}");
                 }

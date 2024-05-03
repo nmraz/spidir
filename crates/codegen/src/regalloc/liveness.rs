@@ -17,8 +17,8 @@ use crate::{
 use super::{
     types::{
         AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeInstr, LiveRangeInstrs,
-        LiveRangeOpPos, LiveRangePhysCopy, LiveSetFragment, PhysRegCopyDir, PhysRegHint,
-        PhysRegReservation, ProgramPoint, ProgramRange,
+        LiveRangeOpPos, LiveSetFragment, PhysRegHint, PhysRegReservation, ProgramPoint,
+        ProgramRange,
     },
     utils::get_instr_weight,
     RegAllocContext,
@@ -226,16 +226,11 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             );
 
             if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
-                let copied_live_range = live_range.map(|live_range| LiveRangePhysCopy {
-                    live_range,
-                    direction: PhysRegCopyDir::FromPhys,
-                });
-
                 self.reserve_phys_reg(
                     preg,
                     ProgramRange::new(op_def_point, def_point),
                     instr,
-                    copied_live_range,
+                    live_range,
                     // There isn't really a good reason for multiple defs to refer to the same
                     // physical register (the same vreg could just be reused later instead), and
                     // allowing that would complicate our `phys_reg_reservations`.
@@ -295,10 +290,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
                     preg,
                     ProgramRange::new(pos, op_pos),
                     instr,
-                    Some(LiveRangePhysCopy {
-                        live_range,
-                        direction: PhysRegCopyDir::ToPhys,
-                    }),
+                    Some(live_range),
                     // We completely disallow overlaps with reservations for any other uses.
                     false,
                 );
@@ -311,7 +303,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
         preg: PhysReg,
         prog_range: ProgramRange,
         instr: Instr,
-        copied_live_range: Option<LiveRangePhysCopy>,
+        copied_live_range: Option<LiveRange>,
         allow_identical_range: bool,
     ) {
         let reservations = &mut self.phys_reg_reservations[preg.as_u8() as usize];
@@ -343,11 +335,11 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
 
         reservations.push(PhysRegReservation {
             prog_range,
-            copied_live_range,
+            copied_live_range: copied_live_range.into(),
         });
 
-        if let Some(copied_live_range) = copied_live_range {
-            self.hint_live_range(copied_live_range.live_range, preg, instr);
+        if let Some(live_range) = copied_live_range {
+            self.hint_live_range(live_range, preg, instr);
         }
     }
 

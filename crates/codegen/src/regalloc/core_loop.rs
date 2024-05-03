@@ -455,9 +455,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             // reserved for the `cqo`, so a naive check would return a conflict. That case is
             // okay, though, because the reservation of `$rax` is copied out of `%1`.
 
-            let copied_from_live_range = reservation_copy
-                .is_some_and(|live_range_copy| live_range_copy.live_range == fragment_live_range);
-            if !copied_from_live_range {
+            if reservation_copy.expand() != Some(fragment_live_range) {
                 return Some(ProbeConflict::Hard {
                     boundary: conflict_boundary(reservation_range, fragment_range),
                 });

@@ -365,21 +365,9 @@ impl LiveSetFragmentData {
 }
 
 #[derive(Clone, Copy)]
-pub enum PhysRegCopyDir {
-    ToPhys,
-    FromPhys,
-}
-
-#[derive(Clone, Copy)]
-pub struct LiveRangePhysCopy {
-    pub live_range: LiveRange,
-    pub direction: PhysRegCopyDir,
-}
-
-#[derive(Clone, Copy)]
 pub struct PhysRegReservation {
     pub prog_range: ProgramRange,
-    pub copied_live_range: Option<LiveRangePhysCopy>,
+    pub copied_live_range: PackedOption<LiveRange>,
 }
 
 #[derive(Clone, Copy, Eq)]

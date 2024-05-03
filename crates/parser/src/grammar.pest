@@ -1,5 +1,3 @@
-//! Grammmar for spidir textual format.
-
 WHITESPACE = _{ " " | "\t" }
 
 line_end = _{ ("#" ~ (!"\n" ~ ANY)* ~ "\n") | "\n" }

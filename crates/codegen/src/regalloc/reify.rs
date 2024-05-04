@@ -2,7 +2,7 @@ use core::iter;
 
 use alloc::vec::Vec;
 
-use cranelift_entity::{packed_option::ReservedValue, PrimaryMap, SecondaryMap};
+use cranelift_entity::{packed_option::ReservedValue, EntityRef, PrimaryMap, SecondaryMap};
 
 use crate::{
     lir::{DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, UseOperandConstraint},
@@ -48,6 +48,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // assignments.
         self.sort_vreg_ranges();
         self.assign_allocated_operands(&mut assignment, &mut copies);
+        self.collect_func_live_in_copies(&mut copies);
         self.collect_cross_fragment_copies(&mut copies);
 
         copies.sort_unstable_by_key(|copy| (copy.instr, copy.phase));
@@ -59,6 +60,29 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
 
         assignment
+    }
+
+    fn collect_func_live_in_copies(&self, copies: &mut AssignmentCopies) {
+        let first_block = self.cfg_ctx.block_order[0];
+        for (&block_param, &preg) in self
+            .lir
+            .block_params(first_block)
+            .iter()
+            .zip(self.lir.live_in_regs())
+        {
+            let Some(&first_range) = self.vreg_ranges[block_param.reg_num()].first() else {
+                continue;
+            };
+            let assignment = self.get_range_assignment(first_range);
+
+            record_assignment_copy(
+                copies,
+                Instr::new(0),
+                AssignmentCopyPhase::PrevInstrCleanup,
+                OperandAssignment::Reg(preg),
+                assignment,
+            );
+        }
     }
 
     fn collect_cross_fragment_copies(&self, copies: &mut AssignmentCopies) {

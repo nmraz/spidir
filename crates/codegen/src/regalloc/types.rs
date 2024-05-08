@@ -400,13 +400,18 @@ pub type FragmentQueue = BinaryHeap<QueuedFragment>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AssignmentCopyPhase {
+    /// Corresponds to the `Before` instruction slot:
     /// * Copies out of fixed def operands
-    /// * Copies into spill slots for def operands that have been spilled
-    PrevInstrCleanup,
     /// * Intra-block copies between fragments belonging to the same vreg
     /// * Copies for block live-ins when there is a unique predecessor
+    /// * Copies into spill slots for def operands that have been spilled
+    Before,
+    /// Corresponds to the `Before` instruction slot:
     /// * Reloads from spill slots for use operands that have been spilled
-    CrossFragment,
+    /// This is a dedicated phase so that spill -> reload sequences between adjacent instructions
+    /// work correctly.
+    Reload,
+    /// Corresponds to the `PreCopy` instruction slot:
     /// * Copies into fixed use operands
     /// * Copies into tied def operands
     /// * Copies for block live-outs when there is a unique successor

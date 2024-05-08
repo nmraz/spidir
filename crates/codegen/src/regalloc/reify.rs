@@ -78,7 +78,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             record_assignment_copy(
                 copies,
                 Instr::new(0),
-                AssignmentCopyPhase::PrevInstrCleanup,
+                AssignmentCopyPhase::Before,
                 OperandAssignment::Reg(preg),
                 assignment,
             );
@@ -94,59 +94,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 let range_assignment = self.get_range_assignment(range);
                 let range_instrs = &self.live_ranges[range].instrs;
                 let prog_range = self.live_ranges[range].prog_range;
+                let mut copied_from_prev = false;
 
-                // Check if we have any spills/reloads to perform.
-                if let Some((spill_range, spill_slot)) = last_spill {
-                    let spill_prog_range = self.live_ranges[spill_range].prog_range;
-
-                    // Note: we expect to start _strictly_ after the current spill because register
-                    // ranges should be sorted before spill ranges starting at the same point.
-                    debug_assert!(prog_range.start > spill_prog_range.start);
-
-                    // If we have a later range intersecting the current spill range, it should be a
-                    // small spill/reload connector; record the copy for that now.
-                    if prog_range.end <= spill_prog_range.end {
-                        // All such spill/reload connectors should be small ranges requiring
-                        // registers and covering a single instruction.
-                        debug_assert!(range_assignment.is_reg());
-                        debug_assert!(range_instrs.len() == 1);
-
-                        let range_instr = range_instrs[0];
-                        let instr = range_instr.instr();
-                        // We should never have inserted spills/reloads for non-`needs_reg`
-                        // operands.
-                        debug_assert!(range_instr.needs_reg());
-
-                        if range_instr.is_def() {
-                            // Spill
-                            record_assignment_copy(
-                                copies,
-                                instr.next(),
-                                AssignmentCopyPhase::PrevInstrCleanup,
-                                range_assignment,
-                                OperandAssignment::Spill(spill_slot),
-                            );
-                        } else {
-                            // Reload
-                            record_assignment_copy(
-                                copies,
-                                instr,
-                                AssignmentCopyPhase::CrossFragment,
-                                OperandAssignment::Spill(spill_slot),
-                                range_assignment,
-                            );
-                        };
-                    } else {
-                        // We've run off the end of the spill range, reset things.
-                        last_spill = None;
-                    }
-                }
-
-                if let OperandAssignment::Spill(spill_slot) = range_assignment {
-                    last_spill = Some((range, spill_slot));
-                }
-
-                // Stitch together touching live ranges.
+                // Stitch together live ranges with touching endpoints.
                 if let Some((prev_range, prev_assignment)) = prev_range {
                     let prev_prog_range = self.live_ranges[prev_range].prog_range;
                     if prev_prog_range.end == prog_range.start {
@@ -164,15 +114,79 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             record_assignment_copy(
                                 copies,
                                 instr,
-                                AssignmentCopyPhase::CrossFragment,
+                                AssignmentCopyPhase::Before,
                                 prev_assignment,
                                 range_assignment,
                             );
+                            copied_from_prev = true;
                         }
                     }
                 }
 
                 prev_range = Some((range, range_assignment));
+
+                // Check if we have any spills/reloads to perform.
+                if let Some((spill_range, spill_slot)) = last_spill {
+                    let spill_prog_range = self.live_ranges[spill_range].prog_range;
+
+                    // Note: we expect to start _strictly_ after the current spill because
+                    // register ranges should be sorted before spill ranges starting at the same
+                    // point.
+                    debug_assert!(prog_range.start > spill_prog_range.start);
+
+                    // If we have a later range intersecting the current spill range, it should
+                    // be a small spill/reload connector; record the copy for that now.
+                    if prog_range.end <= spill_prog_range.end {
+                        // If the spilled def comes from the range just before us, there's no need
+                        // to reload from the stack; we've already copied into our new register
+                        // above.
+                        if !copied_from_prev {
+                            // All such spill/reload connectors should be small ranges requiring
+                            // registers and covering a single instruction.
+                            debug_assert!(range_assignment.is_reg());
+                            debug_assert!(range_instrs.len() == 1);
+
+                            let range_instr = range_instrs[0];
+                            let instr = range_instr.instr();
+                            // We should never have inserted spills/reloads for non-`needs_reg`
+                            // operands.
+                            debug_assert!(range_instr.needs_reg());
+
+                            if range_instr.is_def() {
+                                // Spill:
+                                // This store could end up dead if the only use of the spilled value
+                                // is the next instruction, in which case a simple register copy
+                                // will be inserted. In practice, dealing with that would require
+                                // dramatically complicating things here for very little tangible
+                                // benefit (we expect these situations not to crop up often because
+                                // shorter live ranges have highger spill weights).
+                                record_assignment_copy(
+                                    copies,
+                                    instr.next(),
+                                    AssignmentCopyPhase::Before,
+                                    range_assignment,
+                                    OperandAssignment::Spill(spill_slot),
+                                );
+                            } else {
+                                // Reload:
+                                record_assignment_copy(
+                                    copies,
+                                    instr,
+                                    AssignmentCopyPhase::Reload,
+                                    OperandAssignment::Spill(spill_slot),
+                                    range_assignment,
+                                );
+                            };
+                        }
+                    } else {
+                        // We've run off the end of the spill range, reset things.
+                        last_spill = None;
+                    }
+                }
+
+                if let OperandAssignment::Spill(spill_slot) = range_assignment {
+                    last_spill = Some((range, spill_slot));
+                }
             }
         }
     }
@@ -206,11 +220,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
                     if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
                         // The assignment itself should have been handled by `assign_fixed_operands`.
-                        // Just make sure to record the appropriate copy.
+                        // Just make sure to record the appropriate copy - we want it in the
+                        // `BeforeInstr` phase because we model the register reservation as ending.
                         record_assignment_copy(
                             copies,
                             instr.next(),
-                            AssignmentCopyPhase::PrevInstrCleanup,
+                            AssignmentCopyPhase::Before,
                             OperandAssignment::Reg(preg),
                             range_assignment,
                         );

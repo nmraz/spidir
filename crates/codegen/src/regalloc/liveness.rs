@@ -8,7 +8,6 @@ use crate::{
     cfg::{Block, CfgContext},
     lir::{
         DefOperandConstraint, Instr, Lir, OperandPos, PhysReg, UseOperandConstraint, VirtRegNum,
-        VirtRegSet,
     },
     machine::MachineRegalloc,
     regalloc::utils::is_sorted_by_key,
@@ -21,6 +20,7 @@ use super::{
         ProgramRange,
     },
     utils::get_instr_weight,
+    virt_reg_set::VirtRegSet,
     RegAllocContext,
 };
 

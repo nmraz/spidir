@@ -19,6 +19,7 @@ mod liveness;
 mod reify;
 mod types;
 mod utils;
+mod virt_reg_set;
 
 pub use display::DisplayAssignment;
 

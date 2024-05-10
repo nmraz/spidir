@@ -416,7 +416,7 @@ pub enum AssignmentCopyPhase {
     /// * Copies into tied def operands
     /// * Copies for block live-outs when there is a unique successor
     /// * Copies for outgoing block params
-    InstrSetup,
+    PreCopy,
 }
 
 #[derive(Clone, Copy)]

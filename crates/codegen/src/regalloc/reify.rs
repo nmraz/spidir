@@ -261,7 +261,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                 record_assignment_copy(
                                     copies,
                                     instr,
-                                    AssignmentCopyPhase::InstrSetup,
+                                    AssignmentCopyPhase::PreCopy,
                                     range_assignment,
                                     OperandAssignment::Reg(preg),
                                 );
@@ -273,7 +273,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                 record_assignment_copy(
                                     copies,
                                     instr,
-                                    AssignmentCopyPhase::InstrSetup,
+                                    AssignmentCopyPhase::PreCopy,
                                     range_assignment,
                                     def_assignment,
                                 );

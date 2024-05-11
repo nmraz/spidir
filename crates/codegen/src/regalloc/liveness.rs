@@ -520,8 +520,8 @@ fn compute_block_liveouts<M: MachineRegalloc>(
     lir: &Lir<M>,
     cfg_ctx: &CfgContext,
 ) -> SecondaryMap<Block, VirtRegSet> {
-    let mut raw_block_uses = make_block_vreg_map(lir, cfg_ctx);
-    let mut raw_block_defs = make_block_vreg_map(lir, cfg_ctx);
+    let mut raw_block_uses = make_block_vreg_map(cfg_ctx);
+    let mut raw_block_defs = make_block_vreg_map(cfg_ctx);
 
     trace!("collecting block defs/uses");
 
@@ -555,8 +555,8 @@ fn compute_block_liveouts<M: MachineRegalloc>(
         }
     }
 
-    let mut live_ins = make_block_vreg_map(lir, cfg_ctx);
-    let mut live_outs = make_block_vreg_map(lir, cfg_ctx);
+    let mut live_ins = make_block_vreg_map(cfg_ctx);
+    let mut live_outs = make_block_vreg_map(cfg_ctx);
 
     let mut worklist: VecDeque<_> = cfg_ctx.block_order.iter().copied().rev().collect();
     let mut workset = FxHashSet::from_iter(worklist.iter().copied());
@@ -588,11 +588,8 @@ fn compute_block_liveouts<M: MachineRegalloc>(
     live_outs
 }
 
-fn make_block_vreg_map<M: MachineRegalloc>(
-    lir: &Lir<M>,
-    cfg_ctx: &CfgContext,
-) -> SecondaryMap<Block, VirtRegSet> {
-    let mut map = SecondaryMap::with_default(VirtRegSet::new(lir.vreg_count()));
+fn make_block_vreg_map(cfg_ctx: &CfgContext) -> SecondaryMap<Block, VirtRegSet> {
+    let mut map = SecondaryMap::new();
     map.resize(cfg_ctx.block_order.len());
     map
 }

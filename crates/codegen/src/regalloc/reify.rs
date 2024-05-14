@@ -3,16 +3,18 @@ use core::iter;
 use alloc::vec::Vec;
 
 use cranelift_entity::{packed_option::ReservedValue, EntityRef, PrimaryMap, SecondaryMap};
+use fx_utils::FxHashMap;
+use log::trace;
 
 use crate::{
-    lir::{DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, UseOperandConstraint},
+    lir::{DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, UseOperandConstraint, VirtRegNum},
     machine::{MachineCore, MachineRegalloc},
     regalloc::types::InstrSlot,
 };
 
 use super::{
     context::RegAllocContext,
-    types::{AssignmentCopies, AssignmentCopy, AssignmentCopyPhase, LiveRange},
+    types::{AssignmentCopies, AssignmentCopy, AssignmentCopyPhase, LiveRange, ProgramPoint},
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot,
 };
 
@@ -86,107 +88,233 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     fn collect_cross_fragment_copies(&self, copies: &mut AssignmentCopies) {
-        for vreg_ranges in self.vreg_ranges.values() {
-            let mut last_spill: Option<(LiveRange, SpillSlot)> = None;
-            let mut prev_range: Option<(LiveRange, OperandAssignment)> = None;
+        for (vreg, ranges) in self.vreg_ranges.iter() {
+            self.collect_intra_block_range_copies(ranges, copies);
+            self.collect_inter_block_range_copies(vreg, ranges, copies);
+        }
+    }
 
-            for &range in vreg_ranges {
-                let range_assignment = self.get_range_assignment(range);
-                let range_instrs = &self.live_ranges[range].instrs;
-                let prog_range = self.live_ranges[range].prog_range;
-                let mut copied_from_prev = false;
+    fn collect_intra_block_range_copies(
+        &self,
+        ranges: &[LiveRange],
+        copies: &mut Vec<AssignmentCopy>,
+    ) {
+        let mut last_spill: Option<(LiveRange, SpillSlot)> = None;
+        let mut prev_range: Option<(LiveRange, OperandAssignment)> = None;
 
-                // Stitch together live ranges with touching endpoints.
-                if let Some((prev_range, prev_assignment)) = prev_range {
-                    let prev_prog_range = self.live_ranges[prev_range].prog_range;
-                    if prev_prog_range.end == prog_range.start {
-                        let boundary = prog_range.start;
-                        let instr = boundary.instr();
+        for &range in ranges {
+            let range_assignment = self.get_range_assignment(range);
+            let range_instrs = &self.live_ranges[range].instrs;
+            let prog_range = self.live_ranges[range].prog_range;
+            let mut copied_from_prev = false;
 
-                        // Adjacent ranges belonging to the same vreg should only happen because of
-                        // basic block boundaries or splits, and both those cases use the `Before`
-                        // slot.
-                        debug_assert!(boundary.slot() == InstrSlot::Before);
+            // Stitch together live ranges with touching endpoints.
+            if let Some((prev_range, prev_assignment)) = prev_range {
+                let prev_prog_range = self.live_ranges[prev_range].prog_range;
+                if prev_prog_range.end == prog_range.start {
+                    let boundary = prog_range.start;
+                    let instr = boundary.instr();
 
-                        // Cross-block copies need to be handled more delicately, so do only
-                        // intra-block copies this way.
-                        if !is_block_header(self.lir, instr) {
+                    // Adjacent ranges belonging to the same vreg should only happen because of
+                    // basic block boundaries or splits, and both those cases use the `Before`
+                    // slot.
+                    debug_assert!(boundary.slot() == InstrSlot::Before);
+
+                    // Inter-block copies need to be handled more delicately, so we do them
+                    // separately.
+                    if !is_block_header(self.lir, instr) {
+                        record_assignment_copy(
+                            copies,
+                            instr,
+                            AssignmentCopyPhase::Before,
+                            prev_assignment,
+                            range_assignment,
+                        );
+                        copied_from_prev = true;
+                    }
+                }
+            }
+
+            prev_range = Some((range, range_assignment));
+
+            // Check if we have any spills/reloads to perform.
+            if let Some((spill_range, spill_slot)) = last_spill {
+                let spill_prog_range = self.live_ranges[spill_range].prog_range;
+
+                // Note: we expect to start _strictly_ after the current spill because
+                // register ranges should be sorted before spill ranges starting at the same
+                // point.
+                debug_assert!(prog_range.start > spill_prog_range.start);
+
+                // If we have a later range intersecting the current spill range, it should
+                // be a small spill/reload connector; record the copy for that now.
+                if prog_range.end <= spill_prog_range.end {
+                    // If the spilled def comes from the range just before us, there's no need
+                    // to reload from the stack; we've already copied into our new register
+                    // above.
+                    if !copied_from_prev {
+                        // All such spill/reload connectors should be small ranges requiring
+                        // registers and covering a single instruction.
+                        debug_assert!(range_assignment.is_reg());
+                        debug_assert!(range_instrs.len() == 1);
+
+                        let range_instr = range_instrs[0];
+                        let instr = range_instr.instr();
+                        // We should never have inserted spills/reloads for non-`needs_reg`
+                        // operands.
+                        debug_assert!(range_instr.needs_reg());
+
+                        if range_instr.is_def() {
+                            // Spill:
+                            // This store could end up dead if the only use of the spilled value
+                            // is the next instruction, in which case a simple register copy
+                            // will be inserted. In practice, dealing with that would require
+                            // dramatically complicating things here for very little tangible
+                            // benefit (we expect these situations not to crop up often because
+                            // shorter live ranges have highger spill weights).
+                            record_assignment_copy(
+                                copies,
+                                instr.next(),
+                                AssignmentCopyPhase::Before,
+                                range_assignment,
+                                OperandAssignment::Spill(spill_slot),
+                            );
+                        } else {
+                            // Reload:
                             record_assignment_copy(
                                 copies,
                                 instr,
-                                AssignmentCopyPhase::Before,
-                                prev_assignment,
+                                AssignmentCopyPhase::Reload,
+                                OperandAssignment::Spill(spill_slot),
                                 range_assignment,
                             );
-                            copied_from_prev = true;
-                        }
+                        };
                     }
+                } else {
+                    // We've run off the end of the spill range, reset things.
+                    last_spill = None;
+                }
+            }
+
+            if let OperandAssignment::Spill(spill_slot) = range_assignment {
+                last_spill = Some((range, spill_slot));
+            }
+        }
+    }
+
+    fn collect_inter_block_range_copies(
+        &self,
+        vreg: VirtRegNum,
+        ranges: &[LiveRange],
+        copies: &mut AssignmentCopies,
+    ) {
+        let mut block_outs = FxHashMap::default();
+        let mut block_ins = Vec::new();
+
+        let mut blocks = &self.cfg_ctx.block_order[..];
+
+        trace!("collecting inter-block copies: {vreg}");
+
+        // Walk through all block boundaries covered by `ranges`, collecting live-in and live-out
+        // information.
+        for &range in ranges {
+            let assignment = self.get_range_assignment(range);
+            let prog_range = self.live_ranges[range].prog_range;
+
+            trace!("  {prog_range:?}");
+
+            let Some(&first_block) = blocks.first() else {
+                // If all blocks have been exhausted, we definitely don't have anything to do.
+                break;
+            };
+
+            // When dealing with spill/reload connector ranges, we'll have ranges later in the list
+            // that end before a previous one. Just skip those ranges, since they can never carry
+            // the value into/out of blocks anyway.
+            if prog_range.end < ProgramPoint::before(self.lir.block_instrs(first_block).start) {
+                continue;
+            }
+
+            let mut block_idx = blocks
+                .binary_search_by_key(&prog_range.start, |&block| {
+                    ProgramPoint::before(self.lir.block_instrs(block).start)
+                })
+                .unwrap_or_else(|i| i - 1);
+
+            while block_idx < blocks.len() {
+                let block = blocks[block_idx];
+                let block_range = self.lir.block_instrs(block);
+                let header = block_range.start;
+                let next_header = block_range.end;
+
+                trace!("    {block}:");
+
+                if prog_range.start.instr() <= header && self.block_live_ins[block].contains(vreg) {
+                    // This vreg is live-in at this block: record it so we can insert copies for the
+                    // value once all live-out assignments are known.
+                    trace!("      in");
+                    block_ins.push((block, assignment));
                 }
 
-                prev_range = Some((range, range_assignment));
-
-                // Check if we have any spills/reloads to perform.
-                if let Some((spill_range, spill_slot)) = last_spill {
-                    let spill_prog_range = self.live_ranges[spill_range].prog_range;
-
-                    // Note: we expect to start _strictly_ after the current spill because
-                    // register ranges should be sorted before spill ranges starting at the same
-                    // point.
-                    debug_assert!(prog_range.start > spill_prog_range.start);
-
-                    // If we have a later range intersecting the current spill range, it should
-                    // be a small spill/reload connector; record the copy for that now.
-                    if prog_range.end <= spill_prog_range.end {
-                        // If the spilled def comes from the range just before us, there's no need
-                        // to reload from the stack; we've already copied into our new register
-                        // above.
-                        if !copied_from_prev {
-                            // All such spill/reload connectors should be small ranges requiring
-                            // registers and covering a single instruction.
-                            debug_assert!(range_assignment.is_reg());
-                            debug_assert!(range_instrs.len() == 1);
-
-                            let range_instr = range_instrs[0];
-                            let instr = range_instr.instr();
-                            // We should never have inserted spills/reloads for non-`needs_reg`
-                            // operands.
-                            debug_assert!(range_instr.needs_reg());
-
-                            if range_instr.is_def() {
-                                // Spill:
-                                // This store could end up dead if the only use of the spilled value
-                                // is the next instruction, in which case a simple register copy
-                                // will be inserted. In practice, dealing with that would require
-                                // dramatically complicating things here for very little tangible
-                                // benefit (we expect these situations not to crop up often because
-                                // shorter live ranges have highger spill weights).
-                                record_assignment_copy(
-                                    copies,
-                                    instr.next(),
-                                    AssignmentCopyPhase::Before,
-                                    range_assignment,
-                                    OperandAssignment::Spill(spill_slot),
-                                );
-                            } else {
-                                // Reload:
-                                record_assignment_copy(
-                                    copies,
-                                    instr,
-                                    AssignmentCopyPhase::Reload,
-                                    OperandAssignment::Spill(spill_slot),
-                                    range_assignment,
-                                );
-                            };
-                        }
-                    } else {
-                        // We've run off the end of the spill range, reset things.
-                        last_spill = None;
-                    }
+                if next_header <= prog_range.end.instr() {
+                    // This vreg is live-out of this block. Note that the `<=` is very important
+                    // here: the value is live-out even when it isn't used in the next block, in
+                    // which case the range will end `Before` the next block's header.
+                    trace!("      out");
+                    block_outs.insert(block, assignment);
                 }
 
-                if let OperandAssignment::Spill(spill_slot) = range_assignment {
-                    last_spill = Some((range, spill_slot));
+                if next_header >= prog_range.end.instr() {
+                    break;
                 }
+
+                block_idx += 1;
+            }
+
+            blocks = &blocks[block_idx..];
+        }
+
+        trace!("placing inter-block copies: {vreg}");
+
+        // Now that we have the necessary liveness information, place copies along the appropriate
+        // edges.
+        for &(block, assignment) in &block_ins {
+            let preds = self.cfg_ctx.cfg.block_preds(block);
+            let single_pred = preds.len() == 1;
+
+            for &pred in preds {
+                let Some(&pred_assignment) = block_outs.get(&pred) else {
+                    panic!("vreg {vreg} not live-out across edge {pred} -> {block}");
+                };
+
+                if assignment == pred_assignment {
+                    continue;
+                }
+
+                // If we have a single predecessor, we can safely insert the copy at the start of
+                // our own block. Otherwise, our predecessors should each have only `block` as a
+                // successor, allowing the copy to be inserted at the end of each.
+                let (instr, phase) = if single_pred {
+                    (
+                        self.lir.block_instrs(block).start,
+                        AssignmentCopyPhase::Before,
+                    )
+                } else {
+                    debug_assert!(
+                        self.cfg_ctx.cfg.block_succs(pred).len() == 1,
+                        "critical edge not split"
+                    );
+                    let pred_terminator = self.lir.block_instrs(pred).end.prev();
+                    (pred_terminator, AssignmentCopyPhase::PreCopy)
+                };
+
+                trace!("  {pred} -> {block} at {instr}");
+                copies.push(AssignmentCopy {
+                    instr,
+                    phase,
+                    from: pred_assignment,
+                    to: assignment,
+                });
             }
         }
     }

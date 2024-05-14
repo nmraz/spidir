@@ -43,7 +43,10 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
     }
 
     pub fn compute_liveness(&mut self) {
-        let live_outs = compute_block_liveouts(self.lir, self.cfg_ctx);
+        let (live_ins, live_outs) = compute_block_liveness(self.lir, self.cfg_ctx);
+
+        // Stash these for cross-block copy insertion later.
+        self.block_live_ins = live_ins;
 
         trace!("computing precise live ranges");
 
@@ -516,10 +519,13 @@ fn def_constraint_needs_reg(constraint: DefOperandConstraint) -> bool {
     constraint == DefOperandConstraint::AnyReg
 }
 
-fn compute_block_liveouts<M: MachineRegalloc>(
+fn compute_block_liveness<M: MachineRegalloc>(
     lir: &Lir<M>,
     cfg_ctx: &CfgContext,
-) -> SecondaryMap<Block, VirtRegSet> {
+) -> (
+    SecondaryMap<Block, VirtRegSet>,
+    SecondaryMap<Block, VirtRegSet>,
+) {
     let mut raw_block_uses = make_block_vreg_map(cfg_ctx);
     let mut raw_block_defs = make_block_vreg_map(cfg_ctx);
 
@@ -585,7 +591,7 @@ fn compute_block_liveouts<M: MachineRegalloc>(
         }
     }
 
-    live_outs
+    (live_ins, live_outs)
 }
 
 fn make_block_vreg_map(cfg_ctx: &CfgContext) -> SecondaryMap<Block, VirtRegSet> {

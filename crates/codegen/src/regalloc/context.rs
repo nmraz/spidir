@@ -8,20 +8,24 @@ use log::{debug, log_enabled};
 use smallvec::SmallVec;
 
 use crate::{
-    cfg::CfgContext,
+    cfg::{Block, CfgContext},
     lir::{Lir, PhysReg, VirtRegNum},
     machine::MachineRegalloc,
 };
 
-use super::types::{
-    AnnotatedPhysRegHint, FragmentQueue, LiveRange, LiveRangeData, LiveSet, LiveSetData,
-    LiveSetFragment, LiveSetFragmentData, PhysRegReservation, RangeEndKey,
+use super::{
+    types::{
+        AnnotatedPhysRegHint, FragmentQueue, LiveRange, LiveRangeData, LiveSet, LiveSetData,
+        LiveSetFragment, LiveSetFragmentData, PhysRegReservation, RangeEndKey,
+    },
+    virt_reg_set::VirtRegSet,
 };
 
 pub struct RegAllocContext<'a, M: MachineRegalloc> {
     pub lir: &'a Lir<M>,
     pub cfg_ctx: &'a CfgContext,
     pub machine: &'a M,
+    pub block_live_ins: SecondaryMap<Block, VirtRegSet>,
     pub vreg_ranges: SecondaryMap<VirtRegNum, SmallVec<[LiveRange; 4]>>,
     pub live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
     pub live_range_hints: FxHashMap<LiveRange, SmallVec<[AnnotatedPhysRegHint; 2]>>,
@@ -40,6 +44,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             lir,
             cfg_ctx,
             machine,
+            block_live_ins: SecondaryMap::new(),
             vreg_ranges: SecondaryMap::new(),
             live_ranges: PrimaryMap::new(),
             live_range_hints: FxHashMap::default(),

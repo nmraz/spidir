@@ -36,6 +36,13 @@ impl VirtRegSet {
         *self.map.entry(word).or_insert(0) |= 1 << bit;
     }
 
+    pub fn contains(&self, reg: VirtRegNum) -> bool {
+        let (word, bit) = word_bit_offset(reg.as_u32());
+        self.map
+            .get(&word)
+            .map_or(false, |&word_bits| ((word_bits >> bit) & 1) != 0)
+    }
+
     pub fn union(&mut self, other: &VirtRegSet) -> ChangeStatus {
         let mut status = ChangeStatus::Unchanged;
 
@@ -151,7 +158,7 @@ mod tests {
     }
 
     #[quickcheck]
-    fn add_iter_regset(mut vals: Vec<u32>) -> bool {
+    fn add_iter_reg_set(mut vals: Vec<u32>) -> bool {
         let reg_set = reg_set_from_vals(&vals);
 
         // Get a stable representation of the input list for comparison.
@@ -159,6 +166,19 @@ mod tests {
         vals.dedup();
 
         vals == vals_from_reg_set(&reg_set)
+    }
+
+    #[quickcheck]
+    fn reg_set_contains(vals: Vec<u32>, mut other_vals: Vec<u32>) -> bool {
+        let val_set: FxHashSet<_> = vals.iter().copied().collect();
+        other_vals.retain(|val| !val_set.contains(val));
+
+        let reg_set = reg_set_from_vals(&vals);
+        vals.iter()
+            .all(|&val| reg_set.contains(VirtRegNum::from_bits(val)))
+            && !other_vals
+                .iter()
+                .any(|&val| reg_set.contains(VirtRegNum::from_bits(val)))
     }
 
     #[quickcheck]

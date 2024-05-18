@@ -7,6 +7,7 @@ use fx_utils::FxHashMap;
 use log::trace;
 
 use crate::{
+    cfg::Block,
     lir::{DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, UseOperandConstraint, VirtRegNum},
     machine::{MachineCore, MachineRegalloc},
     regalloc::types::InstrSlot,
@@ -17,6 +18,25 @@ use super::{
     types::{AssignmentCopies, AssignmentCopy, AssignmentCopyPhase, LiveRange, ProgramPoint},
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot,
 };
+
+// Every block parameter is uniquely identified by its destination vreg because everything is in
+// SSA. To uniquely identify a complete "from -> to" pair, all we need in addition is the relevant
+// source block.
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct BlockParamEdgeKey {
+    from_block: Block,
+    to_vreg: VirtRegNum,
+}
+
+type BlockParamOutMap = FxHashMap<BlockParamEdgeKey, OperandAssignment>;
+
+struct BlockParamIn {
+    block: Block,
+    vreg: VirtRegNum,
+    assignment: OperandAssignment,
+}
+
+type BlockParamIns = Vec<BlockParamIn>;
 
 fn record_assignment_copy(
     copies: &mut AssignmentCopies,
@@ -88,9 +108,47 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     fn collect_cross_fragment_copies(&self, copies: &mut AssignmentCopies) {
+        let mut block_param_ins = BlockParamIns::new();
+        let mut block_param_outs = BlockParamOutMap::default();
+
+        // Step 1: Gather all vreg-local copies, tracking information about block params for the
+        // next step.
         for (vreg, ranges) in self.vreg_ranges.iter() {
             self.collect_intra_block_range_copies(ranges, copies);
-            self.collect_inter_block_range_copies(vreg, ranges, copies);
+            self.collect_inter_block_range_copies(
+                vreg,
+                ranges,
+                copies,
+                &mut block_param_ins,
+                &mut block_param_outs,
+            );
+        }
+
+        // Step 2: Insert copies for block params once we've gathered block param information for
+        // all vregs.
+        trace!("inserting block param copies");
+        for incoming in &block_param_ins {
+            trace!("  -> {} ({})", incoming.vreg, incoming.block);
+            for &pred in self.cfg_ctx.cfg.block_preds(incoming.block) {
+                trace!("    {pred}");
+                let from_assignment = *block_param_outs
+                    .get(&BlockParamEdgeKey {
+                        from_block: pred,
+                        to_vreg: incoming.vreg,
+                    })
+                    .expect("block param source not recorded for predecessor");
+
+                // We always insert copies for block params in the predecessor because we know we
+                // are its unique successor.
+                let pred_terminator = self.lir.block_instrs(pred).end.prev();
+                record_assignment_copy(
+                    copies,
+                    pred_terminator,
+                    AssignmentCopyPhase::PreCopy,
+                    from_assignment,
+                    incoming.assignment,
+                );
+            }
         }
     }
 
@@ -207,6 +265,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         vreg: VirtRegNum,
         ranges: &[LiveRange],
         copies: &mut AssignmentCopies,
+        block_param_ins: &mut BlockParamIns,
+        block_param_outs: &mut BlockParamOutMap,
     ) {
         let mut block_outs = FxHashMap::default();
         let mut block_ins = Vec::new();
@@ -249,14 +309,33 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
                 trace!("    {block}:");
 
-                if prog_range.start.instr() <= header && self.block_live_ins[block].contains(vreg) {
-                    // This vreg is live-in at this block: record it so we can insert copies for the
-                    // value once all live-out assignments are known.
-                    trace!("      in");
-                    block_ins.push((block, assignment));
+                if prog_range.start <= ProgramPoint::before(header) {
+                    if self.block_live_ins[block].contains(vreg) {
+                        // This vreg is live-in at this block: record it so we can insert copies for the
+                        // value once all live-out assignments are known.
+                        trace!("      in");
+                        block_ins.push((block, assignment));
+                    } else {
+                        // This vreg needs to be defined upon entry to this block, but isn't
+                        // implicitly carried in from other blocks - its lifetime starts here. This
+                        // is only possible when the vreg is a block param.
+                        trace!("      in (block param)");
+
+                        debug_assert!(self
+                            .lir
+                            .block_params(block)
+                            .iter()
+                            .any(|param| param.reg_num() == vreg));
+
+                        block_param_ins.push(BlockParamIn {
+                            block,
+                            vreg,
+                            assignment,
+                        });
+                    }
                 }
 
-                if next_header <= prog_range.end.instr() {
+                if ProgramPoint::before(next_header) <= prog_range.end {
                     // This vreg is live-out of this block. Note that the `<=` is very important
                     // here: the value is live-out even when it isn't used in the next block, in
                     // which case the range will end `Before` the next block's header.
@@ -264,7 +343,30 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     block_outs.insert(block, assignment);
                 }
 
-                if next_header >= prog_range.end.instr() {
+                // TODO: This could be made more efficient by flattening and sorting things by
+                // vreg/block in advance.
+                let outgoing_param_uses = self
+                    .lir
+                    .outgoing_block_params(block)
+                    .iter()
+                    .copied()
+                    .enumerate()
+                    .filter(|(_idx, param)| param.reg_num() == vreg)
+                    .map(|(idx, _param)| idx);
+
+                for param_idx in outgoing_param_uses {
+                    trace!("      out (block param {param_idx})");
+                    for &succ in self.cfg_ctx.cfg.block_succs(block) {
+                        let to_vreg = self.lir.block_params(succ)[param_idx].reg_num();
+                        let key = BlockParamEdgeKey {
+                            from_block: block,
+                            to_vreg,
+                        };
+                        block_param_outs.insert(key, assignment);
+                    }
+                }
+
+                if ProgramPoint::before(next_header) >= prog_range.end {
                     break;
                 }
 

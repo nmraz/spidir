@@ -140,7 +140,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
                 // We always insert copies for block params in the predecessor because we know we
                 // are its unique successor.
-                let pred_terminator = self.lir.block_instrs(pred).end.prev();
+                let pred_terminator = self.lir.block_terminator(pred);
                 record_assignment_copy(
                     copies,
                     pred_terminator,
@@ -406,7 +406,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         self.cfg_ctx.cfg.block_succs(pred).len() == 1,
                         "critical edge not split"
                     );
-                    let pred_terminator = self.lir.block_instrs(pred).end.prev();
+                    let pred_terminator = self.lir.block_terminator(pred);
                     (pred_terminator, AssignmentCopyPhase::PreCopy)
                 };
 

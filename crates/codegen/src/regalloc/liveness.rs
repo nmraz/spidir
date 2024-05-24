@@ -56,7 +56,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             trace!("  {block}");
 
             let block_range = self.lir.block_instrs(block);
-            let last_instr = block_range.end.prev();
+            let terminator = block_range.end.prev();
 
             // In case we need to insert a copy just before a jump (either because of outgoing block
             // params or because of a split live range), we don't model the small live range of the
@@ -64,8 +64,8 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             // need to make sure no unaccounted-for ranges might interfere with that small range.
             // For now, we achieve this by completely disallowing block terminators to define vregs.
             assert!(
-                self.lir.instr_defs(last_instr).is_empty()
-                    && self.lir.instr_clobbers(last_instr).is_empty()
+                self.lir.instr_defs(terminator).is_empty()
+                    && self.lir.instr_clobbers(terminator).is_empty()
             );
 
             for live_out in &live_outs[block] {
@@ -82,7 +82,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
                 // be placed here, as critical edges are already split.
                 self.record_live_use(
                     outgoing_vreg,
-                    ProgramPoint::pre_copy(last_instr),
+                    ProgramPoint::pre_copy(terminator),
                     // We never consider outgoing params as needing registers because they represent
                     // copies anyway.
                     false,

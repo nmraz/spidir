@@ -406,6 +406,12 @@ impl<M: MachineCore> Lir<M> {
         InstrRange::new(start, end)
     }
 
+    pub fn block_terminator(&self, block: Block) -> Instr {
+        let instrs = self.block_instrs(block);
+        debug_assert!(instrs.start != instrs.end);
+        instrs.end.prev()
+    }
+
     pub fn instr_block(&self, instr: Instr) -> Block {
         self.instr_blocks[instr.index()]
     }

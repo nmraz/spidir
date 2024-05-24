@@ -84,7 +84,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 {
                     // Since this block has a single successor, we can tack the copy itself onto the
                     // terminator for weight purposes.
-                    let terminator = self.lir.block_instrs(block).end.prev();
+                    let terminator = self.lir.block_terminator(block);
                     candidates.push(CopyCandidate {
                         src: outgoing.reg_num(),
                         dest: incoming.reg_num(),

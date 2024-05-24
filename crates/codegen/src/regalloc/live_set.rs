@@ -141,6 +141,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             ranges,
             hints: smallvec![],
             assignment: None.into(),
+            assignment_hint_weight: 0.0,
             size: 0,
             spill_weight: 0.0,
             is_atomic: false,

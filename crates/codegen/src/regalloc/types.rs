@@ -350,6 +350,7 @@ pub struct LiveSetFragmentData {
     pub ranges: TaggedRangeList,
     pub hints: PhysRegHints,
     pub assignment: PackedOption<PhysReg>,
+    pub assignment_hint_weight: f32,
     pub size: u32,
     pub spill_weight: f32,
     pub is_atomic: bool,

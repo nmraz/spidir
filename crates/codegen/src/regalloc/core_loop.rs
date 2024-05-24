@@ -18,7 +18,8 @@ use super::{
     conflict::{iter_btree_ranges, iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{
-        LiveRange, LiveRangeInstrs, LiveSetFragment, ProgramRange, QueuedFragment, RangeEndKey,
+        LiveRange, LiveRangeInstrs, LiveSetFragment, PhysRegHint, ProgramRange, QueuedFragment,
+        RangeEndKey,
     },
     Error,
 };
@@ -42,6 +43,7 @@ enum ProbeConflict {
     Soft {
         fragments: SmallVec<[LiveSetFragment; 4]>,
         weight: f32,
+        hint_weight: f32,
     },
     Hard {
         boundary: Option<ConflictBoundary>,
@@ -83,8 +85,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let probe_order = self.live_set_fragments[fragment]
             .hints
             .iter()
-            .map(|hint| hint.preg)
-            .chain(self.machine.usable_regs(class).iter().copied());
+            .copied()
+            .chain(
+                self.machine
+                    .usable_regs(class)
+                    .iter()
+                    .map(|&preg| PhysRegHint { preg, weight: 0.0 }),
+            );
 
         let mut no_conflict_reg = None;
         let mut lightest_soft_conflict = None;
@@ -92,28 +99,47 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let mut earliest_hard_conflict_boundary: Option<ConflictBoundary> = None;
 
         let mut probed_regs = PhysRegSet::empty();
-        for preg in probe_order {
+        for hint in probe_order {
+            let preg = hint.preg;
+            let hint_weight = hint.weight;
+
             if probed_regs.contains(preg) {
                 continue;
             }
 
             probed_regs.add(preg);
 
-            trace!("  probe: {}", M::reg_name(preg));
+            trace!("  probe: {} (hint weight {hint_weight})", M::reg_name(preg));
             match self.probe_phys_reg(preg, fragment) {
                 None => {
                     trace!("    no conflict");
-                    no_conflict_reg = Some(preg);
+                    no_conflict_reg = Some((preg, hint_weight));
                     break;
                 }
-                Some(ProbeConflict::Soft { fragments, weight }) => {
+                Some(ProbeConflict::Soft {
+                    fragments,
+                    weight: conflict_weight,
+                    hint_weight: conflict_hint_weight,
+                }) => {
                     trace!(
-                        "    soft conflict with {} (weight {weight})",
+                        "    soft conflict with {} (weight {conflict_weight}, hint weight {conflict_hint_weight})",
                         fragments.iter().format(", ")
                     );
-                    if weight < lightest_soft_conflict_weight {
-                        lightest_soft_conflict = Some((preg, fragments));
-                        lightest_soft_conflict_weight = weight;
+
+                    if hint_weight > conflict_hint_weight {
+                        // If we can evict all overlapping fragments assigned to this register and
+                        // prefer it more stronly than all of them (based on hint weight), go ahead
+                        // and evict them now. This helps deal with the case where a preferred
+                        // register happens to be taken by a fragment that doesn't actually need
+                        // that particular register, in which case we might have otherwise ended up
+                        // choosing an unrelated free register.
+                        lightest_soft_conflict = Some((preg, hint_weight, fragments));
+                        break;
+                    }
+
+                    if conflict_weight < lightest_soft_conflict_weight {
+                        lightest_soft_conflict = Some((preg, hint_weight, fragments));
+                        lightest_soft_conflict_weight = conflict_weight;
                     }
                 }
                 Some(ProbeConflict::Hard { boundary, .. }) => {
@@ -143,13 +169,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             }
         }
 
-        if let Some(no_conflict_reg) = no_conflict_reg {
-            self.assign_fragment_to_phys_reg(no_conflict_reg, fragment);
-        } else if let Some((preg, soft_conflicts)) = lightest_soft_conflict {
+        if let Some((no_conflict_reg, hint_weight)) = no_conflict_reg {
+            self.assign_fragment_to_phys_reg(fragment, no_conflict_reg, hint_weight);
+        } else if let Some((preg, hint_weight, soft_conflicts)) = lightest_soft_conflict {
             for conflicting_fragment in soft_conflicts {
                 self.evict_and_requeue_fragment(conflicting_fragment);
             }
-            self.assign_fragment_to_phys_reg(preg, fragment);
+            self.assign_fragment_to_phys_reg(fragment, preg, hint_weight);
         } else if let Some(boundary) = earliest_hard_conflict_boundary {
             self.split_fragment_for_conflict(fragment, boundary);
         } else if !self.is_fragment_atomic(fragment) {
@@ -480,6 +506,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let mut soft_conflicts = SmallVec::new();
         let mut soft_conflict_weight = 0f32;
+        let mut soft_conflict_hint_weight = 0f32;
 
         let mut conflict_scratch = self.fragment_conflict_scratch.borrow_mut();
         conflict_scratch.clear();
@@ -495,7 +522,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             conflict_scratch.insert(allocated_fragment);
 
-            let allocated_weight = self.live_set_fragments[allocated_fragment].spill_weight;
+            let fragment_data = &self.live_set_fragments[allocated_fragment];
+
+            let allocated_weight = fragment_data.spill_weight;
             if allocated_weight >= fragment_weight {
                 return Some(ProbeConflict::Hard {
                     boundary: conflict_boundary(preg_range, fragment_range),
@@ -504,24 +533,33 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             soft_conflicts.push(allocated_fragment);
             soft_conflict_weight = soft_conflict_weight.max(allocated_weight);
+            soft_conflict_hint_weight =
+                soft_conflict_hint_weight.max(fragment_data.assignment_hint_weight);
         }
 
         if !soft_conflicts.is_empty() {
             Some(ProbeConflict::Soft {
                 fragments: soft_conflicts,
                 weight: soft_conflict_weight,
+                hint_weight: soft_conflict_hint_weight,
             })
         } else {
             None
         }
     }
 
-    fn assign_fragment_to_phys_reg(&mut self, preg: PhysReg, fragment: LiveSetFragment) {
+    fn assign_fragment_to_phys_reg(
+        &mut self,
+        fragment: LiveSetFragment,
+        preg: PhysReg,
+        hint_weight: f32,
+    ) {
         trace!("  assign: {fragment} -> {}", M::reg_name(preg));
         let data = &mut self.live_set_fragments[fragment];
         let preg_assignments = &mut self.phys_reg_assignments[preg.as_u8() as usize];
         assert!(data.assignment.is_none());
         data.assignment = preg.into();
+        data.assignment_hint_weight = hint_weight;
         for range in &data.ranges {
             preg_assignments.insert(RangeEndKey(range.prog_range), range.live_range);
         }

@@ -583,6 +583,10 @@ impl<'o, M: MachineCore> Builder<'o, M> {
 
         if self.cur_block < self.block_order.len() as isize {
             let block = self.cur_block();
+            assert!(
+                next_instr > self.lir.block_instr_ranges[block].1,
+                "attempted to create empty LIR block: {block}"
+            );
             // Note: we always want `.0` to be greater than `.1` for every block, so that when we
             // reverse everything later we'll end up with `.0 < .1`.
             self.lir.block_instr_ranges[block].0 = next_instr;

@@ -96,6 +96,19 @@ fn check_lir(lir: Lir<DummyMachine>, cfg: &BlockCfg, block_order: &[Block], expe
 }
 
 #[test]
+#[should_panic(expected = "attempted to create empty LIR block: block1")]
+fn build_empty_block() {
+    let mut cfg = BlockCfg::new();
+    let block0 = cfg.create_block();
+    let block1 = cfg.create_block();
+    let block_order = [block0, block1];
+
+    let mut builder = Builder::<DummyMachine>::new(&block_order);
+    builder.advance_block();
+    builder.advance_block();
+}
+
+#[test]
 fn build_simple_tied() {
     let mut cfg = BlockCfg::new();
     let block = cfg.create_block();

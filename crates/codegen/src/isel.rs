@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::array;
 
-use cranelift_entity::SecondaryMap;
+use cranelift_entity::{packed_option::PackedOption, SecondaryMap};
 use fx_utils::FxHashMap;
 use hashbrown::hash_map::Entry;
 use ir::{
@@ -19,7 +19,7 @@ use crate::{
     lir::{
         display::{display_block_params, display_instr_data},
         Builder as LirBuilder, DefOperand, InstrBuilder, Lir, MemLayout, PhysRegSet, RegClass,
-        StackSlot, UseOperand, VirtReg,
+        StackSlot, UseOperand, VirtReg, VirtRegNum,
     },
     machine::{MachineLower, ParamLoc},
     schedule::Schedule,
@@ -96,7 +96,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
         get_value_vreg_helper(
             |value, class| {
                 let vreg = self.builder.create_vreg(class);
-                self.state.reg_value_map.insert(vreg, value);
+                self.state.reg_value_map[vreg.reg_num()] = value.into();
                 vreg
             },
             &mut self.state.value_reg_map,
@@ -114,7 +114,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
         // We assume that the destination register is live here, meaning that it's okay to just bump
         // the use count of `src`.
         self.state.bump_vreg_use_count(src);
-        self.builder.copy_vreg(dest, src)
+        self.builder.copy_vreg(dest.reg_num(), src.reg_num())
     }
 
     pub fn emit_instr(&mut self, instr: M::Instr, defs: &[DefOperand], uses: &[UseOperand]) {
@@ -162,7 +162,7 @@ pub fn select_instrs<M: MachineLower>(
 }
 
 type ValueRegMap = FxHashMap<DepValue, VirtReg>;
-type RegValueMap = FxHashMap<VirtReg, DepValue>;
+type RegValueMap = SecondaryMap<VirtRegNum, PackedOption<DepValue>>;
 type ValueUseCounts = SecondaryMap<DepValue, u32>;
 type NodeStackSlotMap = FxHashMap<Node, StackSlot>;
 
@@ -356,7 +356,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             for &phi in self.schedule.block_phis(block) {
                 let input = self.get_value_vreg(builder, self.func.graph.node_inputs(phi)[1]);
                 let output = self.value_reg_map[&self.func.graph.node_outputs(phi)[0]];
-                builder.copy_vreg(output, input);
+                builder.copy_vreg(output.reg_num(), input.reg_num());
             }
         } else {
             // Multiple predecessors - the phis are really necessary.
@@ -416,7 +416,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         get_value_vreg_helper(
             |value, class| {
                 let vreg = builder.create_vreg(class);
-                self.reg_value_map.insert(vreg, value);
+                self.reg_value_map[vreg.reg_num()] = value.into();
                 vreg
             },
             &mut self.value_reg_map,
@@ -444,7 +444,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn bump_vreg_use_count(&mut self, vreg: VirtReg) {
-        if let Some(&value) = self.reg_value_map.get(&vreg) {
+        if let Some(value) = self.reg_value_map[vreg.reg_num()].expand() {
             self.value_use_counts[value] += 1;
         }
     }

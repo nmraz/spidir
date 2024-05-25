@@ -264,8 +264,8 @@ fn multi_block() {
             (UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
-    builder.copy_vreg(right_param2, param2);
-    builder.copy_vreg(left_param2, param2);
+    builder.copy_vreg(right_param2.reg_num(), param2.reg_num());
+    builder.copy_vreg(left_param2.reg_num(), param2.reg_num());
 
     builder.set_incoming_block_params([param1, param2, left_param3]);
     builder.advance_block();
@@ -330,7 +330,7 @@ fn block_param_vreg_copies() {
         [],
     );
 
-    builder.copy_vreg(outgoing_param, five);
+    builder.copy_vreg(outgoing_param.reg_num(), five.reg_num());
     builder.advance_block();
 
     let lir = builder.finish();

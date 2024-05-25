@@ -494,7 +494,7 @@ impl<M: MachineCore> InstrBuilder<'_, '_, M> {
         self.builder.create_vreg(class)
     }
 
-    pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
+    pub fn copy_vreg(&mut self, dest: VirtRegNum, src: VirtRegNum) {
         self.builder.copy_vreg(dest, src)
     }
 
@@ -553,7 +553,7 @@ impl<M: MachineCore> InstrBuilder<'_, '_, M> {
 pub struct Builder<'o, M: MachineCore> {
     lir: Lir<M>,
     block_order: &'o [Block],
-    vreg_copies: FxHashMap<VirtReg, VirtReg>,
+    vreg_copies: FxHashMap<VirtRegNum, VirtRegNum>,
     cur_block: isize,
 }
 
@@ -613,27 +613,21 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         VirtReg::new(num, class)
     }
 
-    pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
+    pub fn copy_vreg(&mut self, dest: VirtRegNum, src: VirtRegNum) {
         let src = resolve_vreg_copy(&mut self.vreg_copies, src).unwrap_or(src);
+        assert!(dest != src, "vreg copy cycle on register {}", dest);
+        let src_class = self.lir.vreg_class(src);
+        let dest_class = self.lir.vreg_class(dest);
         assert!(
-            dest != src,
-            "vreg copy cycle on register {}",
-            dest.reg_num()
-        );
-        assert!(
-            src.class() == dest.class(),
+            src_class == dest_class,
             "attempted to copy vreg of class {} into vreg of class {}",
-            src.class().as_u8(),
-            dest.class().as_u8()
+            src_class.as_u8(),
+            dest_class.as_u8()
         );
 
         let prev = self.vreg_copies.insert(dest, src);
         if let Some(prev) = prev {
-            panic!(
-                "vreg {} already copied from {}",
-                dest.reg_num(),
-                prev.reg_num()
-            );
+            panic!("vreg {} already copied from {}", dest, prev);
         }
     }
 
@@ -709,8 +703,9 @@ impl<'o, M: MachineCore> Builder<'o, M> {
 
     fn propagate_vreg_copies(&mut self) {
         for vreg_use in &mut self.lir.use_pool {
-            if let Some(def) = resolve_vreg_copy(&mut self.vreg_copies, vreg_use.reg) {
-                vreg_use.reg = def;
+            let class = vreg_use.reg.class();
+            if let Some(def) = resolve_vreg_copy(&mut self.vreg_copies, vreg_use.reg.reg_num()) {
+                vreg_use.reg = VirtReg::new(def, class);
             }
         }
 
@@ -722,8 +717,9 @@ impl<'o, M: MachineCore> Builder<'o, M> {
 
             for param in &mut self.lir.block_param_pool[outgoing_base..outgoing_base + outgoing_len]
             {
-                if let Some(def) = resolve_vreg_copy(&mut self.vreg_copies, *param) {
-                    *param = def;
+                let class = param.class();
+                if let Some(def) = resolve_vreg_copy(&mut self.vreg_copies, param.reg_num()) {
+                    *param = VirtReg::new(def, class);
                 }
             }
         }
@@ -731,9 +727,9 @@ impl<'o, M: MachineCore> Builder<'o, M> {
 }
 
 fn resolve_vreg_copy(
-    vreg_copies: &mut FxHashMap<VirtReg, VirtReg>,
-    vreg: VirtReg,
-) -> Option<VirtReg> {
+    vreg_copies: &mut FxHashMap<VirtRegNum, VirtRegNum>,
+    vreg: VirtRegNum,
+) -> Option<VirtRegNum> {
     let def = vreg_copies.get(&vreg).copied()?;
 
     // Look through all existing copies we have here.

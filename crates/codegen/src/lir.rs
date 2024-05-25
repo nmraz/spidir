@@ -72,6 +72,16 @@ impl VirtReg {
     }
 }
 
+impl ReservedValue for VirtReg {
+    fn reserved_value() -> Self {
+        Self(u32::MAX)
+    }
+
+    fn is_reserved_value(&self) -> bool {
+        self.0 == u32::MAX
+    }
+}
+
 const PHYS_REG_COUNT: u8 = 128;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

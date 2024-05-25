@@ -3,7 +3,6 @@ use core::array;
 
 use cranelift_entity::{packed_option::PackedOption, SecondaryMap};
 use fx_utils::FxHashMap;
-use hashbrown::hash_map::Entry;
 use ir::{
     module::{FunctionData, Module},
     node::{NodeKind, Type},
@@ -161,7 +160,7 @@ pub fn select_instrs<M: MachineLower>(
     Ok(builder.finish())
 }
 
-type ValueRegMap = FxHashMap<DepValue, VirtReg>;
+type ValueRegMap = SecondaryMap<DepValue, PackedOption<VirtReg>>;
 type RegValueMap = SecondaryMap<VirtRegNum, PackedOption<DepValue>>;
 type ValueUseCounts = SecondaryMap<DepValue, u32>;
 type NodeStackSlotMap = FxHashMap<Node, StackSlot>;
@@ -355,13 +354,13 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             // for block param resolution in the predecessor later.
             for &phi in self.schedule.block_phis(block) {
                 let input = self.get_value_vreg(builder, self.func.graph.node_inputs(phi)[1]);
-                let output = self.value_reg_map[&self.func.graph.node_outputs(phi)[0]];
+                let output = self.value_reg_map[self.func.graph.node_outputs(phi)[0]].unwrap();
                 builder.copy_vreg(output.reg_num(), input.reg_num());
             }
         } else {
             // Multiple predecessors - the phis are really necessary.
             builder.set_incoming_block_params(self.schedule.block_phis(block).iter().map(|&phi| {
-                let val = self.value_reg_map[&self.func.graph.node_outputs(phi)[0]];
+                let val = self.value_reg_map[self.func.graph.node_outputs(phi)[0]].unwrap();
                 trace!("  {}", display_node(self.module, &self.func.graph, phi));
                 val
             }));
@@ -431,7 +430,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             .machine
             .reg_class_for_type(self.func.graph.value_kind(value).as_value().unwrap());
         let vreg = builder.create_vreg(class);
-        self.value_reg_map.insert(value, vreg);
+        self.value_reg_map[value] = vreg.into();
         vreg
     }
 
@@ -478,18 +477,17 @@ fn get_value_vreg_helper<M: MachineLower>(
     value: DepValue,
 ) -> VirtReg {
     let class = machine.reg_class_for_type(valgraph.value_kind(value).as_value().unwrap());
-    match value_reg_map.entry(value) {
-        Entry::Occupied(occupied) => {
-            let vreg = *occupied.get();
+    match value_reg_map[value].expand() {
+        Some(vreg) => {
             assert!(
                 vreg.class() == class,
                 "attempted to redefine vreg with different class"
             );
             vreg
         }
-        Entry::Vacant(vacant) => {
+        None => {
             let vreg = builder(value, class);
-            vacant.insert(vreg);
+            value_reg_map[value] = vreg.into();
             vreg
         }
     }

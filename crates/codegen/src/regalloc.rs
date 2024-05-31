@@ -8,7 +8,7 @@ use crate::{
     machine::{MachineCore, MachineRegalloc},
 };
 
-use self::{context::RegAllocContext, types::AssignmentCopies};
+use self::{context::RegAllocContext, types::ParallelCopies};
 
 mod conflict;
 mod context;
@@ -61,7 +61,7 @@ pub struct Assignment {
     instr_assignments: SecondaryMap<Instr, InstrAssignmentData>,
     operand_assignment_pool: Vec<OperandAssignment>,
     // TODO: Replace this with fully-resolved single copies once we get there.
-    copies: AssignmentCopies,
+    copies: ParallelCopies,
 }
 
 impl Assignment {

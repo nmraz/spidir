@@ -11,7 +11,7 @@ use crate::{
     machine::MachineCore,
 };
 
-use super::{types::AssignmentCopy, Assignment, OperandAssignment};
+use super::{types::ParallelCopy, Assignment, OperandAssignment};
 
 pub struct DisplayAssignment<'a, M: MachineCore> {
     pub(super) assignment: &'a Assignment,
@@ -48,7 +48,7 @@ impl<M: MachineCore> fmt::Display for DisplayAssignment<'_, M> {
 
 fn write_instr_copies<M: MachineCore>(
     f: &mut fmt::Formatter<'_>,
-    mut copies: &[AssignmentCopy],
+    mut copies: &[ParallelCopy],
 ) -> fmt::Result {
     loop {
         let Some(first) = copies.first() else {
@@ -78,7 +78,7 @@ fn write_instr_copies<M: MachineCore>(
     Ok(())
 }
 
-fn consume_copies_for<'a>(copies: &mut &'a [AssignmentCopy], instr: Instr) -> &'a [AssignmentCopy] {
+fn consume_copies_for<'a>(copies: &mut &'a [ParallelCopy], instr: Instr) -> &'a [ParallelCopy] {
     let len = (*copies)
         .iter()
         .position(|copy| copy.instr != instr)

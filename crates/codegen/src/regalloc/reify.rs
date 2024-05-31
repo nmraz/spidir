@@ -15,7 +15,7 @@ use crate::{
 
 use super::{
     context::RegAllocContext,
-    types::{AssignmentCopies, AssignmentCopy, AssignmentCopyPhase, LiveRange, ProgramPoint},
+    types::{LiveRange, ParallelCopies, ParallelCopy, ParallelCopyPhase, ProgramPoint},
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot,
 };
 
@@ -38,15 +38,15 @@ struct BlockParamIn {
 
 type BlockParamIns = Vec<BlockParamIn>;
 
-fn record_assignment_copy(
-    copies: &mut AssignmentCopies,
+fn record_parallel_copy(
+    copies: &mut ParallelCopies,
     instr: Instr,
-    phase: AssignmentCopyPhase,
+    phase: ParallelCopyPhase,
     from: OperandAssignment,
     to: OperandAssignment,
 ) {
     if from != to {
-        copies.push(AssignmentCopy {
+        copies.push(ParallelCopy {
             instr,
             phase,
             from,
@@ -58,7 +58,7 @@ fn record_assignment_copy(
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn reify(&mut self) -> Assignment {
         let mut assignment = Assignment::empty_for_lir(self.lir);
-        let mut copies = AssignmentCopies::new();
+        let mut copies = ParallelCopies::new();
 
         self.assign_spill_slots(&mut assignment);
 
@@ -84,7 +84,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         assignment
     }
 
-    fn collect_func_live_in_copies(&self, copies: &mut AssignmentCopies) {
+    fn collect_func_live_in_copies(&self, copies: &mut ParallelCopies) {
         let first_block = self.cfg_ctx.block_order[0];
         for (&block_param, &preg) in self
             .lir
@@ -97,17 +97,17 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             };
             let assignment = self.get_range_assignment(first_range);
 
-            record_assignment_copy(
+            record_parallel_copy(
                 copies,
                 Instr::new(0),
-                AssignmentCopyPhase::Before,
+                ParallelCopyPhase::Before,
                 OperandAssignment::Reg(preg),
                 assignment,
             );
         }
     }
 
-    fn collect_cross_fragment_copies(&self, copies: &mut AssignmentCopies) {
+    fn collect_cross_fragment_copies(&self, copies: &mut ParallelCopies) {
         let mut block_param_ins = BlockParamIns::new();
         let mut block_param_outs = BlockParamOutMap::default();
 
@@ -141,10 +141,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 // We always insert copies for block params in the predecessor because we know we
                 // are its unique successor.
                 let pred_terminator = self.lir.block_terminator(pred);
-                record_assignment_copy(
+                record_parallel_copy(
                     copies,
                     pred_terminator,
-                    AssignmentCopyPhase::PreCopy,
+                    ParallelCopyPhase::PreCopy,
                     from_assignment,
                     incoming.assignment,
                 );
@@ -155,7 +155,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn collect_intra_block_range_copies(
         &self,
         ranges: &[LiveRange],
-        copies: &mut Vec<AssignmentCopy>,
+        copies: &mut Vec<ParallelCopy>,
     ) {
         let mut last_spill: Option<(LiveRange, SpillSlot)> = None;
         let mut prev_range: Option<(LiveRange, OperandAssignment)> = None;
@@ -181,10 +181,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     // Inter-block copies need to be handled more delicately, so we do them
                     // separately.
                     if !is_block_header(self.lir, instr) {
-                        record_assignment_copy(
+                        record_parallel_copy(
                             copies,
                             instr,
-                            AssignmentCopyPhase::Before,
+                            ParallelCopyPhase::Before,
                             prev_assignment,
                             range_assignment,
                         );
@@ -230,19 +230,19 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             // dramatically complicating things here for very little tangible
                             // benefit (we expect these situations not to crop up often because
                             // shorter live ranges have highger spill weights).
-                            record_assignment_copy(
+                            record_parallel_copy(
                                 copies,
                                 instr.next(),
-                                AssignmentCopyPhase::Before,
+                                ParallelCopyPhase::Before,
                                 range_assignment,
                                 OperandAssignment::Spill(spill_slot),
                             );
                         } else {
                             // Reload:
-                            record_assignment_copy(
+                            record_parallel_copy(
                                 copies,
                                 instr,
-                                AssignmentCopyPhase::Reload,
+                                ParallelCopyPhase::Reload,
                                 OperandAssignment::Spill(spill_slot),
                                 range_assignment,
                             );
@@ -264,7 +264,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         &self,
         vreg: VirtRegNum,
         ranges: &[LiveRange],
-        copies: &mut AssignmentCopies,
+        copies: &mut ParallelCopies,
         block_param_ins: &mut BlockParamIns,
         block_param_outs: &mut BlockParamOutMap,
     ) {
@@ -399,7 +399,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 let (instr, phase) = if single_pred {
                     (
                         self.lir.block_instrs(block).start,
-                        AssignmentCopyPhase::Before,
+                        ParallelCopyPhase::Before,
                     )
                 } else {
                     debug_assert!(
@@ -407,11 +407,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         "critical edge not split"
                     );
                     let pred_terminator = self.lir.block_terminator(pred);
-                    (pred_terminator, AssignmentCopyPhase::PreCopy)
+                    (pred_terminator, ParallelCopyPhase::PreCopy)
                 };
 
                 trace!("  {pred} -> {block} at {instr}");
-                copies.push(AssignmentCopy {
+                copies.push(ParallelCopy {
                     instr,
                     phase,
                     from: pred_assignment,
@@ -421,11 +421,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
-    fn assign_allocated_operands(
-        &self,
-        assignment: &mut Assignment,
-        copies: &mut AssignmentCopies,
-    ) {
+    fn assign_allocated_operands(&self, assignment: &mut Assignment, copies: &mut ParallelCopies) {
         // First pass: sort each register's live ranges and resolve all instruction def operands to
         // the correct physical registers.
         for (vreg, vreg_ranges) in self.vreg_ranges.iter() {
@@ -452,10 +448,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         // The assignment itself should have been handled by `assign_fixed_operands`.
                         // Just make sure to record the appropriate copy - we want it in the
                         // `BeforeInstr` phase because we model the register reservation as ending.
-                        record_assignment_copy(
+                        record_parallel_copy(
                             copies,
                             instr.next(),
-                            AssignmentCopyPhase::Before,
+                            ParallelCopyPhase::Before,
                             OperandAssignment::Reg(preg),
                             range_assignment,
                         );
@@ -488,10 +484,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                 // The assignment itself should have been handled by
                                 // `assign_fixed_operands`. Just make sure to record the appropriate
                                 // copy.
-                                record_assignment_copy(
+                                record_parallel_copy(
                                     copies,
                                     instr,
-                                    AssignmentCopyPhase::PreCopy,
+                                    ParallelCopyPhase::PreCopy,
                                     range_assignment,
                                     OperandAssignment::Reg(preg),
                                 );
@@ -500,10 +496,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                 let def_assignment =
                                     assignment.instr_def_assignments(instr)[j as usize];
 
-                                record_assignment_copy(
+                                record_parallel_copy(
                                     copies,
                                     instr,
-                                    AssignmentCopyPhase::PreCopy,
+                                    ParallelCopyPhase::PreCopy,
                                     range_assignment,
                                     def_assignment,
                                 );
@@ -597,7 +593,7 @@ impl Assignment {
             // but should usually be compensated for by the fact that many instructions have more
             // than one operand.
             operand_assignment_pool: Vec::with_capacity(instr_count),
-            copies: AssignmentCopies::new(),
+            copies: ParallelCopies::new(),
         };
 
         for instr in lir.all_instrs() {

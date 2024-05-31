@@ -397,10 +397,8 @@ impl Ord for QueuedFragment {
 
 pub type FragmentQueue = BinaryHeap<QueuedFragment>;
 
-// TODO: Move this `AssignmentCopy` stuff back to `reify.rs`.
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum AssignmentCopyPhase {
+pub enum ParallelCopyPhase {
     /// Corresponds to the `Before` instruction slot:
     /// * Copies out of fixed def operands
     /// * Intra-block copies between fragments belonging to the same vreg
@@ -421,14 +419,14 @@ pub enum AssignmentCopyPhase {
 }
 
 #[derive(Clone, Copy)]
-pub struct AssignmentCopy {
+pub struct ParallelCopy {
     pub instr: Instr,
-    pub phase: AssignmentCopyPhase,
+    pub phase: ParallelCopyPhase,
     pub from: OperandAssignment,
     pub to: OperandAssignment,
 }
 
-pub type AssignmentCopies = Vec<AssignmentCopy>;
+pub type ParallelCopies = Vec<ParallelCopy>;
 
 #[cfg(test)]
 mod tests {

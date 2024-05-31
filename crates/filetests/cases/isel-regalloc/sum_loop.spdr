@@ -1,0 +1,45 @@
+# run: isel-regalloc
+
+func @sum_to_n:i32(i32) {
+    # check: function `sum_to_n`:
+    # nextln:       block0:
+    # nextln: 0000:     $$rax = MovRI(S32, 0)
+    # nextln: 0001:     AluRRm(S32, Cmp) $$rdi, $$rax
+    # nextln: 0002:     Jumpcc(E, block1, block3)
+    # nextln:       block1:
+    # nextln: 0003:     Jump(block2)
+    # nextln:       block3:
+    # nextln: 0004:     $$rcx = MovRI(S32, 1)
+    # nextln:           ($$rdx) = ($$rax)
+    # nextln: 0005:     Jump(block4)
+    # nextln:       block4:
+    # nextln:           ($$rsi) = ($$rdi)
+    # nextln: 0006:     $$rsi = AluRRm(S32, Sub) $$rsi, $$rcx
+    # nextln: 0007:     $$rdx = AluRRm(S32, Add) $$rdx, $$rdi
+    # nextln: 0008:     AluRRm(S32, Cmp) $$rsi, $$rax
+    # nextln: 0009:     Jumpcc(E, block5, block6)
+    # nextln:       block6:
+    # nextln:           ($$rdi) = ($$rsi)
+    # nextln: 0010:     Jump(block4)
+    # nextln:       block5:
+    # nextln:           ($$rax) = ($$rdx)
+    # nextln: 0011:     Jump(block2)
+    # nextln:       block2:
+    # nextln: 0012:     Ret $$rax
+
+    %0:ctrl, %1:i32 = entry
+    %10:i32 = iconst 1
+    %2:i32 = iconst 0
+    %3:i32 = icmp eq %1, %2
+    %4:ctrl, %5:ctrl = brcond %0, %3
+    %13:i32 = icmp eq %11, %2
+    %14:ctrl, %15:ctrl = brcond %6, %13
+    %16:ctrl, %17:phisel = region %4, %14
+    %6:ctrl, %7:phisel = region %5, %15
+    %8:i32 = phi %7, %1, %11
+    %11:i32 = isub %8, %10
+    %9:i32 = phi %7, %2, %12
+    %12:i32 = iadd %9, %8
+    %18:i32 = phi %17, %2, %12
+    return %16, %18
+}

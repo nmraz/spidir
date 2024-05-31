@@ -4,6 +4,7 @@ use anyhow::{anyhow, bail, Result};
 use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{module::Module, write::quote_ident};
+use isel_regalloc::IselRegallocProvider;
 
 use crate::utils::parse_output_func_heading;
 
@@ -21,6 +22,7 @@ mod cfg;
 mod domtree;
 mod graphviz;
 mod isel;
+mod isel_regalloc;
 mod loops;
 mod schedule;
 mod verify;
@@ -51,6 +53,7 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> 
         "graphviz[domtree]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::DomTree))),
         "graphviz[loops]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Loops))),
         "isel" => Ok(Box::new(IselProvider)),
+        "isel-regalloc" => Ok(Box::new(IselRegallocProvider)),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),
         "schedule" => Ok(Box::new(ScheduleProvider)),
         "verify-err" => Ok(Box::new(VerifyErrProvider)),

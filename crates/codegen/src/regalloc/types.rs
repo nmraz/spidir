@@ -428,6 +428,12 @@ pub struct ParallelCopy {
 
 pub type ParallelCopies = Vec<ParallelCopy>;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct AssignmentCopy {
+    pub from: OperandAssignment,
+    pub to: OperandAssignment,
+}
+
 #[cfg(test)]
 mod tests {
     use cranelift_entity::EntityRef;

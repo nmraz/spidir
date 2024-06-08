@@ -56,9 +56,20 @@ pub fn resolve(
         let mut copy_cycle_break = None;
 
         // Step 1: Follow the newly-discovered copy chain as far in as possible.
-        while let Some(&operand) = stack.last() {
+        loop {
+            let operand = *stack.last().unwrap();
+
             match visit_states[operand] {
-                VisitState::Unvisited => {}
+                VisitState::Unvisited => {
+                    visit_states[operand] = VisitState::Visiting;
+
+                    if let Some(src) = copy_sources[operand] {
+                        stack.push(src as usize);
+                    } else {
+                        // No more copies, terminate our current chain.
+                        break;
+                    }
+                }
                 VisitState::Visiting => {
                     // We've encountered a copy cycle `r -> ... -> s -> r`; break it up by
                     // introducing a temporary `t`, saving `r` into it before the cyclic copies, and
@@ -89,14 +100,6 @@ pub fn resolve(
                     last_copy_src = Some(operand);
                     break;
                 }
-            }
-            visit_states[operand] = VisitState::Visiting;
-
-            if let Some(src) = copy_sources[operand] {
-                stack.push(src as usize);
-            } else {
-                // No more copies, terminate our current chain.
-                break;
             }
         }
 

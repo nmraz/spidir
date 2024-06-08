@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use smallvec::{smallvec, SmallVec};
 
 use super::{

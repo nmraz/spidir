@@ -1,6 +1,7 @@
 use alloc::vec::Vec;
 
 use cranelift_entity::{entity_impl, PrimaryMap, SecondaryMap};
+use types::TaggedAssignmentCopy;
 
 use crate::{
     cfg::{Block, CfgContext},
@@ -8,7 +9,7 @@ use crate::{
     machine::{MachineCore, MachineRegalloc},
 };
 
-use self::{context::RegAllocContext, types::ParallelCopies};
+use self::context::RegAllocContext;
 
 mod conflict;
 mod context;
@@ -23,6 +24,7 @@ mod utils;
 mod virt_reg_set;
 
 pub use display::DisplayAssignment;
+pub use types::AssignmentCopy;
 
 #[derive(Debug, Clone)]
 pub enum Error {
@@ -61,8 +63,7 @@ pub struct Assignment {
     spill_slots: PrimaryMap<SpillSlot, MemLayout>,
     instr_assignments: SecondaryMap<Instr, InstrAssignmentData>,
     operand_assignment_pool: Vec<OperandAssignment>,
-    // TODO: Replace this with fully-resolved single copies once we get there.
-    copies: ParallelCopies,
+    copies: Vec<TaggedAssignmentCopy>,
 }
 
 impl Assignment {
@@ -84,6 +85,12 @@ impl Assignment {
         &self.operand_assignment_pool[base..base + len]
     }
 
+    pub fn copies(&self) -> AssignmentCopyIter<'_> {
+        AssignmentCopyIter {
+            copies: &self.copies,
+        }
+    }
+
     pub fn display<'a, M: MachineCore>(
         &'a self,
         block_order: &'a [Block],
@@ -94,6 +101,28 @@ impl Assignment {
             lir,
             block_order,
         }
+    }
+}
+
+pub struct AssignmentCopyIter<'a> {
+    copies: &'a [TaggedAssignmentCopy],
+}
+
+impl<'a> AssignmentCopyIter<'a> {
+    pub fn consume_copies_for(
+        &mut self,
+        instr: Instr,
+    ) -> impl Iterator<Item = AssignmentCopy> + 'a {
+        let len = self
+            .copies
+            .iter()
+            .position(|copy| copy.instr != instr)
+            .unwrap_or(self.copies.len());
+
+        let (for_instr, after_instr) = self.copies.split_at(len);
+        self.copies = after_instr;
+
+        for_instr.iter().map(move |tagged_copy| tagged_copy.copy)
     }
 }
 

@@ -1,4 +1,7 @@
-use core::fmt::{self, Display};
+use core::{
+    fmt::{self, Display},
+    iter,
+};
 
 use itertools::Itertools;
 
@@ -6,12 +9,12 @@ use crate::{
     cfg::Block,
     lir::{
         display::{display_instr_gutter, display_instr_gutter_padding},
-        Instr, Lir,
+        Lir,
     },
     machine::MachineCore,
 };
 
-use super::{types::ParallelCopy, Assignment, OperandAssignment};
+use super::{Assignment, AssignmentCopy, OperandAssignment};
 
 pub struct DisplayAssignment<'a, M: MachineCore> {
     pub(super) assignment: &'a Assignment,
@@ -21,12 +24,12 @@ pub struct DisplayAssignment<'a, M: MachineCore> {
 
 impl<M: MachineCore> fmt::Display for DisplayAssignment<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut copies = &self.assignment.copies[..];
+        let mut copies = self.assignment.copies();
 
         for &block in self.block_order {
             writeln!(f, "{}{block}:", display_instr_gutter_padding())?;
             for instr in self.lir.block_instrs(block) {
-                let instr_copies = consume_copies_for(&mut copies, instr);
+                let instr_copies = copies.consume_copies_for(instr);
                 write_instr_copies::<M>(f, instr_copies)?;
 
                 write!(f, "{}    ", display_instr_gutter(instr))?;
@@ -48,45 +51,17 @@ impl<M: MachineCore> fmt::Display for DisplayAssignment<'_, M> {
 
 fn write_instr_copies<M: MachineCore>(
     f: &mut fmt::Formatter<'_>,
-    mut copies: &[ParallelCopy],
+    copies: impl Iterator<Item = AssignmentCopy>,
 ) -> fmt::Result {
-    loop {
-        let Some(first) = copies.first() else {
-            break;
-        };
-
-        let len = copies
-            .iter()
-            .position(|copy| copy.phase != first.phase)
-            .unwrap_or(copies.len());
-        let (cur_copies, next_copies) = copies.split_at(len);
-
-        let cur_dests = cur_copies.iter().map(|copy| copy.to);
-        let cur_srcs = cur_copies.iter().map(|copy| copy.from);
-
-        writeln!(
-            f,
-            "{}    ({}) = ({})",
-            display_instr_gutter_padding(),
-            format_op_assignments::<M>(cur_dests),
-            format_op_assignments::<M>(cur_srcs),
-        )?;
-
-        copies = next_copies;
+    for copy in copies {
+        write!(f, "{}    ", display_instr_gutter_padding())?;
+        write_op::<M>(f, copy.to)?;
+        write!(f, " = ")?;
+        write_op::<M>(f, copy.from)?;
+        writeln!(f)?;
     }
 
     Ok(())
-}
-
-fn consume_copies_for<'a>(copies: &mut &'a [ParallelCopy], instr: Instr) -> &'a [ParallelCopy] {
-    let len = (*copies)
-        .iter()
-        .position(|copy| copy.instr != instr)
-        .unwrap_or(copies.len());
-
-    let (for_instr, after_instr) = copies.split_at(len);
-    *copies = after_instr;
-    for_instr
 }
 
 fn format_op_assignments<M: MachineCore>(
@@ -96,4 +71,8 @@ fn format_op_assignments<M: MachineCore>(
         OperandAssignment::Reg(reg) => f(&format_args!("${}", M::reg_name(reg))),
         OperandAssignment::Spill(slot) => f(&format_args!("${}", slot)),
     })
+}
+
+fn write_op<M: MachineCore>(f: &mut fmt::Formatter<'_>, op: OperandAssignment) -> fmt::Result {
+    write!(f, "{}", format_op_assignments::<M>(iter::once(op)))
 }

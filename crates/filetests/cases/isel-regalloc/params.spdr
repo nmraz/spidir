@@ -7,7 +7,9 @@
 func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
     # check: function `many_params`:
     # nextln:       block0:
-    # nextln:           ($$rax, $$r10, $$rdi) = ($$rdi, $$rdx, $$rcx)
+    # nextln:           $$r10 = $$rdx
+    # nextln:           $$rax = $$rdi
+    # nextln:           $$rdi = $$rcx
     # nextln: 0000:     $$rcx = MovRRbp { offset: 24 }
     # nextln: 0001:     $$rdx = MovRRbp { offset: 16 }
     # nextln: 0002:     $$rax = AluRRm(S64, Add) $$rax, $$rsi
@@ -33,7 +35,7 @@ func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
 func @unused_param:i64(ptr, i64, i64) {
     # check: function `unused_param`:
     # nextln:       block0:
-    # nextln:           ($$rax) = ($$rsi)
+    # nextln:           $$rax = $$rsi
     # nextln: 0000:     $$rax = AluRRm(S64, Add) $$rax, $$rdx
     # nextln: 0001:     Ret $$rax
 

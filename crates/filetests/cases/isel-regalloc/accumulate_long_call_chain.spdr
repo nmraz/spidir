@@ -6,7 +6,7 @@ func @func:i32() {
     # check: function `func`:
     # nextln:       block0:
     # nextln: 0000:     $$rax = Call(External(extfunc0))
-    # nextln:           ($$rbx) = ($$rax)
+    # nextln:           $$rbx = $$rax
     # nextln: 0001:     $$rax = Call(External(extfunc0))
     # nextln: 0002:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
     # nextln: 0003:     $$rax = Call(External(extfunc0))
@@ -25,7 +25,7 @@ func @func:i32() {
     # nextln: 0016:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
     # nextln: 0017:     $$rax = Call(External(extfunc0))
     # nextln: 0018:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln:           ($$rax) = ($$rbx)
+    # nextln:           $$rax = $$rbx
     # nextln: 0019:     Ret $$rax
 
     %ent:ctrl = entry

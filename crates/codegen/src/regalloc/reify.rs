@@ -15,7 +15,11 @@ use crate::{
 
 use super::{
     context::RegAllocContext,
-    types::{LiveRange, ParallelCopies, ParallelCopy, ParallelCopyPhase, ProgramPoint},
+    parallel_copy,
+    types::{
+        LiveRange, ParallelCopies, ParallelCopy, ParallelCopyPhase, ProgramPoint,
+        TaggedAssignmentCopies, TaggedAssignmentCopy,
+    },
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot,
 };
 
@@ -75,7 +79,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         copies.sort_unstable_by_key(|copy| (copy.instr, copy.phase));
 
-        assignment.copies = copies;
+        assignment.copies = resolve_parallel_copies(&copies);
 
         if cfg!(debug_assertions) {
             assignment.verify_all_assigned();
@@ -593,7 +597,7 @@ impl Assignment {
             // but should usually be compensated for by the fact that many instructions have more
             // than one operand.
             operand_assignment_pool: Vec::with_capacity(instr_count),
-            copies: ParallelCopies::new(),
+            copies: TaggedAssignmentCopies::new(),
         };
 
         for instr in lir.all_instrs() {
@@ -660,4 +664,27 @@ impl Assignment {
 
 fn is_block_header<M: MachineCore>(lir: &Lir<M>, instr: Instr) -> bool {
     instr == lir.block_instrs(lir.instr_block(instr)).start
+}
+
+fn resolve_parallel_copies(mut parallel_copies: &[ParallelCopy]) -> Vec<TaggedAssignmentCopy> {
+    let mut resolved = Vec::new();
+    while let Some((instr, chunk)) = next_copy_chunk(&mut parallel_copies) {
+        parallel_copy::resolve(chunk, |copy| {
+            resolved.push(TaggedAssignmentCopy { instr, copy: *copy })
+        });
+    }
+    resolved
+}
+
+fn next_copy_chunk<'a>(
+    parallel_copies: &mut &'a [ParallelCopy],
+) -> Option<(Instr, &'a [ParallelCopy])> {
+    let first = parallel_copies.first()?;
+    let len = parallel_copies
+        .iter()
+        .position(|copy| (copy.instr, copy.phase) != (first.instr, first.phase))
+        .unwrap_or(parallel_copies.len());
+    let (cur_copies, next_copies) = parallel_copies.split_at(len);
+    *parallel_copies = next_copies;
+    Some((first.instr, cur_copies))
 }

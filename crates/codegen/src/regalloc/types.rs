@@ -434,6 +434,14 @@ pub struct AssignmentCopy {
     pub to: OperandAssignment,
 }
 
+#[derive(Clone, Copy)]
+pub struct TaggedAssignmentCopy {
+    pub instr: Instr,
+    pub copy: AssignmentCopy,
+}
+
+pub type TaggedAssignmentCopies = Vec<TaggedAssignmentCopy>;
+
 #[cfg(test)]
 mod tests {
     use cranelift_entity::EntityRef;

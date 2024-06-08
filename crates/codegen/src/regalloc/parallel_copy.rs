@@ -36,6 +36,7 @@ pub fn resolve(
     }
 
     let mut cycle_break_tmp_reg = None;
+    let mut stack_copy_reg = None;
 
     // Resolved copies are held in reverse order during the traversal.
     let mut resolved = SmallVec::<[AssignmentCopy; 8]>::new();
@@ -108,10 +109,24 @@ pub fn resolve(
             visit_states[operand] = VisitState::Visited;
 
             if let Some(src) = last_copy_src {
-                resolved.push(AssignmentCopy {
-                    from: operands[src],
-                    to: operands[operand],
-                });
+                let from = operands[src];
+                let to = operands[operand];
+
+                if from.is_reg() || to.is_reg() {
+                    // Copies involving at least one register can be performed directly.
+                    resolved.push(AssignmentCopy { from, to });
+                } else {
+                    // Stack-to-stack copies need to go through a temporary register.
+                    let tmp_reg = *stack_copy_reg.get_or_insert_with(&mut get_tmp_reg);
+                    resolved.push(AssignmentCopy {
+                        from: OperandAssignment::Reg(tmp_reg),
+                        to,
+                    });
+                    resolved.push(AssignmentCopy {
+                        from,
+                        to: OperandAssignment::Reg(tmp_reg),
+                    });
+                }
             }
 
             match copy_cycle_break {
@@ -221,9 +236,14 @@ mod tests {
         }
 
         let mut resolved = Vec::new();
+        let mut tmp_reg_num = 64;
         resolve(
             &parallel_copies,
-            || PhysReg::new(64),
+            || {
+                let num = tmp_reg_num;
+                tmp_reg_num += 1;
+                PhysReg::new(num)
+            },
             |copy| resolved.push(*copy),
         );
 
@@ -466,6 +486,106 @@ mod tests {
                 r2 = r3
                 r3 = r0
                 r0 = r64
+            "#]],
+        )
+    }
+
+    #[test]
+    fn copy_stack_to_reg() {
+        check_resolution(
+            "
+            r0 = s0
+            ",
+            expect![[r#"
+                r0 = s0
+            "#]],
+        )
+    }
+
+    #[test]
+    fn copy_reg_to_stack() {
+        check_resolution(
+            "
+            s0 = r0
+            ",
+            expect![[r#"
+                s0 = r0
+            "#]],
+        )
+    }
+
+    #[test]
+    fn copy_stack_to_stack() {
+        check_resolution(
+            "
+            s1 = s0
+            ",
+            expect![[r#"
+                r64 = s0
+                s1 = r64
+            "#]],
+        )
+    }
+
+    #[test]
+    fn disjoint_stack_copies() {
+        check_resolution(
+            "
+            s1 = s0
+            s3 = s2
+            ",
+            expect![[r#"
+                r64 = s2
+                s3 = r64
+                r64 = s0
+                s1 = r64
+            "#]],
+        )
+    }
+
+    #[test]
+    fn overlapping_stack_copy_chain() {
+        check_resolution(
+            "
+            s1 = s0
+            s3 = s2
+            s2 = s1
+            ",
+            expect![[r#"
+                r64 = s2
+                s3 = r64
+                r64 = s1
+                s2 = r64
+                r64 = s0
+                s1 = r64
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_stack_copy_cycle() {
+        check_resolution(
+            "
+            s0 = s1
+            s1 = s2
+            s2 = s3
+            s3 = s4
+            s4 = s5
+            s5 = s0
+            ",
+            expect![[r#"
+                r64 = s0
+                r65 = s1
+                s0 = r65
+                r65 = s2
+                s1 = r65
+                r65 = s3
+                s2 = r65
+                r65 = s4
+                s3 = r65
+                r65 = s5
+                s4 = r65
+                s5 = r64
             "#]],
         )
     }

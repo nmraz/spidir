@@ -1,11 +1,17 @@
 use smallvec::{smallvec, SmallVec};
 
+use crate::lir::PhysReg;
+
 use super::{
     types::{AssignmentCopy, ParallelCopy},
     OperandAssignment,
 };
 
-pub fn resolve(parallel_copies: &[ParallelCopy], mut f: impl FnMut(&AssignmentCopy)) {
+pub fn resolve(
+    parallel_copies: &[ParallelCopy],
+    mut get_tmp_reg: impl FnMut() -> PhysReg,
+    mut collect: impl FnMut(&AssignmentCopy),
+) {
     let mut operands = SmallVec::<[OperandAssignment; 16]>::new();
 
     for copy in parallel_copies {
@@ -29,6 +35,9 @@ pub fn resolve(parallel_copies: &[ParallelCopy], mut f: impl FnMut(&AssignmentCo
         copy_sources[to] = Some(from as u32);
     }
 
+    let mut cycle_break_tmp_reg = None;
+
+    // Resolved copies are held in reverse order during the traversal.
     let mut resolved = SmallVec::<[AssignmentCopy; 8]>::new();
 
     let mut stack = SmallVec::<[usize; 8]>::new();
@@ -44,13 +53,34 @@ pub fn resolve(parallel_copies: &[ParallelCopy], mut f: impl FnMut(&AssignmentCo
         stack.push(to);
 
         let mut last_copy_src = None;
+        let mut copy_cycle_break = None;
 
         // Step 1: Follow the newly-discovered copy chain as far in as possible.
         while let Some(&operand) = stack.last() {
             match visit_states[operand] {
                 VisitState::Unvisited => {}
                 VisitState::Visiting => {
-                    todo!("break parallel copy cycle at {operand}: {stack:?} {visit_states:?}");
+                    // We've encountered a copy cycle `r -> ... -> s -> r`; break it up by
+                    // introducing a temporary `t`, saving `r` into it before the cyclic copies, and
+                    // copying from `t` into `s` (instead of from `r`).
+
+                    // Remove the duplicate `r` from the top of the stack.
+                    stack.pop();
+
+                    // We should always have a previous copy destination on the stack.
+                    let prev = *stack.last().unwrap();
+
+                    let tmp_reg = *cycle_break_tmp_reg.get_or_insert_with(&mut get_tmp_reg);
+                    copy_cycle_break = Some((operand, tmp_reg));
+
+                    // Insert the final copy out of the temporary here (resolved assignments are in
+                    // reverse order).
+                    resolved.push(AssignmentCopy {
+                        from: OperandAssignment::Reg(tmp_reg),
+                        to: operands[prev],
+                    });
+
+                    break;
                 }
                 VisitState::Visited => {
                     // We've hit something in a previously-resolved copy chain, so back up out of
@@ -81,13 +111,26 @@ pub fn resolve(parallel_copies: &[ParallelCopy], mut f: impl FnMut(&AssignmentCo
                 });
             }
 
+            match copy_cycle_break {
+                Some((cycle_operand, tmp_reg)) if cycle_operand == operand => {
+                    // We've found the start of a broken parallel copy cycle - make sure the
+                    // original value of `operand` is saved before it is overwritten by the copy
+                    // inserted above.
+                    resolved.push(AssignmentCopy {
+                        from: operands[operand],
+                        to: OperandAssignment::Reg(tmp_reg),
+                    });
+                }
+                _ => {}
+            }
+
             last_copy_src = Some(operand);
         }
     }
 
     // To get a proper topological sort of the copies, we need to invert our post-order traversal.
     for copy in resolved.iter().rev() {
-        f(copy);
+        collect(copy);
     }
 }
 
@@ -175,7 +218,11 @@ mod tests {
         }
 
         let mut resolved = Vec::new();
-        resolve(&parallel_copies, |copy| resolved.push(*copy));
+        resolve(
+            &parallel_copies,
+            || PhysReg::new(64),
+            |copy| resolved.push(*copy),
+        );
 
         let mut output = String::new();
         for copy in &resolved {
@@ -301,6 +348,121 @@ mod tests {
                 r2 = r3
                 r3 = r6
                 r6 = r8
+            "#]],
+        )
+    }
+
+    #[test]
+    fn swap_regs() {
+        check_resolution(
+            "
+            r0 = r1
+            r1 = r0
+            ",
+            expect![[r#"
+                r64 = r0
+                r0 = r1
+                r1 = r64
+            "#]],
+        )
+    }
+
+    #[test]
+    fn swap_regs_with_chain_merge() {
+        check_resolution(
+            "
+            r4 = r2
+            r0 = r1
+            r1 = r0
+            r2 = r0
+            r3 = r1
+            ",
+            expect![[r#"
+                r3 = r1
+                r4 = r2
+                r2 = r0
+                r64 = r0
+                r0 = r1
+                r1 = r64
+            "#]],
+        )
+    }
+
+    #[test]
+    fn disjoint_swaps() {
+        check_resolution(
+            "
+            r0 = r1
+            r2 = r3
+            r1 = r0
+            r3 = r2
+            ",
+            expect![[r#"
+                r64 = r2
+                r2 = r3
+                r3 = r64
+                r64 = r0
+                r0 = r1
+                r1 = r64
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_copy_cycle() {
+        check_resolution(
+            "
+            r0 = r1
+            r1 = r2
+            r2 = r3
+            r3 = r4
+            r4 = r5
+            r5 = r0
+            ",
+            expect![[r#"
+                r64 = r0
+                r0 = r1
+                r1 = r2
+                r2 = r3
+                r3 = r4
+                r4 = r5
+                r5 = r64
+            "#]],
+        )
+    }
+
+    #[test]
+    fn disjoint_large_copy_cycles_with_chain_merge() {
+        check_resolution(
+            "
+            r1 = r2
+            r2 = r3
+            r10 = r11
+            r12 = r8
+            r3 = r0
+            r6 = r4
+            r0 = r1
+            r5 = r4
+            r4 = r1
+            r8 = r9
+            r9 = r10
+            r11 = r8
+            ",
+            expect![[r#"
+                r5 = r4
+                r6 = r4
+                r4 = r1
+                r12 = r8
+                r64 = r10
+                r10 = r11
+                r11 = r8
+                r8 = r9
+                r9 = r64
+                r64 = r1
+                r1 = r2
+                r2 = r3
+                r3 = r0
+                r0 = r64
             "#]],
         )
     }

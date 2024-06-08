@@ -669,9 +669,11 @@ fn is_block_header<M: MachineCore>(lir: &Lir<M>, instr: Instr) -> bool {
 fn resolve_parallel_copies(mut parallel_copies: &[ParallelCopy]) -> Vec<TaggedAssignmentCopy> {
     let mut resolved = Vec::new();
     while let Some((instr, chunk)) = next_copy_chunk(&mut parallel_copies) {
-        parallel_copy::resolve(chunk, |copy| {
-            resolved.push(TaggedAssignmentCopy { instr, copy: *copy })
-        });
+        parallel_copy::resolve(
+            chunk,
+            || todo!("get tmp reg"),
+            |copy| resolved.push(TaggedAssignmentCopy { instr, copy: *copy }),
+        );
     }
     resolved
 }

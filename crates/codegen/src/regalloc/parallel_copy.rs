@@ -278,4 +278,30 @@ mod tests {
             "#]],
         )
     }
+
+    #[test]
+    fn copy_chain_merge() {
+        check_resolution(
+            "
+            r0 = r1
+            r1 = r2
+            r6 = r8
+            r4 = r5
+            r2 = r3
+            r3 = r6
+            r7 = r6
+            r5 = r3
+            ",
+            expect![[r#"
+                r7 = r6
+                r4 = r5
+                r5 = r3
+                r0 = r1
+                r1 = r2
+                r2 = r3
+                r3 = r6
+                r6 = r8
+            "#]],
+        )
+    }
 }

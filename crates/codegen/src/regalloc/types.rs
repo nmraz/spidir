@@ -422,6 +422,7 @@ pub enum ParallelCopyPhase {
 pub struct ParallelCopy {
     pub instr: Instr,
     pub phase: ParallelCopyPhase,
+    pub class: RegClass,
     pub from: OperandAssignment,
     pub to: OperandAssignment,
 }

@@ -8,7 +8,10 @@ use log::trace;
 
 use crate::{
     cfg::Block,
-    lir::{DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, UseOperandConstraint, VirtRegNum},
+    lir::{
+        DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, RegClass, UseOperandConstraint,
+        VirtRegNum,
+    },
     machine::{MachineCore, MachineRegalloc},
     regalloc::types::InstrSlot,
 };
@@ -46,6 +49,7 @@ fn record_parallel_copy(
     copies: &mut ParallelCopies,
     instr: Instr,
     phase: ParallelCopyPhase,
+    class: RegClass,
     from: OperandAssignment,
     to: OperandAssignment,
 ) {
@@ -53,6 +57,7 @@ fn record_parallel_copy(
         copies.push(ParallelCopy {
             instr,
             phase,
+            class,
             from,
             to,
         });
@@ -77,7 +82,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.collect_func_live_in_copies(&mut copies);
         self.collect_cross_fragment_copies(&mut copies);
 
-        copies.sort_unstable_by_key(|copy| (copy.instr, copy.phase));
+        copies.sort_unstable_by_key(parallel_copy_key);
 
         assignment.copies = resolve_parallel_copies(&copies);
 
@@ -105,6 +110,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 copies,
                 Instr::new(0),
                 ParallelCopyPhase::Before,
+                block_param.class(),
                 OperandAssignment::Reg(preg),
                 assignment,
             );
@@ -133,6 +139,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         trace!("inserting block param copies");
         for incoming in &block_param_ins {
             trace!("  -> {} ({})", incoming.vreg, incoming.block);
+            let class = self.lir.vreg_class(incoming.vreg);
             for &pred in self.cfg_ctx.cfg.block_preds(incoming.block) {
                 trace!("    {pred}");
                 let from_assignment = *block_param_outs
@@ -149,6 +156,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     copies,
                     pred_terminator,
                     ParallelCopyPhase::PreCopy,
+                    class,
                     from_assignment,
                     incoming.assignment,
                 );
@@ -172,7 +180,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             // Stitch together live ranges with touching endpoints.
             if let Some((prev_range, prev_assignment)) = prev_range {
-                let prev_prog_range = self.live_ranges[prev_range].prog_range;
+                let prev_range_data = &self.live_ranges[prev_range];
+                let prev_prog_range = prev_range_data.prog_range;
                 if prev_prog_range.end == prog_range.start {
                     let boundary = prog_range.start;
                     let instr = boundary.instr();
@@ -189,6 +198,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             copies,
                             instr,
                             ParallelCopyPhase::Before,
+                            self.lir.vreg_class(prev_range_data.vreg),
                             prev_assignment,
                             range_assignment,
                         );
@@ -201,7 +211,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             // Check if we have any spills/reloads to perform.
             if let Some((spill_range, spill_slot)) = last_spill {
-                let spill_prog_range = self.live_ranges[spill_range].prog_range;
+                let spill_range_data = &self.live_ranges[spill_range];
+                let spill_prog_range = spill_range_data.prog_range;
 
                 // Note: we expect to start _strictly_ after the current spill because
                 // register ranges should be sorted before spill ranges starting at the same
@@ -226,6 +237,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         // operands.
                         debug_assert!(range_instr.needs_reg());
 
+                        let vreg = spill_range_data.vreg;
+                        let class = self.lir.vreg_class(vreg);
+
                         if range_instr.is_def() {
                             // Spill:
                             // This store could end up dead if the only use of the spilled value
@@ -238,6 +252,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                 copies,
                                 instr.next(),
                                 ParallelCopyPhase::Before,
+                                class,
                                 range_assignment,
                                 OperandAssignment::Spill(spill_slot),
                             );
@@ -247,6 +262,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                 copies,
                                 instr,
                                 ParallelCopyPhase::Reload,
+                                class,
                                 OperandAssignment::Spill(spill_slot),
                                 range_assignment,
                             );
@@ -418,6 +434,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 copies.push(ParallelCopy {
                     instr,
                     phase,
+                    class: self.lir.vreg_class(vreg),
                     from: pred_assignment,
                     to: assignment,
                 });
@@ -431,7 +448,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         for (vreg, vreg_ranges) in self.vreg_ranges.iter() {
             for &range in vreg_ranges {
                 let range_assignment = self.get_range_assignment(range);
-
                 // Assign defs based on range data.
                 for &range_instr in &self.live_ranges[range].instrs {
                     if !range_instr.is_def() {
@@ -456,6 +472,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             copies,
                             instr.next(),
                             ParallelCopyPhase::Before,
+                            self.lir.vreg_class(vreg),
                             OperandAssignment::Reg(preg),
                             range_assignment,
                         );
@@ -492,6 +509,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     copies,
                                     instr,
                                     ParallelCopyPhase::PreCopy,
+                                    self.lir.vreg_class(vreg),
                                     range_assignment,
                                     OperandAssignment::Reg(preg),
                                 );
@@ -504,6 +522,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     copies,
                                     instr,
                                     ParallelCopyPhase::PreCopy,
+                                    self.lir.vreg_class(vreg),
                                     range_assignment,
                                     def_assignment,
                                 );
@@ -684,9 +703,16 @@ fn next_copy_chunk<'a>(
     let first = parallel_copies.first()?;
     let len = parallel_copies
         .iter()
-        .position(|copy| (copy.instr, copy.phase) != (first.instr, first.phase))
+        .position(|copy| parallel_copy_key(copy) != parallel_copy_key(first))
         .unwrap_or(parallel_copies.len());
     let (cur_copies, next_copies) = parallel_copies.split_at(len);
     *parallel_copies = next_copies;
     Some((first.instr, cur_copies))
+}
+
+fn parallel_copy_key(copy: &ParallelCopy) -> u64 {
+    let instr = (copy.instr.as_u32() as u64) << 16;
+    let class = (copy.class.as_u8() as u64) << 8;
+    let phase = copy.phase as u64;
+    instr | class | phase
 }

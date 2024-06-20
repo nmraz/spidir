@@ -9,14 +9,15 @@ use log::trace;
 use crate::{
     cfg::Block,
     lir::{
-        DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, RegClass, UseOperandConstraint,
-        VirtRegNum,
+        DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, PhysRegSet, RegClass,
+        UseOperandConstraint, VirtRegNum,
     },
     machine::{MachineCore, MachineRegalloc},
     regalloc::types::InstrSlot,
 };
 
 use super::{
+    conflict::{iter_btree_ranges, iter_slice_ranges, RangeKeyIter},
     context::RegAllocContext,
     parallel_copy,
     types::{
@@ -84,13 +85,37 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         copies.sort_unstable_by_key(parallel_copy_key);
 
-        assignment.copies = resolve_parallel_copies(&copies);
+        assignment.copies = self.resolve_parallel_copies(&copies);
 
         if cfg!(debug_assertions) {
             assignment.verify_all_assigned();
         }
 
         assignment
+    }
+
+    fn resolve_parallel_copies(
+        &self,
+        mut parallel_copies: &[ParallelCopy],
+    ) -> Vec<TaggedAssignmentCopy> {
+        let mut resolved = Vec::new();
+        while let Some((pos, class, chunk)) = next_copy_chunk(&mut parallel_copies) {
+            let mut used_tmp_regs = PhysRegSet::empty();
+            parallel_copy::resolve(
+                chunk,
+                || {
+                    self.scavenge_free_reg_at(class, pos, &mut used_tmp_regs)
+                        .unwrap_or_else(|| todo!("emergency spill"))
+                },
+                |copy| {
+                    resolved.push(TaggedAssignmentCopy {
+                        instr: pos.instr(),
+                        copy: *copy,
+                    })
+                },
+            );
+        }
+        resolved
     }
 
     fn collect_func_live_in_copies(&self, copies: &mut ParallelCopies) {
@@ -603,6 +628,38 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             }
         }
     }
+
+    fn scavenge_free_reg_at(
+        &self,
+        class: RegClass,
+        pos: ProgramPoint,
+        used: &mut PhysRegSet,
+    ) -> Option<PhysReg> {
+        let reg = *self
+            .machine
+            .usable_regs(class)
+            .iter()
+            .find(|&&reg| !used.contains(reg) && self.is_reg_free_at(reg, pos))?;
+        used.add(reg);
+        Some(reg)
+    }
+
+    fn is_reg_free_at(&self, reg: PhysReg, pos: ProgramPoint) -> bool {
+        !self.is_reg_reserved_at(reg, pos) && !self.is_reg_assigned_at(reg, pos)
+    }
+
+    fn is_reg_assigned_at(&self, reg: PhysReg, pos: ProgramPoint) -> bool {
+        let assignments = iter_btree_ranges(&self.phys_reg_assignments[reg.as_u8() as usize]);
+        has_containing_range(assignments, pos)
+    }
+
+    fn is_reg_reserved_at(&self, reg: PhysReg, pos: ProgramPoint) -> bool {
+        let reservations = iter_slice_ranges(
+            &self.phys_reg_reservations[reg.as_u8() as usize],
+            |reservation| (reservation.prog_range, &()),
+        );
+        has_containing_range(reservations, pos)
+    }
 }
 
 impl Assignment {
@@ -685,29 +742,23 @@ fn is_block_header<M: MachineCore>(lir: &Lir<M>, instr: Instr) -> bool {
     instr == lir.block_instrs(lir.instr_block(instr)).start
 }
 
-fn resolve_parallel_copies(mut parallel_copies: &[ParallelCopy]) -> Vec<TaggedAssignmentCopy> {
-    let mut resolved = Vec::new();
-    while let Some((instr, chunk)) = next_copy_chunk(&mut parallel_copies) {
-        parallel_copy::resolve(
-            chunk,
-            || todo!("get tmp reg"),
-            |copy| resolved.push(TaggedAssignmentCopy { instr, copy: *copy }),
-        );
-    }
-    resolved
-}
-
 fn next_copy_chunk<'a>(
     parallel_copies: &mut &'a [ParallelCopy],
-) -> Option<(Instr, &'a [ParallelCopy])> {
+) -> Option<(ProgramPoint, RegClass, &'a [ParallelCopy])> {
     let first = parallel_copies.first()?;
     let len = parallel_copies
         .iter()
         .position(|copy| parallel_copy_key(copy) != parallel_copy_key(first))
         .unwrap_or(parallel_copies.len());
+
     let (cur_copies, next_copies) = parallel_copies.split_at(len);
     *parallel_copies = next_copies;
-    Some((first.instr, cur_copies))
+
+    Some((
+        ProgramPoint::new(first.instr, first.phase.slot()),
+        first.class,
+        cur_copies,
+    ))
 }
 
 fn parallel_copy_key(copy: &ParallelCopy) -> u64 {
@@ -715,4 +766,10 @@ fn parallel_copy_key(copy: &ParallelCopy) -> u64 {
     let class = (copy.class.as_u8() as u64) << 8;
     let phase = copy.phase as u64;
     instr | class | phase
+}
+
+fn has_containing_range(mut iter: impl RangeKeyIter, pos: ProgramPoint) -> bool {
+    iter.skip_to_endpoint_above(pos);
+    iter.current()
+        .is_some_and(|(cur_range, _)| pos >= cur_range.start)
 }

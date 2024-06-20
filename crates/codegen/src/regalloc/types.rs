@@ -418,6 +418,15 @@ pub enum ParallelCopyPhase {
     PreCopy,
 }
 
+impl ParallelCopyPhase {
+    pub fn slot(self) -> InstrSlot {
+        match self {
+            ParallelCopyPhase::Before | ParallelCopyPhase::Reload => InstrSlot::Before,
+            ParallelCopyPhase::PreCopy => InstrSlot::PreCopy,
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct ParallelCopy {
     pub instr: Instr,

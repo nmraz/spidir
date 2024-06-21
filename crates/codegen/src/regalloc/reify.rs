@@ -7,7 +7,7 @@ use fx_utils::FxHashMap;
 use log::trace;
 
 use crate::{
-    cfg::Block,
+    cfg::{Block, CfgContext},
     lir::{
         DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, PhysRegSet, RegClass,
         UseOperandConstraint, VirtRegNum,
@@ -218,7 +218,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
                     // Inter-block copies need to be handled more delicately, so we do them
                     // separately.
-                    if !is_block_header(self.lir, instr) {
+                    if !is_block_header(self.lir, self.cfg_ctx, instr) {
                         record_parallel_copy(
                             copies,
                             instr,
@@ -315,8 +315,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) {
         let mut block_outs = FxHashMap::default();
         let mut block_ins = Vec::new();
+        let block_order = &self.cfg_ctx.block_order[..];
 
-        let mut blocks = &self.cfg_ctx.block_order[..];
+        let mut last_range_end_block = 0;
 
         trace!("collecting inter-block copies: {vreg}");
 
@@ -328,7 +329,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             trace!("  {prog_range:?}");
 
-            let Some(&first_block) = blocks.first() else {
+            let Some(&last_block) = block_order.get(last_range_end_block) else {
                 // If all blocks have been exhausted, we definitely don't have anything to do.
                 break;
             };
@@ -336,18 +337,14 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             // When dealing with spill/reload connector ranges, we'll have ranges later in the list
             // that end before a previous one. Just skip those ranges, since they can never carry
             // the value into/out of blocks anyway.
-            if prog_range.end < ProgramPoint::before(self.lir.block_instrs(first_block).start) {
+            if prog_range.end < ProgramPoint::before(self.lir.block_instrs(last_block).start) {
                 continue;
             }
 
-            let mut block_idx = blocks
-                .binary_search_by_key(&prog_range.start, |&block| {
-                    ProgramPoint::before(self.lir.block_instrs(block).start)
-                })
-                .unwrap_or_else(|i| i - 1);
+            let mut block_idx = self.lir.instr_block_index(prog_range.start.instr());
 
-            while block_idx < blocks.len() {
-                let block = blocks[block_idx];
+            while block_idx < block_order.len() {
+                let block = block_order[block_idx];
                 let block_range = self.lir.block_instrs(block);
                 let header = block_range.start;
                 let next_header = block_range.end;
@@ -418,7 +415,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 block_idx += 1;
             }
 
-            blocks = &blocks[block_idx..];
+            last_range_end_block = block_idx;
         }
 
         trace!("placing inter-block copies: {vreg}");
@@ -738,8 +735,11 @@ impl Assignment {
     }
 }
 
-fn is_block_header<M: MachineCore>(lir: &Lir<M>, instr: Instr) -> bool {
-    instr == lir.block_instrs(lir.instr_block(instr)).start
+fn is_block_header<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, instr: Instr) -> bool {
+    instr
+        == lir
+            .block_instrs(cfg_ctx.block_order[lir.instr_block_index(instr)])
+            .start
 }
 
 fn next_copy_chunk<'a>(

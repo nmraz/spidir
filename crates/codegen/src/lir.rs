@@ -396,7 +396,7 @@ pub struct Lir<M: MachineCore> {
     live_in_regs: Vec<PhysReg>,
     block_param_pool: Vec<VirtReg>,
     instrs: Vec<M::Instr>,
-    instr_blocks: Vec<Block>,
+    instr_block_indices: Vec<u32>,
     instr_operands: Vec<InstrOperands>,
     instr_clobbers: Vec<PackedOption<ClobberIndex>>,
     def_pool: Vec<DefOperand>,
@@ -422,8 +422,8 @@ impl<M: MachineCore> Lir<M> {
         instrs.end.prev()
     }
 
-    pub fn instr_block(&self, instr: Instr) -> Block {
-        self.instr_blocks[instr.index()]
+    pub fn instr_block_index(&self, instr: Instr) -> usize {
+        self.instr_block_indices[instr.index()] as usize
     }
 
     pub fn instr_data(&self, instr: Instr) -> &M::Instr {
@@ -515,10 +515,13 @@ impl<M: MachineCore> InstrBuilder<'_, '_, M> {
         uses: impl IntoIterator<Item = UseOperand>,
         clobbers: PhysRegSet,
     ) {
-        self.builder.lir.instrs.push(data);
+        assert!(self.builder.cur_block >= 0);
 
-        let block = self.builder.block_order[self.builder.cur_block as usize];
-        self.builder.lir.instr_blocks.push(block);
+        self.builder.lir.instrs.push(data);
+        self.builder
+            .lir
+            .instr_block_indices
+            .push(self.builder.cur_block as u32);
 
         let def_base = self.builder.lir.def_pool.len();
         self.builder.lir.def_pool.extend(defs);
@@ -554,7 +557,7 @@ impl<M: MachineCore> InstrBuilder<'_, '_, M> {
 
         self.builder.lir.instr_clobbers.push(clobbers);
 
-        assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_blocks.len());
+        assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_block_indices.len());
         assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_operands.len());
         assert!(self.builder.lir.instrs.len() == self.builder.lir.instr_clobbers.len());
     }
@@ -577,7 +580,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
                 live_in_regs: Vec::new(),
                 block_param_pool: Vec::new(),
                 instrs: Vec::new(),
-                instr_blocks: Vec::new(),
+                instr_block_indices: Vec::new(),
                 instr_operands: Vec::new(),
                 instr_clobbers: Vec::new(),
                 def_pool: Vec::new(),
@@ -706,7 +709,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
 
     fn reverse_instrs(&mut self, range: Range<usize>) {
         self.lir.instrs[range.clone()].reverse();
-        self.lir.instr_blocks[range.clone()].reverse();
+        self.lir.instr_block_indices[range.clone()].reverse();
         self.lir.instr_operands[range.clone()].reverse();
         self.lir.instr_clobbers[range].reverse();
     }

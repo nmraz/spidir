@@ -11,7 +11,7 @@ pub fn get_instr_weight<M: MachineRegalloc>(
     cfg_ctx: &CfgContext,
     instr: Instr,
 ) -> f32 {
-    let block = lir.instr_block(instr);
+    let block = cfg_ctx.block_order[lir.instr_block_index(instr)];
     let loop_depth = cfg_ctx
         .depth_map
         .loop_depth(cfg_ctx.domtree.get_tree_node(block).unwrap());

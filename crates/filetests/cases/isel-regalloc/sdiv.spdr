@@ -1,7 +1,7 @@
 # run: isel-regalloc
 
 # These tests are here to make sure we don't copy from $rdi into $rax again after performing the
-# cdq/cqo. See d06e1a6 for and the explanation in `RegAllocContext::probe_phys_reservation` for more
+# cdq/cqo. See d06e1a6 and the explanation in `RegAllocContext::probe_phys_reservation` for more
 # details.
 
 func @sdiv64:i64(i64, i64) {

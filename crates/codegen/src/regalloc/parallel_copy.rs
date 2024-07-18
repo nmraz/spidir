@@ -9,7 +9,7 @@ use super::{
 
 pub fn resolve(
     parallel_copies: &[ParallelCopy],
-    mut get_tmp_reg: impl FnMut() -> PhysReg,
+    get_tmp_reg: impl FnMut() -> PhysReg,
     mut collect: impl FnMut(&AssignmentCopy),
 ) {
     let mut operands = SmallVec::<[OperandAssignment; 16]>::new();
@@ -35,11 +35,7 @@ pub fn resolve(
         copy_sources[to] = Some(from as u32);
     }
 
-    let mut cycle_break_tmp_reg = None;
-    let mut stack_copy_reg = None;
-
-    // Resolved copies are held in reverse order during the traversal.
-    let mut resolved = SmallVec::<[AssignmentCopy; 8]>::new();
+    let mut ctx = ResolvedCopyContext::new(get_tmp_reg);
 
     let mut stack = SmallVec::<[usize; 8]>::new();
     let mut visit_states: SmallVec<[_; 8]> = smallvec![VisitState::Unvisited; operands.len()];
@@ -82,15 +78,12 @@ pub fn resolve(
                     // We should always have a previous copy destination on the stack.
                     let prev = *stack.last().unwrap();
 
-                    let tmp_reg = *cycle_break_tmp_reg.get_or_insert_with(&mut get_tmp_reg);
+                    let tmp_reg = ctx.get_cycle_break_reg();
                     copy_cycle_break = Some((operand, tmp_reg));
 
                     // Insert the final copy out of the temporary here (resolved assignments are in
                     // reverse order).
-                    resolved.push(AssignmentCopy {
-                        from: OperandAssignment::Reg(tmp_reg),
-                        to: operands[prev],
-                    });
+                    ctx.emit(OperandAssignment::Reg(tmp_reg), operands[prev]);
 
                     break;
                 }
@@ -111,22 +104,7 @@ pub fn resolve(
             if let Some(src) = last_copy_src {
                 let from = operands[src];
                 let to = operands[operand];
-
-                if from.is_reg() || to.is_reg() {
-                    // Copies involving at least one register can be performed directly.
-                    resolved.push(AssignmentCopy { from, to });
-                } else {
-                    // Stack-to-stack copies need to go through a temporary register.
-                    let tmp_reg = *stack_copy_reg.get_or_insert_with(&mut get_tmp_reg);
-                    resolved.push(AssignmentCopy {
-                        from: OperandAssignment::Reg(tmp_reg),
-                        to,
-                    });
-                    resolved.push(AssignmentCopy {
-                        from,
-                        to: OperandAssignment::Reg(tmp_reg),
-                    });
-                }
+                ctx.emit(from, to);
             }
 
             match copy_cycle_break {
@@ -134,10 +112,7 @@ pub fn resolve(
                     // We've found the start of a broken parallel copy cycle - make sure the
                     // original value of `operand` is saved before it is overwritten by the copy
                     // inserted above.
-                    resolved.push(AssignmentCopy {
-                        from: operands[operand],
-                        to: OperandAssignment::Reg(tmp_reg),
-                    });
+                    ctx.emit(operands[operand], OperandAssignment::Reg(tmp_reg));
                 }
                 _ => {}
             }
@@ -147,8 +122,52 @@ pub fn resolve(
     }
 
     // To get a proper topological sort of the copies, we need to invert our post-order traversal.
-    for copy in resolved.iter().rev() {
+    for copy in ctx.copies.iter().rev() {
         collect(copy);
+    }
+}
+
+struct ResolvedCopyContext<F> {
+    copies: SmallVec<[AssignmentCopy; 8]>,
+    stack_copy_reg: Option<PhysReg>,
+    cycle_break_reg: Option<PhysReg>,
+    get_tmp_reg: F,
+}
+
+impl<F: FnMut() -> PhysReg> ResolvedCopyContext<F> {
+    fn new(get_tmp_reg: F) -> Self {
+        Self {
+            copies: SmallVec::new(),
+            stack_copy_reg: None,
+            cycle_break_reg: None,
+            get_tmp_reg,
+        }
+    }
+
+    fn get_cycle_break_reg(&mut self) -> PhysReg {
+        *self
+            .cycle_break_reg
+            .get_or_insert_with(&mut self.get_tmp_reg)
+    }
+
+    fn emit(&mut self, from: OperandAssignment, to: OperandAssignment) {
+        if from.is_reg() || to.is_reg() {
+            // Copies involving at least one register can be performed directly.
+            self.copies.push(AssignmentCopy { from, to });
+        } else {
+            // Stack-to-stack copies need to go through a temporary register.
+            let tmp_reg = *self
+                .stack_copy_reg
+                .get_or_insert_with(&mut self.get_tmp_reg);
+            self.copies.push(AssignmentCopy {
+                from: OperandAssignment::Reg(tmp_reg),
+                to,
+            });
+            self.copies.push(AssignmentCopy {
+                from,
+                to: OperandAssignment::Reg(tmp_reg),
+            });
+        }
     }
 }
 

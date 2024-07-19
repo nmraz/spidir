@@ -84,12 +84,12 @@ pub fn resolve(
                     // We should always have a previous copy destination on the stack.
                     let prev = *stack.last().unwrap();
 
-                    let tmp_reg = ctx.get_cycle_break_reg();
-                    copy_cycle_break = Some((operand, tmp_reg));
+                    let tmp_op = ctx.get_cycle_break_op();
+                    copy_cycle_break = Some((operand, tmp_op));
 
                     // Insert the final copy out of the temporary here (resolved assignments are in
                     // reverse order).
-                    ctx.emit(OperandAssignment::Reg(tmp_reg), operands[prev]);
+                    ctx.emit(tmp_op, operands[prev]);
 
                     break;
                 }
@@ -114,11 +114,11 @@ pub fn resolve(
             }
 
             match copy_cycle_break {
-                Some((cycle_operand, tmp_reg)) if cycle_operand == operand => {
+                Some((cycle_operand, tmp_op)) if cycle_operand == operand => {
                     // We've found the start of a broken parallel copy cycle - make sure the
                     // original value of `operand` is saved before it is overwritten by the copy
                     // inserted above.
-                    ctx.emit(operands[operand], OperandAssignment::Reg(tmp_reg));
+                    ctx.emit(operands[operand], tmp_op);
                 }
                 _ => {}
             }
@@ -162,6 +162,7 @@ struct ResolvedCopyContext<'s, S> {
     stack_copy_reg: Option<PhysReg>,
     stack_copy_spill: Option<SpillSlot>,
     cycle_break_reg: Option<PhysReg>,
+    cycle_break_spill: Option<SpillSlot>,
     scavenger: &'s mut S,
 }
 
@@ -172,16 +173,19 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
             stack_copy_reg: None,
             stack_copy_spill: None,
             cycle_break_reg: None,
+            cycle_break_spill: None,
             scavenger,
         }
     }
 
-    fn get_cycle_break_reg(&mut self) -> PhysReg {
-        *self.cycle_break_reg.get_or_insert_with(|| {
-            self.scavenger
-                .get_fresh_tmp_reg()
-                .expect("need emergency spill")
-        })
+    fn get_cycle_break_op(&mut self) -> OperandAssignment {
+        let reg = get_tmp_reg(&mut self.cycle_break_reg, self.scavenger);
+        match reg {
+            Some(reg) => OperandAssignment::Reg(reg),
+            None => {
+                OperandAssignment::Spill(get_tmp_spill(&mut self.cycle_break_spill, self.scavenger))
+            }
+        }
     }
 
     fn emit(&mut self, from: OperandAssignment, to: OperandAssignment) {
@@ -191,26 +195,23 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         } else {
             // Stack-to-stack copies need to go through a temporary register.
 
-            self.stack_copy_reg = self
-                .stack_copy_reg
-                .or_else(|| self.scavenger.get_fresh_tmp_reg());
-            let (tmp_reg, emergency_spill) = match self.stack_copy_reg {
-                Some(tmp_reg) => (tmp_reg, None),
-                None => {
-                    let tmp_reg = self.scavenger.emergency_reg();
-                    let emergency_spill = *self
-                        .stack_copy_spill
-                        .get_or_insert_with(|| self.scavenger.get_fresh_tmp_spill());
+            let (tmp_reg, emergency_spill) =
+                match get_tmp_reg(&mut self.stack_copy_reg, self.scavenger) {
+                    Some(tmp_reg) => (tmp_reg, None),
+                    None => {
+                        let tmp_reg = self.scavenger.emergency_reg();
+                        let emergency_spill =
+                            get_tmp_spill(&mut self.stack_copy_spill, self.scavenger);
 
-                    // Restore the original value of `tmp_reg` from the emergency spill.
-                    self.emit_raw(
-                        OperandAssignment::Spill(emergency_spill),
-                        OperandAssignment::Reg(tmp_reg),
-                    );
+                        // Restore the original value of `tmp_reg` from the emergency spill.
+                        self.emit_raw(
+                            OperandAssignment::Spill(emergency_spill),
+                            OperandAssignment::Reg(tmp_reg),
+                        );
 
-                    (tmp_reg, Some(emergency_spill))
-                }
-            };
+                        (tmp_reg, Some(emergency_spill))
+                    }
+                };
 
             self.emit_raw(OperandAssignment::Reg(tmp_reg), to);
             self.emit_raw(from, OperandAssignment::Reg(tmp_reg));
@@ -229,6 +230,21 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
     fn emit_raw(&mut self, from: OperandAssignment, to: OperandAssignment) {
         self.copies.push(AssignmentCopy { from, to });
     }
+}
+
+fn get_tmp_reg(
+    cached_tmp_reg: &mut Option<PhysReg>,
+    scavenger: &mut impl RegScavenger,
+) -> Option<PhysReg> {
+    *cached_tmp_reg = cached_tmp_reg.or_else(|| scavenger.get_fresh_tmp_reg());
+    *cached_tmp_reg
+}
+
+fn get_tmp_spill(
+    cached_tmp_spill: &mut Option<SpillSlot>,
+    scavenger: &mut impl RegScavenger,
+) -> SpillSlot {
+    *cached_tmp_spill.get_or_insert_with(|| scavenger.get_fresh_tmp_spill())
 }
 
 #[cfg(test)]
@@ -717,6 +733,114 @@ mod tests {
                 r0 = s2
                 s1 = r0
                 r0 = s1234
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_copy_cycle_no_regs() {
+        check_resolution_with_reg_count(
+            6,
+            "
+            r0 = r1
+            r1 = r2
+            r2 = r3
+            r3 = r4
+            r4 = r5
+            r5 = r0
+            ",
+            expect![[r#"
+                s1234 = r0
+                r0 = r1
+                r1 = r2
+                r2 = r3
+                r3 = r4
+                r4 = r5
+                r5 = s1234
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_stack_copy_cycle_single_reg() {
+        check_resolution_with_reg_count(
+            1,
+            "
+            s0 = s1
+            s1 = s2
+            s2 = s3
+            s3 = s4
+            s4 = s5
+            s5 = s0
+            ",
+            expect![[r#"
+                r0 = s0
+                s1234 = r0
+                r0 = s1
+                s0 = r0
+                r0 = s1234
+                s1234 = r0
+                r0 = s2
+                s1 = r0
+                r0 = s1234
+                s1234 = r0
+                r0 = s3
+                s2 = r0
+                r0 = s1234
+                s1234 = r0
+                r0 = s4
+                s3 = r0
+                r0 = s1234
+                s1234 = r0
+                r0 = s5
+                s4 = r0
+                r0 = s1234
+                s5 = r0
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_stack_copy_cycle_no_regs() {
+        check_resolution_with_reg_count(
+            0,
+            "
+            s0 = s1
+            s1 = s2
+            s2 = s3
+            s3 = s4
+            s4 = s5
+            s5 = s0
+            ",
+            expect![[r#"
+                s1235 = r0
+                r0 = s0
+                s1234 = r0
+                r0 = s1235
+                s1235 = r0
+                r0 = s1
+                s0 = r0
+                r0 = s1235
+                s1235 = r0
+                r0 = s2
+                s1 = r0
+                r0 = s1235
+                s1235 = r0
+                r0 = s3
+                s2 = r0
+                r0 = s1235
+                s1235 = r0
+                r0 = s4
+                s3 = r0
+                r0 = s1235
+                s1235 = r0
+                r0 = s5
+                s4 = r0
+                r0 = s1235
+                s1235 = r0
+                r0 = s1234
+                s5 = r0
+                r0 = s1235
             "#]],
         )
     }

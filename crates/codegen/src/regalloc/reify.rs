@@ -759,12 +759,12 @@ impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
         self.ctx.machine.usable_regs(self.class)[0]
     }
 
-    fn get_tmp_reg(&mut self) -> Option<PhysReg> {
+    fn get_fresh_tmp_reg(&mut self) -> Option<PhysReg> {
         self.ctx
             .scavenge_free_reg_at(self.class, self.pos, &mut self.used_tmp_regs)
     }
 
-    fn get_tmp_spill(&mut self) -> SpillSlot {
+    fn get_fresh_tmp_spill(&mut self) -> SpillSlot {
         todo!()
     }
 }

@@ -9,8 +9,8 @@ use super::{
 
 pub trait RegScavenger {
     fn emergency_reg(&self) -> PhysReg;
-    fn get_tmp_reg(&mut self) -> Option<PhysReg>;
-    fn get_tmp_spill(&mut self) -> SpillSlot;
+    fn get_fresh_tmp_reg(&mut self) -> Option<PhysReg>;
+    fn get_fresh_tmp_spill(&mut self) -> SpillSlot;
 }
 
 pub fn resolve(
@@ -177,9 +177,11 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
     }
 
     fn get_cycle_break_reg(&mut self) -> PhysReg {
-        *self
-            .cycle_break_reg
-            .get_or_insert_with(|| self.scavenger.get_tmp_reg().expect("need emergency spill"))
+        *self.cycle_break_reg.get_or_insert_with(|| {
+            self.scavenger
+                .get_fresh_tmp_reg()
+                .expect("need emergency spill")
+        })
     }
 
     fn emit(&mut self, from: OperandAssignment, to: OperandAssignment) {
@@ -189,14 +191,16 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         } else {
             // Stack-to-stack copies need to go through a temporary register.
 
-            self.stack_copy_reg = self.stack_copy_reg.or_else(|| self.scavenger.get_tmp_reg());
+            self.stack_copy_reg = self
+                .stack_copy_reg
+                .or_else(|| self.scavenger.get_fresh_tmp_reg());
             let (tmp_reg, emergency_spill) = match self.stack_copy_reg {
                 Some(tmp_reg) => (tmp_reg, None),
                 None => {
                     let tmp_reg = self.scavenger.emergency_reg();
                     let emergency_spill = *self
                         .stack_copy_spill
-                        .get_or_insert_with(|| self.scavenger.get_tmp_spill());
+                        .get_or_insert_with(|| self.scavenger.get_fresh_tmp_spill());
 
                     // Restore the original value of `tmp_reg` from the emergency spill.
                     self.emit_raw(
@@ -277,7 +281,7 @@ mod tests {
             PhysReg::new(0)
         }
 
-        fn get_tmp_reg(&mut self) -> Option<PhysReg> {
+        fn get_fresh_tmp_reg(&mut self) -> Option<PhysReg> {
             let reg = (0..self.reg_count)
                 .map(PhysReg::new)
                 .find(|&reg| !self.used_regs.contains(reg))?;
@@ -285,7 +289,7 @@ mod tests {
             Some(reg)
         }
 
-        fn get_tmp_spill(&mut self) -> SpillSlot {
+        fn get_fresh_tmp_spill(&mut self) -> SpillSlot {
             let spill = SpillSlot::from_u32(self.tmp_spill);
             self.tmp_spill += 1;
             spill

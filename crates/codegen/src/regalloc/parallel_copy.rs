@@ -264,7 +264,7 @@ mod tests {
         }
     }
 
-    fn check_resolution(input: &str, expected: Expect) {
+    fn check_resolution_with_reg_count(reg_count: u8, input: &str, expected: Expect) {
         let mut parallel_copies = Vec::new();
 
         for line in input.lines() {
@@ -286,7 +286,7 @@ mod tests {
         }
 
         let mut scavenger = DummyRegScavenger {
-            reg_count: 32,
+            reg_count,
             used_regs: PhysRegSet::empty(),
         };
 
@@ -316,6 +316,10 @@ mod tests {
         }
 
         expected.assert_eq(&output);
+    }
+
+    fn check_resolution(input: &str, expected: Expect) {
+        check_resolution_with_reg_count(32, input, expected);
     }
 
     #[test]

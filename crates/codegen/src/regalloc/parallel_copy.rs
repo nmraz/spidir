@@ -4,12 +4,19 @@ use crate::lir::PhysReg;
 
 use super::{
     types::{AssignmentCopy, ParallelCopy},
-    OperandAssignment,
+    OperandAssignment, SpillSlot,
 };
+
+#[allow(dead_code)]
+pub trait RegScavenger {
+    fn emergency_reg(&self) -> PhysReg;
+    fn get_tmp_reg(&mut self) -> Option<PhysReg>;
+    fn get_tmp_spill(&mut self) -> SpillSlot;
+}
 
 pub fn resolve(
     parallel_copies: &[ParallelCopy],
-    get_tmp_reg: impl FnMut() -> PhysReg,
+    scavenger: &mut impl RegScavenger,
     mut collect: impl FnMut(&AssignmentCopy),
 ) {
     let mut operands = SmallVec::<[OperandAssignment; 16]>::new();
@@ -35,7 +42,7 @@ pub fn resolve(
         copy_sources[to] = Some(from as u32);
     }
 
-    let mut ctx = ResolvedCopyContext::new(get_tmp_reg);
+    let mut ctx = ResolvedCopyContext::new(scavenger);
 
     let mut stack = SmallVec::<[usize; 8]>::new();
     let mut visit_states: SmallVec<[_; 8]> = smallvec![VisitState::Unvisited; operands.len()];
@@ -127,27 +134,27 @@ pub fn resolve(
     }
 }
 
-struct ResolvedCopyContext<F> {
+struct ResolvedCopyContext<'s, S> {
     copies: SmallVec<[AssignmentCopy; 8]>,
     stack_copy_reg: Option<PhysReg>,
     cycle_break_reg: Option<PhysReg>,
-    get_tmp_reg: F,
+    scavenger: &'s mut S,
 }
 
-impl<F: FnMut() -> PhysReg> ResolvedCopyContext<F> {
-    fn new(get_tmp_reg: F) -> Self {
+impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
+    fn new(scavenger: &'s mut S) -> Self {
         Self {
             copies: SmallVec::new(),
             stack_copy_reg: None,
             cycle_break_reg: None,
-            get_tmp_reg,
+            scavenger,
         }
     }
 
     fn get_cycle_break_reg(&mut self) -> PhysReg {
         *self
             .cycle_break_reg
-            .get_or_insert_with(&mut self.get_tmp_reg)
+            .get_or_insert_with(|| self.scavenger.get_tmp_reg().expect("need emergency spill"))
     }
 
     fn emit(&mut self, from: OperandAssignment, to: OperandAssignment) {
@@ -158,7 +165,7 @@ impl<F: FnMut() -> PhysReg> ResolvedCopyContext<F> {
             // Stack-to-stack copies need to go through a temporary register.
             let tmp_reg = *self
                 .stack_copy_reg
-                .get_or_insert_with(&mut self.get_tmp_reg);
+                .get_or_insert_with(|| self.scavenger.get_tmp_reg().expect("need emergency spill"));
             self.copies.push(AssignmentCopy {
                 from: OperandAssignment::Reg(tmp_reg),
                 to,
@@ -203,7 +210,7 @@ mod tests {
     use expect_test::{expect, Expect};
 
     use crate::{
-        lir::{Instr, PhysReg, RegClass},
+        lir::{Instr, PhysReg, PhysRegSet, RegClass},
         regalloc::{types::ParallelCopyPhase, SpillSlot},
     };
 
@@ -234,6 +241,29 @@ mod tests {
         }
     }
 
+    struct DummyRegScavenger {
+        reg_count: u8,
+        used_regs: PhysRegSet,
+    }
+
+    impl RegScavenger for DummyRegScavenger {
+        fn emergency_reg(&self) -> PhysReg {
+            PhysReg::new(0)
+        }
+
+        fn get_tmp_reg(&mut self) -> Option<PhysReg> {
+            let reg = (0..self.reg_count)
+                .map(PhysReg::new)
+                .find(|&reg| !self.used_regs.contains(reg))?;
+            self.used_regs.add(reg);
+            Some(reg)
+        }
+
+        fn get_tmp_spill(&mut self) -> SpillSlot {
+            todo!()
+        }
+    }
+
     fn check_resolution(input: &str, expected: Expect) {
         let mut parallel_copies = Vec::new();
 
@@ -255,17 +285,24 @@ mod tests {
             });
         }
 
+        let mut scavenger = DummyRegScavenger {
+            reg_count: 32,
+            used_regs: PhysRegSet::empty(),
+        };
+
+        for copy in &parallel_copies {
+            if let OperandAssignment::Reg(from) = copy.from {
+                scavenger.used_regs.add(from);
+            }
+            if let OperandAssignment::Reg(to) = copy.to {
+                scavenger.used_regs.add(to);
+            }
+        }
+
         let mut resolved = Vec::new();
-        let mut tmp_reg_num = 64;
-        resolve(
-            &parallel_copies,
-            || {
-                let num = tmp_reg_num;
-                tmp_reg_num += 1;
-                PhysReg::new(num)
-            },
-            |copy| resolved.push(*copy),
-        );
+        resolve(&parallel_copies, &mut scavenger, |copy| {
+            resolved.push(*copy)
+        });
 
         let mut output = String::new();
         for copy in &resolved {
@@ -403,9 +440,9 @@ mod tests {
             r1 = r0
             ",
             expect![[r#"
-                r64 = r0
+                r2 = r0
                 r0 = r1
-                r1 = r64
+                r1 = r2
             "#]],
         )
     }
@@ -424,9 +461,9 @@ mod tests {
                 r3 = r1
                 r4 = r2
                 r2 = r0
-                r64 = r0
+                r5 = r0
                 r0 = r1
-                r1 = r64
+                r1 = r5
             "#]],
         )
     }
@@ -441,12 +478,12 @@ mod tests {
             r3 = r2
             ",
             expect![[r#"
-                r64 = r2
+                r4 = r2
                 r2 = r3
-                r3 = r64
-                r64 = r0
+                r3 = r4
+                r4 = r0
                 r0 = r1
-                r1 = r64
+                r1 = r4
             "#]],
         )
     }
@@ -463,13 +500,13 @@ mod tests {
             r5 = r0
             ",
             expect![[r#"
-                r64 = r0
+                r6 = r0
                 r0 = r1
                 r1 = r2
                 r2 = r3
                 r3 = r4
                 r4 = r5
-                r5 = r64
+                r5 = r6
             "#]],
         )
     }
@@ -496,16 +533,16 @@ mod tests {
                 r6 = r4
                 r4 = r1
                 r12 = r8
-                r64 = r10
+                r7 = r10
                 r10 = r11
                 r11 = r8
                 r8 = r9
-                r9 = r64
-                r64 = r1
+                r9 = r7
+                r7 = r1
                 r1 = r2
                 r2 = r3
                 r3 = r0
-                r0 = r64
+                r0 = r7
             "#]],
         )
     }
@@ -541,8 +578,8 @@ mod tests {
             s1 = s0
             ",
             expect![[r#"
-                r64 = s0
-                s1 = r64
+                r0 = s0
+                s1 = r0
             "#]],
         )
     }
@@ -555,10 +592,10 @@ mod tests {
             s3 = s2
             ",
             expect![[r#"
-                r64 = s2
-                s3 = r64
-                r64 = s0
-                s1 = r64
+                r0 = s2
+                s3 = r0
+                r0 = s0
+                s1 = r0
             "#]],
         )
     }
@@ -572,12 +609,12 @@ mod tests {
             s2 = s1
             ",
             expect![[r#"
-                r64 = s2
-                s3 = r64
-                r64 = s1
-                s2 = r64
-                r64 = s0
-                s1 = r64
+                r0 = s2
+                s3 = r0
+                r0 = s1
+                s2 = r0
+                r0 = s0
+                s1 = r0
             "#]],
         )
     }
@@ -594,18 +631,18 @@ mod tests {
             s5 = s0
             ",
             expect![[r#"
-                r64 = s0
-                r65 = s1
-                s0 = r65
-                r65 = s2
-                s1 = r65
-                r65 = s3
-                s2 = r65
-                r65 = s4
-                s3 = r65
-                r65 = s5
-                s4 = r65
-                s5 = r64
+                r0 = s0
+                r1 = s1
+                s0 = r1
+                r1 = s2
+                s1 = r1
+                r1 = s3
+                s2 = r1
+                r1 = s4
+                s3 = r1
+                r1 = s5
+                s4 = r1
+                s5 = r0
             "#]],
         )
     }

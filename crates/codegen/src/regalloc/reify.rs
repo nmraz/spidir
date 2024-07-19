@@ -19,7 +19,7 @@ use crate::{
 use super::{
     conflict::{iter_btree_ranges, iter_slice_ranges, RangeKeyIter},
     context::RegAllocContext,
-    parallel_copy,
+    parallel_copy::{self, RegScavenger},
     types::{
         LiveRange, ParallelCopies, ParallelCopy, ParallelCopyPhase, ProgramPoint,
         TaggedAssignmentCopies, TaggedAssignmentCopy,
@@ -99,21 +99,16 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         mut parallel_copies: &[ParallelCopy],
     ) -> Vec<TaggedAssignmentCopy> {
         let mut resolved = Vec::new();
+        let mut scavenger = AssignedRegScavenger::new(self);
+
         while let Some((pos, class, chunk)) = next_copy_chunk(&mut parallel_copies) {
-            let mut used_tmp_regs = PhysRegSet::empty();
-            parallel_copy::resolve(
-                chunk,
-                || {
-                    self.scavenge_free_reg_at(class, pos, &mut used_tmp_regs)
-                        .unwrap_or_else(|| todo!("emergency spill"))
-                },
-                |copy| {
-                    resolved.push(TaggedAssignmentCopy {
-                        instr: pos.instr(),
-                        copy: *copy,
-                    })
-                },
-            );
+            scavenger.reset(class, pos);
+            parallel_copy::resolve(chunk, &mut scavenger, |copy| {
+                resolved.push(TaggedAssignmentCopy {
+                    instr: pos.instr(),
+                    copy: *copy,
+                })
+            });
         }
         resolved
     }
@@ -732,6 +727,45 @@ impl Assignment {
 
     fn create_spill_slot(&mut self, layout: MemLayout) -> SpillSlot {
         self.spill_slots.push(layout)
+    }
+}
+
+struct AssignedRegScavenger<'a, M: MachineRegalloc> {
+    ctx: &'a RegAllocContext<'a, M>,
+    class: RegClass,
+    pos: ProgramPoint,
+    used_tmp_regs: PhysRegSet,
+}
+
+impl<'a, M: MachineRegalloc> AssignedRegScavenger<'a, M> {
+    fn new(ctx: &'a RegAllocContext<'a, M>) -> Self {
+        Self {
+            ctx,
+            class: RegClass::new(0),
+            pos: ProgramPoint::before(Instr::new(0)),
+            used_tmp_regs: PhysRegSet::empty(),
+        }
+    }
+
+    fn reset(&mut self, class: RegClass, pos: ProgramPoint) {
+        self.class = class;
+        self.pos = pos;
+        self.used_tmp_regs = PhysRegSet::empty();
+    }
+}
+
+impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
+    fn emergency_reg(&self) -> PhysReg {
+        self.ctx.machine.usable_regs(self.class)[0]
+    }
+
+    fn get_tmp_reg(&mut self) -> Option<PhysReg> {
+        self.ctx
+            .scavenge_free_reg_at(self.class, self.pos, &mut self.used_tmp_regs)
+    }
+
+    fn get_tmp_spill(&mut self) -> SpillSlot {
+        todo!()
     }
 }
 

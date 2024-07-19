@@ -7,7 +7,6 @@ use super::{
     OperandAssignment, SpillSlot,
 };
 
-#[allow(dead_code)]
 pub trait RegScavenger {
     fn emergency_reg(&self) -> PhysReg;
     fn get_tmp_reg(&mut self) -> Option<PhysReg>;

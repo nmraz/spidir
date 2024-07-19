@@ -134,50 +134,6 @@ pub fn resolve(
     }
 }
 
-struct ResolvedCopyContext<'s, S> {
-    copies: SmallVec<[AssignmentCopy; 8]>,
-    stack_copy_reg: Option<PhysReg>,
-    cycle_break_reg: Option<PhysReg>,
-    scavenger: &'s mut S,
-}
-
-impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
-    fn new(scavenger: &'s mut S) -> Self {
-        Self {
-            copies: SmallVec::new(),
-            stack_copy_reg: None,
-            cycle_break_reg: None,
-            scavenger,
-        }
-    }
-
-    fn get_cycle_break_reg(&mut self) -> PhysReg {
-        *self
-            .cycle_break_reg
-            .get_or_insert_with(|| self.scavenger.get_tmp_reg().expect("need emergency spill"))
-    }
-
-    fn emit(&mut self, from: OperandAssignment, to: OperandAssignment) {
-        if from.is_reg() || to.is_reg() {
-            // Copies involving at least one register can be performed directly.
-            self.copies.push(AssignmentCopy { from, to });
-        } else {
-            // Stack-to-stack copies need to go through a temporary register.
-            let tmp_reg = *self
-                .stack_copy_reg
-                .get_or_insert_with(|| self.scavenger.get_tmp_reg().expect("need emergency spill"));
-            self.copies.push(AssignmentCopy {
-                from: OperandAssignment::Reg(tmp_reg),
-                to,
-            });
-            self.copies.push(AssignmentCopy {
-                from,
-                to: OperandAssignment::Reg(tmp_reg),
-            });
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum VisitState {
     Unvisited,
@@ -199,6 +155,76 @@ fn operand_assignment_sort_key(op: &OperandAssignment) -> u32 {
             debug_assert!((val & SPILL_BIT) == 0);
             val | SPILL_BIT
         }
+    }
+}
+
+struct ResolvedCopyContext<'s, S> {
+    copies: SmallVec<[AssignmentCopy; 8]>,
+    stack_copy_reg: Option<PhysReg>,
+    stack_copy_spill: Option<SpillSlot>,
+    cycle_break_reg: Option<PhysReg>,
+    scavenger: &'s mut S,
+}
+
+impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
+    fn new(scavenger: &'s mut S) -> Self {
+        Self {
+            copies: SmallVec::new(),
+            stack_copy_reg: None,
+            stack_copy_spill: None,
+            cycle_break_reg: None,
+            scavenger,
+        }
+    }
+
+    fn get_cycle_break_reg(&mut self) -> PhysReg {
+        *self
+            .cycle_break_reg
+            .get_or_insert_with(|| self.scavenger.get_tmp_reg().expect("need emergency spill"))
+    }
+
+    fn emit(&mut self, from: OperandAssignment, to: OperandAssignment) {
+        if from.is_reg() || to.is_reg() {
+            // Copies involving at least one register can be performed directly.
+            self.emit_raw(from, to);
+        } else {
+            // Stack-to-stack copies need to go through a temporary register.
+
+            self.stack_copy_reg = self.stack_copy_reg.or_else(|| self.scavenger.get_tmp_reg());
+            let (tmp_reg, emergency_spill) = match self.stack_copy_reg {
+                Some(tmp_reg) => (tmp_reg, None),
+                None => {
+                    let tmp_reg = self.scavenger.emergency_reg();
+                    let emergency_spill = *self
+                        .stack_copy_spill
+                        .get_or_insert_with(|| self.scavenger.get_tmp_spill());
+
+                    // Restore the original value of `tmp_reg` from the emergency spill.
+                    self.emit_raw(
+                        OperandAssignment::Spill(emergency_spill),
+                        OperandAssignment::Reg(tmp_reg),
+                    );
+
+                    (tmp_reg, Some(emergency_spill))
+                }
+            };
+
+            self.emit_raw(OperandAssignment::Reg(tmp_reg), to);
+            self.emit_raw(from, OperandAssignment::Reg(tmp_reg));
+
+            if let Some(emergency_spill) = emergency_spill {
+                // If we're using an emergency spill, back up the original value of `tmp_reg` before
+                // using it.
+                self.emit_raw(
+                    OperandAssignment::Reg(tmp_reg),
+                    OperandAssignment::Spill(emergency_spill),
+                );
+            }
+        }
+    }
+
+    fn emit_raw(&mut self, from: OperandAssignment, to: OperandAssignment) {
+        self.copies.push(AssignmentCopy { from, to });
     }
 }
 
@@ -243,6 +269,7 @@ mod tests {
 
     struct DummyRegScavenger {
         reg_count: u8,
+        tmp_spill: u32,
         used_regs: PhysRegSet,
     }
 
@@ -260,7 +287,9 @@ mod tests {
         }
 
         fn get_tmp_spill(&mut self) -> SpillSlot {
-            todo!()
+            let spill = SpillSlot::from_u32(self.tmp_spill);
+            self.tmp_spill += 1;
+            spill
         }
     }
 
@@ -287,6 +316,7 @@ mod tests {
 
         let mut scavenger = DummyRegScavenger {
             reg_count,
+            tmp_spill: 1234,
             used_regs: PhysRegSet::empty(),
         };
 
@@ -647,6 +677,43 @@ mod tests {
                 r1 = s5
                 s4 = r1
                 s5 = r0
+            "#]],
+        )
+    }
+
+    #[test]
+    fn copy_stack_to_stack_no_regs() {
+        check_resolution_with_reg_count(
+            0,
+            "
+            s0 = s1
+            ",
+            expect![[r#"
+                s1234 = r0
+                r0 = s1
+                s0 = r0
+                r0 = s1234
+            "#]],
+        )
+    }
+
+    #[test]
+    fn copy_multiple_stack_to_stack_no_regs() {
+        check_resolution_with_reg_count(
+            0,
+            "
+            s1 = s2
+            s0 = s1
+            ",
+            expect![[r#"
+                s1234 = r0
+                r0 = s1
+                s0 = r0
+                r0 = s1234
+                s1234 = r0
+                r0 = s2
+                s1 = r0
+                r0 = s1234
             "#]],
         )
     }

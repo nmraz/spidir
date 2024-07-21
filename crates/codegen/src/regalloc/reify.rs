@@ -102,7 +102,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let mut scavenger = AssignedRegScavenger::new(self);
 
         while let Some((pos, class, chunk)) = next_copy_chunk(&mut parallel_copies) {
-            scavenger.reset(class, pos);
+            scavenger.reset(class, pos, chunk);
             parallel_copy::resolve(chunk, &mut scavenger, |copy| {
                 resolved.push(TaggedAssignmentCopy {
                     instr: pos.instr(),
@@ -747,10 +747,22 @@ impl<'a, M: MachineRegalloc> AssignedRegScavenger<'a, M> {
         }
     }
 
-    fn reset(&mut self, class: RegClass, pos: ProgramPoint) {
+    fn reset(&mut self, class: RegClass, pos: ProgramPoint, copies: &[ParallelCopy]) {
         self.class = class;
         self.pos = pos;
         self.used_tmp_regs = PhysRegSet::empty();
+
+        // All copy sources need to be marked as used, because their live ranges could end just
+        // before `pos`. Destinations need to be marked as used for correct behavior with block
+        // live-outs and outgoing params, which might not be live at all at `pos`.
+        for copy in copies {
+            if let OperandAssignment::Reg(from) = copy.from {
+                self.used_tmp_regs.add(from);
+            }
+            if let OperandAssignment::Reg(to) = copy.to {
+                self.used_tmp_regs.add(to);
+            }
+        }
     }
 }
 

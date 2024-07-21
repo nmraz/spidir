@@ -2375,9 +2375,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rax = $$rcx
     # nextln:           $$rcx = $$rdi
     # nextln:           $$rdi = $$rbx
-    # nextln:           $$rdi = $$rax
+    # nextln:           $$rsi = $$rax
     # nextln:           $$rax = $$rcx
-    # nextln:           $$rcx = $$rdi
+    # nextln:           $$rcx = $$rsi
     # nextln: 1594:     Jump(block363)
     # nextln:       block363:
     # nextln: 1595:     AluRRm(S32, Test) $$rdi, $$rdi
@@ -2512,9 +2512,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 1669:     $$rdi = MovRStack(!4, S32)
     # nextln: 1670:     $$rdi = AluRRm(S32, Add) $$rdi, $$rbx
     # nextln: 1671:     MovStackR(!4, S32) $$rdi
-    # nextln:           $$rax = $$rcx
+    # nextln:           $$rdi = $$rcx
     # nextln:           $$rcx = $$rdx
-    # nextln:           $$rdx = $$rax
+    # nextln:           $$rdx = $$rdi
     # nextln:           $$rax = $$rsi
     # nextln: 1672:     Jump(block393)
     # nextln:       block392:
@@ -2531,9 +2531,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 1678:     Jumpcc(Ne, block394, block395)
     # nextln:       block394:
     # nextln:           $$rdi = $$rbx
-    # nextln:           $$rdi = $$rcx
+    # nextln:           $$rsi = $$rcx
     # nextln:           $$rcx = $$rdx
-    # nextln:           $$rdx = $$rdi
+    # nextln:           $$rdx = $$rsi
     # nextln: 1679:     Jump(block398)
     # nextln:       block395:
     # nextln:           $$rdi = $$rcx
@@ -2633,9 +2633,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rdi = $$rcx
     # nextln:           $$rcx = $$rax
     # nextln:           $$rax = $$rdi
-    # nextln:           $$rdi = $$rax
+    # nextln:           $$rsi = $$rax
     # nextln:           $$rax = $$rcx
-    # nextln:           $$rcx = $$rdi
+    # nextln:           $$rcx = $$rsi
     # nextln:           $$rdi = $$spill0
     # nextln: 1740:     Jump(block415)
     # nextln:       block415:
@@ -2772,9 +2772,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 1814:     Jumpcc(Ne, block443, block444)
     # nextln:       block443:
     # nextln:           $$rdi = $$spill0
-    # nextln:           $$rdi = $$rcx
+    # nextln:           $$rsi = $$rcx
     # nextln:           $$rcx = $$rdx
-    # nextln:           $$rdx = $$rdi
+    # nextln:           $$rdx = $$rsi
     # nextln: 1815:     Jump(block447)
     # nextln:       block444:
     # nextln:           $$rdi = $$rcx
@@ -2860,9 +2860,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rcx = $$rdx
     # nextln:           $$rdx = $$rax
     # nextln:           $$rax = $$rdi
-    # nextln:           $$rdi = $$rdx
+    # nextln:           $$rsi = $$rdx
     # nextln:           $$rdx = $$rax
-    # nextln:           $$rax = $$rdi
+    # nextln:           $$rax = $$rsi
     # nextln:           $$rdi = $$rbx
     # nextln: 1867:     Jump(block461)
     # nextln:       block461:
@@ -3006,18 +3006,18 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 1936:     $$rdi = AluRRm(S32, Add) $$rdi, $$rbx
     # nextln: 1937:     MovStackR(!4, S32) $$rdi
     # nextln:           $$rdi = $$rax
-    # nextln:           $$rdi = $$rdx
+    # nextln:           $$rsi = $$rdx
     # nextln:           $$rdx = $$rcx
-    # nextln:           $$rcx = $$rdi
+    # nextln:           $$rcx = $$rsi
     # nextln: 1938:     Jump(block488)
     # nextln:       block487:
     # nextln: 1939:     $$rdi = MovRStack(!2, S32)
     # nextln: 1940:     $$rdi = AluRRm(S32, Add) $$rdi, $$rbx
     # nextln: 1941:     MovStackR(!2, S32) $$rdi
     # nextln:           $$rdi = $$rax
-    # nextln:           $$rdi = $$rdx
+    # nextln:           $$rsi = $$rdx
     # nextln:           $$rdx = $$rcx
-    # nextln:           $$rcx = $$rdi
+    # nextln:           $$rcx = $$rsi
     # nextln: 1942:     Jump(block488)
     # nextln:       block488:
     # nextln: 1943:     AluRRm(S32, Test) $$r14, $$r14
@@ -3303,9 +3303,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2088:     $$rdi = AluRRm(S32, Add) $$rdi, $$rbx
     # nextln: 2089:     MovStackR(!2, S32) $$rdi
     # nextln:           $$rdi = $$rax
-    # nextln:           $$rdi = $$rcx
+    # nextln:           $$rsi = $$rcx
     # nextln:           $$rcx = $$rdx
-    # nextln:           $$rdx = $$rdi
+    # nextln:           $$rdx = $$rsi
     # nextln: 2090:     Jump(block540)
     # nextln:       block540:
     # nextln: 2091:     AluRRm(S32, Test) $$r14, $$r14
@@ -3438,10 +3438,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rdx = $$rcx
     # nextln:           $$rcx = $$rdi
     # nextln:           $$rdi = $$rbx
-    # nextln:           $$rdi = $$rax
+    # nextln:           $$rsi = $$rax
     # nextln:           $$rax = $$rcx
     # nextln:           $$rcx = $$rdx
-    # nextln:           $$rdx = $$rdi
+    # nextln:           $$rdx = $$rsi
     # nextln: 2165:     Jump(block565)
     # nextln:       block565:
     # nextln: 2166:     AluRRm(S32, Test) $$rdi, $$rdi
@@ -3470,10 +3470,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rax = $$rdx
     # nextln:           $$rdx = $$rdi
     # nextln:           $$rdi = $$spill0
-    # nextln:           $$rdi = $$rax
+    # nextln:           $$rsi = $$rax
     # nextln:           $$rax = $$rcx
     # nextln:           $$rcx = $$rdx
-    # nextln:           $$rdx = $$rdi
+    # nextln:           $$rdx = $$rsi
     # nextln: 2182:     Jump(block571)
     # nextln:       block571:
     # nextln: 2183:     AluRRm(S32, Test) $$rdi, $$rdi
@@ -3841,9 +3841,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2362:     $$rdi = AluRRm(S32, Add) $$rdi, $$rbx
     # nextln: 2363:     MovStackR(!4, S32) $$rdi
     # nextln:           $$rax = $$rsi
-    # nextln:           $$rax = $$rcx
+    # nextln:           $$rdi = $$rcx
     # nextln:           $$rcx = $$rdx
-    # nextln:           $$rdx = $$rax
+    # nextln:           $$rdx = $$rdi
     # nextln: 2364:     Jump(block632)
     # nextln:       block631:
     # nextln:           $$rax = $$rsi
@@ -4097,9 +4097,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rdx = $$rcx
     # nextln:           $$rcx = $$rax
     # nextln:           $$rax = $$rdx
-    # nextln:           $$rdx = $$rax
+    # nextln:           $$rdi = $$rax
     # nextln:           $$rax = $$rcx
-    # nextln:           $$rcx = $$rdx
+    # nextln:           $$rcx = $$rdi
     # nextln:           $$rdx = $$rbx
     # nextln: 2487:     Jump(block669)
     # nextln:       block669:
@@ -4142,9 +4142,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rdx = $$rax
     # nextln:           $$rax = $$rcx
     # nextln:           $$rcx = $$rdx
-    # nextln:           $$rdx = $$rax
+    # nextln:           $$rdi = $$rax
     # nextln:           $$rax = $$rcx
-    # nextln:           $$rcx = $$rdx
+    # nextln:           $$rcx = $$rdi
     # nextln:           $$rdx = $$spill0
     # nextln: 2514:     Jump(block675)
     # nextln:       block675:
@@ -4485,9 +4485,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rcx = $$rax
     # nextln:           $$rax = $$rdx
     # nextln:           $$rdx = $$rbx
-    # nextln:           $$rdx = $$rax
+    # nextln:           $$rdi = $$rax
     # nextln:           $$rax = $$rcx
-    # nextln:           $$rcx = $$rdx
+    # nextln:           $$rcx = $$rdi
     # nextln: 2731:     Jump(block721)
     # nextln:       block721:
     # nextln: 2732:     AluRRm(S32, Test) $$rdx, $$rdx

@@ -1,10 +1,11 @@
-use core::iter;
+use core::{cmp, iter};
 
 use alloc::vec::Vec;
 
 use cranelift_entity::{packed_option::ReservedValue, EntityRef, PrimaryMap, SecondaryMap};
 use fx_utils::FxHashMap;
 use log::trace;
+use smallvec::SmallVec;
 
 use crate::{
     cfg::{Block, CfgContext},
@@ -85,7 +86,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         copies.sort_unstable_by_key(parallel_copy_key);
 
-        assignment.copies = self.resolve_parallel_copies(&copies);
+        self.resolve_parallel_copies(&mut assignment, &copies);
 
         if cfg!(debug_assertions) {
             assignment.verify_all_assigned();
@@ -96,10 +97,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
     fn resolve_parallel_copies(
         &self,
+        assignment: &mut Assignment,
         mut parallel_copies: &[ParallelCopy],
-    ) -> Vec<TaggedAssignmentCopy> {
+    ) {
         let mut resolved = Vec::new();
-        let mut scavenger = AssignedRegScavenger::new(self);
+        let mut scavenger = AssignedRegScavenger::new(self, assignment);
 
         while let Some((pos, class, chunk)) = next_copy_chunk(&mut parallel_copies) {
             scavenger.reset(class, pos, chunk);
@@ -110,7 +112,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 })
             });
         }
-        resolved
+
+        assignment.copies = resolved;
     }
 
     fn collect_func_live_in_copies(&self, copies: &mut ParallelCopies) {
@@ -728,21 +731,35 @@ impl Assignment {
     fn create_spill_slot(&mut self, layout: MemLayout) -> SpillSlot {
         self.spill_slots.push(layout)
     }
+
+    fn expand_spill_slot(&mut self, spill: SpillSlot, new_layout: MemLayout) {
+        let existing_layout = &mut self.spill_slots[spill];
+        existing_layout.size = cmp::max(existing_layout.size, new_layout.size);
+        existing_layout.align = cmp::max(existing_layout.align, new_layout.align);
+    }
 }
 
 struct AssignedRegScavenger<'a, M: MachineRegalloc> {
     ctx: &'a RegAllocContext<'a, M>,
+    assignment: &'a mut Assignment,
+    tmp_spills: SmallVec<[SpillSlot; 2]>,
+
+    // Per-resolution state
     class: RegClass,
     pos: ProgramPoint,
+    tmp_spill_idx: usize,
     used_tmp_regs: PhysRegSet,
 }
 
 impl<'a, M: MachineRegalloc> AssignedRegScavenger<'a, M> {
-    fn new(ctx: &'a RegAllocContext<'a, M>) -> Self {
+    fn new(ctx: &'a RegAllocContext<'a, M>, assignment: &'a mut Assignment) -> Self {
         Self {
             ctx,
+            assignment,
+            tmp_spills: SmallVec::new(),
             class: RegClass::new(0),
             pos: ProgramPoint::before(Instr::new(0)),
+            tmp_spill_idx: 0,
             used_tmp_regs: PhysRegSet::empty(),
         }
     }
@@ -750,6 +767,7 @@ impl<'a, M: MachineRegalloc> AssignedRegScavenger<'a, M> {
     fn reset(&mut self, class: RegClass, pos: ProgramPoint, copies: &[ParallelCopy]) {
         self.class = class;
         self.pos = pos;
+        self.tmp_spill_idx = 0;
         self.used_tmp_regs = PhysRegSet::empty();
 
         // All copy sources need to be marked as used, because their live ranges could end just
@@ -777,7 +795,20 @@ impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
     }
 
     fn get_fresh_tmp_spill(&mut self) -> SpillSlot {
-        todo!()
+        let spill_idx = self.tmp_spill_idx;
+        let new_layout = self.ctx.machine.reg_class_spill_layout(self.class);
+
+        self.tmp_spill_idx += 1;
+
+        if let Some(&spill) = self.tmp_spills.get(spill_idx) {
+            self.assignment.expand_spill_slot(spill, new_layout);
+            return spill;
+        }
+
+        debug_assert_eq!(spill_idx, self.tmp_spills.len());
+        let spill = self.assignment.create_spill_slot(new_layout);
+        self.tmp_spills.push(spill);
+        spill
     }
 }
 

@@ -407,6 +407,7 @@ pub enum ParallelCopyPhase {
     Before,
     /// Corresponds to the `Before` instruction slot:
     /// * Reloads from spill slots for use operands that have been spilled
+    ///
     /// This is a dedicated phase so that spill -> reload sequences between adjacent instructions
     /// work correctly.
     Reload,

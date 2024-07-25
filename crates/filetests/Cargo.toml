@@ -23,6 +23,7 @@ log.workspace = true
 filecheck = "0.5.0"
 regex = "1.9.3"
 glob = "0.3.1"
+rayon = "1.10.0"
 
 [dev-dependencies]
 expect-test.workspace = true

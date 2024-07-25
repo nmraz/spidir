@@ -2,6 +2,10 @@ use std::{
     env, fs,
     path::{Path, PathBuf},
     process,
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Mutex,
+    },
     time::Instant,
 };
 
@@ -13,6 +17,7 @@ use filetests::{
 };
 use glob::Pattern;
 use log::LevelFilter as LogLevelFilter;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 const OK: &str = "\x1b[32mok\x1b[0m";
 const UPDATED: &str = "\x1b[34mupdated\x1b[0m";
@@ -105,41 +110,48 @@ fn main() -> Result<()> {
         log::set_max_level(level);
     }
 
-    let mut passed = 0;
-    let mut failures = Vec::new();
-    let mut updated = 0;
+    let mut passed = AtomicU32::new(0);
+    let mut updated = AtomicU32::new(0);
+    let mut failures = Mutex::new(Vec::new());
 
     eprintln!("\nrunning {} tests", cases.len());
 
     let start_time = Instant::now();
-    for case_path in &cases {
+
+    cases.par_iter().try_for_each(|case_path| -> Result<()> {
         let case_name = case_path.strip_prefix(&case_dir)?;
-        eprint!("test {} ... ", case_name.display());
+        let display_prefix = format!("test {} ... ", case_name.display());
+
         let (result, logs) = capture_logs(|| run_file_test(case_path, update_mode));
         match result {
             Ok(TestOutcome::Ok) => {
-                passed += 1;
-                eprintln!("{OK}");
+                passed.fetch_add(1, Ordering::Relaxed);
+                eprintln!("{display_prefix}{OK}");
             }
             Ok(TestOutcome::Update(())) => {
-                updated += 1;
-                eprintln!("{UPDATED}")
+                updated.fetch_add(1, Ordering::Relaxed);
+                eprintln!("{display_prefix}{UPDATED}")
             }
             Err(err) => {
-                failures.push((case_name, err, logs));
-                eprintln!("{FAILED}")
+                failures.lock().unwrap().push((case_name, err, logs));
+                eprintln!("{display_prefix}{FAILED}")
             }
         }
-    }
+        Ok(())
+    })?;
+
     let test_duration = start_time.elapsed();
 
     eprintln!();
 
+    let passed = *passed.get_mut();
+    let updated = *updated.get_mut();
+    let failures = failures.get_mut().unwrap();
     let failed = failures.len();
 
     if failed > 0 {
         eprintln!("failures:\n");
-        for (name, err, logs) in &failures {
+        for (name, err, logs) in failures {
             eprintln!("\x1b[1m---- {} ----\x1b[0m\n{err:?}\n", name.display());
             if !logs.is_empty() {
                 eprintln!("logs:\n{}\n", logs.join("\n"));

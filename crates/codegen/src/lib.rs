@@ -4,6 +4,7 @@ extern crate alloc;
 
 pub mod blockorder;
 pub mod cfg;
+pub mod frame;
 pub mod isel;
 pub mod lir;
 pub mod machine;

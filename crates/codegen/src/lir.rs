@@ -1,5 +1,9 @@
 use alloc::vec::Vec;
-use core::{fmt, iter, marker::PhantomData, ops::Range};
+use core::{
+    fmt, iter,
+    marker::PhantomData,
+    ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Range},
+};
 use fx_utils::FxHashMap;
 
 use cranelift_entity::{
@@ -155,6 +159,34 @@ impl Extend<PhysReg> for PhysRegSet {
         for reg in iter {
             self.add(reg);
         }
+    }
+}
+
+impl<'a> BitOr<&'a PhysRegSet> for &'a PhysRegSet {
+    type Output = PhysRegSet;
+
+    fn bitor(self, rhs: &'a PhysRegSet) -> PhysRegSet {
+        PhysRegSet(self.0 | rhs.0)
+    }
+}
+
+impl<'a> BitOrAssign<&'a PhysRegSet> for PhysRegSet {
+    fn bitor_assign(&mut self, rhs: &'a PhysRegSet) {
+        self.0 |= rhs.0;
+    }
+}
+
+impl<'a> BitAnd<&'a PhysRegSet> for &'a PhysRegSet {
+    type Output = PhysRegSet;
+
+    fn bitand(self, rhs: &'a PhysRegSet) -> PhysRegSet {
+        PhysRegSet(self.0 & rhs.0)
+    }
+}
+
+impl<'a> BitAndAssign<&'a PhysRegSet> for PhysRegSet {
+    fn bitand_assign(&mut self, rhs: &'a PhysRegSet) {
+        self.0 &= rhs.0;
     }
 }
 

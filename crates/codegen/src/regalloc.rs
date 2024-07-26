@@ -5,7 +5,7 @@ use types::TaggedAssignmentCopy;
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Instr, Lir, MemLayout, PhysReg},
+    lir::{Instr, Lir, MemLayout, PhysReg, PhysRegSet},
     machine::{MachineCore, MachineRegalloc},
 };
 
@@ -93,6 +93,28 @@ impl Assignment {
         AssignmentCopyIter {
             copies: &self.copies,
         }
+    }
+
+    pub fn compute_global_clobbers<M: MachineCore>(&self, lir: &Lir<M>) -> PhysRegSet {
+        let mut clobbers = PhysRegSet::empty();
+
+        for instr in lir.all_instrs() {
+            clobbers |= &lir.instr_clobbers(instr);
+
+            for def in self.instr_def_assignments(instr) {
+                if let &OperandAssignment::Reg(reg) = def {
+                    clobbers.add(reg);
+                }
+            }
+        }
+
+        for copy in &self.copies {
+            if let &OperandAssignment::Reg(reg) = &copy.copy.to {
+                clobbers.add(reg);
+            }
+        }
+
+        clobbers
     }
 
     pub fn display<'a, M: MachineCore>(

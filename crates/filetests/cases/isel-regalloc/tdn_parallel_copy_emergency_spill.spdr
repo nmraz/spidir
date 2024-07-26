@@ -13,6 +13,7 @@ extfunc @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32
 
 func @"System.Boolean Tests.BitTest::Run()":i32() {
     # check: function `System.Boolean Tests.BitTest::Run()`:
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15
     # nextln:       block0:
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:

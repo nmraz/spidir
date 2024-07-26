@@ -2,9 +2,11 @@ use std::fmt::Write;
 
 use anyhow::{anyhow, Result};
 use codegen::{
-    cfg::CfgContext, isel::select_instrs, regalloc, schedule::Schedule, target::x86_64::X64Machine,
+    cfg::CfgContext, isel::select_instrs, machine::MachineCore, regalloc, schedule::Schedule,
+    target::x86_64::X64Machine,
 };
 use ir::{module::Module, valwalk::cfg_preorder, write::display_node};
+use itertools::Itertools;
 
 use crate::utils::sanitize_raw_output;
 
@@ -34,6 +36,16 @@ impl TestProvider for IselRegallocProvider {
             let assignment = regalloc::run(&lir, &cfg_ctx, &machine)
                 .map_err(|err| anyhow!("register allocation failed: {err:?}"))?;
 
+            writeln!(
+                output,
+                "clobbers: {}",
+                assignment
+                    .compute_global_clobbers(&lir)
+                    .iter()
+                    .map(X64Machine::reg_name)
+                    .format(", ")
+            )
+            .unwrap();
             write!(output, "{}", assignment.display(&cfg_ctx.block_order, &lir)).unwrap();
         }
 

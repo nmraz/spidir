@@ -2,6 +2,7 @@
 
 func @sum_to_n:i32(i32) {
     # check: function `sum_to_n`:
+    # nextln: clobbers: rax, rcx, rdx, rdi, rsi
     # nextln:       block0:
     # nextln: 0000:     $$rax = MovRI(S32, 0)
     # nextln: 0001:     AluRRm(S32, Cmp) $$rdi, $$rax

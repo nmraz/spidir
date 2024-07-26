@@ -5,7 +5,7 @@ use fx_utils::FxHashMap;
 use cranelift_entity::{
     entity_impl,
     packed_option::{PackedOption, ReservedValue},
-    EntityRef, PrimaryMap, SecondaryMap,
+    EntityRef, Keys, PrimaryMap, SecondaryMap,
 };
 
 use crate::{
@@ -462,6 +462,10 @@ impl<M: MachineCore> Lir<M> {
         let params = &self.block_params[block];
         let base = params.outgoing_base as usize;
         &self.block_param_pool[base..base + params.outgoing_len as usize]
+    }
+
+    pub fn stack_slots(&self) -> Keys<StackSlot> {
+        self.stack_slots.keys()
     }
 
     pub fn stack_slot_layout(&self, slot: StackSlot) -> MemLayout {

@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 
-use cranelift_entity::{entity_impl, PrimaryMap, SecondaryMap};
+use cranelift_entity::{entity_impl, Keys, PrimaryMap, SecondaryMap};
 use types::TaggedAssignmentCopy;
 
 use crate::{
@@ -67,6 +67,10 @@ pub struct Assignment {
 }
 
 impl Assignment {
+    pub fn spill_slots(&self) -> Keys<SpillSlot> {
+        self.spill_slots.keys()
+    }
+
     pub fn spill_slot_layout(&self, slot: SpillSlot) -> MemLayout {
         self.spill_slots[slot]
     }

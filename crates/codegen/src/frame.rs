@@ -11,7 +11,7 @@ use crate::{
 };
 
 pub struct FrameLayout {
-    pub fixed_frame_size: u32,
+    pub full_layout: MemLayout,
     pub stack_slot_offsets: SecondaryMap<StackSlot, u32>,
     pub spill_slot_offsets: SecondaryMap<SpillSlot, u32>,
 }
@@ -39,14 +39,19 @@ impl FrameLayout {
         frame_objects.sort_unstable_by_key(|b| cmp::Reverse(frame_object_sort_key(b)));
 
         let mut frame_size = 0;
+        let mut frame_align = 0;
         for obj in &mut frame_objects {
+            frame_align = frame_align.max(obj.layout.align);
             let offset = align_up(frame_size, obj.layout.align);
             obj.offset = offset;
             frame_size = offset + obj.layout.size;
         }
 
         let mut layout = Self {
-            fixed_frame_size: frame_size,
+            full_layout: MemLayout {
+                size: frame_size,
+                align: frame_align,
+            },
             stack_slot_offsets: SecondaryMap::with_capacity(lir.stack_slots().len()),
             spill_slot_offsets: SecondaryMap::with_capacity(
                 regalloc_assignment.spill_slots().len(),

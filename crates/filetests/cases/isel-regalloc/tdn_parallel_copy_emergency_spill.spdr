@@ -14,6 +14,36 @@ extfunc @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32
 func @"System.Boolean Tests.BitTest::Run()":i32() {
     # check: function `System.Boolean Tests.BitTest::Run()`:
     # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15
+    # nextln: frame: size 185, align 8
+    # nextln:     !0: 182
+    # nextln:     !1: 176
+    # nextln:     !2: 16
+    # nextln:     !3: 24
+    # nextln:     !4: 172
+    # nextln:     !5: 180
+    # nextln:     !6: 168
+    # nextln:     !7: 178
+    # nextln:     !8: 184
+    # nextln:     !9: 183
+    # nextln:     spill0: 80
+    # nextln:     spill1: 88
+    # nextln:     spill2: 96
+    # nextln:     spill3: 104
+    # nextln:     spill4: 128
+    # nextln:     spill5: 152
+    # nextln:     spill6: 112
+    # nextln:     spill7: 136
+    # nextln:     spill8: 144
+    # nextln:     spill9: 120
+    # nextln:     spill10: 160
+    # nextln:     spill11: 0
+    # nextln:     spill12: 8
+    # nextln:     spill13: 72
+    # nextln:     spill14: 64
+    # nextln:     spill15: 56
+    # nextln:     spill16: 48
+    # nextln:     spill17: 40
+    # nextln:     spill18: 32
     # nextln:       block0:
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:

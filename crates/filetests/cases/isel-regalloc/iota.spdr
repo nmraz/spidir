@@ -3,6 +3,7 @@
 func @iota(ptr, i64) {
     # check: function `iota`:
     # nextln: clobbers: rax, rcx, rdx, r8, r9
+    # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln: 0000:     $$rax = MovRI(S64, 0)
     # nextln: 0001:     AluRRm(S64, Cmp) $$rsi, $$rax

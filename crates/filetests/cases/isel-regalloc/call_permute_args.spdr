@@ -5,6 +5,7 @@ extfunc @g(i32, i32)
 func @f1(i32, i32) {
     # check: function `f1`:
     # nextln: clobbers: rax, rcx, rdx, rdi, rsi, r8, r9, r10, r11
+    # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln:           $$rax = $$rsi
     # nextln:           $$rsi = $$rdi
@@ -20,6 +21,7 @@ func @f1(i32, i32) {
 func @f2(i32, i32, i32) {
     # check: function `f2`:
     # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12
+    # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln:           $$r12 = $$rdx
     # nextln:           $$rbx = $$rdi

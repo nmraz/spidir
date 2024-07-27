@@ -2,8 +2,8 @@ use std::fmt::Write;
 
 use anyhow::{anyhow, Result};
 use codegen::{
-    cfg::CfgContext, isel::select_instrs, machine::MachineCore, regalloc, schedule::Schedule,
-    target::x86_64::X64Machine,
+    cfg::CfgContext, frame::FrameLayout, isel::select_instrs, machine::MachineCore, regalloc,
+    schedule::Schedule, target::x86_64::X64Machine,
 };
 use ir::{module::Module, valwalk::cfg_preorder, write::display_node};
 use itertools::Itertools;
@@ -46,6 +46,21 @@ impl TestProvider for IselRegallocProvider {
                     .format(", ")
             )
             .unwrap();
+
+            let frame_layout = FrameLayout::compute(&lir, &assignment);
+            writeln!(
+                output,
+                "frame: size {}, align {}",
+                frame_layout.full_layout.size, frame_layout.full_layout.align
+            )
+            .unwrap();
+            for (slot, &offset) in frame_layout.stack_slot_offsets.iter() {
+                writeln!(output, "    {slot}: {offset}").unwrap();
+            }
+            for (spill, &offset) in frame_layout.spill_slot_offsets.iter() {
+                writeln!(output, "    {spill}: {offset}").unwrap();
+            }
+
             write!(output, "{}", assignment.display(&cfg_ctx.block_order, &lir)).unwrap();
         }
 

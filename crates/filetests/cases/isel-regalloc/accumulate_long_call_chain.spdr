@@ -5,6 +5,7 @@ extfunc @f:i32()
 func @func:i32() {
     # check: function `func`:
     # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11
+    # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln: 0000:     $$rax = Call(External(extfunc0))
     # nextln:           $$rbx = $$rax

@@ -7,6 +7,7 @@
 func @sdiv64:i64(i64, i64) {
     # check: function `sdiv64`:
     # nextln: clobbers: rax, rdx
+    # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln:           $$rax = $$rdi
     # nextln: 0000:     $$rdx = ConvertWord(Cqo) $$rax
@@ -21,6 +22,7 @@ func @sdiv64:i64(i64, i64) {
 func @sdiv32:i32(i32, i32) {
     # check: function `sdiv32`:
     # nextln: clobbers: rax, rdx
+    # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln:           $$rax = $$rdi
     # nextln: 0000:     $$rdx = ConvertWord(Cdq) $$rax

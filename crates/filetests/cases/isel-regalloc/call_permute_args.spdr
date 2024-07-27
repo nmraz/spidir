@@ -1,0 +1,38 @@
+# run: isel-regalloc
+
+extfunc @g(i32, i32)
+
+func @f1(i32, i32) {
+    # check: function `f1`:
+    # nextln: clobbers: rax, rcx, rdx, rdi, rsi, r8, r9, r10, r11
+    # nextln:       block0:
+    # nextln:           $$rax = $$rsi
+    # nextln:           $$rsi = $$rdi
+    # nextln:           $$rdi = $$rax
+    # nextln: 0000:     Call(External(extfunc0)) $$rdi, $$rsi
+    # nextln: 0001:     Ret
+
+    %e:ctrl, %p1:i32, %p2:i32 = entry
+    %c:ctrl = call @g %e, %p2, %p1
+    return %c
+}
+
+func @f2(i32, i32, i32) {
+    # check: function `f2`:
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12
+    # nextln:       block0:
+    # nextln:           $$r12 = $$rdx
+    # nextln:           $$rbx = $$rdi
+    # nextln:           $$rdi = $$rsi
+    # nextln:           $$rsi = $$rbx
+    # nextln: 0000:     Call(External(extfunc0)) $$rdi, $$rsi
+    # nextln:           $$rsi = $$r12
+    # nextln:           $$rdi = $$rbx
+    # nextln: 0001:     Call(External(extfunc0)) $$rdi, $$rsi
+    # nextln: 0002:     Ret
+
+    %e:ctrl, %p1:i32, %p2:i32, %p3:i32 = entry
+    %c1:ctrl = call @g %e, %p2, %p1
+    %c2:ctrl = call @g %c1, %p1, %p3
+    return %c2
+}

@@ -4,6 +4,7 @@ use core::{
 };
 
 use itertools::Itertools;
+use log::info;
 
 use crate::{
     cfg::Block,
@@ -14,7 +15,7 @@ use crate::{
     machine::MachineCore,
 };
 
-use super::{Assignment, AssignmentCopy, OperandAssignment};
+use super::{Assignment, InstrOrCopy, OperandAssignment};
 
 pub struct DisplayAssignment<'a, M: MachineCore> {
     pub(super) assignment: &'a Assignment,
@@ -24,44 +25,39 @@ pub struct DisplayAssignment<'a, M: MachineCore> {
 
 impl<M: MachineCore> fmt::Display for DisplayAssignment<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut copies = self.assignment.copies();
-
         for &block in self.block_order {
+            info!("{block}");
             writeln!(f, "{}{block}:", display_instr_gutter_padding())?;
-            for instr in self.lir.block_instrs(block) {
-                let instr_copies = copies.consume_copies_for(instr);
-                write_instr_copies::<M>(f, instr_copies)?;
 
-                write!(f, "{}    ", display_instr_gutter(instr))?;
-                let defs = self.assignment.instr_def_assignments(instr);
-                if !defs.is_empty() {
-                    write!(f, "{} = ", format_op_assignments::<M>(defs.iter().copied()))?;
-                }
-                write!(f, "{:?}", self.lir.instr_data(instr))?;
-                let uses = self.assignment.instr_use_assignments(instr);
-                if !uses.is_empty() {
-                    write!(f, " {}", format_op_assignments::<M>(uses.iter().copied()))?;
+            for instr in self
+                .assignment
+                .instrs_and_copies(self.lir.block_instrs(block))
+            {
+                match instr {
+                    InstrOrCopy::Instr(instr) => {
+                        write!(f, "{}    ", display_instr_gutter(instr))?;
+                        let defs = self.assignment.instr_def_assignments(instr);
+                        if !defs.is_empty() {
+                            write!(f, "{} = ", format_op_assignments::<M>(defs.iter().copied()))?;
+                        }
+                        write!(f, "{:?}", self.lir.instr_data(instr))?;
+                        let uses = self.assignment.instr_use_assignments(instr);
+                        if !uses.is_empty() {
+                            write!(f, " {}", format_op_assignments::<M>(uses.iter().copied()))?;
+                        }
+                    }
+                    InstrOrCopy::Copy(copy) => {
+                        write!(f, "{}    ", display_instr_gutter_padding())?;
+                        write_op::<M>(f, copy.to)?;
+                        write!(f, " = ")?;
+                        write_op::<M>(f, copy.from)?;
+                    }
                 }
                 writeln!(f)?;
             }
         }
         Ok(())
     }
-}
-
-fn write_instr_copies<M: MachineCore>(
-    f: &mut fmt::Formatter<'_>,
-    copies: impl Iterator<Item = AssignmentCopy>,
-) -> fmt::Result {
-    for copy in copies {
-        write!(f, "{}    ", display_instr_gutter_padding())?;
-        write_op::<M>(f, copy.to)?;
-        write!(f, " = ")?;
-        write_op::<M>(f, copy.from)?;
-        writeln!(f)?;
-    }
-
-    Ok(())
 }
 
 fn format_op_assignments<M: MachineCore>(

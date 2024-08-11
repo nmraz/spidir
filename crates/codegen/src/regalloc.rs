@@ -5,7 +5,7 @@ use types::TaggedAssignmentCopy;
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Instr, Lir, MemLayout, PhysReg, PhysRegSet},
+    lir::{Instr, InstrRange, Lir, MemLayout, PhysReg, PhysRegSet},
     machine::{MachineCore, MachineRegalloc},
 };
 
@@ -89,9 +89,12 @@ impl Assignment {
         &self.operand_assignment_pool[base..base + len]
     }
 
-    pub fn copies(&self) -> AssignmentCopyIter<'_> {
-        AssignmentCopyIter {
-            copies: &self.copies,
+    pub fn instrs_and_copies(&self, range: InstrRange) -> AssignmentInstrIter<'_> {
+        let first_copy = self.copies.partition_point(|copy| copy.instr < range.start);
+        AssignmentInstrIter {
+            instr: range.start,
+            instr_end: range.end,
+            copies: &self.copies[first_copy..],
         }
     }
 
@@ -130,25 +133,38 @@ impl Assignment {
     }
 }
 
-pub struct AssignmentCopyIter<'a> {
+pub enum InstrOrCopy {
+    Instr(Instr),
+    Copy(AssignmentCopy),
+}
+
+pub struct AssignmentInstrIter<'a> {
+    instr: Instr,
+    instr_end: Instr,
     copies: &'a [TaggedAssignmentCopy],
 }
 
-impl<'a> AssignmentCopyIter<'a> {
-    pub fn consume_copies_for(
-        &mut self,
-        instr: Instr,
-    ) -> impl Iterator<Item = AssignmentCopy> + 'a {
-        let len = self
-            .copies
-            .iter()
-            .position(|copy| copy.instr != instr)
-            .unwrap_or(self.copies.len());
+impl<'a> Iterator for AssignmentInstrIter<'a> {
+    type Item = InstrOrCopy;
 
-        let (for_instr, after_instr) = self.copies.split_at(len);
-        self.copies = after_instr;
+    fn next(&mut self) -> Option<InstrOrCopy> {
+        let instr = self.instr;
 
-        for_instr.iter().map(move |tagged_copy| tagged_copy.copy)
+        if instr >= self.instr_end {
+            return None;
+        }
+
+        if let Some(copy) = self.copies.first() {
+            // This copy pertains to the current instruction, so return it before the instruction
+            // itself.
+            if copy.instr == instr {
+                self.copies = &self.copies[1..];
+                return Some(InstrOrCopy::Copy(copy.copy));
+            }
+        }
+
+        self.instr = instr.next();
+        Some(InstrOrCopy::Instr(instr))
     }
 }
 

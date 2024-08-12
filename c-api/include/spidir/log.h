@@ -5,8 +5,8 @@
 #ifndef SPIDIR_LOG_H
 #define SPIDIR_LOG_H
 
+#include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 /// A possible severity level of a spidir log.
 ///

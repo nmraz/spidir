@@ -17,16 +17,12 @@ use crate::{
 
 use super::{
     AluOp, CondCode, ConvertWordWidth, ExtWidth, OperandSize, ShiftOp, X64Instr, X64Machine,
-    RC_GPR, REG_R10, REG_R11, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI,
+    CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI,
 };
 
 const FIXED_ARG_COUNT: usize = 6;
 const FIXED_ARG_REGS: [PhysReg; FIXED_ARG_COUNT] =
     [REG_RDI, REG_RSI, REG_RDX, REG_RCX, REG_R8, REG_R9];
-
-const CALL_CLOBBERS: [PhysReg; 9] = [
-    REG_RAX, REG_RCX, REG_RDX, REG_RSI, REG_RDI, REG_R8, REG_R9, REG_R10, REG_R11,
-];
 
 impl MachineLower for X64Machine {
     fn reg_class_for_type(&self, ty: Type) -> RegClass {
@@ -277,7 +273,7 @@ fn emit_call(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Functi
         stack_size += 8;
     }
 
-    let clobbers = PhysRegSet::from_iter(CALL_CLOBBERS);
+    let clobbers = PhysRegSet::from_iter(CALLER_SAVED_REGS);
 
     let retval = ctx.node_outputs(node).next().map(|retval| {
         let retval = ctx.get_value_vreg(retval);

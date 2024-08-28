@@ -6,6 +6,7 @@ use crate::{
     machine::{MachineCore, MachineRegalloc},
 };
 
+mod emit;
 mod lower;
 
 pub const RC_GPR: RegClass = RegClass::new(0);
@@ -16,6 +17,9 @@ pub const REG_RCX: PhysReg = PhysReg::new(2);
 pub const REG_RDX: PhysReg = PhysReg::new(3);
 pub const REG_RDI: PhysReg = PhysReg::new(4);
 pub const REG_RSI: PhysReg = PhysReg::new(5);
+
+pub const REG_RBP: PhysReg = PhysReg::new(6);
+pub const REG_RSP: PhysReg = PhysReg::new(7);
 
 pub const REG_R8: PhysReg = PhysReg::new(8);
 pub const REG_R9: PhysReg = PhysReg::new(9);
@@ -138,6 +142,19 @@ pub enum X64Instr {
     Ud2,
 }
 
+const CALLER_SAVED_REGS: [PhysReg; 9] = [
+    REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11,
+];
+
+const CALLEE_SAVED_REGS: [PhysReg; 5] = [REG_RBX, REG_R12, REG_R13, REG_R14, REG_R15];
+
+// This should be a concatenation of `CALLER_SAVED_REGS` and `CALLEE_SAVED_REGS`.
+// Prefer caller-saved regs to avoid unnecessary prologue/epilogue code.
+const GPR_ORDER: [PhysReg; 14] = [
+    REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11, REG_RBX,
+    REG_R12, REG_R13, REG_R14, REG_R15,
+];
+
 pub struct X64Machine;
 
 impl MachineCore for X64Machine {
@@ -178,12 +195,7 @@ impl MachineRegalloc for X64Machine {
 
     fn usable_regs(&self, class: RegClass) -> &[PhysReg] {
         match class {
-            RC_GPR => &[
-                // Caller-saved registers are preferred, so they come first
-                REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11,
-                // Move on to callee-saved registers when we have to
-                REG_RBX, REG_R12, REG_R13, REG_R14, REG_R15,
-            ],
+            RC_GPR => &GPR_ORDER,
             _ => panic!("unknown register class"),
         }
     }

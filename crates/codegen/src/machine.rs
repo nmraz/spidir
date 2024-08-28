@@ -5,8 +5,10 @@ use ir::{node::Type, valgraph::Node};
 
 use crate::{
     cfg::Block,
+    emit::EmitContext,
     isel::IselContext,
-    lir::{MemLayout, PhysReg, RegClass},
+    lir::{Lir, MemLayout, PhysReg, RegClass},
+    regalloc::{Assignment, OperandAssignment},
 };
 
 pub trait MachineCore {
@@ -44,4 +46,31 @@ pub trait MachineRegalloc: MachineCore {
     fn phys_reg_count() -> u32;
     fn usable_regs(&self, class: RegClass) -> &[PhysReg];
     fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout;
+}
+
+pub trait FixupKind: Copy {
+    fn byte_size(&self) -> usize;
+    fn apply(&self, offset: u32, label_offset: u32, bytes: &mut [u8]);
+}
+
+pub trait MachineEmit: MachineCore + Sized {
+    type FrameInfo;
+    type Fixup: FixupKind;
+
+    fn compute_frame_info(&self, lir: &Lir<Self>, assignment: &Assignment) -> Self::FrameInfo;
+
+    fn emit_prologue(&self, ctx: &mut EmitContext<Self>);
+    fn emit_instr(
+        &self,
+        ctx: &mut EmitContext<Self>,
+        instr: &Self::Instr,
+        defs: &[OperandAssignment],
+        uses: &[OperandAssignment],
+    );
+    fn emit_copy(
+        &self,
+        ctx: &mut EmitContext<Self>,
+        from: OperandAssignment,
+        to: OperandAssignment,
+    );
 }

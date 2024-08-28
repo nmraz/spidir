@@ -124,7 +124,7 @@ impl PhysRegSet {
         self.0 == 0
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = PhysReg> + '_ {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = PhysReg> + '_ {
         (0..PHYS_REG_COUNT)
             .map(PhysReg)
             .filter(move |&reg| self.contains(reg))

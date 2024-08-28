@@ -5,7 +5,7 @@ use ir::{node::Type, valgraph::Node};
 
 use crate::{
     cfg::Block,
-    emit::EmitContext,
+    emit::CodeBuffer,
     isel::IselContext,
     lir::{Lir, MemLayout, PhysReg, RegClass},
     regalloc::{Assignment, OperandAssignment},
@@ -59,17 +59,19 @@ pub trait MachineEmit: MachineCore + Sized {
 
     fn compute_frame_info(&self, lir: &Lir<Self>, assignment: &Assignment) -> Self::FrameInfo;
 
-    fn emit_prologue(&self, ctx: &mut EmitContext<Self>);
+    fn emit_prologue(&self, frame_info: &Self::FrameInfo, buffer: &mut CodeBuffer<Self>);
     fn emit_instr(
         &self,
-        ctx: &mut EmitContext<Self>,
+        frame_info: &Self::FrameInfo,
+        buffer: &mut CodeBuffer<Self>,
         instr: &Self::Instr,
         defs: &[OperandAssignment],
         uses: &[OperandAssignment],
     );
     fn emit_copy(
         &self,
-        ctx: &mut EmitContext<Self>,
+        frame_info: &Self::FrameInfo,
+        buffer: &mut CodeBuffer<Self>,
         from: OperandAssignment,
         to: OperandAssignment,
     );

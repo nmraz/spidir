@@ -18,19 +18,14 @@ struct Fixup<F> {
     kind: F,
 }
 
-pub struct EmitContext<M: MachineEmit> {
-    frame_info: M::FrameInfo,
+pub struct CodeBuffer<M: MachineEmit> {
     bytes: Vec<u8>,
     labels: PrimaryMap<Label, Option<u32>>,
     block_map: SecondaryMap<Block, Label>,
     fixups: Vec<Fixup<M::Fixup>>,
 }
 
-impl<M: MachineEmit> EmitContext<M> {
-    pub fn frame_info(&self) -> &M::FrameInfo {
-        &self.frame_info
-    }
-
+impl<M: MachineEmit> CodeBuffer<M> {
     pub fn offset(&self) -> u32 {
         self.bytes.len().try_into().unwrap()
     }
@@ -73,8 +68,7 @@ pub fn emit_code<M: MachineEmit>(
 ) -> Vec<u8> {
     let frame_info = machine.compute_frame_info(lir, assignment);
 
-    let mut ctx = EmitContext::<M> {
-        frame_info,
+    let mut buffer = CodeBuffer::<M> {
         bytes: Vec::new(),
         labels: PrimaryMap::new(),
         block_map: SecondaryMap::with_default(Label::reserved_value()),
@@ -82,35 +76,36 @@ pub fn emit_code<M: MachineEmit>(
     };
 
     for &block in &cfg_context.block_order {
-        let label = ctx.create_label();
-        ctx.block_map[block] = label;
+        let label = buffer.create_label();
+        buffer.block_map[block] = label;
     }
 
-    machine.emit_prologue(&mut ctx);
+    machine.emit_prologue(&frame_info, &mut buffer);
 
     for &block in &cfg_context.block_order {
-        ctx.bind_label(ctx.block_label(block));
+        buffer.bind_label(buffer.block_label(block));
 
         for instr in assignment.instrs_and_copies(lir.block_instrs(block)) {
             match instr {
                 InstrOrCopy::Instr(instr) => {
                     machine.emit_instr(
-                        &mut ctx,
+                        &frame_info,
+                        &mut buffer,
                         lir.instr_data(instr),
                         assignment.instr_def_assignments(instr),
                         assignment.instr_use_assignments(instr),
                     );
                 }
                 InstrOrCopy::Copy(copy) => {
-                    machine.emit_copy(&mut ctx, copy.from, copy.to);
+                    machine.emit_copy(&frame_info, &mut buffer, copy.from, copy.to);
                 }
             }
         }
     }
 
     // Resolve all outstanding fixups now that the final layout is known.
-    for fixup in &ctx.fixups {
-        let label_offset = ctx.resolve_label(fixup.label).expect("label not bound");
+    for fixup in &buffer.fixups {
+        let label_offset = buffer.resolve_label(fixup.label).expect("label not bound");
 
         let offset_usize = fixup.offset as usize;
         let size = fixup.kind.byte_size();
@@ -118,9 +113,9 @@ pub fn emit_code<M: MachineEmit>(
         fixup.kind.apply(
             fixup.offset,
             label_offset,
-            &mut ctx.bytes[offset_usize..offset_usize + size],
+            &mut buffer.bytes[offset_usize..offset_usize + size],
         );
     }
 
-    ctx.bytes
+    buffer.bytes
 }

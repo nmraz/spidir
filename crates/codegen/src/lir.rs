@@ -120,6 +120,10 @@ impl PhysRegSet {
         Self(0)
     }
 
+    pub fn len(&self) -> usize {
+        self.0.count_ones() as usize
+    }
+
     pub fn is_empty(&self) -> bool {
         self.0 == 0
     }

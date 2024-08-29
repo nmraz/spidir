@@ -1,6 +1,8 @@
 // Until things settle down a bit:
 #![allow(dead_code, unused)]
 
+use core::mem;
+
 use crate::{
     emit::{CodeBuffer, EmitContext},
     frame::FrameLayout,
@@ -121,11 +123,11 @@ impl MachineEmit for X64Machine {
         uses: &[OperandAssignment],
     ) {
         match instr {
-            &X64Instr::AluRRm(op_size, AluOp::Add) => {
+            &X64Instr::AluRRm(op_size, op) => {
                 // TODO: spilled src.
                 let dest = defs[0].as_reg().unwrap();
                 let src = uses[1].as_reg().unwrap();
-                emit_add_rr(buffer, op_size, dest, src);
+                emit_alu_op_rr(buffer, op, op_size, dest, src);
             }
             X64Instr::Ret => {
                 emit_epilogue(buffer, &ctx.frame_info);
@@ -190,15 +192,6 @@ fn emit_mov_rr(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, src: PhysReg)
     buffer.emit(&[0x89, encode_modrm(MODE_R, reg, rm)]);
 }
 
-fn emit_add_rr(
-    buffer: &mut CodeBuffer<X64Machine>,
-    op_size: OperandSize,
-    dest: PhysReg,
-    src: PhysReg,
-) {
-    emit_alu_rr(buffer, 0x1, op_size, dest, src);
-}
-
 fn emit_add_r64i32(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: i32) {
     emit_alu_r64i32(buffer, 0x81, 0, dest, imm);
 }
@@ -208,6 +201,35 @@ fn emit_sub_r64i32(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: i32)
 }
 
 // Instruction group emission helpers
+
+fn emit_alu_op_rr(
+    buffer: &mut CodeBuffer<X64Machine>,
+    op: AluOp,
+    op_size: OperandSize,
+    dest: PhysReg,
+    src: PhysReg,
+) {
+    // By default, use the more "canonical" `op r/m, r` encoding.
+    let mut rm = dest;
+    let mut reg = src;
+
+    let opcode: &[u8] = match op {
+        AluOp::Add => &[0x1],
+        AluOp::And => &[0x21],
+        AluOp::Cmp => &[0x39],
+        AluOp::Or => &[0x9],
+        AluOp::Sub => &[0x29],
+        AluOp::Test => &[0x85],
+        AluOp::Xor => &[0x31],
+        AluOp::Imul => {
+            // `imul` only has the `imul r, r/m` form.
+            mem::swap(&mut rm, &mut reg);
+            &[0xf, 0xaf]
+        }
+    };
+
+    emit_alu_rr(buffer, opcode, op_size, rm, reg);
+}
 
 // TODO: use imm8 when small enough.
 fn emit_alu_r64i32(
@@ -227,17 +249,18 @@ fn emit_alu_r64i32(
 
 fn emit_alu_rr(
     buffer: &mut CodeBuffer<X64Machine>,
-    opcode: u8,
+    opcode: &[u8],
     op_size: OperandSize,
-    dest: PhysReg,
-    src: PhysReg,
+    rm: PhysReg,
+    reg: PhysReg,
 ) {
     let mut rex = RexPrefix::new();
     rex.encode_operand_size(op_size);
     rex.emit(buffer);
-    let rm = rex.encode_modrm_rm(dest);
-    let reg = rex.encode_modrm_reg(src);
-    buffer.emit(&[opcode, encode_modrm(MODE_R, reg, rm)]);
+    let rm = rex.encode_modrm_rm(rm);
+    let reg = rex.encode_modrm_reg(reg);
+    buffer.emit(opcode);
+    buffer.emit(&[encode_modrm(MODE_R, reg, rm)]);
 }
 
 // Prefixes and encoding

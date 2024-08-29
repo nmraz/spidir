@@ -1,0 +1,29 @@
+# run: codegen
+
+func @and64:i64(i64, i64) {
+    # check: function `and64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov rax, rdi
+    # nextln: 0x0007: and rax, rsi
+    # nextln: 0x000a: pop rbp
+    # nextln: 0x000b: ret
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %val:i64 = and %a, %b
+    return %c, %val
+}
+
+func @and32:i32(i32, i32) {
+    # check: function `and32`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov rax, rdi
+    # nextln: 0x0007: and eax, esi
+    # nextln: 0x0009: pop rbp
+    # nextln: 0x000a: ret
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %val:i32 = and %a, %b
+    return %c, %val
+}

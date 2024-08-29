@@ -1,6 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::{anyhow, bail, Result};
+use codegen::CodegenProvider;
 use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{module::Module, write::quote_ident};
@@ -19,6 +20,7 @@ use self::{
 };
 
 mod cfg;
+mod codegen;
 mod domtree;
 mod graphviz;
 mod isel;
@@ -54,6 +56,7 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> 
         "graphviz[loops]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Loops))),
         "isel" => Ok(Box::new(IselProvider)),
         "isel-regalloc" => Ok(Box::new(IselRegallocProvider)),
+        "codegen" => Ok(Box::new(CodegenProvider)),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),
         "schedule" => Ok(Box::new(ScheduleProvider)),
         "verify-err" => Ok(Box::new(VerifyErrProvider)),

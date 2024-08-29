@@ -25,5 +25,7 @@ regex = "1.9.3"
 glob = "0.3.1"
 rayon = "1.10.0"
 
+capstone = "0.12.0"
+
 [dev-dependencies]
 expect-test.workspace = true

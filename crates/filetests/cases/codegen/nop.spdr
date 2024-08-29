@@ -1,0 +1,12 @@
+# run: codegen
+
+func @nop() {
+    # check: function `nop`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: pop rbp
+    # nextln: 0x0005: ret
+
+    %0:ctrl = entry
+    return %0
+}

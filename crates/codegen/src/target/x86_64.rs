@@ -30,13 +30,13 @@ pub const REG_R13: PhysReg = PhysReg::new(13);
 pub const REG_R14: PhysReg = PhysReg::new(14);
 pub const REG_R15: PhysReg = PhysReg::new(15);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OperandSize {
     S32,
     S64,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FullOperandSize {
     S8,
     S16,
@@ -44,7 +44,7 @@ pub enum FullOperandSize {
     S64,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExtWidth {
     Ext8_32,
     Ext8_64,
@@ -53,14 +53,14 @@ pub enum ExtWidth {
     Ext32_64,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConvertWordWidth {
     Cwd,
     Cdq,
     Cqo,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CondCode {
     /// Overflow (OF = 1)
     O,
@@ -96,7 +96,7 @@ pub enum CondCode {
     G,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AluOp {
     Add,
     And,
@@ -108,7 +108,7 @@ pub enum AluOp {
     Imul,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ShiftOp {
     Shl,
     Shr,

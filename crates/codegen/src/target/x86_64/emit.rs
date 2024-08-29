@@ -108,7 +108,7 @@ impl MachineEmit for X64Machine {
         }
 
         if let FrameRealign::AlignTo(align) = frame_info.realign {
-            todo!("realign frame to {align}");
+            emit_alu_r64i32(buffer, AluOp::And, REG_RSP, -align);
         }
     }
 

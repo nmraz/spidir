@@ -32,6 +32,12 @@ pub const REG_R15: PhysReg = PhysReg::new(15);
 
 #[derive(Debug, Clone, Copy)]
 pub enum OperandSize {
+    S32,
+    S64,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum FullOperandSize {
     S8,
     S16,
     S32,
@@ -129,11 +135,11 @@ pub enum X64Instr {
     },
     StackAddr(StackSlot),
     MovRStack(StackSlot, OperandSize),
-    MovStackR(StackSlot, OperandSize),
+    MovStackR(StackSlot, FullOperandSize),
     Push(OperandSize),
     AddSp(i32),
     MovRM(OperandSize),
-    MovMR(OperandSize),
+    MovMR(FullOperandSize),
     MovzxRM(ExtWidth),
     Ret,
     Call(FunctionRef),

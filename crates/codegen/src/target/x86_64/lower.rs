@@ -16,8 +16,9 @@ use crate::{
 };
 
 use super::{
-    AluOp, CondCode, ConvertWordWidth, ExtWidth, OperandSize, ShiftOp, X64Instr, X64Machine,
-    CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI,
+    AluOp, CondCode, ConvertWordWidth, ExtWidth, FullOperandSize, OperandSize, ShiftOp, X64Instr,
+    X64Machine, CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX,
+    REG_RSI,
 };
 
 const FIXED_ARG_COUNT: usize = 6;
@@ -315,7 +316,11 @@ fn select_exact_load(
     mem_size: MemSize,
     output: VirtReg,
 ) {
-    let op_size = operand_size_for_mem_size(mem_size);
+    let op_size = match mem_size {
+        MemSize::S4 => OperandSize::S32,
+        MemSize::S8 => OperandSize::S64,
+        _ => unreachable!(),
+    };
     match match_stack_slot(ctx, addr) {
         Some(stack_slot) => {
             ctx.emit_instr(
@@ -561,11 +566,11 @@ fn operand_size_for_ty(ty: Type) -> OperandSize {
     }
 }
 
-fn operand_size_for_mem_size(mem_size: MemSize) -> OperandSize {
+fn operand_size_for_mem_size(mem_size: MemSize) -> FullOperandSize {
     match mem_size {
-        MemSize::S1 => OperandSize::S8,
-        MemSize::S2 => OperandSize::S16,
-        MemSize::S4 => OperandSize::S32,
-        MemSize::S8 => OperandSize::S64,
+        MemSize::S1 => FullOperandSize::S8,
+        MemSize::S2 => FullOperandSize::S16,
+        MemSize::S4 => FullOperandSize::S32,
+        MemSize::S8 => FullOperandSize::S64,
     }
 }

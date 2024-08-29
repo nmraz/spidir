@@ -27,7 +27,7 @@ func @select_ne:i32(i32, i32, i32, i32) {
     # check: function `select_ne`:
     # nextln:       block0[%3:gpr($$rdi), %4:gpr($$rsi), %2:gpr($$rdx), %1:gpr($$rcx)]:
     # nextln: 0000:      AluRRm(S32, Cmp) %3(reg)[early], %4(any)[early]
-    # nextln: 0001:      Jumpcc(Le, block1, block3)
+    # nextln: 0001:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)

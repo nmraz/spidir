@@ -530,7 +530,7 @@ fn emit_alu_rr_discarded(
 fn cond_code_for_icmp(icmp: IcmpKind) -> CondCode {
     match icmp {
         IcmpKind::Eq => CondCode::E,
-        IcmpKind::Ne => CondCode::Le,
+        IcmpKind::Ne => CondCode::Ne,
         IcmpKind::Slt => CondCode::L,
         IcmpKind::Sle => CondCode::Le,
         IcmpKind::Ult => CondCode::B,

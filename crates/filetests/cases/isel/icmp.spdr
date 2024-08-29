@@ -44,7 +44,7 @@ func @icmp_ne64_64:i64(i64, i64) {
     # nextln:       block0[%2:gpr($$rdi), %3:gpr($$rsi)]:
     # nextln: 0000:      %1:gpr(reg)[late] = MovRZ
     # nextln: 0001:      AluRRm(S64, Cmp) %2(reg)[early], %3(any)[early]
-    # nextln: 0002:      %0:gpr(reg)[late] = Setcc(Le) %1(tied:0)[early]
+    # nextln: 0002:      %0:gpr(reg)[late] = Setcc(Ne) %1(tied:0)[early]
     # nextln: 0003:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry

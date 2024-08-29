@@ -1,6 +1,3 @@
-// Until things settle down a bit:
-#![allow(dead_code, unused)]
-
 use core::mem;
 
 use crate::{
@@ -25,7 +22,7 @@ impl FixupKind for X64Fixup {
         todo!()
     }
 
-    fn apply(&self, offset: u32, label_offset: u32, bytes: &mut [u8]) {
+    fn apply(&self, _offset: u32, _label_offset: u32, _bytes: &mut [u8]) {
         todo!()
     }
 }
@@ -42,7 +39,7 @@ enum FrameRestoreMethod {
 }
 
 pub struct X64FrameInfo {
-    frame_layout: FrameLayout,
+    _frame_layout: FrameLayout,
     saved_regs: PhysRegSet,
     raw_frame_size: i32,
     realign: FrameRealign,
@@ -86,7 +83,7 @@ impl MachineEmit for X64Machine {
         };
 
         X64FrameInfo {
-            frame_layout,
+            _frame_layout: frame_layout,
             saved_regs,
             raw_frame_size,
             realign,
@@ -139,7 +136,7 @@ impl MachineEmit for X64Machine {
 
     fn emit_copy(
         &self,
-        ctx: &EmitContext<Self>,
+        _ctx: &EmitContext<Self>,
         buffer: &mut CodeBuffer<Self>,
         from: OperandAssignment,
         to: OperandAssignment,

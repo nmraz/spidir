@@ -11,8 +11,8 @@ use crate::{
 };
 
 use super::{
-    X64Instr, X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8, REG_R9,
-    REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP,
+    AluOp, OperandSize, X64Instr, X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15,
+    REG_R8, REG_R9, REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -121,6 +121,12 @@ impl MachineEmit for X64Machine {
         uses: &[OperandAssignment],
     ) {
         match instr {
+            &X64Instr::AluRRm(op_size, AluOp::Add) => {
+                // TODO: spilled src.
+                let dest = defs[0].as_reg().unwrap();
+                let src = uses[1].as_reg().unwrap();
+                emit_add_rr(buffer, op_size, dest, src);
+            }
             X64Instr::Ret => {
                 emit_epilogue(buffer, &ctx.frame_info);
                 buffer.emit(&[0xc3]);
@@ -136,7 +142,8 @@ impl MachineEmit for X64Machine {
         from: OperandAssignment,
         to: OperandAssignment,
     ) {
-        todo!()
+        // TODO: spills.
+        emit_mov_rr(buffer, to.as_reg().unwrap(), from.as_reg().unwrap());
     }
 }
 
@@ -174,13 +181,22 @@ fn emit_pop(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
 
 fn emit_mov_rr(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, src: PhysReg) {
     let mut rex = RexPrefix::new();
-    rex.w = true;
+    rex.encode_operand_size(OperandSize::S64);
 
     let reg = rex.encode_modrm_reg(src);
     let rm = rex.encode_modrm_rm(dest);
 
     rex.emit(buffer);
     buffer.emit(&[0x89, encode_modrm(MODE_R, reg, rm)]);
+}
+
+fn emit_add_rr(
+    buffer: &mut CodeBuffer<X64Machine>,
+    op_size: OperandSize,
+    dest: PhysReg,
+    src: PhysReg,
+) {
+    emit_alu_rr(buffer, 0x1, op_size, dest, src);
 }
 
 fn emit_add_r64i32(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: i32) {
@@ -202,11 +218,26 @@ fn emit_alu_r64i32(
     imm: i32,
 ) {
     let mut rex = RexPrefix::new();
-    rex.w = true;
+    rex.encode_operand_size(OperandSize::S64);
     let rm = rex.encode_modrm_rm(dest);
     rex.emit(buffer);
     buffer.emit(&[opcode, encode_modrm(MODE_R, reg_opcode, rm)]);
     buffer.emit(&imm.to_le_bytes());
+}
+
+fn emit_alu_rr(
+    buffer: &mut CodeBuffer<X64Machine>,
+    opcode: u8,
+    op_size: OperandSize,
+    dest: PhysReg,
+    src: PhysReg,
+) {
+    let mut rex = RexPrefix::new();
+    rex.encode_operand_size(op_size);
+    rex.emit(buffer);
+    let rm = rex.encode_modrm_rm(dest);
+    let reg = rex.encode_modrm_reg(src);
+    buffer.emit(&[opcode, encode_modrm(MODE_R, reg, rm)]);
 }
 
 // Prefixes and encoding
@@ -232,6 +263,12 @@ impl RexPrefix {
             x: false,
             r: false,
             w: false,
+        }
+    }
+
+    fn encode_operand_size(&mut self, size: OperandSize) {
+        if size == OperandSize::S64 {
+            self.w = true;
         }
     }
 

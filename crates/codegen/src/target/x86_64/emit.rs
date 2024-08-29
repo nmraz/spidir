@@ -10,8 +10,9 @@ use crate::{
 };
 
 use super::{
-    AluOp, OperandSize, X64Instr, X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15,
-    REG_R8, REG_R9, REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP,
+    AluOp, CondCode, OperandSize, X64Instr, X64Machine, REG_R10, REG_R11, REG_R12, REG_R13,
+    REG_R14, REG_R15, REG_R8, REG_R9, REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX,
+    REG_RSI, REG_RSP,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -120,11 +121,28 @@ impl MachineEmit for X64Machine {
         uses: &[OperandAssignment],
     ) {
         match instr {
+            &X64Instr::AluRRm(op_size, op @ (AluOp::Cmp | AluOp::Test)) => {
+                // `cmp` and `test` are special because they don't have explicit outputs.
+
+                // TODO: spilled arg0.
+                let arg0 = uses[0].as_reg().unwrap();
+                let arg1 = uses[1].as_reg().unwrap();
+                emit_alu_op_rr(buffer, op, op_size, arg0, arg1);
+            }
             &X64Instr::AluRRm(op_size, op) => {
                 // TODO: spilled src.
                 let dest = defs[0].as_reg().unwrap();
                 let src = uses[1].as_reg().unwrap();
                 emit_alu_op_rr(buffer, op, op_size, dest, src);
+            }
+            &X64Instr::Setcc(code) => {
+                let dest = defs[0].as_reg().unwrap();
+                emit_setcc_r(buffer, code, dest);
+            }
+            X64Instr::MovRZ => {
+                let dest = defs[0].as_reg().unwrap();
+                // Note: renamers often recognize only the 32-bit instruction as a zeroing idiom.
+                emit_alu_op_rr(buffer, AluOp::Xor, OperandSize::S32, dest, dest);
             }
             X64Instr::Ret => {
                 emit_epilogue(buffer, &ctx.frame_info);
@@ -197,18 +215,29 @@ fn emit_sub_r64i32(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: i32)
     emit_alu_r64i32(buffer, 0x81, 5, dest, imm);
 }
 
+fn emit_setcc_r(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, dest: PhysReg) {
+    let mut rex = RexPrefix::new();
+    let rm = rex.encode_modrm_rm(dest);
+    rex.emit(buffer);
+    buffer.emit(&[
+        0xf,
+        0x90 | encode_cond_code(code),
+        encode_modrm(MODE_R, 0, rm),
+    ]);
+}
+
 // Instruction group emission helpers
 
 fn emit_alu_op_rr(
     buffer: &mut CodeBuffer<X64Machine>,
     op: AluOp,
     op_size: OperandSize,
-    dest: PhysReg,
-    src: PhysReg,
+    arg0: PhysReg,
+    arg1: PhysReg,
 ) {
     // By default, use the more "canonical" `op r/m, r` encoding.
-    let mut rm = dest;
-    let mut reg = src;
+    let mut rm = arg0;
+    let mut reg = arg1;
 
     let opcode: &[u8] = match op {
         AluOp::Add => &[0x1],
@@ -337,5 +366,26 @@ fn encode_reg(reg: PhysReg) -> u8 {
         REG_R15 => 15,
 
         _ => unreachable!("unknown register"),
+    }
+}
+
+fn encode_cond_code(code: CondCode) -> u8 {
+    match code {
+        CondCode::O => 0x0,
+        CondCode::No => 0x1,
+        CondCode::B => 0x2,
+        CondCode::Ae => 0x3,
+        CondCode::E => 0x4,
+        CondCode::Ne => 0x5,
+        CondCode::Be => 0x6,
+        CondCode::A => 0x7,
+        CondCode::S => 0x8,
+        CondCode::Ns => 0x9,
+        CondCode::P => 0xa,
+        CondCode::Np => 0xb,
+        CondCode::L => 0xc,
+        CondCode::Ge => 0xd,
+        CondCode::Le => 0xe,
+        CondCode::G => 0xf,
     }
 }

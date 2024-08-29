@@ -104,7 +104,7 @@ impl MachineEmit for X64Machine {
 
         if frame_info.raw_frame_size > 0 {
             // TODO: a push can be smaller for frames of size 8.
-            emit_sub_r64i32(buffer, REG_RSP, frame_info.raw_frame_size);
+            emit_alu_r64i32(buffer, AluOp::Sub, REG_RSP, frame_info.raw_frame_size);
         }
 
         if let FrameRealign::AlignTo(align) = frame_info.realign {
@@ -127,13 +127,13 @@ impl MachineEmit for X64Machine {
                 // TODO: spilled arg0.
                 let arg0 = uses[0].as_reg().unwrap();
                 let arg1 = uses[1].as_reg().unwrap();
-                emit_alu_op_rr(buffer, op, op_size, arg0, arg1);
+                emit_alu_rr(buffer, op, op_size, arg0, arg1);
             }
             &X64Instr::AluRRm(op_size, op) => {
                 // TODO: spilled src.
                 let dest = defs[0].as_reg().unwrap();
                 let src = uses[1].as_reg().unwrap();
-                emit_alu_op_rr(buffer, op, op_size, dest, src);
+                emit_alu_rr(buffer, op, op_size, dest, src);
             }
             &X64Instr::Setcc(code) => {
                 let dest = defs[0].as_reg().unwrap();
@@ -142,7 +142,7 @@ impl MachineEmit for X64Machine {
             X64Instr::MovRZ => {
                 let dest = defs[0].as_reg().unwrap();
                 // Note: renamers often recognize only the 32-bit instruction as a zeroing idiom.
-                emit_alu_op_rr(buffer, AluOp::Xor, OperandSize::S32, dest, dest);
+                emit_alu_rr(buffer, AluOp::Xor, OperandSize::S32, dest, dest);
             }
             X64Instr::Ret => {
                 emit_epilogue(buffer, &ctx.frame_info);
@@ -169,7 +169,7 @@ impl MachineEmit for X64Machine {
 fn emit_epilogue(buffer: &mut CodeBuffer<X64Machine>, frame_info: &X64FrameInfo) {
     match frame_info.restore_method {
         FrameRestoreMethod::None => {}
-        FrameRestoreMethod::AddSp(offset) => emit_add_r64i32(buffer, REG_RSP, offset),
+        FrameRestoreMethod::AddSp(offset) => emit_alu_r64i32(buffer, AluOp::Add, REG_RSP, offset),
         FrameRestoreMethod::FromRbp => emit_mov_rr(buffer, REG_RSP, REG_RBP),
     }
 
@@ -207,14 +207,6 @@ fn emit_mov_rr(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, src: PhysReg)
     buffer.emit(&[0x89, encode_modrm(MODE_R, reg, rm)]);
 }
 
-fn emit_add_r64i32(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: i32) {
-    emit_alu_r64i32(buffer, 0x81, 0, dest, imm);
-}
-
-fn emit_sub_r64i32(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: i32) {
-    emit_alu_r64i32(buffer, 0x81, 5, dest, imm);
-}
-
 fn emit_setcc_r(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, dest: PhysReg) {
     let mut rex = RexPrefix::new();
     let rm = rex.encode_modrm_rm(dest);
@@ -228,7 +220,7 @@ fn emit_setcc_r(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, dest: PhysR
 
 // Instruction group emission helpers
 
-fn emit_alu_op_rr(
+fn emit_alu_rr(
     buffer: &mut CodeBuffer<X64Machine>,
     op: AluOp,
     op_size: OperandSize,
@@ -254,32 +246,6 @@ fn emit_alu_op_rr(
         }
     };
 
-    emit_alu_rr(buffer, opcode, op_size, rm, reg);
-}
-
-// TODO: use imm8 when small enough.
-fn emit_alu_r64i32(
-    buffer: &mut CodeBuffer<X64Machine>,
-    opcode: u8,
-    reg_opcode: u8,
-    dest: PhysReg,
-    imm: i32,
-) {
-    let mut rex = RexPrefix::new();
-    rex.encode_operand_size(OperandSize::S64);
-    let rm = rex.encode_modrm_rm(dest);
-    rex.emit(buffer);
-    buffer.emit(&[opcode, encode_modrm(MODE_R, reg_opcode, rm)]);
-    buffer.emit(&imm.to_le_bytes());
-}
-
-fn emit_alu_rr(
-    buffer: &mut CodeBuffer<X64Machine>,
-    opcode: &[u8],
-    op_size: OperandSize,
-    rm: PhysReg,
-    reg: PhysReg,
-) {
     let mut rex = RexPrefix::new();
     rex.encode_operand_size(op_size);
     rex.emit(buffer);
@@ -287,6 +253,30 @@ fn emit_alu_rr(
     let reg = rex.encode_modrm_reg(reg);
     buffer.emit(opcode);
     buffer.emit(&[encode_modrm(MODE_R, reg, rm)]);
+}
+
+// TODO: use imm8 when small enough.
+fn emit_alu_r64i32(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, imm: i32) {
+    let (opcode, reg) = match op {
+        AluOp::Add => (0x81, 0x5),
+        AluOp::And => (0x81, 0x4),
+        AluOp::Cmp => (0x81, 0x7),
+        AluOp::Or => (0x81, 0x1),
+        AluOp::Sub => (0x81, 0x0),
+        AluOp::Test => {
+            // `test` is special. Who knows why.
+            (0xf7, 0x0)
+        }
+        AluOp::Xor => (0x81, 0x6),
+        AluOp::Imul => unimplemented!(),
+    };
+
+    let mut rex = RexPrefix::new();
+    rex.encode_operand_size(OperandSize::S64);
+    let rm = rex.encode_modrm_rm(dest);
+    rex.emit(buffer);
+    buffer.emit(&[opcode, encode_modrm(MODE_R, reg, rm)]);
+    buffer.emit(&imm.to_le_bytes());
 }
 
 // Prefixes and encoding

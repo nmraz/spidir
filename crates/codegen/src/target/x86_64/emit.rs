@@ -2,7 +2,7 @@
 #![allow(dead_code, unused)]
 
 use crate::{
-    emit::CodeBuffer,
+    emit::{CodeBuffer, EmitContext},
     frame::FrameLayout,
     lir::{Lir, PhysReg, PhysRegSet},
     machine::{FixupKind, MachineEmit},
@@ -92,7 +92,9 @@ impl MachineEmit for X64Machine {
         }
     }
 
-    fn emit_prologue(&self, frame_info: &X64FrameInfo, buffer: &mut CodeBuffer<Self>) {
+    fn emit_prologue(&self, ctx: &EmitContext<Self>, buffer: &mut CodeBuffer<Self>) {
+        let frame_info = &ctx.frame_info;
+
         emit_push(buffer, REG_RBP);
         emit_mov_rr(buffer, REG_RBP, REG_RSP);
 
@@ -112,7 +114,7 @@ impl MachineEmit for X64Machine {
 
     fn emit_instr(
         &self,
-        frame_info: &X64FrameInfo,
+        ctx: &EmitContext<Self>,
         buffer: &mut CodeBuffer<Self>,
         instr: &X64Instr,
         defs: &[OperandAssignment],
@@ -120,7 +122,7 @@ impl MachineEmit for X64Machine {
     ) {
         match instr {
             X64Instr::Ret => {
-                emit_epilogue(buffer, frame_info);
+                emit_epilogue(buffer, &ctx.frame_info);
                 buffer.emit(&[0xc3]);
             }
             _ => todo!(),
@@ -129,7 +131,7 @@ impl MachineEmit for X64Machine {
 
     fn emit_copy(
         &self,
-        frame_info: &X64FrameInfo,
+        ctx: &EmitContext<Self>,
         buffer: &mut CodeBuffer<Self>,
         from: OperandAssignment,
         to: OperandAssignment,

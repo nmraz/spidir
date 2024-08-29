@@ -21,11 +21,18 @@ struct Fixup<F> {
 pub struct CodeBuffer<M: MachineEmit> {
     bytes: Vec<u8>,
     labels: PrimaryMap<Label, Option<u32>>,
-    block_map: SecondaryMap<Block, Label>,
     fixups: Vec<Fixup<M::Fixup>>,
 }
 
 impl<M: MachineEmit> CodeBuffer<M> {
+    pub fn new() -> Self {
+        Self {
+            bytes: Vec::new(),
+            labels: PrimaryMap::new(),
+            fixups: Vec::new(),
+        }
+    }
+
     pub fn offset(&self) -> u32 {
         self.bytes.len().try_into().unwrap()
     }
@@ -54,10 +61,17 @@ impl<M: MachineEmit> CodeBuffer<M> {
     pub fn resolve_label(&self, label: Label) -> Option<u32> {
         self.labels[label]
     }
+}
 
-    pub fn block_label(&self, block: Block) -> Label {
-        self.block_map[block]
+impl<M: MachineEmit> Default for CodeBuffer<M> {
+    fn default() -> Self {
+        Self::new()
     }
+}
+
+pub struct EmitContext<M: MachineEmit> {
+    pub frame_info: M::FrameInfo,
+    pub block_labels: SecondaryMap<Block, Label>,
 }
 
 pub fn emit_code<M: MachineEmit>(
@@ -67,29 +81,32 @@ pub fn emit_code<M: MachineEmit>(
     machine: &M,
 ) -> Vec<u8> {
     let frame_info = machine.compute_frame_info(lir, assignment);
+    let mut ctx = EmitContext {
+        frame_info,
+        block_labels: SecondaryMap::with_default(Label::reserved_value()),
+    };
 
     let mut buffer = CodeBuffer::<M> {
         bytes: Vec::new(),
         labels: PrimaryMap::new(),
-        block_map: SecondaryMap::with_default(Label::reserved_value()),
         fixups: Vec::new(),
     };
 
     for &block in &cfg_context.block_order {
         let label = buffer.create_label();
-        buffer.block_map[block] = label;
+        ctx.block_labels[block] = label;
     }
 
-    machine.emit_prologue(&frame_info, &mut buffer);
+    machine.emit_prologue(&ctx, &mut buffer);
 
     for &block in &cfg_context.block_order {
-        buffer.bind_label(buffer.block_label(block));
+        buffer.bind_label(ctx.block_labels[block]);
 
         for instr in assignment.instrs_and_copies(lir.block_instrs(block)) {
             match instr {
                 InstrOrCopy::Instr(instr) => {
                     machine.emit_instr(
-                        &frame_info,
+                        &ctx,
                         &mut buffer,
                         lir.instr_data(instr),
                         assignment.instr_def_assignments(instr),
@@ -97,7 +114,7 @@ pub fn emit_code<M: MachineEmit>(
                     );
                 }
                 InstrOrCopy::Copy(copy) => {
-                    machine.emit_copy(&frame_info, &mut buffer, copy.from, copy.to);
+                    machine.emit_copy(&ctx, &mut buffer, copy.from, copy.to);
                 }
             }
         }

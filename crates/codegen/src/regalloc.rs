@@ -49,6 +49,20 @@ impl OperandAssignment {
     pub fn is_reg(&self) -> bool {
         matches!(self, Self::Reg(..))
     }
+
+    pub fn as_reg(&self) -> Option<PhysReg> {
+        match self {
+            &Self::Reg(reg) => Some(reg),
+            _ => None,
+        }
+    }
+
+    pub fn as_spill(&self) -> Option<SpillSlot> {
+        match self {
+            &Self::Spill(spill) => Some(spill),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Default)]

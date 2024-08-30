@@ -104,8 +104,7 @@ impl MachineEmit for X64Machine {
         }
 
         if frame_info.raw_frame_size > 0 {
-            // TODO: a push can be smaller for frames of size 8.
-            emit_alu_r64i32(buffer, AluOp::Sub, REG_RSP, frame_info.raw_frame_size);
+            emit_add_sp(buffer, -frame_info.raw_frame_size);
         }
 
         if let FrameRealign::AlignTo(align) = frame_info.realign {
@@ -145,6 +144,7 @@ impl MachineEmit for X64Machine {
                 // Note: renamers often recognize only the 32-bit instruction as a zeroing idiom.
                 emit_alu_rr(buffer, AluOp::Xor, OperandSize::S32, dest, dest);
             }
+            &X64Instr::AddSp(offset) => emit_add_sp(buffer, offset),
             X64Instr::Ret => {
                 emit_epilogue(buffer, &ctx.frame_info);
                 buffer.emit(&[0xc3]);
@@ -170,7 +170,7 @@ impl MachineEmit for X64Machine {
 fn emit_epilogue(buffer: &mut CodeBuffer<X64Machine>, frame_info: &X64FrameInfo) {
     match frame_info.restore_method {
         FrameRestoreMethod::None => {}
-        FrameRestoreMethod::AddSp(offset) => emit_alu_r64i32(buffer, AluOp::Add, REG_RSP, offset),
+        FrameRestoreMethod::AddSp(offset) => emit_add_sp(buffer, offset),
         FrameRestoreMethod::FromRbp => emit_mov_rr(buffer, REG_RSP, REG_RBP),
     }
 
@@ -179,6 +179,17 @@ fn emit_epilogue(buffer: &mut CodeBuffer<X64Machine>, frame_info: &X64FrameInfo)
     }
 
     emit_pop(buffer, REG_RBP);
+}
+
+fn emit_add_sp(buffer: &mut CodeBuffer<X64Machine>, offset: i32) {
+    if offset == -8 {
+        // This generates smaller code without penalizing performance.
+        emit_push(buffer, REG_RAX);
+    } else if offset < 0 {
+        emit_alu_r64i32(buffer, AluOp::Sub, REG_RSP, -offset);
+    } else {
+        emit_alu_r64i32(buffer, AluOp::Add, REG_RSP, offset);
+    }
 }
 
 // Single-instruction emission helpers

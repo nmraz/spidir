@@ -12,3 +12,5 @@ pub mod machine;
 pub mod regalloc;
 pub mod schedule;
 pub mod target;
+
+mod num_utils;

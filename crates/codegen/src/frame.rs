@@ -7,6 +7,7 @@ use cranelift_entity::SecondaryMap;
 use crate::{
     lir::{Lir, MemLayout, StackSlot},
     machine::MachineCore,
+    num_utils::align_up,
     regalloc::{Assignment, SpillSlot},
 };
 
@@ -73,10 +74,6 @@ impl FrameLayout {
     }
 }
 
-fn align_up(val: u32, align: u32) -> u32 {
-    (val + align - 1) & 0u32.wrapping_sub(align)
-}
-
 enum AllocOrSpill {
     Alloc(StackSlot),
     Spill(SpillSlot),
@@ -91,17 +88,4 @@ struct FrameObject {
 fn frame_object_sort_key(obj: &FrameObject) -> u64 {
     // Sort by alignment, break ties with size.
     (obj.layout.align as u64) << 32 | obj.layout.size as u64
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn align_up_works() {
-        assert_eq!(align_up(2, 4), 4);
-        assert_eq!(align_up(0, 4), 0);
-        assert_eq!(align_up(3, 16), 16);
-        assert_eq!(align_up(32, 16), 32);
-    }
 }

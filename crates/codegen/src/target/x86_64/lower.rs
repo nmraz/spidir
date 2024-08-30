@@ -152,8 +152,11 @@ impl MachineLower for X64Machine {
                     _ => {
                         let full_width = ty.bit_width().unwrap() as u8;
                         let shift_width = full_width - width;
-                        emit_shift_ri(ctx, ty, input, shift_width, output, ShiftOp::Shl);
-                        emit_shift_ri(ctx, ty, input, shift_width, output, ShiftOp::Sar);
+                        let input = ctx.get_value_vreg(input);
+                        let output = ctx.get_value_vreg(output);
+                        let temp = ctx.create_temp_vreg(RC_GPR);
+                        emit_shift_ri(ctx, ty, input, shift_width, temp, ShiftOp::Shl);
+                        emit_shift_ri(ctx, ty, temp, shift_width, output, ShiftOp::Sar);
                     }
                 }
             }
@@ -440,13 +443,11 @@ fn emit_movsx_rr(
 fn emit_shift_ri(
     ctx: &mut IselContext<'_, '_, X64Machine>,
     ty: Type,
-    input: DepValue,
+    input: VirtReg,
     amount: u8,
-    output: DepValue,
+    output: VirtReg,
     op: ShiftOp,
 ) {
-    let input = ctx.get_value_vreg(input);
-    let output = ctx.get_value_vreg(output);
     ctx.emit_instr(
         X64Instr::ShiftRmI(operand_size_for_ty(ty), op, amount),
         &[DefOperand::any(output)],

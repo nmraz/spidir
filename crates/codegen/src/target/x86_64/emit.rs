@@ -5,7 +5,7 @@ use crate::{
     frame::FrameLayout,
     lir::{Lir, PhysReg, PhysRegSet},
     machine::{FixupKind, MachineEmit},
-    num_utils::align_up,
+    num_utils::{align_up, is_sint},
     regalloc::{Assignment, OperandAssignment},
     target::x86_64::CALLEE_SAVED_REGS,
 };
@@ -108,7 +108,7 @@ impl MachineEmit for X64Machine {
         }
 
         if let FrameRealign::AlignTo(align) = frame_info.realign {
-            emit_alu_r64i32(buffer, AluOp::And, REG_RSP, -align);
+            emit_alu_r64i(buffer, AluOp::And, REG_RSP, -align);
         }
     }
 
@@ -186,9 +186,9 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Machine>, offset: i32) {
         // This generates smaller code without penalizing performance.
         emit_push(buffer, REG_RAX);
     } else if offset < 0 {
-        emit_alu_r64i32(buffer, AluOp::Sub, REG_RSP, -offset);
+        emit_alu_r64i(buffer, AluOp::Sub, REG_RSP, -offset);
     } else {
-        emit_alu_r64i32(buffer, AluOp::Add, REG_RSP, offset);
+        emit_alu_r64i(buffer, AluOp::Add, REG_RSP, offset);
     }
 }
 
@@ -267,19 +267,23 @@ fn emit_alu_rr(
     buffer.emit(&[encode_modrm(MODE_R, reg, rm)]);
 }
 
-// TODO: use imm8 when small enough.
-fn emit_alu_r64i32(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, imm: i32) {
-    let (opcode, reg) = match op {
-        AluOp::Add => (0x81, 0x0),
-        AluOp::And => (0x81, 0x4),
-        AluOp::Cmp => (0x81, 0x7),
-        AluOp::Or => (0x81, 0x1),
-        AluOp::Sub => (0x81, 0x5),
+fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, imm: i32) {
+    let mut is_imm8 = is_sint::<8>(imm as u64);
+    let mut opcode = if is_imm8 { 0x83 } else { 0x81 };
+
+    let reg = match op {
+        AluOp::Add => 0x0,
+        AluOp::And => 0x4,
+        AluOp::Cmp => 0x7,
+        AluOp::Or => 0x1,
+        AluOp::Sub => 0x5,
         AluOp::Test => {
             // `test` is special. Who knows why.
-            (0xf7, 0x0)
+            opcode = 0xf7;
+            is_imm8 = false;
+            0x0
         }
-        AluOp::Xor => (0x81, 0x6),
+        AluOp::Xor => 0x6,
         AluOp::Imul => unimplemented!(),
     };
 
@@ -288,7 +292,12 @@ fn emit_alu_r64i32(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg
     let rm = rex.encode_modrm_rm(dest);
     rex.emit(buffer);
     buffer.emit(&[opcode, encode_modrm(MODE_R, reg, rm)]);
-    buffer.emit(&imm.to_le_bytes());
+
+    if is_imm8 {
+        buffer.emit(&[imm as u8]);
+    } else {
+        buffer.emit(&imm.to_le_bytes());
+    }
 }
 
 // Prefixes and encoding

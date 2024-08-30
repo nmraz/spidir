@@ -10,10 +10,10 @@ func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
     # nextln: 0x000d: mov rcx, qword ptr [rbp + 0x18]
     # nextln: 0x0011: mov rdx, qword ptr [rbp + 0x10]
     # nextln: 0x0015: add rax, rsi
-    # nextln: 0x0018: add rax, rdx
+    # nextln: 0x0018: add rax, r10
     # nextln: 0x001b: add rax, rdi
-    # nextln: 0x001e: add rax, rax
-    # nextln: 0x0021: add rax, rcx
+    # nextln: 0x001e: add rax, r8
+    # nextln: 0x0021: add rax, r9
     # nextln: 0x0024: add rax, rdx
     # nextln: 0x0027: add rax, rcx
     # nextln: 0x002a: pop rbp

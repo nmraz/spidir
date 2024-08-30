@@ -288,9 +288,11 @@ fn emit_alu_rr(
 
     let mut rex = RexPrefix::new();
     rex.encode_operand_size(op_size);
-    rex.emit(buffer);
+
     let rm = rex.encode_modrm_rm(rm);
     let reg = rex.encode_modrm_reg(reg);
+
+    rex.emit(buffer);
     buffer.emit(opcode);
     buffer.emit(&[encode_modrm(MODE_R, reg, rm)]);
 }
@@ -402,7 +404,7 @@ impl RexPrefix {
         reg & 0b111
     }
 
-    fn emit(&self, buffer: &mut CodeBuffer<X64Machine>) {
+    fn emit(self, buffer: &mut CodeBuffer<X64Machine>) {
         let value = 0x40
             | (self.b as u8)
             | ((self.x as u8) << 1)

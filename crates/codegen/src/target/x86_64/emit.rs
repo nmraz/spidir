@@ -270,11 +270,11 @@ fn emit_alu_rr(
 // TODO: use imm8 when small enough.
 fn emit_alu_r64i32(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, imm: i32) {
     let (opcode, reg) = match op {
-        AluOp::Add => (0x81, 0x5),
+        AluOp::Add => (0x81, 0x0),
         AluOp::And => (0x81, 0x4),
         AluOp::Cmp => (0x81, 0x7),
         AluOp::Or => (0x81, 0x1),
-        AluOp::Sub => (0x81, 0x0),
+        AluOp::Sub => (0x81, 0x5),
         AluOp::Test => {
             // `test` is special. Who knows why.
             (0xf7, 0x0)

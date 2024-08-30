@@ -16,9 +16,8 @@ use crate::{
 };
 
 use super::{
-    AluOp, CondCode, ConvertWordWidth, ExtWidth, FullOperandSize, OperandSize, ShiftOp, X64Instr,
-    X64Machine, CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX,
-    REG_RSI,
+    AluOp, CondCode, ExtWidth, FullOperandSize, OperandSize, ShiftOp, X64Instr, X64Machine,
+    CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI,
 };
 
 const FIXED_ARG_COUNT: usize = 6;
@@ -400,7 +399,7 @@ fn emit_sdiv(
 
     let rdx_in = ctx.create_temp_vreg(RC_GPR);
     ctx.emit_instr(
-        X64Instr::ConvertWord(cw_width_for_ty(ty)),
+        X64Instr::ConvertWord(operand_size_for_ty(ty)),
         &[DefOperand::fixed(rdx_in, REG_RDX)],
         &[UseOperand::fixed(op1, REG_RAX)],
     );
@@ -541,14 +540,6 @@ fn load_ext_width_for_ty(ty: Type, mem_size: MemSize) -> ExtWidth {
         (Type::I64, MemSize::S2) => ExtWidth::Ext16_64,
         (Type::I64, MemSize::S4) => ExtWidth::Ext32_64,
         _ => panic!("unsupported extending load type ({ty}, {mem_size:?})"),
-    }
-}
-
-fn cw_width_for_ty(ty: Type) -> ConvertWordWidth {
-    match ty {
-        Type::I32 => ConvertWordWidth::Cdq,
-        Type::I64 => ConvertWordWidth::Cqo,
-        _ => panic!("unexpected type {ty}"),
     }
 }
 

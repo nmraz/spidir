@@ -145,6 +145,9 @@ impl MachineEmit for X64Machine {
                 // Note: renamers often recognize only the 32-bit instruction as a zeroing idiom.
                 emit_alu_rr(buffer, AluOp::Xor, OperandSize::S32, dest, dest);
             }
+            &X64Instr::MovRRbp { offset } => {
+                emit_mov_r_rbp_disp(buffer, defs[0].as_reg().unwrap(), offset)
+            }
             &X64Instr::AddSp(offset) => emit_add_sp(buffer, offset),
             X64Instr::Ret => {
                 emit_epilogue(buffer, &ctx.frame_info);
@@ -207,6 +210,30 @@ fn emit_pop(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
     let reg = rex.encode_modrm_rm(reg);
     rex.emit(buffer);
     buffer.emit(&[0x58 + reg]);
+}
+
+fn emit_mov_r_rbp_disp(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, disp: i32) {
+    let mut rex = RexPrefix::new();
+    rex.encode_operand_size(OperandSize::S64);
+
+    let dest = rex.encode_modrm_reg(dest);
+
+    let mode = if disp == 0 {
+        MODE_M
+    } else if is_sint::<8>(disp as u64) {
+        MODE_M_DISP8
+    } else {
+        MODE_M_DISP32
+    };
+
+    rex.emit(buffer);
+    buffer.emit(&[0x8b, encode_modrm(mode, dest, RM_BP)]);
+    match mode {
+        MODE_M => {}
+        MODE_M_DISP8 => buffer.emit(&[disp as u8]),
+        MODE_M_DISP32 => buffer.emit(&disp.to_le_bytes()),
+        _ => unreachable!(),
+    }
 }
 
 fn emit_mov_rr(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, src: PhysReg) {
@@ -328,7 +355,13 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
 // Prefixes and encoding
 
 // Addressing modes for the ModRM byte
+const MODE_M: u8 = 0b00;
+const MODE_M_DISP8: u8 = 0b01;
+const MODE_M_DISP32: u8 = 0b10;
 const MODE_R: u8 = 0b11;
+
+// RM encodings for memory addressing modes
+const RM_BP: u8 = 0b101;
 
 fn encode_modrm(mode: u8, reg: u8, rm: u8) -> u8 {
     (mode << 6) | (reg << 3) | rm

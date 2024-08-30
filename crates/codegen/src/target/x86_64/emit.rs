@@ -5,6 +5,7 @@ use crate::{
     frame::FrameLayout,
     lir::{Lir, PhysReg, PhysRegSet},
     machine::{FixupKind, MachineEmit},
+    num_utils::align_up,
     regalloc::{Assignment, OperandAssignment},
     target::x86_64::CALLEE_SAVED_REGS,
 };
@@ -59,7 +60,7 @@ impl MachineEmit for X64Machine {
             &assignment.compute_global_clobbers(lir) & &PhysRegSet::from_iter(CALLEE_SAVED_REGS);
 
         let full_frame_layout = frame_layout.full_layout;
-        let mut raw_frame_size = full_frame_layout.size;
+        let mut raw_frame_size = align_up(full_frame_layout.size, DEFAULT_FRAME_ALIGN);
 
         let realign = if full_frame_layout.align > DEFAULT_FRAME_ALIGN {
             FrameRealign::AlignTo(full_frame_layout.align.try_into().unwrap())

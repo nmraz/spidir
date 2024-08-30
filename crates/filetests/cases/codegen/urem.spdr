@@ -1,0 +1,33 @@
+# run: codegen
+
+func @urem64:i64(i64, i64) {
+    # check: function `urem64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov rax, rdi
+    # nextln: 0x0007: xor edx, edx
+    # nextln: 0x0009: div rsi
+    # nextln: 0x000c: mov rax, rdx
+    # nextln: 0x000f: pop rbp
+    # nextln: 0x0010: ret
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %c2:ctrl, %val:i64 = urem %c, %a, %b
+    return %c2, %val
+}
+
+func @urem32:i32(i32, i32) {
+    # check: function `urem32`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov rax, rdi
+    # nextln: 0x0007: xor edx, edx
+    # nextln: 0x0009: div esi
+    # nextln: 0x000b: mov rax, rdx
+    # nextln: 0x000e: pop rbp
+    # nextln: 0x000f: ret
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %c2:ctrl, %val:i32 = urem %c, %a, %b
+    return %c2, %val
+}

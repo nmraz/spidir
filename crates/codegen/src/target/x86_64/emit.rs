@@ -135,6 +135,14 @@ impl MachineEmit for X64Machine {
                 let src = uses[1].as_reg().unwrap();
                 emit_alu_rr(buffer, op, op_size, dest, src);
             }
+            &X64Instr::Div(op_size) => emit_div_r(buffer, 0x6, op_size, uses[2].as_reg().unwrap()),
+            &X64Instr::Idiv(op_size) => emit_div_r(buffer, 0x7, op_size, uses[2].as_reg().unwrap()),
+            &X64Instr::ConvertWord(op_size) => {
+                let mut rex = RexPrefix::new();
+                rex.encode_operand_size(op_size);
+                rex.emit(buffer);
+                buffer.emit(&[0x99]);
+            }
             &X64Instr::Setcc(code) => {
                 let dest = defs[0].as_reg().unwrap();
                 emit_setcc_r(buffer, code, dest);
@@ -295,6 +303,19 @@ fn emit_alu_rr(
     rex.emit(buffer);
     buffer.emit(opcode);
     buffer.emit(&[encode_modrm(MODE_R, reg, rm)]);
+}
+
+fn emit_div_r(
+    buffer: &mut CodeBuffer<X64Machine>,
+    reg_opcode: u8,
+    op_size: OperandSize,
+    arg: PhysReg,
+) {
+    let mut rex = RexPrefix::new();
+    rex.encode_operand_size(op_size);
+    let arg = rex.encode_modrm_rm(arg);
+    rex.emit(buffer);
+    buffer.emit(&[0xf7, encode_modrm(MODE_R, reg_opcode, arg)]);
 }
 
 fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {

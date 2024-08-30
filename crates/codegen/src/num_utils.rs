@@ -7,6 +7,15 @@ pub fn align_up(val: u32, align: u32) -> u32 {
     align_down(val + align - 1, align)
 }
 
+pub fn is_uint<const N: u32>(val: u64) -> bool {
+    debug_assert!(N > 0);
+    debug_assert!(N <= 64);
+
+    // Shift by `N`, folding to zero when the high bit is shifted out completely.
+    let bound = (1u64 << (N - 1)) << 1;
+    val & bound.wrapping_sub(1) == val
+}
+
 pub fn is_sint<const N: u32>(val: u64) -> bool {
     debug_assert!(N > 0);
     debug_assert!(N <= 64);
@@ -33,6 +42,18 @@ mod tests {
         assert_eq!(align_up(0, 4), 0);
         assert_eq!(align_up(3, 16), 16);
         assert_eq!(align_up(32, 16), 32);
+    }
+
+    #[test]
+    fn is_uint_works() {
+        assert!(is_uint::<1>(0));
+        assert!(is_uint::<1>(1));
+        assert!(!is_uint::<1>(3));
+        assert!(is_uint::<8>(u8::MAX as u64));
+        assert!(!is_uint::<8>(-5i64 as u64));
+        assert!(is_uint::<32>(u32::MAX as u64));
+        assert!(!is_uint::<32>(u32::MAX as u64 + 1));
+        assert!(is_uint::<64>(u64::MAX));
     }
 
     #[test]

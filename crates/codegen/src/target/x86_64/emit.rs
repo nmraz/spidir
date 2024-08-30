@@ -5,7 +5,7 @@ use crate::{
     frame::FrameLayout,
     lir::{Lir, PhysReg, PhysRegSet},
     machine::{FixupKind, MachineEmit},
-    num_utils::{align_up, is_sint},
+    num_utils::{align_up, is_sint, is_uint},
     regalloc::{Assignment, OperandAssignment},
     target::x86_64::CALLEE_SAVED_REGS,
 };
@@ -139,6 +139,7 @@ impl MachineEmit for X64Machine {
                 let dest = defs[0].as_reg().unwrap();
                 emit_setcc_r(buffer, code, dest);
             }
+            &X64Instr::MovRI(_op_size, val) => emit_mov_ri(buffer, defs[0].as_reg().unwrap(), val),
             X64Instr::MovRZ => {
                 let dest = defs[0].as_reg().unwrap();
                 // Note: renamers often recognize only the 32-bit instruction as a zeroing idiom.
@@ -265,6 +266,30 @@ fn emit_alu_rr(
     let reg = rex.encode_modrm_reg(reg);
     buffer.emit(opcode);
     buffer.emit(&[encode_modrm(MODE_R, reg, rm)]);
+}
+
+fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
+    let mut rex = RexPrefix::new();
+    let dest = rex.encode_modrm_rm(dest);
+
+    if is_uint::<32>(imm) {
+        // Smallest case: move imm32 to r32, clearing upper bits.
+        rex.emit(buffer);
+        buffer.emit(&[0xb8 + dest]);
+        buffer.emit(&(imm as u32).to_le_bytes());
+    } else if is_sint::<32>(imm) {
+        // Next smallest case: sign-extend imm32 to r64.
+        rex.encode_operand_size(OperandSize::S64);
+        rex.emit(buffer);
+        buffer.emit(&[0xc7, encode_modrm(MODE_R, 0, dest)]);
+        buffer.emit(&(imm as u32).to_le_bytes());
+    } else {
+        // Large case: use full 64-bit immediate.
+        rex.encode_operand_size(OperandSize::S64);
+        rex.emit(buffer);
+        buffer.emit(&[0xb8 + dest]);
+        buffer.emit(&imm.to_le_bytes());
+    }
 }
 
 fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, imm: i32) {

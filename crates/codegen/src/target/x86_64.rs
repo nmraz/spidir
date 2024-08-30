@@ -125,7 +125,7 @@ pub enum X64Instr {
     ConvertWord(ConvertWordWidth),
     /// Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,
-    MovRI(OperandSize, u64),
+    MovRI(u64),
     MovzxRR(ExtWidth),
     MovsxRRm(ExtWidth),
     Setcc(CondCode),

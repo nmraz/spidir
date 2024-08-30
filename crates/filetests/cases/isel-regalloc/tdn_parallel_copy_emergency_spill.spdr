@@ -47,11 +47,11 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:       block0:
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:
-    # nextln: 0001:     $$rax = MovRI(S64, 0)
+    # nextln: 0001:     $$rax = MovRI(0)
     # nextln: 0002:     $$rcx = StackAddr(!0)
     # nextln: 0003:     $$rdx = StackAddr(!1)
     # nextln:           $$rsi = $$rdx
-    # nextln: 0004:     $$rbx = MovRI(S32, 0)
+    # nextln: 0004:     $$rbx = MovRI(0)
     # nextln: 0005:     $$rdx = StackAddr(!2)
     # nextln:           $$r8 = $$rdx
     # nextln: 0006:     $$r9 = StackAddr(!3)
@@ -73,18 +73,18 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0022:     MovStackR(!2, S64) $$rax
     # nextln: 0023:     Jump(block2)
     # nextln:       block2:
-    # nextln: 0024:     $$rax = MovRI(S32, 7)
+    # nextln: 0024:     $$rax = MovRI(7)
     # nextln:           $$r14 = $$rcx
     # nextln:           $$rcx = $$rax
     # nextln:           $$rax = $$rdi
-    # nextln: 0025:     $$r15 = MovRI(S32, 8)
+    # nextln: 0025:     $$r15 = MovRI(8)
     # nextln:           $$rdi = $$r8
     # nextln:           $$r8 = $$r9
     # nextln:           $$r9 = $$rsi
     # nextln:           $$rsi = $$r14
     # nextln:           $$r14 = $$r10
     # nextln:           $$r10 = $$rdi
-    # nextln: 0026:     $$rdi = MovRI(S32, 1)
+    # nextln: 0026:     $$rdi = MovRI(1)
     # nextln:           $$spill18 = $$rdi
     # nextln:           $$rdi = $$rsi
     # nextln:           $$rsi = $$spill18
@@ -95,9 +95,9 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:           $$r8 = $$r10
     # nextln:           $$r10 = $$r9
     # nextln:           $$r9 = $$r14
-    # nextln: 0027:     $$r14 = MovRI(S32, 32)
+    # nextln: 0027:     $$r14 = MovRI(32)
     # nextln:           $$spill17 = $$rcx
-    # nextln: 0028:     $$rcx = MovRI(S32, 15)
+    # nextln: 0028:     $$rcx = MovRI(15)
     # nextln:           $$spill5 = $$r9
     # nextln:           $$spill14 = $$rdi
     # nextln:           $$rdi = $$rcx
@@ -105,23 +105,23 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:           $$r11 = $$r12
     # nextln:           $$r12 = $$rdx
     # nextln:           $$rdx = $$spill17
-    # nextln: 0029:     $$rcx = MovRI(S32, 16)
+    # nextln: 0029:     $$rcx = MovRI(16)
     # nextln:           $$spill2 = $$r12
     # nextln:           $$spill18 = $$r9
     # nextln:           $$r9 = $$r11
     # nextln:           $$r11 = $$spill18
     # nextln:           $$spill17 = $$rdx
     # nextln:           $$r12 = $$spill5
-    # nextln: 0030:     $$rdx = MovRI(S32, 3)
+    # nextln: 0030:     $$rdx = MovRI(3)
     # nextln:           $$spill13 = $$r9
     # nextln:           $$spill1 = $$r8
     # nextln:           $$r9 = $$r11
     # nextln:           $$r11 = $$spill2
-    # nextln: 0031:     $$r8 = MovRI(S32, 64)
+    # nextln: 0031:     $$r8 = MovRI(64)
     # nextln:           $$spill2 = $$r11
     # nextln:           $$r11 = $$r12
     # nextln:           $$r12 = $$r10
-    # nextln: 0032:     $$r10 = MovRI(S32, 2)
+    # nextln: 0032:     $$r10 = MovRI(2)
     # nextln:           $$spill8 = $$r12
     # nextln:           $$spill9 = $$r9
     # nextln:           $$r12 = $$spill2
@@ -130,9 +130,9 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:           $$r12 = $$r11
     # nextln: 0034:     $$r11 = MovsxRRm(Ext32_64) $$r10
     # nextln:           $$spill5 = $$r12
-    # nextln: 0035:     $$r12 = MovRI(S32, 4294967168)
+    # nextln: 0035:     $$r12 = MovRI(4294967168)
     # nextln: 0036:     MovStackR(!8, S8) $$r12
-    # nextln: 0037:     $$r12 = MovRI(S32, 4294934528)
+    # nextln: 0037:     $$r12 = MovRI(4294934528)
     # nextln: 0038:     MovStackR(!0, S8) $$rsi
     # nextln: 0039:     MovStackR(!9, S8) $$r10
     # nextln: 0040:     MovStackR(!7, S16) $$r12

@@ -92,13 +92,8 @@ impl MachineLower for X64Machine {
         match ctx.node_kind(node) {
             NodeKind::IConst(val) => {
                 let [output] = ctx.node_outputs_exact(node);
-                let op_size = operand_size_for_ty(ctx.value_type(output));
                 let output = ctx.get_value_vreg(output);
-                ctx.emit_instr(
-                    X64Instr::MovRI(op_size, val),
-                    &[DefOperand::any_reg(output)],
-                    &[],
-                );
+                ctx.emit_instr(X64Instr::MovRI(val), &[DefOperand::any_reg(output)], &[]);
             }
             NodeKind::Iadd => emit_alu_rr(ctx, node, AluOp::Add),
             NodeKind::And => emit_alu_rr(ctx, node, AluOp::And),

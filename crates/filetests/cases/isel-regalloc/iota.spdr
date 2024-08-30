@@ -5,14 +5,14 @@ func @iota(ptr, i64) {
     # nextln: clobbers: rax, rcx, rdx, r8, r9
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln: 0000:     $$rax = MovRI(S64, 0)
+    # nextln: 0000:     $$rax = MovRI(0)
     # nextln: 0001:     AluRRm(S64, Cmp) $$rsi, $$rax
     # nextln: 0002:     Jumpcc(E, block1, block3)
     # nextln:       block1:
     # nextln: 0003:     Jump(block2)
     # nextln:       block3:
-    # nextln: 0004:     $$rcx = MovRI(S64, 3)
-    # nextln: 0005:     $$rdx = MovRI(S64, 1)
+    # nextln: 0004:     $$rcx = MovRI(3)
+    # nextln: 0005:     $$rdx = MovRI(1)
     # nextln: 0006:     Jump(block4)
     # nextln:       block4:
     # nextln:           $$r8 = $$rax

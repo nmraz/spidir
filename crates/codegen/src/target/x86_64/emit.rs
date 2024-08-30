@@ -139,7 +139,7 @@ impl MachineEmit for X64Machine {
                 let dest = defs[0].as_reg().unwrap();
                 emit_setcc_r(buffer, code, dest);
             }
-            &X64Instr::MovRI(_op_size, val) => emit_mov_ri(buffer, defs[0].as_reg().unwrap(), val),
+            &X64Instr::MovRI(val) => emit_mov_ri(buffer, defs[0].as_reg().unwrap(), val),
             X64Instr::MovRZ => {
                 let dest = defs[0].as_reg().unwrap();
                 // Note: renamers often recognize only the 32-bit instruction as a zeroing idiom.

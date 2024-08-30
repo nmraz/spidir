@@ -11,9 +11,9 @@ use crate::{
 };
 
 use super::{
-    AluOp, CondCode, OperandSize, X64Instr, X64Machine, REG_R10, REG_R11, REG_R12, REG_R13,
-    REG_R14, REG_R15, REG_R8, REG_R9, REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX,
-    REG_RSI, REG_RSP,
+    AluOp, CondCode, OperandSize, ShiftOp, X64Instr, X64Machine, REG_R10, REG_R11, REG_R12,
+    REG_R13, REG_R14, REG_R15, REG_R8, REG_R9, REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI,
+    REG_RDX, REG_RSI, REG_RSP,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -135,6 +135,11 @@ impl MachineEmit for X64Machine {
                 let src = uses[1].as_reg().unwrap();
                 emit_alu_rr(buffer, op, op_size, dest, src);
             }
+            &X64Instr::ShiftRmR(op_size, op) => {
+                // TODO: spilled arg.
+                emit_shift_r_cx(buffer, op, op_size, uses[0].as_reg().unwrap())
+            }
+            // TODO: spilled divisor.
             &X64Instr::Div(op_size) => emit_div_r(buffer, 0x6, op_size, uses[2].as_reg().unwrap()),
             &X64Instr::Idiv(op_size) => emit_div_r(buffer, 0x7, op_size, uses[2].as_reg().unwrap()),
             &X64Instr::ConvertWord(op_size) => {
@@ -316,6 +321,25 @@ fn emit_div_r(
     let arg = rex.encode_modrm_rm(arg);
     rex.emit(buffer);
     buffer.emit(&[0xf7, encode_modrm(MODE_R, reg_opcode, arg)]);
+}
+
+fn emit_shift_r_cx(
+    buffer: &mut CodeBuffer<X64Machine>,
+    op: ShiftOp,
+    op_size: OperandSize,
+    arg: PhysReg,
+) {
+    let reg_opcode = match op {
+        ShiftOp::Shl => 4,
+        ShiftOp::Shr => 5,
+        ShiftOp::Sar => 7,
+    };
+
+    let mut rex = RexPrefix::new();
+    rex.encode_operand_size(op_size);
+    let arg = rex.encode_modrm_rm(arg);
+    rex.emit(buffer);
+    buffer.emit(&[0xd3, encode_modrm(MODE_R, reg_opcode, arg)]);
 }
 
 fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {

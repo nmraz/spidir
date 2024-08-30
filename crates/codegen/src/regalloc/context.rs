@@ -4,7 +4,7 @@ use alloc::{collections::BTreeMap, vec, vec::Vec};
 use cranelift_entity::{EntitySet, PrimaryMap, SecondaryMap};
 use fx_utils::FxHashMap;
 use itertools::Itertools;
-use log::{debug, log_enabled};
+use log::{log_enabled, trace};
 use smallvec::SmallVec;
 
 use crate::{
@@ -58,33 +58,33 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
     }
 
     pub fn dump(&self) {
-        if !log_enabled!(log::Level::Debug) {
+        if !log_enabled!(log::Level::Trace) {
             return;
         }
 
-        debug!("liveranges:");
+        trace!("liveranges:");
         for (vreg, ranges) in self.vreg_ranges.iter() {
             if ranges.is_empty() {
                 continue;
             }
 
-            debug!("{}:", vreg);
+            trace!("{}:", vreg);
 
             for &range in ranges {
-                debug!("  {:?}", self.live_ranges[range].prog_range);
+                trace!("  {:?}", self.live_ranges[range].prog_range);
                 for instr in &self.live_ranges[range].instrs {
-                    debug!("    {instr:?}");
+                    trace!("    {instr:?}");
                 }
             }
         }
 
-        debug!("live fragments:");
+        trace!("live fragments:");
         for (fragment, fragment_data) in self.live_set_fragments.iter() {
             if fragment_data.ranges.is_empty() {
                 continue;
             }
 
-            debug!(
+            trace!(
                 "{fragment}({}): size {}, weight {}",
                 fragment_data
                     .assignment
@@ -94,12 +94,12 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
                 fragment_data.spill_weight,
             );
             for range in &fragment_data.ranges {
-                debug!("  {:?}", range.prog_range);
+                trace!("  {:?}", range.prog_range);
             }
         }
 
         if !self.lir.live_in_regs().is_empty() {
-            debug!(
+            trace!(
                 "live-in copies: {}",
                 self.lir
                     .live_in_regs()
@@ -111,7 +111,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             )
         }
 
-        debug!("phys reg reservations:");
+        trace!("phys reg reservations:");
 
         for preg_num in 0..M::phys_reg_count() {
             let reservations = &self.phys_reg_reservations[preg_num as usize];
@@ -119,30 +119,30 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
                 continue;
             }
 
-            debug!("{}:", M::reg_name(PhysReg::new(preg_num as u8)));
+            trace!("{}:", M::reg_name(PhysReg::new(preg_num as u8)));
 
             for reservation in reservations {
                 let range = reservation.prog_range;
                 if let Some(copied_live_range) = reservation.copied_live_range.expand() {
-                    debug!("  {range:?} ({})", self.live_ranges[copied_live_range].vreg);
+                    trace!("  {range:?} ({})", self.live_ranges[copied_live_range].vreg);
                 } else {
-                    debug!("  {range:?}");
+                    trace!("  {range:?}");
                 }
             }
         }
 
-        debug!("phys reg assignments:");
+        trace!("phys reg assignments:");
         for preg_num in 0..M::phys_reg_count() {
             let assignments = &self.phys_reg_assignments[preg_num as usize];
             if assignments.is_empty() {
                 continue;
             }
 
-            debug!("{}:", M::reg_name(PhysReg::new(preg_num as u8)));
+            trace!("{}:", M::reg_name(PhysReg::new(preg_num as u8)));
 
             for (&range_key, &live_range) in assignments {
                 let range = range_key.0;
-                debug!("  {range:?} ({})", self.live_ranges[live_range].vreg);
+                trace!("  {range:?} ({})", self.live_ranges[live_range].vreg);
             }
         }
     }

@@ -258,7 +258,7 @@ fn emit_mov_rr(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, src: PhysReg)
     let rm = rex.encode_modrm_rm(dest);
 
     rex.emit(buffer);
-    buffer.emit(&[0x89, encode_modrm(MODE_R, reg, rm)]);
+    buffer.emit(&[0x89, encode_modrm_r(reg, rm)]);
 }
 
 fn emit_mov_rm(
@@ -267,74 +267,21 @@ fn emit_mov_rm(
     dest: PhysReg,
     addr: BaseIndexOff,
 ) {
-    let mut rex = RexPrefix::new();
-    rex.encode_operand_size(op_size);
-    let dest = rex.encode_modrm_reg(dest);
+    let (rex, modrm_sib) = encode_mem_parts(addr, |rex| {
+        rex.encode_operand_size(op_size);
+        rex.encode_modrm_reg(dest)
+    });
 
-    let mode = if (addr.disp == 0 && addr.base != Some(REG_RBP)) || addr.base.is_none() {
-        MODE_M
-    } else if is_sint::<8>(addr.disp as u64) {
-        MODE_M_DISP8
-    } else {
-        MODE_M_DISP32
-    };
-
-    let need_sib = !matches!(
-        addr.base,
-        Some(REG_RAX | REG_RBX | REG_RCX | REG_RDX | REG_RBP | REG_RSI | REG_RDI)
-    ) || addr.index.is_some();
-
-    if need_sib {
-        let base = addr
-            .base
-            .map_or(SIB_BASE_NONE, |base| rex.encode_modrm_reg(base));
-        let rm = RM_SIB;
-        let (scale, index) = match addr.index {
-            Some((scale, index)) => {
-                let scale = match scale {
-                    IndexScale::One => 0,
-                    IndexScale::Two => 1,
-                    IndexScale::Four => 2,
-                    IndexScale::Eight => 3,
-                };
-                let index = rex.encode_sib_index(index);
-                (scale, index)
-            }
-            None => (0, SIB_INDEX_NONE),
-        };
-
-        let sib = (scale << 6) | (index << 3) | base;
-        rex.emit(buffer);
-        buffer.emit(&[0x8b, encode_modrm(mode, dest, rm)]);
-        buffer.emit(&[sib]);
-        match mode {
-            MODE_M => {}
-            MODE_M_DISP8 => buffer.emit(&[addr.disp as u8]),
-            MODE_M_DISP32 => buffer.emit(&addr.disp.to_le_bytes()),
-            _ => unreachable!(),
-        }
-    } else {
-        let rm = encode_reg(addr.base.unwrap());
-        rex.emit(buffer);
-        buffer.emit(&[0x8b, encode_modrm(mode, dest, rm)]);
-        match mode {
-            MODE_M => {}
-            MODE_M_DISP8 => buffer.emit(&[addr.disp as u8]),
-            MODE_M_DISP32 => buffer.emit(&addr.disp.to_le_bytes()),
-            _ => unreachable!(),
-        }
-    }
+    rex.emit(buffer);
+    buffer.emit(&[0x8b]);
+    modrm_sib.emit(buffer);
 }
 
 fn emit_setcc_r(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, dest: PhysReg) {
     let mut rex = RexPrefix::new();
     let rm = rex.encode_modrm_rm(dest);
     rex.emit(buffer);
-    buffer.emit(&[
-        0xf,
-        0x90 | encode_cond_code(code),
-        encode_modrm(MODE_R, 0, rm),
-    ]);
+    buffer.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, rm)]);
 }
 
 fn emit_movsx_rr(
@@ -363,7 +310,7 @@ fn emit_movsx_rr(
 
     rex.emit(buffer);
     buffer.emit(opcode);
-    buffer.emit(&[encode_modrm(MODE_R, dest, src)]);
+    buffer.emit(&[encode_modrm_r(dest, src)]);
 }
 
 // Instruction group emission helpers
@@ -402,7 +349,7 @@ fn emit_alu_rr(
 
     rex.emit(buffer);
     buffer.emit(opcode);
-    buffer.emit(&[encode_modrm(MODE_R, reg, rm)]);
+    buffer.emit(&[encode_modrm_r(reg, rm)]);
 }
 
 fn emit_div_r(
@@ -415,7 +362,7 @@ fn emit_div_r(
     rex.encode_operand_size(op_size);
     let arg = rex.encode_modrm_rm(arg);
     rex.emit(buffer);
-    buffer.emit(&[0xf7, encode_modrm(MODE_R, reg_opcode, arg)]);
+    buffer.emit(&[0xf7, encode_modrm_r(reg_opcode, arg)]);
 }
 
 fn emit_shift_r_cx(
@@ -430,7 +377,7 @@ fn emit_shift_r_cx(
     rex.encode_operand_size(op_size);
     let arg = rex.encode_modrm_rm(arg);
     rex.emit(buffer);
-    buffer.emit(&[0xd3, encode_modrm(MODE_R, reg_opcode, arg)]);
+    buffer.emit(&[0xd3, encode_modrm_r(reg_opcode, arg)]);
 }
 
 fn emit_shift_ri(
@@ -452,7 +399,7 @@ fn emit_shift_ri(
     rex.encode_operand_size(op_size);
     let arg = rex.encode_modrm_rm(arg);
     rex.emit(buffer);
-    buffer.emit(&[opcode, encode_modrm(MODE_R, reg_opcode, arg)]);
+    buffer.emit(&[opcode, encode_modrm_r(reg_opcode, arg)]);
     if emit_imm {
         buffer.emit(&[imm]);
     }
@@ -471,7 +418,7 @@ fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
         // Next smallest case: sign-extend imm32 to r64.
         rex.encode_operand_size(OperandSize::S64);
         rex.emit(buffer);
-        buffer.emit(&[0xc7, encode_modrm(MODE_R, 0, dest)]);
+        buffer.emit(&[0xc7, encode_modrm_r(0, dest)]);
         buffer.emit(&(imm as u32).to_le_bytes());
     } else {
         // Large case: use full 64-bit immediate.
@@ -506,7 +453,7 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
     rex.encode_operand_size(OperandSize::S64);
     let rm = rex.encode_modrm_rm(dest);
     rex.emit(buffer);
-    buffer.emit(&[opcode, encode_modrm(MODE_R, reg, rm)]);
+    buffer.emit(&[opcode, encode_modrm_r(reg, rm)]);
 
     if is_imm8 {
         buffer.emit(&[imm as u8]);
@@ -523,21 +470,33 @@ struct BaseIndexOff {
     disp: i32,
 }
 
-// Addressing modes for the ModRM byte
-const MODE_M: u8 = 0b00;
-const MODE_M_DISP8: u8 = 0b01;
-const MODE_M_DISP32: u8 = 0b10;
-const MODE_R: u8 = 0b11;
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+enum MemMode {
+    NoDisp = 0b00,
+    Disp8 = 0b01,
+    Disp32 = 0b11,
+}
 
-// RM encodings for memory addressing modes
-const RM_SIB: u8 = 0b100;
+struct ModRmSib {
+    modrm: u8,
+    sib: Option<u8>,
+    disp: i32,
+    mem_mode: MemMode,
+}
 
-// SIB encodings for lack of base/index registers.
-const SIB_BASE_NONE: u8 = 0b101;
-const SIB_INDEX_NONE: u8 = 0b100;
-
-fn encode_modrm(mode: u8, reg: u8, rm: u8) -> u8 {
-    (mode << 6) | (reg << 3) | rm
+impl ModRmSib {
+    fn emit(self, buffer: &mut CodeBuffer<X64Machine>) {
+        buffer.emit(&[self.modrm]);
+        if let Some(sib) = self.sib {
+            buffer.emit(&[sib]);
+        }
+        match self.mem_mode {
+            MemMode::NoDisp => {}
+            MemMode::Disp8 => buffer.emit(&[self.disp as u8]),
+            MemMode::Disp32 => buffer.emit(&self.disp.to_le_bytes()),
+        }
+    }
 }
 
 struct RexPrefix {
@@ -602,6 +561,84 @@ impl RexPrefix {
     }
 }
 
+fn encode_mem_parts(
+    addr: BaseIndexOff,
+    get_reg: impl FnOnce(&mut RexPrefix) -> u8,
+) -> (RexPrefix, ModRmSib) {
+    let mut rex = RexPrefix::new();
+    let reg = get_reg(&mut rex);
+
+    let mode = if (addr.disp == 0 && addr.base != Some(REG_RBP)) || addr.base.is_none() {
+        MemMode::NoDisp
+    } else if is_sint::<8>(addr.disp as u64) {
+        MemMode::Disp8
+    } else {
+        MemMode::Disp32
+    };
+
+    let need_sib = !matches!(
+        addr.base,
+        Some(REG_RAX | REG_RBX | REG_RCX | REG_RDX | REG_RBP | REG_RSI | REG_RDI)
+    ) || addr.index.is_some();
+
+    if need_sib {
+        let base = addr
+            .base
+            .map_or(SIB_BASE_NONE, |base| rex.encode_modrm_reg(base));
+        let rm = RM_SIB;
+        let (scale, index) = match addr.index {
+            Some((scale, index)) => {
+                let scale = match scale {
+                    IndexScale::One => 0,
+                    IndexScale::Two => 1,
+                    IndexScale::Four => 2,
+                    IndexScale::Eight => 3,
+                };
+                let index = rex.encode_sib_index(index);
+                (scale, index)
+            }
+            None => (0, SIB_INDEX_NONE),
+        };
+
+        let sib = (scale << 6) | (index << 3) | base;
+
+        (
+            rex,
+            ModRmSib {
+                modrm: encode_modrm_mem(mode, reg, rm),
+                sib: Some(sib),
+                disp: addr.disp,
+                mem_mode: mode,
+            },
+        )
+    } else {
+        // Note: we always need an SIB when no base is specified.
+        let rm = encode_reg(addr.base.unwrap());
+
+        (
+            rex,
+            ModRmSib {
+                modrm: encode_modrm_mem(mode, reg, rm),
+                sib: None,
+                disp: addr.disp,
+                mem_mode: mode,
+            },
+        )
+    }
+}
+
+fn encode_modrm_r(reg: u8, rm: u8) -> u8 {
+    encode_modrm(0b11, reg, rm)
+}
+
+fn encode_modrm_mem(mode: MemMode, reg: u8, rm: u8) -> u8 {
+    encode_modrm(mode as u8, reg, rm)
+}
+
+fn encode_modrm(mode: u8, reg: u8, rm: u8) -> u8 {
+    (mode << 6) | (reg << 3) | rm
+}
+
 fn encode_reg(reg: PhysReg) -> u8 {
     match reg {
         REG_RAX => 0,
@@ -654,3 +691,10 @@ fn encode_shift_op(op: ShiftOp) -> u8 {
         ShiftOp::Sar => 7,
     }
 }
+
+// RM encodings for memory addressing modes
+const RM_SIB: u8 = 0b100;
+
+// SIB encodings for lack of base/index registers.
+const SIB_BASE_NONE: u8 = 0b101;
+const SIB_INDEX_NONE: u8 = 0b100;

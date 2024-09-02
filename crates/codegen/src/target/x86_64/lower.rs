@@ -289,35 +289,10 @@ fn emit_call(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Functi
 fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {
     let [addr] = ctx.node_inputs_exact(node);
     let [output] = ctx.node_outputs_exact(node);
-    let ty = ctx.value_type(output);
 
     let output = ctx.get_value_vreg(output);
-    match (ty, mem_size) {
-        (Type::I32, mem_size @ MemSize::S4) | (Type::I64 | Type::Ptr, mem_size @ MemSize::S8) => {
-            select_exact_load(ctx, addr, mem_size, output)
-        }
-        _ => {
-            let addr = ctx.get_value_vreg(addr);
-            ctx.emit_instr(
-                X64Instr::MovzxRM(load_ext_width_for_ty(ty, mem_size)),
-                &[DefOperand::any_reg(output)],
-                &[UseOperand::any_reg(addr)],
-            )
-        }
-    }
-}
+    let op_size = operand_size_for_mem_size(mem_size);
 
-fn select_exact_load(
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    addr: DepValue,
-    mem_size: MemSize,
-    output: VirtReg,
-) {
-    let op_size = match mem_size {
-        MemSize::S4 => OperandSize::S32,
-        MemSize::S8 => OperandSize::S64,
-        _ => unreachable!(),
-    };
     match match_stack_slot(ctx, addr) {
         Some(stack_slot) => {
             ctx.emit_instr(
@@ -530,17 +505,6 @@ fn cond_code_for_icmp(icmp: IcmpKind) -> CondCode {
         IcmpKind::Sle => CondCode::Le,
         IcmpKind::Ult => CondCode::B,
         IcmpKind::Ule => CondCode::Be,
-    }
-}
-
-fn load_ext_width_for_ty(ty: Type, mem_size: MemSize) -> ExtWidth {
-    match (ty, mem_size) {
-        (Type::I32, MemSize::S1) => ExtWidth::Ext8_32,
-        (Type::I32, MemSize::S2) => ExtWidth::Ext16_32,
-        (Type::I64, MemSize::S1) => ExtWidth::Ext8_64,
-        (Type::I64, MemSize::S2) => ExtWidth::Ext16_64,
-        (Type::I64, MemSize::S4) => ExtWidth::Ext32_64,
-        _ => panic!("unsupported extending load type ({ty}, {mem_size:?})"),
     }
 }
 

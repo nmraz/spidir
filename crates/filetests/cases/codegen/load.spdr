@@ -1,0 +1,105 @@
+# run: codegen
+
+func @load1_i32:i32(ptr) {
+    # check: function `load1_i32`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: movzx eax, byte ptr [rdi]
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:i32 = load.1 %0, %1
+    return %2, %3
+}
+
+func @load2_i32:i32(ptr) {
+    # check: function `load2_i32`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: movzx eax, word ptr [rdi]
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:i32 = load.2 %0, %1
+    return %2, %3
+}
+
+func @load4_i32:i32(ptr) {
+    # check: function `load4_i32`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov eax, dword ptr [rdi]
+    # nextln: 0x0006: pop rbp
+    # nextln: 0x0007: ret
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:i32 = load.4 %0, %1
+    return %2, %3
+}
+
+func @load1_i64:i64(ptr) {
+    # check: function `load1_i64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: movzx eax, byte ptr [rdi]
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:i64 = load.1 %0, %1
+    return %2, %3
+}
+
+func @load2_i64:i64(ptr) {
+    # check: function `load2_i64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: movzx eax, word ptr [rdi]
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:i64 = load.2 %0, %1
+    return %2, %3
+}
+
+func @load4_i64:i64(ptr) {
+    # check: function `load4_i64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov eax, dword ptr [rdi]
+    # nextln: 0x0006: pop rbp
+    # nextln: 0x0007: ret
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:i64 = load.4 %0, %1
+    return %2, %3
+}
+
+func @load8_i64:i64(ptr) {
+    # check: function `load8_i64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov rax, qword ptr [rdi]
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:i64 = load.8 %0, %1
+    return %2, %3
+}
+
+func @load8_ptr:ptr(ptr) {
+    # check: function `load8_ptr`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov rax, qword ptr [rdi]
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:ptr = load.8 %0, %1
+    return %2, %3
+}

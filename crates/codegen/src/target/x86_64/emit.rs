@@ -11,9 +11,9 @@ use crate::{
 };
 
 use super::{
-    AluOp, CondCode, ExtWidth, IndexScale, OperandSize, ShiftOp, X64Instr, X64Machine, REG_R10,
-    REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8, REG_R9, REG_RAX, REG_RBP, REG_RBX,
-    REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP,
+    AluOp, CondCode, ExtWidth, FullOperandSize, IndexScale, OperandSize, ShiftOp, X64Instr,
+    X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8, REG_R9, REG_RAX,
+    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -178,7 +178,7 @@ impl MachineEmit for X64Machine {
             }
             &X64Instr::MovRRbp { offset } => emit_mov_rm(
                 buffer,
-                OperandSize::S64,
+                FullOperandSize::S64,
                 defs[0].as_reg().unwrap(),
                 BaseIndexOff {
                     base: Some(REG_RBP),
@@ -187,6 +187,16 @@ impl MachineEmit for X64Machine {
                 },
             ),
             &X64Instr::AddSp(offset) => emit_add_sp(buffer, offset),
+            &X64Instr::MovRM(full_op_size) => emit_mov_rm(
+                buffer,
+                full_op_size,
+                defs[0].as_reg().unwrap(),
+                BaseIndexOff {
+                    base: Some(uses[0].as_reg().unwrap()),
+                    index: None,
+                    disp: 0,
+                },
+            ),
             X64Instr::Ret => {
                 emit_epilogue(buffer, &ctx.frame_info);
                 buffer.emit(&[0xc3]);
@@ -263,17 +273,39 @@ fn emit_mov_rr(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, src: PhysReg)
 
 fn emit_mov_rm(
     buffer: &mut CodeBuffer<X64Machine>,
-    op_size: OperandSize,
+    full_op_size: FullOperandSize,
     dest: PhysReg,
     addr: BaseIndexOff,
 ) {
+    // For anything less than 64 bits, write to a 32-bit register, which will implicitly clear the
+    // high bits.
+    let op_size = match full_op_size {
+        FullOperandSize::S64 => OperandSize::S64,
+        _ => OperandSize::S32,
+    };
+
     let (rex, modrm_sib) = encode_mem_parts(addr, |rex| {
         rex.encode_operand_size(op_size);
         rex.encode_modrm_reg(dest)
     });
 
     rex.emit(buffer);
-    buffer.emit(&[0x8b]);
+
+    match full_op_size {
+        FullOperandSize::S8 => {
+            // Emit a `movzx r32, r/m8`, which will also implicitly clear the high bits.
+            buffer.emit(&[0xf, 0xb6])
+        }
+        FullOperandSize::S16 => {
+            // Emit a `movzx r32, r/m16`, which will also implicitly clear the high bits.
+            buffer.emit(&[0xf, 0xb7])
+        }
+        FullOperandSize::S32 | FullOperandSize::S64 => {
+            // Emit a simple `mov`, which will implicitly clear the high bits in the 32-bit case.
+            buffer.emit(&[0x8b])
+        }
+    }
+
     modrm_sib.emit(buffer);
 }
 

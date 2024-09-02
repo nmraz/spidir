@@ -108,6 +108,14 @@ pub enum ShiftOp {
     Sar,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IndexScale {
+    One,
+    Two,
+    Four,
+    Eight,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum X64Instr {
     AluRRm(OperandSize, AluOp),

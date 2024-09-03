@@ -197,6 +197,16 @@ impl MachineEmit for X64Machine {
                     disp: 0,
                 },
             ),
+            &X64Instr::MovMR(full_op_size) => emit_mov_mr(
+                buffer,
+                full_op_size,
+                BaseIndexOff {
+                    base: Some(uses[0].as_reg().unwrap()),
+                    index: None,
+                    disp: 0,
+                },
+                uses[1].as_reg().unwrap(),
+            ),
             X64Instr::Ret => {
                 emit_epilogue(buffer, &ctx.frame_info);
                 buffer.emit(&[0xc3]);
@@ -304,6 +314,39 @@ fn emit_mov_rm(
             // Emit a simple `mov`, which will implicitly clear the high bits in the 32-bit case.
             buffer.emit(&[0x8b])
         }
+    }
+
+    modrm_sib.emit(buffer);
+}
+
+fn emit_mov_mr(
+    buffer: &mut CodeBuffer<X64Machine>,
+    full_op_size: FullOperandSize,
+    addr: BaseIndexOff,
+    src: PhysReg,
+) {
+    let op_size = match full_op_size {
+        FullOperandSize::S64 => OperandSize::S64,
+        _ => OperandSize::S32,
+    };
+
+    let (rex, modrm_sib) = encode_mem_parts(addr, |rex| {
+        rex.encode_operand_size(op_size);
+        if full_op_size == FullOperandSize::S8 {
+            rex.use_reg8(src);
+        }
+        rex.encode_modrm_reg(src)
+    });
+
+    if full_op_size == FullOperandSize::S16 {
+        buffer.emit(&[PREFIX_OPERAND_SIZE]);
+    }
+
+    rex.emit(buffer);
+    if full_op_size == FullOperandSize::S8 {
+        buffer.emit(&[0x88]);
+    } else {
+        buffer.emit(&[0x89]);
     }
 
     modrm_sib.emit(buffer);
@@ -730,3 +773,6 @@ const RM_SIB: u8 = 0b100;
 // SIB encodings for lack of base/index registers.
 const SIB_BASE_NONE: u8 = 0b101;
 const SIB_INDEX_NONE: u8 = 0b100;
+
+// Legacy prefixes
+const PREFIX_OPERAND_SIZE: u8 = 0x66;

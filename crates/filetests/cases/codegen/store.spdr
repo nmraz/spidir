@@ -1,0 +1,105 @@
+# run: codegen
+
+func @store1_i32(i32, ptr) {
+    # check: function `store1_i32`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov byte ptr [rsi], dil
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl = store.1 %0, %1, %2
+    return %3
+}
+
+func @store2_i32(i32, ptr) {
+    # check: function `store2_i32`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov word ptr [rsi], di
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl = store.2 %0, %1, %2
+    return %3
+}
+
+func @store4_i32(i32, ptr) {
+    # check: function `store4_i32`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov dword ptr [rsi], edi
+    # nextln: 0x0006: pop rbp
+    # nextln: 0x0007: ret
+
+    %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl = store.4 %0, %1, %2
+    return %3
+}
+
+func @store1_i64(i64, ptr) {
+    # check: function `store1_i64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov byte ptr [rsi], dil
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:i64, %2:ptr = entry
+    %3:ctrl = store.1 %0, %1, %2
+    return %3
+}
+
+func @store2_i64(i64, ptr) {
+    # check: function `store2_i64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov word ptr [rsi], di
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:i64, %2:ptr = entry
+    %3:ctrl = store.2 %0, %1, %2
+    return %3
+}
+
+func @store4_i64(i64, ptr) {
+    # check: function `store4_i64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov dword ptr [rsi], edi
+    # nextln: 0x0006: pop rbp
+    # nextln: 0x0007: ret
+
+    %0:ctrl, %1:i64, %2:ptr = entry
+    %3:ctrl = store.4 %0, %1, %2
+    return %3
+}
+
+func @store8_i64(i64, ptr) {
+    # check: function `store8_i64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov qword ptr [rsi], rdi
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:i64, %2:ptr = entry
+    %3:ctrl = store.8 %0, %1, %2
+    return %3
+}
+
+func @store8_ptr(ptr, ptr) {
+    # check: function `store8_ptr`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov qword ptr [rsi], rdi
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:ptr, %2:ptr = entry
+    %3:ctrl = store.8 %0, %1, %2
+    return %3
+}

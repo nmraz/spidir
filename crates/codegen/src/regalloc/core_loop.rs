@@ -10,7 +10,7 @@ use crate::{
     machine::MachineRegalloc,
     regalloc::types::{
         AnnotatedPhysRegHint, InstrSlot, LiveRangeInstr, LiveRangeOpPos, ProgramPoint,
-        TaggedLiveRange,
+        TaggedLiveRange, FRAGMENT_PRIO_HINTED,
     },
 };
 
@@ -63,11 +63,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             self.enqueue_fragment(fragment);
         }
 
-        while let Some(fragment) = self.worklist.pop() {
-            let fragment = fragment.fragment;
+        while let Some(queued_fragment) = self.worklist.pop() {
+            let fragment = queued_fragment.fragment;
             trace!(
-                "process: {fragment}, size {}, weight {}",
-                self.live_set_fragments[fragment].size,
+                "process: {fragment}, prio {}, weight {}",
+                queued_fragment.prio,
                 self.live_set_fragments[fragment].spill_weight,
             );
             self.try_allocate(fragment)?;
@@ -579,12 +579,22 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     fn enqueue_fragment(&mut self, fragment: LiveSetFragment) {
-        let size = self.live_set_fragments[fragment].size;
+        let fragment_data = &self.live_set_fragments[fragment];
+
+        let mut prio = fragment_data.size;
+        if !fragment_data.hints.is_empty() {
+            // Always try to allocate hinted fragments first, regardless of size. This won't hurt
+            // packing ability too much, since hinted fragments are usually attached to physical
+            // reservations anyway, so the corresponding register will already be unavailable in
+            // some places.
+            prio |= FRAGMENT_PRIO_HINTED;
+        }
+
         trace!(
-            "enqueue: {fragment}, size {size}, weight {}",
-            self.live_set_fragments[fragment].spill_weight
+            "enqueue: {fragment}, prio {prio}, weight {}",
+            fragment_data.spill_weight
         );
-        self.worklist.push(QueuedFragment { fragment, size });
+        self.worklist.push(QueuedFragment { fragment, prio });
     }
 
     fn push_vreg_fragment_live_range(

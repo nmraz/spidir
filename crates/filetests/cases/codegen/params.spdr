@@ -4,20 +4,18 @@ func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
     # check: function `many_params`:
     # nextln: 0x0000: push rbp
     # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov r10, rdx
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: mov rdi, rcx
-    # nextln: 0x000d: mov rcx, qword ptr [rbp + 0x18]
-    # nextln: 0x0011: mov rdx, qword ptr [rbp + 0x10]
-    # nextln: 0x0015: add rax, rsi
-    # nextln: 0x0018: add rax, r10
-    # nextln: 0x001b: add rax, rdi
-    # nextln: 0x001e: add rax, r8
-    # nextln: 0x0021: add rax, r9
-    # nextln: 0x0024: add rax, rdx
-    # nextln: 0x0027: add rax, rcx
-    # nextln: 0x002a: pop rbp
-    # nextln: 0x002b: ret
+    # nextln: 0x0004: mov rax, rdi
+    # nextln: 0x0007: mov rdi, qword ptr [rbp + 0x18]
+    # nextln: 0x000b: mov r10, qword ptr [rbp + 0x10]
+    # nextln: 0x000f: add rax, rsi
+    # nextln: 0x0012: add rax, rdx
+    # nextln: 0x0015: add rax, rcx
+    # nextln: 0x0018: add rax, r8
+    # nextln: 0x001b: add rax, r9
+    # nextln: 0x001e: add rax, r10
+    # nextln: 0x0021: add rax, rdi
+    # nextln: 0x0024: pop rbp
+    # nextln: 0x0025: ret
 
     %c:ctrl, %1:i64, %2:i64, %3:i64, %4:i64, %5:i64, %6:i64, %7:i64, %8:i64 = entry
     %val:i64 = iadd %1, %2

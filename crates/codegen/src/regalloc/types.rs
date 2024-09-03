@@ -371,15 +371,17 @@ pub struct PhysRegReservation {
     pub copied_live_range: PackedOption<LiveRange>,
 }
 
+pub const FRAGMENT_PRIO_HINTED: u32 = 1 << 31;
+
 #[derive(Clone, Copy, Eq)]
 pub struct QueuedFragment {
     pub fragment: LiveSetFragment,
-    pub size: u32,
+    pub prio: u32,
 }
 
 impl PartialEq for QueuedFragment {
     fn eq(&self, other: &Self) -> bool {
-        self.size == other.size
+        self.prio == other.prio
     }
 }
 
@@ -391,7 +393,7 @@ impl PartialOrd for QueuedFragment {
 
 impl Ord for QueuedFragment {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.size.cmp(&other.size)
+        self.prio.cmp(&other.prio)
     }
 }
 

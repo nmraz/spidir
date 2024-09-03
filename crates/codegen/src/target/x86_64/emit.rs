@@ -616,7 +616,7 @@ fn encode_mem_parts(
     if need_sib {
         let base = addr
             .base
-            .map_or(SIB_BASE_NONE, |base| rex.encode_modrm_reg(base));
+            .map_or(SIB_BASE_NONE, |base| rex.encode_modrm_rm(base));
         let rm = RM_SIB;
         let (scale, index) = match addr.index {
             Some((scale, index)) => {

@@ -3,7 +3,7 @@ use core::mem;
 use crate::{
     emit::{CodeBuffer, EmitContext},
     frame::FrameLayout,
-    lir::{Lir, PhysReg, PhysRegSet},
+    lir::{Lir, PhysReg, PhysRegSet, StackSlot},
     machine::{FixupKind, MachineEmit},
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{Assignment, OperandAssignment},
@@ -41,11 +41,22 @@ enum FrameRestoreMethod {
 }
 
 pub struct X64FrameInfo {
-    _frame_layout: FrameLayout,
+    frame_layout: FrameLayout,
     saved_regs: PhysRegSet,
     raw_frame_size: i32,
     realign: FrameRealign,
     restore_method: FrameRestoreMethod,
+}
+
+impl X64FrameInfo {
+    fn stack_slot_addr(&self, slot: StackSlot) -> BaseIndexOff {
+        let offset = self.frame_layout.stack_slot_offsets[slot];
+        BaseIndexOff {
+            base: Some(REG_RSP),
+            index: None,
+            disp: offset.try_into().unwrap(),
+        }
+    }
 }
 
 const DEFAULT_FRAME_ALIGN: u32 = 16;
@@ -85,7 +96,7 @@ impl MachineEmit for X64Machine {
         };
 
         X64FrameInfo {
-            _frame_layout: frame_layout,
+            frame_layout,
             saved_regs,
             raw_frame_size,
             realign,
@@ -197,6 +208,12 @@ impl MachineEmit for X64Machine {
                     disp: 0,
                 },
             ),
+            &X64Instr::MovRStack(slot, full_op_size) => emit_mov_rm(
+                buffer,
+                full_op_size,
+                defs[0].as_reg().unwrap(),
+                ctx.frame_info.stack_slot_addr(slot),
+            ),
             &X64Instr::MovMR(full_op_size) => emit_mov_mr(
                 buffer,
                 full_op_size,
@@ -206,6 +223,12 @@ impl MachineEmit for X64Machine {
                     disp: 0,
                 },
                 uses[1].as_reg().unwrap(),
+            ),
+            &X64Instr::MovStackR(slot, full_op_size) => emit_mov_mr(
+                buffer,
+                full_op_size,
+                ctx.frame_info.stack_slot_addr(slot),
+                uses[0].as_reg().unwrap(),
             ),
             X64Instr::Ret => {
                 emit_epilogue(buffer, &ctx.frame_info);

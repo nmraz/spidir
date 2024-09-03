@@ -1,0 +1,90 @@
+# run: codegen
+
+func @store_simple_stackslot32(i32) {
+    # check: function `store_simple_stackslot32`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: sub rsp, 0x10
+    # nextln: 0x0008: mov dword ptr [rsp], edi
+    # nextln: 0x000b: add rsp, 0x10
+    # nextln: 0x000f: pop rbp
+    # nextln: 0x0010: ret
+
+    %0:ctrl, %1:i32 = entry
+    %2:ptr = stackslot 4:4
+    %3:ctrl = store.4 %0, %1, %2
+    return %3
+}
+
+func @store_simple_stackslot64(i64) {
+    # check: function `store_simple_stackslot64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: sub rsp, 0x10
+    # nextln: 0x0008: mov qword ptr [rsp], rdi
+    # nextln: 0x000c: add rsp, 0x10
+    # nextln: 0x0010: pop rbp
+    # nextln: 0x0011: ret
+
+    %0:ctrl, %1:i64 = entry
+    %2:ptr = stackslot 8:8
+    %3:ctrl = store.8 %0, %1, %2
+    return %3
+}
+
+func @load_simple_stackslot32:i32() {
+    # check: function `load_simple_stackslot32`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: sub rsp, 0x10
+    # nextln: 0x0008: mov eax, dword ptr [rsp]
+    # nextln: 0x000b: add rsp, 0x10
+    # nextln: 0x000f: pop rbp
+    # nextln: 0x0010: ret
+
+    %0:ctrl = entry
+    %1:ptr = stackslot 4:4
+    %2:ctrl, %3:i32 = load.4 %0, %1
+    return %2, %3
+}
+
+func @load_simple_stackslot64:i64() {
+    # check: function `load_simple_stackslot64`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: sub rsp, 0x10
+    # nextln: 0x0008: mov rax, qword ptr [rsp]
+    # nextln: 0x000c: add rsp, 0x10
+    # nextln: 0x0010: pop rbp
+    # nextln: 0x0011: ret
+
+    %0:ctrl = entry
+    %1:ptr = stackslot 8:8
+    %2:ctrl, %3:i64 = load.8 %0, %1
+    return %2, %3
+}
+
+func @use_many_stackslots:i32(i64) {
+    # check: function `use_many_stackslots`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: sub rsp, 0x20
+    # nextln: 0x0008: mov qword ptr [rsp + 8], rdi
+    # nextln: 0x000d: mov qword ptr [rsp], rdi
+    # nextln: 0x0011: mov dword ptr [rsp + 0x10], edi
+    # nextln: 0x0015: movzx eax, word ptr [rsp]
+    # nextln: 0x0019: add rsp, 0x20
+    # nextln: 0x001d: pop rbp
+    # nextln: 0x001e: ret
+
+    %0:ctrl, %1:i64 = entry
+    %s0:ptr = stackslot 8:8
+    %s1:ptr = stackslot 8:8
+    %s2:ptr = stackslot 4:4
+    %2:ctrl = store.8 %0, %1, %s0
+    %3:ctrl = store.8 %2, %1, %s1
+    %1n:i32 = itrunc %1
+    %4:ctrl = store.4 %3, %1n, %s2
+    %5:ctrl, %ret:i32 = load.2 %4, %s1
+    return %5, %ret
+}

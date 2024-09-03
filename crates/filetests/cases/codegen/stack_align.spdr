@@ -1,0 +1,18 @@
+# run: codegen
+
+func @aligned_stack(i32) {
+    # check: function `aligned_stack`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: sub rsp, 0x20
+    # nextln: 0x0008: and rsp, 0xffffffffffffffe0
+    # nextln: 0x000c: mov dword ptr [rsp], edi
+    # nextln: 0x000f: mov rsp, rbp
+    # nextln: 0x0012: pop rbp
+    # nextln: 0x0013: ret
+
+    %0:ctrl, %1:i32 = entry
+    %s:ptr = stackslot 32:32
+    %2:ctrl = store.4 %0, %1, %s
+    return %2
+}

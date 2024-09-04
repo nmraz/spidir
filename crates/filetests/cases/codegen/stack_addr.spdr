@@ -1,0 +1,19 @@
+# run: codegen
+
+func @dangle:ptr(i32) {
+    # check: function `dangle`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: sub rsp, 0x10
+    # nextln: 0x0008: mov dword ptr [rsp], edi
+    # nextln: 0x000b: lea rax, [rsp + 8]
+    # nextln: 0x0010: add rsp, 0x10
+    # nextln: 0x0014: pop rbp
+    # nextln: 0x0015: ret
+
+    %c:ctrl, %i:i32 = entry
+    %s:ptr = stackslot 8:8
+    %p:ptr = stackslot 4:4
+    %r:ctrl = store.4 %c, %i, %s
+    return %r, %p
+}

@@ -230,6 +230,11 @@ impl MachineEmit for X64Machine {
                 ctx.frame_info.stack_slot_addr(slot),
                 uses[0].as_reg().unwrap(),
             ),
+            &X64Instr::StackAddr(slot) => emit_lea(
+                buffer,
+                defs[0].as_reg().unwrap(),
+                ctx.frame_info.stack_slot_addr(slot),
+            ),
             X64Instr::Ret => {
                 emit_epilogue(buffer, &ctx.frame_info);
                 buffer.emit(&[0xc3]);
@@ -339,6 +344,17 @@ fn emit_mov_rm(
         }
     }
 
+    modrm_sib.emit(buffer);
+}
+
+fn emit_lea(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, addr: BaseIndexOff) {
+    let (rex, modrm_sib) = encode_mem_parts(addr, |rex| {
+        rex.encode_operand_size(OperandSize::S64);
+        rex.encode_modrm_reg(dest)
+    });
+
+    rex.emit(buffer);
+    buffer.emit(&[0x8d]);
     modrm_sib.emit(buffer);
 }
 

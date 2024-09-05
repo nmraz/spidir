@@ -196,7 +196,6 @@ impl MachineEmit for X64Machine {
                     disp: offset,
                 },
             ),
-            &X64Instr::AddSp(offset) => emit_add_sp(buffer, offset),
             &X64Instr::MovRM(full_op_size) => emit_mov_rm(
                 buffer,
                 full_op_size,
@@ -239,6 +238,13 @@ impl MachineEmit for X64Machine {
                 emit_ret(buffer);
             }
             X64Instr::Ud2 => emit_ud2(buffer),
+            &X64Instr::AddSp(offset) => emit_add_sp(buffer, offset),
+            X64Instr::Push => emit_push(buffer, uses[0].as_reg().unwrap()),
+            X64Instr::Call(_func) => {
+                // TODO: Other code models?
+                // TODO: Record relocation.
+                emit_call_rel(buffer);
+            }
             _ => todo!(),
         }
     }
@@ -425,6 +431,11 @@ fn emit_movsx_rr(
     rex.emit(buffer);
     buffer.emit(opcode);
     buffer.emit(&[encode_modrm_r(dest, src)]);
+}
+
+fn emit_call_rel(buffer: &mut CodeBuffer<X64Machine>) {
+    buffer.emit(&[0xe8]);
+    buffer.emit(&0u32.to_le_bytes());
 }
 
 fn emit_ret(buffer: &mut CodeBuffer<X64Machine>) {

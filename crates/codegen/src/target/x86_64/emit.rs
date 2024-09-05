@@ -238,6 +238,7 @@ impl MachineEmit for X64Machine {
                 emit_epilogue(buffer, state);
                 buffer.emit(&[0xc3]);
             }
+            X64Instr::Ud2 => buffer.emit(&[0xf, 0xb]),
             _ => todo!(),
         }
     }

@@ -1,0 +1,11 @@
+# run: codegen
+
+func @ub() {
+    # check: function `ub`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: ud2
+
+    %0:ctrl = entry
+    unreachable %0
+}

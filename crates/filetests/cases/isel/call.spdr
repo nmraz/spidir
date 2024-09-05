@@ -89,7 +89,7 @@ func @call_single_stack_arg() {
     # nextln:       block0[]:
     # nextln: 0000:      %0:gpr(reg)[late] = MovRI(7)
     # nextln: 0001:      AddSp(-8)
-    # nextln: 0002:      Push(S64) %0(reg)[early]
+    # nextln: 0002:      Push %0(reg)[early]
     # nextln: 0003:      Call(Internal(func3)) %0($$rdi)[early], %0($$rsi)[early], %0($$rdx)[early], %0($$rcx)[early], %0($$r8)[early], %0($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln: 0004:      AddSp(16)
     # nextln: 0005:      Ret
@@ -105,10 +105,10 @@ func @call_many_params(ptr) {
     # nextln:       block0[%2:gpr($$rdi)]:
     # nextln: 0000:      %0:gpr(reg)[late] = MovRI(0)
     # nextln: 0001:      %1:gpr(reg)[late] = MovRI(0)
-    # nextln: 0002:      Push(S64) %1(reg)[early]
-    # nextln: 0003:      Push(S64) %2(reg)[early]
-    # nextln: 0004:      Push(S64) %0(reg)[early]
-    # nextln: 0005:      Push(S64) %1(reg)[early]
+    # nextln: 0002:      Push %1(reg)[early]
+    # nextln: 0003:      Push %2(reg)[early]
+    # nextln: 0004:      Push %0(reg)[early]
+    # nextln: 0005:      Push %1(reg)[early]
     # nextln: 0006:      Call(Internal(func4)) %0($$rdi)[early], %1($$rsi)[early], %2($$rdx)[early], %1($$rcx)[early], %0($$r8)[early], %0($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln: 0007:      AddSp(32)
     # nextln: 0008:      Ret

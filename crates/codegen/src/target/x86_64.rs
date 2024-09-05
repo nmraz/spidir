@@ -136,7 +136,7 @@ pub enum X64Instr {
     StackAddr(StackSlot),
     MovRStack(StackSlot, FullOperandSize),
     MovStackR(StackSlot, FullOperandSize),
-    Push(OperandSize),
+    Push,
     AddSp(i32),
     MovRM(FullOperandSize),
     MovMR(FullOperandSize),

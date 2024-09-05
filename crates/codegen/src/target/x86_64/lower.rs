@@ -263,11 +263,7 @@ fn emit_call(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Functi
     }
 
     for &stack_arg in &stack_args {
-        ctx.emit_instr(
-            X64Instr::Push(OperandSize::S64),
-            &[],
-            &[UseOperand::any_reg(stack_arg)],
-        );
+        ctx.emit_instr(X64Instr::Push, &[], &[UseOperand::any_reg(stack_arg)]);
         stack_size += 8;
     }
 

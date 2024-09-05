@@ -69,10 +69,7 @@ impl<M: MachineEmit> Default for CodeBuffer<M> {
     }
 }
 
-pub struct EmitContext<M: MachineEmit> {
-    pub frame_info: M::FrameInfo,
-    pub block_labels: SecondaryMap<Block, Label>,
-}
+pub type BlockLabelMap = SecondaryMap<Block, Label>;
 
 pub fn emit_code<M: MachineEmit>(
     lir: &Lir<M>,
@@ -80,11 +77,7 @@ pub fn emit_code<M: MachineEmit>(
     assignment: &Assignment,
     machine: &M,
 ) -> Vec<u8> {
-    let frame_info = machine.compute_frame_info(lir, assignment);
-    let mut ctx = EmitContext {
-        frame_info,
-        block_labels: SecondaryMap::with_default(Label::reserved_value()),
-    };
+    let mut state = machine.prepare_state(lir, assignment);
 
     let mut buffer = CodeBuffer::<M> {
         bytes: Vec::new(),
@@ -92,29 +85,31 @@ pub fn emit_code<M: MachineEmit>(
         fixups: Vec::new(),
     };
 
+    let mut block_labels = BlockLabelMap::with_default(Label::reserved_value());
     for &block in &cfg_context.block_order {
         let label = buffer.create_label();
-        ctx.block_labels[block] = label;
+        block_labels[block] = label;
     }
 
-    machine.emit_prologue(&ctx, &mut buffer);
+    machine.emit_prologue(&mut state, &mut buffer);
 
     for &block in &cfg_context.block_order {
-        buffer.bind_label(ctx.block_labels[block]);
+        buffer.bind_label(block_labels[block]);
 
         for instr in assignment.instrs_and_copies(lir.block_instrs(block)) {
             match instr {
                 InstrOrCopy::Instr(instr) => {
                     machine.emit_instr(
-                        &ctx,
+                        &mut state,
                         &mut buffer,
+                        &block_labels,
                         lir.instr_data(instr),
                         assignment.instr_def_assignments(instr),
                         assignment.instr_use_assignments(instr),
                     );
                 }
                 InstrOrCopy::Copy(copy) => {
-                    machine.emit_copy(&ctx, &mut buffer, copy.from, copy.to);
+                    machine.emit_copy(&mut state, &mut buffer, copy.from, copy.to);
                 }
             }
         }

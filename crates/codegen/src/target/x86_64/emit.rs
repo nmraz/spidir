@@ -1,7 +1,7 @@
 use core::mem;
 
 use crate::{
-    emit::{CodeBuffer, EmitContext},
+    emit::{BlockLabelMap, CodeBuffer},
     frame::FrameLayout,
     lir::{Lir, PhysReg, PhysRegSet, StackSlot},
     machine::{FixupKind, MachineEmit},
@@ -40,7 +40,7 @@ enum FrameRestoreMethod {
     FromRbp,
 }
 
-pub struct X64FrameInfo {
+pub struct X64EmitState {
     frame_layout: FrameLayout,
     saved_regs: PhysRegSet,
     raw_frame_size: i32,
@@ -48,7 +48,7 @@ pub struct X64FrameInfo {
     restore_method: FrameRestoreMethod,
 }
 
-impl X64FrameInfo {
+impl X64EmitState {
     fn stack_slot_addr(&self, slot: StackSlot) -> BaseIndexOff {
         let offset = self.frame_layout.stack_slot_offsets[slot];
         BaseIndexOff {
@@ -62,10 +62,10 @@ impl X64FrameInfo {
 const DEFAULT_FRAME_ALIGN: u32 = 16;
 
 impl MachineEmit for X64Machine {
-    type FrameInfo = X64FrameInfo;
+    type EmitState = X64EmitState;
     type Fixup = X64Fixup;
 
-    fn compute_frame_info(&self, lir: &Lir<Self>, assignment: &Assignment) -> X64FrameInfo {
+    fn prepare_state(&self, lir: &Lir<Self>, assignment: &Assignment) -> X64EmitState {
         let frame_layout = FrameLayout::compute(lir, assignment);
         let saved_regs =
             &assignment.compute_global_clobbers(lir) & &PhysRegSet::from_iter(CALLEE_SAVED_REGS);
@@ -95,7 +95,7 @@ impl MachineEmit for X64Machine {
             FrameRestoreMethod::None
         };
 
-        X64FrameInfo {
+        X64EmitState {
             frame_layout,
             saved_regs,
             raw_frame_size,
@@ -104,29 +104,28 @@ impl MachineEmit for X64Machine {
         }
     }
 
-    fn emit_prologue(&self, ctx: &EmitContext<Self>, buffer: &mut CodeBuffer<Self>) {
-        let frame_info = &ctx.frame_info;
-
+    fn emit_prologue(&self, state: &mut X64EmitState, buffer: &mut CodeBuffer<Self>) {
         emit_push(buffer, REG_RBP);
         emit_mov_rr(buffer, REG_RBP, REG_RSP);
 
-        for saved_reg in frame_info.saved_regs.iter().rev() {
+        for saved_reg in state.saved_regs.iter().rev() {
             emit_push(buffer, saved_reg);
         }
 
-        if frame_info.raw_frame_size > 0 {
-            emit_add_sp(buffer, -frame_info.raw_frame_size);
+        if state.raw_frame_size > 0 {
+            emit_add_sp(buffer, -state.raw_frame_size);
         }
 
-        if let FrameRealign::AlignTo(align) = frame_info.realign {
+        if let FrameRealign::AlignTo(align) = state.realign {
             emit_alu_r64i(buffer, AluOp::And, REG_RSP, -align);
         }
     }
 
     fn emit_instr(
         &self,
-        ctx: &EmitContext<Self>,
+        state: &mut X64EmitState,
         buffer: &mut CodeBuffer<Self>,
+        _block_labels: &BlockLabelMap,
         instr: &X64Instr,
         defs: &[OperandAssignment],
         uses: &[OperandAssignment],
@@ -212,7 +211,7 @@ impl MachineEmit for X64Machine {
                 buffer,
                 full_op_size,
                 defs[0].as_reg().unwrap(),
-                ctx.frame_info.stack_slot_addr(slot),
+                state.stack_slot_addr(slot),
             ),
             &X64Instr::MovMR(full_op_size) => emit_mov_mr(
                 buffer,
@@ -227,16 +226,16 @@ impl MachineEmit for X64Machine {
             &X64Instr::MovStackR(slot, full_op_size) => emit_mov_mr(
                 buffer,
                 full_op_size,
-                ctx.frame_info.stack_slot_addr(slot),
+                state.stack_slot_addr(slot),
                 uses[0].as_reg().unwrap(),
             ),
             &X64Instr::StackAddr(slot) => emit_lea(
                 buffer,
                 defs[0].as_reg().unwrap(),
-                ctx.frame_info.stack_slot_addr(slot),
+                state.stack_slot_addr(slot),
             ),
             X64Instr::Ret => {
-                emit_epilogue(buffer, &ctx.frame_info);
+                emit_epilogue(buffer, state);
                 buffer.emit(&[0xc3]);
             }
             _ => todo!(),
@@ -245,7 +244,7 @@ impl MachineEmit for X64Machine {
 
     fn emit_copy(
         &self,
-        _ctx: &EmitContext<Self>,
+        _state: &mut X64EmitState,
         buffer: &mut CodeBuffer<Self>,
         from: OperandAssignment,
         to: OperandAssignment,
@@ -257,14 +256,14 @@ impl MachineEmit for X64Machine {
 
 // Code sequence emission helpers
 
-fn emit_epilogue(buffer: &mut CodeBuffer<X64Machine>, frame_info: &X64FrameInfo) {
-    match frame_info.restore_method {
+fn emit_epilogue(buffer: &mut CodeBuffer<X64Machine>, state: &X64EmitState) {
+    match state.restore_method {
         FrameRestoreMethod::None => {}
         FrameRestoreMethod::AddSp(offset) => emit_add_sp(buffer, offset),
         FrameRestoreMethod::FromRbp => emit_mov_rr(buffer, REG_RSP, REG_RBP),
     }
 
-    for saved_reg in frame_info.saved_regs.iter() {
+    for saved_reg in state.saved_regs.iter() {
         emit_pop(buffer, saved_reg);
     }
 

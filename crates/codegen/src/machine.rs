@@ -5,7 +5,7 @@ use ir::{node::Type, valgraph::Node};
 
 use crate::{
     cfg::Block,
-    emit::{CodeBuffer, EmitContext},
+    emit::{BlockLabelMap, CodeBuffer},
     isel::IselContext,
     lir::{Lir, MemLayout, PhysReg, RegClass},
     regalloc::{Assignment, OperandAssignment},
@@ -54,23 +54,26 @@ pub trait FixupKind: Copy {
 }
 
 pub trait MachineEmit: MachineCore + Sized {
-    type FrameInfo;
+    type EmitState;
     type Fixup: FixupKind;
 
-    fn compute_frame_info(&self, lir: &Lir<Self>, assignment: &Assignment) -> Self::FrameInfo;
+    fn prepare_state(&self, lir: &Lir<Self>, assignment: &Assignment) -> Self::EmitState;
 
-    fn emit_prologue(&self, ctx: &EmitContext<Self>, buffer: &mut CodeBuffer<Self>);
+    fn emit_prologue(&self, state: &mut Self::EmitState, buffer: &mut CodeBuffer<Self>);
+
     fn emit_instr(
         &self,
-        ctx: &EmitContext<Self>,
+        state: &mut Self::EmitState,
         buffer: &mut CodeBuffer<Self>,
+        block_labels: &BlockLabelMap,
         instr: &Self::Instr,
         defs: &[OperandAssignment],
         uses: &[OperandAssignment],
     );
+
     fn emit_copy(
         &self,
-        ctx: &EmitContext<Self>,
+        state: &mut Self::EmitState,
         buffer: &mut CodeBuffer<Self>,
         from: OperandAssignment,
         to: OperandAssignment,

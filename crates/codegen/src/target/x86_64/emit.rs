@@ -236,9 +236,9 @@ impl MachineEmit for X64Machine {
             ),
             X64Instr::Ret => {
                 emit_epilogue(buffer, state);
-                buffer.emit(&[0xc3]);
+                emit_ret(buffer);
             }
-            X64Instr::Ud2 => buffer.emit(&[0xf, 0xb]),
+            X64Instr::Ud2 => emit_ud2(buffer),
             _ => todo!(),
         }
     }
@@ -425,6 +425,14 @@ fn emit_movsx_rr(
     rex.emit(buffer);
     buffer.emit(opcode);
     buffer.emit(&[encode_modrm_r(dest, src)]);
+}
+
+fn emit_ret(buffer: &mut CodeBuffer<X64Machine>) {
+    buffer.emit(&[0xc3]);
+}
+
+fn emit_ud2(buffer: &mut CodeBuffer<X64Machine>) {
+    buffer.emit(&[0xf, 0xb]);
 }
 
 // Instruction group emission helpers

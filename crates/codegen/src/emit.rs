@@ -1,5 +1,6 @@
 use alloc::vec::Vec;
 use cranelift_entity::{entity_impl, packed_option::ReservedValue, PrimaryMap, SecondaryMap};
+use ir::node::FunctionRef;
 
 use crate::{
     cfg::{Block, CfgContext},
@@ -7,6 +8,35 @@ use crate::{
     machine::{FixupKind, MachineEmit},
     regalloc::{Assignment, InstrOrCopy},
 };
+
+// These types are intentionally completely machine-independent; we want the final `CodeBlob` to be
+// type-erased to enable trait objects in the high-level API.
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct RelocKind(pub u8);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Reloc {
+    pub kind: RelocKind,
+    pub offset: u32,
+    pub target: FunctionRef,
+    pub addend: i64,
+}
+
+pub struct CodeBlob {
+    code: Vec<u8>,
+    relocs: Vec<Reloc>,
+}
+
+impl CodeBlob {
+    pub fn code(&self) -> &[u8] {
+        &self.code
+    }
+
+    pub fn relocs(&self) -> &[Reloc] {
+        &self.relocs
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Label(u32);
@@ -22,6 +52,7 @@ pub struct CodeBuffer<M: MachineEmit> {
     bytes: Vec<u8>,
     labels: PrimaryMap<Label, Option<u32>>,
     fixups: Vec<Fixup<M::Fixup>>,
+    relocs: Vec<Reloc>,
 }
 
 impl<M: MachineEmit> CodeBuffer<M> {
@@ -30,6 +61,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
             bytes: Vec::new(),
             labels: PrimaryMap::new(),
             fixups: Vec::new(),
+            relocs: Vec::new(),
         }
     }
 
@@ -53,6 +85,25 @@ impl<M: MachineEmit> CodeBuffer<M> {
         self.emit_fixup_at(self.offset(), label, kind);
     }
 
+    pub fn emit_reloc_at(
+        &mut self,
+        offset: u32,
+        target: FunctionRef,
+        addend: i64,
+        kind: RelocKind,
+    ) {
+        self.relocs.push(Reloc {
+            kind,
+            offset,
+            target,
+            addend,
+        });
+    }
+
+    pub fn emit_reloc(&mut self, target: FunctionRef, addend: i64, kind: RelocKind) {
+        self.emit_reloc_at(self.offset(), target, addend, kind);
+    }
+
     pub fn create_label(&mut self) -> Label {
         self.labels.push(None)
     }
@@ -66,7 +117,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
         self.labels[label]
     }
 
-    pub fn finish(mut self) -> Vec<u8> {
+    pub fn finish(mut self) -> CodeBlob {
         // Resolve all outstanding fixups now that the final layout is known.
         for fixup in &self.fixups {
             let label_offset = self.resolve_label(fixup.label).expect("label not bound");
@@ -81,7 +132,13 @@ impl<M: MachineEmit> CodeBuffer<M> {
             );
         }
 
-        self.bytes
+        // Let's be nice to everyone else who wants to use this.
+        self.relocs.sort_unstable_by_key(|reloc| reloc.offset);
+
+        CodeBlob {
+            code: self.bytes,
+            relocs: self.relocs,
+        }
     }
 }
 
@@ -98,14 +155,10 @@ pub fn emit_code<M: MachineEmit>(
     cfg_context: &CfgContext,
     assignment: &Assignment,
     machine: &M,
-) -> Vec<u8> {
+) -> CodeBlob {
     let mut state = machine.prepare_state(lir, assignment);
 
-    let mut buffer = CodeBuffer::<M> {
-        bytes: Vec::new(),
-        labels: PrimaryMap::new(),
-        fixups: Vec::new(),
-    };
+    let mut buffer = CodeBuffer::new();
 
     let mut block_labels = BlockLabelMap::with_default(Label::reserved_value());
     for &block in &cfg_context.block_order {

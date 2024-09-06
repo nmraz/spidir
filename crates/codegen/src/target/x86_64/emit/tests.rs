@@ -36,7 +36,7 @@ fn disasm_instr(code: &[u8]) -> String {
 fn check_emit_instr(f: impl FnOnce(&mut CodeBuffer<X64Machine>), expected: Expect) {
     let mut buffer = CodeBuffer::new();
     f(&mut buffer);
-    expected.assert_eq(&disasm_instr(&buffer.finish()));
+    expected.assert_eq(&disasm_instr(buffer.finish().code()));
 }
 
 fn check_emit_addr_mode(addr: BaseIndexOff, expected: Expect) {

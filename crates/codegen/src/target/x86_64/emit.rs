@@ -861,7 +861,7 @@ fn encode_modrm_mem(mode: MemMode, reg: u8, rm: u8) -> u8 {
     let mode = match mode {
         MemMode::NoDisp => 0b00,
         MemMode::Disp8 => 0b01,
-        MemMode::Disp32 => 0b11,
+        MemMode::Disp32 => 0b10,
         MemMode::Disp32Special => 0b00,
     };
     encode_modrm(mode, reg, rm)

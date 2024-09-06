@@ -163,10 +163,7 @@ impl MachineEmit for X64Machine {
                 emit_div_rm(buffer, op, op_size, state.operand_reg_mem(uses[2]))
             }
             &X64Instr::ConvertWord(op_size) => {
-                let mut rex = RexPrefix::new();
-                rex.encode_operand_size(op_size);
-                rex.emit(buffer);
-                buffer.emit(&[0x99]);
+                emit_convert_word(buffer, op_size);
             }
             &X64Instr::Setcc(code) => {
                 let dest = defs[0].as_reg().unwrap();
@@ -514,6 +511,13 @@ fn emit_div_rm(buffer: &mut CodeBuffer<X64Machine>, op: DivOp, op_size: OperandS
     rex.emit(buffer);
     buffer.emit(&[0xf7]);
     modrm_sib.emit(buffer);
+}
+
+fn emit_convert_word(buffer: &mut CodeBuffer<X64Machine>, op_size: OperandSize) {
+    let mut rex = RexPrefix::new();
+    rex.encode_operand_size(op_size);
+    rex.emit(buffer);
+    buffer.emit(&[0x99]);
 }
 
 fn emit_shift_rm_cx(

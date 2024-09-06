@@ -27,7 +27,7 @@ pub use display::DisplayAssignment;
 pub use types::AssignmentCopy;
 
 #[derive(Debug, Clone, Copy)]
-pub enum Error {
+pub enum RegallocError {
     OutOfRegisters(Instr),
 }
 
@@ -186,7 +186,7 @@ pub fn run<M: MachineRegalloc>(
     lir: &Lir<M>,
     cfg_ctx: &CfgContext,
     machine: &M,
-) -> Result<Assignment, Error> {
+) -> Result<Assignment, RegallocError> {
     let mut ctx = RegAllocContext::new(lir, cfg_ctx, machine);
     ctx.compute_liveness();
     ctx.build_live_sets();

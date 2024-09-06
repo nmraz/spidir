@@ -12,7 +12,7 @@ use crate::{
     isel::{select_instrs, IselError},
     lir::Lir,
     machine::{Machine, MachineLower},
-    regalloc::{self, Error as RegallocError},
+    regalloc::{self, RegallocError},
     schedule::Schedule,
 };
 

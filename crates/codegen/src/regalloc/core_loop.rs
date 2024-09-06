@@ -21,7 +21,7 @@ use super::{
         LiveRange, LiveRangeInstrs, LiveSetFragment, PhysRegHint, ProgramRange, QueuedFragment,
         RangeEndKey,
     },
-    Error,
+    RegallocError,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -51,7 +51,7 @@ enum ProbeConflict {
 }
 
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
-    pub fn run_core_loop(&mut self) -> Result<(), Error> {
+    pub fn run_core_loop(&mut self) -> Result<(), RegallocError> {
         // Process fragments in order of decreasing size, to try to fill in the larger ranges before
         // moving on to smaller ones. Because of weight-based eviction, we can still end up
         // revisiting a larger fragment later.
@@ -76,7 +76,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         Ok(())
     }
 
-    fn try_allocate(&mut self, fragment: LiveSetFragment) -> Result<(), Error> {
+    fn try_allocate(&mut self, fragment: LiveSetFragment) -> Result<(), RegallocError> {
         let live_set = self.live_set_fragments[fragment].live_set;
         let class = self.live_sets[live_set].class;
 
@@ -182,7 +182,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             self.spill_fragment(fragment);
         } else {
             let instr = self.fragment_hull(fragment).start.instr();
-            return Err(Error::OutOfRegisters(instr));
+            return Err(RegallocError::OutOfRegisters(instr));
         }
 
         Ok(())

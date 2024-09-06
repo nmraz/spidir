@@ -1,5 +1,5 @@
 use crate::{
-    emit::{BlockLabelMap, CodeBuffer},
+    emit::{BlockLabelMap, CodeBuffer, Label},
     frame::FrameLayout,
     lir::{Lir, PhysReg, PhysRegSet, StackSlot},
     machine::{FixupKind, MachineEmit},
@@ -15,15 +15,24 @@ use super::{
 };
 
 #[derive(Debug, Clone, Copy)]
-pub enum X64Fixup {}
+pub enum X64Fixup {
+    Rela4(i32),
+}
 
 impl FixupKind for X64Fixup {
     fn byte_size(&self) -> usize {
-        todo!()
+        match self {
+            X64Fixup::Rela4(_) => 4,
+        }
     }
 
-    fn apply(&self, _offset: u32, _label_offset: u32, _bytes: &mut [u8]) {
-        todo!()
+    fn apply(&self, offset: u32, label_offset: u32, bytes: &mut [u8]) {
+        match self {
+            &X64Fixup::Rela4(addend) => {
+                let rel = label_offset.wrapping_sub(offset) as i32 + addend;
+                bytes.copy_from_slice(&rel.to_le_bytes());
+            }
+        }
     }
 }
 
@@ -142,7 +151,7 @@ impl MachineEmit for X64Machine {
         &self,
         state: &mut X64EmitState,
         buffer: &mut CodeBuffer<Self>,
-        _block_labels: &BlockLabelMap,
+        block_labels: &BlockLabelMap,
         instr: &X64Instr,
         defs: &[OperandAssignment],
         uses: &[OperandAssignment],
@@ -251,6 +260,9 @@ impl MachineEmit for X64Machine {
                 // TODO: Other code models?
                 // TODO: Record relocation.
                 emit_call_rel(buffer);
+            }
+            &X64Instr::Jump(target) => {
+                emit_jmp(buffer, block_labels[target]);
             }
             _ => todo!(),
         }
@@ -620,6 +632,12 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
     } else {
         buffer.emit(&imm.to_le_bytes());
     }
+}
+
+fn emit_jmp(buffer: &mut CodeBuffer<X64Machine>, target: Label) {
+    buffer.emit(&[0xe9]);
+    buffer.emit_fixup(target, X64Fixup::Rela4(-4));
+    buffer.emit(&0u32.to_le_bytes());
 }
 
 // Prefixes and encoding

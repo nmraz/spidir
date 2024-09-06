@@ -1,0 +1,14 @@
+# run: codegen
+
+func @jump() {
+    # check: function `jump`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: jmp 9
+    # nextln: 0x0009: pop rbp
+    # nextln: 0x000a: ret
+
+    %0:ctrl = entry
+    %1:ctrl, %2:phisel = region %0
+    return %1
+}

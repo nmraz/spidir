@@ -4,7 +4,7 @@ func @srem64:i64(i64, i64) {
     # check: function `srem64`:
     # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln: 0000:      %3:gpr($$rdx)[late] = ConvertWord(S64) %1($$rax)[early]
-    # nextln: 0001:      %4:gpr($$rax)[late], %5:gpr($$rdx)[late] = Idiv(S64) %1($$rax)[early], %3($$rdx)[early], %2(any)[early]
+    # nextln: 0001:      %4:gpr($$rax)[late], %5:gpr($$rdx)[late] = Div(S64, Idiv) %1($$rax)[early], %3($$rdx)[early], %2(any)[early]
     # nextln: 0002:      Ret %5($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
@@ -16,7 +16,7 @@ func @srem32:i32(i32, i32) {
     # check: function `srem32`:
     # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln: 0000:      %3:gpr($$rdx)[late] = ConvertWord(S32) %1($$rax)[early]
-    # nextln: 0001:      %4:gpr($$rax)[late], %5:gpr($$rdx)[late] = Idiv(S32) %1($$rax)[early], %3($$rdx)[early], %2(any)[early]
+    # nextln: 0001:      %4:gpr($$rax)[late], %5:gpr($$rdx)[late] = Div(S32, Idiv) %1($$rax)[early], %3($$rdx)[early], %2(any)[early]
     # nextln: 0002:      Ret %5($$rax)[early]
 
     %c:ctrl, %a:i32, %b:i32 = entry

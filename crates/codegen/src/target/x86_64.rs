@@ -109,6 +109,12 @@ pub enum ShiftOp {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DivOp {
+    Div,
+    Idiv,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IndexScale {
     One,
     Two,
@@ -121,8 +127,7 @@ pub enum X64Instr {
     AluRRm(OperandSize, AluOp),
     ShiftRmR(OperandSize, ShiftOp),
     ShiftRmI(OperandSize, ShiftOp, u8),
-    Div(OperandSize),
-    Idiv(OperandSize),
+    Div(OperandSize, DivOp),
     ConvertWord(OperandSize),
     /// Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,

@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    AluOp, CondCode, ExtWidth, FullOperandSize, IndexScale, OperandSize, ShiftOp, X64Instr,
+    AluOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale, OperandSize, ShiftOp, X64Instr,
     X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8, REG_R9, REG_RAX,
     REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP,
 };
@@ -159,11 +159,8 @@ impl MachineEmit for X64Machine {
             &X64Instr::ShiftRmI(op_size, op, imm) => {
                 emit_shift_rm_i(buffer, op, op_size, state.operand_reg_mem(uses[0]), imm)
             }
-            &X64Instr::Div(op_size) => {
-                emit_div_rm(buffer, 0x6, op_size, state.operand_reg_mem(uses[2]))
-            }
-            &X64Instr::Idiv(op_size) => {
-                emit_div_rm(buffer, 0x7, op_size, state.operand_reg_mem(uses[2]))
+            &X64Instr::Div(op_size, op) => {
+                emit_div_rm(buffer, op, op_size, state.operand_reg_mem(uses[2]))
             }
             &X64Instr::ConvertWord(op_size) => {
                 let mut rex = RexPrefix::new();
@@ -504,12 +501,11 @@ fn emit_alu_r_rm(
     modrm_sib.emit(buffer);
 }
 
-fn emit_div_rm(
-    buffer: &mut CodeBuffer<X64Machine>,
-    reg_opcode: u8,
-    op_size: OperandSize,
-    arg: RegMem,
-) {
+fn emit_div_rm(buffer: &mut CodeBuffer<X64Machine>, op: DivOp, op_size: OperandSize, arg: RegMem) {
+    let reg_opcode = match op {
+        DivOp::Div => 0x6,
+        DivOp::Idiv => 0x7,
+    };
     let (rex, modrm_sib) = encode_reg_mem_parts(arg, |rex| {
         rex.encode_operand_size(op_size);
         reg_opcode

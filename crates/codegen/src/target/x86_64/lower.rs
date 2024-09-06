@@ -16,7 +16,7 @@ use crate::{
 };
 
 use super::{
-    AluOp, CondCode, ExtWidth, FullOperandSize, OperandSize, ShiftOp, X64Instr, X64Machine,
+    AluOp, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, ShiftOp, X64Instr, X64Machine,
     CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI,
 };
 
@@ -347,7 +347,7 @@ fn emit_udiv(
     let rax_out = ctx.create_temp_vreg(RC_GPR);
     let rdx_out = ctx.create_temp_vreg(RC_GPR);
     ctx.emit_instr(
-        X64Instr::Div(operand_size_for_ty(ty)),
+        X64Instr::Div(operand_size_for_ty(ty), DivOp::Div),
         &[
             DefOperand::fixed(rax_out, REG_RAX),
             DefOperand::fixed(rdx_out, REG_RDX),
@@ -381,7 +381,7 @@ fn emit_sdiv(
     let rax_out = ctx.create_temp_vreg(RC_GPR);
     let rdx_out = ctx.create_temp_vreg(RC_GPR);
     ctx.emit_instr(
-        X64Instr::Idiv(operand_size_for_ty(ty)),
+        X64Instr::Div(operand_size_for_ty(ty), DivOp::Idiv),
         &[
             DefOperand::fixed(rax_out, REG_RAX),
             DefOperand::fixed(rdx_out, REG_RDX),

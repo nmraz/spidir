@@ -264,7 +264,10 @@ impl MachineEmit for X64Machine {
             &X64Instr::Jump(target) => {
                 emit_jmp(buffer, block_labels[target]);
             }
-            _ => todo!(),
+            &X64Instr::Jumpcc(code, true_target, false_target) => {
+                emit_jcc(buffer, code, block_labels[true_target]);
+                emit_jmp(buffer, block_labels[false_target]);
+            }
         }
     }
 
@@ -636,6 +639,12 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
 
 fn emit_jmp(buffer: &mut CodeBuffer<X64Machine>, target: Label) {
     buffer.emit(&[0xe9]);
+    buffer.emit_fixup(target, X64Fixup::Rela4(-4));
+    buffer.emit(&0u32.to_le_bytes());
+}
+
+fn emit_jcc(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, target: Label) {
+    buffer.emit(&[0xf, 0x80 + encode_cond_code(code)]);
     buffer.emit_fixup(target, X64Fixup::Rela4(-4));
     buffer.emit(&0u32.to_le_bytes());
 }

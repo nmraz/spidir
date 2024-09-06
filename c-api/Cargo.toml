@@ -12,6 +12,7 @@ crate-type = ["staticlib"]
 [dependencies]
 frontend.workspace = true
 ir.workspace = true
+codegen.workspace = true
 
 log.workspace = true
 smallvec.workspace = true

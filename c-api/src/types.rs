@@ -4,6 +4,7 @@ use core::{
 };
 
 use alloc::{borrow::ToOwned, string::String};
+use codegen::emit::Reloc;
 use frontend::{Block, FunctionBuilder};
 use ir::{
     module::{ExternFunction, Function, Signature},
@@ -25,14 +26,28 @@ pub struct ApiValue(pub u32);
 #[repr(C)]
 pub struct ApiPhi(pub u32);
 
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
+pub struct ApiReloc {
+    pub target: ApiFunction,
+    pub addend: i64,
+    pub offset: u32,
+    pub kind: u8,
+}
+
 pub type ApiType = u8;
 pub type ApiIcmpKind = u8;
 pub type ApiMemSize = u8;
+pub type ApiCodegenStatus = u32;
 
 pub type BuildFunctionCallback = extern "C" fn(*mut FunctionBuilder, *mut ());
 pub type DumpCallback = extern "C" fn(*const c_char, usize, *mut ()) -> u8;
 
 pub const SPIDIR_DUMP_CONTINUE: u8 = 0;
+
+pub const SPIDIR_CODEGEN_OK: u32 = 0;
+pub const SPIDIR_CODEGEN_ERROR_ISEL: u32 = 1;
+pub const SPIDIR_CODEGEN_ERROR_REGALLOC: u32 = 2;
 
 const SPIDIR_VALUE_INVALID: ApiValue = ApiValue(u32::MAX);
 const EXTERN_FUNCTION_BIT: u64 = 1 << 63;
@@ -183,6 +198,15 @@ pub fn mem_size_from_api(api_size: ApiMemSize) -> MemSize {
         SPIDIR_MEM_SIZE_4 => MemSize::S4,
         SPIDIR_MEM_SIZE_8 => MemSize::S8,
         _ => panic!("unexpected memory size {api_size}"),
+    }
+}
+
+pub fn reloc_to_api(reloc: &Reloc) -> ApiReloc {
+    ApiReloc {
+        target: funcref_to_api(reloc.target),
+        addend: reloc.addend,
+        offset: reloc.offset,
+        kind: reloc.kind.0,
     }
 }
 

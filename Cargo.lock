@@ -178,6 +178,7 @@ name = "codegen"
 version = "0.1.0"
 dependencies = [
  "bitflags 2.5.0",
+ "capstone",
  "cranelift-entity",
  "dominators",
  "expect-test",

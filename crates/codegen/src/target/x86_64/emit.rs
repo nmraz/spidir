@@ -933,3 +933,6 @@ const SIB_INDEX_NONE: u8 = 0b100;
 
 // Legacy prefixes
 const PREFIX_OPERAND_SIZE: u8 = 0x66;
+
+#[cfg(test)]
+mod tests;

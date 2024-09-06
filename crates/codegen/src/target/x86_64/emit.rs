@@ -665,11 +665,11 @@ struct BaseIndexOff {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
 enum MemMode {
-    NoDisp = 0b00,
-    Disp8 = 0b01,
-    Disp32 = 0b11,
+    NoDisp,
+    Disp8,
+    Disp32,
+    Disp32Special,
 }
 
 struct ModRmSib {
@@ -688,7 +688,7 @@ impl ModRmSib {
         match self.mem_mode {
             MemMode::NoDisp => {}
             MemMode::Disp8 => buffer.emit(&[self.disp as u8]),
-            MemMode::Disp32 => buffer.emit(&self.disp.to_le_bytes()),
+            MemMode::Disp32 | MemMode::Disp32Special => buffer.emit(&self.disp.to_le_bytes()),
         }
     }
 }
@@ -783,18 +783,29 @@ fn encode_mem_parts(
     let mut rex = RexPrefix::new();
     let reg = get_reg(&mut rex);
 
-    let mode = if (addr.disp == 0 && addr.base != Some(REG_RBP)) || addr.base.is_none() {
+    // These values can have special meanings when placed in the R/M slot.
+    let (base_bp, base_sp) = match addr.base {
+        Some(base) => {
+            let base_rm = encode_reg(base) & 0b111;
+            (
+                base_rm == encode_reg(REG_RBP),
+                base_rm == encode_reg(REG_RSP),
+            )
+        }
+        None => (false, false),
+    };
+
+    let mode = if addr.disp == 0 && !base_bp {
         MemMode::NoDisp
+    } else if addr.base.is_none() {
+        MemMode::Disp32Special
     } else if is_sint::<8>(addr.disp as u64) {
         MemMode::Disp8
     } else {
         MemMode::Disp32
     };
 
-    let need_sib = !matches!(
-        addr.base,
-        Some(REG_RAX | REG_RBX | REG_RCX | REG_RDX | REG_RBP | REG_RSI | REG_RDI)
-    ) || addr.index.is_some();
+    let need_sib = addr.base.is_none() || base_sp || addr.index.is_some();
 
     if need_sib {
         let base = addr
@@ -828,7 +839,7 @@ fn encode_mem_parts(
         )
     } else {
         // Note: we always need an SIB when no base is specified.
-        let rm = encode_reg(addr.base.unwrap());
+        let rm = rex.encode_modrm_rm(addr.base.unwrap());
 
         (
             rex,
@@ -847,7 +858,13 @@ fn encode_modrm_r(reg: u8, rm: u8) -> u8 {
 }
 
 fn encode_modrm_mem(mode: MemMode, reg: u8, rm: u8) -> u8 {
-    encode_modrm(mode as u8, reg, rm)
+    let mode = match mode {
+        MemMode::NoDisp => 0b00,
+        MemMode::Disp8 => 0b01,
+        MemMode::Disp32 => 0b11,
+        MemMode::Disp32Special => 0b00,
+    };
+    encode_modrm(mode, reg, rm)
 }
 
 fn encode_modrm(mode: u8, reg: u8, rm: u8) -> u8 {

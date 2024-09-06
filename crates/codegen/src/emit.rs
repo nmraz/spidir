@@ -65,6 +65,24 @@ impl<M: MachineEmit> CodeBuffer<M> {
     pub fn resolve_label(&self, label: Label) -> Option<u32> {
         self.labels[label]
     }
+
+    pub fn finish(mut self) -> Vec<u8> {
+        // Resolve all outstanding fixups now that the final layout is known.
+        for fixup in &self.fixups {
+            let label_offset = self.resolve_label(fixup.label).expect("label not bound");
+
+            let offset_usize = fixup.offset as usize;
+            let size = fixup.kind.byte_size();
+
+            fixup.kind.apply(
+                fixup.offset,
+                label_offset,
+                &mut self.bytes[offset_usize..offset_usize + size],
+            );
+        }
+
+        self.bytes
+    }
 }
 
 impl<M: MachineEmit> Default for CodeBuffer<M> {
@@ -119,19 +137,5 @@ pub fn emit_code<M: MachineEmit>(
         }
     }
 
-    // Resolve all outstanding fixups now that the final layout is known.
-    for fixup in &buffer.fixups {
-        let label_offset = buffer.resolve_label(fixup.label).expect("label not bound");
-
-        let offset_usize = fixup.offset as usize;
-        let size = fixup.kind.byte_size();
-
-        fixup.kind.apply(
-            fixup.offset,
-            label_offset,
-            &mut buffer.bytes[offset_usize..offset_usize + size],
-        );
-    }
-
-    buffer.bytes
+    buffer.finish()
 }

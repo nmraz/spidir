@@ -2,6 +2,7 @@
 
 extern crate alloc;
 
+pub mod api;
 pub mod blockorder;
 pub mod cfg;
 pub mod emit;

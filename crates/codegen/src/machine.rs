@@ -11,6 +11,9 @@ use crate::{
     regalloc::{Assignment, OperandAssignment},
 };
 
+pub trait Machine: MachineCore + MachineLower + MachineRegalloc + MachineEmit {}
+impl<M: MachineCore + MachineLower + MachineRegalloc + MachineEmit> Machine for M {}
+
 pub trait MachineCore {
     type Instr: Copy + Debug;
 

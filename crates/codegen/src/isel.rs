@@ -135,6 +135,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct IselError {
     pub node: Node,
 }

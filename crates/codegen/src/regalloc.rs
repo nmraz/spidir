@@ -26,7 +26,7 @@ mod virt_reg_set;
 pub use display::DisplayAssignment;
 pub use types::AssignmentCopy;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Error {
     OutOfRegisters(Instr),
 }

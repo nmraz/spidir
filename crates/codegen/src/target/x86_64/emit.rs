@@ -44,17 +44,23 @@ pub struct X64EmitState {
     frame_layout: FrameLayout,
     saved_regs: PhysRegSet,
     raw_frame_size: i32,
+    sp_frame_offset: i32,
     realign: FrameRealign,
     restore_method: FrameRestoreMethod,
 }
 
 impl X64EmitState {
     fn stack_slot_addr(&self, slot: StackSlot) -> BaseIndexOff {
-        let offset = self.frame_layout.stack_slot_offsets[slot];
+        let offset: i32 = self.frame_layout.stack_slot_offsets[slot]
+            .try_into()
+            .unwrap();
+
+        let offset = offset + self.sp_frame_offset;
+
         BaseIndexOff {
             base: Some(REG_RSP),
             index: None,
-            disp: offset.try_into().unwrap(),
+            disp: offset,
         }
     }
 }
@@ -99,6 +105,7 @@ impl MachineEmit for X64Machine {
             frame_layout,
             saved_regs,
             raw_frame_size,
+            sp_frame_offset: 0,
             realign,
             restore_method,
         }
@@ -238,8 +245,14 @@ impl MachineEmit for X64Machine {
                 emit_ret(buffer);
             }
             X64Instr::Ud2 => emit_ud2(buffer),
-            &X64Instr::AddSp(offset) => emit_add_sp(buffer, offset),
-            X64Instr::Push => emit_push(buffer, uses[0].as_reg().unwrap()),
+            &X64Instr::AddSp(offset) => {
+                emit_add_sp(buffer, offset);
+                state.sp_frame_offset -= offset;
+            }
+            X64Instr::Push => {
+                emit_push(buffer, uses[0].as_reg().unwrap());
+                state.sp_frame_offset += 8;
+            }
             X64Instr::Call(_func) => {
                 // TODO: Other code models?
                 // TODO: Record relocation.

@@ -1,0 +1,1114 @@
+# run: codegen
+
+extfunc @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)":i32(i32, i32)
+extfunc @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)":i32(i32, i32)
+extfunc @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)":i32(ptr, i32)
+extfunc @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)":i32(i32, i32)
+extfunc @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)":i32(ptr, i32)
+extfunc @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)":i32(i32, i32)
+extfunc @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)":i32(ptr, i32)
+extfunc @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)":i32(i32, i32)
+extfunc @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)":i32(ptr, i32)
+extfunc @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)":i32(i64, i32)
+
+func @"System.Boolean Tests.BitTest::Run()":i32() {
+    # check: function `System.Boolean Tests.BitTest::Run()`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: push r15
+    # nextln: 0x0006: push r14
+    # nextln: 0x0008: push r13
+    # nextln: 0x000a: push r12
+    # nextln: 0x000c: push rbx
+    # nextln: 0x000d: sub rsp, 0xc8
+    # nextln: 0x0014: jmp 0x19
+    # nextln: 0x0019: mov eax, 0
+    # nextln: 0x001e: lea rcx, [rsp + 0xb6]
+    # nextln: 0x0026: lea rdx, [rsp + 0xb0]
+    # nextln: 0x002e: mov ebx, 0
+    # nextln: 0x0033: lea rdi, [rsp]
+    # nextln: 0x0037: mov r8, rdx
+    # nextln: 0x003a: mov rdx, rdi
+    # nextln: 0x003d: lea rsi, [rsp + 8]
+    # nextln: 0x0042: lea rdi, [rsp + 0xa8]
+    # nextln: 0x004a: mov r10, rsi
+    # nextln: 0x004d: lea rsi, [rsp + 0xb2]
+    # nextln: 0x0055: lea r9, [rsp + 0xac]
+    # nextln: 0x005d: lea r11, [rsp + 0xb4]
+    # nextln: 0x0065: lea r12, [rsp + 0xb7]
+    # nextln: 0x006d: mov byte ptr [rsp + 0xb7], bl
+    # nextln: 0x0074: mov byte ptr [rsp + 0xb6], bl
+    # nextln: 0x007b: lea r13, [rsp + 0xb8]
+    # nextln: 0x0083: mov byte ptr [rsp + 0xb8], bl
+    # nextln: 0x008a: mov word ptr [rsp + 0xb4], bx
+    # nextln: 0x0092: mov word ptr [rsp + 0xb2], bx
+    # nextln: 0x009a: mov word ptr [rsp + 0xb0], bx
+    # nextln: 0x00a2: mov dword ptr [rsp + 0xac], ebx
+    # nextln: 0x00a9: mov dword ptr [rsp + 0xa8], ebx
+    # nextln: 0x00b0: mov qword ptr [rsp + 8], rax
+    # nextln: 0x00b5: mov qword ptr [rsp], rax
+    # nextln: 0x00b9: jmp 0xbe
+    # nextln: 0x00be: mov eax, 7
+    # nextln: 0x00c3: mov r14, rcx
+    # nextln: 0x00c6: mov rcx, rax
+    # nextln: 0x00c9: mov eax, 8
+    # nextln: 0x00ce: mov r15, r11
+    # nextln: 0x00d1: mov r11, rdx
+    # nextln: 0x00d4: mov rdx, r9
+    # nextln: 0x00d7: mov r9, rsi
+    # nextln: 0x00da: mov rsi, r8
+    # nextln: 0x00dd: mov r8, rdi
+    # nextln: 0x00e0: mov rdi, r15
+    # nextln: 0x00e3: mov r15d, 1
+    # nextln: 0x00e9: mov qword ptr [rsp + 0x38], r8
+    # nextln: 0x00ee: mov r8, rcx
+    # nextln: 0x00f1: mov rcx, rdi
+    # nextln: 0x00f4: mov rdi, r11
+    # nextln: 0x00f7: mov qword ptr [rsp + 0xa0], r13
+    # nextln: 0x00ff: mov r13, r9
+    # nextln: 0x0102: mov r9, qword ptr [rsp + 0xa0]
+    # nextln: 0x010a: mov r11, rdx
+    # nextln: 0x010d: mov rdx, r12
+    # nextln: 0x0110: mov r12, r14
+    # nextln: 0x0113: mov r14, rsi
+    # nextln: 0x0116: mov rsi, r15
+    # nextln: 0x0119: mov r15, r10
+    # nextln: 0x011c: mov r10d, 0x20
+    # nextln: 0x0122: mov qword ptr [rsp + 0x68], rcx
+    # nextln: 0x0127: mov ecx, 0xf
+    # nextln: 0x012c: mov qword ptr [rsp + 0x98], r8
+    # nextln: 0x0134: mov qword ptr [rsp + 0x40], r11
+    # nextln: 0x0139: mov r11, r15
+    # nextln: 0x013c: mov r15, r13
+    # nextln: 0x013f: mov r13, r9
+    # nextln: 0x0142: mov r9, r14
+    # nextln: 0x0145: mov r14, rsi
+    # nextln: 0x0148: mov rsi, r12
+    # nextln: 0x014b: mov r12, rcx
+    # nextln: 0x014e: mov r8, qword ptr [rsp + 0x38]
+    # nextln: 0x0153: mov ecx, 0x10
+    # nextln: 0x0158: mov qword ptr [rsp + 0x20], r11
+    # nextln: 0x015d: mov r11, rdx
+    # nextln: 0x0160: mov qword ptr [rsp + 0x50], r9
+    # nextln: 0x0165: mov r9, rsi
+    # nextln: 0x0168: mov rsi, r8
+    # nextln: 0x016b: mov r8, qword ptr [rsp + 0x40]
+    # nextln: 0x0170: mov edx, 3
+    # nextln: 0x0175: mov qword ptr [rsp + 0x18], rdi
+    # nextln: 0x017a: mov rdi, r11
+    # nextln: 0x017d: mov r11, rsi
+    # nextln: 0x0180: mov esi, 0x40
+    # nextln: 0x0185: mov qword ptr [rsp + 0x80], r9
+    # nextln: 0x018d: mov r9, r11
+    # nextln: 0x0190: mov r11, r8
+    # nextln: 0x0193: mov r8d, 2
+    # nextln: 0x0199: mov qword ptr [rsp + 0x90], rdi
+    # nextln: 0x01a1: movsxd rdi, r14d
+    # nextln: 0x01a4: mov qword ptr [rsp + 0x38], r9
+    # nextln: 0x01a9: mov qword ptr [rsp + 0x40], r11
+    # nextln: 0x01ae: mov r11, qword ptr [rsp + 0x80]
+    # nextln: 0x01b6: movsxd r9, r8d
+    # nextln: 0x01b9: mov qword ptr [rsp + 0x80], r11
+    # nextln: 0x01c1: mov r11d, 0xffffff80
+    # nextln: 0x01c7: mov byte ptr [rsp + 0xb7], r11b
+    # nextln: 0x01cf: mov r11d, 0xffff8000
+    # nextln: 0x01d5: mov byte ptr [rsp + 0xb6], r14b
+    # nextln: 0x01dd: mov byte ptr [rsp + 0xb8], r8b
+    # nextln: 0x01e5: mov word ptr [rsp + 0xb4], r11w
+    # nextln: 0x01ee: mov word ptr [rsp + 0xb2], r14w
+    # nextln: 0x01f7: mov word ptr [rsp + 0xb0], r8w
+    # nextln: 0x0200: mov dword ptr [rsp + 0xac], r14d
+    # nextln: 0x0208: mov dword ptr [rsp + 0xa8], r8d
+    # nextln: 0x0210: mov r11, qword ptr [rsp + 0x80]
+    # nextln: 0x0218: mov r8, qword ptr [rsp + 0x40]
+    # nextln: 0x021d: mov qword ptr [rsp + 8], rdi
+    # nextln: 0x0222: mov rdi, qword ptr [rsp + 0x38]
+    # nextln: 0x0227: mov qword ptr [rsp], r9
+    # nextln: 0x022b: mov r9, rdi
+    # nextln: 0x022e: movzx edi, byte ptr [rsp + 0xb7]
+    # nextln: 0x0236: movsx edi, dil
+    # nextln: 0x023a: mov qword ptr [rsp + 0x60], rcx
+    # nextln: 0x023f: mov qword ptr [rsp + 0x28], rsi
+    # nextln: 0x0244: mov qword ptr [rsp + 0x10], r14
+    # nextln: 0x0249: mov r14, r15
+    # nextln: 0x024c: mov qword ptr [rsp + 0x88], rax
+    # nextln: 0x0254: mov qword ptr [rsp + 0x30], r10
+    # nextln: 0x0259: mov qword ptr [rsp + 0x38], r9
+    # nextln: 0x025e: mov qword ptr [rsp + 0x78], r13
+    # nextln: 0x0263: mov r13, r11
+    # nextln: 0x0266: mov qword ptr [rsp + 0x48], rdx
+    # nextln: 0x026b: mov qword ptr [rsp + 0x70], r12
+    # nextln: 0x0270: mov r12, qword ptr [rsp + 0x98]
+    # nextln: 0x0278: mov r15, r8
+    # nextln: 0x027b: mov rsi, r12
+    # nextln: 0x027e: call 0x283
+    # nextln: 0x0283: mov qword ptr [rsp + 0x98], r12
+    # nextln: 0x028b: mov qword ptr [rsp + 0x58], r14
+    # nextln: 0x0290: mov r11, qword ptr [rsp + 0x18]
+    # nextln: 0x0295: mov rcx, qword ptr [rsp + 0x10]
+    # nextln: 0x029a: mov qword ptr [rsp + 0x80], r13
+    # nextln: 0x02a2: mov rdi, qword ptr [rsp + 0x50]
+    # nextln: 0x02a7: mov r12, qword ptr [rsp + 0x38]
+    # nextln: 0x02ac: mov r8, qword ptr [rsp + 0x48]
+    # nextln: 0x02b1: mov r10, qword ptr [rsp + 0x28]
+    # nextln: 0x02b6: mov rdx, qword ptr [rsp + 0x70]
+    # nextln: 0x02bb: mov r14, r15
+    # nextln: 0x02be: mov rsi, qword ptr [rsp + 0x68]
+    # nextln: 0x02c3: mov r9, qword ptr [rsp + 0x20]
+    # nextln: 0x02c8: mov r13, qword ptr [rsp + 0x88]
+    # nextln: 0x02d0: mov r15, rcx
+    # nextln: 0x02d3: and r15d, eax
+    # nextln: 0x02d6: mov rax, qword ptr [rsp + 0x60]
+    # nextln: 0x02db: mov qword ptr [rsp + 0x50], rdi
+    # nextln: 0x02e0: movzx edi, byte ptr [rsp + 0xb7]
+    # nextln: 0x02e8: movsx edi, dil
+    # nextln: 0x02ec: mov qword ptr [rsp + 0x18], r11
+    # nextln: 0x02f1: mov qword ptr [rsp + 0x10], rcx
+    # nextln: 0x02f6: mov qword ptr [rsp + 0x38], r12
+    # nextln: 0x02fb: mov r12, r13
+    # nextln: 0x02fe: mov r13, r8
+    # nextln: 0x0301: mov qword ptr [rsp + 0x40], r14
+    # nextln: 0x0306: mov r14, r10
+    # nextln: 0x0309: mov qword ptr [rsp + 0x70], rdx
+    # nextln: 0x030e: mov qword ptr [rsp + 0x68], rsi
+    # nextln: 0x0313: mov qword ptr [rsp + 0x20], r9
+    # nextln: 0x0318: mov qword ptr [rsp + 0x60], rax
+    # nextln: 0x031d: mov rsi, r12
+    # nextln: 0x0320: call 0x325
+    # nextln: 0x0325: and r15d, eax
+    # nextln: 0x0328: mov r11, qword ptr [rsp + 0x80]
+    # nextln: 0x0330: mov rsi, qword ptr [rsp + 0x58]
+    # nextln: 0x0335: mov qword ptr [rsp + 0x48], r13
+    # nextln: 0x033a: mov r13, qword ptr [rsp + 0x50]
+    # nextln: 0x033f: mov r9, qword ptr [rsp + 0x70]
+    # nextln: 0x0344: mov rdi, qword ptr [rsp + 0x38]
+    # nextln: 0x0349: mov rdx, qword ptr [rsp + 0x18]
+    # nextln: 0x034e: mov r10, r12
+    # nextln: 0x0351: mov r12, qword ptr [rsp + 0x90]
+    # nextln: 0x0359: mov r8, qword ptr [rsp + 0x68]
+    # nextln: 0x035e: mov rcx, r14
+    # nextln: 0x0361: mov r14, qword ptr [rsp + 0x20]
+    # nextln: 0x0366: movzx eax, byte ptr [rsp + 0xb6]
+    # nextln: 0x036e: mov qword ptr [rsp + 0x38], rdi
+    # nextln: 0x0373: movsx edi, al
+    # nextln: 0x0376: mov qword ptr [rsp + 0x58], rsi
+    # nextln: 0x037b: mov qword ptr [rsp + 0x88], r10
+    # nextln: 0x0383: mov qword ptr [rsp + 0x50], r13
+    # nextln: 0x0388: mov qword ptr [rsp + 0x80], r11
+    # nextln: 0x0390: mov qword ptr [rsp + 0x20], r14
+    # nextln: 0x0395: mov r14, qword ptr [rsp + 0x48]
+    # nextln: 0x039a: mov r13, rdx
+    # nextln: 0x039d: mov qword ptr [rsp + 0x70], r9
+    # nextln: 0x03a2: mov qword ptr [rsp + 0x68], r8
+    # nextln: 0x03a7: mov qword ptr [rsp + 0x28], rcx
+    # nextln: 0x03ac: mov qword ptr [rsp + 0x90], r12
+    # nextln: 0x03b4: mov r12, qword ptr [rsp + 0x38]
+    # nextln: 0x03b9: mov rsi, rbx
+    # nextln: 0x03bc: call 0x3c1
+    # nextln: 0x03c1: and r15d, eax
+    # nextln: 0x03c4: mov qword ptr [rsp + 0x38], r12
+    # nextln: 0x03c9: mov r12, qword ptr [rsp + 0x90]
+    # nextln: 0x03d1: mov r10, qword ptr [rsp + 0x88]
+    # nextln: 0x03d9: mov rcx, r13
+    # nextln: 0x03dc: mov r11, qword ptr [rsp + 0x80]
+    # nextln: 0x03e4: mov r13, qword ptr [rsp + 0x20]
+    # nextln: 0x03e9: mov rsi, r14
+    # nextln: 0x03ec: mov r9, qword ptr [rsp + 0x70]
+    # nextln: 0x03f1: mov r14, qword ptr [rsp + 0x40]
+    # nextln: 0x03f6: mov rdx, qword ptr [rsp + 0x28]
+    # nextln: 0x03fb: mov rdi, qword ptr [rsp + 0x60]
+    # nextln: 0x0400: mov r8, qword ptr [rsp + 0x58]
+    # nextln: 0x0405: movzx eax, byte ptr [rsp + 0xb6]
+    # nextln: 0x040d: mov qword ptr [rsp + 0x60], rdi
+    # nextln: 0x0412: movsx edi, al
+    # nextln: 0x0415: mov qword ptr [rsp + 0x40], r14
+    # nextln: 0x041a: mov qword ptr [rsp + 0x80], r11
+    # nextln: 0x0422: mov qword ptr [rsp + 0x20], r13
+    # nextln: 0x0427: mov r13, rcx
+    # nextln: 0x042a: mov qword ptr [rsp + 0x48], rsi
+    # nextln: 0x042f: mov qword ptr [rsp + 0x28], rdx
+    # nextln: 0x0434: mov qword ptr [rsp + 0x58], r8
+    # nextln: 0x0439: mov qword ptr [rsp + 0x70], r9
+    # nextln: 0x043e: mov r14, qword ptr [rsp + 0x38]
+    # nextln: 0x0443: mov qword ptr [rsp + 0x90], r12
+    # nextln: 0x044b: mov r12, r10
+    # nextln: 0x044e: mov rsi, r12
+    # nextln: 0x0451: call 0x456
+    # nextln: 0x0456: xor ecx, ecx
+    # nextln: 0x0458: cmp eax, ebx
+    # nextln: 0x045a: sete cl
+    # nextln: 0x045d: and r15d, ecx
+    # nextln: 0x0460: mov qword ptr [rsp + 0x38], r14
+    # nextln: 0x0465: mov r14, qword ptr [rsp + 0x60]
+    # nextln: 0x046a: mov rcx, qword ptr [rsp + 0x90]
+    # nextln: 0x0472: mov r11, qword ptr [rsp + 0x40]
+    # nextln: 0x0477: mov r10, qword ptr [rsp + 0x50]
+    # nextln: 0x047c: mov rdx, r12
+    # nextln: 0x047f: mov r12, qword ptr [rsp + 0x10]
+    # nextln: 0x0484: mov qword ptr [rsp + 0x18], r13
+    # nextln: 0x0489: mov r13, qword ptr [rsp + 0x78]
+    # nextln: 0x048e: mov rsi, qword ptr [rsp + 0x80]
+    # nextln: 0x0496: mov r8, qword ptr [rsp + 0x20]
+    # nextln: 0x049b: mov r9, qword ptr [rsp + 0x98]
+    # nextln: 0x04a3: mov rdi, qword ptr [rsp + 0x68]
+    # nextln: 0x04a8: movzx eax, byte ptr [rsp + 0xb6]
+    # nextln: 0x04b0: mov qword ptr [rsp + 0x68], rdi
+    # nextln: 0x04b5: movsx edi, al
+    # nextln: 0x04b8: mov qword ptr [rsp + 0x98], r9
+    # nextln: 0x04c0: mov qword ptr [rsp + 0x20], r8
+    # nextln: 0x04c5: mov qword ptr [rsp + 0x40], r11
+    # nextln: 0x04ca: mov qword ptr [rsp + 0x50], r10
+    # nextln: 0x04cf: mov qword ptr [rsp + 0x88], rdx
+    # nextln: 0x04d7: mov qword ptr [rsp + 0x78], r13
+    # nextln: 0x04dc: mov r13, qword ptr [rsp + 0x70]
+    # nextln: 0x04e1: mov qword ptr [rsp + 0x60], r14
+    # nextln: 0x04e6: mov r14, rsi
+    # nextln: 0x04e9: mov qword ptr [rsp + 0x10], r12
+    # nextln: 0x04ee: mov r12, rcx
+    # nextln: 0x04f1: mov rsi, qword ptr [rsp + 0x30]
+    # nextln: 0x04f6: call 0x4fb
+    # nextln: 0x04fb: and r15d, eax
+    # nextln: 0x04fe: mov rsi, qword ptr [rsp + 0x98]
+    # nextln: 0x0506: mov rdx, qword ptr [rsp + 0x38]
+    # nextln: 0x050b: mov r10, qword ptr [rsp + 0x78]
+    # nextln: 0x0510: mov r9, qword ptr [rsp + 0x50]
+    # nextln: 0x0515: mov r11, qword ptr [rsp + 0x88]
+    # nextln: 0x051d: mov rdi, r13
+    # nextln: 0x0520: mov r13, qword ptr [rsp + 0x58]
+    # nextln: 0x0525: mov rcx, r14
+    # nextln: 0x0528: mov r14, r12
+    # nextln: 0x052b: mov r12, qword ptr [rsp + 0x40]
+    # nextln: 0x0530: mov r8, qword ptr [rsp + 0x20]
+    # nextln: 0x0535: movzx eax, byte ptr [rsp + 0xb8]
+    # nextln: 0x053d: mov qword ptr [rsp + 0x70], rdi
+    # nextln: 0x0542: movsx edi, al
+    # nextln: 0x0545: mov qword ptr [rsp + 0x98], rsi
+    # nextln: 0x054d: mov qword ptr [rsp + 0x58], r13
+    # nextln: 0x0552: mov qword ptr [rsp + 0x50], r9
+    # nextln: 0x0557: mov qword ptr [rsp + 0x40], r12
+    # nextln: 0x055c: mov qword ptr [rsp + 0x78], r10
+    # nextln: 0x0561: mov qword ptr [rsp + 0x20], r8
+    # nextln: 0x0566: mov r12, r11
+    # nextln: 0x0569: mov r13, rcx
+    # nextln: 0x056c: mov qword ptr [rsp + 0x38], rdx
+    # nextln: 0x0571: mov rsi, rbx
+    # nextln: 0x0574: call 0x579
+    # nextln: 0x0579: xor ecx, ecx
+    # nextln: 0x057b: cmp eax, ebx
+    # nextln: 0x057d: sete cl
+    # nextln: 0x0580: and r15d, ecx
+    # nextln: 0x0583: mov rsi, qword ptr [rsp + 0x98]
+    # nextln: 0x058b: mov rdi, r14
+    # nextln: 0x058e: call 0x593
+    # nextln: 0x0593: mov rdx, qword ptr [rsp + 0x78]
+    # nextln: 0x0598: mov rcx, qword ptr [rsp + 0x30]
+    # nextln: 0x059d: and r15d, eax
+    # nextln: 0x05a0: mov qword ptr [rsp + 0x78], rdx
+    # nextln: 0x05a5: mov qword ptr [rsp + 0x30], rcx
+    # nextln: 0x05aa: mov rsi, r12
+    # nextln: 0x05ad: mov rdi, r14
+    # nextln: 0x05b0: call 0x5b5
+    # nextln: 0x05b5: mov rcx, qword ptr [rsp + 0x60]
+    # nextln: 0x05ba: mov rdi, qword ptr [rsp + 0x28]
+    # nextln: 0x05bf: mov r9, qword ptr [rsp + 0x18]
+    # nextln: 0x05c4: mov r10, qword ptr [rsp + 0x50]
+    # nextln: 0x05c9: mov r14, qword ptr [rsp + 0x78]
+    # nextln: 0x05ce: mov r8, qword ptr [rsp + 0x20]
+    # nextln: 0x05d3: mov r11, qword ptr [rsp + 0x70]
+    # nextln: 0x05d8: mov rsi, qword ptr [rsp + 0x48]
+    # nextln: 0x05dd: mov rdx, qword ptr [rsp + 0x68]
+    # nextln: 0x05e2: and r15d, eax
+    # nextln: 0x05e5: mov qword ptr [rsp + 0x68], rdx
+    # nextln: 0x05ea: mov qword ptr [rsp + 0x28], rdi
+    # nextln: 0x05ef: mov qword ptr [rsp + 0x18], r9
+    # nextln: 0x05f4: mov qword ptr [rsp + 0x48], rsi
+    # nextln: 0x05f9: mov qword ptr [rsp + 0x50], r10
+    # nextln: 0x05fe: mov qword ptr [rsp + 0x20], r8
+    # nextln: 0x0603: mov qword ptr [rsp + 0x70], r11
+    # nextln: 0x0608: mov qword ptr [rsp + 0x60], rcx
+    # nextln: 0x060d: mov rsi, rbx
+    # nextln: 0x0610: mov rdi, r13
+    # nextln: 0x0613: call 0x618
+    # nextln: 0x0618: and r15d, eax
+    # nextln: 0x061b: mov rsi, r12
+    # nextln: 0x061e: mov rdi, r13
+    # nextln: 0x0621: call 0x626
+    # nextln: 0x0626: mov r12, qword ptr [rsp + 0x30]
+    # nextln: 0x062b: mov r8, qword ptr [rsp + 0x60]
+    # nextln: 0x0630: mov rsi, qword ptr [rsp + 0x58]
+    # nextln: 0x0635: mov r9, qword ptr [rsp + 0x70]
+    # nextln: 0x063a: mov r10, qword ptr [rsp + 0x68]
+    # nextln: 0x063f: mov rdx, qword ptr [rsp + 0x20]
+    # nextln: 0x0644: mov r11, qword ptr [rsp + 0x10]
+    # nextln: 0x0649: mov rdi, qword ptr [rsp + 0x40]
+    # nextln: 0x064e: xor ecx, ecx
+    # nextln: 0x0650: cmp eax, ebx
+    # nextln: 0x0652: mov rax, qword ptr [rsp + 0x18]
+    # nextln: 0x0657: sete cl
+    # nextln: 0x065a: and r15d, ecx
+    # nextln: 0x065d: mov qword ptr [rsp + 0x40], rdi
+    # nextln: 0x0662: mov qword ptr [rsp + 0x20], rdx
+    # nextln: 0x0667: mov qword ptr [rsp + 0x60], r8
+    # nextln: 0x066c: mov qword ptr [rsp + 0x10], r11
+    # nextln: 0x0671: mov qword ptr [rsp + 0x68], r10
+    # nextln: 0x0676: mov qword ptr [rsp + 0x58], rsi
+    # nextln: 0x067b: mov qword ptr [rsp + 0x70], r9
+    # nextln: 0x0680: mov qword ptr [rsp + 0x18], rax
+    # nextln: 0x0685: mov rdi, r13
+    # nextln: 0x0688: mov rsi, r12
+    # nextln: 0x068b: call 0x690
+    # nextln: 0x0690: mov r8, qword ptr [rsp + 0x40]
+    # nextln: 0x0695: mov rcx, r12
+    # nextln: 0x0698: mov r11, qword ptr [rsp + 0x60]
+    # nextln: 0x069d: mov rsi, qword ptr [rsp + 0x50]
+    # nextln: 0x06a2: mov rdi, qword ptr [rsp + 0x10]
+    # nextln: 0x06a7: mov r13, qword ptr [rsp + 0x28]
+    # nextln: 0x06ac: mov r9, qword ptr [rsp + 0x68]
+    # nextln: 0x06b1: mov r12, qword ptr [rsp + 0x48]
+    # nextln: 0x06b6: mov r10, qword ptr [rsp + 0x70]
+    # nextln: 0x06bb: mov rdx, qword ptr [rsp + 0x20]
+    # nextln: 0x06c0: and r15d, eax
+    # nextln: 0x06c3: mov qword ptr [rsp + 0x40], r8
+    # nextln: 0x06c8: mov qword ptr [rsp + 0x60], r11
+    # nextln: 0x06cd: mov qword ptr [rsp + 0x50], rsi
+    # nextln: 0x06d2: mov qword ptr [rsp + 0x68], r9
+    # nextln: 0x06d7: mov qword ptr [rsp + 0x28], r13
+    # nextln: 0x06dc: mov qword ptr [rsp + 0x20], rdx
+    # nextln: 0x06e1: mov r13, qword ptr [rsp + 0x58]
+    # nextln: 0x06e6: mov qword ptr [rsp + 0x48], r12
+    # nextln: 0x06eb: mov r12, rcx
+    # nextln: 0x06ee: mov qword ptr [rsp + 0x70], r10
+    # nextln: 0x06f3: mov qword ptr [rsp + 0x10], rdi
+    # nextln: 0x06f8: mov rsi, rbx
+    # nextln: 0x06fb: mov rdi, r14
+    # nextln: 0x06fe: call 0x703
+    # nextln: 0x0703: mov rsi, qword ptr [rsp + 0x40]
+    # nextln: 0x0708: mov r11, qword ptr [rsp + 0x38]
+    # nextln: 0x070d: mov rdi, qword ptr [rsp + 0x10]
+    # nextln: 0x0712: mov r8, qword ptr [rsp + 0x60]
+    # nextln: 0x0717: mov rdx, qword ptr [rsp + 0x50]
+    # nextln: 0x071c: mov r10, qword ptr [rsp + 0x28]
+    # nextln: 0x0721: mov r9, qword ptr [rsp + 0x48]
+    # nextln: 0x0726: mov r14, qword ptr [rsp + 0x18]
+    # nextln: 0x072b: xor ecx, ecx
+    # nextln: 0x072d: cmp eax, ebx
+    # nextln: 0x072f: mov rax, qword ptr [rsp + 0x20]
+    # nextln: 0x0734: sete cl
+    # nextln: 0x0737: and r15d, ecx
+    # nextln: 0x073a: mov qword ptr [rsp + 0x10], rdi
+    # nextln: 0x073f: mov rdi, rdx
+    # nextln: 0x0742: mov qword ptr [rsp + 0xa0], r13
+    # nextln: 0x074a: mov r13, r14
+    # nextln: 0x074d: mov r14, r11
+    # nextln: 0x0750: mov r11, r9
+    # nextln: 0x0753: mov r9, qword ptr [rsp + 0xa0]
+    # nextln: 0x075b: mov rdx, qword ptr [rsp + 0x70]
+    # nextln: 0x0760: mov rcx, r10
+    # nextln: 0x0763: mov r10, r12
+    # nextln: 0x0766: mov r12, r8
+    # nextln: 0x0769: mov r8, rax
+    # nextln: 0x076c: movzx eax, word ptr [rsp + 0xb4]
+    # nextln: 0x0774: mov qword ptr [rsp + 0x50], rdi
+    # nextln: 0x0779: movsx edi, ax
+    # nextln: 0x077c: mov qword ptr [rsp + 0x28], rcx
+    # nextln: 0x0781: mov qword ptr [rsp + 0x20], r8
+    # nextln: 0x0786: mov qword ptr [rsp + 0x58], r9
+    # nextln: 0x078b: mov qword ptr [rsp + 0x48], r11
+    # nextln: 0x0790: mov qword ptr [rsp + 0x18], r13
+    # nextln: 0x0795: mov r13, rdx
+    # nextln: 0x0798: mov qword ptr [rsp + 0x38], r14
+    # nextln: 0x079d: mov r14, rsi
+    # nextln: 0x07a0: mov qword ptr [rsp + 0x30], r10
+    # nextln: 0x07a5: mov rsi, r13
+    # nextln: 0x07a8: call 0x7ad
+    # nextln: 0x07ad: and r15d, eax
+    # nextln: 0x07b0: mov r8, qword ptr [rsp + 0x30]
+    # nextln: 0x07b5: mov rdi, qword ptr [rsp + 0x10]
+    # nextln: 0x07ba: mov rcx, r13
+    # nextln: 0x07bd: mov r13, qword ptr [rsp + 0x20]
+    # nextln: 0x07c2: mov rsi, qword ptr [rsp + 0x58]
+    # nextln: 0x07c7: mov r9, qword ptr [rsp + 0x48]
+    # nextln: 0x07cc: mov rdx, qword ptr [rsp + 0x18]
+    # nextln: 0x07d1: mov qword ptr [rsp + 0x40], r14
+    # nextln: 0x07d6: mov r14, qword ptr [rsp + 0x50]
+    # nextln: 0x07db: mov r10, qword ptr [rsp + 0x38]
+    # nextln: 0x07e0: mov r11, qword ptr [rsp + 0x28]
+    # nextln: 0x07e5: movzx eax, word ptr [rsp + 0xb4]
+    # nextln: 0x07ed: mov qword ptr [rsp + 0x10], rdi
+    # nextln: 0x07f2: movsx edi, ax
+    # nextln: 0x07f5: mov qword ptr [rsp + 0x50], r14
+    # nextln: 0x07fa: mov r14, qword ptr [rsp + 0x10]
+    # nextln: 0x07ff: mov qword ptr [rsp + 0x70], rcx
+    # nextln: 0x0804: mov qword ptr [rsp + 0x48], r9
+    # nextln: 0x0809: mov qword ptr [rsp + 0x20], r13
+    # nextln: 0x080e: mov r13, r11
+    # nextln: 0x0811: mov qword ptr [rsp + 0x38], r10
+    # nextln: 0x0816: mov qword ptr [rsp + 0x58], rsi
+    # nextln: 0x081b: mov qword ptr [rsp + 0x18], rdx
+    # nextln: 0x0820: mov qword ptr [rsp + 0x30], r8
+    # nextln: 0x0825: mov rsi, r12
+    # nextln: 0x0828: call 0x82d
+    # nextln: 0x082d: and r15d, eax
+    # nextln: 0x0830: mov r10, r13
+    # nextln: 0x0833: mov r8, qword ptr [rsp + 0x30]
+    # nextln: 0x0838: mov r11, qword ptr [rsp + 0x50]
+    # nextln: 0x083d: mov rsi, qword ptr [rsp + 0x38]
+    # nextln: 0x0842: mov rcx, qword ptr [rsp + 0x70]
+    # nextln: 0x0847: mov rax, qword ptr [rsp + 0x48]
+    # nextln: 0x084c: mov r13, qword ptr [rsp + 0x20]
+    # nextln: 0x0851: mov r9, qword ptr [rsp + 0x18]
+    # nextln: 0x0856: mov rdx, qword ptr [rsp + 0x58]
+    # nextln: 0x085b: movzx edi, word ptr [rsp + 0xb2]
+    # nextln: 0x0863: movsx edi, di
+    # nextln: 0x0866: mov qword ptr [rsp + 0x28], r10
+    # nextln: 0x086b: mov qword ptr [rsp + 0x70], rcx
+    # nextln: 0x0870: mov qword ptr [rsp + 0x48], rax
+    # nextln: 0x0875: mov qword ptr [rsp + 0x30], r8
+    # nextln: 0x087a: mov qword ptr [rsp + 0x38], rsi
+    # nextln: 0x087f: mov qword ptr [rsp + 0x58], rdx
+    # nextln: 0x0884: mov qword ptr [rsp + 0x50], r11
+    # nextln: 0x0889: mov qword ptr [rsp + 0x10], r14
+    # nextln: 0x088e: mov r14, r9
+    # nextln: 0x0891: mov rsi, rbx
+    # nextln: 0x0894: call 0x899
+    # nextln: 0x0899: and r15d, eax
+    # nextln: 0x089c: mov r10, qword ptr [rsp + 0x28]
+    # nextln: 0x08a1: mov r8, qword ptr [rsp + 0x48]
+    # nextln: 0x08a6: mov rcx, qword ptr [rsp + 0x70]
+    # nextln: 0x08ab: mov r11, r13
+    # nextln: 0x08ae: mov r9, r14
+    # nextln: 0x08b1: mov rsi, qword ptr [rsp + 0x38]
+    # nextln: 0x08b6: mov rdi, qword ptr [rsp + 0x58]
+    # nextln: 0x08bb: mov rdx, qword ptr [rsp + 0x30]
+    # nextln: 0x08c0: mov r13, qword ptr [rsp + 0x50]
+    # nextln: 0x08c5: mov r14, qword ptr [rsp + 0x40]
+    # nextln: 0x08ca: movzx eax, word ptr [rsp + 0xb2]
+    # nextln: 0x08d2: mov qword ptr [rsp + 0x58], rdi
+    # nextln: 0x08d7: movsx edi, ax
+    # nextln: 0x08da: mov qword ptr [rsp + 0x28], r10
+    # nextln: 0x08df: mov qword ptr [rsp + 0x18], r9
+    # nextln: 0x08e4: mov qword ptr [rsp + 0x70], rcx
+    # nextln: 0x08e9: mov qword ptr [rsp + 0x20], r11
+    # nextln: 0x08ee: mov qword ptr [rsp + 0x38], rsi
+    # nextln: 0x08f3: mov qword ptr [rsp + 0x30], rdx
+    # nextln: 0x08f8: mov qword ptr [rsp + 0x50], r13
+    # nextln: 0x08fd: mov r13, qword ptr [rsp + 0x58]
+    # nextln: 0x0902: mov qword ptr [rsp + 0x40], r14
+    # nextln: 0x0907: mov r14, r8
+    # nextln: 0x090a: mov rsi, r12
+    # nextln: 0x090d: call 0x912
+    # nextln: 0x0912: xor ecx, ecx
+    # nextln: 0x0914: cmp eax, ebx
+    # nextln: 0x0916: sete cl
+    # nextln: 0x0919: and r15d, ecx
+    # nextln: 0x091c: mov r9, qword ptr [rsp + 0x28]
+    # nextln: 0x0921: mov rsi, qword ptr [rsp + 0x30]
+    # nextln: 0x0926: mov r11, qword ptr [rsp + 0x18]
+    # nextln: 0x092b: mov rdi, qword ptr [rsp + 0x10]
+    # nextln: 0x0930: mov r8, r14
+    # nextln: 0x0933: mov r14, qword ptr [rsp + 0x50]
+    # nextln: 0x0938: mov r10, qword ptr [rsp + 0x38]
+    # nextln: 0x093d: mov rcx, qword ptr [rsp + 0x70]
+    # nextln: 0x0942: mov rdx, qword ptr [rsp + 0x20]
+    # nextln: 0x0947: movzx eax, word ptr [rsp + 0xb2]
+    # nextln: 0x094f: mov qword ptr [rsp + 0x10], rdi
+    # nextln: 0x0954: movsx edi, ax
+    # nextln: 0x0957: mov qword ptr [rsp + 0x50], r14
+    # nextln: 0x095c: mov qword ptr [rsp + 0x18], r11
+    # nextln: 0x0961: mov r14, rsi
+    # nextln: 0x0964: mov qword ptr [rsp + 0x48], r8
+    # nextln: 0x0969: mov qword ptr [rsp + 0x28], r9
+    # nextln: 0x096e: mov qword ptr [rsp + 0x38], r10
+    # nextln: 0x0973: mov qword ptr [rsp + 0x70], rcx
+    # nextln: 0x0978: mov qword ptr [rsp + 0x20], rdx
+    # nextln: 0x097d: mov rsi, r14
+    # nextln: 0x0980: call 0x985
+    # nextln: 0x0985: and r15d, eax
+    # nextln: 0x0988: mov r8, qword ptr [rsp + 0x28]
+    # nextln: 0x098d: mov rax, qword ptr [rsp + 0x48]
+    # nextln: 0x0992: mov rsi, qword ptr [rsp + 0x38]
+    # nextln: 0x0997: mov rcx, qword ptr [rsp + 0x10]
+    # nextln: 0x099c: mov r9, r14
+    # nextln: 0x099f: mov r14, qword ptr [rsp + 0x70]
+    # nextln: 0x09a4: mov r11, qword ptr [rsp + 0x20]
+    # nextln: 0x09a9: mov r10, qword ptr [rsp + 0x50]
+    # nextln: 0x09ae: mov rdx, qword ptr [rsp + 0x18]
+    # nextln: 0x09b3: movzx edi, word ptr [rsp + 0xb0]
+    # nextln: 0x09bb: movsx edi, di
+    # nextln: 0x09be: mov qword ptr [rsp + 0x28], r8
+    # nextln: 0x09c3: mov qword ptr [rsp + 0x48], rax
+    # nextln: 0x09c8: mov qword ptr [rsp + 0x30], r9
+    # nextln: 0x09cd: mov qword ptr [rsp + 0x10], rcx
+    # nextln: 0x09d2: mov qword ptr [rsp + 0x20], r11
+    # nextln: 0x09d7: mov qword ptr [rsp + 0x50], r10
+    # nextln: 0x09dc: mov qword ptr [rsp + 0x18], rdx
+    # nextln: 0x09e1: mov qword ptr [rsp + 0x38], rsi
+    # nextln: 0x09e6: mov rsi, rbx
+    # nextln: 0x09e9: call 0x9ee
+    # nextln: 0x09ee: xor ecx, ecx
+    # nextln: 0x09f0: cmp eax, ebx
+    # nextln: 0x09f2: sete cl
+    # nextln: 0x09f5: and r15d, ecx
+    # nextln: 0x09f8: mov rsi, r14
+    # nextln: 0x09fb: mov rdi, qword ptr [rsp + 0x68]
+    # nextln: 0x0a00: call 0xa05
+    # nextln: 0x0a05: mov r10, qword ptr [rsp + 0x28]
+    # nextln: 0x0a0a: mov rsi, qword ptr [rsp + 0x18]
+    # nextln: 0x0a0f: mov r9, qword ptr [rsp + 0x40]
+    # nextln: 0x0a14: mov rdx, qword ptr [rsp + 0x30]
+    # nextln: 0x0a19: mov rcx, qword ptr [rsp + 0x50]
+    # nextln: 0x0a1e: mov r8, qword ptr [rsp + 0x38]
+    # nextln: 0x0a23: mov r14, qword ptr [rsp + 0x20]
+    # nextln: 0x0a28: mov rdi, qword ptr [rsp + 0x68]
+    # nextln: 0x0a2d: mov r11, qword ptr [rsp + 0x10]
+    # nextln: 0x0a32: and r15d, eax
+    # nextln: 0x0a35: mov qword ptr [rsp + 0x28], r10
+    # nextln: 0x0a3a: mov qword ptr [rsp + 0x30], rdx
+    # nextln: 0x0a3f: mov qword ptr [rsp + 0x50], rcx
+    # nextln: 0x0a44: mov qword ptr [rsp + 0x38], r8
+    # nextln: 0x0a49: mov qword ptr [rsp + 0x10], r11
+    # nextln: 0x0a4e: mov qword ptr [rsp + 0x40], r9
+    # nextln: 0x0a53: mov qword ptr [rsp + 0x18], rsi
+    # nextln: 0x0a58: mov rsi, r12
+    # nextln: 0x0a5b: call 0xa60
+    # nextln: 0x0a60: mov rdi, qword ptr [rsp + 0x28]
+    # nextln: 0x0a65: mov r11, qword ptr [rsp + 0x38]
+    # nextln: 0x0a6a: mov rcx, qword ptr [rsp + 0x48]
+    # nextln: 0x0a6f: mov rsi, r14
+    # nextln: 0x0a72: mov r14, qword ptr [rsp + 0x50]
+    # nextln: 0x0a77: mov r8, qword ptr [rsp + 0x40]
+    # nextln: 0x0a7c: mov rdx, qword ptr [rsp + 0x18]
+    # nextln: 0x0a81: mov r9, qword ptr [rsp + 0x10]
+    # nextln: 0x0a86: mov r10, qword ptr [rsp + 0x30]
+    # nextln: 0x0a8b: and r15d, eax
+    # nextln: 0x0a8e: mov qword ptr [rsp + 0x28], rdi
+    # nextln: 0x0a93: mov qword ptr [rsp + 0x38], r11
+    # nextln: 0x0a98: mov qword ptr [rsp + 0x30], r10
+    # nextln: 0x0a9d: mov qword ptr [rsp + 0x48], rcx
+    # nextln: 0x0aa2: mov qword ptr [rsp + 0x40], r8
+    # nextln: 0x0aa7: mov qword ptr [rsp + 0x20], rsi
+    # nextln: 0x0aac: mov qword ptr [rsp + 0x18], rdx
+    # nextln: 0x0ab1: mov qword ptr [rsp + 0x10], r9
+    # nextln: 0x0ab6: mov rdi, r13
+    # nextln: 0x0ab9: mov rsi, rbx
+    # nextln: 0x0abc: call 0xac1
+    # nextln: 0x0ac1: and r15d, eax
+    # nextln: 0x0ac4: mov rsi, r12
+    # nextln: 0x0ac7: mov rdi, r13
+    # nextln: 0x0aca: call 0xacf
+    # nextln: 0x0acf: mov rdx, qword ptr [rsp + 0x18]
+    # nextln: 0x0ad4: mov rcx, qword ptr [rsp + 0x48]
+    # nextln: 0x0ad9: mov r11, qword ptr [rsp + 0x40]
+    # nextln: 0x0ade: mov rdi, qword ptr [rsp + 0x38]
+    # nextln: 0x0ae3: mov r8, qword ptr [rsp + 0x30]
+    # nextln: 0x0ae8: mov r9, qword ptr [rsp + 0x10]
+    # nextln: 0x0aed: mov r10, qword ptr [rsp + 0x20]
+    # nextln: 0x0af2: mov rsi, qword ptr [rsp + 0x28]
+    # nextln: 0x0af7: xor r12d, r12d
+    # nextln: 0x0afa: cmp eax, ebx
+    # nextln: 0x0afc: sete r12b
+    # nextln: 0x0b00: and r15d, r12d
+    # nextln: 0x0b03: mov qword ptr [rsp + 0x28], rsi
+    # nextln: 0x0b08: mov qword ptr [rsp + 0x40], r11
+    # nextln: 0x0b0d: mov qword ptr [rsp + 0x48], rcx
+    # nextln: 0x0b12: mov qword ptr [rsp + 0x38], rdi
+    # nextln: 0x0b17: mov qword ptr [rsp + 0x10], r9
+    # nextln: 0x0b1c: mov r12, r8
+    # nextln: 0x0b1f: mov qword ptr [rsp + 0x20], r10
+    # nextln: 0x0b24: mov qword ptr [rsp + 0x18], rdx
+    # nextln: 0x0b29: mov rdi, r13
+    # nextln: 0x0b2c: mov rsi, r12
+    # nextln: 0x0b2f: call 0xb34
+    # nextln: 0x0b34: mov rsi, qword ptr [rsp + 0x48]
+    # nextln: 0x0b39: mov rdi, qword ptr [rsp + 0x38]
+    # nextln: 0x0b3e: mov r13, r12
+    # nextln: 0x0b41: mov r8, qword ptr [rsp + 0x18]
+    # nextln: 0x0b46: mov r9, qword ptr [rsp + 0x10]
+    # nextln: 0x0b4b: mov rdx, qword ptr [rsp + 0x20]
+    # nextln: 0x0b50: mov rcx, qword ptr [rsp + 0x28]
+    # nextln: 0x0b55: mov r12, qword ptr [rsp + 0x40]
+    # nextln: 0x0b5a: and r15d, eax
+    # nextln: 0x0b5d: mov qword ptr [rsp + 0x28], rcx
+    # nextln: 0x0b62: mov qword ptr [rsp + 0x18], r8
+    # nextln: 0x0b67: mov qword ptr [rsp + 0x20], rdx
+    # nextln: 0x0b6c: mov qword ptr [rsp + 0x10], r9
+    # nextln: 0x0b71: mov qword ptr [rsp + 0x38], rdi
+    # nextln: 0x0b76: mov qword ptr [rsp + 0x48], rsi
+    # nextln: 0x0b7b: mov rdi, r14
+    # nextln: 0x0b7e: mov rsi, rbx
+    # nextln: 0x0b81: call 0xb86
+    # nextln: 0x0b86: mov rdi, qword ptr [rsp + 0x28]
+    # nextln: 0x0b8b: mov rcx, qword ptr [rsp + 0x20]
+    # nextln: 0x0b90: mov rdx, qword ptr [rsp + 0x38]
+    # nextln: 0x0b95: mov r8, qword ptr [rsp + 0x10]
+    # nextln: 0x0b9a: mov r14, qword ptr [rsp + 0x48]
+    # nextln: 0x0b9f: mov rsi, qword ptr [rsp + 0x18]
+    # nextln: 0x0ba4: xor r9d, r9d
+    # nextln: 0x0ba7: cmp eax, ebx
+    # nextln: 0x0ba9: sete r9b
+    # nextln: 0x0bad: and r15d, r9d
+    # nextln: 0x0bb0: mov rax, r8
+    # nextln: 0x0bb3: mov r8, rsi
+    # nextln: 0x0bb6: mov rsi, rdx
+    # nextln: 0x0bb9: mov rdx, rdi
+    # nextln: 0x0bbc: mov edi, dword ptr [rsp + 0xac]
+    # nextln: 0x0bc3: mov qword ptr [rsp + 0x28], rdx
+    # nextln: 0x0bc8: mov qword ptr [rsp + 0x10], rax
+    # nextln: 0x0bcd: mov qword ptr [rsp + 0x38], rsi
+    # nextln: 0x0bd2: mov qword ptr [rsp + 0x18], r8
+    # nextln: 0x0bd7: mov qword ptr [rsp + 0x20], rcx
+    # nextln: 0x0bdc: mov rsi, rbx
+    # nextln: 0x0bdf: call 0xbe4
+    # nextln: 0x0be4: and r15d, eax
+    # nextln: 0x0be7: mov rcx, qword ptr [rsp + 0x10]
+    # nextln: 0x0bec: mov rdx, qword ptr [rsp + 0x38]
+    # nextln: 0x0bf1: mov rsi, qword ptr [rsp + 0x20]
+    # nextln: 0x0bf6: mov rax, qword ptr [rsp + 0x28]
+    # nextln: 0x0bfb: mov r8, qword ptr [rsp + 0x18]
+    # nextln: 0x0c00: mov edi, dword ptr [rsp + 0xac]
+    # nextln: 0x0c07: mov qword ptr [rsp + 0x18], r8
+    # nextln: 0x0c0c: mov qword ptr [rsp + 0x20], rsi
+    # nextln: 0x0c11: mov qword ptr [rsp + 0x38], rdx
+    # nextln: 0x0c16: mov qword ptr [rsp + 0x10], rcx
+    # nextln: 0x0c1b: mov qword ptr [rsp + 0x28], rax
+    # nextln: 0x0c20: mov rsi, r13
+    # nextln: 0x0c23: call 0xc28
+    # nextln: 0x0c28: and r15d, eax
+    # nextln: 0x0c2b: mov rcx, qword ptr [rsp + 0x10]
+    # nextln: 0x0c30: mov rax, qword ptr [rsp + 0x18]
+    # nextln: 0x0c35: mov r8, qword ptr [rsp + 0x20]
+    # nextln: 0x0c3a: mov rsi, qword ptr [rsp + 0x38]
+    # nextln: 0x0c3f: mov rdx, qword ptr [rsp + 0x28]
+    # nextln: 0x0c44: mov edi, dword ptr [rsp + 0xa8]
+    # nextln: 0x0c4b: mov qword ptr [rsp + 0x18], rax
+    # nextln: 0x0c50: mov qword ptr [rsp + 0x20], r8
+    # nextln: 0x0c55: mov qword ptr [rsp + 0x38], rsi
+    # nextln: 0x0c5a: mov qword ptr [rsp + 0x28], rdx
+    # nextln: 0x0c5f: mov qword ptr [rsp + 0x10], rcx
+    # nextln: 0x0c64: mov rsi, rbx
+    # nextln: 0x0c67: call 0xc6c
+    # nextln: 0x0c6c: xor ecx, ecx
+    # nextln: 0x0c6e: cmp eax, ebx
+    # nextln: 0x0c70: sete cl
+    # nextln: 0x0c73: and r15d, ecx
+    # nextln: 0x0c76: mov rsi, qword ptr [rsp + 0x18]
+    # nextln: 0x0c7b: mov rcx, qword ptr [rsp + 0x20]
+    # nextln: 0x0c80: mov rax, qword ptr [rsp + 0x38]
+    # nextln: 0x0c85: mov r8, qword ptr [rsp + 0x28]
+    # nextln: 0x0c8a: mov rdx, qword ptr [rsp + 0x10]
+    # nextln: 0x0c8f: mov edi, dword ptr [rsp + 0xac]
+    # nextln: 0x0c96: mov qword ptr [rsp + 0x28], r8
+    # nextln: 0x0c9b: mov qword ptr [rsp + 0x20], rcx
+    # nextln: 0x0ca0: mov qword ptr [rsp + 0x10], rdx
+    # nextln: 0x0ca5: mov qword ptr [rsp + 0x18], rsi
+    # nextln: 0x0caa: mov qword ptr [rsp + 0x38], rax
+    # nextln: 0x0caf: mov rsi, rbx
+    # nextln: 0x0cb2: call 0xcb7
+    # nextln: 0x0cb7: xor ecx, ecx
+    # nextln: 0x0cb9: cmp eax, ebx
+    # nextln: 0x0cbb: sete cl
+    # nextln: 0x0cbe: and r15d, ecx
+    # nextln: 0x0cc1: mov rcx, qword ptr [rsp + 0x18]
+    # nextln: 0x0cc6: mov rdx, qword ptr [rsp + 0x38]
+    # nextln: 0x0ccb: mov r8, qword ptr [rsp + 0x20]
+    # nextln: 0x0cd0: mov rsi, qword ptr [rsp + 0x10]
+    # nextln: 0x0cd5: mov rax, qword ptr [rsp + 0x28]
+    # nextln: 0x0cda: mov edi, dword ptr [rsp + 0xac]
+    # nextln: 0x0ce1: mov qword ptr [rsp + 0x38], rdx
+    # nextln: 0x0ce6: mov qword ptr [rsp + 0x20], r8
+    # nextln: 0x0ceb: mov qword ptr [rsp + 0x10], rsi
+    # nextln: 0x0cf0: mov qword ptr [rsp + 0x18], rcx
+    # nextln: 0x0cf5: mov qword ptr [rsp + 0x28], rax
+    # nextln: 0x0cfa: mov rsi, r13
+    # nextln: 0x0cfd: call 0xd02
+    # nextln: 0x0d02: xor ecx, ecx
+    # nextln: 0x0d04: cmp eax, ebx
+    # nextln: 0x0d06: sete cl
+    # nextln: 0x0d09: and r15d, ecx
+    # nextln: 0x0d0c: mov rax, qword ptr [rsp + 0x38]
+    # nextln: 0x0d11: mov rsi, qword ptr [rsp + 0x20]
+    # nextln: 0x0d16: mov rdx, qword ptr [rsp + 0x10]
+    # nextln: 0x0d1b: mov rcx, qword ptr [rsp + 0x18]
+    # nextln: 0x0d20: mov r8, qword ptr [rsp + 0x28]
+    # nextln: 0x0d25: mov edi, dword ptr [rsp + 0xa8]
+    # nextln: 0x0d2c: mov qword ptr [rsp + 0x38], rax
+    # nextln: 0x0d31: mov qword ptr [rsp + 0x20], rsi
+    # nextln: 0x0d36: mov qword ptr [rsp + 0x18], rcx
+    # nextln: 0x0d3b: mov qword ptr [rsp + 0x10], rdx
+    # nextln: 0x0d40: mov qword ptr [rsp + 0x28], r8
+    # nextln: 0x0d45: mov rsi, rbx
+    # nextln: 0x0d48: call 0xd4d
+    # nextln: 0x0d4d: and r15d, eax
+    # nextln: 0x0d50: mov rdx, qword ptr [rsp + 0x18]
+    # nextln: 0x0d55: mov rax, qword ptr [rsp + 0x28]
+    # nextln: 0x0d5a: mov rsi, qword ptr [rsp + 0x38]
+    # nextln: 0x0d5f: mov rcx, qword ptr [rsp + 0x20]
+    # nextln: 0x0d64: mov r8, qword ptr [rsp + 0x10]
+    # nextln: 0x0d69: mov edi, dword ptr [rsp + 0xac]
+    # nextln: 0x0d70: mov qword ptr [rsp + 0x38], rsi
+    # nextln: 0x0d75: mov qword ptr [rsp + 0x20], rcx
+    # nextln: 0x0d7a: mov qword ptr [rsp + 0x10], r8
+    # nextln: 0x0d7f: mov qword ptr [rsp + 0x28], rax
+    # nextln: 0x0d84: mov qword ptr [rsp + 0x18], rdx
+    # nextln: 0x0d89: mov rsi, rbx
+    # nextln: 0x0d8c: call 0xd91
+    # nextln: 0x0d91: xor ecx, ecx
+    # nextln: 0x0d93: cmp eax, ebx
+    # nextln: 0x0d95: sete cl
+    # nextln: 0x0d98: and r15d, ecx
+    # nextln: 0x0d9b: mov rdx, qword ptr [rsp + 0x38]
+    # nextln: 0x0da0: mov rcx, qword ptr [rsp + 0x20]
+    # nextln: 0x0da5: mov r8, qword ptr [rsp + 0x18]
+    # nextln: 0x0daa: mov rax, qword ptr [rsp + 0x10]
+    # nextln: 0x0daf: mov rsi, qword ptr [rsp + 0x28]
+    # nextln: 0x0db4: mov edi, dword ptr [rsp + 0xac]
+    # nextln: 0x0dbb: mov qword ptr [rsp + 0x10], rax
+    # nextln: 0x0dc0: mov qword ptr [rsp + 0x38], rdx
+    # nextln: 0x0dc5: mov qword ptr [rsp + 0x20], rcx
+    # nextln: 0x0dca: mov qword ptr [rsp + 0x28], rsi
+    # nextln: 0x0dcf: mov qword ptr [rsp + 0x18], r8
+    # nextln: 0x0dd4: mov rsi, r13
+    # nextln: 0x0dd7: call 0xddc
+    # nextln: 0x0ddc: xor ecx, ecx
+    # nextln: 0x0dde: cmp eax, ebx
+    # nextln: 0x0de0: sete cl
+    # nextln: 0x0de3: and r15d, ecx
+    # nextln: 0x0de6: mov r8, qword ptr [rsp + 0x10]
+    # nextln: 0x0deb: mov rsi, qword ptr [rsp + 0x38]
+    # nextln: 0x0df0: mov rcx, qword ptr [rsp + 0x20]
+    # nextln: 0x0df5: mov rdx, qword ptr [rsp + 0x18]
+    # nextln: 0x0dfa: mov rax, qword ptr [rsp + 0x28]
+    # nextln: 0x0dff: mov edi, dword ptr [rsp + 0xa8]
+    # nextln: 0x0e06: mov qword ptr [rsp + 0x38], rsi
+    # nextln: 0x0e0b: mov qword ptr [rsp + 0x20], rcx
+    # nextln: 0x0e10: mov qword ptr [rsp + 0x10], r8
+    # nextln: 0x0e15: mov qword ptr [rsp + 0x18], rdx
+    # nextln: 0x0e1a: mov qword ptr [rsp + 0x28], rax
+    # nextln: 0x0e1f: mov rsi, rbx
+    # nextln: 0x0e22: call 0xe27
+    # nextln: 0x0e27: xor ecx, ecx
+    # nextln: 0x0e29: cmp eax, r14d
+    # nextln: 0x0e2c: mov rax, qword ptr [rsp + 0x20]
+    # nextln: 0x0e31: mov r14, qword ptr [rsp + 0x18]
+    # nextln: 0x0e36: mov rdx, qword ptr [rsp + 0x38]
+    # nextln: 0x0e3b: mov rdi, qword ptr [rsp + 0x28]
+    # nextln: 0x0e40: mov rsi, qword ptr [rsp + 0x10]
+    # nextln: 0x0e45: sete cl
+    # nextln: 0x0e48: and r15d, ecx
+    # nextln: 0x0e4b: mov qword ptr [rsp + 0x20], rax
+    # nextln: 0x0e50: mov qword ptr [rsp + 0x38], rdx
+    # nextln: 0x0e55: mov qword ptr [rsp + 0x10], rsi
+    # nextln: 0x0e5a: mov qword ptr [rsp + 0x28], rdi
+    # nextln: 0x0e5f: mov rdi, r12
+    # nextln: 0x0e62: mov rsi, rbx
+    # nextln: 0x0e65: call 0xe6a
+    # nextln: 0x0e6a: and r15d, eax
+    # nextln: 0x0e6d: mov rsi, r13
+    # nextln: 0x0e70: mov rdi, r12
+    # nextln: 0x0e73: call 0xe78
+    # nextln: 0x0e78: mov r8, qword ptr [rsp + 0x28]
+    # nextln: 0x0e7d: mov rsi, qword ptr [rsp + 0x10]
+    # nextln: 0x0e82: mov rdi, qword ptr [rsp + 0x38]
+    # nextln: 0x0e87: mov rcx, r14
+    # nextln: 0x0e8a: mov rdx, qword ptr [rsp + 0x20]
+    # nextln: 0x0e8f: and r15d, eax
+    # nextln: 0x0e92: mov r12, r8
+    # nextln: 0x0e95: mov qword ptr [rsp + 0x10], rsi
+    # nextln: 0x0e9a: mov qword ptr [rsp + 0x18], rcx
+    # nextln: 0x0e9f: mov r14, rdx
+    # nextln: 0x0ea2: mov rsi, rbx
+    # nextln: 0x0ea5: call 0xeaa
+    # nextln: 0x0eaa: xor ecx, ecx
+    # nextln: 0x0eac: cmp eax, ebx
+    # nextln: 0x0eae: sete cl
+    # nextln: 0x0eb1: and r15d, ecx
+    # nextln: 0x0eb4: mov rax, r12
+    # nextln: 0x0eb7: mov rsi, qword ptr [rsp + 0x10]
+    # nextln: 0x0ebc: mov rdx, r14
+    # nextln: 0x0ebf: mov rcx, qword ptr [rsp + 0x18]
+    # nextln: 0x0ec4: mov rdi, qword ptr [rsp + 8]
+    # nextln: 0x0ec9: mov qword ptr [rsp + 0x10], rsi
+    # nextln: 0x0ece: mov r14, rdx
+    # nextln: 0x0ed1: mov qword ptr [rsp + 0x28], rax
+    # nextln: 0x0ed6: mov r12, rcx
+    # nextln: 0x0ed9: mov rsi, rbx
+    # nextln: 0x0edc: call 0xee1
+    # nextln: 0x0ee1: and r15d, eax
+    # nextln: 0x0ee4: mov rdx, qword ptr [rsp + 0x10]
+    # nextln: 0x0ee9: mov rax, qword ptr [rsp + 0x28]
+    # nextln: 0x0eee: mov rcx, r12
+    # nextln: 0x0ef1: mov rdi, qword ptr [rsp + 8]
+    # nextln: 0x0ef6: mov qword ptr [rsp + 0x10], rdx
+    # nextln: 0x0efb: mov qword ptr [rsp + 0x18], rcx
+    # nextln: 0x0f00: mov r12, rax
+    # nextln: 0x0f03: mov rsi, r13
+    # nextln: 0x0f06: call 0xf0b
+    # nextln: 0x0f0b: xor ecx, ecx
+    # nextln: 0x0f0d: cmp eax, ebx
+    # nextln: 0x0f0f: sete cl
+    # nextln: 0x0f12: and r15d, ecx
+    # nextln: 0x0f15: mov rcx, qword ptr [rsp + 0x18]
+    # nextln: 0x0f1a: mov rax, qword ptr [rsp + 0x10]
+    # nextln: 0x0f1f: mov rdi, qword ptr [rsp + 8]
+    # nextln: 0x0f24: mov qword ptr [rsp + 0x10], rax
+    # nextln: 0x0f29: mov qword ptr [rsp + 0x18], rcx
+    # nextln: 0x0f2e: mov rsi, r12
+    # nextln: 0x0f31: call 0xf36
+    # nextln: 0x0f36: and r15d, eax
+    # nextln: 0x0f39: mov rax, qword ptr [rsp + 0x10]
+    # nextln: 0x0f3e: mov rcx, qword ptr [rsp + 0x18]
+    # nextln: 0x0f43: mov rdi, qword ptr [rsp]
+    # nextln: 0x0f47: mov qword ptr [rsp + 0x18], rcx
+    # nextln: 0x0f4c: mov qword ptr [rsp + 0x10], rax
+    # nextln: 0x0f51: mov rsi, rbx
+    # nextln: 0x0f54: call 0xf59
+    # nextln: 0x0f59: xor ecx, ecx
+    # nextln: 0x0f5b: cmp eax, ebx
+    # nextln: 0x0f5d: sete cl
+    # nextln: 0x0f60: and r15d, ecx
+    # nextln: 0x0f63: mov rdi, r14
+    # nextln: 0x0f66: mov rsi, rbx
+    # nextln: 0x0f69: call 0xf6e
+    # nextln: 0x0f6e: and r15d, eax
+    # nextln: 0x0f71: mov rdi, r14
+    # nextln: 0x0f74: mov rsi, r13
+    # nextln: 0x0f77: call 0xf7c
+    # nextln: 0x0f7c: mov r13, rax
+    # nextln: 0x0f7f: mov rsi, r12
+    # nextln: 0x0f82: mov rdi, r14
+    # nextln: 0x0f85: call 0xf8a
+    # nextln: 0x0f8a: mov r12, qword ptr [rsp + 0x10]
+    # nextln: 0x0f8f: mov rdi, qword ptr [rsp + 0x18]
+    # nextln: 0x0f94: xor ecx, ecx
+    # nextln: 0x0f96: cmp r13d, ebx
+    # nextln: 0x0f99: sete cl
+    # nextln: 0x0f9c: and r15d, ecx
+    # nextln: 0x0f9f: and r15d, eax
+    # nextln: 0x0fa2: mov rsi, rbx
+    # nextln: 0x0fa5: call 0xfaa
+    # nextln: 0x0faa: xor ecx, ecx
+    # nextln: 0x0fac: cmp eax, ebx
+    # nextln: 0x0fae: sete cl
+    # nextln: 0x0fb1: and r15d, ecx
+    # nextln: 0x0fb4: test r15d, r15d
+    # nextln: 0x0fb7: jne 0xfc2
+    # nextln: 0x0fbd: jmp 0xfd7
+    # nextln: 0x0fc2: mov rax, r12
+    # nextln: 0x0fc5: add rsp, 0xc8
+    # nextln: 0x0fcc: pop rbx
+    # nextln: 0x0fcd: pop r12
+    # nextln: 0x0fcf: pop r13
+    # nextln: 0x0fd1: pop r14
+    # nextln: 0x0fd3: pop r15
+    # nextln: 0x0fd5: pop rbp
+    # nextln: 0x0fd6: ret
+    # nextln: 0x0fd7: mov rax, rbx
+    # nextln: 0x0fda: add rsp, 0xc8
+    # nextln: 0x0fe1: pop rbx
+    # nextln: 0x0fe2: pop r12
+    # nextln: 0x0fe4: pop r13
+    # nextln: 0x0fe6: pop r14
+    # nextln: 0x0fe8: pop r15
+    # nextln: 0x0fea: pop rbp
+    # nextln: 0x0feb: ret
+
+    %0:ctrl = entry
+    %1:ctrl, %2:phisel = region %0
+    %3:i32 = iconst 0
+    %4:i32 = iconst 1
+    %5:i64 = iext %4
+    %6:i64 = sfill 32 %5
+    %7:i32 = iconst 3
+    %8:ptr = stackslot 8:8
+    %9:i32 = iconst 64
+    %10:ptr = stackslot 8:8
+    %11:i32 = iconst 32
+    %12:ptr = stackslot 4:4
+    %13:ptr = stackslot 4:4
+    %14:ptr = stackslot 2:2
+    %15:ptr = stackslot 2:2
+    %16:i32 = iconst 16
+    %17:ptr = stackslot 2:2
+    %18:i32 = iconst 15
+    %19:ptr = stackslot 1:1
+    %20:ptr = stackslot 1:1
+    %21:i32 = iconst 8
+    %22:ptr = stackslot 1:1
+    %23:ctrl = store.1 %1, %3, %22
+    %24:ctrl = store.1 %23, %3, %20
+    %25:ctrl = store.1 %24, %3, %19
+    %26:ctrl = store.2 %25, %3, %17
+    %27:ctrl = store.2 %26, %3, %15
+    %28:ctrl = store.2 %27, %3, %14
+    %29:ctrl = store.4 %28, %3, %13
+    %30:ctrl = store.4 %29, %3, %12
+    %31:i32 = iconst 7
+    %32:i32 = iconst 2
+    %33:i64 = iext %32
+    %34:i64 = sfill 32 %33
+    %35:i32 = iconst 4294934528
+    %36:i32 = iconst 4294967168
+    %37:i64 = iconst 0
+    %38:ctrl = store.8 %30, %37, %10
+    %39:ctrl = store.8 %38, %37, %8
+    %40:ctrl, %41:phisel = region %39
+    %42:ctrl = store.1 %40, %36, %22
+    %43:ctrl = store.1 %42, %4, %20
+    %44:ctrl = store.1 %43, %32, %19
+    %45:ctrl = store.2 %44, %35, %17
+    %46:ctrl = store.2 %45, %4, %15
+    %47:ctrl = store.2 %46, %32, %14
+    %48:ctrl = store.4 %47, %4, %13
+    %49:ctrl = store.4 %48, %32, %12
+    %50:ctrl = store.8 %49, %6, %10
+    %51:ctrl = store.8 %50, %34, %8
+    %52:ctrl, %53:i32 = load.1 %51, %22
+    %54:i32 = sfill 8 %53
+    %55:ctrl, %56:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %52, %54, %31
+    %57:ctrl, %58:i32 = load.1 %55, %22
+    %59:i32 = sfill 8 %58
+    %60:ctrl, %61:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %57, %59, %21
+    %62:ctrl, %63:i32 = load.1 %60, %20
+    %64:i32 = sfill 8 %63
+    %65:ctrl, %66:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %62, %64, %3
+    %67:ctrl, %68:i32 = load.1 %65, %20
+    %69:i32 = sfill 8 %68
+    %70:ctrl, %71:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %67, %69, %21
+    %72:ctrl, %73:i32 = load.1 %70, %20
+    %74:i32 = sfill 8 %73
+    %75:ctrl, %76:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %72, %74, %11
+    %77:ctrl, %78:i32 = load.1 %75, %19
+    %79:i32 = sfill 8 %78
+    %80:ctrl, %81:i32 = call @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" %77, %79, %3
+    %82:ctrl, %83:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %80, %22, %31
+    %84:ctrl, %85:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %82, %22, %21
+    %86:ctrl, %87:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %84, %20, %3
+    %88:ctrl, %89:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %86, %20, %21
+    %90:ctrl, %91:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %88, %20, %11
+    %92:ctrl, %93:i32 = call @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" %90, %19, %3
+    %94:ctrl, %95:i32 = load.2 %92, %17
+    %96:i32 = sfill 16 %95
+    %97:ctrl, %98:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %94, %96, %18
+    %99:ctrl, %100:i32 = load.2 %97, %17
+    %101:i32 = sfill 16 %100
+    %102:ctrl, %103:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %99, %101, %16
+    %104:ctrl, %105:i32 = load.2 %102, %15
+    %106:i32 = sfill 16 %105
+    %107:ctrl, %108:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %104, %106, %3
+    %109:ctrl, %110:i32 = load.2 %107, %15
+    %111:i32 = sfill 16 %110
+    %112:ctrl, %113:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %109, %111, %16
+    %114:ctrl, %115:i32 = load.2 %112, %15
+    %116:i32 = sfill 16 %115
+    %117:ctrl, %118:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %114, %116, %11
+    %119:ctrl, %120:i32 = load.2 %117, %14
+    %121:i32 = sfill 16 %120
+    %122:ctrl, %123:i32 = call @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" %119, %121, %3
+    %124:ctrl, %125:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %122, %17, %18
+    %126:ctrl, %127:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %124, %17, %16
+    %128:ctrl, %129:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %126, %15, %3
+    %130:ctrl, %131:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %128, %15, %16
+    %132:ctrl, %133:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %130, %15, %11
+    %134:ctrl, %135:i32 = call @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" %132, %14, %3
+    %136:ctrl, %137:i32 = load.4 %134, %13
+    %138:ctrl, %139:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" %136, %137, %3
+    %140:ctrl, %141:i32 = load.4 %138, %13
+    %142:ctrl, %143:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" %140, %141, %11
+    %144:ctrl, %145:i32 = load.4 %142, %12
+    %146:ctrl, %147:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" %144, %145, %3
+    %148:ctrl, %149:i32 = load.4 %146, %13
+    %150:ctrl, %151:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" %148, %149, %3
+    %152:ctrl, %153:i32 = load.4 %150, %13
+    %154:ctrl, %155:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" %152, %153, %11
+    %156:ctrl, %157:i32 = load.4 %154, %12
+    %158:ctrl, %159:i32 = call @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" %156, %157, %3
+    %160:ctrl, %161:i32 = load.4 %158, %13
+    %162:ctrl, %163:i32 = call @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" %160, %161, %3
+    %164:ctrl, %165:i32 = load.4 %162, %13
+    %166:ctrl, %167:i32 = call @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" %164, %165, %11
+    %168:ctrl, %169:i32 = load.4 %166, %12
+    %170:ctrl, %171:i32 = call @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" %168, %169, %3
+    %172:ctrl, %173:i32 = call @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" %170, %13, %3
+    %174:ctrl, %175:i32 = call @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" %172, %13, %11
+    %176:ctrl, %177:i32 = call @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" %174, %12, %3
+    %178:ctrl, %179:i64 = load.8 %176, %10
+    %180:ctrl, %181:i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" %178, %179, %3
+    %182:ctrl, %183:i64 = load.8 %180, %10
+    %184:ctrl, %185:i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" %182, %183, %11
+    %186:ctrl, %187:i64 = load.8 %184, %10
+    %188:ctrl, %189:i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" %186, %187, %9
+    %190:ctrl, %191:i64 = load.8 %188, %8
+    %192:ctrl, %193:i32 = call @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" %190, %191, %3
+    %194:ctrl, %195:i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" %192, %10, %3
+    %196:ctrl, %197:i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" %194, %10, %11
+    %198:ctrl, %199:i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" %196, %10, %9
+    %200:ctrl, %201:i32 = call @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" %198, %8, %3
+    %202:i32 = icmp eq %201, %3
+    %203:i32 = icmp eq %197, %3
+    %204:i32 = icmp eq %193, %3
+    %205:i32 = icmp eq %185, %3
+    %206:i32 = icmp eq %177, %3
+    %207:i32 = icmp eq %171, %7
+    %208:i32 = icmp eq %167, %3
+    %209:i32 = icmp eq %163, %3
+    %210:i32 = icmp eq %155, %3
+    %211:i32 = icmp eq %151, %3
+    %212:i32 = icmp eq %147, %3
+    %213:i32 = icmp eq %135, %3
+    %214:i32 = icmp eq %131, %3
+    %215:i32 = icmp eq %123, %3
+    %216:i32 = icmp eq %113, %3
+    %217:i32 = icmp eq %93, %3
+    %218:i32 = icmp eq %89, %3
+    %219:i32 = icmp eq %81, %3
+    %220:i32 = icmp eq %71, %3
+    %221:i32 = and %4, %56
+    %222:i32 = and %221, %61
+    %223:i32 = and %222, %66
+    %224:i32 = and %223, %220
+    %225:i32 = and %224, %76
+    %226:i32 = and %225, %219
+    %227:i32 = and %226, %83
+    %228:i32 = and %227, %85
+    %229:i32 = and %228, %87
+    %230:i32 = and %229, %218
+    %231:i32 = and %230, %91
+    %232:i32 = and %231, %217
+    %233:i32 = and %232, %98
+    %234:i32 = and %233, %103
+    %235:i32 = and %234, %108
+    %236:i32 = and %235, %216
+    %237:i32 = and %236, %118
+    %238:i32 = and %237, %215
+    %239:i32 = and %238, %125
+    %240:i32 = and %239, %127
+    %241:i32 = and %240, %129
+    %242:i32 = and %241, %214
+    %243:i32 = and %242, %133
+    %244:i32 = and %243, %213
+    %245:i32 = and %244, %139
+    %246:i32 = and %245, %143
+    %247:i32 = and %246, %212
+    %248:i32 = and %247, %211
+    %249:i32 = and %248, %210
+    %250:i32 = and %249, %159
+    %251:i32 = and %250, %209
+    %252:i32 = and %251, %208
+    %253:i32 = and %252, %207
+    %254:i32 = and %253, %173
+    %255:i32 = and %254, %175
+    %256:i32 = and %255, %206
+    %257:i32 = and %256, %181
+    %258:i32 = and %257, %205
+    %259:i32 = and %258, %189
+    %260:i32 = and %259, %204
+    %261:i32 = and %260, %195
+    %262:i32 = and %261, %203
+    %263:i32 = and %262, %199
+    %264:i32 = and %263, %202
+    %265:ctrl, %266:ctrl = brcond %200, %264
+    %267:ctrl, %268:phisel = region %265
+    return %267, %4
+    %269:ctrl, %270:phisel = region %266
+    return %269, %3
+}

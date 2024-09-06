@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use anyhow::{anyhow, Result};
 use codegen::{
-    api::lower_func, frame::FrameLayout, machine::MachineCore, regalloc, target::x86_64::X64Machine,
+    api::lower_func, frame::FrameLayout, machine::MachineCore, regalloc, target::x64::X64Machine,
 };
 use ir::{module::Module, write::display_node};
 use itertools::Itertools;

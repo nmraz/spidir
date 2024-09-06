@@ -1,7 +1,7 @@
 use core::fmt::Write;
 
 use anyhow::{anyhow, Result};
-use codegen::{api::lower_func, target::x86_64::X64Machine};
+use codegen::{api::lower_func, target::x64::X64Machine};
 use ir::{module::Module, write::display_node};
 
 use crate::utils::sanitize_raw_output;

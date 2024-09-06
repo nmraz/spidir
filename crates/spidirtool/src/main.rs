@@ -12,7 +12,7 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 
 use codegen::{
     api::{lower_func, schedule_graph},
-    target::x86_64::X64Machine,
+    target::x64::X64Machine,
 };
 use ir::{
     domtree::DomTree,

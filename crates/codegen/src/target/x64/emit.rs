@@ -7,7 +7,7 @@ use crate::{
     machine::{FixupKind, MachineEmit},
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{Assignment, OperandAssignment, SpillSlot},
-    target::x86_64::CALLEE_SAVED_REGS,
+    target::x64::CALLEE_SAVED_REGS,
 };
 
 use super::{

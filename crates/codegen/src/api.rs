@@ -80,7 +80,7 @@ pub fn schedule_graph(graph: &ValGraph, entry: Node) -> (CfgContext, FunctionBlo
 
 #[cfg(test)]
 mod tests {
-    use crate::target::x86_64::X64Machine;
+    use crate::target::x64::X64Machine;
 
     use super::*;
 

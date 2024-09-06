@@ -8,7 +8,7 @@ use capstone::{
     },
     Capstone,
 };
-use codegen::{api::codegen_func, emit::CodeBlob, target::x86_64::X64Machine};
+use codegen::{api::codegen_func, emit::CodeBlob, target::x64::X64Machine};
 use ir::{module::Module, write::quote_ident};
 
 use crate::utils::sanitize_raw_output;

@@ -224,7 +224,7 @@ impl MachineEmit for X64Machine {
                 defs[0].as_reg().unwrap(),
                 RegMem::Mem(state.stack_slot_addr(slot)),
             ),
-            &X64Instr::MovMR(full_op_size) => emit_mov_mr_r(
+            &X64Instr::MovMR(full_op_size) => emit_mov_rm_r(
                 buffer,
                 full_op_size,
                 RegMem::Mem(BaseIndexOff {
@@ -234,7 +234,7 @@ impl MachineEmit for X64Machine {
                 }),
                 uses[1].as_reg().unwrap(),
             ),
-            &X64Instr::MovStackR(slot, full_op_size) => emit_mov_mr_r(
+            &X64Instr::MovStackR(slot, full_op_size) => emit_mov_rm_r(
                 buffer,
                 full_op_size,
                 RegMem::Mem(state.stack_slot_addr(slot)),
@@ -289,7 +289,7 @@ impl MachineEmit for X64Machine {
                 to,
                 RegMem::Mem(state.spill_slot_addr(from)),
             ),
-            (OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => emit_mov_mr_r(
+            (OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => emit_mov_rm_r(
                 buffer,
                 FullOperandSize::S64,
                 RegMem::Mem(state.spill_slot_addr(to)),
@@ -346,7 +346,7 @@ fn emit_pop(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
 }
 
 fn emit_mov_rr(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, src: PhysReg) {
-    emit_mov_mr_r(buffer, FullOperandSize::S64, RegMem::Reg(dest), src);
+    emit_mov_rm_r(buffer, FullOperandSize::S64, RegMem::Reg(dest), src);
 }
 
 fn emit_movzx_r_rm(
@@ -398,7 +398,7 @@ fn emit_lea(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, addr: BaseIndexO
     modrm_sib.emit(buffer);
 }
 
-fn emit_mov_mr_r(
+fn emit_mov_rm_r(
     buffer: &mut CodeBuffer<X64Machine>,
     full_op_size: FullOperandSize,
     dest: RegMem,

@@ -41,7 +41,7 @@ fn check_emit_instr(f: impl FnOnce(&mut CodeBuffer<X64Machine>), expected: Expec
 
 fn check_emit_addr_mode(addr: BaseIndexOff, expected: Expect) {
     check_emit_instr(
-        |buffer| emit_mov_mr_r(buffer, FullOperandSize::S32, RegMem::Mem(addr), REG_RAX),
+        |buffer| emit_mov_rm_r(buffer, FullOperandSize::S32, RegMem::Mem(addr), REG_RAX),
         expected,
     );
 }

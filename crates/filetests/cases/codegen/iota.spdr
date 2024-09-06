@@ -1,0 +1,47 @@
+# run: codegen
+
+func @iota(ptr, i64) {
+    # check: function `iota`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov eax, 0
+    # nextln: 0x0009: cmp rsi, rax
+    # nextln: 0x000c: je 0x17
+    # nextln: 0x0012: jmp 0x1c
+    # nextln: 0x0017: jmp 0x5b
+    # nextln: 0x001c: mov ecx, 3
+    # nextln: 0x0021: mov edx, 1
+    # nextln: 0x0026: jmp 0x2b
+    # nextln: 0x002b: mov r8, rax
+    # nextln: 0x002e: shl r8, cl
+    # nextln: 0x0031: mov r9, rdi
+    # nextln: 0x0034: add r9, r8
+    # nextln: 0x0037: mov r8, rax
+    # nextln: 0x003a: add r8, rdx
+    # nextln: 0x003d: mov qword ptr [r9], rax
+    # nextln: 0x0040: cmp r8, rsi
+    # nextln: 0x0043: je 0x56
+    # nextln: 0x0049: jmp 0x4e
+    # nextln: 0x004e: mov rax, r8
+    # nextln: 0x0051: jmp 0x2b
+    # nextln: 0x0056: jmp 0x5b
+    # nextln: 0x005b: pop rbp
+    # nextln: 0x005c: ret
+
+    %entry_ctrl:ctrl, %arr:ptr, %n:i64 = entry
+    %zero:i64 = iconst 0
+    %zerocmp:i32 = icmp eq %n, %zero
+    %iszero:ctrl, %isnonzero:ctrl = brcond %entry_ctrl, %zerocmp
+    %loopbody:ctrl, %loopphi:phisel = region %isnonzero, %looplatch
+    %i:i64 = phi %loopphi, %zero, %inext
+    %three:i64 = iconst 3
+    %off:i64 = shl %i, %three
+    %ptr:ptr = ptroff %arr, %off
+    %poststore:ctrl = store.8 %loopbody, %i, %ptr
+    %one:i64 = iconst 1
+    %inext:i64 = iadd %i, %one
+    %donecmp:i32 = icmp eq %inext, %n
+    %loopdone:ctrl, %looplatch:ctrl = brcond %poststore, %donecmp
+    %exit:ctrl, %exitphi:phisel = region %iszero, %loopdone
+    return %exit
+}

@@ -1,0 +1,4 @@
+CompileFlags:
+  # HACK: clangd doesn't support config-relative include directories, but this works well enough
+  # for now.
+  Add: [-I../]

@@ -2,12 +2,15 @@ use ir::node::FunctionRef;
 
 use crate::{
     cfg::Block,
+    emit::RelocKind,
     lir::{MemLayout, PhysReg, RegClass, StackSlot},
     machine::{MachineCore, MachineRegalloc},
 };
 
 mod emit;
 mod lower;
+
+pub const RELOC_PC32: RelocKind = RelocKind(0);
 
 pub const RC_GPR: RegClass = RegClass::new(0);
 

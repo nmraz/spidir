@@ -141,7 +141,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0270: mov r12, qword ptr [rsp + 0x98]
     # nextln: 0x0278: mov r15, r8
     # nextln: 0x027b: mov rsi, r12
-    # nextln: 0x027e: call 0x283
+    # nextln: 0x027e: call 0x283  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + -4
     # nextln: 0x0283: mov qword ptr [rsp + 0x98], r12
     # nextln: 0x028b: mov qword ptr [rsp + 0x58], r14
     # nextln: 0x0290: mov r11, qword ptr [rsp + 0x18]
@@ -174,7 +174,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0313: mov qword ptr [rsp + 0x20], r9
     # nextln: 0x0318: mov qword ptr [rsp + 0x60], rax
     # nextln: 0x031d: mov rsi, r12
-    # nextln: 0x0320: call 0x325
+    # nextln: 0x0320: call 0x325  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + -4
     # nextln: 0x0325: and r15d, eax
     # nextln: 0x0328: mov r11, qword ptr [rsp + 0x80]
     # nextln: 0x0330: mov rsi, qword ptr [rsp + 0x58]
@@ -204,7 +204,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x03ac: mov qword ptr [rsp + 0x90], r12
     # nextln: 0x03b4: mov r12, qword ptr [rsp + 0x38]
     # nextln: 0x03b9: mov rsi, rbx
-    # nextln: 0x03bc: call 0x3c1
+    # nextln: 0x03bc: call 0x3c1  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + -4
     # nextln: 0x03c1: and r15d, eax
     # nextln: 0x03c4: mov qword ptr [rsp + 0x38], r12
     # nextln: 0x03c9: mov r12, qword ptr [rsp + 0x90]
@@ -233,7 +233,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0443: mov qword ptr [rsp + 0x90], r12
     # nextln: 0x044b: mov r12, r10
     # nextln: 0x044e: mov rsi, r12
-    # nextln: 0x0451: call 0x456
+    # nextln: 0x0451: call 0x456  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + -4
     # nextln: 0x0456: xor ecx, ecx
     # nextln: 0x0458: cmp eax, ebx
     # nextln: 0x045a: sete cl
@@ -266,7 +266,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x04e9: mov qword ptr [rsp + 0x10], r12
     # nextln: 0x04ee: mov r12, rcx
     # nextln: 0x04f1: mov rsi, qword ptr [rsp + 0x30]
-    # nextln: 0x04f6: call 0x4fb
+    # nextln: 0x04f6: call 0x4fb  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + -4
     # nextln: 0x04fb: and r15d, eax
     # nextln: 0x04fe: mov rsi, qword ptr [rsp + 0x98]
     # nextln: 0x0506: mov rdx, qword ptr [rsp + 0x38]
@@ -292,14 +292,14 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0569: mov r13, rcx
     # nextln: 0x056c: mov qword ptr [rsp + 0x38], rdx
     # nextln: 0x0571: mov rsi, rbx
-    # nextln: 0x0574: call 0x579
+    # nextln: 0x0574: call 0x579  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + -4
     # nextln: 0x0579: xor ecx, ecx
     # nextln: 0x057b: cmp eax, ebx
     # nextln: 0x057d: sete cl
     # nextln: 0x0580: and r15d, ecx
     # nextln: 0x0583: mov rsi, qword ptr [rsp + 0x98]
     # nextln: 0x058b: mov rdi, r14
-    # nextln: 0x058e: call 0x593
+    # nextln: 0x058e: call 0x593  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + -4
     # nextln: 0x0593: mov rdx, qword ptr [rsp + 0x78]
     # nextln: 0x0598: mov rcx, qword ptr [rsp + 0x30]
     # nextln: 0x059d: and r15d, eax
@@ -307,7 +307,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x05a5: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x05aa: mov rsi, r12
     # nextln: 0x05ad: mov rdi, r14
-    # nextln: 0x05b0: call 0x5b5
+    # nextln: 0x05b0: call 0x5b5  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + -4
     # nextln: 0x05b5: mov rcx, qword ptr [rsp + 0x60]
     # nextln: 0x05ba: mov rdi, qword ptr [rsp + 0x28]
     # nextln: 0x05bf: mov r9, qword ptr [rsp + 0x18]
@@ -328,11 +328,11 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0608: mov qword ptr [rsp + 0x60], rcx
     # nextln: 0x060d: mov rsi, rbx
     # nextln: 0x0610: mov rdi, r13
-    # nextln: 0x0613: call 0x618
+    # nextln: 0x0613: call 0x618  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + -4
     # nextln: 0x0618: and r15d, eax
     # nextln: 0x061b: mov rsi, r12
     # nextln: 0x061e: mov rdi, r13
-    # nextln: 0x0621: call 0x626
+    # nextln: 0x0621: call 0x626  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + -4
     # nextln: 0x0626: mov r12, qword ptr [rsp + 0x30]
     # nextln: 0x062b: mov r8, qword ptr [rsp + 0x60]
     # nextln: 0x0630: mov rsi, qword ptr [rsp + 0x58]
@@ -356,7 +356,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0680: mov qword ptr [rsp + 0x18], rax
     # nextln: 0x0685: mov rdi, r13
     # nextln: 0x0688: mov rsi, r12
-    # nextln: 0x068b: call 0x690
+    # nextln: 0x068b: call 0x690  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + -4
     # nextln: 0x0690: mov r8, qword ptr [rsp + 0x40]
     # nextln: 0x0695: mov rcx, r12
     # nextln: 0x0698: mov r11, qword ptr [rsp + 0x60]
@@ -381,7 +381,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x06f3: mov qword ptr [rsp + 0x10], rdi
     # nextln: 0x06f8: mov rsi, rbx
     # nextln: 0x06fb: mov rdi, r14
-    # nextln: 0x06fe: call 0x703
+    # nextln: 0x06fe: call 0x703  # reloc <0> -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + -4
     # nextln: 0x0703: mov rsi, qword ptr [rsp + 0x40]
     # nextln: 0x0708: mov r11, qword ptr [rsp + 0x38]
     # nextln: 0x070d: mov rdi, qword ptr [rsp + 0x10]
@@ -420,7 +420,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x079d: mov r14, rsi
     # nextln: 0x07a0: mov qword ptr [rsp + 0x30], r10
     # nextln: 0x07a5: mov rsi, r13
-    # nextln: 0x07a8: call 0x7ad
+    # nextln: 0x07a8: call 0x7ad  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + -4
     # nextln: 0x07ad: and r15d, eax
     # nextln: 0x07b0: mov r8, qword ptr [rsp + 0x30]
     # nextln: 0x07b5: mov rdi, qword ptr [rsp + 0x10]
@@ -447,7 +447,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x081b: mov qword ptr [rsp + 0x18], rdx
     # nextln: 0x0820: mov qword ptr [rsp + 0x30], r8
     # nextln: 0x0825: mov rsi, r12
-    # nextln: 0x0828: call 0x82d
+    # nextln: 0x0828: call 0x82d  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + -4
     # nextln: 0x082d: and r15d, eax
     # nextln: 0x0830: mov r10, r13
     # nextln: 0x0833: mov r8, qword ptr [rsp + 0x30]
@@ -470,7 +470,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0889: mov qword ptr [rsp + 0x10], r14
     # nextln: 0x088e: mov r14, r9
     # nextln: 0x0891: mov rsi, rbx
-    # nextln: 0x0894: call 0x899
+    # nextln: 0x0894: call 0x899  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + -4
     # nextln: 0x0899: and r15d, eax
     # nextln: 0x089c: mov r10, qword ptr [rsp + 0x28]
     # nextln: 0x08a1: mov r8, qword ptr [rsp + 0x48]
@@ -496,7 +496,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0902: mov qword ptr [rsp + 0x40], r14
     # nextln: 0x0907: mov r14, r8
     # nextln: 0x090a: mov rsi, r12
-    # nextln: 0x090d: call 0x912
+    # nextln: 0x090d: call 0x912  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + -4
     # nextln: 0x0912: xor ecx, ecx
     # nextln: 0x0914: cmp eax, ebx
     # nextln: 0x0916: sete cl
@@ -522,7 +522,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0973: mov qword ptr [rsp + 0x70], rcx
     # nextln: 0x0978: mov qword ptr [rsp + 0x20], rdx
     # nextln: 0x097d: mov rsi, r14
-    # nextln: 0x0980: call 0x985
+    # nextln: 0x0980: call 0x985  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + -4
     # nextln: 0x0985: and r15d, eax
     # nextln: 0x0988: mov r8, qword ptr [rsp + 0x28]
     # nextln: 0x098d: mov rax, qword ptr [rsp + 0x48]
@@ -544,14 +544,14 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x09dc: mov qword ptr [rsp + 0x18], rdx
     # nextln: 0x09e1: mov qword ptr [rsp + 0x38], rsi
     # nextln: 0x09e6: mov rsi, rbx
-    # nextln: 0x09e9: call 0x9ee
+    # nextln: 0x09e9: call 0x9ee  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + -4
     # nextln: 0x09ee: xor ecx, ecx
     # nextln: 0x09f0: cmp eax, ebx
     # nextln: 0x09f2: sete cl
     # nextln: 0x09f5: and r15d, ecx
     # nextln: 0x09f8: mov rsi, r14
     # nextln: 0x09fb: mov rdi, qword ptr [rsp + 0x68]
-    # nextln: 0x0a00: call 0xa05
+    # nextln: 0x0a00: call 0xa05  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + -4
     # nextln: 0x0a05: mov r10, qword ptr [rsp + 0x28]
     # nextln: 0x0a0a: mov rsi, qword ptr [rsp + 0x18]
     # nextln: 0x0a0f: mov r9, qword ptr [rsp + 0x40]
@@ -570,7 +570,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0a4e: mov qword ptr [rsp + 0x40], r9
     # nextln: 0x0a53: mov qword ptr [rsp + 0x18], rsi
     # nextln: 0x0a58: mov rsi, r12
-    # nextln: 0x0a5b: call 0xa60
+    # nextln: 0x0a5b: call 0xa60  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + -4
     # nextln: 0x0a60: mov rdi, qword ptr [rsp + 0x28]
     # nextln: 0x0a65: mov r11, qword ptr [rsp + 0x38]
     # nextln: 0x0a6a: mov rcx, qword ptr [rsp + 0x48]
@@ -591,11 +591,11 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0ab1: mov qword ptr [rsp + 0x10], r9
     # nextln: 0x0ab6: mov rdi, r13
     # nextln: 0x0ab9: mov rsi, rbx
-    # nextln: 0x0abc: call 0xac1
+    # nextln: 0x0abc: call 0xac1  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + -4
     # nextln: 0x0ac1: and r15d, eax
     # nextln: 0x0ac4: mov rsi, r12
     # nextln: 0x0ac7: mov rdi, r13
-    # nextln: 0x0aca: call 0xacf
+    # nextln: 0x0aca: call 0xacf  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + -4
     # nextln: 0x0acf: mov rdx, qword ptr [rsp + 0x18]
     # nextln: 0x0ad4: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x0ad9: mov r11, qword ptr [rsp + 0x40]
@@ -618,7 +618,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0b24: mov qword ptr [rsp + 0x18], rdx
     # nextln: 0x0b29: mov rdi, r13
     # nextln: 0x0b2c: mov rsi, r12
-    # nextln: 0x0b2f: call 0xb34
+    # nextln: 0x0b2f: call 0xb34  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + -4
     # nextln: 0x0b34: mov rsi, qword ptr [rsp + 0x48]
     # nextln: 0x0b39: mov rdi, qword ptr [rsp + 0x38]
     # nextln: 0x0b3e: mov r13, r12
@@ -636,7 +636,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0b76: mov qword ptr [rsp + 0x48], rsi
     # nextln: 0x0b7b: mov rdi, r14
     # nextln: 0x0b7e: mov rsi, rbx
-    # nextln: 0x0b81: call 0xb86
+    # nextln: 0x0b81: call 0xb86  # reloc <0> -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + -4
     # nextln: 0x0b86: mov rdi, qword ptr [rsp + 0x28]
     # nextln: 0x0b8b: mov rcx, qword ptr [rsp + 0x20]
     # nextln: 0x0b90: mov rdx, qword ptr [rsp + 0x38]
@@ -658,7 +658,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0bd2: mov qword ptr [rsp + 0x18], r8
     # nextln: 0x0bd7: mov qword ptr [rsp + 0x20], rcx
     # nextln: 0x0bdc: mov rsi, rbx
-    # nextln: 0x0bdf: call 0xbe4
+    # nextln: 0x0bdf: call 0xbe4  # reloc <0> -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" + -4
     # nextln: 0x0be4: and r15d, eax
     # nextln: 0x0be7: mov rcx, qword ptr [rsp + 0x10]
     # nextln: 0x0bec: mov rdx, qword ptr [rsp + 0x38]
@@ -672,7 +672,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0c16: mov qword ptr [rsp + 0x10], rcx
     # nextln: 0x0c1b: mov qword ptr [rsp + 0x28], rax
     # nextln: 0x0c20: mov rsi, r13
-    # nextln: 0x0c23: call 0xc28
+    # nextln: 0x0c23: call 0xc28  # reloc <0> -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" + -4
     # nextln: 0x0c28: and r15d, eax
     # nextln: 0x0c2b: mov rcx, qword ptr [rsp + 0x10]
     # nextln: 0x0c30: mov rax, qword ptr [rsp + 0x18]
@@ -686,7 +686,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0c5a: mov qword ptr [rsp + 0x28], rdx
     # nextln: 0x0c5f: mov qword ptr [rsp + 0x10], rcx
     # nextln: 0x0c64: mov rsi, rbx
-    # nextln: 0x0c67: call 0xc6c
+    # nextln: 0x0c67: call 0xc6c  # reloc <0> -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" + -4
     # nextln: 0x0c6c: xor ecx, ecx
     # nextln: 0x0c6e: cmp eax, ebx
     # nextln: 0x0c70: sete cl
@@ -703,7 +703,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0ca5: mov qword ptr [rsp + 0x18], rsi
     # nextln: 0x0caa: mov qword ptr [rsp + 0x38], rax
     # nextln: 0x0caf: mov rsi, rbx
-    # nextln: 0x0cb2: call 0xcb7
+    # nextln: 0x0cb2: call 0xcb7  # reloc <0> -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" + -4
     # nextln: 0x0cb7: xor ecx, ecx
     # nextln: 0x0cb9: cmp eax, ebx
     # nextln: 0x0cbb: sete cl
@@ -720,7 +720,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0cf0: mov qword ptr [rsp + 0x18], rcx
     # nextln: 0x0cf5: mov qword ptr [rsp + 0x28], rax
     # nextln: 0x0cfa: mov rsi, r13
-    # nextln: 0x0cfd: call 0xd02
+    # nextln: 0x0cfd: call 0xd02  # reloc <0> -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" + -4
     # nextln: 0x0d02: xor ecx, ecx
     # nextln: 0x0d04: cmp eax, ebx
     # nextln: 0x0d06: sete cl
@@ -737,7 +737,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0d3b: mov qword ptr [rsp + 0x10], rdx
     # nextln: 0x0d40: mov qword ptr [rsp + 0x28], r8
     # nextln: 0x0d45: mov rsi, rbx
-    # nextln: 0x0d48: call 0xd4d
+    # nextln: 0x0d48: call 0xd4d  # reloc <0> -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" + -4
     # nextln: 0x0d4d: and r15d, eax
     # nextln: 0x0d50: mov rdx, qword ptr [rsp + 0x18]
     # nextln: 0x0d55: mov rax, qword ptr [rsp + 0x28]
@@ -751,7 +751,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0d7f: mov qword ptr [rsp + 0x28], rax
     # nextln: 0x0d84: mov qword ptr [rsp + 0x18], rdx
     # nextln: 0x0d89: mov rsi, rbx
-    # nextln: 0x0d8c: call 0xd91
+    # nextln: 0x0d8c: call 0xd91  # reloc <0> -> @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" + -4
     # nextln: 0x0d91: xor ecx, ecx
     # nextln: 0x0d93: cmp eax, ebx
     # nextln: 0x0d95: sete cl
@@ -768,7 +768,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0dca: mov qword ptr [rsp + 0x28], rsi
     # nextln: 0x0dcf: mov qword ptr [rsp + 0x18], r8
     # nextln: 0x0dd4: mov rsi, r13
-    # nextln: 0x0dd7: call 0xddc
+    # nextln: 0x0dd7: call 0xddc  # reloc <0> -> @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" + -4
     # nextln: 0x0ddc: xor ecx, ecx
     # nextln: 0x0dde: cmp eax, ebx
     # nextln: 0x0de0: sete cl
@@ -785,7 +785,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0e15: mov qword ptr [rsp + 0x18], rdx
     # nextln: 0x0e1a: mov qword ptr [rsp + 0x28], rax
     # nextln: 0x0e1f: mov rsi, rbx
-    # nextln: 0x0e22: call 0xe27
+    # nextln: 0x0e22: call 0xe27  # reloc <0> -> @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" + -4
     # nextln: 0x0e27: xor ecx, ecx
     # nextln: 0x0e29: cmp eax, r14d
     # nextln: 0x0e2c: mov rax, qword ptr [rsp + 0x20]
@@ -801,11 +801,11 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0e5a: mov qword ptr [rsp + 0x28], rdi
     # nextln: 0x0e5f: mov rdi, r12
     # nextln: 0x0e62: mov rsi, rbx
-    # nextln: 0x0e65: call 0xe6a
+    # nextln: 0x0e65: call 0xe6a  # reloc <0> -> @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" + -4
     # nextln: 0x0e6a: and r15d, eax
     # nextln: 0x0e6d: mov rsi, r13
     # nextln: 0x0e70: mov rdi, r12
-    # nextln: 0x0e73: call 0xe78
+    # nextln: 0x0e73: call 0xe78  # reloc <0> -> @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" + -4
     # nextln: 0x0e78: mov r8, qword ptr [rsp + 0x28]
     # nextln: 0x0e7d: mov rsi, qword ptr [rsp + 0x10]
     # nextln: 0x0e82: mov rdi, qword ptr [rsp + 0x38]
@@ -817,7 +817,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0e9a: mov qword ptr [rsp + 0x18], rcx
     # nextln: 0x0e9f: mov r14, rdx
     # nextln: 0x0ea2: mov rsi, rbx
-    # nextln: 0x0ea5: call 0xeaa
+    # nextln: 0x0ea5: call 0xeaa  # reloc <0> -> @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" + -4
     # nextln: 0x0eaa: xor ecx, ecx
     # nextln: 0x0eac: cmp eax, ebx
     # nextln: 0x0eae: sete cl
@@ -832,7 +832,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0ed1: mov qword ptr [rsp + 0x28], rax
     # nextln: 0x0ed6: mov r12, rcx
     # nextln: 0x0ed9: mov rsi, rbx
-    # nextln: 0x0edc: call 0xee1
+    # nextln: 0x0edc: call 0xee1  # reloc <0> -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + -4
     # nextln: 0x0ee1: and r15d, eax
     # nextln: 0x0ee4: mov rdx, qword ptr [rsp + 0x10]
     # nextln: 0x0ee9: mov rax, qword ptr [rsp + 0x28]
@@ -842,7 +842,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0efb: mov qword ptr [rsp + 0x18], rcx
     # nextln: 0x0f00: mov r12, rax
     # nextln: 0x0f03: mov rsi, r13
-    # nextln: 0x0f06: call 0xf0b
+    # nextln: 0x0f06: call 0xf0b  # reloc <0> -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + -4
     # nextln: 0x0f0b: xor ecx, ecx
     # nextln: 0x0f0d: cmp eax, ebx
     # nextln: 0x0f0f: sete cl
@@ -853,7 +853,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0f24: mov qword ptr [rsp + 0x10], rax
     # nextln: 0x0f29: mov qword ptr [rsp + 0x18], rcx
     # nextln: 0x0f2e: mov rsi, r12
-    # nextln: 0x0f31: call 0xf36
+    # nextln: 0x0f31: call 0xf36  # reloc <0> -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + -4
     # nextln: 0x0f36: and r15d, eax
     # nextln: 0x0f39: mov rax, qword ptr [rsp + 0x10]
     # nextln: 0x0f3e: mov rcx, qword ptr [rsp + 0x18]
@@ -861,22 +861,22 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0f47: mov qword ptr [rsp + 0x18], rcx
     # nextln: 0x0f4c: mov qword ptr [rsp + 0x10], rax
     # nextln: 0x0f51: mov rsi, rbx
-    # nextln: 0x0f54: call 0xf59
+    # nextln: 0x0f54: call 0xf59  # reloc <0> -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + -4
     # nextln: 0x0f59: xor ecx, ecx
     # nextln: 0x0f5b: cmp eax, ebx
     # nextln: 0x0f5d: sete cl
     # nextln: 0x0f60: and r15d, ecx
     # nextln: 0x0f63: mov rdi, r14
     # nextln: 0x0f66: mov rsi, rbx
-    # nextln: 0x0f69: call 0xf6e
+    # nextln: 0x0f69: call 0xf6e  # reloc <0> -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + -4
     # nextln: 0x0f6e: and r15d, eax
     # nextln: 0x0f71: mov rdi, r14
     # nextln: 0x0f74: mov rsi, r13
-    # nextln: 0x0f77: call 0xf7c
+    # nextln: 0x0f77: call 0xf7c  # reloc <0> -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + -4
     # nextln: 0x0f7c: mov r13, rax
     # nextln: 0x0f7f: mov rsi, r12
     # nextln: 0x0f82: mov rdi, r14
-    # nextln: 0x0f85: call 0xf8a
+    # nextln: 0x0f85: call 0xf8a  # reloc <0> -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + -4
     # nextln: 0x0f8a: mov r12, qword ptr [rsp + 0x10]
     # nextln: 0x0f8f: mov rdi, qword ptr [rsp + 0x18]
     # nextln: 0x0f94: xor ecx, ecx
@@ -885,7 +885,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0x0f9c: and r15d, ecx
     # nextln: 0x0f9f: and r15d, eax
     # nextln: 0x0fa2: mov rsi, rbx
-    # nextln: 0x0fa5: call 0xfaa
+    # nextln: 0x0fa5: call 0xfaa  # reloc <0> -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + -4
     # nextln: 0x0faa: xor ecx, ecx
     # nextln: 0x0fac: cmp eax, ebx
     # nextln: 0x0fae: sete cl

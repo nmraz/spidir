@@ -8,25 +8,25 @@ func @func:i32() {
     # nextln: 0x0001: mov rbp, rsp
     # nextln: 0x0004: push rbx
     # nextln: 0x0005: push rax
-    # nextln: 0x0006: call 0xb
+    # nextln: 0x0006: call 0xb  # reloc <0> -> @f + -4
     # nextln: 0x000b: mov rbx, rax
-    # nextln: 0x000e: call 0x13
+    # nextln: 0x000e: call 0x13  # reloc <0> -> @f + -4
     # nextln: 0x0013: and ebx, eax
-    # nextln: 0x0015: call 0x1a
+    # nextln: 0x0015: call 0x1a  # reloc <0> -> @f + -4
     # nextln: 0x001a: and ebx, eax
-    # nextln: 0x001c: call 0x21
+    # nextln: 0x001c: call 0x21  # reloc <0> -> @f + -4
     # nextln: 0x0021: and ebx, eax
-    # nextln: 0x0023: call 0x28
+    # nextln: 0x0023: call 0x28  # reloc <0> -> @f + -4
     # nextln: 0x0028: and ebx, eax
-    # nextln: 0x002a: call 0x2f
+    # nextln: 0x002a: call 0x2f  # reloc <0> -> @f + -4
     # nextln: 0x002f: and ebx, eax
-    # nextln: 0x0031: call 0x36
+    # nextln: 0x0031: call 0x36  # reloc <0> -> @f + -4
     # nextln: 0x0036: and ebx, eax
-    # nextln: 0x0038: call 0x3d
+    # nextln: 0x0038: call 0x3d  # reloc <0> -> @f + -4
     # nextln: 0x003d: and ebx, eax
-    # nextln: 0x003f: call 0x44
+    # nextln: 0x003f: call 0x44  # reloc <0> -> @f + -4
     # nextln: 0x0044: and ebx, eax
-    # nextln: 0x0046: call 0x4b
+    # nextln: 0x0046: call 0x4b  # reloc <0> -> @f + -4
     # nextln: 0x004b: and ebx, eax
     # nextln: 0x004d: mov rax, rbx
     # nextln: 0x0050: add rsp, 8

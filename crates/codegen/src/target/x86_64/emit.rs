@@ -1,3 +1,5 @@
+use ir::node::FunctionRef;
+
 use crate::{
     emit::{BlockLabelMap, CodeBuffer, Label},
     frame::FrameLayout,
@@ -11,7 +13,7 @@ use crate::{
 use super::{
     AluOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale, OperandSize, ShiftOp, X64Instr,
     X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8, REG_R9, REG_RAX,
-    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP,
+    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_PC32,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -256,10 +258,9 @@ impl MachineEmit for X64Machine {
                 emit_push(buffer, uses[0].as_reg().unwrap());
                 state.sp_frame_offset += 8;
             }
-            X64Instr::Call(_func) => {
+            &X64Instr::Call(target) => {
                 // TODO: Other code models?
-                // TODO: Record relocation.
-                emit_call_rel(buffer);
+                emit_call_rel(buffer, target);
             }
             &X64Instr::Jump(target) => {
                 emit_jmp(buffer, block_labels[target]);
@@ -466,8 +467,9 @@ fn emit_movsx_r_rm(
     modrm_sib.emit(buffer);
 }
 
-fn emit_call_rel(buffer: &mut CodeBuffer<X64Machine>) {
+fn emit_call_rel(buffer: &mut CodeBuffer<X64Machine>, target: FunctionRef) {
     buffer.emit(&[0xe8]);
+    buffer.emit_reloc(target, -4, RELOC_PC32);
     buffer.emit(&0u32.to_le_bytes());
 }
 

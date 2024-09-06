@@ -62,25 +62,25 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x00c2: mov qword ptr [rsp + 0x40], rcx
     # nextln: 0x00c7: mov qword ptr [rsp + 0x38], r8
     # nextln: 0x00cc: mov r14, r9
-    # nextln: 0x00cf: call 0xd4
+    # nextln: 0x00cf: call 0xd4  # reloc <0> -> @gc_new + -4
     # nextln: 0x00d4: mov qword ptr [rsp + 0x18], r13
     # nextln: 0x00d9: mov qword ptr [rsp + 0x28], r14
     # nextln: 0x00de: mov r13, rax
     # nextln: 0x00e1: mov r14, qword ptr [rsp + 0x50]
     # nextln: 0x00e6: mov rdi, r13
-    # nextln: 0x00e9: call 0xee
+    # nextln: 0x00e9: call 0xee  # reloc <0> -> @"System.Void Tests.Bool_No_Op::.ctor()" + -4
     # nextln: 0x00ee: mov qword ptr [rsp], r13
     # nextln: 0x00f2: mov r13, qword ptr [rsp + 0x40]
     # nextln: 0x00f7: mov rsi, rbx
     # nextln: 0x00fa: mov rdi, r12
-    # nextln: 0x00fd: call 0x102
+    # nextln: 0x00fd: call 0x102  # reloc <0> -> @gc_new + -4
     # nextln: 0x0102: mov rcx, rax
     # nextln: 0x0105: add rcx, r13
     # nextln: 0x0108: mov dword ptr [rcx], r15d
     # nextln: 0x010b: mov qword ptr [rsp + 8], rax
     # nextln: 0x0110: mov rsi, rbx
     # nextln: 0x0113: mov rdi, r12
-    # nextln: 0x0116: call 0x11b
+    # nextln: 0x0116: call 0x11b  # reloc <0> -> @gc_new + -4
     # nextln: 0x011b: mov rdi, r13
     # nextln: 0x011e: mov rdx, qword ptr [rsp + 0x18]
     # nextln: 0x0123: mov rcx, qword ptr [rsp + 0x38]
@@ -627,7 +627,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x09c7: mov qword ptr [rsp + 0x30], rdx
     # nextln: 0x09cc: mov qword ptr [rsp + 0x18], rax
     # nextln: 0x09d1: jmp 0x9d6
-    # nextln: 0x09d6: call 0x9db
+    # nextln: 0x09d6: call 0x9db  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x09db: test eax, eax
     # nextln: 0x09dd: jne 0x9e8
     # nextln: 0x09e3: jmp 0x9f7
@@ -645,7 +645,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x0a13: mov r14, rax
     # nextln: 0x0a16: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x0a1b: jmp 0xa20
-    # nextln: 0x0a20: call 0xa25
+    # nextln: 0x0a20: call 0xa25  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x0a25: test eax, eax
     # nextln: 0x0a27: jne 0xa32
     # nextln: 0x0a2d: jmp 0xa4b
@@ -665,7 +665,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x0a67: mov r14, rax
     # nextln: 0x0a6a: mov qword ptr [rsp + 0x38], rcx
     # nextln: 0x0a6f: jmp 0xa74
-    # nextln: 0x0a74: call 0xa79
+    # nextln: 0x0a74: call 0xa79  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x0a79: test eax, eax
     # nextln: 0x0a7b: jne 0xa86
     # nextln: 0x0a81: jmp 0xa9f
@@ -685,7 +685,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x0abb: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x0ac0: mov r14, rax
     # nextln: 0x0ac3: jmp 0xac8
-    # nextln: 0x0ac8: call 0xacd
+    # nextln: 0x0ac8: call 0xacd  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x0acd: test eax, eax
     # nextln: 0x0acf: jne 0xada
     # nextln: 0x0ad5: jmp 0xae9
@@ -703,7 +703,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x0b05: mov r14, rcx
     # nextln: 0x0b08: mov qword ptr [rsp + 0x30], rax
     # nextln: 0x0b0d: jmp 0xb12
-    # nextln: 0x0b12: call 0xb17
+    # nextln: 0x0b12: call 0xb17  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x0b17: test eax, eax
     # nextln: 0x0b19: jne 0xb24
     # nextln: 0x0b1f: jmp 0xb33
@@ -721,7 +721,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x0b4f: mov r14, rax
     # nextln: 0x0b52: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x0b57: jmp 0xb5c
-    # nextln: 0x0b5c: call 0xb61
+    # nextln: 0x0b5c: call 0xb61  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x0b61: test eax, eax
     # nextln: 0x0b63: jne 0xb6e
     # nextln: 0x0b69: jmp 0xb87
@@ -741,7 +741,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x0ba1: mov qword ptr [rsp + 0x48], rdx
     # nextln: 0x0ba6: mov qword ptr [rsp + 0x38], rcx
     # nextln: 0x0bab: jmp 0xbb0
-    # nextln: 0x0bb0: call 0xbb5
+    # nextln: 0x0bb0: call 0xbb5  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x0bb5: test eax, eax
     # nextln: 0x0bb7: jne 0xbc2
     # nextln: 0x0bbd: jmp 0xbdb
@@ -761,7 +761,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x0bf7: mov r14, rax
     # nextln: 0x0bfa: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x0bff: jmp 0xc04
-    # nextln: 0x0c04: call 0xc09
+    # nextln: 0x0c04: call 0xc09  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x0c09: test eax, eax
     # nextln: 0x0c0b: jne 0xc16
     # nextln: 0x0c11: jmp 0xc32
@@ -1283,7 +1283,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x1392: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x1397: mov qword ptr [rsp + 0x48], rdx
     # nextln: 0x139c: jmp 0x13a1
-    # nextln: 0x13a1: call 0x13a6
+    # nextln: 0x13a1: call 0x13a6  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x13a6: test eax, eax
     # nextln: 0x13a8: jne 0x13b3
     # nextln: 0x13ae: jmp 0x13cf
@@ -1424,7 +1424,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x15a2: mov r14, rax
     # nextln: 0x15a5: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x15aa: jmp 0x15af
-    # nextln: 0x15af: call 0x15b4
+    # nextln: 0x15af: call 0x15b4  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x15b4: test eax, eax
     # nextln: 0x15b6: jne 0x15c1
     # nextln: 0x15bc: jmp 0x15dd
@@ -1544,7 +1544,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x1771: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x1776: mov r14, rax
     # nextln: 0x1779: jmp 0x177e
-    # nextln: 0x177e: call 0x1783
+    # nextln: 0x177e: call 0x1783  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x1783: test eax, eax
     # nextln: 0x1785: jne 0x1790
     # nextln: 0x178b: jmp 0x17ac
@@ -1664,7 +1664,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x1940: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x1945: mov r14, rax
     # nextln: 0x1948: jmp 0x194d
-    # nextln: 0x194d: call 0x1952
+    # nextln: 0x194d: call 0x1952  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x1952: test eax, eax
     # nextln: 0x1954: jne 0x195f
     # nextln: 0x195a: jmp 0x197b
@@ -1796,7 +1796,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x1b33: mov r14, rax
     # nextln: 0x1b36: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x1b3b: jmp 0x1b40
-    # nextln: 0x1b40: call 0x1b45
+    # nextln: 0x1b40: call 0x1b45  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x1b45: test eax, eax
     # nextln: 0x1b47: jne 0x1b52
     # nextln: 0x1b4d: jmp 0x1b6e
@@ -1932,7 +1932,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x1d32: mov r14, rax
     # nextln: 0x1d35: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x1d3a: jmp 0x1d3f
-    # nextln: 0x1d3f: call 0x1d44
+    # nextln: 0x1d3f: call 0x1d44  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x1d44: test eax, eax
     # nextln: 0x1d46: jne 0x1d51
     # nextln: 0x1d4c: jmp 0x1d6d
@@ -2060,7 +2060,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x1f19: mov qword ptr [rsp + 0x48], rcx
     # nextln: 0x1f1e: mov r14, rax
     # nextln: 0x1f21: jmp 0x1f26
-    # nextln: 0x1f26: call 0x1f2b
+    # nextln: 0x1f26: call 0x1f2b  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x1f2b: test eax, eax
     # nextln: 0x1f2d: jne 0x1f38
     # nextln: 0x1f33: jmp 0x1f54
@@ -2180,7 +2180,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x20e8: mov qword ptr [rsp + 0x38], rdx
     # nextln: 0x20ed: mov r14, rax
     # nextln: 0x20f0: jmp 0x20f5
-    # nextln: 0x20f5: call 0x20fa
+    # nextln: 0x20f5: call 0x20fa  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x20fa: test eax, eax
     # nextln: 0x20fc: jne 0x2107
     # nextln: 0x2102: jmp 0x2123
@@ -2359,7 +2359,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x23a4: mov r14, rax
     # nextln: 0x23a7: mov qword ptr [rsp + 0x48], rcx
     # nextln: 0x23ac: mov qword ptr [rsp + 0x38], rdx
-    # nextln: 0x23b1: call 0x23b6
+    # nextln: 0x23b1: call 0x23b6  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x23b6: mov rdx, qword ptr [rsp + 0x48]
     # nextln: 0x23bb: mov rdi, qword ptr [rsp + 0x38]
     # nextln: 0x23c0: mov rcx, r14
@@ -2585,7 +2585,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x2709: mov qword ptr [rsp + 0x48], rax
     # nextln: 0x270e: mov r14, rdx
     # nextln: 0x2711: mov qword ptr [rsp + 0x38], rcx
-    # nextln: 0x2716: call 0x271b
+    # nextln: 0x2716: call 0x271b  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x271b: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x2720: mov rdi, r14
     # nextln: 0x2723: mov rdx, qword ptr [rsp + 0x38]
@@ -2840,7 +2840,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x2ad1: mov qword ptr [rsp + 0x48], rcx
     # nextln: 0x2ad6: mov qword ptr [rsp + 0x30], rdx
     # nextln: 0x2adb: mov r14, rdi
-    # nextln: 0x2ade: call 0x2ae3
+    # nextln: 0x2ade: call 0x2ae3  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x2ae3: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x2ae8: mov rdi, qword ptr [rsp + 0x30]
     # nextln: 0x2aed: mov rdx, r14
@@ -3093,7 +3093,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x2e87: mov qword ptr [rsp + 0x48], rdx
     # nextln: 0x2e8c: mov r14, rcx
     # nextln: 0x2e8f: mov qword ptr [rsp + 0x30], rdi
-    # nextln: 0x2e94: call 0x2e99
+    # nextln: 0x2e94: call 0x2e99  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x2e99: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x2e9e: mov rdi, qword ptr [rsp + 0x30]
     # nextln: 0x2ea3: mov rdx, r14
@@ -3356,7 +3356,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x325d: mov r14, rcx
     # nextln: 0x3260: mov qword ptr [rsp + 0x30], rdx
     # nextln: 0x3265: mov qword ptr [rsp + 0x38], rdi
-    # nextln: 0x326a: call 0x326f
+    # nextln: 0x326a: call 0x326f  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x326f: mov rcx, r14
     # nextln: 0x3272: mov rdi, qword ptr [rsp + 0x30]
     # nextln: 0x3277: mov rdx, qword ptr [rsp + 0x38]
@@ -3476,7 +3476,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x341c: mov r14, rax
     # nextln: 0x341f: mov qword ptr [rsp + 0x48], rdx
     # nextln: 0x3424: mov qword ptr [rsp + 0x30], rcx
-    # nextln: 0x3429: call 0x342e
+    # nextln: 0x3429: call 0x342e  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x342e: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x3433: mov rdi, qword ptr [rsp + 0x30]
     # nextln: 0x3438: mov rdx, r14
@@ -3515,7 +3515,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x34ae: mov qword ptr [rsp + 0x38], rdx
     # nextln: 0x34b3: mov qword ptr [rsp + 0x48], rcx
     # nextln: 0x34b8: mov r14, rax
-    # nextln: 0x34bb: call 0x34c0
+    # nextln: 0x34bb: call 0x34c0  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x34c0: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x34c5: mov rdi, qword ptr [rsp + 0x38]
     # nextln: 0x34ca: mov rdx, r14
@@ -3557,7 +3557,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x354b: mov qword ptr [rsp + 0x48], rdx
     # nextln: 0x3550: mov r14, rax
     # nextln: 0x3553: mov qword ptr [rsp + 0x30], rcx
-    # nextln: 0x3558: call 0x355d
+    # nextln: 0x3558: call 0x355d  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x355d: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x3562: mov rdx, r14
     # nextln: 0x3565: mov rdi, qword ptr [rsp + 0x30]
@@ -3594,7 +3594,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x35d9: mov qword ptr [rsp + 0x48], rax
     # nextln: 0x35de: mov qword ptr [rsp + 0x30], rdx
     # nextln: 0x35e3: mov r14, rcx
-    # nextln: 0x35e6: call 0x35eb
+    # nextln: 0x35e6: call 0x35eb  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x35eb: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x35f0: mov rdx, qword ptr [rsp + 0x30]
     # nextln: 0x35f5: mov rdi, r14
@@ -3630,7 +3630,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3662: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x3667: mov qword ptr [rsp + 0x38], rax
     # nextln: 0x366c: mov r14, rdx
-    # nextln: 0x366f: call 0x3674
+    # nextln: 0x366f: call 0x3674  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x3674: mov rdx, qword ptr [rsp + 0x30]
     # nextln: 0x3679: mov rcx, r14
     # nextln: 0x367c: mov rdi, qword ptr [rsp + 0x38]
@@ -3672,7 +3672,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x36fe: mov qword ptr [rsp + 0x48], rdx
     # nextln: 0x3703: mov qword ptr [rsp + 0x30], rcx
     # nextln: 0x3708: mov r14, rax
-    # nextln: 0x370b: call 0x3710
+    # nextln: 0x370b: call 0x3710  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x3710: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x3715: mov rdi, qword ptr [rsp + 0x30]
     # nextln: 0x371a: mov rdx, r14
@@ -3680,7 +3680,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3722: mov r14, rax
     # nextln: 0x3725: mov qword ptr [rsp + 0x48], rdx
     # nextln: 0x372a: mov qword ptr [rsp + 0x30], rcx
-    # nextln: 0x372f: call 0x3734
+    # nextln: 0x372f: call 0x3734  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x3734: mov rdi, qword ptr [rsp + 0x30]
     # nextln: 0x3739: mov rdx, r14
     # nextln: 0x373c: mov rcx, qword ptr [rsp + 0x48]
@@ -3710,7 +3710,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3797: mov r14, rcx
     # nextln: 0x379a: mov qword ptr [rsp + 0x48], rax
     # nextln: 0x379f: mov qword ptr [rsp + 0x30], rdx
-    # nextln: 0x37a4: call 0x37a9
+    # nextln: 0x37a4: call 0x37a9  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x37a9: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x37ae: mov rdx, qword ptr [rsp + 0x30]
     # nextln: 0x37b3: jmp 0x37f9
@@ -3754,7 +3754,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x383f: jmp 0x3862
     # nextln: 0x3844: mov qword ptr [rsp + 0x48], rcx
     # nextln: 0x3849: mov qword ptr [rsp + 0x30], rax
-    # nextln: 0x384e: call 0x3853
+    # nextln: 0x384e: call 0x3853  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x3853: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x3858: mov rdx, qword ptr [rsp + 0x30]
     # nextln: 0x385d: jmp 0x38a0
@@ -3809,7 +3809,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3915: add rdx, rdi
     # nextln: 0x3918: movzx edx, byte ptr [rdx]
     # nextln: 0x391b: jmp 0x392f
-    # nextln: 0x3920: call 0x3925
+    # nextln: 0x3920: call 0x3925  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x3925: ud2
     # nextln: 0x3927: mov rdx, rbx
     # nextln: 0x392a: jmp 0x392f
@@ -3852,7 +3852,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x39b3: mov rax, rcx
     # nextln: 0x39b6: mov rcx, rdx
     # nextln: 0x39b9: jmp 0x39d8
-    # nextln: 0x39be: call 0x39c3
+    # nextln: 0x39be: call 0x39c3  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x39c3: ud2
     # nextln: 0x39c5: mov rdi, rax
     # nextln: 0x39c8: mov rax, rcx
@@ -3898,7 +3898,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3a5c: mov rcx, rax
     # nextln: 0x3a5f: mov rax, rdx
     # nextln: 0x3a62: jmp 0x3a81
-    # nextln: 0x3a67: call 0x3a6c
+    # nextln: 0x3a67: call 0x3a6c  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x3a6c: ud2
     # nextln: 0x3a6e: mov rdx, rcx
     # nextln: 0x3a71: mov rcx, rax
@@ -3935,7 +3935,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3aea: add rdx, rdi
     # nextln: 0x3aed: movzx edx, byte ptr [rdx]
     # nextln: 0x3af0: jmp 0x3b16
-    # nextln: 0x3af5: call 0x3afa
+    # nextln: 0x3af5: call 0x3afa  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x3afa: ud2
     # nextln: 0x3afc: mov rdx, rcx
     # nextln: 0x3aff: mov rcx, rax
@@ -3981,7 +3981,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3b91: add rdx, rdi
     # nextln: 0x3b94: movzx edx, byte ptr [rdx]
     # nextln: 0x3b97: jmp 0x3bc4
-    # nextln: 0x3b9c: call 0x3ba1
+    # nextln: 0x3b9c: call 0x3ba1  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x3ba1: ud2
     # nextln: 0x3ba3: mov rdx, rcx
     # nextln: 0x3ba6: mov rcx, rax
@@ -4027,11 +4027,11 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3c39: add rax, rdi
     # nextln: 0x3c3c: movzx eax, byte ptr [rax]
     # nextln: 0x3c3f: jmp 0x3c69
-    # nextln: 0x3c44: call 0x3c49
+    # nextln: 0x3c44: call 0x3c49  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x3c49: ud2
     # nextln: 0x3c4b: mov qword ptr [rsp + 0x48], rcx
     # nextln: 0x3c50: mov qword ptr [rsp + 0x30], rdx
-    # nextln: 0x3c55: call 0x3c5a
+    # nextln: 0x3c55: call 0x3c5a  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x3c5a: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x3c5f: mov rdx, qword ptr [rsp + 0x30]
     # nextln: 0x3c64: jmp 0x3c69
@@ -4069,7 +4069,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3cde: add rdx, rdi
     # nextln: 0x3ce1: movzx edx, byte ptr [rdx]
     # nextln: 0x3ce4: jmp 0x3d2b
-    # nextln: 0x3ce9: call 0x3cee
+    # nextln: 0x3ce9: call 0x3cee  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x3cee: ud2
     # nextln: 0x3cf0: mov rdx, qword ptr [rsp + 0x10]
     # nextln: 0x3cf5: mov rdi, rdx
@@ -4117,7 +4117,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3d94: add rdx, rdi
     # nextln: 0x3d97: movzx edx, byte ptr [rdx]
     # nextln: 0x3d9a: jmp 0x3de1
-    # nextln: 0x3d9f: call 0x3da4
+    # nextln: 0x3d9f: call 0x3da4  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x3da4: ud2
     # nextln: 0x3da6: mov rdx, qword ptr [rsp + 8]
     # nextln: 0x3dab: mov rdi, rdx
@@ -4165,7 +4165,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3e4a: add rdx, rdi
     # nextln: 0x3e4d: movzx edx, byte ptr [rdx]
     # nextln: 0x3e50: jmp 0x3e76
-    # nextln: 0x3e55: call 0x3e5a
+    # nextln: 0x3e55: call 0x3e5a  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x3e5a: ud2
     # nextln: 0x3e5c: mov rdx, rax
     # nextln: 0x3e5f: mov rax, rcx
@@ -4205,7 +4205,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3edf: add rdx, rdi
     # nextln: 0x3ee2: movzx edx, byte ptr [rdx]
     # nextln: 0x3ee5: jmp 0x3f0d
-    # nextln: 0x3eea: call 0x3eef
+    # nextln: 0x3eea: call 0x3eef  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x3eef: ud2
     # nextln: 0x3ef1: mov rdx, rcx
     # nextln: 0x3ef4: mov rcx, rax
@@ -4245,7 +4245,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3f76: add rdx, rdi
     # nextln: 0x3f79: movzx edx, byte ptr [rdx]
     # nextln: 0x3f7c: jmp 0x3f92
-    # nextln: 0x3f81: call 0x3f86
+    # nextln: 0x3f81: call 0x3f86  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x3f86: ud2
     # nextln: 0x3f88: movzx edx, byte ptr [rsp + 0x64]
     # nextln: 0x3f8d: jmp 0x3f92
@@ -4279,7 +4279,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x3ffb: add rdx, rdi
     # nextln: 0x3ffe: movzx edx, byte ptr [rdx]
     # nextln: 0x4001: jmp 0x4015
-    # nextln: 0x4006: call 0x400b
+    # nextln: 0x4006: call 0x400b  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x400b: ud2
     # nextln: 0x400d: movzx edx, byte ptr [rax]
     # nextln: 0x4010: jmp 0x4015
@@ -4313,7 +4313,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x407e: add rdx, rdi
     # nextln: 0x4081: movzx edx, byte ptr [rdx]
     # nextln: 0x4084: jmp 0x409f
-    # nextln: 0x4089: call 0x408e
+    # nextln: 0x4089: call 0x408e  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x408e: ud2
     # nextln: 0x4090: mov rdx, qword ptr [rsp]
     # nextln: 0x4094: add rdx, r15
@@ -4353,11 +4353,11 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x4114: add rax, rdi
     # nextln: 0x4117: movzx eax, byte ptr [rax]
     # nextln: 0x411a: jmp 0x4144
-    # nextln: 0x411f: call 0x4124
+    # nextln: 0x411f: call 0x4124  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x4124: ud2
     # nextln: 0x4126: mov qword ptr [rsp + 0x30], rdx
     # nextln: 0x412b: mov qword ptr [rsp + 0x48], rcx
-    # nextln: 0x4130: call 0x4135
+    # nextln: 0x4130: call 0x4135  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x4135: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x413a: mov rdx, qword ptr [rsp + 0x30]
     # nextln: 0x413f: jmp 0x4144
@@ -4395,7 +4395,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x41b9: add rdx, rdi
     # nextln: 0x41bc: movzx edx, byte ptr [rdx]
     # nextln: 0x41bf: jmp 0x4206
-    # nextln: 0x41c4: call 0x41c9
+    # nextln: 0x41c4: call 0x41c9  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x41c9: ud2
     # nextln: 0x41cb: mov rdx, qword ptr [rsp + 0x10]
     # nextln: 0x41d0: mov rdi, rdx
@@ -4444,7 +4444,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x4271: add rcx, rdx
     # nextln: 0x4274: movzx ecx, byte ptr [rcx]
     # nextln: 0x4277: jmp 0x42bd
-    # nextln: 0x427c: call 0x4281
+    # nextln: 0x427c: call 0x4281  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x4281: ud2
     # nextln: 0x4283: mov rcx, qword ptr [rsp + 8]
     # nextln: 0x4288: mov rdx, rcx
@@ -4566,7 +4566,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x4457: mov rax, rbx
     # nextln: 0x445a: jmp 0x4473
     # nextln: 0x445f: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x4464: call 0x4469
+    # nextln: 0x4464: call 0x4469  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x4469: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x446e: jmp 0x4473
     # nextln: 0x4473: test eax, eax
@@ -4738,7 +4738,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x4710: mov rax, qword ptr [rsp + 0x18]
     # nextln: 0x4715: jmp 0x472e
     # nextln: 0x471a: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x471f: call 0x4724
+    # nextln: 0x471f: call 0x4724  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x4724: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x4729: jmp 0x472e
     # nextln: 0x472e: test eax, eax
@@ -4918,7 +4918,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x49ef: movzx eax, byte ptr [rsp + 0x64]
     # nextln: 0x49f4: jmp 0x4a0d
     # nextln: 0x49f9: mov qword ptr [rsp + 0x48], rcx
-    # nextln: 0x49fe: call 0x4a03
+    # nextln: 0x49fe: call 0x4a03  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x4a03: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x4a08: jmp 0x4a0d
     # nextln: 0x4a0d: test eax, eax
@@ -5098,7 +5098,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x4cc4: movzx eax, byte ptr [rcx]
     # nextln: 0x4cc7: jmp 0x4ce0
     # nextln: 0x4ccc: mov qword ptr [rsp + 0x48], rcx
-    # nextln: 0x4cd1: call 0x4cd6
+    # nextln: 0x4cd1: call 0x4cd6  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x4cd6: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x4cdb: jmp 0x4ce0
     # nextln: 0x4ce0: test eax, eax
@@ -5290,7 +5290,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x4fbd: movzx eax, byte ptr [rax]
     # nextln: 0x4fc0: jmp 0x4fd9
     # nextln: 0x4fc5: mov qword ptr [rsp + 0x48], rcx
-    # nextln: 0x4fca: call 0x4fcf
+    # nextln: 0x4fca: call 0x4fcf  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x4fcf: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x4fd4: jmp 0x4fd9
     # nextln: 0x4fd9: test eax, eax
@@ -5378,7 +5378,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5111: jne 0x511c
     # nextln: 0x5117: jmp 0x5130
     # nextln: 0x511c: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x5121: call 0x5126
+    # nextln: 0x5121: call 0x5126  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x5126: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x512b: jmp 0x513b
     # nextln: 0x5130: mov rcx, rax
@@ -5401,7 +5401,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x516f: jne 0x517a
     # nextln: 0x5175: jmp 0x518e
     # nextln: 0x517a: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x517f: call 0x5184
+    # nextln: 0x517f: call 0x5184  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x5184: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x5189: jmp 0x519b
     # nextln: 0x518e: mov rcx, rax
@@ -5424,7 +5424,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x51cf: jne 0x51da
     # nextln: 0x51d5: jmp 0x51ee
     # nextln: 0x51da: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x51df: call 0x51e4
+    # nextln: 0x51df: call 0x51e4  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x51e4: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x51e9: jmp 0x51fb
     # nextln: 0x51ee: mov rcx, rax
@@ -5447,7 +5447,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x522f: jne 0x523a
     # nextln: 0x5235: jmp 0x524e
     # nextln: 0x523a: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x523f: call 0x5244
+    # nextln: 0x523f: call 0x5244  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x5244: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x5249: jmp 0x5259
     # nextln: 0x524e: mov rcx, rax
@@ -5470,7 +5470,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x528d: jne 0x5298
     # nextln: 0x5293: jmp 0x52ac
     # nextln: 0x5298: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x529d: call 0x52a2
+    # nextln: 0x529d: call 0x52a2  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x52a2: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x52a7: jmp 0x52be
     # nextln: 0x52ac: mov rcx, rax
@@ -5495,11 +5495,11 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x52f2: jne 0x52fd
     # nextln: 0x52f8: jmp 0x5311
     # nextln: 0x52fd: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x5302: call 0x5307
+    # nextln: 0x5302: call 0x5307  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x5307: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x530c: jmp 0x5325
     # nextln: 0x5311: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x5316: call 0x531b
+    # nextln: 0x5316: call 0x531b  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x531b: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x5320: jmp 0x5325
     # nextln: 0x5325: test eax, eax
@@ -5519,7 +5519,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5359: jne 0x5364
     # nextln: 0x535f: jmp 0x5378
     # nextln: 0x5364: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x5369: call 0x536e
+    # nextln: 0x5369: call 0x536e  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x536e: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x5373: jmp 0x53b5
     # nextln: 0x5378: mov rcx, rax
@@ -5556,7 +5556,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x53e9: jne 0x53f4
     # nextln: 0x53ef: jmp 0x5408
     # nextln: 0x53f4: mov qword ptr [rsp + 0x48], rax
-    # nextln: 0x53f9: call 0x53fe
+    # nextln: 0x53f9: call 0x53fe  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x53fe: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x5403: jmp 0x5445
     # nextln: 0x5408: mov rcx, rax
@@ -5608,7 +5608,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x54b3: add rcx, rdx
     # nextln: 0x54b6: movzx ecx, byte ptr [rcx]
     # nextln: 0x54b9: jmp 0x54cd
-    # nextln: 0x54be: call 0x54c3
+    # nextln: 0x54be: call 0x54c3  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x54c3: ud2
     # nextln: 0x54c5: mov rcx, rbx
     # nextln: 0x54c8: jmp 0x54cd
@@ -5642,7 +5642,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5535: add rcx, rdx
     # nextln: 0x5538: movzx ecx, byte ptr [rcx]
     # nextln: 0x553b: jmp 0x5551
-    # nextln: 0x5540: call 0x5545
+    # nextln: 0x5540: call 0x5545  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5545: ud2
     # nextln: 0x5547: mov rcx, qword ptr [rsp + 0x18]
     # nextln: 0x554c: jmp 0x5551
@@ -5676,7 +5676,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x55b9: add rcx, rdx
     # nextln: 0x55bc: movzx ecx, byte ptr [rcx]
     # nextln: 0x55bf: jmp 0x55d5
-    # nextln: 0x55c4: call 0x55c9
+    # nextln: 0x55c4: call 0x55c9  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x55c9: ud2
     # nextln: 0x55cb: movzx ecx, byte ptr [rsp + 0x64]
     # nextln: 0x55d0: jmp 0x55d5
@@ -5710,7 +5710,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x563d: add rcx, rdx
     # nextln: 0x5640: movzx ecx, byte ptr [rcx]
     # nextln: 0x5643: jmp 0x5657
-    # nextln: 0x5648: call 0x564d
+    # nextln: 0x5648: call 0x564d  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x564d: ud2
     # nextln: 0x564f: movzx ecx, byte ptr [rax]
     # nextln: 0x5652: jmp 0x5657
@@ -5744,7 +5744,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x56bf: add rcx, rdx
     # nextln: 0x56c2: movzx ecx, byte ptr [rcx]
     # nextln: 0x56c5: jmp 0x56e0
-    # nextln: 0x56ca: call 0x56cf
+    # nextln: 0x56ca: call 0x56cf  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x56cf: ud2
     # nextln: 0x56d1: mov rcx, qword ptr [rsp]
     # nextln: 0x56d5: add rcx, r15
@@ -5782,10 +5782,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x574e: add rax, rdx
     # nextln: 0x5751: movzx eax, byte ptr [rax]
     # nextln: 0x5754: jmp 0x5774
-    # nextln: 0x5759: call 0x575e
+    # nextln: 0x5759: call 0x575e  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x575e: ud2
     # nextln: 0x5760: mov qword ptr [rsp + 0x48], rcx
-    # nextln: 0x5765: call 0x576a
+    # nextln: 0x5765: call 0x576a  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x576a: mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0x576f: jmp 0x5774
     # nextln: 0x5774: test eax, eax
@@ -5818,7 +5818,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x57dc: add rax, rdx
     # nextln: 0x57df: movzx eax, byte ptr [rax]
     # nextln: 0x57e2: jmp 0x5828
-    # nextln: 0x57e7: call 0x57ec
+    # nextln: 0x57e7: call 0x57ec  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x57ec: ud2
     # nextln: 0x57ee: mov rax, qword ptr [rsp + 0x10]
     # nextln: 0x57f3: mov rdx, rax
@@ -5866,7 +5866,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5890: add rax, rdx
     # nextln: 0x5893: movzx eax, byte ptr [rax]
     # nextln: 0x5896: jmp 0x58dc
-    # nextln: 0x589b: call 0x58a0
+    # nextln: 0x589b: call 0x58a0  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x58a0: ud2
     # nextln: 0x58a2: mov rax, qword ptr [rsp + 8]
     # nextln: 0x58a7: mov rdx, rax
@@ -5914,7 +5914,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5944: add rax, rdx
     # nextln: 0x5947: movzx eax, byte ptr [rax]
     # nextln: 0x594a: jmp 0x595e
-    # nextln: 0x594f: call 0x5954
+    # nextln: 0x594f: call 0x5954  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5954: ud2
     # nextln: 0x5956: mov rax, rbx
     # nextln: 0x5959: jmp 0x595e
@@ -5949,7 +5949,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x59c9: movzx eax, byte ptr [rax]
     # nextln: 0x59cc: mov rax, qword ptr [rsp + 0x18]
     # nextln: 0x59d1: jmp 0x59e7
-    # nextln: 0x59d6: call 0x59db
+    # nextln: 0x59d6: call 0x59db  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x59db: ud2
     # nextln: 0x59dd: mov rax, qword ptr [rsp + 0x18]
     # nextln: 0x59e2: jmp 0x59e7
@@ -5983,7 +5983,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5a4f: add rax, rdx
     # nextln: 0x5a52: movzx eax, byte ptr [rax]
     # nextln: 0x5a55: jmp 0x5a6b
-    # nextln: 0x5a5a: call 0x5a5f
+    # nextln: 0x5a5a: call 0x5a5f  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5a5f: ud2
     # nextln: 0x5a61: movzx eax, byte ptr [rsp + 0x64]
     # nextln: 0x5a66: jmp 0x5a6b
@@ -6017,7 +6017,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5ad3: add rax, rcx
     # nextln: 0x5ad6: movzx eax, byte ptr [rax]
     # nextln: 0x5ad9: jmp 0x5aed
-    # nextln: 0x5ade: call 0x5ae3
+    # nextln: 0x5ade: call 0x5ae3  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5ae3: ud2
     # nextln: 0x5ae5: movzx eax, byte ptr [rcx]
     # nextln: 0x5ae8: jmp 0x5aed
@@ -6051,7 +6051,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5b55: add rax, rcx
     # nextln: 0x5b58: movzx eax, byte ptr [rax]
     # nextln: 0x5b5b: jmp 0x5b76
-    # nextln: 0x5b60: call 0x5b65
+    # nextln: 0x5b60: call 0x5b65  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5b65: ud2
     # nextln: 0x5b67: mov rax, qword ptr [rsp]
     # nextln: 0x5b6b: add rax, r15
@@ -6087,9 +6087,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5bde: add rax, rcx
     # nextln: 0x5be1: movzx eax, byte ptr [rax]
     # nextln: 0x5be4: jmp 0x5bfa
-    # nextln: 0x5be9: call 0x5bee
+    # nextln: 0x5be9: call 0x5bee  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5bee: ud2
-    # nextln: 0x5bf0: call 0x5bf5
+    # nextln: 0x5bf0: call 0x5bf5  # reloc <0> -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + -4
     # nextln: 0x5bf5: jmp 0x5bfa
     # nextln: 0x5bfa: test eax, eax
     # nextln: 0x5bfc: jne 0x5c07
@@ -6121,7 +6121,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5c62: add rax, rcx
     # nextln: 0x5c65: movzx eax, byte ptr [rax]
     # nextln: 0x5c68: jmp 0x5cae
-    # nextln: 0x5c6d: call 0x5c72
+    # nextln: 0x5c6d: call 0x5c72  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5c72: ud2
     # nextln: 0x5c74: mov rax, qword ptr [rsp + 0x10]
     # nextln: 0x5c79: mov rcx, rax
@@ -6167,7 +6167,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5d10: add rax, r13
     # nextln: 0x5d13: movzx eax, byte ptr [rax]
     # nextln: 0x5d16: jmp 0x5d56
-    # nextln: 0x5d1b: call 0x5d20
+    # nextln: 0x5d1b: call 0x5d20  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5d20: ud2
     # nextln: 0x5d22: mov rax, qword ptr [rsp + 8]
     # nextln: 0x5d27: mov rcx, rax
@@ -6206,139 +6206,139 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0x5d9b: pop r15
     # nextln: 0x5d9d: pop rbp
     # nextln: 0x5d9e: ret
-    # nextln: 0x5d9f: call 0x5da4
+    # nextln: 0x5d9f: call 0x5da4  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5da4: ud2
-    # nextln: 0x5da6: call 0x5dab
+    # nextln: 0x5da6: call 0x5dab  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5dab: ud2
-    # nextln: 0x5dad: call 0x5db2
+    # nextln: 0x5dad: call 0x5db2  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5db2: ud2
-    # nextln: 0x5db4: call 0x5db9
+    # nextln: 0x5db4: call 0x5db9  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5db9: ud2
-    # nextln: 0x5dbb: call 0x5dc0
+    # nextln: 0x5dbb: call 0x5dc0  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5dc0: ud2
-    # nextln: 0x5dc2: call 0x5dc7
+    # nextln: 0x5dc2: call 0x5dc7  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5dc7: ud2
-    # nextln: 0x5dc9: call 0x5dce
+    # nextln: 0x5dc9: call 0x5dce  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5dce: ud2
-    # nextln: 0x5dd0: call 0x5dd5
+    # nextln: 0x5dd0: call 0x5dd5  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5dd5: ud2
-    # nextln: 0x5dd7: call 0x5ddc
+    # nextln: 0x5dd7: call 0x5ddc  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5ddc: ud2
-    # nextln: 0x5dde: call 0x5de3
+    # nextln: 0x5dde: call 0x5de3  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5de3: ud2
-    # nextln: 0x5de5: call 0x5dea
+    # nextln: 0x5de5: call 0x5dea  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5dea: ud2
-    # nextln: 0x5dec: call 0x5df1
+    # nextln: 0x5dec: call 0x5df1  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5df1: ud2
-    # nextln: 0x5df3: call 0x5df8
+    # nextln: 0x5df3: call 0x5df8  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5df8: ud2
-    # nextln: 0x5dfa: call 0x5dff
+    # nextln: 0x5dfa: call 0x5dff  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5dff: ud2
-    # nextln: 0x5e01: call 0x5e06
+    # nextln: 0x5e01: call 0x5e06  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e06: ud2
-    # nextln: 0x5e08: call 0x5e0d
+    # nextln: 0x5e08: call 0x5e0d  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e0d: ud2
-    # nextln: 0x5e0f: call 0x5e14
+    # nextln: 0x5e0f: call 0x5e14  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e14: ud2
-    # nextln: 0x5e16: call 0x5e1b
+    # nextln: 0x5e16: call 0x5e1b  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e1b: ud2
-    # nextln: 0x5e1d: call 0x5e22
+    # nextln: 0x5e1d: call 0x5e22  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e22: ud2
-    # nextln: 0x5e24: call 0x5e29
+    # nextln: 0x5e24: call 0x5e29  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e29: ud2
-    # nextln: 0x5e2b: call 0x5e30
+    # nextln: 0x5e2b: call 0x5e30  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e30: ud2
-    # nextln: 0x5e32: call 0x5e37
+    # nextln: 0x5e32: call 0x5e37  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e37: ud2
-    # nextln: 0x5e39: call 0x5e3e
+    # nextln: 0x5e39: call 0x5e3e  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e3e: ud2
-    # nextln: 0x5e40: call 0x5e45
+    # nextln: 0x5e40: call 0x5e45  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e45: ud2
-    # nextln: 0x5e47: call 0x5e4c
+    # nextln: 0x5e47: call 0x5e4c  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e4c: ud2
-    # nextln: 0x5e4e: call 0x5e53
+    # nextln: 0x5e4e: call 0x5e53  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e53: ud2
-    # nextln: 0x5e55: call 0x5e5a
+    # nextln: 0x5e55: call 0x5e5a  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e5a: ud2
-    # nextln: 0x5e5c: call 0x5e61
+    # nextln: 0x5e5c: call 0x5e61  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e61: ud2
-    # nextln: 0x5e63: call 0x5e68
+    # nextln: 0x5e63: call 0x5e68  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e68: ud2
-    # nextln: 0x5e6a: call 0x5e6f
+    # nextln: 0x5e6a: call 0x5e6f  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e6f: ud2
-    # nextln: 0x5e71: call 0x5e76
+    # nextln: 0x5e71: call 0x5e76  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e76: ud2
-    # nextln: 0x5e78: call 0x5e7d
+    # nextln: 0x5e78: call 0x5e7d  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e7d: ud2
-    # nextln: 0x5e7f: call 0x5e84
+    # nextln: 0x5e7f: call 0x5e84  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e84: ud2
-    # nextln: 0x5e86: call 0x5e8b
+    # nextln: 0x5e86: call 0x5e8b  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e8b: ud2
-    # nextln: 0x5e8d: call 0x5e92
+    # nextln: 0x5e8d: call 0x5e92  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e92: ud2
-    # nextln: 0x5e94: call 0x5e99
+    # nextln: 0x5e94: call 0x5e99  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5e99: ud2
-    # nextln: 0x5e9b: call 0x5ea0
+    # nextln: 0x5e9b: call 0x5ea0  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5ea0: ud2
-    # nextln: 0x5ea2: call 0x5ea7
+    # nextln: 0x5ea2: call 0x5ea7  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5ea7: ud2
-    # nextln: 0x5ea9: call 0x5eae
+    # nextln: 0x5ea9: call 0x5eae  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5eae: ud2
-    # nextln: 0x5eb0: call 0x5eb5
+    # nextln: 0x5eb0: call 0x5eb5  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5eb5: ud2
-    # nextln: 0x5eb7: call 0x5ebc
+    # nextln: 0x5eb7: call 0x5ebc  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5ebc: ud2
-    # nextln: 0x5ebe: call 0x5ec3
+    # nextln: 0x5ebe: call 0x5ec3  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5ec3: ud2
-    # nextln: 0x5ec5: call 0x5eca
+    # nextln: 0x5ec5: call 0x5eca  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5eca: ud2
-    # nextln: 0x5ecc: call 0x5ed1
+    # nextln: 0x5ecc: call 0x5ed1  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5ed1: ud2
-    # nextln: 0x5ed3: call 0x5ed8
+    # nextln: 0x5ed3: call 0x5ed8  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5ed8: ud2
-    # nextln: 0x5eda: call 0x5edf
+    # nextln: 0x5eda: call 0x5edf  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5edf: ud2
-    # nextln: 0x5ee1: call 0x5ee6
+    # nextln: 0x5ee1: call 0x5ee6  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5ee6: ud2
-    # nextln: 0x5ee8: call 0x5eed
+    # nextln: 0x5ee8: call 0x5eed  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5eed: ud2
-    # nextln: 0x5eef: call 0x5ef4
+    # nextln: 0x5eef: call 0x5ef4  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5ef4: ud2
-    # nextln: 0x5ef6: call 0x5efb
+    # nextln: 0x5ef6: call 0x5efb  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5efb: ud2
-    # nextln: 0x5efd: call 0x5f02
+    # nextln: 0x5efd: call 0x5f02  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f02: ud2
-    # nextln: 0x5f04: call 0x5f09
+    # nextln: 0x5f04: call 0x5f09  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f09: ud2
-    # nextln: 0x5f0b: call 0x5f10
+    # nextln: 0x5f0b: call 0x5f10  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f10: ud2
-    # nextln: 0x5f12: call 0x5f17
+    # nextln: 0x5f12: call 0x5f17  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f17: ud2
-    # nextln: 0x5f19: call 0x5f1e
+    # nextln: 0x5f19: call 0x5f1e  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f1e: ud2
-    # nextln: 0x5f20: call 0x5f25
+    # nextln: 0x5f20: call 0x5f25  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f25: ud2
-    # nextln: 0x5f27: call 0x5f2c
+    # nextln: 0x5f27: call 0x5f2c  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f2c: ud2
-    # nextln: 0x5f2e: call 0x5f33
+    # nextln: 0x5f2e: call 0x5f33  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f33: ud2
-    # nextln: 0x5f35: call 0x5f3a
+    # nextln: 0x5f35: call 0x5f3a  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f3a: ud2
-    # nextln: 0x5f3c: call 0x5f41
+    # nextln: 0x5f3c: call 0x5f41  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f41: ud2
-    # nextln: 0x5f43: call 0x5f48
+    # nextln: 0x5f43: call 0x5f48  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f48: ud2
-    # nextln: 0x5f4a: call 0x5f4f
+    # nextln: 0x5f4a: call 0x5f4f  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f4f: ud2
-    # nextln: 0x5f51: call 0x5f56
+    # nextln: 0x5f51: call 0x5f56  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f56: ud2
-    # nextln: 0x5f58: call 0x5f5d
+    # nextln: 0x5f58: call 0x5f5d  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f5d: ud2
-    # nextln: 0x5f5f: call 0x5f64
+    # nextln: 0x5f5f: call 0x5f64  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f64: ud2
-    # nextln: 0x5f66: call 0x5f6b
+    # nextln: 0x5f66: call 0x5f6b  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f6b: ud2
-    # nextln: 0x5f6d: call 0x5f72
+    # nextln: 0x5f6d: call 0x5f72  # reloc <0> -> @throw_index_out_of_range_exception + -4
     # nextln: 0x5f72: ud2
 
     %0:ctrl = entry

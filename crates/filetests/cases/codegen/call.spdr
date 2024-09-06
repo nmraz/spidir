@@ -71,19 +71,19 @@ func @caller:i32(ptr, i32) {
     # nextln: 0x000d: mov r12, rdi
     # nextln: 0x0010: mov rsi, r13
     # nextln: 0x0013: mov rdi, r12
-    # nextln: 0x0016: call 0x1b
+    # nextln: 0x0016: call 0x1b  # reloc <0> -> @extfunc + -4
     # nextln: 0x001b: mov rsi, r13
     # nextln: 0x001e: mov rdi, r12
-    # nextln: 0x0021: call 0x26
+    # nextln: 0x0021: call 0x26  # reloc <0> -> @extfunc2 + -4
     # nextln: 0x0026: mov rbx, rax
     # nextln: 0x0029: mov rsi, r13
     # nextln: 0x002c: mov rdi, r12
-    # nextln: 0x002f: call 0x34
+    # nextln: 0x002f: call 0x34  # reloc <0> -> @infunc + -4
     # nextln: 0x0034: mov rsi, r13
     # nextln: 0x0037: mov rdi, r12
-    # nextln: 0x003a: call 0x3f
+    # nextln: 0x003a: call 0x3f  # reloc <0> -> @infunc2 + -4
     # nextln: 0x003f: add ebx, eax
-    # nextln: 0x0041: call 0x46
+    # nextln: 0x0041: call 0x46  # reloc <0> -> @no_params + -4
     # nextln: 0x0046: mov rax, rbx
     # nextln: 0x0049: add rsp, 8
     # nextln: 0x004d: pop rbx
@@ -117,7 +117,7 @@ func @call_single_stack_arg() {
     # nextln: 0x0011: mov rdx, rcx
     # nextln: 0x0014: mov rsi, rcx
     # nextln: 0x0017: mov rdi, rcx
-    # nextln: 0x001a: call 0x1f
+    # nextln: 0x001a: call 0x1f  # reloc <0> -> @single_stack_arg + -4
     # nextln: 0x001f: add rsp, 0x10
     # nextln: 0x0023: pop rbp
     # nextln: 0x0024: ret
@@ -142,7 +142,7 @@ func @call_many_params(ptr) {
     # nextln: 0x0015: mov rsi, rcx
     # nextln: 0x0018: mov r9, rdi
     # nextln: 0x001b: mov r8, rdi
-    # nextln: 0x001e: call 0x23
+    # nextln: 0x001e: call 0x23  # reloc <0> -> @many_params + -4
     # nextln: 0x0023: add rsp, 0x20
     # nextln: 0x0027: pop rbp
     # nextln: 0x0028: ret

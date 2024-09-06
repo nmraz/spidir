@@ -1,10 +1,10 @@
 use std::fmt::Write;
 
 use anyhow::Result;
-use codegen::{cfg::CfgContext, schedule::Schedule};
+use codegen::api::schedule_graph;
 use filecheck::Value;
 use fx_utils::FxHashMap;
-use ir::{module::Module, valwalk::cfg_preorder};
+use ir::module::Module;
 
 use crate::{regexes::VAL_REGEX, utils::generalize_value_names};
 
@@ -24,15 +24,12 @@ impl TestProvider for ScheduleProvider {
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.name).unwrap();
 
-            let graph = &func.graph;
-            let cfg_preorder: Vec<_> = cfg_preorder(graph, func.entry).collect();
-            let (cfg_ctx, block_map) = CfgContext::compute_for_valgraph(graph, &cfg_preorder);
-            let schedule = Schedule::compute(graph, &cfg_preorder, &cfg_ctx, &block_map);
+            let (cfg_ctx, _, schedule) = schedule_graph(&func.graph, func.entry);
 
             write!(
                 output,
                 "{}",
-                schedule.display(module, graph, &cfg_ctx.cfg, &cfg_ctx.block_order)
+                schedule.display(module, &func.graph, &cfg_ctx.cfg, &cfg_ctx.block_order)
             )
             .unwrap();
         }

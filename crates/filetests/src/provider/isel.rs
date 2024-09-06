@@ -1,10 +1,8 @@
 use core::fmt::Write;
 
 use anyhow::{anyhow, Result};
-use codegen::{
-    cfg::CfgContext, isel::select_instrs, schedule::Schedule, target::x86_64::X64Machine,
-};
-use ir::{module::Module, valwalk::cfg_preorder, write::display_node};
+use codegen::{api::lower_func, target::x86_64::X64Machine};
+use ir::{module::Module, write::display_node};
 
 use crate::utils::sanitize_raw_output;
 
@@ -19,18 +17,13 @@ impl TestProvider for IselProvider {
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.name).unwrap();
 
-            let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
-            let (cfg_ctx, block_map) = CfgContext::compute_for_valgraph(&func.graph, &cfg_preorder);
-            let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx, &block_map);
-            let machine = X64Machine;
-            let lir = select_instrs(module, func, &schedule, &cfg_ctx, &block_map, &machine)
-                .map_err(|err| {
-                    anyhow!(
-                        "failed to select `{}`: `{}`",
-                        func.name,
-                        display_node(module, &func.graph, err.node)
-                    )
-                })?;
+            let (cfg_ctx, lir) = lower_func(module, func, &X64Machine).map_err(|err| {
+                anyhow!(
+                    "failed to select `{}`: `{}`",
+                    func.name,
+                    display_node(module, &func.graph, err.node)
+                )
+            })?;
 
             write!(
                 output,

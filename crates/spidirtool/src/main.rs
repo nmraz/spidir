@@ -11,13 +11,13 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
 use codegen::{
-    cfg::CfgContext, isel::select_instrs, lir::Lir, schedule::Schedule, target::x86_64::X64Machine,
+    api::{lower_func, schedule_graph},
+    target::x86_64::X64Machine,
 };
 use ir::{
     domtree::DomTree,
     loops::LoopForest,
     module::{FunctionData, Module},
-    valwalk::cfg_preorder,
     verify::verify_func,
     write::{display_node, quote_ident, write_signature},
 };
@@ -284,9 +284,7 @@ fn get_module_schedule_str(module: &Module) -> String {
         write!(output, "func @{}", quote_ident(&func.name)).unwrap();
         write_signature(&mut output, &func.sig).unwrap();
 
-        let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
-        let (cfg_ctx, block_map) = CfgContext::compute_for_valgraph(&func.graph, &cfg_preorder);
-        let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx, &block_map);
+        let (cfg_ctx, _, schedule) = schedule_graph(&func.graph, func.entry);
 
         writeln!(
             output,
@@ -304,7 +302,13 @@ fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
 
     for func in module.functions.values() {
         writeln!(output, "func @{} {{", quote_ident(&func.name)).unwrap();
-        let (cfg_ctx, lir) = get_function_lir(module, func)?;
+        let (cfg_ctx, lir) = lower_func(module, func, &X64Machine).map_err(|err| {
+            anyhow!(
+                "failed to select `{}`: `{}`",
+                func.name,
+                display_node(module, &func.graph, err.node)
+            )
+        })?;
 
         if regalloc {
             let assignment = codegen::regalloc::run(&lir, &cfg_ctx, &X64Machine)
@@ -322,22 +326,6 @@ fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
     }
 
     Ok(output)
-}
-
-fn get_function_lir(module: &Module, func: &FunctionData) -> Result<(CfgContext, Lir<X64Machine>)> {
-    let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
-    let (cfg_ctx, block_map) = CfgContext::compute_for_valgraph(&func.graph, &cfg_preorder);
-    let schedule = Schedule::compute(&func.graph, &cfg_preorder, &cfg_ctx, &block_map);
-    let machine = X64Machine;
-    let lir =
-        select_instrs(module, func, &schedule, &cfg_ctx, &block_map, &machine).map_err(|err| {
-            anyhow!(
-                "failed to select `{}`: `{}`",
-                func.name,
-                display_node(module, &func.graph, err.node)
-            )
-        })?;
-    Ok((cfg_ctx, lir))
 }
 
 fn get_graphviz_str(

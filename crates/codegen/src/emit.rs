@@ -152,7 +152,7 @@ pub type BlockLabelMap = SecondaryMap<Block, Label>;
 
 pub fn emit_code<M: MachineEmit>(
     lir: &Lir<M>,
-    cfg_context: &CfgContext,
+    cfg_ctx: &CfgContext,
     assignment: &Assignment,
     machine: &M,
 ) -> CodeBlob {
@@ -161,14 +161,14 @@ pub fn emit_code<M: MachineEmit>(
     let mut buffer = CodeBuffer::new();
 
     let mut block_labels = BlockLabelMap::with_default(Label::reserved_value());
-    for &block in &cfg_context.block_order {
+    for &block in &cfg_ctx.block_order {
         let label = buffer.create_label();
         block_labels[block] = label;
     }
 
     machine.emit_prologue(&mut state, &mut buffer);
 
-    for &block in &cfg_context.block_order {
+    for &block in &cfg_ctx.block_order {
         buffer.bind_label(block_labels[block]);
 
         for instr in assignment.instrs_and_copies(lir.block_instrs(block)) {

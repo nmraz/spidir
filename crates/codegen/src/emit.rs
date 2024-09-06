@@ -41,12 +41,16 @@ impl<M: MachineEmit> CodeBuffer<M> {
         self.bytes.extend_from_slice(bytes);
     }
 
-    pub fn emit_fixup(&mut self, offset: u32, label: Label, kind: M::Fixup) {
+    pub fn emit_fixup_at(&mut self, offset: u32, label: Label, kind: M::Fixup) {
         self.fixups.push(Fixup {
             offset,
             label,
             kind,
         });
+    }
+
+    pub fn emit_fixup(&mut self, label: Label, kind: M::Fixup) {
+        self.emit_fixup_at(self.offset(), label, kind);
     }
 
     pub fn create_label(&mut self) -> Label {

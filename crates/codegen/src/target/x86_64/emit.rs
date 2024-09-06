@@ -1,12 +1,10 @@
-use core::mem;
-
 use crate::{
     emit::{BlockLabelMap, CodeBuffer},
     frame::FrameLayout,
     lir::{Lir, PhysReg, PhysRegSet, StackSlot},
     machine::{FixupKind, MachineEmit},
     num_utils::{align_up, is_sint, is_uint},
-    regalloc::{Assignment, OperandAssignment},
+    regalloc::{Assignment, OperandAssignment, SpillSlot},
     target::x86_64::CALLEE_SAVED_REGS,
 };
 
@@ -50,11 +48,23 @@ pub struct X64EmitState {
 }
 
 impl X64EmitState {
-    fn stack_slot_addr(&self, slot: StackSlot) -> BaseIndexOff {
-        let offset: i32 = self.frame_layout.stack_slot_offsets[slot]
-            .try_into()
-            .unwrap();
+    fn operand_reg_mem(&self, operand: OperandAssignment) -> RegMem {
+        match operand {
+            OperandAssignment::Reg(reg) => RegMem::Reg(reg),
+            OperandAssignment::Spill(spill) => RegMem::Mem(self.spill_slot_addr(spill)),
+        }
+    }
 
+    fn stack_slot_addr(&self, slot: StackSlot) -> BaseIndexOff {
+        self.stack_addr(self.frame_layout.stack_slot_offsets[slot])
+    }
+
+    fn spill_slot_addr(&self, spill: SpillSlot) -> BaseIndexOff {
+        self.stack_addr(self.frame_layout.spill_slot_offsets[spill])
+    }
+
+    fn stack_addr(&self, frame_offset: u32) -> BaseIndexOff {
+        let offset: i32 = frame_offset.try_into().unwrap();
         let offset = offset + self.sp_frame_offset;
 
         BaseIndexOff {
@@ -138,19 +148,10 @@ impl MachineEmit for X64Machine {
         uses: &[OperandAssignment],
     ) {
         match instr {
-            &X64Instr::AluRRm(op_size, op @ (AluOp::Cmp | AluOp::Test)) => {
-                // `cmp` and `test` are special because they don't have explicit outputs.
-
-                // TODO: spilled arg0.
-                let arg0 = uses[0].as_reg().unwrap();
-                let arg1 = uses[1].as_reg().unwrap();
-                emit_alu_rr(buffer, op, op_size, arg0, arg1);
-            }
             &X64Instr::AluRRm(op_size, op) => {
-                // TODO: spilled src.
-                let dest = defs[0].as_reg().unwrap();
-                let src = uses[1].as_reg().unwrap();
-                emit_alu_rr(buffer, op, op_size, dest, src);
+                let arg0 = uses[0].as_reg().unwrap();
+                let arg1 = state.operand_reg_mem(uses[1]);
+                emit_alu_r_rm(buffer, op, op_size, arg0, arg1);
             }
             &X64Instr::ShiftRmR(op_size, op) => {
                 // TODO: spilled arg.
@@ -181,8 +182,14 @@ impl MachineEmit for X64Machine {
             &X64Instr::MovRI(val) => emit_mov_ri(buffer, defs[0].as_reg().unwrap(), val),
             X64Instr::MovRZ => {
                 let dest = defs[0].as_reg().unwrap();
-                // Note: renamers often recognize only the 32-bit instruction as a zeroing idiom.
-                emit_alu_rr(buffer, AluOp::Xor, OperandSize::S32, dest, dest);
+                // Note: some renamers recognize only the 32-bit instruction as a zeroing idiom.
+                emit_alu_r_rm(
+                    buffer,
+                    AluOp::Xor,
+                    OperandSize::S32,
+                    dest,
+                    RegMem::Reg(dest),
+                );
             }
             &X64Instr::MovsxRRm(width) => {
                 // TODO: spilled arg.
@@ -461,41 +468,36 @@ fn emit_ud2(buffer: &mut CodeBuffer<X64Machine>) {
 
 // Instruction group emission helpers
 
-fn emit_alu_rr(
+fn emit_alu_r_rm(
     buffer: &mut CodeBuffer<X64Machine>,
     op: AluOp,
     op_size: OperandSize,
     arg0: PhysReg,
-    arg1: PhysReg,
+    arg1: RegMem,
 ) {
-    // By default, use the more "canonical" `op r/m, r` encoding.
-    let mut rm = arg0;
-    let mut reg = arg1;
-
     let opcode: &[u8] = match op {
-        AluOp::Add => &[0x1],
-        AluOp::And => &[0x21],
-        AluOp::Cmp => &[0x39],
-        AluOp::Or => &[0x9],
-        AluOp::Sub => &[0x29],
-        AluOp::Test => &[0x85],
-        AluOp::Xor => &[0x31],
-        AluOp::Imul => {
-            // `imul` only has the `imul r, r/m` form.
-            mem::swap(&mut rm, &mut reg);
-            &[0xf, 0xaf]
+        AluOp::Add => &[0x3],
+        AluOp::And => &[0x23],
+        AluOp::Cmp => &[0x3b],
+        AluOp::Or => &[0xb],
+        AluOp::Sub => &[0x2b],
+        AluOp::Test => {
+            // This encoding is actually backwards (`test r/m, r`), but it doesn't matter because
+            // `test` is commutative and has no outputs other than flags.
+            &[0x85]
         }
+        AluOp::Xor => &[0x33],
+        AluOp::Imul => &[0xf, 0xaf],
     };
 
-    let mut rex = RexPrefix::new();
-    rex.encode_operand_size(op_size);
-
-    let rm = rex.encode_modrm_rm(rm);
-    let reg = rex.encode_modrm_reg(reg);
+    let (rex, modrm_sib) = encode_reg_mem_parts(arg1, |rex| {
+        rex.encode_operand_size(op_size);
+        rex.encode_modrm_reg(arg0)
+    });
 
     rex.emit(buffer);
     buffer.emit(opcode);
-    buffer.emit(&[encode_modrm_r(reg, rm)]);
+    modrm_sib.emit(buffer);
 }
 
 fn emit_div_r(
@@ -610,6 +612,11 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
 
 // Prefixes and encoding
 
+enum RegMem {
+    Reg(PhysReg),
+    Mem(BaseIndexOff),
+}
+
 struct BaseIndexOff {
     base: Option<PhysReg>,
     index: Option<(IndexScale, PhysReg)>,
@@ -704,6 +711,27 @@ impl RexPrefix {
         if self.force || value != 0x40 {
             buffer.emit(&[value]);
         }
+    }
+}
+
+fn encode_reg_mem_parts(
+    reg_mem: RegMem,
+    get_reg: impl FnOnce(&mut RexPrefix) -> u8,
+) -> (RexPrefix, ModRmSib) {
+    match reg_mem {
+        RegMem::Reg(rm) => {
+            let mut rex = RexPrefix::new();
+            let reg = get_reg(&mut rex);
+            let rm = rex.encode_modrm_rm(rm);
+            let modrm_sib = ModRmSib {
+                modrm: encode_modrm_r(reg, rm),
+                sib: None,
+                disp: 0,
+                mem_mode: MemMode::NoDisp,
+            };
+            (rex, modrm_sib)
+        }
+        RegMem::Mem(addr) => encode_mem_parts(addr, get_reg),
     }
 }
 

@@ -332,14 +332,14 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Machine>, offset: i32) {
 
 fn emit_push(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
     let mut rex = RexPrefix::new();
-    let reg = rex.encode_modrm_rm(reg);
+    let reg = rex.encode_modrm_base(reg);
     rex.emit(buffer);
     buffer.emit(&[0x50 + reg]);
 }
 
 fn emit_pop(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
     let mut rex = RexPrefix::new();
-    let reg = rex.encode_modrm_rm(reg);
+    let reg = rex.encode_modrm_base(reg);
     rex.emit(buffer);
     buffer.emit(&[0x58 + reg]);
 }
@@ -432,9 +432,9 @@ fn emit_mov_mr_r(
 
 fn emit_setcc_r(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, dest: PhysReg) {
     let mut rex = RexPrefix::new();
-    let rm = rex.encode_modrm_rm(dest);
+    let dest = rex.encode_modrm_base(dest);
     rex.emit(buffer);
-    buffer.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, rm)]);
+    buffer.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, dest)]);
 }
 
 fn emit_movsx_r_rm(
@@ -582,7 +582,7 @@ fn emit_shift_rm_i(
 
 fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
     let mut rex = RexPrefix::new();
-    let dest = rex.encode_modrm_rm(dest);
+    let dest = rex.encode_modrm_base(dest);
 
     if is_uint::<32>(imm) {
         // Smallest case: move imm32 to r32, clearing upper bits.
@@ -626,9 +626,9 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
 
     let mut rex = RexPrefix::new();
     rex.encode_operand_size(OperandSize::S64);
-    let rm = rex.encode_modrm_rm(dest);
+    let dest = rex.encode_modrm_base(dest);
     rex.emit(buffer);
-    buffer.emit(&[opcode, encode_modrm_r(reg, rm)]);
+    buffer.emit(&[opcode, encode_modrm_r(reg, dest)]);
 
     if is_imm8 {
         buffer.emit(&[imm as u8]);
@@ -724,16 +724,16 @@ impl RexPrefix {
         reg & 0b111
     }
 
-    fn encode_modrm_rm(&mut self, reg: PhysReg) -> u8 {
-        let reg = encode_reg(reg);
-        self.b = reg & 0b1000 != 0;
-        reg & 0b111
+    fn encode_modrm_base(&mut self, base: PhysReg) -> u8 {
+        let base = encode_reg(base);
+        self.b = base & 0b1000 != 0;
+        base & 0b111
     }
 
-    fn encode_sib_index(&mut self, reg: PhysReg) -> u8 {
-        let reg = encode_reg(reg);
-        self.x = reg & 0b1000 != 0;
-        reg & 0b111
+    fn encode_sib_index(&mut self, index: PhysReg) -> u8 {
+        let index = encode_reg(index);
+        self.x = index & 0b1000 != 0;
+        index & 0b111
     }
 
     fn use_reg8(&mut self, reg: PhysReg) {
@@ -763,7 +763,7 @@ fn encode_reg_mem_parts(
         RegMem::Reg(rm) => {
             let mut rex = RexPrefix::new();
             let reg = get_reg(&mut rex);
-            let rm = rex.encode_modrm_rm(rm);
+            let rm = rex.encode_modrm_base(rm);
             let modrm_sib = ModRmSib {
                 modrm: encode_modrm_r(reg, rm),
                 sib: None,
@@ -810,7 +810,7 @@ fn encode_mem_parts(
     if need_sib {
         let base = addr
             .base
-            .map_or(SIB_BASE_NONE, |base| rex.encode_modrm_rm(base));
+            .map_or(SIB_BASE_NONE, |base| rex.encode_modrm_base(base));
         let rm = RM_SIB;
         let (scale, index) = match addr.index {
             Some((scale, index)) => {
@@ -839,12 +839,12 @@ fn encode_mem_parts(
         )
     } else {
         // Note: we always need an SIB when no base is specified.
-        let rm = rex.encode_modrm_rm(addr.base.unwrap());
+        let base = rex.encode_modrm_base(addr.base.unwrap());
 
         (
             rex,
             ModRmSib {
-                modrm: encode_modrm_mem(mode, reg, rm),
+                modrm: encode_modrm_mem(mode, reg, base),
                 sib: None,
                 disp: addr.disp,
                 mem_mode: mode,

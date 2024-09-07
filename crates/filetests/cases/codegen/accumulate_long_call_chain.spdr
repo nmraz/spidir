@@ -4,35 +4,35 @@ extfunc @f:i32()
 
 func @func:i32() {
     # check: function `func`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: push rbx
-    # nextln: 0x0005: push rax
-    # nextln: 0x0006: call 0xb  # reloc <0> -> @f + -4
-    # nextln: 0x000b: mov rbx, rax
-    # nextln: 0x000e: call 0x13  # reloc <0> -> @f + -4
-    # nextln: 0x0013: and ebx, eax
-    # nextln: 0x0015: call 0x1a  # reloc <0> -> @f + -4
-    # nextln: 0x001a: and ebx, eax
-    # nextln: 0x001c: call 0x21  # reloc <0> -> @f + -4
-    # nextln: 0x0021: and ebx, eax
-    # nextln: 0x0023: call 0x28  # reloc <0> -> @f + -4
-    # nextln: 0x0028: and ebx, eax
-    # nextln: 0x002a: call 0x2f  # reloc <0> -> @f + -4
-    # nextln: 0x002f: and ebx, eax
-    # nextln: 0x0031: call 0x36  # reloc <0> -> @f + -4
-    # nextln: 0x0036: and ebx, eax
-    # nextln: 0x0038: call 0x3d  # reloc <0> -> @f + -4
-    # nextln: 0x003d: and ebx, eax
-    # nextln: 0x003f: call 0x44  # reloc <0> -> @f + -4
-    # nextln: 0x0044: and ebx, eax
-    # nextln: 0x0046: call 0x4b  # reloc <0> -> @f + -4
-    # nextln: 0x004b: and ebx, eax
-    # nextln: 0x004d: mov rax, rbx
-    # nextln: 0x0050: add rsp, 8
-    # nextln: 0x0054: pop rbx
-    # nextln: 0x0055: pop rbp
-    # nextln: 0x0056: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 53                              push rbx
+    # nextln: 000005: 50                              push rax
+    # nextln: 000006: e8 00 00 00 00                  call 0xb  # RELOC_PC32 -> @f + -4
+    # nextln: 00000b: 48 89 c3                        mov rbx, rax
+    # nextln: 00000e: e8 00 00 00 00                  call 0x13  # RELOC_PC32 -> @f + -4
+    # nextln: 000013: 23 d8                           and ebx, eax
+    # nextln: 000015: e8 00 00 00 00                  call 0x1a  # RELOC_PC32 -> @f + -4
+    # nextln: 00001a: 23 d8                           and ebx, eax
+    # nextln: 00001c: e8 00 00 00 00                  call 0x21  # RELOC_PC32 -> @f + -4
+    # nextln: 000021: 23 d8                           and ebx, eax
+    # nextln: 000023: e8 00 00 00 00                  call 0x28  # RELOC_PC32 -> @f + -4
+    # nextln: 000028: 23 d8                           and ebx, eax
+    # nextln: 00002a: e8 00 00 00 00                  call 0x2f  # RELOC_PC32 -> @f + -4
+    # nextln: 00002f: 23 d8                           and ebx, eax
+    # nextln: 000031: e8 00 00 00 00                  call 0x36  # RELOC_PC32 -> @f + -4
+    # nextln: 000036: 23 d8                           and ebx, eax
+    # nextln: 000038: e8 00 00 00 00                  call 0x3d  # RELOC_PC32 -> @f + -4
+    # nextln: 00003d: 23 d8                           and ebx, eax
+    # nextln: 00003f: e8 00 00 00 00                  call 0x44  # RELOC_PC32 -> @f + -4
+    # nextln: 000044: 23 d8                           and ebx, eax
+    # nextln: 000046: e8 00 00 00 00                  call 0x4b  # RELOC_PC32 -> @f + -4
+    # nextln: 00004b: 23 d8                           and ebx, eax
+    # nextln: 00004d: 48 89 d8                        mov rax, rbx
+    # nextln: 000050: 48 83 c4 08                     add rsp, 8
+    # nextln: 000054: 5b                              pop rbx
+    # nextln: 000055: 5d                              pop rbp
+    # nextln: 000056: c3                              ret
 
     %ent:ctrl = entry
     %c0:ctrl, %v0:i32 = call @f %ent

@@ -28,7 +28,7 @@ impl TestProvider for CodegenProvider {
 
             let code = codegen_func(module, func, &self.machine)
                 .map_err(|err| anyhow!("codegen failed: {:?}", err))?;
-            disasm_code(module, &code, &mut output)?;
+            disasm_code(module, &code, 0, &mut output)?;
         }
 
         Ok(output)

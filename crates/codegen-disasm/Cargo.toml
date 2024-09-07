@@ -9,3 +9,4 @@ codegen.workspace = true
 
 anyhow.workspace = true
 capstone.workspace = true
+itertools.workspace = true

@@ -5,10 +5,10 @@ extfunc @extfunc2:i32(ptr, i32)
 
 func @infunc(ptr, i32) {
     # check: function `infunc`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: pop rbp
-    # nextln: 0x0005: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 5d                              pop rbp
+    # nextln: 000005: c3                              ret
 
     %0:ctrl, %1:ptr, %2:i32 = entry
     return %0
@@ -16,11 +16,11 @@ func @infunc(ptr, i32) {
 
 func @infunc2:i32(ptr, i32) {
     # check: function `infunc2`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rax, rsi
-    # nextln: 0x0007: pop rbp
-    # nextln: 0x0008: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 5d                              pop rbp
+    # nextln: 000008: c3                              ret
 
     %0:ctrl, %1:ptr, %2:i32 = entry
     return %0, %2
@@ -28,10 +28,10 @@ func @infunc2:i32(ptr, i32) {
 
 func @no_params() {
     # check: function `no_params`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: pop rbp
-    # nextln: 0x0005: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 5d                              pop rbp
+    # nextln: 000005: c3                              ret
 
     %0:ctrl = entry
     return %0
@@ -39,10 +39,10 @@ func @no_params() {
 
 func @single_stack_arg(i64, i64, i64, i64, i64, i64, i64) {
     # check: function `single_stack_arg`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: pop rbp
-    # nextln: 0x0005: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 5d                              pop rbp
+    # nextln: 000005: c3                              ret
 
     %0:ctrl, %1:i64, %2:i64, %3:i64, %4:i64, %5:i64, %6:i64, %7:i64 = entry
     return %0
@@ -50,10 +50,10 @@ func @single_stack_arg(i64, i64, i64, i64, i64, i64, i64) {
 
 func @many_params(i32, i64, ptr, i64, i32, i32, i64, ptr, i32, i64) {
     # check: function `many_params`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: pop rbp
-    # nextln: 0x0005: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 5d                              pop rbp
+    # nextln: 000005: c3                              ret
 
     %0:ctrl, %1:i32, %2:i64, %3:ptr, %4:i64, %5:i32, %6:i32, %7:i64, %8:ptr, %9:i32, %10:i64 = entry
     return %0
@@ -61,41 +61,41 @@ func @many_params(i32, i64, ptr, i64, i32, i32, i64, ptr, i32, i64) {
 
 func @caller:i32(ptr, i32) {
     # check: function `caller`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: push r13
-    # nextln: 0x0006: push r12
-    # nextln: 0x0008: push rbx
-    # nextln: 0x0009: push rax
-    # nextln: 0x000a: mov r12, rsi
-    # nextln: 0x000d: mov r13, rdi
-    # nextln: 0x0010: movabs rax, 0  # reloc <1> -> @extfunc + 0
-    # nextln: 0x001a: mov rsi, r12
-    # nextln: 0x001d: mov rdi, r13
-    # nextln: 0x0020: call rax
-    # nextln: 0x0022: movabs rax, 0  # reloc <1> -> @extfunc2 + 0
-    # nextln: 0x002c: mov rsi, r12
-    # nextln: 0x002f: mov rdi, r13
-    # nextln: 0x0032: call rax
-    # nextln: 0x0034: mov rbx, rax
-    # nextln: 0x0037: movabs rax, 0  # reloc <1> -> @infunc + 0
-    # nextln: 0x0041: mov rsi, r12
-    # nextln: 0x0044: mov rdi, r13
-    # nextln: 0x0047: call rax
-    # nextln: 0x0049: movabs rax, 0  # reloc <1> -> @infunc2 + 0
-    # nextln: 0x0053: mov rsi, r12
-    # nextln: 0x0056: mov rdi, r13
-    # nextln: 0x0059: call rax
-    # nextln: 0x005b: add ebx, eax
-    # nextln: 0x005d: movabs rax, 0  # reloc <1> -> @no_params + 0
-    # nextln: 0x0067: call rax
-    # nextln: 0x0069: mov rax, rbx
-    # nextln: 0x006c: add rsp, 8
-    # nextln: 0x0070: pop rbx
-    # nextln: 0x0071: pop r12
-    # nextln: 0x0073: pop r13
-    # nextln: 0x0075: pop rbp
-    # nextln: 0x0076: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 41 55                           push r13
+    # nextln: 000006: 41 54                           push r12
+    # nextln: 000008: 53                              push rbx
+    # nextln: 000009: 50                              push rax
+    # nextln: 00000a: 49 89 f4                        mov r12, rsi
+    # nextln: 00000d: 49 89 fd                        mov r13, rdi
+    # nextln: 000010: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @extfunc + 0
+    # nextln: 00001a: 4c 89 e6                        mov rsi, r12
+    # nextln: 00001d: 4c 89 ef                        mov rdi, r13
+    # nextln: 000020: ff d0                           call rax
+    # nextln: 000022: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @extfunc2 + 0
+    # nextln: 00002c: 4c 89 e6                        mov rsi, r12
+    # nextln: 00002f: 4c 89 ef                        mov rdi, r13
+    # nextln: 000032: ff d0                           call rax
+    # nextln: 000034: 48 89 c3                        mov rbx, rax
+    # nextln: 000037: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @infunc + 0
+    # nextln: 000041: 4c 89 e6                        mov rsi, r12
+    # nextln: 000044: 4c 89 ef                        mov rdi, r13
+    # nextln: 000047: ff d0                           call rax
+    # nextln: 000049: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @infunc2 + 0
+    # nextln: 000053: 4c 89 e6                        mov rsi, r12
+    # nextln: 000056: 4c 89 ef                        mov rdi, r13
+    # nextln: 000059: ff d0                           call rax
+    # nextln: 00005b: 03 d8                           add ebx, eax
+    # nextln: 00005d: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @no_params + 0
+    # nextln: 000067: ff d0                           call rax
+    # nextln: 000069: 48 89 d8                        mov rax, rbx
+    # nextln: 00006c: 48 83 c4 08                     add rsp, 8
+    # nextln: 000070: 5b                              pop rbx
+    # nextln: 000071: 41 5c                           pop r12
+    # nextln: 000073: 41 5d                           pop r13
+    # nextln: 000075: 5d                              pop rbp
+    # nextln: 000076: c3                              ret
 
     %3:ctrl, %1:ptr, %2:i32 = entry
     %5:ctrl = call @extfunc %3, %1, %2
@@ -112,21 +112,21 @@ func @caller:i32(ptr, i32) {
 
 func @call_single_stack_arg() {
     # check: function `call_single_stack_arg`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov ecx, 7
-    # nextln: 0x0009: movabs rax, 0  # reloc <1> -> @single_stack_arg + 0
-    # nextln: 0x0013: push rax
-    # nextln: 0x0014: push rcx
-    # nextln: 0x0015: mov r9, rcx
-    # nextln: 0x0018: mov r8, rcx
-    # nextln: 0x001b: mov rdx, rcx
-    # nextln: 0x001e: mov rsi, rcx
-    # nextln: 0x0021: mov rdi, rcx
-    # nextln: 0x0024: call rax
-    # nextln: 0x0026: add rsp, 0x10
-    # nextln: 0x002a: pop rbp
-    # nextln: 0x002b: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: b9 07 00 00 00                  mov ecx, 7
+    # nextln: 000009: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @single_stack_arg + 0
+    # nextln: 000013: 50                              push rax
+    # nextln: 000014: 51                              push rcx
+    # nextln: 000015: 49 89 c9                        mov r9, rcx
+    # nextln: 000018: 49 89 c8                        mov r8, rcx
+    # nextln: 00001b: 48 89 ca                        mov rdx, rcx
+    # nextln: 00001e: 48 89 ce                        mov rsi, rcx
+    # nextln: 000021: 48 89 cf                        mov rdi, rcx
+    # nextln: 000024: ff d0                           call rax
+    # nextln: 000026: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 00002a: 5d                              pop rbp
+    # nextln: 00002b: c3                              ret
 
     %0:ctrl = entry
     %x:i64 = iconst 7
@@ -136,23 +136,23 @@ func @call_single_stack_arg() {
 
 func @call_many_params(ptr) {
     # check: function `call_many_params`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rdx, rdi
-    # nextln: 0x0007: mov edi, 0
-    # nextln: 0x000c: mov ecx, 0
-    # nextln: 0x0011: movabs rax, 0  # reloc <1> -> @many_params + 0
-    # nextln: 0x001b: push rcx
-    # nextln: 0x001c: push rdx
-    # nextln: 0x001d: push rdi
-    # nextln: 0x001e: push rcx
-    # nextln: 0x001f: mov rsi, rcx
-    # nextln: 0x0022: mov r9, rdi
-    # nextln: 0x0025: mov r8, rdi
-    # nextln: 0x0028: call rax
-    # nextln: 0x002a: add rsp, 0x20
-    # nextln: 0x002e: pop rbp
-    # nextln: 0x002f: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 fa                        mov rdx, rdi
+    # nextln: 000007: bf 00 00 00 00                  mov edi, 0
+    # nextln: 00000c: b9 00 00 00 00                  mov ecx, 0
+    # nextln: 000011: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @many_params + 0
+    # nextln: 00001b: 51                              push rcx
+    # nextln: 00001c: 52                              push rdx
+    # nextln: 00001d: 57                              push rdi
+    # nextln: 00001e: 51                              push rcx
+    # nextln: 00001f: 48 89 ce                        mov rsi, rcx
+    # nextln: 000022: 49 89 f9                        mov r9, rdi
+    # nextln: 000025: 49 89 f8                        mov r8, rdi
+    # nextln: 000028: ff d0                           call rax
+    # nextln: 00002a: 48 83 c4 20                     add rsp, 0x20
+    # nextln: 00002e: 5d                              pop rbp
+    # nextln: 00002f: c3                              ret
 
     %0:ctrl, %p:ptr = entry
     %zero32:i32 = iconst 0

@@ -2,11 +2,11 @@
 
 func @call_virt:i32(ptr) {
     # check: function `call_virt`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: call rdi
-    # nextln: 0x0006: pop rbp
-    # nextln: 0x0007: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: ff d7                           call rdi
+    # nextln: 000006: 5d                              pop rbp
+    # nextln: 000007: c3                              ret
 
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:i32 = callind i32() %0, %1
@@ -15,13 +15,13 @@ func @call_virt:i32(ptr) {
 
 func @call_virt_no_ret(ptr, i32) {
     # check: function `call_virt_no_ret`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rax, rdi
-    # nextln: 0x0007: mov rdi, rsi
-    # nextln: 0x000a: call rax
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 89 f7                        mov rdi, rsi
+    # nextln: 00000a: ff d0                           call rax
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %0:ctrl, %1:ptr, %v:i32 = entry
     %2:ctrl = callind (i32) %0, %1, %v
@@ -30,23 +30,23 @@ func @call_virt_no_ret(ptr, i32) {
 
 func @call_virt_many_params(ptr, ptr) {
     # check: function `call_virt_many_params`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rdx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: mov edi, 0
-    # nextln: 0x000f: mov ecx, 0
-    # nextln: 0x0014: push rcx
-    # nextln: 0x0015: push rdx
-    # nextln: 0x0016: push rdi
-    # nextln: 0x0017: push rcx
-    # nextln: 0x0018: mov rsi, rcx
-    # nextln: 0x001b: mov r9, rdi
-    # nextln: 0x001e: mov r8, rdi
-    # nextln: 0x0021: call rax
-    # nextln: 0x0023: add rsp, 0x20
-    # nextln: 0x0027: pop rbp
-    # nextln: 0x0028: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f2                        mov rdx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: bf 00 00 00 00                  mov edi, 0
+    # nextln: 00000f: b9 00 00 00 00                  mov ecx, 0
+    # nextln: 000014: 51                              push rcx
+    # nextln: 000015: 52                              push rdx
+    # nextln: 000016: 57                              push rdi
+    # nextln: 000017: 51                              push rcx
+    # nextln: 000018: 48 89 ce                        mov rsi, rcx
+    # nextln: 00001b: 49 89 f9                        mov r9, rdi
+    # nextln: 00001e: 49 89 f8                        mov r8, rdi
+    # nextln: 000021: ff d0                           call rax
+    # nextln: 000023: 48 83 c4 20                     add rsp, 0x20
+    # nextln: 000027: 5d                              pop rbp
+    # nextln: 000028: c3                              ret
 
     %0:ctrl, %f:ptr, %p:ptr = entry
     %zero32:i32 = iconst 0

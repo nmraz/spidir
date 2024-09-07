@@ -2,11 +2,11 @@
 
 func @sfill_8_32:i32(i32) {
     # check: function `sfill_8_32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: movsx eax, dil
-    # nextln: 0x0008: pop rbp
-    # nextln: 0x0009: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 40 0f be c7                     movsx eax, dil
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:i32 = sfill 8 %1
@@ -15,11 +15,11 @@ func @sfill_8_32:i32(i32) {
 
 func @sfill_16_32:i32(i32) {
     # check: function `sfill_16_32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: movsx eax, di
-    # nextln: 0x0007: pop rbp
-    # nextln: 0x0008: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 0f bf c7                        movsx eax, di
+    # nextln: 000007: 5d                              pop rbp
+    # nextln: 000008: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:i32 = sfill 16 %1
@@ -28,11 +28,11 @@ func @sfill_16_32:i32(i32) {
 
 func @sfill_8_64:i64(i64) {
     # check: function `sfill_8_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: movsx rax, dil
-    # nextln: 0x0008: pop rbp
-    # nextln: 0x0009: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 0f be c7                     movsx rax, dil
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
 
     %0:ctrl, %1:i64 = entry
     %2:i64 = sfill 8 %1
@@ -41,11 +41,11 @@ func @sfill_8_64:i64(i64) {
 
 func @sfill_16_64:i64(i64) {
     # check: function `sfill_16_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: movsx rax, di
-    # nextln: 0x0008: pop rbp
-    # nextln: 0x0009: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 0f bf c7                     movsx rax, di
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
 
     %0:ctrl, %1:i64 = entry
     %2:i64 = sfill 16 %1
@@ -54,11 +54,11 @@ func @sfill_16_64:i64(i64) {
 
 func @sfill_32_64:i64(i64) {
     # check: function `sfill_32_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: movsxd rax, edi
-    # nextln: 0x0007: pop rbp
-    # nextln: 0x0008: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 63 c7                        movsxd rax, edi
+    # nextln: 000007: 5d                              pop rbp
+    # nextln: 000008: c3                              ret
 
     %0:ctrl, %1:i64 = entry
     %2:i64 = sfill 32 %1
@@ -67,13 +67,13 @@ func @sfill_32_64:i64(i64) {
 
 func @sfill_weird_width_32:i32(i32) {
     # check: function `sfill_weird_width_32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rax, rdi
-    # nextln: 0x0007: shl eax, 0xf
-    # nextln: 0x000a: sar eax, 0xf
-    # nextln: 0x000d: pop rbp
-    # nextln: 0x000e: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: c1 e0 0f                        shl eax, 0xf
+    # nextln: 00000a: c1 f8 0f                        sar eax, 0xf
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:i32 = sfill 17 %1
@@ -82,13 +82,13 @@ func @sfill_weird_width_32:i32(i32) {
 
 func @sfill_weird_width_64:i64(i64) {
     # check: function `sfill_weird_width_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rax, rdi
-    # nextln: 0x0007: shl rax, 0x1d
-    # nextln: 0x000b: sar rax, 0x1d
-    # nextln: 0x000f: pop rbp
-    # nextln: 0x0010: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 c1 e0 1d                     shl rax, 0x1d
+    # nextln: 00000b: 48 c1 f8 1d                     sar rax, 0x1d
+    # nextln: 00000f: 5d                              pop rbp
+    # nextln: 000010: c3                              ret
 
     %0:ctrl, %1:i64 = entry
     %2:i64 = sfill 35 %1
@@ -97,13 +97,13 @@ func @sfill_weird_width_64:i64(i64) {
 
 func @sfill_min_width:i32(i32) {
     # check: function `sfill_min_width`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rax, rdi
-    # nextln: 0x0007: shl eax, 0x1f
-    # nextln: 0x000a: sar eax, 0x1f
-    # nextln: 0x000d: pop rbp
-    # nextln: 0x000e: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: c1 e0 1f                        shl eax, 0x1f
+    # nextln: 00000a: c1 f8 1f                        sar eax, 0x1f
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:i32 = sfill 1 %1
@@ -112,13 +112,13 @@ func @sfill_min_width:i32(i32) {
 
 func @sfill_max_width_32:i32(i32) {
     # check: function `sfill_max_width_32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rax, rdi
-    # nextln: 0x0007: shl eax, 1
-    # nextln: 0x0009: sar eax, 1
-    # nextln: 0x000b: pop rbp
-    # nextln: 0x000c: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: d1 e0                           shl eax, 1
+    # nextln: 000009: d1 f8                           sar eax, 1
+    # nextln: 00000b: 5d                              pop rbp
+    # nextln: 00000c: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:i32 = sfill 31 %1
@@ -127,13 +127,13 @@ func @sfill_max_width_32:i32(i32) {
 
 func @sfill_max_width_64:i64(i64) {
     # check: function `sfill_max_width_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rax, rdi
-    # nextln: 0x0007: shl rax, 1
-    # nextln: 0x000a: sar rax, 1
-    # nextln: 0x000d: pop rbp
-    # nextln: 0x000e: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 d1 e0                        shl rax, 1
+    # nextln: 00000a: 48 d1 f8                        sar rax, 1
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
 
     %0:ctrl, %1:i64 = entry
     %2:i64 = sfill 63 %1

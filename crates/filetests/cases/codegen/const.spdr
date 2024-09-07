@@ -2,11 +2,11 @@
 
 func @iconst32_small:i32() {
     # check: function `iconst32_small`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov eax, 3
-    # nextln: 0x0009: pop rbp
-    # nextln: 0x000a: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: b8 03 00 00 00                  mov eax, 3
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %0:ctrl = entry
     %1:i32 = iconst 3
@@ -15,11 +15,11 @@ func @iconst32_small:i32() {
 
 func @iconst32_neg:i32() {
     # check: function `iconst32_neg`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov eax, 0xfffffffd
-    # nextln: 0x0009: pop rbp
-    # nextln: 0x000a: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: b8 fd ff ff ff                  mov eax, 0xfffffffd
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %0:ctrl = entry
     %1:i32 = iconst 4294967293
@@ -28,11 +28,11 @@ func @iconst32_neg:i32() {
 
 func @iconst32_smin:i32() {
     # check: function `iconst32_smin`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov eax, 0x80000000
-    # nextln: 0x0009: pop rbp
-    # nextln: 0x000a: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: b8 00 00 00 80                  mov eax, 0x80000000
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %0:ctrl = entry
     %1:i32 = iconst 2147483648
@@ -41,11 +41,11 @@ func @iconst32_smin:i32() {
 
 func @iconst64_small:i64() {
     # check: function `iconst64_small`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov eax, 3
-    # nextln: 0x0009: pop rbp
-    # nextln: 0x000a: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: b8 03 00 00 00                  mov eax, 3
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %0:ctrl = entry
     %1:i64 = iconst 3
@@ -54,11 +54,11 @@ func @iconst64_small:i64() {
 
 func @iconst64_large32:i64() {
     # check: function `iconst64_large32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov eax, 0xdeadbeef
-    # nextln: 0x0009: pop rbp
-    # nextln: 0x000a: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: b8 ef be ad de                  mov eax, 0xdeadbeef
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %0:ctrl = entry
     %1:i64 = iconst 3735928559
@@ -67,11 +67,11 @@ func @iconst64_large32:i64() {
 
 func @iconst64_neg32:i64() {
     # check: function `iconst64_neg32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rax, 0xfffffffffffffffd
-    # nextln: 0x000b: pop rbp
-    # nextln: 0x000c: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 c7 c0 fd ff ff ff            mov rax, 0xfffffffffffffffd
+    # nextln: 00000b: 5d                              pop rbp
+    # nextln: 00000c: c3                              ret
 
     %0:ctrl = entry
     %1:i64 = iconst 18446744073709551613
@@ -80,11 +80,11 @@ func @iconst64_neg32:i64() {
 
 func @iconst64_large64:i64() {
     # check: function `iconst64_large64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: movabs rax, 0xaaaaaaaaaaaaaaaa
-    # nextln: 0x000e: pop rbp
-    # nextln: 0x000f: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 b8 aa aa aa aa aa aa aa aa   movabs rax, 0xaaaaaaaaaaaaaaaa
+    # nextln: 00000e: 5d                              pop rbp
+    # nextln: 00000f: c3                              ret
 
     %0:ctrl = entry
     %1:i64 = iconst 12297829382473034410
@@ -93,11 +93,11 @@ func @iconst64_large64:i64() {
 
 func @iconst64_smin:i64() {
     # check: function `iconst64_smin`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: movabs rax, 0x8000000000000000
-    # nextln: 0x000e: pop rbp
-    # nextln: 0x000f: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 b8 00 00 00 00 00 00 00 80   movabs rax, 0x8000000000000000
+    # nextln: 00000e: 5d                              pop rbp
+    # nextln: 00000f: c3                              ret
 
     %0:ctrl = entry
     %1:i64 = iconst 9223372036854775808

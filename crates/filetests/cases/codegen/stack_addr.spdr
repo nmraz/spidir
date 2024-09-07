@@ -2,14 +2,14 @@
 
 func @dangle:ptr(i32) {
     # check: function `dangle`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: sub rsp, 0x10
-    # nextln: 0x0008: mov dword ptr [rsp], edi
-    # nextln: 0x000b: lea rax, [rsp + 8]
-    # nextln: 0x0010: add rsp, 0x10
-    # nextln: 0x0014: pop rbp
-    # nextln: 0x0015: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 83 ec 10                     sub rsp, 0x10
+    # nextln: 000008: 89 3c 24                        mov dword ptr [rsp], edi
+    # nextln: 00000b: 48 8d 44 24 08                  lea rax, [rsp + 8]
+    # nextln: 000010: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 000014: 5d                              pop rbp
+    # nextln: 000015: c3                              ret
 
     %c:ctrl, %i:i32 = entry
     %s:ptr = stackslot 8:8

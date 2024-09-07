@@ -2,13 +2,13 @@
 
 func @icmp_eq64_64:i64(i64, i64) {
     # check: function `icmp_eq64_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: xor eax, eax
-    # nextln: 0x0006: cmp rdi, rsi
-    # nextln: 0x0009: sete al
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 48 3b fe                        cmp rdi, rsi
+    # nextln: 000009: 0f 94 c0                        sete al
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %c:ctrl, %a:i64, %b:i64 = entry
     %icmp:i64 = icmp eq %a, %b
@@ -17,13 +17,13 @@ func @icmp_eq64_64:i64(i64, i64) {
 
 func @icmp_eq64_32:i32(i64, i64) {
     # check: function `icmp_eq64_32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: xor eax, eax
-    # nextln: 0x0006: cmp rdi, rsi
-    # nextln: 0x0009: sete al
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 48 3b fe                        cmp rdi, rsi
+    # nextln: 000009: 0f 94 c0                        sete al
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %c:ctrl, %a:i64, %b:i64 = entry
     %icmp:i32 = icmp eq %a, %b
@@ -32,13 +32,13 @@ func @icmp_eq64_32:i32(i64, i64) {
 
 func @icmp_eq32_64:i64(i32, i32) {
     # check: function `icmp_eq32_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: xor eax, eax
-    # nextln: 0x0006: cmp edi, esi
-    # nextln: 0x0008: sete al
-    # nextln: 0x000b: pop rbp
-    # nextln: 0x000c: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 3b fe                           cmp edi, esi
+    # nextln: 000008: 0f 94 c0                        sete al
+    # nextln: 00000b: 5d                              pop rbp
+    # nextln: 00000c: c3                              ret
 
     %c:ctrl, %a:i32, %b:i32 = entry
     %icmp:i64 = icmp eq %a, %b
@@ -47,13 +47,13 @@ func @icmp_eq32_64:i64(i32, i32) {
 
 func @icmp_ne64_64:i64(i64, i64) {
     # check: function `icmp_ne64_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: xor eax, eax
-    # nextln: 0x0006: cmp rdi, rsi
-    # nextln: 0x0009: setne al
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 48 3b fe                        cmp rdi, rsi
+    # nextln: 000009: 0f 95 c0                        setne al
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %c:ctrl, %a:i64, %b:i64 = entry
     %icmp:i64 = icmp ne %a, %b
@@ -62,13 +62,13 @@ func @icmp_ne64_64:i64(i64, i64) {
 
 func @icmp_slt64_64:i64(i64, i64) {
     # check: function `icmp_slt64_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: xor eax, eax
-    # nextln: 0x0006: cmp rdi, rsi
-    # nextln: 0x0009: setl al
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 48 3b fe                        cmp rdi, rsi
+    # nextln: 000009: 0f 9c c0                        setl al
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %c:ctrl, %a:i64, %b:i64 = entry
     %icmp:i64 = icmp slt %a, %b
@@ -77,13 +77,13 @@ func @icmp_slt64_64:i64(i64, i64) {
 
 func @icmp_sle64_64:i64(i64, i64) {
     # check: function `icmp_sle64_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: xor eax, eax
-    # nextln: 0x0006: cmp rdi, rsi
-    # nextln: 0x0009: setle al
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 48 3b fe                        cmp rdi, rsi
+    # nextln: 000009: 0f 9e c0                        setle al
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %c:ctrl, %a:i64, %b:i64 = entry
     %icmp:i64 = icmp sle %a, %b
@@ -92,13 +92,13 @@ func @icmp_sle64_64:i64(i64, i64) {
 
 func @icmp_ult64_64:i64(i64, i64) {
     # check: function `icmp_ult64_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: xor eax, eax
-    # nextln: 0x0006: cmp rdi, rsi
-    # nextln: 0x0009: setb al
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 48 3b fe                        cmp rdi, rsi
+    # nextln: 000009: 0f 92 c0                        setb al
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %c:ctrl, %a:i64, %b:i64 = entry
     %icmp:i64 = icmp ult %a, %b
@@ -107,13 +107,13 @@ func @icmp_ult64_64:i64(i64, i64) {
 
 func @icmp_ule64_64:i64(i64, i64) {
     # check: function `icmp_ule64_64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: xor eax, eax
-    # nextln: 0x0006: cmp rdi, rsi
-    # nextln: 0x0009: setbe al
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 48 3b fe                        cmp rdi, rsi
+    # nextln: 000009: 0f 96 c0                        setbe al
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %c:ctrl, %a:i64, %b:i64 = entry
     %icmp:i64 = icmp ule %a, %b

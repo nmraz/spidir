@@ -8,10 +8,19 @@ use capstone::{
     },
     Capstone,
 };
-use codegen::emit::CodeBlob;
+use codegen::{
+    emit::{CodeBlob, RelocKind},
+    target::x64::{RELOC_ABS64, RELOC_PC32},
+};
 use ir::{module::Module, write::quote_ident};
+use itertools::Itertools;
 
-pub fn disasm_code(module: &Module, code: &CodeBlob, output: &mut String) -> Result<()> {
+pub fn disasm_code(
+    module: &Module,
+    code: &CodeBlob,
+    indent: usize,
+    output: &mut String,
+) -> Result<()> {
     let cs = Capstone::new()
         .x86()
         .mode(ArchMode::Mode64)
@@ -27,21 +36,24 @@ pub fn disasm_code(module: &Module, code: &CodeBlob, output: &mut String) -> Res
         let insn_start = insn.address();
         let insn_end = insn.address() + insn.len() as u64;
 
+        let insn_code = &code.code[insn_start as usize..insn_end as usize];
+        let code_bytes = format!("{:02x}", insn_code.iter().format(" "));
+
         let line = format!(
-            "{:#06x}: {} {}",
-            insn_start,
+            "{:<31} {} {}",
+            code_bytes,
             insn.mnemonic().unwrap(),
             insn.op_str().unwrap()
         );
-        write!(output, "{}", line.trim()).unwrap();
+        write!(output, "{:indent$}{:06x}: {}", "", insn_start, line.trim()).unwrap();
 
         // Note: this assumes there is at most one reloc per instruction.
         if let Some(reloc) = relocs.first() {
             if (reloc.offset as u64) < insn_end {
                 write!(
                     output,
-                    "  # reloc <{}> -> @{} + {}",
-                    reloc.kind.0,
+                    "  # {} -> @{} + {}",
+                    reloc_name(reloc.kind),
                     quote_ident(&module.resolve_funcref(reloc.target).name),
                     reloc.addend
                 )
@@ -61,4 +73,12 @@ pub fn disasm_code(module: &Module, code: &CodeBlob, output: &mut String) -> Res
     }
 
     Ok(())
+}
+
+fn reloc_name(reloc: RelocKind) -> String {
+    match reloc {
+        RELOC_PC32 => "RELOC_PC32".to_owned(),
+        RELOC_ABS64 => "RELOC_ABS64".to_owned(),
+        _ => format!("RELOC_{}", reloc.0),
+    }
 }

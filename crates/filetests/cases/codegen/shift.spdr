@@ -2,13 +2,13 @@
 
 func @shl_i32_i32:i32(i32, i32) {
     # check: function `shl_i32_i32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: shl eax, cl
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: d3 e0                           shl eax, cl
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %0:ctrl, %1:i32, %2:i32 = entry
     %3:i32 = shl %1, %2
@@ -17,13 +17,13 @@ func @shl_i32_i32:i32(i32, i32) {
 
 func @shl_i64_i64:i64(i64, i64) {
     # check: function `shl_i64_i64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: shl rax, cl
-    # nextln: 0x000d: pop rbp
-    # nextln: 0x000e: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: 48 d3 e0                        shl rax, cl
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
 
     %0:ctrl, %1:i64, %2:i64 = entry
     %3:i64 = shl %1, %2
@@ -32,13 +32,13 @@ func @shl_i64_i64:i64(i64, i64) {
 
 func @shl_i32_i64:i32(i32, i64) {
     # check: function `shl_i32_i64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: shl eax, cl
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: d3 e0                           shl eax, cl
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %0:ctrl, %1:i32, %2:i64 = entry
     %3:i32 = shl %1, %2
@@ -47,13 +47,13 @@ func @shl_i32_i64:i32(i32, i64) {
 
 func @shl_i64_i32:i64(i64, i32) {
     # check: function `shl_i64_i32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: shl rax, cl
-    # nextln: 0x000d: pop rbp
-    # nextln: 0x000e: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: 48 d3 e0                        shl rax, cl
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
 
     %0:ctrl, %1:i64, %2:i32 = entry
     %3:i64 = shl %1, %2
@@ -62,13 +62,13 @@ func @shl_i64_i32:i64(i64, i32) {
 
 func @lshr_i32_i32:i32(i32, i32) {
     # check: function `lshr_i32_i32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: shr eax, cl
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: d3 e8                           shr eax, cl
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %0:ctrl, %1:i32, %2:i32 = entry
     %3:i32 = lshr %1, %2
@@ -77,13 +77,13 @@ func @lshr_i32_i32:i32(i32, i32) {
 
 func @lshr_i64_i64:i64(i64, i64) {
     # check: function `lshr_i64_i64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: shr rax, cl
-    # nextln: 0x000d: pop rbp
-    # nextln: 0x000e: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: 48 d3 e8                        shr rax, cl
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
 
     %0:ctrl, %1:i64, %2:i64 = entry
     %3:i64 = lshr %1, %2
@@ -92,13 +92,13 @@ func @lshr_i64_i64:i64(i64, i64) {
 
 func @lshr_i32_i64:i32(i32, i64) {
     # check: function `lshr_i32_i64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: shr eax, cl
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: d3 e8                           shr eax, cl
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %0:ctrl, %1:i32, %2:i64 = entry
     %3:i32 = lshr %1, %2
@@ -107,13 +107,13 @@ func @lshr_i32_i64:i32(i32, i64) {
 
 func @lshr_i64_i32:i64(i64, i32) {
     # check: function `lshr_i64_i32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: shr rax, cl
-    # nextln: 0x000d: pop rbp
-    # nextln: 0x000e: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: 48 d3 e8                        shr rax, cl
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
 
     %0:ctrl, %1:i64, %2:i32 = entry
     %3:i64 = lshr %1, %2
@@ -122,13 +122,13 @@ func @lshr_i64_i32:i64(i64, i32) {
 
 func @ashr_i32_i32:i32(i32, i32) {
     # check: function `ashr_i32_i32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: sar eax, cl
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: d3 f8                           sar eax, cl
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %0:ctrl, %1:i32, %2:i32 = entry
     %3:i32 = ashr %1, %2
@@ -137,13 +137,13 @@ func @ashr_i32_i32:i32(i32, i32) {
 
 func @ashr_i64_i64:i64(i64, i64) {
     # check: function `ashr_i64_i64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: sar rax, cl
-    # nextln: 0x000d: pop rbp
-    # nextln: 0x000e: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: 48 d3 f8                        sar rax, cl
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
 
     %0:ctrl, %1:i64, %2:i64 = entry
     %3:i64 = ashr %1, %2
@@ -152,13 +152,13 @@ func @ashr_i64_i64:i64(i64, i64) {
 
 func @ashr_i32_i64:i32(i32, i64) {
     # check: function `ashr_i32_i64`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: sar eax, cl
-    # nextln: 0x000c: pop rbp
-    # nextln: 0x000d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: d3 f8                           sar eax, cl
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %0:ctrl, %1:i32, %2:i64 = entry
     %3:i32 = ashr %1, %2
@@ -167,13 +167,13 @@ func @ashr_i32_i64:i32(i32, i64) {
 
 func @ashr_i64_i32:i64(i64, i32) {
     # check: function `ashr_i64_i32`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov rcx, rsi
-    # nextln: 0x0007: mov rax, rdi
-    # nextln: 0x000a: sar rax, cl
-    # nextln: 0x000d: pop rbp
-    # nextln: 0x000e: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f1                        mov rcx, rsi
+    # nextln: 000007: 48 89 f8                        mov rax, rdi
+    # nextln: 00000a: 48 d3 f8                        sar rax, cl
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
 
     %0:ctrl, %1:i64, %2:i32 = entry
     %3:i64 = ashr %1, %2

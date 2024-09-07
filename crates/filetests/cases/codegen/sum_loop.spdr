@@ -2,28 +2,28 @@
 
 func @sum_to_n:i32(i32) {
     # check: function `sum_to_n`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: mov eax, 0
-    # nextln: 0x0009: cmp edi, eax
-    # nextln: 0x000b: je 0x16
-    # nextln: 0x0011: jmp 0x1b
-    # nextln: 0x0016: jmp 0x4c
-    # nextln: 0x001b: mov ecx, 1
-    # nextln: 0x0020: mov rdx, rax
-    # nextln: 0x0023: jmp 0x28
-    # nextln: 0x0028: mov rsi, rdi
-    # nextln: 0x002b: sub esi, ecx
-    # nextln: 0x002d: add edx, edi
-    # nextln: 0x002f: cmp esi, eax
-    # nextln: 0x0031: je 0x44
-    # nextln: 0x0037: jmp 0x3c
-    # nextln: 0x003c: mov rdi, rsi
-    # nextln: 0x003f: jmp 0x28
-    # nextln: 0x0044: mov rax, rdx
-    # nextln: 0x0047: jmp 0x4c
-    # nextln: 0x004c: pop rbp
-    # nextln: 0x004d: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: b8 00 00 00 00                  mov eax, 0
+    # nextln: 000009: 3b f8                           cmp edi, eax
+    # nextln: 00000b: 0f 84 05 00 00 00               je 0x16
+    # nextln: 000011: e9 05 00 00 00                  jmp 0x1b
+    # nextln: 000016: e9 31 00 00 00                  jmp 0x4c
+    # nextln: 00001b: b9 01 00 00 00                  mov ecx, 1
+    # nextln: 000020: 48 89 c2                        mov rdx, rax
+    # nextln: 000023: e9 00 00 00 00                  jmp 0x28
+    # nextln: 000028: 48 89 fe                        mov rsi, rdi
+    # nextln: 00002b: 2b f1                           sub esi, ecx
+    # nextln: 00002d: 03 d7                           add edx, edi
+    # nextln: 00002f: 3b f0                           cmp esi, eax
+    # nextln: 000031: 0f 84 0d 00 00 00               je 0x44
+    # nextln: 000037: e9 00 00 00 00                  jmp 0x3c
+    # nextln: 00003c: 48 89 f7                        mov rdi, rsi
+    # nextln: 00003f: e9 e4 ff ff ff                  jmp 0x28
+    # nextln: 000044: 48 89 d0                        mov rax, rdx
+    # nextln: 000047: e9 00 00 00 00                  jmp 0x4c
+    # nextln: 00004c: 5d                              pop rbp
+    # nextln: 00004d: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %10:i32 = iconst 1
@@ -45,31 +45,31 @@ func @sum_to_n:i32(i32) {
 
 func @sum_to_n_with_stack:i32(i32) {
     # check: function `sum_to_n_with_stack`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: sub rsp, 0x10
-    # nextln: 0x0008: jmp 0xd
-    # nextln: 0x000d: mov eax, 0
-    # nextln: 0x0012: mov dword ptr [rsp], edi
-    # nextln: 0x0015: mov dword ptr [rsp + 4], eax
-    # nextln: 0x0019: mov ecx, 1
-    # nextln: 0x001e: jmp 0x23
-    # nextln: 0x0023: mov edx, dword ptr [rsp]
-    # nextln: 0x0026: cmp edx, eax
-    # nextln: 0x0028: je 0x4d
-    # nextln: 0x002e: jmp 0x33
-    # nextln: 0x0033: mov esi, dword ptr [rsp]
-    # nextln: 0x0036: mov rdx, rsi
-    # nextln: 0x0039: sub edx, ecx
-    # nextln: 0x003b: mov edi, dword ptr [rsp + 4]
-    # nextln: 0x003f: add edi, esi
-    # nextln: 0x0041: mov dword ptr [rsp], edx
-    # nextln: 0x0044: mov dword ptr [rsp + 4], edi
-    # nextln: 0x0048: jmp 0x23
-    # nextln: 0x004d: mov eax, dword ptr [rsp + 4]
-    # nextln: 0x0051: add rsp, 0x10
-    # nextln: 0x0055: pop rbp
-    # nextln: 0x0056: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 83 ec 10                     sub rsp, 0x10
+    # nextln: 000008: e9 00 00 00 00                  jmp 0xd
+    # nextln: 00000d: b8 00 00 00 00                  mov eax, 0
+    # nextln: 000012: 89 3c 24                        mov dword ptr [rsp], edi
+    # nextln: 000015: 89 44 24 04                     mov dword ptr [rsp + 4], eax
+    # nextln: 000019: b9 01 00 00 00                  mov ecx, 1
+    # nextln: 00001e: e9 00 00 00 00                  jmp 0x23
+    # nextln: 000023: 8b 14 24                        mov edx, dword ptr [rsp]
+    # nextln: 000026: 3b d0                           cmp edx, eax
+    # nextln: 000028: 0f 84 1f 00 00 00               je 0x4d
+    # nextln: 00002e: e9 00 00 00 00                  jmp 0x33
+    # nextln: 000033: 8b 34 24                        mov esi, dword ptr [rsp]
+    # nextln: 000036: 48 89 f2                        mov rdx, rsi
+    # nextln: 000039: 2b d1                           sub edx, ecx
+    # nextln: 00003b: 8b 7c 24 04                     mov edi, dword ptr [rsp + 4]
+    # nextln: 00003f: 03 fe                           add edi, esi
+    # nextln: 000041: 89 14 24                        mov dword ptr [rsp], edx
+    # nextln: 000044: 89 7c 24 04                     mov dword ptr [rsp + 4], edi
+    # nextln: 000048: e9 d6 ff ff ff                  jmp 0x23
+    # nextln: 00004d: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
+    # nextln: 000051: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 000055: 5d                              pop rbp
+    # nextln: 000056: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:ctrl, %3:phisel = region %0

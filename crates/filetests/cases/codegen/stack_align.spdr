@@ -2,14 +2,14 @@
 
 func @aligned_stack(i32) {
     # check: function `aligned_stack`:
-    # nextln: 0x0000: push rbp
-    # nextln: 0x0001: mov rbp, rsp
-    # nextln: 0x0004: sub rsp, 0x20
-    # nextln: 0x0008: and rsp, 0xffffffffffffffe0
-    # nextln: 0x000c: mov dword ptr [rsp], edi
-    # nextln: 0x000f: mov rsp, rbp
-    # nextln: 0x0012: pop rbp
-    # nextln: 0x0013: ret
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 83 ec 20                     sub rsp, 0x20
+    # nextln: 000008: 48 83 e4 e0                     and rsp, 0xffffffffffffffe0
+    # nextln: 00000c: 89 3c 24                        mov dword ptr [rsp], edi
+    # nextln: 00000f: 48 89 ec                        mov rsp, rbp
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %s:ptr = stackslot 32:32

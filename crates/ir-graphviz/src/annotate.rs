@@ -13,7 +13,7 @@ use ir::{
     loops::LoopForest,
     node::DepValueKind,
     valgraph::{Node, ValGraph},
-    verify::GraphVerifierError,
+    verify::FunctionVerifierError,
 };
 use itertools::Itertools;
 
@@ -113,12 +113,12 @@ impl Annotate for ColoredAnnotator {
 }
 
 pub struct ErrorAnnotator<'a> {
-    node_errors: FxHashMap<Node, Vec<&'a GraphVerifierError>>,
-    edge_errors: FxHashMap<(Node, u32), Vec<&'a GraphVerifierError>>,
+    node_errors: FxHashMap<Node, Vec<&'a FunctionVerifierError>>,
+    edge_errors: FxHashMap<(Node, u32), Vec<&'a FunctionVerifierError>>,
 }
 
 impl<'a> ErrorAnnotator<'a> {
-    pub fn new(graph: &ValGraph, errors: &'a [GraphVerifierError]) -> Self {
+    pub fn new(graph: &ValGraph, errors: &'a [FunctionVerifierError]) -> Self {
         let mut node_errors: FxHashMap<_, Vec<_>> = FxHashMap::default();
         let mut edge_errors: FxHashMap<_, Vec<_>> = FxHashMap::default();
 
@@ -160,7 +160,7 @@ impl<'a> Annotate for ErrorAnnotator<'a> {
     }
 }
 
-fn error_attrs(errors: &[&GraphVerifierError], graph: &ValGraph, attrs: &mut DotAttributes) {
+fn error_attrs(errors: &[&FunctionVerifierError], graph: &ValGraph, attrs: &mut DotAttributes) {
     attrs.extend([
         ("color".to_owned(), "#ff0000".to_owned()),
         ("penwidth".to_owned(), "2".to_owned()),
@@ -168,7 +168,7 @@ fn error_attrs(errors: &[&GraphVerifierError], graph: &ValGraph, attrs: &mut Dot
     ]);
 }
 
-fn format_verifier_errors(errors: &[&GraphVerifierError], graph: &ValGraph) -> String {
+fn format_verifier_errors(errors: &[&FunctionVerifierError], graph: &ValGraph) -> String {
     errors
         .iter()
         .format_with("&#10;", |error, f| f(&error.display(graph)))

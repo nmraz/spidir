@@ -6,7 +6,7 @@ use ir::{
     function::FunctionData,
     loops::LoopForest,
     module::Module,
-    verify::{verify_func, GraphVerifierError},
+    verify::{verify_func, FunctionVerifierError},
 };
 use ir_graphviz::{
     annotate::{Annotate, ColoredAnnotator, DomTreeAnnotator, ErrorAnnotator, LoopAnnotator},
@@ -111,7 +111,7 @@ impl TestProvider for GraphvizTestProvider {
     }
 }
 
-fn get_verifier_errors(module: &Module, func: &FunctionData) -> Result<Vec<GraphVerifierError>> {
+fn get_verifier_errors(module: &Module, func: &FunctionData) -> Result<Vec<FunctionVerifierError>> {
     verify_func(module, func)
         .err()
         .ok_or_else(|| anyhow!("expected function to contain errors"))

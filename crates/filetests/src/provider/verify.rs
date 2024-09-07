@@ -61,7 +61,7 @@ impl TestProvider for VerifyErrProvider {
 
         for error in errors {
             match error {
-                ModuleVerifierError::Graph { function, error } => {
+                ModuleVerifierError::Func { function, error } => {
                     errors_by_function[function].push(error);
                 }
                 error => global_errors.push(error),

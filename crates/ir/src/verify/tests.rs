@@ -8,7 +8,11 @@ use crate::{
 use super::*;
 
 #[track_caller]
-fn check_verify_func_errors(graph: ValGraph, entry: Node, expected_errors: &[GraphVerifierError]) {
+fn check_verify_func_errors(
+    graph: ValGraph,
+    entry: Node,
+    expected_errors: &[FunctionVerifierError],
+) {
     let func = FunctionData {
         metadata: FunctionMetadata {
             name: "func".to_owned(),
@@ -42,7 +46,7 @@ fn verify_func_bad_entry() {
     );
     let region_ctrl = graph.node_outputs(region)[0];
     create_return(&mut graph, [region_ctrl]);
-    check_verify_func_errors(graph, region, &[GraphVerifierError::BadEntry(region)]);
+    check_verify_func_errors(graph, region, &[FunctionVerifierError::BadEntry(region)]);
 }
 
 #[test]
@@ -61,8 +65,8 @@ fn verify_func_bad_entry_multi_err() {
         graph,
         region,
         &[
-            GraphVerifierError::BadEntry(region),
-            GraphVerifierError::BadInputCount {
+            FunctionVerifierError::BadEntry(region),
+            FunctionVerifierError::BadInputCount {
                 node: ret,
                 expected: 1,
             },
@@ -77,7 +81,11 @@ fn verify_func_misplaced_entry() {
     let (entry2, entry2_ctrl, []) = create_entry(&mut graph, []);
     let region_ctrl = create_region(&mut graph, [entry1_ctrl, entry2_ctrl]);
     create_return(&mut graph, [region_ctrl]);
-    check_verify_func_errors(graph, entry1, &[GraphVerifierError::MisplacedEntry(entry2)]);
+    check_verify_func_errors(
+        graph,
+        entry1,
+        &[FunctionVerifierError::MisplacedEntry(entry2)],
+    );
 }
 
 #[test]
@@ -96,9 +104,9 @@ fn verify_module_propagate_graph_error() {
 
     check_verify_module_errors(
         &module,
-        &[ModuleVerifierError::Graph {
+        &[ModuleVerifierError::Func {
             function: func,
-            error: GraphVerifierError::UnusedControl(entry_ctrl),
+            error: FunctionVerifierError::UnusedControl(entry_ctrl),
         }],
     );
 }

@@ -24,7 +24,7 @@ use self::node::verify_node_kind;
 mod node;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum GraphVerifierError {
+pub enum FunctionVerifierError {
     UnusedControl(DepValue),
     ReusedControl(DepValue),
     UseNotDominated {
@@ -55,7 +55,7 @@ pub enum GraphVerifierError {
     BadStackSlotAlign(Node),
 }
 
-impl GraphVerifierError {
+impl FunctionVerifierError {
     pub fn node(&self, graph: &ValGraph) -> Node {
         match self {
             Self::UnusedControl(value)
@@ -82,37 +82,37 @@ impl GraphVerifierError {
         }
     }
 
-    pub fn display<'a>(&'a self, graph: &'a ValGraph) -> DisplayGraphVerifierError<'a> {
-        DisplayGraphVerifierError { graph, error: self }
+    pub fn display<'a>(&'a self, graph: &'a ValGraph) -> DisplayFunctionVerifierError<'a> {
+        DisplayFunctionVerifierError { graph, error: self }
     }
 }
 
-pub struct DisplayGraphVerifierError<'a> {
+pub struct DisplayFunctionVerifierError<'a> {
     graph: &'a ValGraph,
-    error: &'a GraphVerifierError,
+    error: &'a FunctionVerifierError,
 }
 
-impl fmt::Display for DisplayGraphVerifierError<'_> {
+impl fmt::Display for DisplayFunctionVerifierError<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.error {
-            GraphVerifierError::UnusedControl(value) => {
+            FunctionVerifierError::UnusedControl(value) => {
                 let (_, output_idx) = self.graph.value_def(*value);
                 write!(f, "control output {output_idx} unused")?;
             }
-            GraphVerifierError::ReusedControl(value) => {
+            FunctionVerifierError::ReusedControl(value) => {
                 let (_, output_idx) = self.graph.value_def(*value);
                 write!(f, "control output {output_idx} reused")?;
             }
-            GraphVerifierError::UseNotDominated { input, .. } => {
+            FunctionVerifierError::UseNotDominated { input, .. } => {
                 write!(f, "input {input} not dominated by def")?;
             }
-            GraphVerifierError::BadInputCount { expected, .. } => {
+            FunctionVerifierError::BadInputCount { expected, .. } => {
                 write!(f, "bad input count, expected {expected}")?;
             }
-            GraphVerifierError::BadOutputCount { expected, .. } => {
+            FunctionVerifierError::BadOutputCount { expected, .. } => {
                 write!(f, "bad output count, expected {expected}")?;
             }
-            GraphVerifierError::BadInputKind {
+            FunctionVerifierError::BadInputKind {
                 node,
                 input,
                 expected,
@@ -125,7 +125,7 @@ impl fmt::Display for DisplayGraphVerifierError<'_> {
                         .value_kind(self.graph.node_inputs(*node)[*input as usize])
                 )?;
             }
-            GraphVerifierError::BadOutputKind { value, expected } => {
+            FunctionVerifierError::BadOutputKind { value, expected } => {
                 let (_, output_idx) = self.graph.value_def(*value);
                 write!(
                     f,
@@ -134,19 +134,19 @@ impl fmt::Display for DisplayGraphVerifierError<'_> {
                     self.graph.value_kind(*value)
                 )?;
             }
-            GraphVerifierError::BadEntry(_) => {
+            FunctionVerifierError::BadEntry(_) => {
                 write!(f, "bad entry node")?;
             }
-            GraphVerifierError::MisplacedEntry(_) => {
+            FunctionVerifierError::MisplacedEntry(_) => {
                 write!(f, "misplaced entry node")?;
             }
-            GraphVerifierError::ConstantOutOfRange(_) => {
+            FunctionVerifierError::ConstantOutOfRange(_) => {
                 write!(f, "constant value out of range")?;
             }
-            GraphVerifierError::BadFillWidth(_) => {
+            FunctionVerifierError::BadFillWidth(_) => {
                 write!(f, "bad fill width")?;
             }
-            GraphVerifierError::BadStackSlotAlign(_) => {
+            FunctionVerifierError::BadStackSlotAlign(_) => {
                 write!(f, "illegal stack slot alignment")?;
             }
         }
@@ -163,9 +163,9 @@ fn display_expected_kinds(kinds: &[DepValueKind]) -> impl fmt::Display + '_ {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ModuleVerifierError {
-    Graph {
+    Func {
         function: Function,
-        error: GraphVerifierError,
+        error: FunctionVerifierError,
     },
     ReusedFunctionName(String),
 }
@@ -173,7 +173,7 @@ pub enum ModuleVerifierError {
 impl ModuleVerifierError {
     pub fn node<'a>(&self, module: &'a Module) -> Option<(&'a FunctionData, Node)> {
         match self {
-            Self::Graph { function, error } => {
+            Self::Func { function, error } => {
                 let function = &module.functions[*function];
                 Some((function, error.node(&function.body.graph)))
             }
@@ -205,7 +205,7 @@ pub struct DisplayError<'a> {
 impl fmt::Display for DisplayError<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.error {
-            ModuleVerifierError::Graph { function, error } => {
+            ModuleVerifierError::Func { function, error } => {
                 let function = &self.module.functions[*function];
                 write!(f, "{}", error.display(&function.body.graph))
             }
@@ -263,7 +263,7 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
             errors.extend(
                 graph_errors
                     .into_iter()
-                    .map(|error| ModuleVerifierError::Graph { function, error }),
+                    .map(|error| ModuleVerifierError::Func { function, error }),
             )
         }
     }
@@ -275,13 +275,13 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
     }
 }
 
-pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<GraphVerifierError>> {
+pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<FunctionVerifierError>> {
     let body = &func.body;
 
     let mut errors = Vec::new();
 
     if body.graph.node_kind(body.entry) != &NodeKind::Entry {
-        errors.push(GraphVerifierError::BadEntry(body.entry));
+        errors.push(FunctionVerifierError::BadEntry(body.entry));
     }
 
     for node in walk_live_nodes(&body.graph, body.entry) {
@@ -304,7 +304,7 @@ pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<Graph
     }
 }
 
-fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVerifierError>) {
+fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
     for output in graph.node_outputs(node) {
         if graph.value_kind(output) != DepValueKind::Control {
             continue;
@@ -312,12 +312,12 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVe
 
         let mut uses = graph.value_uses(output);
         if uses.next().is_none() {
-            errors.push(GraphVerifierError::UnusedControl(output));
+            errors.push(FunctionVerifierError::UnusedControl(output));
             continue;
         }
 
         if uses.next().is_some() {
-            errors.push(GraphVerifierError::ReusedControl(output));
+            errors.push(FunctionVerifierError::ReusedControl(output));
         }
     }
 }
@@ -325,7 +325,7 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<GraphVe
 type InputLocScratch = SmallVec<[(DomTreeNode, u32); 4]>;
 type ByNodeSchedule = SecondaryMap<Node, PackedOption<DomTreeNode>>;
 
-fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifierError>) {
+fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<FunctionVerifierError>) {
     let live_node_info = LiveNodeInfo::compute(graph, entry);
     let cfg_preorder: Vec<_> = cfg_preorder(graph, entry).collect();
     let ctx = ScheduleContext::new(graph, &live_node_info, &cfg_preorder);
@@ -361,7 +361,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<GraphVerifier
 
 struct VerifierScheduler<'a> {
     domtree: &'a DomTree,
-    errors: &'a mut Vec<GraphVerifierError>,
+    errors: &'a mut Vec<FunctionVerifierError>,
     input_loc_scratch: InputLocScratch,
     schedule: ByNodeSchedule,
 }
@@ -395,7 +395,7 @@ impl VerifierScheduler<'_> {
         };
 
         if !self.domtree.dominates(last_scheduled_input, domtree_node) {
-            self.errors.push(GraphVerifierError::UseNotDominated {
+            self.errors.push(FunctionVerifierError::UseNotDominated {
                 node: cfg_node,
                 input: last_scheduled_input_idx,
             })
@@ -427,7 +427,7 @@ impl VerifierScheduler<'_> {
             let Some(input_sched_tree_node) = self.schedule[input_node].expand() else {
                 // Having dead *inputs* for a non-dead control edge, on the other hand, is
                 // problematic. Report that now.
-                self.errors.push(GraphVerifierError::UseNotDominated {
+                self.errors.push(FunctionVerifierError::UseNotDominated {
                     node: phi,
                     input: i,
                 });
@@ -440,7 +440,7 @@ impl VerifierScheduler<'_> {
                 .domtree
                 .dominates(input_sched_tree_node, ctrl_tree_node)
             {
-                self.errors.push(GraphVerifierError::UseNotDominated {
+                self.errors.push(FunctionVerifierError::UseNotDominated {
                     node: phi,
                     input: i,
                 });
@@ -472,7 +472,7 @@ impl VerifierScheduler<'_> {
                 // cycle or that node depends on a computation that is unreachable in the CFG. Both
                 // scenarios are errors.
                 self.errors
-                    .push(GraphVerifierError::UseNotDominated { node, input: i });
+                    .push(FunctionVerifierError::UseNotDominated { node, input: i });
                 continue;
             };
             // Save the input index so we can report errors accurately later.
@@ -497,7 +497,7 @@ impl VerifierScheduler<'_> {
                     // The inputs at positions `j` and `j + 1` are not ordered by dominance; report an
                     // error on one of them. We choose `j + 1` here so that nodes always appear to be
                     // placed based on earlier (lower-indexed) inputs.
-                    self.errors.push(GraphVerifierError::UseNotDominated {
+                    self.errors.push(FunctionVerifierError::UseNotDominated {
                         node,
                         input: cur_input_idx,
                     });

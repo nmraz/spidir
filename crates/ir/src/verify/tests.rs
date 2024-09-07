@@ -1,4 +1,5 @@
 use crate::{
+    builder::{BuilderExt, SimpleBuilder},
     module::{FunctionBody, FunctionData, FunctionMetadata, Signature},
     node::Type,
     test_utils::{create_const32, create_entry, create_region, create_return},
@@ -144,10 +145,10 @@ fn verify_module_duplicate_intern_extern_names() {
             param_types: vec![],
         },
     ));
+
     let body = &mut module.functions[f].body;
-    let graph = &mut body.graph;
-    let entry_ctrl = graph.node_outputs(body.entry)[0];
-    create_return(graph, [entry_ctrl]);
+    let entry_ctrl = body.entry_ctrl();
+    SimpleBuilder(body).build_return(entry_ctrl, None);
 
     check_verify_module_errors(
         &module,
@@ -166,10 +167,10 @@ fn verify_module_duplicate_intern_names() {
             param_types: vec![],
         },
     ));
+
     let body = &mut module.functions[f].body;
-    let graph = &mut body.graph;
-    let entry_ctrl = graph.node_outputs(body.entry)[0];
-    create_return(graph, [entry_ctrl]);
+    let entry_ctrl = body.entry_ctrl();
+    SimpleBuilder(body).build_return(entry_ctrl, None);
 
     let f = module.functions.push(FunctionData::new(
         "func".to_owned(),
@@ -178,10 +179,10 @@ fn verify_module_duplicate_intern_names() {
             param_types: vec![],
         },
     ));
+
     let body = &mut module.functions[f].body;
-    let graph = &mut body.graph;
-    let entry_ctrl = graph.node_outputs(body.entry)[0];
-    create_return(graph, [entry_ctrl]);
+    let entry_ctrl = body.entry_ctrl();
+    SimpleBuilder(body).build_return(entry_ctrl, None);
 
     check_verify_module_errors(
         &module,

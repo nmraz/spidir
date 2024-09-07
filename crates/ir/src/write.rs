@@ -319,10 +319,10 @@ mod tests {
     use expect_test::{expect, Expect};
 
     use crate::{
-        builder::{Builder, BuilderExt, SimpleBuilder},
+        builder::{BuilderExt, SimpleBuilder},
         module::{FunctionData, Signature},
-        node::{BitwiseF64, DepValueKind, IcmpKind, MemSize, Type},
-        test_utils::{create_entry, create_loop_body, create_return},
+        node::{BitwiseF64, IcmpKind, MemSize, Type},
+        test_utils::create_loop_body,
     };
 
     use super::*;
@@ -426,20 +426,14 @@ mod tests {
 
     #[test]
     fn write_add_params_body() {
-        let mut graph = ValGraph::new();
+        let mut body = FunctionBody::new(&[Type::I32, Type::I32]);
+        let ctrl = body.entry_ctrl();
+        let param1 = body.param_value(0);
+        let param2 = body.param_value(1);
 
-        let (entry, control_value, [param1, param2]) =
-            create_entry(&mut graph, [Type::I32, Type::I32]);
-
-        let add = graph.create_node(
-            NodeKind::Iadd,
-            [param1, param2],
-            [DepValueKind::Value(Type::I32)],
-        );
-        let add_res = graph.node_outputs(add)[0];
-        create_return(&mut graph, [control_value, add_res]);
-
-        let body = FunctionBody { graph, entry };
+        let mut builder = SimpleBuilder(&mut body);
+        let add = builder.build_iadd(param1, param2);
+        builder.build_return(ctrl, Some(add));
 
         check_write_body(
             &body,
@@ -486,20 +480,15 @@ mod tests {
                 param_types: vec![Type::I32, Type::I32],
             },
         );
-        let graph = &mut function.body.graph;
-        let entry = function.body.entry;
-        let entry_outputs = graph.node_outputs(entry);
-        let control_value = entry_outputs[0];
-        let param1 = entry_outputs[1];
-        let param2 = entry_outputs[2];
+        let body = &mut function.body;
 
-        let add = graph.create_node(
-            NodeKind::Iadd,
-            [param1, param2],
-            [DepValueKind::Value(Type::I32)],
-        );
-        let add_res = graph.node_outputs(add)[0];
-        create_return(graph, [control_value, add_res]);
+        let ctrl = body.entry_ctrl();
+        let param1 = body.param_value(0);
+        let param2 = body.param_value(1);
+
+        let mut builder = SimpleBuilder(body);
+        let add = builder.build_iadd(param1, param2);
+        builder.build_return(ctrl, Some(add));
 
         check_write_function(
             &function,
@@ -522,9 +511,10 @@ mod tests {
                 param_types: vec![Type::I32],
             },
         );
-        let graph = &mut function.body.graph;
-        let control_value = graph.node_outputs(function.body.entry)[0];
-        create_return(graph, [control_value]);
+
+        let ctrl = function.body.entry_ctrl();
+        SimpleBuilder(&mut function.body).build_return(ctrl, None);
+
         check_write_function(
             &function,
             expect![[r#"
@@ -545,11 +535,12 @@ mod tests {
                 param_types: vec![Type::I32, Type::F64],
             },
         );
+
+        let entry_ctrl = function.body.entry_ctrl();
+        let param32 = function.body.param_value(0);
+        let param64 = function.body.param_value(1);
+
         let mut builder = SimpleBuilder(&mut function.body);
-        let entry_outputs = builder.graph().node_outputs(builder.body().entry);
-        let entry_ctrl = entry_outputs[0];
-        let param32 = entry_outputs[1];
-        let param64 = entry_outputs[2];
 
         let addr32 = builder.build_stackslot(4, 4);
         let addr64 = builder.build_stackslot(8, 8);
@@ -591,24 +582,18 @@ mod tests {
             },
         });
 
-        let func_entry = module.functions[func].body.entry;
-        let func_graph = &mut module.functions[func].body.graph;
+        let body = &mut module.functions[func].body;
+        let entry_ctrl = body.entry_ctrl();
+        let param1 = body.param_value(0);
 
-        let func_entry_outputs = func_graph.node_outputs(func_entry);
-        let func_entry_ctrl = func_entry_outputs[0];
-        let func_param1 = func_entry_outputs[1];
-
-        let call = func_graph.create_node(
-            NodeKind::Call(FunctionRef::External(extfunc)),
-            [func_entry_ctrl, func_param1],
-            [DepValueKind::Control, DepValueKind::Value(Type::I32)],
+        let mut builder = SimpleBuilder(body);
+        let call = builder.build_call(
+            Some(Type::I32),
+            FunctionRef::External(extfunc),
+            entry_ctrl,
+            &[param1],
         );
-
-        let call_outputs = func_graph.node_outputs(call);
-        let call_ctrl = call_outputs[0];
-        let call_retval = call_outputs[1];
-
-        create_return(func_graph, [call_ctrl, call_retval]);
+        builder.build_return(call.ctrl, call.retval);
 
         check_write_module(
             &module,

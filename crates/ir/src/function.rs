@@ -1,7 +1,7 @@
 use alloc::{string::String, vec::Vec};
 use core::{fmt, iter};
 
-use cranelift_entity::packed_option::ReservedValue;
+use cranelift_entity::{entity_impl, packed_option::ReservedValue, PrimaryMap};
 
 use crate::{
     node::{DepValueKind, NodeKind, Type},
@@ -28,10 +28,15 @@ impl fmt::Display for FunctionMetadata {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SignatureRef(u32);
+entity_impl!(SignatureRef, "sig");
+
 #[derive(Clone)]
 pub struct FunctionBody {
     pub graph: ValGraph,
     pub entry: Node,
+    pub call_ind_sigs: PrimaryMap<SignatureRef, Signature>,
 }
 
 impl FunctionBody {
@@ -39,6 +44,7 @@ impl FunctionBody {
         Self {
             graph: ValGraph::new(),
             entry: Node::reserved_value(),
+            call_ind_sigs: PrimaryMap::new(),
         }
     }
 

@@ -15,7 +15,7 @@ use ir::{
     function::{FunctionBody, FunctionData, FunctionMetadata, Signature},
     module::{Function, Module},
     node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
-    valgraph::{DepValue, Node, ValGraph},
+    valgraph::DepValue,
 };
 use itertools::Itertools;
 use pest::{
@@ -103,11 +103,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                         name: name.clone().into_owned(),
                         sig: parsed.sig,
                     },
-                    body: FunctionBody {
-                        graph: ValGraph::new(),
-                        // This is cheating, but we promise not to inspect the graph until we fill it in later.
-                        entry: Node::from_u32(0),
-                    },
+                    body: FunctionBody::new_invalid(),
                 });
 
                 function_names.insert(name, FunctionRef::Internal(function));

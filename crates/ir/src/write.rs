@@ -363,9 +363,8 @@ mod tests {
         });
 
         let check = |kind: NodeKind, expected: &str| {
-            let mut graph = ValGraph::new();
-            let node = graph.create_node(kind, [], []);
-            let body = FunctionBody { graph, entry: node };
+            let mut body = FunctionBody::new_invalid();
+            let node = body.graph.create_node(kind, [], []);
             let mut output = String::new();
             write_node(&mut output, &module, &body, node).expect("failed to write node");
             assert_eq!(output, expected.to_owned());

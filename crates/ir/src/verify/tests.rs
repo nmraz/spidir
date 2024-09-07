@@ -1,3 +1,5 @@
+use cranelift_entity::PrimaryMap;
+
 use crate::{
     builder::{BuilderExt, SimpleBuilder},
     function::{FunctionBody, FunctionMetadata, Signature},
@@ -21,7 +23,11 @@ fn check_verify_func_errors(
                 param_types: vec![],
             },
         },
-        body: FunctionBody { graph, entry },
+        body: FunctionBody {
+            graph,
+            entry,
+            call_ind_sigs: PrimaryMap::new(),
+        },
     };
     let mut module = Module::new();
     let func = module.functions.push(func);

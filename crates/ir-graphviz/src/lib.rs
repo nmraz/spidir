@@ -7,10 +7,7 @@ use core::fmt;
 
 use itertools::Itertools;
 
-use ir::{
-    function::FunctionBody, module::Module, node::NodeKind, valwalk::LiveNodeInfo,
-    write::write_node_kind,
-};
+use ir::{function::FunctionBody, module::Module, node::NodeKind, write::write_node_kind};
 
 use crate::annotate::{Annotate, DotAttributes};
 
@@ -23,7 +20,7 @@ pub fn write_graphviz(
     body: &FunctionBody,
 ) -> fmt::Result {
     let graph = &body.graph;
-    let live_info = &LiveNodeInfo::compute(graph, body.entry);
+    let live_info = body.compute_live_nodes();
     let rpo = live_info.reverse_postorder(graph);
 
     writeln!(w, "digraph {{")?;

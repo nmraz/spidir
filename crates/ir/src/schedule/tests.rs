@@ -7,7 +7,7 @@ use crate::{
     node::Type,
     test_utils::create_loop_body,
     valgraph::{Node, ValGraph},
-    valwalk::{cfg_preorder, LiveNodeInfo},
+    valwalk::LiveNodeInfo,
 };
 
 use super::{is_pinned_node, schedule_early, schedule_late, ScheduleContext};
@@ -29,8 +29,8 @@ fn check_live_scheduled(
 }
 
 fn check_graph_scheduling(body: &FunctionBody) {
-    let live_node_info = LiveNodeInfo::compute(&body.graph, body.entry);
-    let cfg_preorder: Vec<_> = cfg_preorder(&body.graph, body.entry).collect();
+    let live_node_info = body.compute_live_nodes();
+    let cfg_preorder: Vec<_> = body.cfg_preorder().collect();
     let ctx = ScheduleContext::new(&body.graph, &live_node_info, &cfg_preorder);
     let mut scheduled = EntitySet::new();
 

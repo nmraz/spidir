@@ -7,7 +7,6 @@ use crate::{
     module::{ExternFunction, Function, Module},
     node::{FunctionRef, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::LiveNodeInfo,
 };
 
 pub trait AnnotateGraph<W: fmt::Write + ?Sized> {
@@ -150,7 +149,7 @@ pub fn write_annotated_body<W: fmt::Write + ?Sized>(
     body: &FunctionBody,
     indentation: u32,
 ) -> fmt::Result {
-    for node in LiveNodeInfo::compute(&body.graph, body.entry).reverse_postorder(&body.graph) {
+    for node in body.compute_live_nodes().reverse_postorder(&body.graph) {
         write_indendation(w, indentation)?;
         annotator.write_node(w, module, body, node)?;
         writeln!(w)?;

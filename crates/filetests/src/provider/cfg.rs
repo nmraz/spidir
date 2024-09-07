@@ -3,7 +3,7 @@ use std::fmt::Write;
 use anyhow::Result;
 use codegen::cfg::compute_block_cfg;
 use cranelift_entity::EntitySet;
-use ir::{module::Module, valwalk::cfg_preorder};
+use ir::module::Module;
 use itertools::Itertools;
 
 use crate::utils::write_body_with_trailing_comments;
@@ -17,7 +17,7 @@ impl TestProvider for CfgProvider {
 
         for func in module.functions.values() {
             let body = &func.body;
-            let cfg_preorder: Vec<_> = cfg_preorder(&body.graph, body.entry).collect();
+            let cfg_preorder: Vec<_> = body.cfg_preorder().collect();
             let (cfg, block_map) = compute_block_cfg(&body.graph, &cfg_preorder);
             let mut seen_blocks = EntitySet::new();
             write_body_with_trailing_comments(&mut output, module, func, |s, node| {

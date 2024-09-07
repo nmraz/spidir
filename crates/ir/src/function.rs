@@ -6,6 +6,7 @@ use cranelift_entity::packed_option::ReservedValue;
 use crate::{
     node::{DepValueKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
+    valwalk::{cfg_preorder, CfgPreorder, LiveNodeInfo},
     write::write_function_metadata,
 };
 
@@ -61,6 +62,14 @@ impl FunctionBody {
 
     pub fn param_value(&self, index: u32) -> DepValue {
         self.graph.node_outputs(self.entry)[index as usize + 1]
+    }
+
+    pub fn compute_live_nodes(&self) -> LiveNodeInfo {
+        LiveNodeInfo::compute(&self.graph, self.entry)
+    }
+
+    pub fn cfg_preorder(&self) -> CfgPreorder<'_> {
+        cfg_preorder(&self.graph, self.entry)
     }
 }
 

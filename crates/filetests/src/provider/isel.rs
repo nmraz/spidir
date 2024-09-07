@@ -8,7 +8,15 @@ use crate::utils::sanitize_raw_output;
 
 use super::{update_per_func_output, TestProvider, Updater};
 
-pub struct IselProvider;
+pub struct IselProvider {
+    machine: X64Machine,
+}
+
+impl IselProvider {
+    pub fn new(machine: X64Machine) -> Self {
+        Self { machine }
+    }
+}
 
 impl TestProvider for IselProvider {
     fn output_for(&self, module: &Module) -> Result<String> {
@@ -17,14 +25,13 @@ impl TestProvider for IselProvider {
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let (cfg_ctx, lir) =
-                lower_func(module, func, &X64Machine::default()).map_err(|err| {
-                    anyhow!(
-                        "failed to select `{}`: `{}`",
-                        func.metadata.name,
-                        display_node(module, &func.body, err.node)
-                    )
-                })?;
+            let (cfg_ctx, lir) = lower_func(module, func, &self.machine).map_err(|err| {
+                anyhow!(
+                    "failed to select `{}`: `{}`",
+                    func.metadata.name,
+                    display_node(module, &func.body, err.node)
+                )
+            })?;
 
             write!(
                 output,

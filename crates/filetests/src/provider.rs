@@ -6,6 +6,7 @@ use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{module::Module, write::quote_ident};
 use isel_regalloc::IselRegallocProvider;
+use x64::create_x64_machine;
 
 use crate::utils::parse_output_func_heading;
 
@@ -28,6 +29,7 @@ mod isel_regalloc;
 mod loops;
 mod schedule;
 mod verify;
+mod x64;
 
 pub trait TestProvider {
     fn expects_valid_module(&self) -> bool {
@@ -49,9 +51,11 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> 
         "cfg" => Ok(Box::new(CfgProvider)),
         "domtree" => Ok(Box::new(DomTreeProvider)),
         "graphviz" => Ok(Box::new(GraphvizTestProvider::new(&params)?)),
-        "isel" => Ok(Box::new(IselProvider)),
-        "isel-regalloc" => Ok(Box::new(IselRegallocProvider)),
-        "codegen" => Ok(Box::new(CodegenProvider)),
+        "isel" => Ok(Box::new(IselProvider::new(create_x64_machine(&params)?))),
+        "isel-regalloc" => Ok(Box::new(IselRegallocProvider::new(create_x64_machine(
+            &params,
+        )?))),
+        "codegen" => Ok(Box::new(CodegenProvider::new(create_x64_machine(&params)?))),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),
         "schedule" => Ok(Box::new(ScheduleProvider)),
         "verify-err" => Ok(Box::new(VerifyErrProvider)),

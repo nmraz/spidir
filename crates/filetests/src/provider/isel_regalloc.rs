@@ -11,7 +11,15 @@ use crate::utils::sanitize_raw_output;
 
 use super::{update_per_func_output, TestProvider, Updater};
 
-pub struct IselRegallocProvider;
+pub struct IselRegallocProvider {
+    machine: X64Machine,
+}
+
+impl IselRegallocProvider {
+    pub fn new(machine: X64Machine) -> Self {
+        Self { machine }
+    }
+}
 
 impl TestProvider for IselRegallocProvider {
     fn output_for(&self, module: &Module) -> Result<String> {
@@ -20,16 +28,14 @@ impl TestProvider for IselRegallocProvider {
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let machine = X64Machine::default();
-
-            let (cfg_ctx, lir) = lower_func(module, func, &machine).map_err(|err| {
+            let (cfg_ctx, lir) = lower_func(module, func, &self.machine).map_err(|err| {
                 anyhow!(
                     "failed to select `{}`: `{}`",
                     func.metadata.name,
                     display_node(module, &func.body, err.node)
                 )
             })?;
-            let assignment = regalloc::run(&lir, &cfg_ctx, &machine)
+            let assignment = regalloc::run(&lir, &cfg_ctx, &self.machine)
                 .map_err(|err| anyhow!("register allocation failed: {err:?}"))?;
 
             writeln!(

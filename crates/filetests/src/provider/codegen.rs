@@ -15,7 +15,15 @@ use crate::utils::sanitize_raw_output;
 
 use super::{update_per_func_output, TestProvider, Updater};
 
-pub struct CodegenProvider;
+pub struct CodegenProvider {
+    machine: X64Machine,
+}
+
+impl CodegenProvider {
+    pub fn new(machine: X64Machine) -> Self {
+        Self { machine }
+    }
+}
 
 impl TestProvider for CodegenProvider {
     fn output_for(&self, module: &Module) -> Result<String> {
@@ -24,7 +32,7 @@ impl TestProvider for CodegenProvider {
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let code = codegen_func(module, func, &X64Machine::default())
+            let code = codegen_func(module, func, &self.machine)
                 .map_err(|err| anyhow!("codegen failed: {:?}", err))?;
             disasm_code(module, &code, &mut output)?;
         }

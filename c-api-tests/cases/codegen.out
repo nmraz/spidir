@@ -1,0 +1,2 @@
+[INFO codegen::api] generating code for: @inner(i32)
+[INFO codegen::api] generating code for: @outer:i32()

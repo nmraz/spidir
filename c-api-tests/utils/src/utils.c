@@ -1,7 +1,9 @@
 #include "utils.h"
 
+#include <spidir/codegen.h>
 #include <spidir/log.h>
 #include <spidir/spidir.h>
+#include <spidir/x64.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,4 +50,19 @@ static spidir_dump_status_t stdout_dump_callback(const char* s, size_t size,
 
 void dump_module_to_stdout(spidir_module_handle_t module) {
     spidir_module_dump(module, stdout_dump_callback, NULL);
+}
+
+spidir_codegen_blob_handle_t codegen_function(spidir_module_handle_t module,
+                                              spidir_function_t func) {
+    spidir_codegen_blob_handle_t blob = NULL;
+
+    spidir_codegen_machine_handle_t machine =
+        spidir_codegen_create_x64_machine();
+
+    ASSERT(spidir_codegen_emit_function(machine, module, func, &blob) ==
+           SPIDIR_CODEGEN_OK);
+
+    spidir_codegen_machine_destroy(machine);
+
+    return blob;
 }

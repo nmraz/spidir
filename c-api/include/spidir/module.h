@@ -349,6 +349,32 @@ spidir_value_t spidir_builder_build_call(spidir_builder_handle_t builder,
                                          size_t arg_count,
                                          const spidir_value_t* args);
 
+/// Builds an instruction dynamically calling the function pointed to by
+/// `target` at the current insertion point.
+///
+/// @param[in] builder   A handle to the function builder.
+/// @param[in] ret_type  The return type of the target function.
+/// @param[in] arg_count The number of arguments to pass to the function.
+/// @param[in] arg_types A pointer to an array of `param_count` types,
+///                      indicating the types of parameters accepted by the
+///                      target function. The types will be encoded into the
+///                      signature of the `callind` as an extra sanity. This
+///                      parameter may be null if `param_count` is 0.
+/// @param[in] target    An SSA value pointing to the function to call. This
+///                      value should have pointer type, and should point to a
+///                      valid, callable function at runtime.
+/// @param[in] args      A pointer to an array of `arg_count` values, each
+///                      representing an argument to pass. This parameter may be
+///                      null if `arg_count` is 0.
+/// @return An SSA value containing the return value of the function. If the
+///         specified return type is `SPIDIR_TYPE_NONE`, the returned value will
+///         be `SPIDIR_VALUE_INVALID`.
+spidir_value_t
+spidir_builder_build_callind(spidir_builder_handle_t builder,
+                             spidir_value_type_t ret_type, size_t arg_count,
+                             const spidir_value_type_t* arg_types,
+                             spidir_value_t target, const spidir_value_t* args);
+
 /// Builds a return instruction at the current insertion point.
 ///
 /// After the return instruction is built, the current block will be considered

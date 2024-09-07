@@ -89,20 +89,31 @@ pub unsafe fn name_signature_from_api(
     param_types: *const ApiType,
 ) -> (String, Signature) {
     unsafe {
-        let name = CStr::from_ptr(name);
+        (
+            CStr::from_ptr(name)
+                .to_str()
+                .expect("function name not utf-8")
+                .to_owned(),
+            signature_from_api(ret_type, param_count, param_types),
+        )
+    }
+}
+
+#[track_caller]
+pub unsafe fn signature_from_api(
+    ret_type: ApiType,
+    param_count: usize,
+    param_types: *const ApiType,
+) -> Signature {
+    unsafe {
         let params = slice_from_api(param_count, param_types);
 
         let ret_type = opt_type_from_api(ret_type);
 
-        let sig = Signature {
+        Signature {
             ret_type,
             param_types: params.iter().map(|&ty| type_from_api(ty)).collect(),
-        };
-
-        (
-            name.to_str().expect("function name not utf-8").to_owned(),
-            sig,
-        )
+        }
     }
 }
 

@@ -5,8 +5,9 @@ use paste::paste;
 
 use crate::types::{
     block_from_api, block_to_api, funcref_from_api, icmp_kind_from_api, mem_size_from_api,
-    opt_value_from_api, opt_value_to_api, type_from_api, value_from_api, value_list_from_api,
-    value_to_api, ApiBlock, ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
+    opt_value_from_api, opt_value_to_api, signature_from_api, type_from_api, value_from_api,
+    value_list_from_api, value_to_api, ApiBlock, ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi,
+    ApiType, ApiValue,
 };
 
 #[no_mangle]
@@ -80,6 +81,23 @@ unsafe extern "C" fn spidir_builder_build_call(
         let builder = &mut *builder;
         let args = value_list_from_api(arg_count, args);
         opt_value_to_api(builder.build_call(funcref_from_api(func), &args))
+    }
+}
+
+#[no_mangle]
+unsafe extern "C" fn spidir_builder_build_callind(
+    builder: *mut FunctionBuilder<'_>,
+    ret_type: ApiType,
+    arg_count: usize,
+    arg_types: *const ApiType,
+    target: ApiValue,
+    args: *const ApiValue,
+) -> ApiValue {
+    unsafe {
+        let builder = &mut *builder;
+        let sig = signature_from_api(ret_type, arg_count, arg_types);
+        let args = value_list_from_api(arg_count, args);
+        opt_value_to_api(builder.build_callind(sig, value_from_api(target), &args))
     }
 }
 

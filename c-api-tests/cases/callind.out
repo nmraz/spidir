@@ -1,0 +1,9 @@
+
+func @func(ptr, ptr, ptr) {
+    %0:ctrl, %1:ptr, %2:ptr, %3:ptr = entry
+    %4:ctrl, %5:phisel = region %0
+    %6:ctrl, %7:i32 = callind i32() %4, %1
+    %8:ctrl, %9:i32 = callind i32(i32) %6, %2, %7
+    %10:ctrl = callind (i32) %8, %3, %9
+    return %10
+}

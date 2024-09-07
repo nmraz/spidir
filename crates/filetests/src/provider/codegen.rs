@@ -45,9 +45,9 @@ fn disasm_code(module: &Module, code: &CodeBlob, output: &mut String) -> Result<
         .build()?;
 
     let insns = cs
-        .disasm_all(code.code(), 0)
+        .disasm_all(&code.code, 0)
         .context("failed to disassemble")?;
-    let mut relocs = code.relocs();
+    let mut relocs = &code.relocs[..];
 
     for insn in insns.as_ref() {
         let insn_start = insn.address();

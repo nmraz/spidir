@@ -24,18 +24,8 @@ pub struct Reloc {
 }
 
 pub struct CodeBlob {
-    code: Vec<u8>,
-    relocs: Vec<Reloc>,
-}
-
-impl CodeBlob {
-    pub fn code(&self) -> &[u8] {
-        &self.code
-    }
-
-    pub fn relocs(&self) -> &[Reloc] {
-        &self.relocs
-    }
+    pub code: Vec<u8>,
+    pub relocs: Vec<Reloc>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

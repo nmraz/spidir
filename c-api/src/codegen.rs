@@ -74,9 +74,8 @@ fn codegen_machine_to_api<M: Machine>(machine: M) -> *mut ApiCodegenMachine {
 }
 
 fn codegen_blob_to_api(blob: CodeBlob) -> *mut ApiCodegenBlob {
-    // TODO: avoid copying here.
-    let code = blob.code().to_vec();
-    let relocs = blob.relocs().iter().map(reloc_to_api).collect();
+    let code = blob.code;
+    let relocs = blob.relocs.iter().map(reloc_to_api).collect();
     Box::into_raw(Box::new(ApiCodegenBlob { code, relocs }))
 }
 

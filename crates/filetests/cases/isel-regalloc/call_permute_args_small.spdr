@@ -1,4 +1,4 @@
-# run: isel-regalloc
+# run: isel-regalloc[small-pic]
 
 extfunc @g(i32, i32)
 

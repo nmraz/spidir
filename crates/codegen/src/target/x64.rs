@@ -139,8 +139,8 @@ pub enum X64Instr {
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CodeModel {
-    #[default]
     SmallPic,
+    #[default]
     LargeAbs,
 }
 

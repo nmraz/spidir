@@ -1,4 +1,4 @@
-# run: codegen
+# run: codegen[small-pic, large-abs]
 
 extfunc @extfunc(ptr, i32)
 extfunc @extfunc2:i32(ptr, i32)
@@ -67,30 +67,32 @@ func @caller:i32(ptr, i32) {
     # nextln: 0x0006: push r12
     # nextln: 0x0008: push rbx
     # nextln: 0x0009: push rax
-    # nextln: 0x000a: mov r13, rsi
-    # nextln: 0x000d: mov r12, rdi
-    # nextln: 0x0010: mov rsi, r13
-    # nextln: 0x0013: mov rdi, r12
-    # nextln: 0x0016: call 0x1b  # reloc <0> -> @extfunc + -4
-    # nextln: 0x001b: mov rsi, r13
-    # nextln: 0x001e: mov rdi, r12
-    # nextln: 0x0021: call 0x26  # reloc <0> -> @extfunc2 + -4
-    # nextln: 0x0026: mov rbx, rax
-    # nextln: 0x0029: mov rsi, r13
-    # nextln: 0x002c: mov rdi, r12
-    # nextln: 0x002f: call 0x34  # reloc <0> -> @infunc + -4
-    # nextln: 0x0034: mov rsi, r13
-    # nextln: 0x0037: mov rdi, r12
-    # nextln: 0x003a: call 0x3f  # reloc <0> -> @infunc2 + -4
-    # nextln: 0x003f: add ebx, eax
-    # nextln: 0x0041: call 0x46  # reloc <0> -> @no_params + -4
-    # nextln: 0x0046: mov rax, rbx
-    # nextln: 0x0049: add rsp, 8
-    # nextln: 0x004d: pop rbx
-    # nextln: 0x004e: pop r12
-    # nextln: 0x0050: pop r13
-    # nextln: 0x0052: pop rbp
-    # nextln: 0x0053: ret
+    # nextln: 0x000a: mov r12, rsi
+    # nextln: 0x000d: mov rbx, rdi
+    # nextln: 0x0010: movabs rax, 0  # reloc <1> -> @extfunc + 0
+    # nextln: 0x001a: mov rsi, r12
+    # nextln: 0x001d: mov rdi, rbx
+    # nextln: 0x0020: call rax
+    # nextln: 0x0022: movabs rax, 0  # reloc <1> -> @extfunc2 + 0
+    # nextln: 0x002c: mov rsi, r12
+    # nextln: 0x002f: mov rdi, rbx
+    # nextln: 0x0032: call rax
+    # nextln: 0x0034: mov r13, rax
+    # nextln: 0x0037: mov rsi, r12
+    # nextln: 0x003a: mov rdi, rbx
+    # nextln: 0x003d: call 0x42  # reloc <0> -> @infunc + -4
+    # nextln: 0x0042: mov rsi, r12
+    # nextln: 0x0045: mov rdi, rbx
+    # nextln: 0x0048: call 0x4d  # reloc <0> -> @infunc2 + -4
+    # nextln: 0x004d: add r13d, eax
+    # nextln: 0x0050: call 0x55  # reloc <0> -> @no_params + -4
+    # nextln: 0x0055: mov rax, r13
+    # nextln: 0x0058: add rsp, 8
+    # nextln: 0x005c: pop rbx
+    # nextln: 0x005d: pop r12
+    # nextln: 0x005f: pop r13
+    # nextln: 0x0061: pop rbp
+    # nextln: 0x0062: ret
 
     %3:ctrl, %1:ptr, %2:i32 = entry
     %5:ctrl = call @extfunc %3, %1, %2

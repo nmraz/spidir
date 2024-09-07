@@ -1,0 +1,162 @@
+# run: codegen
+
+extfunc @extfunc(ptr, i32)
+extfunc @extfunc2:i32(ptr, i32)
+
+func @infunc(ptr, i32) {
+    # check: function `infunc`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: pop rbp
+    # nextln: 0x0005: ret
+
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    return %0
+}
+
+func @infunc2:i32(ptr, i32) {
+    # check: function `infunc2`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov rax, rsi
+    # nextln: 0x0007: pop rbp
+    # nextln: 0x0008: ret
+
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    return %0, %2
+}
+
+func @no_params() {
+    # check: function `no_params`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: pop rbp
+    # nextln: 0x0005: ret
+
+    %0:ctrl = entry
+    return %0
+}
+
+func @single_stack_arg(i64, i64, i64, i64, i64, i64, i64) {
+    # check: function `single_stack_arg`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: pop rbp
+    # nextln: 0x0005: ret
+
+    %0:ctrl, %1:i64, %2:i64, %3:i64, %4:i64, %5:i64, %6:i64, %7:i64 = entry
+    return %0
+}
+
+func @many_params(i32, i64, ptr, i64, i32, i32, i64, ptr, i32, i64) {
+    # check: function `many_params`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: pop rbp
+    # nextln: 0x0005: ret
+
+    %0:ctrl, %1:i32, %2:i64, %3:ptr, %4:i64, %5:i32, %6:i32, %7:i64, %8:ptr, %9:i32, %10:i64 = entry
+    return %0
+}
+
+func @caller:i32(ptr, i32) {
+    # check: function `caller`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: push r13
+    # nextln: 0x0006: push r12
+    # nextln: 0x0008: push rbx
+    # nextln: 0x0009: push rax
+    # nextln: 0x000a: mov r12, rsi
+    # nextln: 0x000d: mov r13, rdi
+    # nextln: 0x0010: movabs rax, 0  # reloc <1> -> @extfunc + 0
+    # nextln: 0x001a: mov rsi, r12
+    # nextln: 0x001d: mov rdi, r13
+    # nextln: 0x0020: call rax
+    # nextln: 0x0022: movabs rax, 0  # reloc <1> -> @extfunc2 + 0
+    # nextln: 0x002c: mov rsi, r12
+    # nextln: 0x002f: mov rdi, r13
+    # nextln: 0x0032: call rax
+    # nextln: 0x0034: mov rbx, rax
+    # nextln: 0x0037: movabs rax, 0  # reloc <1> -> @infunc + 0
+    # nextln: 0x0041: mov rsi, r12
+    # nextln: 0x0044: mov rdi, r13
+    # nextln: 0x0047: call rax
+    # nextln: 0x0049: movabs rax, 0  # reloc <1> -> @infunc2 + 0
+    # nextln: 0x0053: mov rsi, r12
+    # nextln: 0x0056: mov rdi, r13
+    # nextln: 0x0059: call rax
+    # nextln: 0x005b: add ebx, eax
+    # nextln: 0x005d: movabs rax, 0  # reloc <1> -> @no_params + 0
+    # nextln: 0x0067: call rax
+    # nextln: 0x0069: mov rax, rbx
+    # nextln: 0x006c: add rsp, 8
+    # nextln: 0x0070: pop rbx
+    # nextln: 0x0071: pop r12
+    # nextln: 0x0073: pop r13
+    # nextln: 0x0075: pop rbp
+    # nextln: 0x0076: ret
+
+    %3:ctrl, %1:ptr, %2:i32 = entry
+    %5:ctrl = call @extfunc %3, %1, %2
+    %6:ctrl, %7:i32 = call @extfunc2 %5, %1, %2
+    %8:ctrl = call @infunc %6, %1, %2
+    %9:ctrl, %10:i32 = call @infunc2 %8, %1, %2
+    %11:i32 = iadd %7, %10
+    %12:ctrl = call @no_params %9
+    return %12, %11
+}
+
+# When calling functions with an odd number of stack arguments, the stack should
+# stay aligned to 16 bytes.
+
+func @call_single_stack_arg() {
+    # check: function `call_single_stack_arg`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov ecx, 7
+    # nextln: 0x0009: movabs rax, 0  # reloc <1> -> @single_stack_arg + 0
+    # nextln: 0x0013: push rax
+    # nextln: 0x0014: push rcx
+    # nextln: 0x0015: mov r9, rcx
+    # nextln: 0x0018: mov r8, rcx
+    # nextln: 0x001b: mov rdx, rcx
+    # nextln: 0x001e: mov rsi, rcx
+    # nextln: 0x0021: mov rdi, rcx
+    # nextln: 0x0024: call rax
+    # nextln: 0x0026: add rsp, 0x10
+    # nextln: 0x002a: pop rbp
+    # nextln: 0x002b: ret
+
+    %0:ctrl = entry
+    %x:i64 = iconst 7
+    %1:ctrl = call @single_stack_arg %0, %x, %x, %x, %x, %x, %x, %x
+    return %1
+}
+
+func @call_many_params(ptr) {
+    # check: function `call_many_params`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov rdx, rdi
+    # nextln: 0x0007: mov edi, 0
+    # nextln: 0x000c: mov ecx, 0
+    # nextln: 0x0011: movabs rax, 0  # reloc <1> -> @many_params + 0
+    # nextln: 0x001b: push rcx
+    # nextln: 0x001c: push rdx
+    # nextln: 0x001d: push rdi
+    # nextln: 0x001e: push rcx
+    # nextln: 0x001f: mov rsi, rcx
+    # nextln: 0x0022: mov r9, rdi
+    # nextln: 0x0025: mov r8, rdi
+    # nextln: 0x0028: call rax
+    # nextln: 0x002a: add rsp, 0x20
+    # nextln: 0x002e: pop rbp
+    # nextln: 0x002f: ret
+
+    %0:ctrl, %p:ptr = entry
+    %zero32:i32 = iconst 0
+    %zero64:i64 = iconst 0
+    %1:ctrl = call @many_params %0, %zero32, %zero64, %p, %zero64, %zero32, %zero32, %zero64, %p, %zero32, %zero64
+    return %1
+}

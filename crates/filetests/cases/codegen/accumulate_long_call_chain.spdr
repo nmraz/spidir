@@ -1,4 +1,4 @@
-# run: codegen
+# run: codegen[small-pic]
 
 extfunc @f:i32()
 

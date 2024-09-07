@@ -1,4 +1,4 @@
-# run: isel
+# run: isel[small-pic]
 
 extfunc @noreturn()
 

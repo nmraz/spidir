@@ -1,4 +1,5 @@
 #include <spidir/platform.h>
+
 #include <stdalign.h>
 #include <stddef.h>
 #include <stdio.h>

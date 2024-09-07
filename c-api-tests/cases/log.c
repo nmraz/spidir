@@ -1,6 +1,6 @@
-#include "spidir/log.h"
-
+#include <spidir/log.h>
 #include <spidir/spidir.h>
+
 #include <stddef.h>
 
 #include "utils.h"

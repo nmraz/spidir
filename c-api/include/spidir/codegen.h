@@ -5,6 +5,7 @@
 #define SPIDIR_CODEGEN_H
 
 #include <spidir/spidir.h>
+
 #include <stddef.h>
 #include <stdint.h>
 

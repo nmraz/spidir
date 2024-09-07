@@ -2,6 +2,7 @@
 #include <spidir/log.h>
 #include <spidir/spidir.h>
 #include <spidir/x64.h>
+
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>

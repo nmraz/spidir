@@ -1,4 +1,5 @@
 #include <spidir/spidir.h>
+
 #include <stddef.h>
 
 #include "utils.h"

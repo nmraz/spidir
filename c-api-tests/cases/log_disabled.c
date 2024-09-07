@@ -1,7 +1,8 @@
+#include <spidir/log.h>
 #include <spidir/spidir.h>
+
 #include <stddef.h>
 
-#include "spidir/log.h"
 #include "utils.h"
 
 #define BUILD_BINOP(op) a = spidir_builder_build_##op(builder, a, b)

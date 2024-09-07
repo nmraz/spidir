@@ -135,40 +135,6 @@ pub enum X64Instr {
     Ud2,
 }
 
-const RC_GPR: RegClass = RegClass::new(0);
-
-const REG_RAX: PhysReg = PhysReg::new(0);
-const REG_RBX: PhysReg = PhysReg::new(1);
-const REG_RCX: PhysReg = PhysReg::new(2);
-const REG_RDX: PhysReg = PhysReg::new(3);
-const REG_RDI: PhysReg = PhysReg::new(4);
-const REG_RSI: PhysReg = PhysReg::new(5);
-
-const REG_RBP: PhysReg = PhysReg::new(6);
-const REG_RSP: PhysReg = PhysReg::new(7);
-
-const REG_R8: PhysReg = PhysReg::new(8);
-const REG_R9: PhysReg = PhysReg::new(9);
-const REG_R10: PhysReg = PhysReg::new(10);
-const REG_R11: PhysReg = PhysReg::new(11);
-const REG_R12: PhysReg = PhysReg::new(12);
-const REG_R13: PhysReg = PhysReg::new(13);
-const REG_R14: PhysReg = PhysReg::new(14);
-const REG_R15: PhysReg = PhysReg::new(15);
-
-const CALLER_SAVED_REGS: [PhysReg; 9] = [
-    REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11,
-];
-
-const CALLEE_SAVED_REGS: [PhysReg; 5] = [REG_RBX, REG_R12, REG_R13, REG_R14, REG_R15];
-
-// This should be a concatenation of `CALLER_SAVED_REGS` and `CALLEE_SAVED_REGS`.
-// Prefer caller-saved regs to avoid unnecessary prologue/epilogue code.
-const GPR_ORDER: [PhysReg; 14] = [
-    REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11, REG_RBX,
-    REG_R12, REG_R13, REG_R14, REG_R15,
-];
-
 pub struct X64Machine;
 
 impl MachineCore for X64Machine {
@@ -221,3 +187,37 @@ impl MachineRegalloc for X64Machine {
         }
     }
 }
+
+const RC_GPR: RegClass = RegClass::new(0);
+
+const REG_RAX: PhysReg = PhysReg::new(0);
+const REG_RBX: PhysReg = PhysReg::new(1);
+const REG_RCX: PhysReg = PhysReg::new(2);
+const REG_RDX: PhysReg = PhysReg::new(3);
+const REG_RDI: PhysReg = PhysReg::new(4);
+const REG_RSI: PhysReg = PhysReg::new(5);
+
+const REG_RBP: PhysReg = PhysReg::new(6);
+const REG_RSP: PhysReg = PhysReg::new(7);
+
+const REG_R8: PhysReg = PhysReg::new(8);
+const REG_R9: PhysReg = PhysReg::new(9);
+const REG_R10: PhysReg = PhysReg::new(10);
+const REG_R11: PhysReg = PhysReg::new(11);
+const REG_R12: PhysReg = PhysReg::new(12);
+const REG_R13: PhysReg = PhysReg::new(13);
+const REG_R14: PhysReg = PhysReg::new(14);
+const REG_R15: PhysReg = PhysReg::new(15);
+
+const CALLER_SAVED_REGS: [PhysReg; 9] = [
+    REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11,
+];
+
+const CALLEE_SAVED_REGS: [PhysReg; 5] = [REG_RBX, REG_R12, REG_R13, REG_R14, REG_R15];
+
+// This should be a concatenation of `CALLER_SAVED_REGS` and `CALLEE_SAVED_REGS`.
+// Prefer caller-saved regs to avoid unnecessary prologue/epilogue code.
+const GPR_ORDER: [PhysReg; 14] = [
+    REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11, REG_RBX,
+    REG_R12, REG_R13, REG_R14, REG_R15,
+];

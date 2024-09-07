@@ -4,7 +4,8 @@ use core::array;
 use cranelift_entity::{packed_option::PackedOption, SecondaryMap};
 use fx_utils::FxHashMap;
 use ir::{
-    module::{FunctionBody, FunctionData, Module},
+    function::{FunctionBody, FunctionData},
+    module::Module,
     node::{NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{dataflow_inputs, dataflow_outputs},

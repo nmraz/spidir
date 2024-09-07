@@ -3,9 +3,8 @@ use core::fmt;
 use alloc::{borrow::Cow, format};
 
 use crate::{
-    module::{
-        ExternFunction, Function, FunctionBody, FunctionData, FunctionMetadata, Module, Signature,
-    },
+    function::{FunctionBody, FunctionData, FunctionMetadata, Signature},
+    module::{ExternFunction, Function, Module},
     node::{FunctionRef, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::LiveNodeInfo,
@@ -320,7 +319,6 @@ mod tests {
 
     use crate::{
         builder::{BuilderExt, SimpleBuilder},
-        module::{FunctionData, Signature},
         node::{BitwiseF64, IcmpKind, MemSize, Type},
         test_utils::create_loop_body,
     };

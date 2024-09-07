@@ -6,7 +6,8 @@ use log::trace;
 use ir::{
     builder::{Builder, BuilderExt},
     cons_builder::{Cache, ConsBuilder},
-    module::{Function, FunctionBody, Module},
+    function::FunctionBody,
+    module::{Function, Module},
     node::{DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     write::display_node,
@@ -352,7 +353,8 @@ impl<'a> Builder for GraphBuilderWrapper<'a> {
 mod tests {
     use expect_test::{expect, Expect};
     use ir::{
-        module::{FunctionData, Module, Signature},
+        function::{FunctionData, Signature},
+        module::Module,
         node::Type,
     };
 

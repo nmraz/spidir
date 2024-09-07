@@ -4,7 +4,8 @@ use anyhow::Result;
 use fx_utils::FxHashMap;
 use hashbrown::hash_map::Entry;
 use ir::{
-    module::{FunctionBody, FunctionData, Module},
+    function::{FunctionBody, FunctionData},
+    module::Module,
     valgraph::{DepValue, Node},
     write::{write_annotated_body, write_annotated_node, write_node_kind, AnnotateGraph},
 };

@@ -10,7 +10,8 @@ use dominators::depth_map::DepthMap;
 use fx_utils::{FxHashMap, FxHashSet};
 use graphwalk::{GraphRef, PostOrderContext};
 use ir::{
-    module::{FunctionBody, Module},
+    function::FunctionBody,
+    module::Module,
     node::NodeKind,
     schedule::{schedule_early, schedule_late, ScheduleContext},
     valgraph::{DepValue, Node, ValGraph},

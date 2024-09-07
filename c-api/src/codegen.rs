@@ -8,11 +8,7 @@ use codegen::{
     regalloc::RegallocError,
     target::x64::X64Machine,
 };
-use ir::{
-    module::{FunctionData, Module},
-    node::FunctionRef,
-    write::display_node,
-};
+use ir::{function::FunctionData, module::Module, node::FunctionRef, write::display_node};
 use log::error;
 
 use crate::types::{

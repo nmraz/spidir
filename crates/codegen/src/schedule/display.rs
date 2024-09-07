@@ -1,9 +1,6 @@
 use core::fmt;
 
-use ir::{
-    module::{FunctionBody, Module},
-    write::display_node,
-};
+use ir::{function::FunctionBody, module::Module, write::display_node};
 use itertools::Itertools;
 
 use crate::cfg::{Block, BlockCfg};

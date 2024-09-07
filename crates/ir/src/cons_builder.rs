@@ -6,7 +6,7 @@ use smallvec::SmallVec;
 
 use crate::{
     builder::Builder,
-    module::FunctionBody,
+    function::FunctionBody,
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
 };

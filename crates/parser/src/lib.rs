@@ -12,7 +12,8 @@ use alloc::{
 
 use fx_utils::FxHashMap;
 use ir::{
-    module::{Function, FunctionBody, FunctionData, FunctionMetadata, Module, Signature},
+    function::{FunctionBody, FunctionData, FunctionMetadata, Signature},
+    module::{Function, Module},
     node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };

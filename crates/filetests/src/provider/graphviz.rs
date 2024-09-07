@@ -3,8 +3,9 @@ use std::fmt::Write;
 use anyhow::{anyhow, Result};
 use ir::{
     domtree::DomTree,
+    function::FunctionData,
     loops::LoopForest,
-    module::{FunctionData, Module},
+    module::Module,
     verify::{verify_func, GraphVerifierError},
 };
 use ir_graphviz::{

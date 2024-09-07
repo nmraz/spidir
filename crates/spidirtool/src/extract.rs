@@ -1,7 +1,8 @@
 use anyhow::Result;
 use fx_utils::{FxHashMap, FxHashSet};
 use ir::{
-    module::{FunctionBody, FunctionMetadata, Module},
+    function::{FunctionBody, FunctionMetadata},
+    module::Module,
     node::{FunctionRef, NodeKind},
     valwalk::walk_live_nodes,
 };

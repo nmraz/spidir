@@ -2,7 +2,8 @@ use std::{fs, path::Path};
 
 use anyhow::{anyhow, bail, Context, Result};
 use ir::{
-    module::{Function, FunctionData, Module},
+    function::FunctionData,
+    module::{Function, Module},
     verify::verify_module,
 };
 use parser::parse_module;

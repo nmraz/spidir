@@ -3,7 +3,7 @@ use graphwalk::PostOrderContext;
 
 use crate::{
     builder::{BuilderExt, SimpleBuilder},
-    module::FunctionBody,
+    function::FunctionBody,
     node::Type,
     test_utils::create_loop_body,
     valgraph::{Node, ValGraph},

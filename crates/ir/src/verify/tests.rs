@@ -1,6 +1,6 @@
 use crate::{
     builder::{BuilderExt, SimpleBuilder},
-    module::{FunctionBody, FunctionData, FunctionMetadata, Signature},
+    function::{FunctionBody, FunctionMetadata, Signature},
     node::Type,
     test_utils::{create_const32, create_entry, create_region, create_return},
 };

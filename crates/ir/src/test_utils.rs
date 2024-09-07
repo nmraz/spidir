@@ -2,7 +2,7 @@ use core::{array, iter};
 
 use crate::{
     builder::{BuilderExt, SimpleBuilder},
-    module::FunctionBody,
+    function::FunctionBody,
     node::{DepValueKind, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };

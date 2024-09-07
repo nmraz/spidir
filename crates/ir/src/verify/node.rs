@@ -3,7 +3,8 @@ use core::array;
 use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::{
-    module::{FunctionData, Module},
+    function::FunctionData,
+    module::Module,
     node::{DepValueKind, FunctionRef, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };

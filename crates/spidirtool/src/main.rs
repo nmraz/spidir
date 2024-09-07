@@ -16,8 +16,9 @@ use codegen::{
 };
 use ir::{
     domtree::DomTree,
+    function::FunctionData,
     loops::LoopForest,
-    module::{FunctionData, Module},
+    module::Module,
     verify::verify_func,
     write::{display_node, quote_ident, write_function_metadata},
 };

@@ -1,7 +1,8 @@
 use alloc::vec::Vec;
 
 use ir::{
-    module::{FunctionData, Module},
+    function::FunctionData,
+    module::Module,
     valgraph::{Node, ValGraph},
     valwalk::cfg_preorder,
 };

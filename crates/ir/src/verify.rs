@@ -10,7 +10,8 @@ use smallvec::SmallVec;
 
 use crate::{
     domtree::{DomTree, DomTreeNode},
-    module::{Function, FunctionData, Module},
+    function::FunctionData,
+    module::{Function, Module},
     node::{DepValueKind, NodeKind},
     schedule::{schedule_early, ScheduleContext},
     valgraph::{DepValue, Node, ValGraph},

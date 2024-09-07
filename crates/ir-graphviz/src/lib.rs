@@ -8,9 +8,7 @@ use core::fmt;
 use itertools::Itertools;
 
 use ir::{
-    module::{FunctionBody, Module},
-    node::NodeKind,
-    valwalk::LiveNodeInfo,
+    function::FunctionBody, module::Module, node::NodeKind, valwalk::LiveNodeInfo,
     write::write_node_kind,
 };
 

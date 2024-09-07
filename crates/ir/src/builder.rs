@@ -1,7 +1,7 @@
 use core::iter;
 
 use crate::{
-    module::FunctionBody,
+    function::FunctionBody,
     node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };

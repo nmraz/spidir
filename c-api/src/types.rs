@@ -7,7 +7,8 @@ use alloc::{borrow::ToOwned, string::String};
 use codegen::emit::Reloc;
 use frontend::{Block, FunctionBuilder};
 use ir::{
-    module::{ExternFunction, Function, Signature},
+    function::Signature,
+    module::{ExternFunction, Function},
     node::{FunctionRef, IcmpKind, MemSize, Type},
     valgraph::DepValue,
 };

@@ -6,7 +6,8 @@ use core::{
 use alloc::boxed::Box;
 use frontend::FunctionBuilder;
 use ir::{
-    module::{FunctionData, FunctionMetadata, Module},
+    function::{FunctionData, FunctionMetadata},
+    module::Module,
     node::FunctionRef,
 };
 

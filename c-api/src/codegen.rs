@@ -6,7 +6,6 @@ use codegen::{
     emit::CodeBlob,
     machine::Machine,
     regalloc::RegallocError,
-    target::x64::X64Machine,
 };
 use ir::{function::FunctionData, module::Module, node::FunctionRef, write::display_node};
 use log::error;
@@ -25,7 +24,7 @@ struct ApiCodegenMachineVtable {
     ) -> Result<CodeBlob, CodegenError>,
 }
 
-struct ApiCodegenMachine {
+pub struct ApiCodegenMachine {
     vtable: &'static ApiCodegenMachineVtable,
 }
 
@@ -57,7 +56,7 @@ unsafe fn codegen_machine_codegen_func<M: Machine>(
     codegen_func(module, func, &inner.machine)
 }
 
-fn codegen_machine_to_api<M: Machine>(machine: M) -> *mut ApiCodegenMachine {
+pub fn codegen_machine_to_api<M: Machine>(machine: M) -> *mut ApiCodegenMachine {
     Box::into_raw(Box::new(ApiCodegenMachineInner {
         base: ApiCodegenMachine {
             vtable: &ApiCodegenMachineVtable {
@@ -166,9 +165,4 @@ unsafe extern "C" fn spidir_codegen_emit_function(
     }
 
     SPIDIR_CODEGEN_OK
-}
-
-#[no_mangle]
-extern "C" fn spidir_codegen_create_x64_machine() -> *mut ApiCodegenMachine {
-    codegen_machine_to_api(X64Machine::default())
 }

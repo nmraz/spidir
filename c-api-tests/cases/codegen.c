@@ -50,7 +50,8 @@ void outer_builder_callback(spidir_builder_handle_t builder, void* ctx) {
 
 void apply_relocs(uintptr_t base, spidir_function_t inner, uintptr_t inner_addr,
                   spidir_function_t outer, uintptr_t outer_addr,
-                  const spidir_codegen_reloc_t* relocs, size_t reloc_count) {
+                  const spidir_codegen_reloc_t* relocs, size_t reloc_count,
+                  spidir_reloc_kind_t expected_reloc) {
     for (size_t i = 0; i < reloc_count; i++) {
         const spidir_codegen_reloc_t* reloc = &relocs[i];
         uintptr_t patch_addr = base + reloc->offset;
@@ -63,6 +64,8 @@ void apply_relocs(uintptr_t base, spidir_function_t inner, uintptr_t inner_addr,
         } else {
             ASSERT(!"unknown relocation target");
         }
+
+        ASSERT(reloc->kind == expected_reloc);
 
         switch (reloc->kind) {
         case SPIDIR_RELOC_X64_PC32: {
@@ -83,7 +86,8 @@ void apply_relocs(uintptr_t base, spidir_function_t inner, uintptr_t inner_addr,
 void map_and_run(spidir_function_t inner,
                  spidir_codegen_blob_handle_t inner_code,
                  spidir_function_t outer,
-                 spidir_codegen_blob_handle_t outer_code) {
+                 spidir_codegen_blob_handle_t outer_code,
+                 spidir_reloc_kind_t expected_reloc) {
     size_t inner_size = spidir_codegen_blob_get_code_size(inner_code);
     size_t outer_size = spidir_codegen_blob_get_code_size(outer_code);
 
@@ -105,15 +109,30 @@ void map_and_run(spidir_function_t inner,
 
     apply_relocs(inner_base, inner, inner_base, outer, outer_base,
                  spidir_codegen_blob_get_relocs(inner_code),
-                 spidir_codegen_blob_get_reloc_count(inner_code));
+                 spidir_codegen_blob_get_reloc_count(inner_code),
+                 expected_reloc);
     apply_relocs(outer_base, inner, inner_base, outer, outer_base,
                  spidir_codegen_blob_get_relocs(outer_code),
-                 spidir_codegen_blob_get_reloc_count(outer_code));
+                 spidir_codegen_blob_get_reloc_count(outer_code),
+                 expected_reloc);
 
     ASSERT(mprotect((void*) map_base, map_size, PROT_READ | PROT_EXEC) == 0);
 
     int32_t retval = ((int (*)(void)) outer_base)();
     ASSERT(retval == 7);
+}
+
+void codegen_and_run(spidir_module_handle_t module, spidir_function_t inner,
+                     spidir_function_t outer,
+                     spidir_codegen_machine_handle_t machine,
+                     spidir_reloc_kind_t expected_reloc) {
+    spidir_codegen_blob_handle_t inner_code =
+        codegen_function(machine, module, inner);
+    spidir_codegen_blob_handle_t outer_code =
+        codegen_function(machine, module, outer);
+    map_and_run(inner, inner_code, outer, outer_code, expected_reloc);
+    spidir_codegen_blob_destroy(inner_code);
+    spidir_codegen_blob_destroy(outer_code);
 }
 
 int main(void) {
@@ -139,10 +158,30 @@ int main(void) {
     spidir_module_build_function(module, outer, outer_builder_callback,
                                  &func_ctx);
 
-    spidir_codegen_blob_handle_t inner_code = codegen_function(module, inner);
-    spidir_codegen_blob_handle_t outer_code = codegen_function(module, outer);
+    spidir_codegen_machine_handle_t default_machine =
+        spidir_codegen_create_x64_machine();
+    codegen_and_run(module, inner, outer, default_machine,
+                    SPIDIR_RELOC_X64_ABS64);
+    spidir_codegen_machine_destroy(default_machine);
 
-    map_and_run(inner, inner_code, outer, outer_code);
+    spidir_codegen_machine_handle_t large_machine =
+        spidir_codegen_create_x64_machine_with_config(
+            &((spidir_x64_machine_config_t){
+                .internal_code_model = SPIDIR_X64_CM_LARGE_ABS,
+                .extern_code_model = SPIDIR_X64_CM_LARGE_ABS,
+            }));
+    codegen_and_run(module, inner, outer, large_machine,
+                    SPIDIR_RELOC_X64_ABS64);
+    spidir_codegen_machine_destroy(large_machine);
+
+    spidir_codegen_machine_handle_t small_machine =
+        spidir_codegen_create_x64_machine_with_config(
+            &((spidir_x64_machine_config_t){
+                .internal_code_model = SPIDIR_X64_CM_SMALL_PIC,
+                .extern_code_model = SPIDIR_X64_CM_SMALL_PIC,
+            }));
+    codegen_and_run(module, inner, outer, small_machine, SPIDIR_RELOC_X64_PC32);
+    spidir_codegen_machine_destroy(small_machine);
 
     return 0;
 }

@@ -15,7 +15,8 @@ void assert_failed(const char* file, int line, const char* expr);
 void init_stdout_spidir_log(void);
 void dump_module_to_stdout(spidir_module_handle_t module);
 
-spidir_codegen_blob_handle_t codegen_function(spidir_module_handle_t module,
-                                              spidir_function_t func);
+spidir_codegen_blob_handle_t
+codegen_function(spidir_codegen_machine_handle_t machine,
+                 spidir_module_handle_t module, spidir_function_t func);
 
 #endif

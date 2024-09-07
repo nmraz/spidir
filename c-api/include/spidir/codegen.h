@@ -23,6 +23,10 @@ enum spidir_codegen_status {
     SPIDIR_CODEGEN_ERROR_REGALLOC = 2,
 };
 
+/// Represents the different types of relocations to apply to generated code.
+/// See individual backend definitions for possible values.
+typedef uint8_t spidir_reloc_kind_t;
+
 /// Represents a relocation against another function (internal or external) in
 /// generated code.
 typedef struct spidir_codegen_reloc {
@@ -36,7 +40,7 @@ typedef struct spidir_codegen_reloc {
     uint32_t offset;
     /// The kind of relocation to apply.
     /// The meaning of this field depends on the target architecture.
-    uint8_t kind;
+    spidir_reloc_kind_t kind;
 } spidir_codegen_reloc_t;
 
 /// An opaque type representing a machine backend for a specific architecture.

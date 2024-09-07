@@ -1,0 +1,11 @@
+[package]
+name = "codegen-disasm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ir.workspace = true
+codegen.workspace = true
+
+anyhow.workspace = true
+capstone.workspace = true

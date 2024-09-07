@@ -195,6 +195,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "codegen-disasm"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "capstone",
+ "codegen",
+ "ir",
+]
+
+[[package]]
 name = "colorchoice"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -345,9 +355,9 @@ name = "filetests"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "capstone",
  "clap",
  "codegen",
+ "codegen-disasm",
  "cranelift-entity",
  "expect-test",
  "filecheck",

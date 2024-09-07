@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 codegen.workspace = true
+codegen-disasm.workspace = true
 ir.workspace = true
 ir-graphviz.workspace = true
 parser = { workspace = true, features = ["std"] }
@@ -19,7 +20,6 @@ cranelift-entity.workspace = true
 hashbrown.workspace = true
 itertools.workspace = true
 log.workspace = true
-capstone.workspace = true
 
 filecheck = "0.5.0"
 regex = "1.9.3"

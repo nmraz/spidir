@@ -2,7 +2,7 @@
 #define SPIDIR_TESTS_UTILS_UTILS_H
 
 #include <spidir/codegen.h>
-#include <spidir/spidir.h>
+#include <spidir/module.h>
 
 #define ASSERT(expr)                                                           \
     do {                                                                       \

@@ -2,7 +2,7 @@
 
 #include <spidir/codegen.h>
 #include <spidir/log.h>
-#include <spidir/spidir.h>
+#include <spidir/module.h>
 #include <spidir/x64.h>
 
 #include <stddef.h>

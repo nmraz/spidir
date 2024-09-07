@@ -4,7 +4,7 @@
 #ifndef SPIDIR_CODEGEN_H
 #define SPIDIR_CODEGEN_H
 
-#include <spidir/spidir.h>
+#include <spidir/module.h>
 
 #include <stddef.h>
 #include <stdint.h>

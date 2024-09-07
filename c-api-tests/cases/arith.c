@@ -1,4 +1,4 @@
-#include <spidir/spidir.h>
+#include <spidir/module.h>
 
 #include <stddef.h>
 

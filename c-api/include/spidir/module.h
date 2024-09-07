@@ -1,5 +1,5 @@
 /// @file spidir.h
-/// Core spidir definitions and APIs.
+/// Spidir module/function definitions and APIs.
 
 #ifndef SPIDIR_SPIDIR_H
 #define SPIDIR_SPIDIR_H

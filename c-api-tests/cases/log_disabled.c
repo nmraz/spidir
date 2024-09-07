@@ -1,5 +1,5 @@
 #include <spidir/log.h>
-#include <spidir/spidir.h>
+#include <spidir/module.h>
 
 #include <stddef.h>
 

@@ -89,7 +89,7 @@ mod tests {
 
     fn _codegen_object_safe(_codegen: &dyn Codegen) {}
     fn _real_machine_object_safe() {
-        let machine = X64Machine;
+        let machine = X64Machine::default();
         _codegen_object_safe(&machine);
     }
 }

@@ -17,13 +17,14 @@ impl TestProvider for IselProvider {
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let (cfg_ctx, lir) = lower_func(module, func, &X64Machine).map_err(|err| {
-                anyhow!(
-                    "failed to select `{}`: `{}`",
-                    func.metadata.name,
-                    display_node(module, &func.body, err.node)
-                )
-            })?;
+            let (cfg_ctx, lir) =
+                lower_func(module, func, &X64Machine::default()).map_err(|err| {
+                    anyhow!(
+                        "failed to select `{}`: `{}`",
+                        func.metadata.name,
+                        display_node(module, &func.body, err.node)
+                    )
+                })?;
 
             write!(
                 output,

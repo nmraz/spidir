@@ -304,7 +304,7 @@ fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
 
     for func in module.functions.values() {
         writeln!(output, "func @{} {{", quote_ident(&func.metadata.name)).unwrap();
-        let (cfg_ctx, lir) = lower_func(module, func, &X64Machine).map_err(|err| {
+        let (cfg_ctx, lir) = lower_func(module, func, &X64Machine::default()).map_err(|err| {
             anyhow!(
                 "failed to select `{}`: `{}`",
                 func.metadata.name,
@@ -313,7 +313,7 @@ fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
         })?;
 
         if regalloc {
-            let assignment = codegen::regalloc::run(&lir, &cfg_ctx, &X64Machine)
+            let assignment = codegen::regalloc::run(&lir, &cfg_ctx, &X64Machine::default())
                 .map_err(|err| anyhow!("register allocation failed: {err:?}"))?;
             write!(output, "{}", assignment.display(&cfg_ctx.block_order, &lir)).unwrap();
         } else {

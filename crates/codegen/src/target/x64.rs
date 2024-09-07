@@ -135,7 +135,29 @@ pub enum X64Instr {
     Ud2,
 }
 
-pub struct X64Machine;
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum CodeModel {
+    #[default]
+    SmallPic,
+    LargeAbs,
+}
+
+#[derive(Default, Debug, Clone, Copy)]
+pub struct X64MachineConfig {
+    pub internal_code_model: CodeModel,
+    pub extern_code_model: CodeModel,
+}
+
+#[derive(Default)]
+pub struct X64Machine {
+    _config: X64MachineConfig,
+}
+
+impl X64Machine {
+    pub fn new(config: X64MachineConfig) -> Self {
+        Self { _config: config }
+    }
+}
 
 impl MachineCore for X64Machine {
     type Instr = X64Instr;

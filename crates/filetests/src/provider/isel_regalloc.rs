@@ -20,7 +20,7 @@ impl TestProvider for IselRegallocProvider {
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let machine = X64Machine;
+            let machine = X64Machine::default();
 
             let (cfg_ctx, lir) = lower_func(module, func, &machine).map_err(|err| {
                 anyhow!(

@@ -170,5 +170,5 @@ unsafe extern "C" fn spidir_codegen_emit_function(
 
 #[no_mangle]
 extern "C" fn spidir_codegen_create_x64_machine() -> *mut ApiCodegenMachine {
-    codegen_machine_to_api(X64Machine)
+    codegen_machine_to_api(X64Machine::default())
 }

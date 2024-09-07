@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, bail, ensure, Result};
 use codegen::CodegenProvider;
 use filecheck::Value;
 use fx_utils::FxHashMap;
@@ -12,7 +12,7 @@ use crate::utils::parse_output_func_heading;
 use self::{
     cfg::CfgProvider,
     domtree::DomTreeProvider,
-    graphviz::{AnnotatorKind, GraphvizTestProvider},
+    graphviz::GraphvizTestProvider,
     isel::IselProvider,
     loops::LoopForestProvider,
     schedule::ScheduleProvider,
@@ -43,17 +43,12 @@ pub trait TestProvider {
 }
 
 pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> {
-    match run_command {
+    let (command, params) = parse_run_command(run_command)?;
+
+    match command {
         "cfg" => Ok(Box::new(CfgProvider)),
         "domtree" => Ok(Box::new(DomTreeProvider)),
-        "graphviz[plain]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Plain))),
-        "graphviz[colored]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Colored))),
-        "graphviz[verify]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Verify))),
-        "graphviz[verify-colored]" => Ok(Box::new(GraphvizTestProvider::new(
-            AnnotatorKind::VerifyColored,
-        ))),
-        "graphviz[domtree]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::DomTree))),
-        "graphviz[loops]" => Ok(Box::new(GraphvizTestProvider::new(AnnotatorKind::Loops))),
+        "graphviz" => Ok(Box::new(GraphvizTestProvider::new(&params)?)),
         "isel" => Ok(Box::new(IselProvider)),
         "isel-regalloc" => Ok(Box::new(IselRegallocProvider)),
         "codegen" => Ok(Box::new(CodegenProvider)),
@@ -63,6 +58,25 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> 
         "verify-ok" => Ok(Box::new(VerifyOkProvider)),
         _ => bail!("unknown run command '{run_command}'"),
     }
+}
+
+fn parse_run_command(run_command: &str) -> Result<(&str, Vec<&str>)> {
+    let Some(base_end) = run_command.find('[') else {
+        // Simple case: no parameters.
+        return Ok((run_command, vec![]));
+    };
+
+    let (command, params) = run_command.split_at(base_end);
+    ensure!(
+        params.find(']') == Some(params.len() - 1),
+        "invalid provider parameter string"
+    );
+    let params = params[1..params.len() - 1]
+        .split(',')
+        .map(|param| param.trim())
+        .collect();
+
+    Ok((command, params))
 }
 
 fn update_per_func_output(updater: &mut Updater<'_>, output_str: &str) -> Result<()> {

@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use ir::{
     domtree::DomTree,
     function::FunctionData,
@@ -16,7 +16,7 @@ use ir_graphviz::{
 use super::{update_per_func_output, TestProvider, Updater};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AnnotatorKind {
+enum AnnotatorKind {
     Plain,
     Colored,
     Verify,
@@ -30,8 +30,22 @@ pub struct GraphvizTestProvider {
 }
 
 impl GraphvizTestProvider {
-    pub fn new(kind: AnnotatorKind) -> Self {
-        Self { kind }
+    pub fn new(params: &[&str]) -> Result<Self> {
+        let &[kind] = params else {
+            bail!("graphviz provider requires exactly one parameter")
+        };
+
+        let kind = match kind {
+            "plain" => AnnotatorKind::Plain,
+            "colored" => AnnotatorKind::Colored,
+            "verify" => AnnotatorKind::Verify,
+            "verify-colored" => AnnotatorKind::VerifyColored,
+            "domtree" => AnnotatorKind::DomTree,
+            "loops" => AnnotatorKind::Loops,
+            _ => bail!("invalid annotator kind '{kind}'"),
+        };
+
+        Ok(Self { kind })
     }
 }
 

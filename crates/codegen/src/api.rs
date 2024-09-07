@@ -5,6 +5,7 @@ use ir::{
     valgraph::{Node, ValGraph},
     valwalk::cfg_preorder,
 };
+use log::info;
 
 use crate::{
     cfg::{CfgContext, FunctionBlockMap},
@@ -55,6 +56,7 @@ pub fn codegen_func<M: Machine>(
     func: &FunctionData,
     machine: &M,
 ) -> Result<CodeBlob, CodegenError> {
+    info!("generating code for: {}", func.metadata());
     let (cfg_ctx, lir) = lower_func(module, func, machine)?;
     let assignment = regalloc::run(&lir, &cfg_ctx, machine)?;
     let code = emit_code(&lir, &cfg_ctx, &assignment, machine);

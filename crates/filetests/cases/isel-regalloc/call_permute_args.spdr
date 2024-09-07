@@ -10,7 +10,7 @@ func @f1(i32, i32) {
     # nextln:           $$rax = $$rsi
     # nextln:           $$rsi = $$rdi
     # nextln:           $$rdi = $$rax
-    # nextln: 0000:     Call(External(extfunc0)) $$rdi, $$rsi
+    # nextln: 0000:     CallRel(External(extfunc0)) $$rdi, $$rsi
     # nextln: 0001:     Ret
 
     %e:ctrl, %p1:i32, %p2:i32 = entry
@@ -27,10 +27,10 @@ func @f2(i32, i32, i32) {
     # nextln:           $$rbx = $$rdi
     # nextln:           $$rdi = $$rsi
     # nextln:           $$rsi = $$rbx
-    # nextln: 0000:     Call(External(extfunc0)) $$rdi, $$rsi
+    # nextln: 0000:     CallRel(External(extfunc0)) $$rdi, $$rsi
     # nextln:           $$rsi = $$r12
     # nextln:           $$rdi = $$rbx
-    # nextln: 0001:     Call(External(extfunc0)) $$rdi, $$rsi
+    # nextln: 0001:     CallRel(External(extfunc0)) $$rdi, $$rsi
     # nextln: 0002:     Ret
 
     %e:ctrl, %p1:i32, %p2:i32, %p3:i32 = entry

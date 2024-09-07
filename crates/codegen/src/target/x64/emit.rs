@@ -13,7 +13,7 @@ use crate::{
 use super::{
     AluOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale, OperandSize, ShiftOp, X64Instr,
     X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8, REG_R9, REG_RAX,
-    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_PC32,
+    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64, RELOC_PC32,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -258,8 +258,11 @@ impl MachineEmit for X64Machine {
                 emit_push(buffer, uses[0].as_reg().unwrap());
                 state.sp_frame_offset += 8;
             }
-            &X64Instr::Call(target) => {
-                // TODO: Other code models?
+            &X64Instr::FuncAddrAbs(target) => {
+                buffer.emit_reloc_at(buffer.offset() + 2, target, 0, RELOC_ABS64);
+                emit_movabs_ri(buffer, defs[0].as_reg().unwrap(), 0);
+            }
+            &X64Instr::CallRel(target) => {
                 emit_call_rel(buffer, target);
             }
             &X64Instr::CallRm => emit_call_rm(buffer, state.operand_reg_mem(uses[0])),
@@ -591,27 +594,34 @@ fn emit_shift_rm_i(
 }
 
 fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
-    let mut rex = RexPrefix::new();
-    let dest = rex.encode_modrm_base(dest);
-
     if is_uint::<32>(imm) {
         // Smallest case: move imm32 to r32, clearing upper bits.
+        let mut rex = RexPrefix::new();
+        let dest = rex.encode_modrm_base(dest);
         rex.emit(buffer);
         buffer.emit(&[0xb8 + dest]);
         buffer.emit(&(imm as u32).to_le_bytes());
     } else if is_sint::<32>(imm) {
         // Next smallest case: sign-extend imm32 to r64.
+        let mut rex = RexPrefix::new();
+        let dest = rex.encode_modrm_base(dest);
         rex.encode_operand_size(OperandSize::S64);
         rex.emit(buffer);
         buffer.emit(&[0xc7, encode_modrm_r(0, dest)]);
         buffer.emit(&(imm as u32).to_le_bytes());
     } else {
         // Large case: use full 64-bit immediate.
-        rex.encode_operand_size(OperandSize::S64);
-        rex.emit(buffer);
-        buffer.emit(&[0xb8 + dest]);
-        buffer.emit(&imm.to_le_bytes());
+        emit_movabs_ri(buffer, dest, imm);
     }
+}
+
+fn emit_movabs_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
+    let mut rex = RexPrefix::new();
+    let dest = rex.encode_modrm_base(dest);
+    rex.encode_operand_size(OperandSize::S64);
+    rex.emit(buffer);
+    buffer.emit(&[0xb8 + dest]);
+    buffer.emit(&imm.to_le_bytes());
 }
 
 fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, imm: i32) {

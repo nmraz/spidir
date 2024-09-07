@@ -74,25 +74,25 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill5 = $$rcx
     # nextln:           $$spill4 = $$r8
     # nextln:           $$r14 = $$r9
-    # nextln: 0027:     $$rax = Call(External(extfunc0)) $$rdi, $$rsi
+    # nextln: 0027:     $$rax = CallRel(External(extfunc0)) $$rdi, $$rsi
     # nextln:           $$spill0 = $$r13
     # nextln:           $$spill2 = $$r14
     # nextln:           $$r13 = $$rax
     # nextln:           $$r14 = $$spill7
     # nextln:           $$rdi = $$r13
-    # nextln: 0028:     Call(External(extfunc3)) $$rdi
+    # nextln: 0028:     CallRel(External(extfunc3)) $$rdi
     # nextln: 0029:     MovStackR(!0, S64) $$r13
     # nextln:           $$r13 = $$spill5
     # nextln:           $$rsi = $$rbx
     # nextln:           $$rdi = $$r12
-    # nextln: 0030:     $$rax = Call(External(extfunc0)) $$rdi, $$rsi
+    # nextln: 0030:     $$rax = CallRel(External(extfunc0)) $$rdi, $$rsi
     # nextln:           $$rcx = $$rax
     # nextln: 0031:     $$rcx = AluRRm(S64, Add) $$rcx, $$r13
     # nextln: 0032:     MovMR(S32) $$rcx, $$r15
     # nextln: 0033:     MovStackR(!1, S64) $$rax
     # nextln:           $$rsi = $$rbx
     # nextln:           $$rdi = $$r12
-    # nextln: 0034:     $$rax = Call(External(extfunc0)) $$rdi, $$rsi
+    # nextln: 0034:     $$rax = CallRel(External(extfunc0)) $$rdi, $$rsi
     # nextln:           $$rdi = $$r13
     # nextln:           $$rdx = $$spill0
     # nextln:           $$rcx = $$spill4
@@ -687,7 +687,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill0 = $$rax
     # nextln: 0413:     Jump(block80)
     # nextln:       block80:
-    # nextln: 0414:     $$rax = Call(External(extfunc1))
+    # nextln: 0414:     $$rax = CallRel(External(extfunc1))
     # nextln: 0415:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0416:     Jumpcc(Ne, block81, block82)
     # nextln:       block81:
@@ -707,7 +707,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill3 = $$rcx
     # nextln: 0424:     Jump(block83)
     # nextln:       block83:
-    # nextln: 0425:     $$rax = Call(External(extfunc1))
+    # nextln: 0425:     $$rax = CallRel(External(extfunc1))
     # nextln: 0426:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0427:     Jumpcc(Ne, block84, block85)
     # nextln:       block84:
@@ -729,7 +729,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill4 = $$rcx
     # nextln: 0435:     Jump(block86)
     # nextln:       block86:
-    # nextln: 0436:     $$rax = Call(External(extfunc1))
+    # nextln: 0436:     $$rax = CallRel(External(extfunc1))
     # nextln: 0437:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0438:     Jumpcc(Ne, block87, block88)
     # nextln:       block87:
@@ -751,7 +751,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$r14 = $$rax
     # nextln: 0446:     Jump(block89)
     # nextln:       block89:
-    # nextln: 0447:     $$rax = Call(External(extfunc1))
+    # nextln: 0447:     $$rax = CallRel(External(extfunc1))
     # nextln: 0448:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0449:     Jumpcc(Ne, block90, block91)
     # nextln:       block90:
@@ -771,7 +771,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill3 = $$rax
     # nextln: 0457:     Jump(block92)
     # nextln:       block92:
-    # nextln: 0458:     $$rax = Call(External(extfunc1))
+    # nextln: 0458:     $$rax = CallRel(External(extfunc1))
     # nextln: 0459:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0460:     Jumpcc(Ne, block93, block94)
     # nextln:       block93:
@@ -791,7 +791,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill3 = $$rcx
     # nextln: 0468:     Jump(block95)
     # nextln:       block95:
-    # nextln: 0469:     $$rax = Call(External(extfunc1))
+    # nextln: 0469:     $$rax = CallRel(External(extfunc1))
     # nextln: 0470:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0471:     Jumpcc(Ne, block96, block97)
     # nextln:       block96:
@@ -813,7 +813,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill4 = $$rcx
     # nextln: 0479:     Jump(block98)
     # nextln:       block98:
-    # nextln: 0480:     $$rax = Call(External(extfunc1))
+    # nextln: 0480:     $$rax = CallRel(External(extfunc1))
     # nextln: 0481:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0482:     Jumpcc(Ne, block99, block100)
     # nextln:       block99:
@@ -835,7 +835,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill3 = $$rcx
     # nextln: 0490:     Jump(block101)
     # nextln:       block101:
-    # nextln: 0491:     $$rax = Call(External(extfunc1))
+    # nextln: 0491:     $$rax = CallRel(External(extfunc1))
     # nextln: 0492:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0493:     Jumpcc(Ne, block102, block103)
     # nextln:       block102:
@@ -1397,7 +1397,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill6 = $$rdx
     # nextln: 0878:     Jump(block193)
     # nextln:       block193:
-    # nextln: 0879:     $$rax = Call(External(extfunc1))
+    # nextln: 0879:     $$rax = CallRel(External(extfunc1))
     # nextln: 0880:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0881:     Jumpcc(Ne, block194, block195)
     # nextln:       block194:
@@ -1550,7 +1550,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill3 = $$rcx
     # nextln: 0972:     Jump(block215)
     # nextln:       block215:
-    # nextln: 0973:     $$rax = Call(External(extfunc1))
+    # nextln: 0973:     $$rax = CallRel(External(extfunc1))
     # nextln: 0974:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0975:     Jumpcc(Ne, block216, block217)
     # nextln:       block216:
@@ -1682,7 +1682,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$r14 = $$rax
     # nextln: 1066:     Jump(block237)
     # nextln:       block237:
-    # nextln: 1067:     $$rax = Call(External(extfunc1))
+    # nextln: 1067:     $$rax = CallRel(External(extfunc1))
     # nextln: 1068:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 1069:     Jumpcc(Ne, block238, block239)
     # nextln:       block238:
@@ -1814,7 +1814,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$r14 = $$rax
     # nextln: 1160:     Jump(block259)
     # nextln:       block259:
-    # nextln: 1161:     $$rax = Call(External(extfunc1))
+    # nextln: 1161:     $$rax = CallRel(External(extfunc1))
     # nextln: 1162:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 1163:     Jumpcc(Ne, block260, block261)
     # nextln:       block260:
@@ -1958,7 +1958,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill3 = $$rcx
     # nextln: 1254:     Jump(block281)
     # nextln:       block281:
-    # nextln: 1255:     $$rax = Call(External(extfunc1))
+    # nextln: 1255:     $$rax = CallRel(External(extfunc1))
     # nextln: 1256:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 1257:     Jumpcc(Ne, block282, block283)
     # nextln:       block282:
@@ -2106,7 +2106,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill3 = $$rcx
     # nextln: 1348:     Jump(block303)
     # nextln:       block303:
-    # nextln: 1349:     $$rax = Call(External(extfunc1))
+    # nextln: 1349:     $$rax = CallRel(External(extfunc1))
     # nextln: 1350:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 1351:     Jumpcc(Ne, block304, block305)
     # nextln:       block304:
@@ -2246,7 +2246,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$r14 = $$rax
     # nextln: 1442:     Jump(block325)
     # nextln:       block325:
-    # nextln: 1443:     $$rax = Call(External(extfunc1))
+    # nextln: 1443:     $$rax = CallRel(External(extfunc1))
     # nextln: 1444:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 1445:     Jumpcc(Ne, block326, block327)
     # nextln:       block326:
@@ -2378,7 +2378,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$r14 = $$rax
     # nextln: 1536:     Jump(block347)
     # nextln:       block347:
-    # nextln: 1537:     $$rax = Call(External(extfunc1))
+    # nextln: 1537:     $$rax = CallRel(External(extfunc1))
     # nextln: 1538:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 1539:     Jumpcc(Ne, block348, block349)
     # nextln:       block348:
@@ -2582,7 +2582,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$r14 = $$rax
     # nextln:           $$spill6 = $$rcx
     # nextln:           $$spill4 = $$rdx
-    # nextln: 1664:     $$rax = Call(External(extfunc1))
+    # nextln: 1664:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rdx = $$spill6
     # nextln:           $$rdi = $$spill4
     # nextln:           $$rcx = $$r14
@@ -2838,7 +2838,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill6 = $$rax
     # nextln:           $$r14 = $$rdx
     # nextln:           $$spill4 = $$rcx
-    # nextln: 1800:     $$rax = Call(External(extfunc1))
+    # nextln: 1800:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdi = $$r14
     # nextln:           $$rdx = $$spill4
@@ -3125,7 +3125,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill6 = $$rcx
     # nextln:           $$spill3 = $$rdx
     # nextln:           $$r14 = $$rdi
-    # nextln: 1946:     $$rax = Call(External(extfunc1))
+    # nextln: 1946:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdi = $$spill3
     # nextln:           $$rdx = $$r14
@@ -3410,7 +3410,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill6 = $$rdx
     # nextln:           $$r14 = $$rcx
     # nextln:           $$spill3 = $$rdi
-    # nextln: 2094:     $$rax = Call(External(extfunc1))
+    # nextln: 2094:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdi = $$spill3
     # nextln:           $$rdx = $$r14
@@ -3705,7 +3705,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$r14 = $$rcx
     # nextln:           $$spill3 = $$rdx
     # nextln:           $$spill4 = $$rdi
-    # nextln: 2254:     $$rax = Call(External(extfunc1))
+    # nextln: 2254:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$r14
     # nextln:           $$rdi = $$spill3
     # nextln:           $$rdx = $$spill4
@@ -3836,7 +3836,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$r14 = $$rax
     # nextln:           $$spill6 = $$rdx
     # nextln:           $$spill3 = $$rcx
-    # nextln: 2324:     $$rax = Call(External(extfunc1))
+    # nextln: 2324:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdi = $$spill3
     # nextln:           $$rdx = $$r14
@@ -3879,7 +3879,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill4 = $$rdx
     # nextln:           $$spill6 = $$rcx
     # nextln:           $$r14 = $$rax
-    # nextln: 2339:     $$rax = Call(External(extfunc1))
+    # nextln: 2339:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdi = $$spill4
     # nextln:           $$rdx = $$r14
@@ -3925,7 +3925,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill6 = $$rdx
     # nextln:           $$r14 = $$rax
     # nextln:           $$spill3 = $$rcx
-    # nextln: 2354:     $$rax = Call(External(extfunc1))
+    # nextln: 2354:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdx = $$r14
     # nextln:           $$rdi = $$spill3
@@ -3966,7 +3966,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill6 = $$rax
     # nextln:           $$spill3 = $$rdx
     # nextln:           $$r14 = $$rcx
-    # nextln: 2370:     $$rax = Call(External(extfunc1))
+    # nextln: 2370:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdx = $$spill3
     # nextln:           $$rdi = $$r14
@@ -4006,7 +4006,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill3 = $$rcx
     # nextln:           $$spill4 = $$rax
     # nextln:           $$r14 = $$rdx
-    # nextln: 2386:     $$rax = Call(External(extfunc1))
+    # nextln: 2386:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rdx = $$spill3
     # nextln:           $$rcx = $$r14
     # nextln:           $$rdi = $$spill4
@@ -4052,7 +4052,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill6 = $$rdx
     # nextln:           $$spill3 = $$rcx
     # nextln:           $$r14 = $$rax
-    # nextln: 2404:     $$rax = Call(External(extfunc1))
+    # nextln: 2404:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdi = $$spill3
     # nextln:           $$rdx = $$r14
@@ -4061,7 +4061,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$r14 = $$rax
     # nextln:           $$spill6 = $$rdx
     # nextln:           $$spill3 = $$rcx
-    # nextln: 2406:     $$rax = Call(External(extfunc1))
+    # nextln: 2406:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rdi = $$spill3
     # nextln:           $$rdx = $$r14
     # nextln:           $$rcx = $$spill6
@@ -4094,7 +4094,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$r14 = $$rcx
     # nextln:           $$spill6 = $$rax
     # nextln:           $$spill3 = $$rdx
-    # nextln: 2420:     $$rax = Call(External(extfunc1))
+    # nextln: 2420:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdx = $$spill3
     # nextln: 2421:     Jump(block655)
@@ -4142,7 +4142,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:       block659:
     # nextln:           $$spill6 = $$rcx
     # nextln:           $$spill3 = $$rax
-    # nextln: 2446:     $$rax = Call(External(extfunc1))
+    # nextln: 2446:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdx = $$spill3
     # nextln: 2447:     Jump(block663)
@@ -4202,7 +4202,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2482:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2483:     Jump(block669)
     # nextln:       block1244:
-    # nextln: 2484:     Call(External(extfunc2))
+    # nextln: 2484:     CallRel(External(extfunc2))
     # nextln: 2485:     Ud2
     # nextln:       block668:
     # nextln:           $$rdx = $$rbx
@@ -4250,7 +4250,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rcx = $$rdx
     # nextln: 2510:     Jump(block675)
     # nextln:       block1242:
-    # nextln: 2511:     Call(External(extfunc2))
+    # nextln: 2511:     CallRel(External(extfunc2))
     # nextln: 2512:     Ud2
     # nextln:       block674:
     # nextln:           $$rdi = $$rax
@@ -4301,7 +4301,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rax = $$rdx
     # nextln: 2537:     Jump(block681)
     # nextln:       block1240:
-    # nextln: 2538:     Call(External(extfunc2))
+    # nextln: 2538:     CallRel(External(extfunc2))
     # nextln: 2539:     Ud2
     # nextln:       block680:
     # nextln:           $$rdx = $$rcx
@@ -4343,7 +4343,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2564:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2565:     Jump(block687)
     # nextln:       block1238:
-    # nextln: 2566:     Call(External(extfunc2))
+    # nextln: 2566:     CallRel(External(extfunc2))
     # nextln: 2567:     Ud2
     # nextln:       block686:
     # nextln:           $$rdx = $$rcx
@@ -4394,7 +4394,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2592:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2593:     Jump(block693)
     # nextln:       block1236:
-    # nextln: 2594:     Call(External(extfunc2))
+    # nextln: 2594:     CallRel(External(extfunc2))
     # nextln: 2595:     Ud2
     # nextln:       block692:
     # nextln:           $$rdx = $$rcx
@@ -4445,12 +4445,12 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2622:     $$rax = MovRM(S8) $$rax
     # nextln: 2623:     Jump(block699)
     # nextln:       block1234:
-    # nextln: 2624:     Call(External(extfunc2))
+    # nextln: 2624:     CallRel(External(extfunc2))
     # nextln: 2625:     Ud2
     # nextln:       block698:
     # nextln:           $$spill6 = $$rcx
     # nextln:           $$spill3 = $$rdx
-    # nextln: 2626:     $$rax = Call(External(extfunc1))
+    # nextln: 2626:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdx = $$spill3
     # nextln: 2627:     Jump(block699)
@@ -4492,7 +4492,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2650:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2651:     Jump(block707)
     # nextln:       block1232:
-    # nextln: 2652:     Call(External(extfunc2))
+    # nextln: 2652:     CallRel(External(extfunc2))
     # nextln: 2653:     Ud2
     # nextln:       block704:
     # nextln: 2654:     $$rdx = MovRStack(!5, S64)
@@ -4545,7 +4545,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2688:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2689:     Jump(block715)
     # nextln:       block1230:
-    # nextln: 2690:     Call(External(extfunc2))
+    # nextln: 2690:     CallRel(External(extfunc2))
     # nextln: 2691:     Ud2
     # nextln:       block712:
     # nextln: 2692:     $$rdx = MovRStack(!1, S64)
@@ -4598,7 +4598,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2726:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2727:     Jump(block721)
     # nextln:       block1228:
-    # nextln: 2728:     Call(External(extfunc2))
+    # nextln: 2728:     CallRel(External(extfunc2))
     # nextln: 2729:     Ud2
     # nextln:       block720:
     # nextln:           $$rdx = $$rax
@@ -4643,7 +4643,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2753:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2754:     Jump(block727)
     # nextln:       block1226:
-    # nextln: 2755:     Call(External(extfunc2))
+    # nextln: 2755:     CallRel(External(extfunc2))
     # nextln: 2756:     Ud2
     # nextln:       block726:
     # nextln:           $$rdx = $$rcx
@@ -4688,7 +4688,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2780:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2781:     Jump(block733)
     # nextln:       block1224:
-    # nextln: 2782:     Call(External(extfunc2))
+    # nextln: 2782:     CallRel(External(extfunc2))
     # nextln: 2783:     Ud2
     # nextln:       block732:
     # nextln: 2784:     $$rdx = MovRStack(!6, S8)
@@ -4727,7 +4727,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2808:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2809:     Jump(block739)
     # nextln:       block1222:
-    # nextln: 2810:     Call(External(extfunc2))
+    # nextln: 2810:     CallRel(External(extfunc2))
     # nextln: 2811:     Ud2
     # nextln:       block738:
     # nextln: 2812:     $$rdx = MovRM(S8) $$rax
@@ -4766,7 +4766,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2836:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2837:     Jump(block745)
     # nextln:       block1220:
-    # nextln: 2838:     Call(External(extfunc2))
+    # nextln: 2838:     CallRel(External(extfunc2))
     # nextln: 2839:     Ud2
     # nextln:       block744:
     # nextln: 2840:     $$rdx = MovRStack(!0, S64)
@@ -4811,12 +4811,12 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2866:     $$rax = MovRM(S8) $$rax
     # nextln: 2867:     Jump(block751)
     # nextln:       block1218:
-    # nextln: 2868:     Call(External(extfunc2))
+    # nextln: 2868:     CallRel(External(extfunc2))
     # nextln: 2869:     Ud2
     # nextln:       block750:
     # nextln:           $$spill3 = $$rdx
     # nextln:           $$spill6 = $$rcx
-    # nextln: 2870:     $$rax = Call(External(extfunc1))
+    # nextln: 2870:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln:           $$rdx = $$spill3
     # nextln: 2871:     Jump(block751)
@@ -4858,7 +4858,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2894:     $$rdx = MovRM(S8) $$rdx
     # nextln: 2895:     Jump(block759)
     # nextln:       block1216:
-    # nextln: 2896:     Call(External(extfunc2))
+    # nextln: 2896:     CallRel(External(extfunc2))
     # nextln: 2897:     Ud2
     # nextln:       block756:
     # nextln: 2898:     $$rdx = MovRStack(!5, S64)
@@ -4912,7 +4912,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2932:     $$rcx = MovRM(S8) $$rcx
     # nextln: 2933:     Jump(block767)
     # nextln:       block1214:
-    # nextln: 2934:     Call(External(extfunc2))
+    # nextln: 2934:     CallRel(External(extfunc2))
     # nextln: 2935:     Ud2
     # nextln:       block764:
     # nextln: 2936:     $$rcx = MovRStack(!1, S64)
@@ -5057,7 +5057,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3031:     Jump(block800)
     # nextln:       block799:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3032:     $$rax = Call(External(extfunc1))
+    # nextln: 3032:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3033:     Jump(block800)
     # nextln:       block800:
@@ -5259,7 +5259,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3167:     Jump(block849)
     # nextln:       block848:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3168:     $$rax = Call(External(extfunc1))
+    # nextln: 3168:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3169:     Jump(block849)
     # nextln:       block849:
@@ -5471,7 +5471,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3313:     Jump(block901)
     # nextln:       block900:
     # nextln:           $$spill6 = $$rcx
-    # nextln: 3314:     $$rax = Call(External(extfunc1))
+    # nextln: 3314:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3315:     Jump(block901)
     # nextln:       block901:
@@ -5683,7 +5683,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3461:     Jump(block953)
     # nextln:       block952:
     # nextln:           $$spill6 = $$rcx
-    # nextln: 3462:     $$rax = Call(External(extfunc1))
+    # nextln: 3462:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3463:     Jump(block953)
     # nextln:       block953:
@@ -5907,7 +5907,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3621:     Jump(block1005)
     # nextln:       block1004:
     # nextln:           $$spill6 = $$rcx
-    # nextln: 3622:     $$rax = Call(External(extfunc1))
+    # nextln: 3622:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3623:     Jump(block1005)
     # nextln:       block1005:
@@ -6006,7 +6006,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3691:     Jumpcc(Ne, block1025, block1026)
     # nextln:       block1025:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3692:     $$rax = Call(External(extfunc1))
+    # nextln: 3692:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3693:     Jump(block1027)
     # nextln:       block1026:
@@ -6033,7 +6033,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3706:     Jumpcc(Ne, block1031, block1032)
     # nextln:       block1031:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3707:     $$rax = Call(External(extfunc1))
+    # nextln: 3707:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3708:     Jump(block1033)
     # nextln:       block1032:
@@ -6060,7 +6060,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3721:     Jumpcc(Ne, block1037, block1038)
     # nextln:       block1037:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3722:     $$rax = Call(External(extfunc1))
+    # nextln: 3722:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3723:     Jump(block1039)
     # nextln:       block1038:
@@ -6087,7 +6087,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3737:     Jumpcc(Ne, block1043, block1044)
     # nextln:       block1043:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3738:     $$rax = Call(External(extfunc1))
+    # nextln: 3738:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3739:     Jump(block1045)
     # nextln:       block1044:
@@ -6114,7 +6114,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3753:     Jumpcc(Ne, block1049, block1050)
     # nextln:       block1049:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3754:     $$rax = Call(External(extfunc1))
+    # nextln: 3754:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3755:     Jump(block1051)
     # nextln:       block1050:
@@ -6143,12 +6143,12 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3771:     Jumpcc(Ne, block1055, block1056)
     # nextln:       block1055:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3772:     $$rax = Call(External(extfunc1))
+    # nextln: 3772:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3773:     Jump(block1057)
     # nextln:       block1056:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3774:     $$rax = Call(External(extfunc1))
+    # nextln: 3774:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3775:     Jump(block1057)
     # nextln:       block1057:
@@ -6171,7 +6171,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3787:     Jumpcc(Ne, block1061, block1062)
     # nextln:       block1061:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3788:     $$rax = Call(External(extfunc1))
+    # nextln: 3788:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3789:     Jump(block1065)
     # nextln:       block1062:
@@ -6212,7 +6212,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3813:     Jumpcc(Ne, block1069, block1070)
     # nextln:       block1069:
     # nextln:           $$spill6 = $$rax
-    # nextln: 3814:     $$rax = Call(External(extfunc1))
+    # nextln: 3814:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3815:     Jump(block1073)
     # nextln:       block1070:
@@ -6269,7 +6269,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3850:     $$rcx = MovRM(S8) $$rcx
     # nextln: 3851:     Jump(block1079)
     # nextln:       block1212:
-    # nextln: 3852:     Call(External(extfunc2))
+    # nextln: 3852:     CallRel(External(extfunc2))
     # nextln: 3853:     Ud2
     # nextln:       block1078:
     # nextln:           $$rcx = $$rbx
@@ -6308,7 +6308,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3877:     $$rcx = MovRM(S8) $$rcx
     # nextln: 3878:     Jump(block1085)
     # nextln:       block1210:
-    # nextln: 3879:     Call(External(extfunc2))
+    # nextln: 3879:     CallRel(External(extfunc2))
     # nextln: 3880:     Ud2
     # nextln:       block1084:
     # nextln:           $$rcx = $$spill0
@@ -6347,7 +6347,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3904:     $$rcx = MovRM(S8) $$rcx
     # nextln: 3905:     Jump(block1091)
     # nextln:       block1208:
-    # nextln: 3906:     Call(External(extfunc2))
+    # nextln: 3906:     CallRel(External(extfunc2))
     # nextln: 3907:     Ud2
     # nextln:       block1090:
     # nextln: 3908:     $$rcx = MovRStack(!6, S8)
@@ -6386,7 +6386,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3932:     $$rcx = MovRM(S8) $$rcx
     # nextln: 3933:     Jump(block1097)
     # nextln:       block1206:
-    # nextln: 3934:     Call(External(extfunc2))
+    # nextln: 3934:     CallRel(External(extfunc2))
     # nextln: 3935:     Ud2
     # nextln:       block1096:
     # nextln: 3936:     $$rcx = MovRM(S8) $$rax
@@ -6425,7 +6425,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3960:     $$rcx = MovRM(S8) $$rcx
     # nextln: 3961:     Jump(block1103)
     # nextln:       block1204:
-    # nextln: 3962:     Call(External(extfunc2))
+    # nextln: 3962:     CallRel(External(extfunc2))
     # nextln: 3963:     Ud2
     # nextln:       block1102:
     # nextln: 3964:     $$rcx = MovRStack(!0, S64)
@@ -6468,11 +6468,11 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3990:     $$rax = MovRM(S8) $$rax
     # nextln: 3991:     Jump(block1109)
     # nextln:       block1202:
-    # nextln: 3992:     Call(External(extfunc2))
+    # nextln: 3992:     CallRel(External(extfunc2))
     # nextln: 3993:     Ud2
     # nextln:       block1108:
     # nextln:           $$spill6 = $$rcx
-    # nextln: 3994:     $$rax = Call(External(extfunc1))
+    # nextln: 3994:     $$rax = CallRel(External(extfunc1))
     # nextln:           $$rcx = $$spill6
     # nextln: 3995:     Jump(block1109)
     # nextln:       block1109:
@@ -6509,7 +6509,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 4018:     $$rax = MovRM(S8) $$rax
     # nextln: 4019:     Jump(block1117)
     # nextln:       block1200:
-    # nextln: 4020:     Call(External(extfunc2))
+    # nextln: 4020:     CallRel(External(extfunc2))
     # nextln: 4021:     Ud2
     # nextln:       block1114:
     # nextln: 4022:     $$rax = MovRStack(!5, S64)
@@ -6562,7 +6562,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 4056:     $$rax = MovRM(S8) $$rax
     # nextln: 4057:     Jump(block1125)
     # nextln:       block1198:
-    # nextln: 4058:     Call(External(extfunc2))
+    # nextln: 4058:     CallRel(External(extfunc2))
     # nextln: 4059:     Ud2
     # nextln:       block1122:
     # nextln: 4060:     $$rax = MovRStack(!1, S64)
@@ -6615,7 +6615,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 4094:     $$rax = MovRM(S8) $$rax
     # nextln: 4095:     Jump(block1131)
     # nextln:       block1196:
-    # nextln: 4096:     Call(External(extfunc2))
+    # nextln: 4096:     CallRel(External(extfunc2))
     # nextln: 4097:     Ud2
     # nextln:       block1130:
     # nextln:           $$rax = $$rbx
@@ -6655,7 +6655,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rax = $$spill0
     # nextln: 4122:     Jump(block1137)
     # nextln:       block1194:
-    # nextln: 4123:     Call(External(extfunc2))
+    # nextln: 4123:     CallRel(External(extfunc2))
     # nextln: 4124:     Ud2
     # nextln:       block1136:
     # nextln:           $$rax = $$spill0
@@ -6694,7 +6694,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 4148:     $$rax = MovRM(S8) $$rax
     # nextln: 4149:     Jump(block1143)
     # nextln:       block1192:
-    # nextln: 4150:     Call(External(extfunc2))
+    # nextln: 4150:     CallRel(External(extfunc2))
     # nextln: 4151:     Ud2
     # nextln:       block1142:
     # nextln: 4152:     $$rax = MovRStack(!6, S8)
@@ -6733,7 +6733,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 4176:     $$rax = MovRM(S8) $$rax
     # nextln: 4177:     Jump(block1149)
     # nextln:       block1190:
-    # nextln: 4178:     Call(External(extfunc2))
+    # nextln: 4178:     CallRel(External(extfunc2))
     # nextln: 4179:     Ud2
     # nextln:       block1148:
     # nextln: 4180:     $$rax = MovRM(S8) $$rcx
@@ -6772,7 +6772,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 4204:     $$rax = MovRM(S8) $$rax
     # nextln: 4205:     Jump(block1155)
     # nextln:       block1188:
-    # nextln: 4206:     Call(External(extfunc2))
+    # nextln: 4206:     CallRel(External(extfunc2))
     # nextln: 4207:     Ud2
     # nextln:       block1154:
     # nextln: 4208:     $$rax = MovRStack(!0, S64)
@@ -6813,10 +6813,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 4234:     $$rax = MovRM(S8) $$rax
     # nextln: 4235:     Jump(block1161)
     # nextln:       block1186:
-    # nextln: 4236:     Call(External(extfunc2))
+    # nextln: 4236:     CallRel(External(extfunc2))
     # nextln: 4237:     Ud2
     # nextln:       block1160:
-    # nextln: 4238:     $$rax = Call(External(extfunc1))
+    # nextln: 4238:     $$rax = CallRel(External(extfunc1))
     # nextln: 4239:     Jump(block1161)
     # nextln:       block1161:
     # nextln: 4240:     AluRRm(S32, Test) $$rax, $$rax
@@ -6852,7 +6852,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 4262:     $$rax = MovRM(S8) $$rax
     # nextln: 4263:     Jump(block1169)
     # nextln:       block1184:
-    # nextln: 4264:     Call(External(extfunc2))
+    # nextln: 4264:     CallRel(External(extfunc2))
     # nextln: 4265:     Ud2
     # nextln:       block1166:
     # nextln: 4266:     $$rax = MovRStack(!5, S64)
@@ -6903,7 +6903,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 4300:     $$rax = MovRM(S8) $$rax
     # nextln: 4301:     Jump(block1177)
     # nextln:       block1182:
-    # nextln: 4302:     Call(External(extfunc2))
+    # nextln: 4302:     CallRel(External(extfunc2))
     # nextln: 4303:     Ud2
     # nextln:       block1174:
     # nextln: 4304:     $$rax = MovRStack(!1, S64)
@@ -6940,205 +6940,205 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 4329:     $$rax = AluRRm(S32, Sub) $$rax, $$rcx
     # nextln: 4330:     Ret $$rax
     # nextln:       block1176:
-    # nextln: 4331:     Call(External(extfunc2))
+    # nextln: 4331:     CallRel(External(extfunc2))
     # nextln: 4332:     Ud2
     # nextln:       block1168:
-    # nextln: 4333:     Call(External(extfunc2))
+    # nextln: 4333:     CallRel(External(extfunc2))
     # nextln: 4334:     Ud2
     # nextln:       block1124:
-    # nextln: 4335:     Call(External(extfunc2))
+    # nextln: 4335:     CallRel(External(extfunc2))
     # nextln: 4336:     Ud2
     # nextln:       block1116:
-    # nextln: 4337:     Call(External(extfunc2))
+    # nextln: 4337:     CallRel(External(extfunc2))
     # nextln: 4338:     Ud2
     # nextln:       block1072:
-    # nextln: 4339:     Call(External(extfunc2))
+    # nextln: 4339:     CallRel(External(extfunc2))
     # nextln: 4340:     Ud2
     # nextln:       block1064:
-    # nextln: 4341:     Call(External(extfunc2))
+    # nextln: 4341:     CallRel(External(extfunc2))
     # nextln: 4342:     Ud2
     # nextln:       block1020:
-    # nextln: 4343:     Call(External(extfunc2))
+    # nextln: 4343:     CallRel(External(extfunc2))
     # nextln: 4344:     Ud2
     # nextln:       block1012:
-    # nextln: 4345:     Call(External(extfunc2))
+    # nextln: 4345:     CallRel(External(extfunc2))
     # nextln: 4346:     Ud2
     # nextln:       block968:
-    # nextln: 4347:     Call(External(extfunc2))
+    # nextln: 4347:     CallRel(External(extfunc2))
     # nextln: 4348:     Ud2
     # nextln:       block960:
-    # nextln: 4349:     Call(External(extfunc2))
+    # nextln: 4349:     CallRel(External(extfunc2))
     # nextln: 4350:     Ud2
     # nextln:       block916:
-    # nextln: 4351:     Call(External(extfunc2))
+    # nextln: 4351:     CallRel(External(extfunc2))
     # nextln: 4352:     Ud2
     # nextln:       block908:
-    # nextln: 4353:     Call(External(extfunc2))
+    # nextln: 4353:     CallRel(External(extfunc2))
     # nextln: 4354:     Ud2
     # nextln:       block864:
-    # nextln: 4355:     Call(External(extfunc2))
+    # nextln: 4355:     CallRel(External(extfunc2))
     # nextln: 4356:     Ud2
     # nextln:       block856:
-    # nextln: 4357:     Call(External(extfunc2))
+    # nextln: 4357:     CallRel(External(extfunc2))
     # nextln: 4358:     Ud2
     # nextln:       block815:
-    # nextln: 4359:     Call(External(extfunc2))
+    # nextln: 4359:     CallRel(External(extfunc2))
     # nextln: 4360:     Ud2
     # nextln:       block807:
-    # nextln: 4361:     Call(External(extfunc2))
+    # nextln: 4361:     CallRel(External(extfunc2))
     # nextln: 4362:     Ud2
     # nextln:       block766:
-    # nextln: 4363:     Call(External(extfunc2))
+    # nextln: 4363:     CallRel(External(extfunc2))
     # nextln: 4364:     Ud2
     # nextln:       block758:
-    # nextln: 4365:     Call(External(extfunc2))
+    # nextln: 4365:     CallRel(External(extfunc2))
     # nextln: 4366:     Ud2
     # nextln:       block714:
-    # nextln: 4367:     Call(External(extfunc2))
+    # nextln: 4367:     CallRel(External(extfunc2))
     # nextln: 4368:     Ud2
     # nextln:       block706:
-    # nextln: 4369:     Call(External(extfunc2))
+    # nextln: 4369:     CallRel(External(extfunc2))
     # nextln: 4370:     Ud2
     # nextln:       block662:
-    # nextln: 4371:     Call(External(extfunc2))
+    # nextln: 4371:     CallRel(External(extfunc2))
     # nextln: 4372:     Ud2
     # nextln:       block654:
-    # nextln: 4373:     Call(External(extfunc2))
+    # nextln: 4373:     CallRel(External(extfunc2))
     # nextln: 4374:     Ud2
     # nextln:       block610:
-    # nextln: 4375:     Call(External(extfunc2))
+    # nextln: 4375:     CallRel(External(extfunc2))
     # nextln: 4376:     Ud2
     # nextln:       block602:
-    # nextln: 4377:     Call(External(extfunc2))
+    # nextln: 4377:     CallRel(External(extfunc2))
     # nextln: 4378:     Ud2
     # nextln:       block558:
-    # nextln: 4379:     Call(External(extfunc2))
+    # nextln: 4379:     CallRel(External(extfunc2))
     # nextln: 4380:     Ud2
     # nextln:       block550:
-    # nextln: 4381:     Call(External(extfunc2))
+    # nextln: 4381:     CallRel(External(extfunc2))
     # nextln: 4382:     Ud2
     # nextln:       block506:
-    # nextln: 4383:     Call(External(extfunc2))
+    # nextln: 4383:     CallRel(External(extfunc2))
     # nextln: 4384:     Ud2
     # nextln:       block498:
-    # nextln: 4385:     Call(External(extfunc2))
+    # nextln: 4385:     CallRel(External(extfunc2))
     # nextln: 4386:     Ud2
     # nextln:       block454:
-    # nextln: 4387:     Call(External(extfunc2))
+    # nextln: 4387:     CallRel(External(extfunc2))
     # nextln: 4388:     Ud2
     # nextln:       block446:
-    # nextln: 4389:     Call(External(extfunc2))
+    # nextln: 4389:     CallRel(External(extfunc2))
     # nextln: 4390:     Ud2
     # nextln:       block405:
-    # nextln: 4391:     Call(External(extfunc2))
+    # nextln: 4391:     CallRel(External(extfunc2))
     # nextln: 4392:     Ud2
     # nextln:       block397:
-    # nextln: 4393:     Call(External(extfunc2))
+    # nextln: 4393:     CallRel(External(extfunc2))
     # nextln: 4394:     Ud2
     # nextln:       block357:
-    # nextln: 4395:     Call(External(extfunc2))
+    # nextln: 4395:     CallRel(External(extfunc2))
     # nextln: 4396:     Ud2
     # nextln:       block352:
-    # nextln: 4397:     Call(External(extfunc2))
+    # nextln: 4397:     CallRel(External(extfunc2))
     # nextln: 4398:     Ud2
     # nextln:       block335:
-    # nextln: 4399:     Call(External(extfunc2))
+    # nextln: 4399:     CallRel(External(extfunc2))
     # nextln: 4400:     Ud2
     # nextln:       block330:
-    # nextln: 4401:     Call(External(extfunc2))
+    # nextln: 4401:     CallRel(External(extfunc2))
     # nextln: 4402:     Ud2
     # nextln:       block313:
-    # nextln: 4403:     Call(External(extfunc2))
+    # nextln: 4403:     CallRel(External(extfunc2))
     # nextln: 4404:     Ud2
     # nextln:       block308:
-    # nextln: 4405:     Call(External(extfunc2))
+    # nextln: 4405:     CallRel(External(extfunc2))
     # nextln: 4406:     Ud2
     # nextln:       block291:
-    # nextln: 4407:     Call(External(extfunc2))
+    # nextln: 4407:     CallRel(External(extfunc2))
     # nextln: 4408:     Ud2
     # nextln:       block286:
-    # nextln: 4409:     Call(External(extfunc2))
+    # nextln: 4409:     CallRel(External(extfunc2))
     # nextln: 4410:     Ud2
     # nextln:       block269:
-    # nextln: 4411:     Call(External(extfunc2))
+    # nextln: 4411:     CallRel(External(extfunc2))
     # nextln: 4412:     Ud2
     # nextln:       block264:
-    # nextln: 4413:     Call(External(extfunc2))
+    # nextln: 4413:     CallRel(External(extfunc2))
     # nextln: 4414:     Ud2
     # nextln:       block247:
-    # nextln: 4415:     Call(External(extfunc2))
+    # nextln: 4415:     CallRel(External(extfunc2))
     # nextln: 4416:     Ud2
     # nextln:       block242:
-    # nextln: 4417:     Call(External(extfunc2))
+    # nextln: 4417:     CallRel(External(extfunc2))
     # nextln: 4418:     Ud2
     # nextln:       block225:
-    # nextln: 4419:     Call(External(extfunc2))
+    # nextln: 4419:     CallRel(External(extfunc2))
     # nextln: 4420:     Ud2
     # nextln:       block220:
-    # nextln: 4421:     Call(External(extfunc2))
+    # nextln: 4421:     CallRel(External(extfunc2))
     # nextln: 4422:     Ud2
     # nextln:       block203:
-    # nextln: 4423:     Call(External(extfunc2))
+    # nextln: 4423:     CallRel(External(extfunc2))
     # nextln: 4424:     Ud2
     # nextln:       block198:
-    # nextln: 4425:     Call(External(extfunc2))
+    # nextln: 4425:     CallRel(External(extfunc2))
     # nextln: 4426:     Ud2
     # nextln:       block181:
-    # nextln: 4427:     Call(External(extfunc2))
+    # nextln: 4427:     CallRel(External(extfunc2))
     # nextln: 4428:     Ud2
     # nextln:       block176:
-    # nextln: 4429:     Call(External(extfunc2))
+    # nextln: 4429:     CallRel(External(extfunc2))
     # nextln: 4430:     Ud2
     # nextln:       block171:
-    # nextln: 4431:     Call(External(extfunc2))
+    # nextln: 4431:     CallRel(External(extfunc2))
     # nextln: 4432:     Ud2
     # nextln:       block166:
-    # nextln: 4433:     Call(External(extfunc2))
+    # nextln: 4433:     CallRel(External(extfunc2))
     # nextln: 4434:     Ud2
     # nextln:       block161:
-    # nextln: 4435:     Call(External(extfunc2))
+    # nextln: 4435:     CallRel(External(extfunc2))
     # nextln: 4436:     Ud2
     # nextln:       block156:
-    # nextln: 4437:     Call(External(extfunc2))
+    # nextln: 4437:     CallRel(External(extfunc2))
     # nextln: 4438:     Ud2
     # nextln:       block151:
-    # nextln: 4439:     Call(External(extfunc2))
+    # nextln: 4439:     CallRel(External(extfunc2))
     # nextln: 4440:     Ud2
     # nextln:       block146:
-    # nextln: 4441:     Call(External(extfunc2))
+    # nextln: 4441:     CallRel(External(extfunc2))
     # nextln: 4442:     Ud2
     # nextln:       block141:
-    # nextln: 4443:     Call(External(extfunc2))
+    # nextln: 4443:     CallRel(External(extfunc2))
     # nextln: 4444:     Ud2
     # nextln:       block136:
-    # nextln: 4445:     Call(External(extfunc2))
+    # nextln: 4445:     CallRel(External(extfunc2))
     # nextln: 4446:     Ud2
     # nextln:       block131:
-    # nextln: 4447:     Call(External(extfunc2))
+    # nextln: 4447:     CallRel(External(extfunc2))
     # nextln: 4448:     Ud2
     # nextln:       block126:
-    # nextln: 4449:     Call(External(extfunc2))
+    # nextln: 4449:     CallRel(External(extfunc2))
     # nextln: 4450:     Ud2
     # nextln:       block121:
-    # nextln: 4451:     Call(External(extfunc2))
+    # nextln: 4451:     CallRel(External(extfunc2))
     # nextln: 4452:     Ud2
     # nextln:       block116:
-    # nextln: 4453:     Call(External(extfunc2))
+    # nextln: 4453:     CallRel(External(extfunc2))
     # nextln: 4454:     Ud2
     # nextln:       block111:
-    # nextln: 4455:     Call(External(extfunc2))
+    # nextln: 4455:     CallRel(External(extfunc2))
     # nextln: 4456:     Ud2
     # nextln:       block106:
-    # nextln: 4457:     Call(External(extfunc2))
+    # nextln: 4457:     CallRel(External(extfunc2))
     # nextln: 4458:     Ud2
     # nextln:       block8:
-    # nextln: 4459:     Call(External(extfunc2))
+    # nextln: 4459:     CallRel(External(extfunc2))
     # nextln: 4460:     Ud2
     # nextln:       block6:
-    # nextln: 4461:     Call(External(extfunc2))
+    # nextln: 4461:     CallRel(External(extfunc2))
     # nextln: 4462:     Ud2
     # nextln:       block4:
-    # nextln: 4463:     Call(External(extfunc2))
+    # nextln: 4463:     CallRel(External(extfunc2))
     # nextln: 4464:     Ud2
 
     %0:ctrl = entry

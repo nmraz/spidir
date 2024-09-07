@@ -11,6 +11,7 @@ mod emit;
 mod lower;
 
 pub const RELOC_PC32: RelocKind = RelocKind(0);
+pub const RELOC_ABS64: RelocKind = RelocKind(1);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OperandSize {
@@ -128,7 +129,8 @@ pub enum X64Instr {
     MovRM(FullOperandSize),
     MovMR(FullOperandSize),
     Ret,
-    Call(FunctionRef),
+    FuncAddrAbs(FunctionRef),
+    CallRel(FunctionRef),
     CallRm,
     Jump(Block),
     Jumpcc(CondCode, Block, Block),
@@ -150,12 +152,19 @@ pub struct X64MachineConfig {
 
 #[derive(Default)]
 pub struct X64Machine {
-    _config: X64MachineConfig,
+    config: X64MachineConfig,
 }
 
 impl X64Machine {
     pub fn new(config: X64MachineConfig) -> Self {
-        Self { _config: config }
+        Self { config }
+    }
+
+    fn code_model_for_function(&self, func: FunctionRef) -> CodeModel {
+        match func {
+            FunctionRef::Internal(_) => self.config.internal_code_model,
+            FunctionRef::External(_) => self.config.extern_code_model,
+        }
     }
 }
 

@@ -16,8 +16,9 @@ use crate::{
 };
 
 use super::{
-    AluOp, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, ShiftOp, X64Instr, X64Machine,
-    CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI,
+    AluOp, CodeModel, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, ShiftOp, X64Instr,
+    X64Machine, CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX,
+    REG_RSI,
 };
 
 const FIXED_ARG_COUNT: usize = 6;
@@ -229,8 +230,13 @@ impl MachineLower for X64Machine {
                     ctx.emit_instr(X64Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
                 }
             },
-            NodeKind::Call(func) => emit_call(ctx, node, func),
-            NodeKind::CallInd(_) => emit_callind(ctx, node),
+            NodeKind::Call(func) => emit_call(self, ctx, node, func),
+            NodeKind::CallInd(_) => {
+                let mut vals = ctx.node_inputs(node);
+                let target =
+                    ctx.get_value_vreg(vals.next().expect("expected indirect call target"));
+                emit_callind(ctx, node, target, vals);
+            }
             NodeKind::Unreachable => ctx.emit_instr(X64Instr::Ud2, &[], &[]),
             _ => return Err(MachineIselError),
         }
@@ -238,10 +244,31 @@ impl MachineLower for X64Machine {
     }
 }
 
-fn emit_call(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
+fn emit_call(
+    machine: &X64Machine,
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+    func: FunctionRef,
+) {
+    match machine.code_model_for_function(func) {
+        CodeModel::SmallPic => emit_call_rel(ctx, node, func),
+        CodeModel::LargeAbs => {
+            let target = ctx.create_temp_vreg(RC_GPR);
+            ctx.emit_instr(
+                X64Instr::FuncAddrAbs(func),
+                &[DefOperand::any_reg(target)],
+                &[],
+            );
+            let args = ctx.node_inputs(node);
+            emit_callind(ctx, node, target, args);
+        }
+    }
+}
+
+fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
     emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
         ctx.emit_instr_with_clobbers(
-            X64Instr::Call(func),
+            X64Instr::CallRel(func),
             retvals,
             args,
             PhysRegSet::from_iter(CALLER_SAVED_REGS),
@@ -249,11 +276,13 @@ fn emit_call(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Functi
     });
 }
 
-fn emit_callind(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
-    let mut vals = ctx.node_inputs(node);
-    let target = ctx.get_value_vreg(vals.next().expect("expected indirect call target"));
-
-    emit_call_wrapper(ctx, node, vals, |ctx, retvals, args| {
+fn emit_callind(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+    target: VirtReg,
+    args: impl Iterator<Item = DepValue>,
+) {
+    emit_call_wrapper(ctx, node, args, |ctx, retvals, args| {
         let mut uses: SmallVec<[_; FIXED_ARG_COUNT + 1]> = smallvec![UseOperand::any(target)];
         uses.extend_from_slice(args);
         ctx.emit_instr_with_clobbers(

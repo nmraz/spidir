@@ -262,6 +262,7 @@ impl MachineEmit for X64Machine {
                 // TODO: Other code models?
                 emit_call_rel(buffer, target);
             }
+            &X64Instr::CallRm => emit_call_rm(buffer, state.operand_reg_mem(uses[0])),
             &X64Instr::Jump(target) => {
                 emit_jmp(buffer, block_labels[target]);
             }
@@ -471,6 +472,13 @@ fn emit_call_rel(buffer: &mut CodeBuffer<X64Machine>, target: FunctionRef) {
     buffer.emit(&[0xe8]);
     buffer.emit_reloc(target, -4, RELOC_PC32);
     buffer.emit(&0u32.to_le_bytes());
+}
+
+fn emit_call_rm(buffer: &mut CodeBuffer<X64Machine>, target: RegMem) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(target, |_rex| 2);
+    rex.emit(buffer);
+    buffer.emit(&[0xff]);
+    modrm_sib.emit(buffer);
 }
 
 fn emit_ret(buffer: &mut CodeBuffer<X64Machine>) {

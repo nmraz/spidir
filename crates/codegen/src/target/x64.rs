@@ -150,6 +150,7 @@ pub enum X64Instr {
     MovMR(FullOperandSize),
     Ret,
     Call(FunctionRef),
+    CallRm,
     Jump(Block),
     Jumpcc(CondCode, Block, Block),
     Ud2,

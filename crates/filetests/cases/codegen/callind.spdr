@@ -1,0 +1,56 @@
+# run: codegen
+
+func @call_virt:i32(ptr) {
+    # check: function `call_virt`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: call rdi
+    # nextln: 0x0006: pop rbp
+    # nextln: 0x0007: ret
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:i32 = callind i32() %0, %1
+    return %2, %3
+}
+
+func @call_virt_no_ret(ptr, i32) {
+    # check: function `call_virt_no_ret`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov rax, rdi
+    # nextln: 0x0007: mov rdi, rsi
+    # nextln: 0x000a: call rax
+    # nextln: 0x000c: pop rbp
+    # nextln: 0x000d: ret
+
+    %0:ctrl, %1:ptr, %v:i32 = entry
+    %2:ctrl = callind (i32) %0, %1, %v
+    return %2
+}
+
+func @call_virt_many_params(ptr, ptr) {
+    # check: function `call_virt_many_params`:
+    # nextln: 0x0000: push rbp
+    # nextln: 0x0001: mov rbp, rsp
+    # nextln: 0x0004: mov rdx, rsi
+    # nextln: 0x0007: mov rax, rdi
+    # nextln: 0x000a: mov edi, 0
+    # nextln: 0x000f: mov ecx, 0
+    # nextln: 0x0014: push rcx
+    # nextln: 0x0015: push rdx
+    # nextln: 0x0016: push rdi
+    # nextln: 0x0017: push rcx
+    # nextln: 0x0018: mov rsi, rcx
+    # nextln: 0x001b: mov r9, rdi
+    # nextln: 0x001e: mov r8, rdi
+    # nextln: 0x0021: call rax
+    # nextln: 0x0023: add rsp, 0x20
+    # nextln: 0x0027: pop rbp
+    # nextln: 0x0028: ret
+
+    %0:ctrl, %f:ptr, %p:ptr = entry
+    %zero32:i32 = iconst 0
+    %zero64:i64 = iconst 0
+    %1:ctrl = callind (i32, i64, ptr, i64, i32, i32, i64, ptr, i32, i64) %0, %f, %zero32, %zero64, %p, %zero64, %zero32, %zero32, %zero64, %p, %zero32, %zero64
+    return %1
+}

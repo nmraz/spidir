@@ -1,0 +1,43 @@
+# run: isel
+
+func @call_virt:i32(ptr) {
+    # check: function `call_virt`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr($$rax)[late] = CallRm %1(any)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:i32 = callind i32() %0, %1
+    return %2, %3
+}
+
+func @call_virt_no_ret(ptr, i32) {
+    # check: function `call_virt_no_ret`:
+    # nextln:       block0[%0:gpr($$rdi), %1:gpr($$rsi)]:
+    # nextln: 0000:      CallRm %0(any)[early], %1($$rdi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln: 0001:      Ret
+
+    %0:ctrl, %1:ptr, %v:i32 = entry
+    %2:ctrl = callind (i32) %0, %1, %v
+    return %2
+}
+
+func @call_virt_many_params(ptr, ptr) {
+    # check: function `call_virt_many_params`:
+    # nextln:       block0[%0:gpr($$rdi), %3:gpr($$rsi)]:
+    # nextln: 0000:      %1:gpr(reg)[late] = MovRI(0)
+    # nextln: 0001:      %2:gpr(reg)[late] = MovRI(0)
+    # nextln: 0002:      Push %2(reg)[early]
+    # nextln: 0003:      Push %3(reg)[early]
+    # nextln: 0004:      Push %1(reg)[early]
+    # nextln: 0005:      Push %2(reg)[early]
+    # nextln: 0006:      CallRm %0(any)[early], %1($$rdi)[early], %2($$rsi)[early], %3($$rdx)[early], %2($$rcx)[early], %1($$r8)[early], %1($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln: 0007:      AddSp(32)
+    # nextln: 0008:      Ret
+
+    %0:ctrl, %f:ptr, %p:ptr = entry
+    %zero32:i32 = iconst 0
+    %zero64:i64 = iconst 0
+    %1:ctrl = callind (i32, i64, ptr, i64, i32, i32, i64, ptr, i32, i64) %0, %f, %zero32, %zero64, %p, %zero64, %zero32, %zero32, %zero64, %p, %zero32, %zero64
+    return %1
+}

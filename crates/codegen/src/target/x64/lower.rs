@@ -6,7 +6,7 @@ use ir::{
     node::{FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node},
 };
-use smallvec::SmallVec;
+use smallvec::{smallvec, SmallVec};
 
 use crate::{
     cfg::Block,
@@ -230,6 +230,7 @@ impl MachineLower for X64Machine {
                 }
             },
             NodeKind::Call(func) => emit_call(ctx, node, func),
+            NodeKind::CallInd(_) => emit_callind(ctx, node),
             NodeKind::Unreachable => ctx.emit_instr(X64Instr::Ud2, &[], &[]),
             _ => return Err(MachineIselError),
         }
@@ -238,8 +239,38 @@ impl MachineLower for X64Machine {
 }
 
 fn emit_call(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
-    let mut args = ctx.node_inputs(node);
+    emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
+        ctx.emit_instr_with_clobbers(
+            X64Instr::Call(func),
+            retvals,
+            args,
+            PhysRegSet::from_iter(CALLER_SAVED_REGS),
+        );
+    });
+}
 
+fn emit_callind(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
+    let mut vals = ctx.node_inputs(node);
+    let target = ctx.get_value_vreg(vals.next().expect("expected indirect call target"));
+
+    emit_call_wrapper(ctx, node, vals, |ctx, retvals, args| {
+        let mut uses: SmallVec<[_; FIXED_ARG_COUNT + 1]> = smallvec![UseOperand::any(target)];
+        uses.extend_from_slice(args);
+        ctx.emit_instr_with_clobbers(
+            X64Instr::CallRm,
+            retvals,
+            &uses,
+            PhysRegSet::from_iter(CALLER_SAVED_REGS),
+        );
+    })
+}
+
+fn emit_call_wrapper(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+    mut args: impl Iterator<Item = DepValue>,
+    emit_inner: impl FnOnce(&mut IselContext<'_, '_, X64Machine>, &[DefOperand], &[UseOperand]),
+) {
     // The `take` here is important, because `zip` will advance the argument iterator before
     // realizing it has run out of physical registers, causing the first stack argument to be
     // dropped.
@@ -267,15 +298,13 @@ fn emit_call(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Functi
         stack_size += 8;
     }
 
-    let clobbers = PhysRegSet::from_iter(CALLER_SAVED_REGS);
-
     let retval = ctx.node_outputs(node).next().map(|retval| {
         let retval = ctx.get_value_vreg(retval);
         DefOperand::fixed(retval, REG_RAX)
     });
 
     let call_defs = retval.as_ref().map(slice::from_ref).unwrap_or_default();
-    ctx.emit_instr_with_clobbers(X64Instr::Call(func), call_defs, &reg_args, clobbers);
+    emit_inner(ctx, call_defs, &reg_args);
 
     if stack_size > 0 {
         ctx.emit_instr(X64Instr::AddSp(stack_size), &[], &[]);

@@ -20,7 +20,7 @@ use ir::{
 use itertools::Itertools;
 use pest::{
     error::{Error, ErrorVariant},
-    iterators::Pair,
+    iterators::{Pair, Pairs},
     Parser, Span,
 };
 use pest_derive::Parser;
@@ -145,14 +145,12 @@ fn extract_body(
     function_names: &FunctionNames<'_>,
     body: &mut FunctionBody,
 ) -> Result<(), Box<Error<Rule>>> {
-    let graph = &mut body.graph;
-
     let mut value_map = FxHashMap::<Cow<'_, str>, DepValue>::default();
 
     let graph_start = graph_pair.as_span().start_pos();
     let node_listings = graph_pair
         .into_inner()
-        .map(|pair| extract_node(pair, function_names))
+        .map(|pair| extract_node(pair, function_names, body))
         .collect::<Result<Vec<_>, _>>()?;
     let mut nodes = Vec::new();
 
@@ -164,6 +162,8 @@ fn extract_body(
             graph_start,
         )));
     }
+
+    let graph = &mut body.graph;
 
     // Pass 1: add nodes to graph
     for node_listing in &node_listings {
@@ -219,6 +219,7 @@ fn extract_body(
 fn extract_node<'a>(
     node_pair: Pair<'a, Rule>,
     function_names: &FunctionNames<'_>,
+    body: &mut FunctionBody,
 ) -> Result<NodeListing<'a>, Box<Error<Rule>>> {
     let mut inner = node_pair.into_inner().peekable();
     let defs = inner
@@ -226,7 +227,11 @@ fn extract_node<'a>(
         .map(extract_valdef)
         .collect();
 
-    let kind = extract_node_kind(inner.next().expect("node should have kind"), function_names)?;
+    let kind = extract_node_kind(
+        inner.next().expect("node should have kind"),
+        function_names,
+        body,
+    )?;
 
     let uses = inner
         .map(|pair| {
@@ -241,6 +246,7 @@ fn extract_node<'a>(
 fn extract_node_kind(
     node_kind_pair: Pair<'_, Rule>,
     function_names: &FunctionNames<'_>,
+    body: &mut FunctionBody,
 ) -> Result<NodeKind, Box<Error<Rule>>> {
     match node_kind_pair.as_str() {
         "entry" => Ok(NodeKind::Entry),
@@ -265,13 +271,14 @@ fn extract_node_kind(
         "itrunc" => Ok(NodeKind::Itrunc),
         "ptroff" => Ok(NodeKind::PtrOff),
         "brcond" => Ok(NodeKind::BrCond),
-        _ => extract_special_node_kind(node_kind_pair, function_names),
+        _ => extract_special_node_kind(node_kind_pair, function_names, body),
     }
 }
 
 fn extract_special_node_kind(
     node_kind_pair: Pair<'_, Rule>,
     function_names: &FunctionNames<'_>,
+    body: &mut FunctionBody,
 ) -> Result<NodeKind, Box<Error<Rule>>> {
     let special_pair = node_kind_pair
         .into_inner()
@@ -313,6 +320,12 @@ fn extract_special_node_kind(
                 ))
             })?;
             NodeKind::Call(funcref)
+        }
+        Rule::callind_nodekind => {
+            let sig_pair = inner.next().unwrap();
+            let sig = extract_callind_signature(sig_pair);
+            let sig = body.call_ind_sigs.push(sig);
+            NodeKind::CallInd(sig)
         }
         _ => unreachable!("unknown special node kind {rule:?}"),
     };
@@ -364,12 +377,22 @@ fn extract_name_signature(sig_pair: Pair<'_, Rule>) -> (Span<'_>, Signature) {
     let name_pair = inner.next().expect("parsed signature should have name");
     assert!(name_pair.as_rule() == Rule::funcname);
     let name = name_pair.as_span();
+    let sig = extract_signature(inner);
 
+    (name, sig)
+}
+
+fn extract_callind_signature(sig_pair: Pair<'_, Rule>) -> Signature {
+    assert!(sig_pair.as_rule() == Rule::callind_signature);
+    extract_signature(sig_pair.into_inner())
+}
+
+fn extract_signature(mut pairs: Pairs<'_, Rule>) -> Signature {
     let (ret_type_pair, param_type_pair) = {
-        let next = inner.next().expect("expected return type or parameters");
+        let next = pairs.next().expect("expected return type or parameters");
         match next.as_rule() {
             Rule::r#type => {
-                let param_type_pair = inner.next().expect("expected parameter types");
+                let param_type_pair = pairs.next().expect("expected parameter types");
                 assert!(param_type_pair.as_rule() == Rule::param_types);
                 (Some(next), param_type_pair)
             }
@@ -382,14 +405,10 @@ fn extract_name_signature(sig_pair: Pair<'_, Rule>) -> (Span<'_>, Signature) {
 
     let ret_type = ret_type_pair.map(extract_type);
     let param_types: Vec<_> = param_type_pair.into_inner().map(extract_type).collect();
-
-    (
-        name,
-        Signature {
-            ret_type,
-            param_types,
-        },
-    )
+    Signature {
+        ret_type,
+        param_types,
+    }
 }
 
 fn name_from_span<'a>(span: &Span<'a>) -> Cow<'a, str> {
@@ -644,6 +663,11 @@ mod tests {
             "store.4",
             "store.8",
             "brcond",
+            "callind ()",
+            "callind i32()",
+            "callind i32(ptr)",
+            "callind i32(ptr, i64)",
+            "callind (ptr)",
         ];
 
         for node_str in node_strs {
@@ -929,6 +953,30 @@ mod tests {
                     return %8, %9
                 }
             "#]],
+        );
+    }
+
+    #[test]
+    fn parse_callind() {
+        let module = parse_module(
+            "
+            func @call_virt:i32(ptr) {
+                %ent:ctrl, %p:ptr = entry
+                %ret:ctrl, %val:i32 = callind i32() %ent, %p
+                return %ret, %val
+            }",
+        )
+        .unwrap();
+        check_module(
+            &module,
+            expect![[r#"
+
+            func @call_virt:i32(ptr) {
+                %0:ctrl, %1:ptr = entry
+                %2:ctrl, %3:i32 = callind i32() %0, %1
+                return %2, %3
+            }
+        "#]],
         );
     }
 
@@ -1239,6 +1287,26 @@ mod tests {
                   |                                        ^----------^
                   |
                   = undefined function"#]],
+        );
+    }
+
+    #[test]
+    fn parse_callind_no_signature() {
+        check_parse_error(
+            "
+            func @func:i32(ptr) {
+                %c:ctrl, %p:ptr = entry
+                %r:ctrl, %v:i32 = callind %p
+                return %r, %v
+            }
+            ",
+            expect![[r#"
+                 --> 4:43
+                  |
+                4 |                 %r:ctrl, %v:i32 = callind %p
+                  |                                           ^---
+                  |
+                  = expected type"#]],
         );
     }
 }

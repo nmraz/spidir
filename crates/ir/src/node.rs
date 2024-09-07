@@ -196,6 +196,7 @@ impl NodeKind {
                 | Self::Store(..)
                 | Self::BrCond
                 | Self::Call(..)
+                | Self::CallInd(..)
         )
     }
 

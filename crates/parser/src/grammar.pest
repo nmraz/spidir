@@ -19,8 +19,9 @@ funcname = @{ "@" ~ ident }
 
 type = { "i32" | "i64" | "f64" | "ptr" }
 
-param_types = { (type ~ ("," ~ type)*)? }
-signature   = { funcname ~ (":" ~ type)? ~ "(" ~ param_types ~ ")" }
+param_types       = { (type ~ ("," ~ type)*)? }
+signature         = { funcname ~ (":" ~ type)? ~ "(" ~ param_types ~ ")" }
+callind_signature = { type? ~ "(" ~ param_types ~ ")" }
 
 extfunc = { "extfunc" ~ signature }
 
@@ -37,6 +38,7 @@ load_nodekind      = ${ "load." ~ memsize }
 store_nodekind     = ${ "store." ~ memsize }
 stackslot_nodekind =  { "stackslot" ~ integer ~ ":" ~ integer }
 call_nodekind      =  { "call" ~ funcname }
+callind_nodekind   =  { "callind" ~ callind_signature }
 nodekind           =  {
     "entry"
   | "return"
@@ -68,6 +70,7 @@ nodekind           =  {
   | stackslot_nodekind
   | "brcond"
   | call_nodekind
+  | callind_nodekind
 }
 
 valdef = {

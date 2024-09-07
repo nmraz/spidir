@@ -1,0 +1,21 @@
+# run: verify-ok
+
+# check: $()
+
+func @caller:i32(ptr, ptr, i32) {
+    %0:ctrl, %f:ptr, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    %5:ctrl = callind (ptr, i32) %3, %f, %1, %2
+    %6:ctrl, %7:i32 = callind i32(ptr, i32) %5, %f, %1, %2
+    %8:ctrl = callind () %6, %f
+    return %8, %7
+}
+
+func @call_mixed_params(ptr, ptr) {
+    %0:ctrl, %f:ptr, %p:ptr = entry
+    %zero32:i32 = iconst 0
+    %zero64:i64 = iconst 0
+    %fivef:f64 = fconst 5
+    %1:ctrl = callind (i32, i64, f64, ptr, i64) %0, %f, %zero32, %zero64, %fivef, %p, %zero64
+    return %1
+}

@@ -1,0 +1,54 @@
+# run: verify-err
+
+func @caller:i32(ptr, i32) {
+    # check: function `caller`:
+    # unordered: `$val:ctrl, $val:ptr, $val:ptr, $val:i32 = entry`: bad output count, expected 3
+    # unordered: `$val:ctrl = callind (ptr, i32) $val, $val, $val`: bad input count, expected 4
+    # unordered: `$val:ctrl, $val:i32 = callind i32(ptr, i32) $val, $val, $val, $val, $val`: bad input count, expected 4
+    # unordered: `$val:ctrl, $val:i64 = callind () $val`: bad input count, expected 2
+    # unordered: `$val:i32 = callind i32(ptr, i32) $val, $val, $val`: bad input count, expected 4
+    # unordered: `callind (ptr, i32) $val, $val, $val, $val`: bad output count, expected 1
+
+    %0:ctrl, %fp:ptr, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    %5:ctrl = callind (ptr, i32) %3, %fp, %2
+    %6:ctrl, %7:i32 = callind i32(ptr, i32) %5, %fp, %1, %2, %1
+    %t:ctrl, %f:ctrl = brcond %6, %2
+    callind (ptr, i32) %t, %fp, %1, %2
+    %10:i32 = callind i32(ptr, i32) %fp, %1, %2
+    %11:i32 = iadd %7, %10
+    %12:ctrl, %13:i64 = callind () %f
+    return %12, %11
+}
+
+func @call_mixed_params(ptr, ptr) {
+    # check: function `call_mixed_params`:
+    # unordered: `$val:ctrl = callind (i32, i64, f64, ptr, i64) $val, $val, $val, $val, $val, $val, $val`: bad value kind for input 3, expected one of `i64`, got `f64`
+    # unordered: `$val:ctrl = callind (i32, i64, f64, ptr, i64) $val, $val, $val, $val, $val, $val, $val`: bad value kind for input 4, expected one of `f64`, got `i64`
+
+    %0:ctrl, %fp:ptr, %p:ptr = entry
+    %zero32:i32 = iconst 0
+    %zero64:i64 = iconst 0
+    %fivef:f64 = fconst 5
+    %1:ctrl = callind (i32, i64, f64, ptr, i64) %0, %fp, %zero32, %fivef, %zero64, %p, %zero64
+    return %1
+}
+
+func @call_swapped_outputs:i32(ptr) {
+    # check: function `call_swapped_outputs`:
+    # unordered: `$val:i32, $val:ctrl = callind i32() $val, $val`: bad value kind for output 0, expected one of `ctrl`, got `i32`
+    # unordered: `$val:i32, $val:ctrl = callind i32() $val, $val`: bad value kind for output 1, expected one of `i32`, got `ctrl`
+
+    %0:ctrl, %fp:ptr = entry
+    %1:i32, %2:ctrl = callind i32() %0, %fp
+    return %2, %1
+}
+
+func @callind_not_ptr(i32) {
+    # check: function `callind_not_ptr`:
+    # unordered: `$val:ctrl = callind () $val, $val`: bad value kind for input 1, expected one of `ptr`, got `i32`
+
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl = callind () %0, %1
+    return %2
+}

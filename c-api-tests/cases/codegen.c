@@ -53,21 +53,25 @@ void apply_relocs(uintptr_t base, spidir_function_t inner, uintptr_t inner_addr,
                   const spidir_codegen_reloc_t* relocs, size_t reloc_count) {
     for (size_t i = 0; i < reloc_count; i++) {
         const spidir_codegen_reloc_t* reloc = &relocs[i];
+        uintptr_t patch_addr = base + reloc->offset;
+        uint64_t target_value = 0;
+
+        if (reloc->target.id == inner.id) {
+            target_value = inner_addr;
+        } else if (reloc->target.id == outer.id) {
+            target_value = outer_addr;
+        } else {
+            ASSERT(!"unknown relocation target");
+        }
+
         switch (reloc->kind) {
         case SPIDIR_RELOC_X64_PC32: {
-            uintptr_t patch_addr = base + reloc->offset;
-            uintptr_t target_value = 0;
-
-            if (reloc->target.id == inner.id) {
-                target_value = inner_addr;
-            } else if (reloc->target.id == outer.id) {
-                target_value = outer_addr;
-            } else {
-                ASSERT(!"unknown relocation target");
-            }
-
             uint32_t reloc_value = target_value + reloc->addend - patch_addr;
             memcpy((void*) patch_addr, &reloc_value, sizeof(uint32_t));
+            break;
+        }
+        case SPIDIR_RELOC_X64_ABS64: {
+            memcpy((void*) patch_addr, &target_value, sizeof(uint64_t));
             break;
         }
         default:

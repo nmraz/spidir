@@ -1,12 +1,11 @@
 use alloc::{string::String, vec::Vec};
-use core::fmt;
+use core::{fmt, iter};
 
-use cranelift_entity::{entity_impl, PrimaryMap};
+use cranelift_entity::{entity_impl, packed_option::ReservedValue, PrimaryMap};
 
 use crate::{
-    builder::{BuilderExt, SimpleBuilder},
-    node::{FunctionRef, Type},
-    valgraph::{Node, ValGraph},
+    node::{DepValueKind, FunctionRef, NodeKind, Type},
+    valgraph::{DepValue, Node, ValGraph},
     write::{write_function_metadata, write_module},
 };
 
@@ -42,6 +41,37 @@ pub struct FunctionBody {
     pub entry: Node,
 }
 
+impl FunctionBody {
+    pub fn new_invalid() -> Self {
+        Self {
+            graph: ValGraph::new(),
+            entry: Node::reserved_value(),
+        }
+    }
+
+    pub fn new(param_types: &[Type]) -> Self {
+        let mut body = Self::new_invalid();
+
+        let entry = body.graph.create_node(
+            NodeKind::Entry,
+            [],
+            iter::once(DepValueKind::Control)
+                .chain(param_types.iter().map(|&ty| DepValueKind::Value(ty))),
+        );
+        body.entry = entry;
+
+        body
+    }
+
+    pub fn entry_ctrl(&self) -> DepValue {
+        self.graph.node_outputs(self.entry)[0]
+    }
+
+    pub fn param_value(&self, index: u32) -> DepValue {
+        self.graph.node_outputs(self.entry)[index as usize + 1]
+    }
+}
+
 #[derive(Clone)]
 pub struct FunctionData {
     pub metadata: FunctionMetadata,
@@ -50,14 +80,10 @@ pub struct FunctionData {
 
 impl FunctionData {
     pub fn new(name: String, sig: Signature) -> Self {
-        let mut graph = ValGraph::new();
-        let entry = SimpleBuilder(&mut graph).build_entry(&sig.param_types);
+        let body = FunctionBody::new(&sig.param_types);
         Self {
             metadata: FunctionMetadata { name, sig },
-            body: FunctionBody {
-                graph,
-                entry: entry.node,
-            },
+            body,
         }
     }
 }

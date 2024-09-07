@@ -1,6 +1,5 @@
 use crate::{
-    builder::{BuilderExt, SimpleBuilder},
-    test_utils::{create_const32, create_entry, create_region, create_return},
+    test_utils::{create_brcond, create_const32, create_entry, create_region, create_return},
     valgraph::{DepValue, ValGraph},
 };
 
@@ -12,16 +11,15 @@ fn create_graph() -> (ValGraph, Node, DepValue) {
     (graph, entry, ctrl)
 }
 
-fn create_brcond(graph: &mut ValGraph, ctrl: DepValue) -> (DepValue, DepValue) {
+fn create_dummy_brcond(graph: &mut ValGraph, ctrl: DepValue) -> (DepValue, DepValue) {
     let cond = create_const32(graph);
-    let brcond = SimpleBuilder(graph).build_brcond(ctrl, cond);
-    (brcond.true_ctrl, brcond.false_ctrl)
+    create_brcond(graph, ctrl, cond)
 }
 
 #[test]
 fn basic_cfg_reachable() {
     let (mut graph, entry, ctrl) = create_graph();
-    let (actrl, bctrl) = create_brcond(&mut graph, ctrl);
+    let (actrl, bctrl) = create_dummy_brcond(&mut graph, ctrl);
     let actrl = create_region(&mut graph, [actrl]);
     let bctrl = create_region(&mut graph, [bctrl]);
     let dead_region = create_region(&mut graph, []);
@@ -68,7 +66,7 @@ fn straight_line_query() {
 #[test]
 fn diamond_query() {
     let (mut graph, entry, ctrl) = create_graph();
-    let (actrl, bctrl) = create_brcond(&mut graph, ctrl);
+    let (actrl, bctrl) = create_dummy_brcond(&mut graph, ctrl);
     let actrl = create_region(&mut graph, [actrl]);
     let bctrl = create_region(&mut graph, [bctrl]);
     let join_ctrl = create_region(&mut graph, [actrl, bctrl]);

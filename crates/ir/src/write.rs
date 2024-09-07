@@ -545,8 +545,8 @@ mod tests {
                 param_types: vec![Type::I32, Type::F64],
             },
         );
-        let mut builder = SimpleBuilder(&mut function.body.graph);
-        let entry_outputs = builder.graph().node_outputs(function.body.entry);
+        let mut builder = SimpleBuilder(&mut function.body);
+        let entry_outputs = builder.graph().node_outputs(builder.body().entry);
         let entry_ctrl = entry_outputs[0];
         let param32 = entry_outputs[1];
         let param64 = entry_outputs[2];

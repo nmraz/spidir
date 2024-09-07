@@ -1,6 +1,7 @@
 use core::iter;
 
 use crate::{
+    module::FunctionBody,
     node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -43,10 +44,10 @@ pub trait Builder {
         inputs: impl IntoIterator<Item = DepValue>,
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node;
-    fn graph(&self) -> &ValGraph;
+    fn body(&self) -> &FunctionBody;
 }
 
-pub struct SimpleBuilder<'a>(pub &'a mut ValGraph);
+pub struct SimpleBuilder<'a>(pub &'a mut FunctionBody);
 
 impl<'a> Builder for SimpleBuilder<'a> {
     fn create_node(
@@ -55,16 +56,19 @@ impl<'a> Builder for SimpleBuilder<'a> {
         inputs: impl IntoIterator<Item = DepValue>,
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node {
-        self.0.create_node(kind, inputs, output_kinds)
+        self.0.graph.create_node(kind, inputs, output_kinds)
     }
 
-    #[inline]
-    fn graph(&self) -> &ValGraph {
+    fn body(&self) -> &FunctionBody {
         self.0
     }
 }
 
 pub trait BuilderExt: Builder {
+    fn graph(&self) -> &ValGraph {
+        &self.body().graph
+    }
+
     fn build_entry(&mut self, types: &[Type]) -> BuiltEntry {
         let entry = self.create_node(
             NodeKind::Entry,
@@ -268,7 +272,7 @@ pub trait BuilderExt: Builder {
     }
 }
 
-impl<F: Builder> BuilderExt for F {}
+impl<F: Builder + ?Sized> BuilderExt for F {}
 
 fn build_int_div(
     builder: &mut (impl Builder + ?Sized),

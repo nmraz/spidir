@@ -6,6 +6,7 @@ use smallvec::SmallVec;
 
 use crate::{
     builder::Builder,
+    module::FunctionBody,
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -21,14 +22,14 @@ impl Cache {
 }
 
 pub struct ConsBuilder<'a> {
-    graph: &'a mut ValGraph,
+    body: &'a mut FunctionBody,
     cache: &'a mut Cache,
 }
 
 impl<'a> ConsBuilder<'a> {
     #[inline]
-    pub fn new(graph: &'a mut ValGraph, cache: &'a mut Cache) -> Self {
-        Self { graph, cache }
+    pub fn new(body: &'a mut FunctionBody, cache: &'a mut Cache) -> Self {
+        Self { body, cache }
     }
 }
 
@@ -39,8 +40,10 @@ impl<'a> Builder for ConsBuilder<'a> {
         inputs: impl IntoIterator<Item = DepValue>,
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node {
+        let graph = &mut self.body.graph;
+
         if !should_cons_node_kind(&kind) {
-            return self.graph.create_node(kind, inputs, output_kinds);
+            return graph.create_node(kind, inputs, output_kinds);
         }
 
         let inputs: SmallVec<[_; 4]> = inputs.into_iter().collect();
@@ -48,24 +51,23 @@ impl<'a> Builder for ConsBuilder<'a> {
 
         let hash = hash_node(&kind, inputs.iter().copied(), output_kinds.iter().copied());
         let entry = self.cache.0.get(hash, |&node| {
-            existing_node_equal(self.graph, node, &kind, &inputs, &output_kinds)
+            existing_node_equal(graph, node, &kind, &inputs, &output_kinds)
         });
 
         match entry {
             Some(node) => *node,
             None => {
-                let node = self.graph.create_node(kind, inputs, output_kinds);
+                let node = graph.create_node(kind, inputs, output_kinds);
                 self.cache.0.insert(hash, node, |&existing_node| {
-                    hash_existing_node(self.graph, existing_node)
+                    hash_existing_node(graph, existing_node)
                 });
                 node
             }
         }
     }
 
-    #[inline]
-    fn graph(&self) -> &ValGraph {
-        self.graph
+    fn body(&self) -> &FunctionBody {
+        self.body
     }
 }
 
@@ -142,9 +144,9 @@ mod tests {
     use super::*;
 
     fn check(f: impl FnOnce(&mut ConsBuilder<'_>)) {
-        let mut graph = ValGraph::new();
+        let mut body = FunctionBody::new_invalid();
         let mut cache = Cache::new();
-        f(&mut ConsBuilder::new(&mut graph, &mut cache));
+        f(&mut ConsBuilder::new(&mut body, &mut cache));
     }
 
     #[test]

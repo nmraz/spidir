@@ -3,8 +3,9 @@ use graphwalk::PostOrderContext;
 
 use crate::{
     builder::{BuilderExt, SimpleBuilder},
+    module::FunctionBody,
     node::Type,
-    test_utils::{create_const32, create_entry, create_loop_body, create_return},
+    test_utils::create_loop_body,
     valgraph::{Node, ValGraph},
     valwalk::{cfg_preorder, LiveNodeInfo},
 };
@@ -27,47 +28,52 @@ fn check_live_scheduled(
     }
 }
 
-fn check_graph_scheduling(graph: &ValGraph, entry: Node) {
-    let live_node_info = LiveNodeInfo::compute(graph, entry);
-    let cfg_preorder: Vec<_> = cfg_preorder(graph, entry).collect();
-    let ctx = ScheduleContext::new(graph, &live_node_info, &cfg_preorder);
+fn check_graph_scheduling(body: &FunctionBody) {
+    let live_node_info = LiveNodeInfo::compute(&body.graph, body.entry);
+    let cfg_preorder: Vec<_> = cfg_preorder(&body.graph, body.entry).collect();
+    let ctx = ScheduleContext::new(&body.graph, &live_node_info, &cfg_preorder);
     let mut scheduled = EntitySet::new();
 
     let mut scratch_postorder = PostOrderContext::new();
     schedule_early(&ctx, &mut scratch_postorder, |_ctx, node| {
         scheduled.insert(node);
     });
-    check_live_scheduled(graph, &live_node_info, &scheduled, "early");
+    check_live_scheduled(&body.graph, &live_node_info, &scheduled, "early");
 
     scheduled.clear();
     schedule_late(&ctx, &mut scratch_postorder, |_ctx, node| {
         scheduled.insert(node);
     });
-    check_live_scheduled(graph, &live_node_info, &scheduled, "late");
+    check_live_scheduled(&body.graph, &live_node_info, &scheduled, "late");
 }
 
 #[test]
 fn schedule_simple_add() {
-    let mut graph = ValGraph::new();
-    let (entry, ctrl, [param]) = create_entry(&mut graph, [Type::I32]);
-    let add = SimpleBuilder(&mut graph).build_iadd(param, param);
-    create_return(&mut graph, [ctrl, add]);
-    check_graph_scheduling(&graph, entry);
+    let mut body = FunctionBody::new(&[Type::I32]);
+    let ctrl = body.entry_ctrl();
+    let param = body.param_value(0);
+
+    let mut builder = SimpleBuilder(&mut body);
+    let add = builder.build_iadd(param, param);
+    builder.build_return(ctrl, Some(add));
+    check_graph_scheduling(&body);
 }
 
 #[test]
 fn schedule_loop() {
     let body = create_loop_body();
-    check_graph_scheduling(&body.graph, body.entry);
+    check_graph_scheduling(&body);
 }
 
 #[test]
 fn schedule_floating_data_chain() {
-    let mut graph = ValGraph::new();
-    let (entry, ctrl, []) = create_entry(&mut graph, []);
-    let iconst = create_const32(&mut graph);
-    let iext = SimpleBuilder(&mut graph).build_iext(iconst);
-    let sfill = SimpleBuilder(&mut graph).build_sfill(32, iext);
-    create_return(&mut graph, [ctrl, sfill]);
-    check_graph_scheduling(&graph, entry);
+    let mut body = FunctionBody::new(&[]);
+    let ctrl = body.entry_ctrl();
+
+    let mut builder = SimpleBuilder(&mut body);
+    let iconst = builder.build_iconst(Type::I32, 5);
+    let iext = builder.build_iext(iconst);
+    let sfill = builder.build_sfill(32, iext);
+    builder.build_return(ctrl, Some(sfill));
+    check_graph_scheduling(&body);
 }

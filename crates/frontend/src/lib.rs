@@ -333,10 +333,8 @@ impl<'a> Builder for GraphBuilderWrapper<'a> {
         inputs: impl IntoIterator<Item = DepValue>,
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node {
-        let mut builder = ConsBuilder::new(
-            &mut self.module.functions[self.func].body.graph,
-            self.node_cache,
-        );
+        let mut builder =
+            ConsBuilder::new(&mut self.module.functions[self.func].body, self.node_cache);
         let node = builder.create_node(kind, inputs, output_kinds);
         trace!(
             "built node: `{}`",
@@ -345,8 +343,8 @@ impl<'a> Builder for GraphBuilderWrapper<'a> {
         node
     }
 
-    fn graph(&self) -> &ValGraph {
-        &self.module.functions[self.func].body.graph
+    fn body(&self) -> &FunctionBody {
+        &self.module.functions[self.func].body
     }
 }
 

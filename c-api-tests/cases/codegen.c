@@ -107,13 +107,17 @@ void map_and_run(spidir_function_t inner,
     memcpy((void*) outer_base, spidir_codegen_blob_get_code(outer_code),
            outer_size);
 
+    size_t inner_reloc_count = spidir_codegen_blob_get_reloc_count(inner_code);
+    size_t outer_reloc_count = spidir_codegen_blob_get_reloc_count(outer_code);
+
+    // Make sure we actually have some relocations in the emitted code.
+    ASSERT(inner_reloc_count + outer_reloc_count > 0);
+
     apply_relocs(inner_base, inner, inner_base, outer, outer_base,
-                 spidir_codegen_blob_get_relocs(inner_code),
-                 spidir_codegen_blob_get_reloc_count(inner_code),
+                 spidir_codegen_blob_get_relocs(inner_code), inner_reloc_count,
                  expected_reloc);
     apply_relocs(outer_base, inner, inner_base, outer, outer_base,
-                 spidir_codegen_blob_get_relocs(outer_code),
-                 spidir_codegen_blob_get_reloc_count(outer_code),
+                 spidir_codegen_blob_get_relocs(outer_code), outer_reloc_count,
                  expected_reloc);
 
     ASSERT(mprotect((void*) map_base, map_size, PROT_READ | PROT_EXEC) == 0);

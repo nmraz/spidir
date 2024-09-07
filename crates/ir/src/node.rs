@@ -3,7 +3,10 @@ use core::{
     hash::{Hash, Hasher},
 };
 
-use crate::module::{ExternFunction, Function};
+use crate::{
+    function::SignatureRef,
+    module::{ExternFunction, Function},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Type {
@@ -166,6 +169,7 @@ pub enum NodeKind {
     StackSlot { size: u32, align: u32 },
     BrCond,
     Call(FunctionRef),
+    CallInd(SignatureRef),
 }
 
 impl NodeKind {

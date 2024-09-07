@@ -225,9 +225,6 @@ pub fn write_node_kind(
     body: &FunctionBody,
     node_kind: &NodeKind,
 ) -> fmt::Result {
-    // For now, no auxiliary information is stored in the body.
-    let _ = body;
-
     match node_kind {
         NodeKind::Entry => w.write_str("entry")?,
         NodeKind::Return => w.write_str("return")?,
@@ -262,6 +259,10 @@ pub fn write_node_kind(
             w.write_str("call ")?;
             write_func_ref(w, module, *func)?;
         }
+        NodeKind::CallInd(sig) => {
+            w.write_str("callind ")?;
+            write_signature(w, &body.call_ind_sigs[*sig], false)?;
+        }
     };
     Ok(())
 }
@@ -281,12 +282,15 @@ pub fn quote_ident(ident: &str) -> Cow<'_, str> {
 
 pub fn write_function_metadata(w: &mut dyn fmt::Write, metadata: &FunctionMetadata) -> fmt::Result {
     write!(w, "@{}", quote_ident(&metadata.name))?;
-    write_signature(w, &metadata.sig)
+    write_signature(w, &metadata.sig, true)
 }
 
-pub fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
+fn write_signature(w: &mut dyn fmt::Write, sig: &Signature, after_name: bool) -> fmt::Result {
     if let Some(ret_type) = sig.ret_type {
-        write!(w, ":{}", ret_type)?;
+        if after_name {
+            write!(w, ":")?;
+        }
+        write!(w, "{}", ret_type)?;
     }
 
     w.write_str("(")?;
@@ -362,8 +366,21 @@ mod tests {
             },
         });
 
-        let check = |kind: NodeKind, expected: &str| {
-            let mut body = FunctionBody::new_invalid();
+        let mut body = FunctionBody::new_invalid();
+        let sig1 = body.call_ind_sigs.push(Signature {
+            ret_type: None,
+            param_types: vec![],
+        });
+        let sig2 = body.call_ind_sigs.push(Signature {
+            ret_type: None,
+            param_types: vec![Type::I64],
+        });
+        let sig3 = body.call_ind_sigs.push(Signature {
+            ret_type: Some(Type::I32),
+            param_types: vec![Type::Ptr],
+        });
+
+        let mut check = |kind: NodeKind, expected: &str| {
             let node = body.graph.create_node(kind, [], []);
             let mut output = String::new();
             write_node(&mut output, &module, &body, node).expect("failed to write node");
@@ -413,6 +430,9 @@ mod tests {
                 NodeKind::Call(FunctionRef::External(extfunc)),
                 "call @my_ext_func",
             ),
+            (NodeKind::CallInd(sig1), "callind ()"),
+            (NodeKind::CallInd(sig2), "callind (i64)"),
+            (NodeKind::CallInd(sig3), "callind i32(ptr)"),
         ];
 
         for (kind, expected) in kinds {

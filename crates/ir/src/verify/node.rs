@@ -3,7 +3,7 @@ use core::array;
 use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::{
-    function::FunctionData,
+    function::{FunctionBody, FunctionData, SignatureRef},
     module::Module,
     node::{DepValueKind, FunctionRef, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
@@ -49,6 +49,7 @@ pub fn verify_node_kind(
         NodeKind::StackSlot { align, .. } => verify_stack_slot(graph, node, *align, errors),
         NodeKind::BrCond => verify_brcond(graph, node, errors),
         NodeKind::Call(func) => verify_call(module, graph, node, *func, errors),
+        NodeKind::CallInd(sig) => verify_call_ind(&func.body, node, *sig, errors),
     }
 }
 
@@ -417,6 +418,44 @@ fn verify_call(
             graph,
             node,
             i + 1,
+            &[DepValueKind::Value(param_type)],
+            errors,
+        );
+    }
+}
+
+fn verify_call_ind(
+    body: &FunctionBody,
+    node: Node,
+    sig: SignatureRef,
+    errors: &mut Vec<FunctionVerifierError>,
+) {
+    let sig = &body.call_ind_sigs[sig];
+    let graph = &body.graph;
+
+    let expected_input_count = sig.param_types.len() as u32 + 2;
+
+    if let Some(ret_type) = sig.ret_type {
+        let Ok([out_ctrl, retval]) = verify_node_arity(graph, node, expected_input_count, errors)
+        else {
+            return;
+        };
+        let _ = verify_ctrl_output_kind(graph, out_ctrl, errors);
+        let _ = verify_output_kind(graph, retval, &[DepValueKind::Value(ret_type)], errors);
+    } else {
+        let Ok([out_ctrl]) = verify_node_arity(graph, node, expected_input_count, errors) else {
+            return;
+        };
+        let _ = verify_ctrl_output_kind(graph, out_ctrl, errors);
+    }
+
+    let _ = verify_ctrl_input_kind(graph, node, 0, errors);
+    let _ = verify_input_kind(graph, node, 1, &[DepValueKind::Value(Type::Ptr)], errors);
+    for (i, &param_type) in (0..).zip(&sig.param_types) {
+        let _ = verify_input_kind(
+            graph,
+            node,
+            i + 2,
             &[DepValueKind::Value(param_type)],
             errors,
         );

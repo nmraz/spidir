@@ -331,12 +331,10 @@ spidir_value_t spidir_builder_build_param_ref(spidir_builder_handle_t builder,
 /// Builds an instruction calling the function `func` at the current insertion
 /// point.
 ///
-/// This function can only build calls to internal functions (functions that
-/// reside in the current module, created by `spidir_module_create_function`).
-/// To build a call to an external function, use
-/// `spidir_builder_build_extern_call`.
-///
 /// @param[in] builder   A handle to the function builder.
+/// @param[in] func      The function to call. This should be a value previously
+///                      returned by either `spidir_module_create_function` or
+///                      `spidir_module_create_extern_function`.
 /// @param[in] arg_count The number of arguments to pass to the function. This
 ///                      value should match the parameter count specified when
 ///                      the function was created.

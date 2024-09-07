@@ -12,6 +12,9 @@ enum {
     ///   relocation
     /// * `A` is the addend value stored in the relocation
     SPIDIR_RELOC_X64_PC32 = 0,
+    /// A 64-bit relocation whose value should be the full run-time address of
+    /// the function referred to by the relocation.
+    SPIDIR_RELOC_X64_ABS64 = 1,
 };
 
 /// Creates a machine backend that generates code for the x64 architecture.

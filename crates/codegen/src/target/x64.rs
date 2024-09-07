@@ -12,27 +12,6 @@ mod lower;
 
 pub const RELOC_PC32: RelocKind = RelocKind(0);
 
-pub const RC_GPR: RegClass = RegClass::new(0);
-
-pub const REG_RAX: PhysReg = PhysReg::new(0);
-pub const REG_RBX: PhysReg = PhysReg::new(1);
-pub const REG_RCX: PhysReg = PhysReg::new(2);
-pub const REG_RDX: PhysReg = PhysReg::new(3);
-pub const REG_RDI: PhysReg = PhysReg::new(4);
-pub const REG_RSI: PhysReg = PhysReg::new(5);
-
-pub const REG_RBP: PhysReg = PhysReg::new(6);
-pub const REG_RSP: PhysReg = PhysReg::new(7);
-
-pub const REG_R8: PhysReg = PhysReg::new(8);
-pub const REG_R9: PhysReg = PhysReg::new(9);
-pub const REG_R10: PhysReg = PhysReg::new(10);
-pub const REG_R11: PhysReg = PhysReg::new(11);
-pub const REG_R12: PhysReg = PhysReg::new(12);
-pub const REG_R13: PhysReg = PhysReg::new(13);
-pub const REG_R14: PhysReg = PhysReg::new(14);
-pub const REG_R15: PhysReg = PhysReg::new(15);
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OperandSize {
     S32,
@@ -155,6 +134,27 @@ pub enum X64Instr {
     Jumpcc(CondCode, Block, Block),
     Ud2,
 }
+
+const RC_GPR: RegClass = RegClass::new(0);
+
+const REG_RAX: PhysReg = PhysReg::new(0);
+const REG_RBX: PhysReg = PhysReg::new(1);
+const REG_RCX: PhysReg = PhysReg::new(2);
+const REG_RDX: PhysReg = PhysReg::new(3);
+const REG_RDI: PhysReg = PhysReg::new(4);
+const REG_RSI: PhysReg = PhysReg::new(5);
+
+const REG_RBP: PhysReg = PhysReg::new(6);
+const REG_RSP: PhysReg = PhysReg::new(7);
+
+const REG_R8: PhysReg = PhysReg::new(8);
+const REG_R9: PhysReg = PhysReg::new(9);
+const REG_R10: PhysReg = PhysReg::new(10);
+const REG_R11: PhysReg = PhysReg::new(11);
+const REG_R12: PhysReg = PhysReg::new(12);
+const REG_R13: PhysReg = PhysReg::new(13);
+const REG_R14: PhysReg = PhysReg::new(14);
+const REG_R15: PhysReg = PhysReg::new(15);
 
 const CALLER_SAVED_REGS: [PhysReg; 9] = [
     REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11,

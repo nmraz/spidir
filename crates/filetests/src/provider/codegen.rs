@@ -22,7 +22,7 @@ impl TestProvider for CodegenProvider {
         let mut output = String::new();
 
         for func in module.functions.values() {
-            writeln!(output, "function `{}`:", func.name).unwrap();
+            writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
             let code = codegen_func(module, func, &X64Machine)
                 .map_err(|err| anyhow!("codegen failed: {:?}", err))?;
@@ -68,7 +68,7 @@ fn disasm_code(module: &Module, code: &CodeBlob, output: &mut String) -> Result<
                     output,
                     "  # reloc <{}> -> @{} + {}",
                     reloc.kind.0,
-                    quote_ident(module.resolve_funcref(reloc.target).name),
+                    quote_ident(&module.resolve_funcref(reloc.target).name),
                     reloc.addend
                 )
                 .unwrap();

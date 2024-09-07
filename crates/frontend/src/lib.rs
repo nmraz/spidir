@@ -6,7 +6,7 @@ use log::trace;
 use ir::{
     builder::{Builder, BuilderExt},
     cons_builder::{Cache, ConsBuilder},
-    module::{Function, FunctionData, Module},
+    module::{Function, FunctionBody, Module},
     node::{DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     write::display_node,
@@ -88,7 +88,7 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub fn set_entry_block(&mut self, block: Block) {
-        let entry = self.func().entry;
+        let entry = self.body().entry;
         let region = self.blocks[block].region;
         let graph = self.graph_mut();
 
@@ -97,7 +97,7 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub fn build_param_ref(&mut self, index: u32) -> DepValue {
-        self.graph().node_outputs(self.func().entry)[index as usize + 1]
+        self.graph().node_outputs(self.body().entry)[index as usize + 1]
     }
 
     pub fn build_call(&mut self, func: FunctionRef, args: &[DepValue]) -> Option<DepValue> {
@@ -276,7 +276,7 @@ impl<'a> FunctionBuilder<'a> {
         trace!(
             "terminating block {}, last control node `{}`",
             cur_block.as_u32(),
-            display_node(self.module, self.graph(), self.graph().value_def(ctrl).0)
+            display_node(self.module, self.body(), self.graph().value_def(ctrl).0)
         );
         ctrl
     }
@@ -304,19 +304,19 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn graph(&self) -> &ValGraph {
-        &self.func().graph
+        &self.body().graph
     }
 
     fn graph_mut(&mut self) -> &mut ValGraph {
-        &mut self.func_mut().graph
+        &mut self.body_mut().graph
     }
 
-    fn func(&self) -> &FunctionData {
-        &self.module.functions[self.func]
+    fn body(&self) -> &FunctionBody {
+        &self.module.functions[self.func].body
     }
 
-    fn func_mut(&mut self) -> &mut FunctionData {
-        &mut self.module.functions[self.func]
+    fn body_mut(&mut self) -> &mut FunctionBody {
+        &mut self.module.functions[self.func].body
     }
 }
 
@@ -333,18 +333,20 @@ impl<'a> Builder for GraphBuilderWrapper<'a> {
         inputs: impl IntoIterator<Item = DepValue>,
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node {
-        let mut builder =
-            ConsBuilder::new(&mut self.module.functions[self.func].graph, self.node_cache);
+        let mut builder = ConsBuilder::new(
+            &mut self.module.functions[self.func].body.graph,
+            self.node_cache,
+        );
         let node = builder.create_node(kind, inputs, output_kinds);
         trace!(
             "built node: `{}`",
-            display_node(self.module, &self.module.functions[self.func].graph, node)
+            display_node(self.module, &self.module.functions[self.func].body, node)
         );
         node
     }
 
     fn graph(&self) -> &ValGraph {
-        &self.module.functions[self.func].graph
+        &self.module.functions[self.func].body.graph
     }
 }
 

@@ -43,7 +43,9 @@ impl TestProvider for GraphvizTestProvider {
     fn output_for(&self, module: &Module) -> Result<String> {
         let mut output = String::new();
         for func in module.functions.values() {
-            writeln!(output, "function `{}`:", func.name).unwrap();
+            writeln!(output, "function `{}`:", func.metadata.name).unwrap();
+
+            let body = &func.body;
 
             match self.kind {
                 AnnotatorKind::Plain => {
@@ -61,7 +63,7 @@ impl TestProvider for GraphvizTestProvider {
                     let errors = get_verifier_errors(module, func)?;
                     write_graphviz_with_annotator(
                         &mut output,
-                        &mut [Box::new(ErrorAnnotator::new(&func.graph, &errors))],
+                        &mut [Box::new(ErrorAnnotator::new(&body.graph, &errors))],
                         module,
                         func,
                     );
@@ -72,14 +74,14 @@ impl TestProvider for GraphvizTestProvider {
                         &mut output,
                         &mut [
                             Box::new(ColoredAnnotator),
-                            Box::new(ErrorAnnotator::new(&func.graph, &errors)),
+                            Box::new(ErrorAnnotator::new(&body.graph, &errors)),
                         ],
                         module,
                         func,
                     );
                 }
                 AnnotatorKind::DomTree => {
-                    let domtree = DomTree::compute(&func.graph, func.entry);
+                    let domtree = DomTree::compute(&body.graph, body.entry);
                     write_graphviz_with_annotator(
                         &mut output,
                         &mut [Box::new(DomTreeAnnotator::new(&domtree))],
@@ -88,8 +90,8 @@ impl TestProvider for GraphvizTestProvider {
                     );
                 }
                 AnnotatorKind::Loops => {
-                    let domtree = DomTree::compute(&func.graph, func.entry);
-                    let loop_forest = LoopForest::compute(&func.graph, &domtree);
+                    let domtree = DomTree::compute(&body.graph, body.entry);
+                    let loop_forest = LoopForest::compute(&body.graph, &domtree);
                     write_graphviz_with_annotator(
                         &mut output,
                         &mut [Box::new(LoopAnnotator::new(&domtree, &loop_forest))],
@@ -120,5 +122,5 @@ fn write_graphviz_with_annotator(
     module: &Module,
     func: &FunctionData,
 ) {
-    write_graphviz(output, annotators, module, &func.graph, func.entry).unwrap();
+    write_graphviz(output, annotators, module, &func.body).unwrap();
 }

@@ -4,7 +4,7 @@ use core::array;
 use cranelift_entity::{packed_option::PackedOption, SecondaryMap};
 use fx_utils::FxHashMap;
 use ir::{
-    module::{FunctionData, Module},
+    module::{FunctionBody, FunctionData, Module},
     node::{NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{dataflow_inputs, dataflow_outputs},
@@ -35,11 +35,11 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     }
 
     pub fn value_type(&self, value: DepValue) -> Type {
-        self.state.func.graph.value_kind(value).as_value().unwrap()
+        self.state.graph().value_kind(value).as_value().unwrap()
     }
 
     pub fn value_def(&self, value: DepValue) -> Option<(Node, u32)> {
-        let (node, output_idx) = self.state.func.graph.value_def(value);
+        let (node, output_idx) = self.state.graph().value_def(value);
 
         // Only allow pure nodes to be looked through for pattern matching.
         if !self.node_kind(node).has_side_effects() {
@@ -58,7 +58,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     }
 
     pub fn node_kind(&self, node: Node) -> NodeKind {
-        *self.state.func.graph.node_kind(node)
+        *self.state.graph().node_kind(node)
     }
 
     pub fn node_stack_slot(&self, node: Node) -> StackSlot {
@@ -70,11 +70,11 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     }
 
     pub fn node_inputs(&self, node: Node) -> impl Iterator<Item = DepValue> + 'ctx {
-        dataflow_inputs(&self.state.func.graph, node)
+        dataflow_inputs(self.state.graph(), node)
     }
 
     pub fn node_outputs(&self, node: Node) -> impl Iterator<Item = DepValue> + 'ctx {
-        dataflow_outputs(&self.state.func.graph, node)
+        dataflow_outputs(self.state.graph(), node)
     }
 
     pub fn node_inputs_exact<const N: usize>(&self, node: Node) -> [DepValue; N] {
@@ -92,6 +92,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
     }
 
     pub fn get_value_vreg(&mut self, value: DepValue) -> VirtReg {
+        let graph = self.state.graph();
         get_value_vreg_helper(
             |value, class| {
                 let vreg = self.builder.create_vreg(class);
@@ -100,7 +101,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
             },
             &mut self.state.value_reg_map,
             self.state.machine,
-            &self.state.func.graph,
+            graph,
             value,
         )
     }
@@ -148,7 +149,7 @@ pub fn select_instrs<M: MachineLower>(
     block_map: &FunctionBlockMap,
     machine: &M,
 ) -> Result<Lir<M>, IselError> {
-    debug!("selecting instructions for: {}", func.metadata());
+    debug!("selecting instructions for: {}", func.metadata);
 
     let mut state = IselState::new(module, func, schedule, cfg_ctx, block_map, machine);
     let mut builder = LirBuilder::new(&cfg_ctx.block_order);
@@ -209,23 +210,23 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             for &phi in self.schedule.block_phis(block) {
                 // Values flowing into block parameters are always live.
                 // TODO: Except for values from dead control inputs?
-                for input in dataflow_inputs(&self.func.graph, phi) {
+                for input in dataflow_inputs(self.graph(), phi) {
                     self.value_use_counts[input] += 1;
                 }
 
                 // Create a fresh register for every incoming block parameter (phi output).
-                let output = self.func.graph.node_outputs(phi)[0];
+                let output = self.graph().node_outputs(phi)[0];
                 self.create_phi_vreg(builder, output);
             }
 
             for &node in self.schedule.scheduled_nodes(block) {
                 // Values flowing into scheduled nodes start live, but may be made dead by the
                 // instruction selection process.
-                for input in dataflow_inputs(&self.func.graph, node) {
+                for input in dataflow_inputs(self.graph(), node) {
                     self.value_use_counts[input] += 1;
                 }
 
-                if let &NodeKind::StackSlot { size, align } = self.func.graph.node_kind(node) {
+                if let &NodeKind::StackSlot { size, align } = self.graph().node_kind(node) {
                     let stack_slot = builder.create_stack_slot(MemLayout { size, align });
                     self.stack_slot_map.insert(node, stack_slot);
                 }
@@ -245,7 +246,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             .schedule
             .scheduled_nodes(block)
             .last()
-            .is_some_and(|&node| self.func.graph.node_kind(node).is_terminator());
+            .is_some_and(|&node| self.graph().node_kind(node).is_terminator());
 
         if !is_terminated {
             let succs = self.cfg_ctx.cfg.block_succs(block);
@@ -266,12 +267,12 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         }
 
         for &node in self.schedule.scheduled_nodes(block).iter().rev() {
-            trace!("  {}:", display_node(self.module, &self.func.graph, node));
+            trace!("  {}:", display_node(self.module, self.body(), node));
 
             // Note: node inputs should be detached after selection so the selector sees correct use
             // counts for the current node's inputs.
 
-            if !self.func.graph.node_kind(node).has_side_effects() && !self.is_node_used(node) {
+            if !self.graph().node_kind(node).has_side_effects() && !self.is_node_used(node) {
                 // This node is now dead as it was folded into a previous computation.
                 trace!("    (dead)");
                 self.detach_node_inputs(node);
@@ -291,12 +292,12 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         block: Block,
         node: Node,
     ) -> Result<(), IselError> {
-        let node_kind = self.func.graph.node_kind(node);
+        let node_kind = self.graph().node_kind(node);
         match node_kind {
             NodeKind::Entry => {
                 assert!(block == self.cfg_ctx.block_order[0], "misplaced entry node");
-                let param_locs = self.machine.param_locs(&self.func.sig.param_types);
-                let entry_outputs = self.func.graph.node_outputs(node);
+                let param_locs = self.machine.param_locs(&self.func.metadata.sig.param_types);
+                let entry_outputs = self.graph().node_outputs(node);
                 assert!(param_locs.len() == entry_outputs.len() - 1);
 
                 let mut param_regs = SmallVec::<[VirtReg; 8]>::new();
@@ -354,15 +355,15 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             // combined with critical edge splitting, means that we can always place parallel copies
             // for block param resolution in the predecessor later.
             for &phi in self.schedule.block_phis(block) {
-                let input = self.get_value_vreg(builder, self.func.graph.node_inputs(phi)[1]);
-                let output = self.value_reg_map[self.func.graph.node_outputs(phi)[0]].unwrap();
+                let input = self.get_value_vreg(builder, self.graph().node_inputs(phi)[1]);
+                let output = self.value_reg_map[self.graph().node_outputs(phi)[0]].unwrap();
                 builder.copy_vreg(output.reg_num(), input.reg_num());
             }
         } else {
             // Multiple predecessors - the phis are really necessary.
             builder.set_incoming_block_params(self.schedule.block_phis(block).iter().map(|&phi| {
-                let val = self.value_reg_map[self.func.graph.node_outputs(phi)[0]].unwrap();
-                trace!("  {}", display_node(self.module, &self.func.graph, phi));
+                let val = self.value_reg_map[self.graph().node_outputs(phi)[0]].unwrap();
+                trace!("  {}", display_node(self.module, self.body(), phi));
                 val
             }));
         }
@@ -399,7 +400,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 .iter()
                 .map(|&phi| {
                     // Note: input 0 is the selector from the containing block.
-                    let input = self.func.graph.node_inputs(phi)[valgraph_pred_idx as usize + 1];
+                    let input = self.graph().node_inputs(phi)[valgraph_pred_idx as usize + 1];
                     self.get_value_vreg(builder, input)
                 })
                 .collect();
@@ -413,6 +414,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn get_value_vreg(&mut self, builder: &mut LirBuilder<'ctx, M>, value: DepValue) -> VirtReg {
+        let graph = self.graph();
         get_value_vreg_helper(
             |value, class| {
                 let vreg = builder.create_vreg(class);
@@ -421,7 +423,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             },
             &mut self.value_reg_map,
             self.machine,
-            &self.func.graph,
+            graph,
             value,
         )
     }
@@ -429,14 +431,14 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     fn create_phi_vreg(&mut self, builder: &mut LirBuilder<'ctx, M>, value: DepValue) -> VirtReg {
         let class = self
             .machine
-            .reg_class_for_type(self.func.graph.value_kind(value).as_value().unwrap());
+            .reg_class_for_type(self.graph().value_kind(value).as_value().unwrap());
         let vreg = builder.create_vreg(class);
         self.value_reg_map[value] = vreg.into();
         vreg
     }
 
     fn is_node_used(&self, node: Node) -> bool {
-        dataflow_outputs(&self.func.graph, node).any(|output| self.is_value_used(output))
+        dataflow_outputs(self.graph(), node).any(|output| self.is_value_used(output))
     }
 
     fn is_value_used(&self, value: DepValue) -> bool {
@@ -450,9 +452,17 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn detach_node_inputs(&mut self, node: Node) {
-        for input in dataflow_inputs(&self.func.graph, node) {
+        for input in dataflow_inputs(self.graph(), node) {
             self.value_use_counts[input] -= 1;
         }
+    }
+
+    fn graph(&self) -> &'ctx ValGraph {
+        &self.func.body.graph
+    }
+
+    fn body(&self) -> &'ctx FunctionBody {
+        &self.func.body
     }
 }
 

@@ -78,14 +78,15 @@ impl TestProvider for VerifyErrProvider {
         writeln!(output).unwrap();
 
         for (func, func_data) in &module.functions {
-            writeln!(output, "function `{}`:", func_data.name).unwrap();
+            writeln!(output, "function `{}`:", func_data.metadata.name).unwrap();
             if let Some(errors) = errors_by_function.get(func) {
-                let graph = &func_data.graph;
+                let body = &func_data.body;
+                let graph = &body.graph;
                 for error in errors {
                     writeln!(
                         output,
                         "`{}`: {}",
-                        display_node(module, graph, error.node(graph)),
+                        display_node(module, body, error.node(graph)),
                         error.display(graph)
                     )
                     .unwrap();

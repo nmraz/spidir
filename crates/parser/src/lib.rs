@@ -12,7 +12,7 @@ use alloc::{
 
 use fx_utils::FxHashMap;
 use ir::{
-    module::{ExternFunctionData, Function, FunctionData, Module, Signature},
+    module::{Function, FunctionBody, FunctionData, FunctionMetadata, Module, Signature},
     node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -79,7 +79,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                     )));
                 }
 
-                let function = module.extern_functions.push(ExternFunctionData {
+                let function = module.extern_functions.push(FunctionMetadata {
                     name: name.clone().into_owned(),
                     sig,
                 });
@@ -98,11 +98,15 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 }
 
                 let function = module.functions.push(FunctionData {
-                    name: name.clone().into_owned(),
-                    sig: parsed.sig,
-                    graph: ValGraph::new(),
-                    // This is cheating, but we promise not to inspect the graph until we fill it in later.
-                    entry: Node::from_u32(0),
+                    metadata: FunctionMetadata {
+                        name: name.clone().into_owned(),
+                        sig: parsed.sig,
+                    },
+                    body: FunctionBody {
+                        graph: ValGraph::new(),
+                        // This is cheating, but we promise not to inspect the graph until we fill it in later.
+                        entry: Node::from_u32(0),
+                    },
                 });
 
                 function_names.insert(name, FunctionRef::Internal(function));
@@ -118,7 +122,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
 
     for func in pending_functions {
         let func_data = &mut module.functions[func.id];
-        func_data.entry = extract_graph(func.graph_pair, &function_names, &mut func_data.graph)?;
+        extract_body(func.graph_pair, &function_names, &mut func_data.body)?;
     }
 
     Ok(module)
@@ -139,11 +143,13 @@ fn extract_function(func_pair: Pair<'_, Rule>) -> Result<ParsedFunction<'_>, Box
     })
 }
 
-fn extract_graph(
+fn extract_body(
     graph_pair: Pair<'_, Rule>,
     function_names: &FunctionNames<'_>,
-    graph: &mut ValGraph,
-) -> Result<Node, Box<Error<Rule>>> {
+    body: &mut FunctionBody,
+) -> Result<(), Box<Error<Rule>>> {
+    let graph = &mut body.graph;
+
     let mut value_map = FxHashMap::<Cow<'_, str>, DepValue>::default();
 
     let graph_start = graph_pair.as_span().start_pos();
@@ -209,7 +215,8 @@ fn extract_graph(
         }
     }
 
-    Ok(*nodes.first().expect("nodes should be nonempty"))
+    body.entry = *nodes.first().expect("nodes should be nonempty");
+    Ok(())
 }
 
 fn extract_node<'a>(

@@ -19,7 +19,7 @@ use ir::{
     loops::LoopForest,
     module::{FunctionData, Module},
     verify::verify_func,
-    write::{display_node, quote_ident, write_signature},
+    write::{display_node, quote_ident, write_function_metadata},
 };
 use ir_graphviz::{
     annotate::{Annotate, ColoredAnnotator, DomTreeAnnotator, ErrorAnnotator, LoopAnnotator},
@@ -240,11 +240,13 @@ fn output_dot_file(
     module: &Module,
     func: &FunctionData,
 ) -> Result<()> {
+    let graph = &func.body.graph;
+
     let errors;
     let loop_forest;
 
     let domtree = if annotator_opts.domtree || annotator_opts.loops {
-        Some(DomTree::compute(&func.graph, func.entry))
+        Some(DomTree::compute(graph, func.body.entry))
     } else {
         None
     };
@@ -258,14 +260,14 @@ fn output_dot_file(
 
     if annotator_opts.loops {
         let domtree = domtree.as_ref().unwrap();
-        loop_forest = LoopForest::compute(&func.graph, domtree);
+        loop_forest = LoopForest::compute(graph, domtree);
         annotators.push(Box::new(LoopAnnotator::new(domtree, &loop_forest)));
     }
 
     if !annotator_opts.no_verify {
         if let Err(inner_errors) = verify_func(module, func) {
             errors = inner_errors;
-            annotators.push(Box::new(ErrorAnnotator::new(&func.graph, &errors)));
+            annotators.push(Box::new(ErrorAnnotator::new(graph, &errors)));
         }
     };
 
@@ -281,15 +283,14 @@ fn get_module_schedule_str(module: &Module) -> String {
     let mut output = String::new();
 
     for func in module.functions.values() {
-        write!(output, "func @{}", quote_ident(&func.name)).unwrap();
-        write_signature(&mut output, &func.sig).unwrap();
+        write_function_metadata(&mut output, &func.metadata).unwrap();
 
-        let (cfg_ctx, _, schedule) = schedule_graph(&func.graph, func.entry);
+        let (cfg_ctx, _, schedule) = schedule_graph(&func.body.graph, func.body.entry);
 
         writeln!(
             output,
             " {{\n{}}}\n",
-            schedule.display(module, &func.graph, &cfg_ctx.cfg, &cfg_ctx.block_order)
+            schedule.display(module, &func.body, &cfg_ctx.cfg, &cfg_ctx.block_order)
         )
         .unwrap();
     }
@@ -301,12 +302,12 @@ fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
     let mut output = String::new();
 
     for func in module.functions.values() {
-        writeln!(output, "func @{} {{", quote_ident(&func.name)).unwrap();
+        writeln!(output, "func @{} {{", quote_ident(&func.metadata.name)).unwrap();
         let (cfg_ctx, lir) = lower_func(module, func, &X64Machine).map_err(|err| {
             anyhow!(
                 "failed to select `{}`: `{}`",
-                func.name,
-                display_node(module, &func.graph, err.node)
+                func.metadata.name,
+                display_node(module, &func.body, err.node)
             )
         })?;
 
@@ -334,8 +335,6 @@ fn get_graphviz_str(
     func: &FunctionData,
 ) -> Result<String> {
     let mut s = String::new();
-    write_graphviz(&mut s, annotators, module, &func.graph, func.entry)
-        .context("failed to format dot graph")?;
-
+    write_graphviz(&mut s, annotators, module, &func.body).context("failed to format dot graph")?;
     Ok(s)
 }

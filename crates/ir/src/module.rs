@@ -24,12 +24,28 @@ pub struct Signature {
     pub param_types: Vec<Type>,
 }
 
-#[derive(Clone)]
-pub struct FunctionData {
+#[derive(Debug, Clone)]
+pub struct FunctionMetadata {
     pub name: String,
     pub sig: Signature,
+}
+
+impl fmt::Display for FunctionMetadata {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_function_metadata(f, self)
+    }
+}
+
+#[derive(Clone)]
+pub struct FunctionBody {
     pub graph: ValGraph,
     pub entry: Node,
+}
+
+#[derive(Clone)]
+pub struct FunctionData {
+    pub metadata: FunctionMetadata,
+    pub body: FunctionBody,
 }
 
 impl FunctionData {
@@ -37,52 +53,19 @@ impl FunctionData {
         let mut graph = ValGraph::new();
         let entry = SimpleBuilder(&mut graph).build_entry(&sig.param_types);
         Self {
-            name,
-            sig,
-            graph,
-            entry: entry.node,
+            metadata: FunctionMetadata { name, sig },
+            body: FunctionBody {
+                graph,
+                entry: entry.node,
+            },
         }
-    }
-
-    pub fn metadata(&self) -> FunctionMetadata<'_> {
-        FunctionMetadata {
-            name: &self.name,
-            sig: &self.sig,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct ExternFunctionData {
-    pub name: String,
-    pub sig: Signature,
-}
-
-impl ExternFunctionData {
-    pub fn metadata(&self) -> FunctionMetadata<'_> {
-        FunctionMetadata {
-            name: &self.name,
-            sig: &self.sig,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct FunctionMetadata<'a> {
-    pub name: &'a str,
-    pub sig: &'a Signature,
-}
-
-impl fmt::Display for FunctionMetadata<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_function_metadata(f, self)
     }
 }
 
 #[derive(Clone)]
 pub struct Module {
     pub functions: PrimaryMap<Function, FunctionData>,
-    pub extern_functions: PrimaryMap<ExternFunction, ExternFunctionData>,
+    pub extern_functions: PrimaryMap<ExternFunction, FunctionMetadata>,
 }
 
 impl Module {
@@ -94,10 +77,10 @@ impl Module {
         }
     }
 
-    pub fn resolve_funcref(&self, funcref: FunctionRef) -> FunctionMetadata<'_> {
+    pub fn resolve_funcref(&self, funcref: FunctionRef) -> &FunctionMetadata {
         match funcref {
-            FunctionRef::Internal(func) => self.functions[func].metadata(),
-            FunctionRef::External(func) => self.extern_functions[func].metadata(),
+            FunctionRef::Internal(func) => &self.functions[func].metadata,
+            FunctionRef::External(func) => &self.extern_functions[func],
         }
     }
 }

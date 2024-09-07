@@ -2,6 +2,7 @@ use core::array;
 
 use crate::{
     builder::{BuilderExt, SimpleBuilder},
+    module::FunctionBody,
     node::{DepValueKind, IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -36,7 +37,7 @@ pub fn create_return<const N: usize>(graph: &mut ValGraph, inputs: [DepValue; N]
     graph.create_node(NodeKind::Return, inputs, [])
 }
 
-pub fn create_loop_graph() -> (ValGraph, Node) {
+pub fn create_loop_body() -> FunctionBody {
     let mut graph = ValGraph::new();
     let (entry, entry_control, [param1]) = create_entry(&mut graph, [Type::I32]);
 
@@ -137,5 +138,5 @@ pub fn create_loop_graph() -> (ValGraph, Node) {
     graph.add_node_input(indvar_phi, next_indvar_val);
     graph.add_node_input(sum_phi, next_sum_val);
 
-    (graph, entry)
+    FunctionBody { graph, entry }
 }

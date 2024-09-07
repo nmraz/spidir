@@ -18,15 +18,15 @@ impl TestProvider for IselRegallocProvider {
         let mut output = String::new();
 
         for func in module.functions.values() {
-            writeln!(output, "function `{}`:", func.name).unwrap();
+            writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
             let machine = X64Machine;
 
             let (cfg_ctx, lir) = lower_func(module, func, &machine).map_err(|err| {
                 anyhow!(
                     "failed to select `{}`: `{}`",
-                    func.name,
-                    display_node(module, &func.graph, err.node)
+                    func.metadata.name,
+                    display_node(module, &func.body, err.node)
                 )
             })?;
             let assignment = regalloc::run(&lir, &cfg_ctx, &machine)

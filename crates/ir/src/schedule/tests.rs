@@ -4,7 +4,7 @@ use graphwalk::PostOrderContext;
 use crate::{
     builder::{BuilderExt, SimpleBuilder},
     node::Type,
-    test_utils::{create_const32, create_entry, create_loop_graph, create_return},
+    test_utils::{create_const32, create_entry, create_loop_body, create_return},
     valgraph::{Node, ValGraph},
     valwalk::{cfg_preorder, LiveNodeInfo},
 };
@@ -57,8 +57,8 @@ fn schedule_simple_add() {
 
 #[test]
 fn schedule_loop() {
-    let (graph, entry) = create_loop_graph();
-    check_graph_scheduling(&graph, entry);
+    let body = create_loop_body();
+    check_graph_scheduling(&body.graph, body.entry);
 }
 
 #[test]

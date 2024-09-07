@@ -16,7 +16,7 @@ pub fn verify_node_kind(
     node: Node,
     errors: &mut Vec<GraphVerifierError>,
 ) {
-    let graph = &func.graph;
+    let graph = &func.body.graph;
     match graph.node_kind(node) {
         NodeKind::Entry => verify_entry(func, node, errors),
         NodeKind::Return => verify_return(func, node, errors),
@@ -52,13 +52,16 @@ pub fn verify_node_kind(
 }
 
 fn verify_entry(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifierError>) {
-    if node != func.entry {
+    let metadata = &func.metadata;
+    let body = &func.body;
+
+    if node != body.entry {
         errors.push(GraphVerifierError::MisplacedEntry(node));
         return;
     }
 
-    let expected_output_count = func.sig.param_types.len() + 1;
-    let outputs = func.graph.node_outputs(node);
+    let expected_output_count = metadata.sig.param_types.len() + 1;
+    let outputs = body.graph.node_outputs(node);
     if outputs.len() != expected_output_count {
         errors.push(GraphVerifierError::BadOutputCount {
             node,
@@ -67,10 +70,10 @@ fn verify_entry(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifierE
         return;
     }
 
-    let _ = verify_ctrl_output_kind(&func.graph, outputs[0], errors);
-    for (output, &expected_ty) in outputs.into_iter().skip(1).zip(&func.sig.param_types) {
+    let _ = verify_ctrl_output_kind(&body.graph, outputs[0], errors);
+    for (output, &expected_ty) in outputs.into_iter().skip(1).zip(&metadata.sig.param_types) {
         let _ = verify_output_kind(
-            &func.graph,
+            &body.graph,
             output,
             &[DepValueKind::Value(expected_ty)],
             errors,
@@ -79,14 +82,17 @@ fn verify_entry(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifierE
 }
 
 fn verify_return(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifierError>) {
-    match func.sig.ret_type {
+    let metadata = &func.metadata;
+    let body = &func.body;
+
+    match metadata.sig.ret_type {
         Some(ret_type) => {
-            let Ok([]) = verify_node_arity(&func.graph, node, 2, errors) else {
+            let Ok([]) = verify_node_arity(&body.graph, node, 2, errors) else {
                 return;
             };
-            let _ = verify_ctrl_input_kind(&func.graph, node, 0, errors);
+            let _ = verify_ctrl_input_kind(&body.graph, node, 0, errors);
             let _ = verify_input_kind(
-                &func.graph,
+                &body.graph,
                 node,
                 1,
                 &[DepValueKind::Value(ret_type)],
@@ -94,10 +100,10 @@ fn verify_return(func: &FunctionData, node: Node, errors: &mut Vec<GraphVerifier
             );
         }
         None => {
-            let Ok([]) = verify_node_arity(&func.graph, node, 1, errors) else {
+            let Ok([]) = verify_node_arity(&body.graph, node, 1, errors) else {
                 return;
             };
-            let _ = verify_ctrl_input_kind(&func.graph, node, 0, errors);
+            let _ = verify_ctrl_input_kind(&body.graph, node, 0, errors);
         }
     }
 }
@@ -377,7 +383,7 @@ fn verify_call(
     func: FunctionRef,
     errors: &mut Vec<GraphVerifierError>,
 ) {
-    let sig = module.resolve_funcref(func).sig;
+    let sig = &module.resolve_funcref(func).sig;
     let expected_input_count = sig.param_types.len() as u32 + 1;
 
     if let Some(ret_type) = sig.ret_type {

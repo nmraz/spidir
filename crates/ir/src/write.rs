@@ -4,8 +4,7 @@ use alloc::{borrow::Cow, format};
 
 use crate::{
     module::{
-        ExternFunction, ExternFunctionData, Function, FunctionData, FunctionMetadata, Module,
-        Signature,
+        ExternFunction, Function, FunctionBody, FunctionData, FunctionMetadata, Module, Signature,
     },
     node::{FunctionRef, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
@@ -17,10 +16,10 @@ pub trait AnnotateGraph<W: fmt::Write + ?Sized> {
         &mut self,
         w: &mut W,
         module: &Module,
-        graph: &ValGraph,
+        body: &FunctionBody,
         node: Node,
     ) -> fmt::Result {
-        write_annotated_node(w, self, module, graph, node)
+        write_annotated_node(w, self, module, body, node)
     }
 
     fn write_node_output(&mut self, w: &mut W, graph: &ValGraph, output: DepValue) -> fmt::Result {
@@ -31,13 +30,14 @@ pub trait AnnotateGraph<W: fmt::Write + ?Sized> {
         &mut self,
         mut w: &mut W,
         module: &Module,
+        body: &FunctionBody,
         node_kind: &NodeKind,
     ) -> fmt::Result {
         // This is a little ugly because it can cause double-vtables if `W` is already
         // `dyn fmt::Write`, but there isn't a way to let this trait know the concrete type `W` (and
         // allow it to be unsized) and have `write_node_kind` accept type-erased writers without the
         // extra indirection.
-        write_node_kind(&mut w, module, node_kind)
+        write_node_kind(&mut w, module, body, node_kind)
     }
 
     fn write_node_input(
@@ -75,25 +75,21 @@ impl<'a> AnnotateModule<dyn fmt::Write + 'a> for DefaultAnnotator {}
 
 pub fn display_node<'a>(
     module: &'a Module,
-    graph: &'a ValGraph,
+    body: &'a FunctionBody,
     node: Node,
 ) -> impl fmt::Display + 'a {
-    DisplayNode {
-        module,
-        graph,
-        node,
-    }
+    DisplayNode { module, body, node }
 }
 
 struct DisplayNode<'a> {
     module: &'a Module,
-    graph: &'a ValGraph,
+    body: &'a FunctionBody,
     node: Node,
 }
 
 impl<'a> fmt::Display for DisplayNode<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_node(f, self.module, self.graph, self.node)
+        write_node(f, self.module, self.body, self.node)
     }
 }
 
@@ -133,33 +129,31 @@ pub fn write_annotated_function<W: fmt::Write + ?Sized>(
     module: &Module,
     func: &FunctionData,
 ) -> fmt::Result {
-    write!(w, "func {}", func.metadata())?;
+    write!(w, "func {}", func.metadata)?;
     w.write_str(" {\n")?;
-    write_annotated_graph(w, annotator, module, &func.graph, func.entry, 4)?;
+    write_annotated_body(w, annotator, module, &func.body, 4)?;
     w.write_str("}\n")
 }
 
-pub fn write_graph(
+pub fn write_body(
     w: &mut dyn fmt::Write,
     module: &Module,
-    graph: &ValGraph,
-    entry: Node,
+    body: &FunctionBody,
     indentation: u32,
 ) -> fmt::Result {
-    write_annotated_graph(w, &mut DefaultAnnotator, module, graph, entry, indentation)
+    write_annotated_body(w, &mut DefaultAnnotator, module, body, indentation)
 }
 
-pub fn write_annotated_graph<W: fmt::Write + ?Sized>(
+pub fn write_annotated_body<W: fmt::Write + ?Sized>(
     w: &mut W,
     annotator: &mut (impl AnnotateGraph<W> + ?Sized),
     module: &Module,
-    graph: &ValGraph,
-    entry: Node,
+    body: &FunctionBody,
     indentation: u32,
 ) -> fmt::Result {
-    for node in LiveNodeInfo::compute(graph, entry).reverse_postorder(graph) {
+    for node in LiveNodeInfo::compute(&body.graph, body.entry).reverse_postorder(&body.graph) {
         write_indendation(w, indentation)?;
-        annotator.write_node(w, module, graph, node)?;
+        annotator.write_node(w, module, body, node)?;
         writeln!(w)?;
     }
 
@@ -169,19 +163,20 @@ pub fn write_annotated_graph<W: fmt::Write + ?Sized>(
 pub fn write_node(
     w: &mut dyn fmt::Write,
     module: &Module,
-    graph: &ValGraph,
+    body: &FunctionBody,
     node: Node,
 ) -> fmt::Result {
-    write_annotated_node(w, &mut DefaultAnnotator, module, graph, node)
+    write_annotated_node(w, &mut DefaultAnnotator, module, body, node)
 }
 
 pub fn write_annotated_node<W: fmt::Write + ?Sized>(
     w: &mut W,
     annotator: &mut (impl AnnotateGraph<W> + ?Sized),
     module: &Module,
-    graph: &ValGraph,
+    body: &FunctionBody,
     node: Node,
 ) -> fmt::Result {
+    let graph = &body.graph;
     let outputs = graph.node_outputs(node);
 
     if !outputs.is_empty() {
@@ -196,7 +191,7 @@ pub fn write_annotated_node<W: fmt::Write + ?Sized>(
         w.write_str(" = ")?;
     }
 
-    annotator.write_node_kind(w, module, graph.node_kind(node))?;
+    annotator.write_node_kind(w, module, body, graph.node_kind(node))?;
 
     for input in 0..graph.node_inputs(node).len() {
         if input == 0 {
@@ -229,8 +224,12 @@ pub fn write_value_def(
 pub fn write_node_kind(
     w: &mut dyn fmt::Write,
     module: &Module,
+    body: &FunctionBody,
     node_kind: &NodeKind,
 ) -> fmt::Result {
+    // For now, no auxiliary information is stored in the body.
+    let _ = body;
+
     match node_kind {
         NodeKind::Entry => w.write_str("entry")?,
         NodeKind::Return => w.write_str("return")?,
@@ -269,8 +268,8 @@ pub fn write_node_kind(
     Ok(())
 }
 
-pub fn write_extern_function(w: &mut dyn fmt::Write, func: &ExternFunctionData) -> fmt::Result {
-    write!(w, "extfunc {}", func.metadata())?;
+pub fn write_extern_function(w: &mut dyn fmt::Write, metadata: &FunctionMetadata) -> fmt::Result {
+    write!(w, "extfunc {}", metadata)?;
     writeln!(w)
 }
 
@@ -282,12 +281,9 @@ pub fn quote_ident(ident: &str) -> Cow<'_, str> {
     }
 }
 
-pub fn write_function_metadata(
-    w: &mut dyn fmt::Write,
-    metadata: &FunctionMetadata<'_>,
-) -> fmt::Result {
-    write!(w, "@{}", quote_ident(metadata.name))?;
-    write_signature(w, metadata.sig)
+pub fn write_function_metadata(w: &mut dyn fmt::Write, metadata: &FunctionMetadata) -> fmt::Result {
+    write!(w, "@{}", quote_ident(&metadata.name))?;
+    write_signature(w, &metadata.sig)
 }
 
 pub fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
@@ -310,7 +306,7 @@ pub fn write_signature(w: &mut dyn fmt::Write, sig: &Signature) -> fmt::Result {
 }
 
 fn write_func_ref(w: &mut dyn fmt::Write, module: &Module, func: FunctionRef) -> fmt::Result {
-    write!(w, "@{}", quote_ident(module.resolve_funcref(func).name))
+    write!(w, "@{}", quote_ident(&module.resolve_funcref(func).name))
 }
 
 fn is_unquoted_ident_char(c: char) -> bool {
@@ -324,17 +320,17 @@ mod tests {
 
     use crate::{
         builder::{Builder, BuilderExt, SimpleBuilder},
-        module::{ExternFunctionData, FunctionData, Signature},
+        module::{FunctionData, Signature},
         node::{BitwiseF64, DepValueKind, IcmpKind, MemSize, Type},
-        test_utils::{create_entry, create_loop_graph, create_return},
+        test_utils::{create_entry, create_loop_body, create_return},
     };
 
     use super::*;
 
-    fn check_write_graph(graph: &ValGraph, entry: Node, expected: Expect) {
+    fn check_write_body(body: &FunctionBody, expected: Expect) {
         let module = Module::new();
         let mut output = String::new();
-        write_graph(&mut output, &module, graph, entry, 0).expect("failed to display graph");
+        write_body(&mut output, &module, body, 0).expect("failed to display graph");
         expected.assert_eq(&output);
     }
 
@@ -361,7 +357,7 @@ mod tests {
             },
         ));
 
-        let extfunc = module.extern_functions.push(ExternFunctionData {
+        let extfunc = module.extern_functions.push(FunctionMetadata {
             name: "my_ext_func".to_owned(),
             sig: Signature {
                 ret_type: Some(Type::I32),
@@ -372,8 +368,9 @@ mod tests {
         let check = |kind: NodeKind, expected: &str| {
             let mut graph = ValGraph::new();
             let node = graph.create_node(kind, [], []);
+            let body = FunctionBody { graph, entry: node };
             let mut output = String::new();
-            write_node(&mut output, &module, &graph, node).expect("failed to write node");
+            write_node(&mut output, &module, &body, node).expect("failed to write node");
             assert_eq!(output, expected.to_owned());
         };
 
@@ -428,7 +425,7 @@ mod tests {
     }
 
     #[test]
-    fn write_add_params_graph() {
+    fn write_add_params_body() {
         let mut graph = ValGraph::new();
 
         let (entry, control_value, [param1, param2]) =
@@ -442,9 +439,10 @@ mod tests {
         let add_res = graph.node_outputs(add)[0];
         create_return(&mut graph, [control_value, add_res]);
 
-        check_write_graph(
-            &graph,
-            entry,
+        let body = FunctionBody { graph, entry };
+
+        check_write_body(
+            &body,
             expect![[r#"
                 %0:ctrl, %1:i32, %2:i32 = entry
                 %3:i32 = iadd %1, %2
@@ -454,12 +452,11 @@ mod tests {
     }
 
     #[test]
-    fn write_loop_graph() {
-        let (graph, entry) = create_loop_graph();
+    fn write_loop_body() {
+        let body = create_loop_body();
 
-        check_write_graph(
-            &graph,
-            entry,
+        check_write_body(
+            &body,
             expect![[r#"
                 %0:ctrl, %1:i32 = entry
                 %10:i32 = iconst 1
@@ -489,8 +486,8 @@ mod tests {
                 param_types: vec![Type::I32, Type::I32],
             },
         );
-        let graph = &mut function.graph;
-        let entry = function.entry;
+        let graph = &mut function.body.graph;
+        let entry = function.body.entry;
         let entry_outputs = graph.node_outputs(entry);
         let control_value = entry_outputs[0];
         let param1 = entry_outputs[1];
@@ -525,8 +522,8 @@ mod tests {
                 param_types: vec![Type::I32],
             },
         );
-        let graph = &mut function.graph;
-        let control_value = graph.node_outputs(function.entry)[0];
+        let graph = &mut function.body.graph;
+        let control_value = graph.node_outputs(function.body.entry)[0];
         create_return(graph, [control_value]);
         check_write_function(
             &function,
@@ -548,8 +545,8 @@ mod tests {
                 param_types: vec![Type::I32, Type::F64],
             },
         );
-        let mut builder = SimpleBuilder(&mut function.graph);
-        let entry_outputs = builder.graph().node_outputs(function.entry);
+        let mut builder = SimpleBuilder(&mut function.body.graph);
+        let entry_outputs = builder.graph().node_outputs(function.body.entry);
         let entry_ctrl = entry_outputs[0];
         let param32 = entry_outputs[1];
         let param64 = entry_outputs[2];
@@ -586,7 +583,7 @@ mod tests {
                 param_types: vec![Type::I64],
             },
         ));
-        let extfunc = module.extern_functions.push(ExternFunctionData {
+        let extfunc = module.extern_functions.push(FunctionMetadata {
             name: "my_ext_func".to_owned(),
             sig: Signature {
                 ret_type: Some(Type::I32),
@@ -594,8 +591,8 @@ mod tests {
             },
         });
 
-        let func_entry = module.functions[func].entry;
-        let func_graph = &mut module.functions[func].graph;
+        let func_entry = module.functions[func].body.entry;
+        let func_graph = &mut module.functions[func].body.graph;
 
         let func_entry_outputs = func_graph.node_outputs(func_entry);
         let func_entry_ctrl = func_entry_outputs[0];
@@ -630,21 +627,21 @@ mod tests {
     #[test]
     fn write_multi_extfunc_module() {
         let mut module = Module::new();
-        module.extern_functions.push(ExternFunctionData {
+        module.extern_functions.push(FunctionMetadata {
             name: "func1".to_owned(),
             sig: Signature {
                 ret_type: Some(Type::I32),
                 param_types: vec![Type::I64],
             },
         });
-        module.extern_functions.push(ExternFunctionData {
+        module.extern_functions.push(FunctionMetadata {
             name: "func2".to_owned(),
             sig: Signature {
                 ret_type: None,
                 param_types: vec![Type::I64, Type::Ptr],
             },
         });
-        module.extern_functions.push(ExternFunctionData {
+        module.extern_functions.push(FunctionMetadata {
             name: "func3".to_owned(),
             sig: Signature {
                 ret_type: None,
@@ -675,7 +672,7 @@ mod tests {
             },
         ));
 
-        module.extern_functions.push(ExternFunctionData {
+        module.extern_functions.push(FunctionMetadata {
             name: "System.Test+Lol System.Test::Do(Lol[])".to_owned(),
             sig: Signature {
                 ret_type: None,

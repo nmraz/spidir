@@ -5,7 +5,7 @@ use cranelift_entity::SecondaryMap;
 use ir::{domtree::DomTree, module::Module, valwalk::LiveNodeInfo};
 use itertools::Itertools;
 
-use crate::utils::write_graph_with_trailing_comments;
+use crate::utils::write_body_with_trailing_comments;
 
 use super::{update_per_func_output, TestProvider, Updater};
 
@@ -15,19 +15,19 @@ impl TestProvider for DomTreeProvider {
         let mut output = String::new();
 
         for func in module.functions.values() {
-            let graph = &func.graph;
+            let body = &func.body;
 
-            let domtree = DomTree::compute(graph, func.entry);
+            let domtree = DomTree::compute(&body.graph, body.entry);
             let mut rpo_nums = SecondaryMap::new();
-            for (i, &node) in LiveNodeInfo::compute(graph, func.entry)
-                .reverse_postorder(graph)
+            for (i, &node) in LiveNodeInfo::compute(&body.graph, body.entry)
+                .reverse_postorder(&body.graph)
                 .iter()
                 .enumerate()
             {
                 rpo_nums[node] = i;
             }
 
-            write_graph_with_trailing_comments(&mut output, module, func, |s, node| {
+            write_body_with_trailing_comments(&mut output, module, func, |s, node| {
                 let tree_node = domtree.get_tree_node(node);
                 let idom = tree_node.and_then(|tree_node| domtree.idom(tree_node));
                 let children =

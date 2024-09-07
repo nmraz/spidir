@@ -146,8 +146,8 @@ unsafe extern "C" fn spidir_codegen_emit_function(
                 CodegenError::Isel(err) => {
                     error!(
                         "failed to select `{}`: `{}`",
-                        func.name,
-                        display_node(module, &func.graph, err.node)
+                        func.metadata.name,
+                        display_node(module, &func.body, err.node)
                     );
                     SPIDIR_CODEGEN_ERROR_ISEL
                 }

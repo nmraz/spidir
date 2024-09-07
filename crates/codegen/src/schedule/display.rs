@@ -1,6 +1,9 @@
 use core::fmt;
 
-use ir::{module::Module, valgraph::ValGraph, write::display_node};
+use ir::{
+    module::{FunctionBody, Module},
+    write::display_node,
+};
 use itertools::Itertools;
 
 use crate::cfg::{Block, BlockCfg};
@@ -9,7 +12,7 @@ use super::Schedule;
 
 pub struct Display<'a> {
     pub(super) module: &'a Module,
-    pub(super) graph: &'a ValGraph,
+    pub(super) body: &'a FunctionBody,
     pub(super) cfg: &'a BlockCfg,
     pub(super) schedule: &'a Schedule,
     pub(super) block_order: &'a [Block],
@@ -20,10 +23,10 @@ impl fmt::Display for Display<'_> {
         for &block in self.block_order {
             writeln!(f, "{block}:")?;
             for &phi in self.schedule.block_phis(block) {
-                writeln!(f, "    {}", display_node(self.module, self.graph, phi))?;
+                writeln!(f, "    {}", display_node(self.module, self.body, phi))?;
             }
             for &node in self.schedule.scheduled_nodes(block) {
-                writeln!(f, "    {}", display_node(self.module, self.graph, node))?;
+                writeln!(f, "    {}", display_node(self.module, self.body, node))?;
             }
             let succs = self.cfg.block_succs(block);
             if !succs.is_empty() {

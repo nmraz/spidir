@@ -15,13 +15,13 @@ impl TestProvider for IselProvider {
         let mut output = String::new();
 
         for func in module.functions.values() {
-            writeln!(output, "function `{}`:", func.name).unwrap();
+            writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
             let (cfg_ctx, lir) = lower_func(module, func, &X64Machine).map_err(|err| {
                 anyhow!(
                     "failed to select `{}`: `{}`",
-                    func.name,
-                    display_node(module, &func.graph, err.node)
+                    func.metadata.name,
+                    display_node(module, &func.body, err.node)
                 )
             })?;
 

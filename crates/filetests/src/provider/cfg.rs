@@ -6,7 +6,7 @@ use cranelift_entity::EntitySet;
 use ir::{module::Module, valwalk::cfg_preorder};
 use itertools::Itertools;
 
-use crate::utils::write_graph_with_trailing_comments;
+use crate::utils::write_body_with_trailing_comments;
 
 use super::{update_per_func_output, TestProvider, Updater};
 
@@ -16,10 +16,11 @@ impl TestProvider for CfgProvider {
         let mut output = String::new();
 
         for func in module.functions.values() {
-            let cfg_preorder: Vec<_> = cfg_preorder(&func.graph, func.entry).collect();
-            let (cfg, block_map) = compute_block_cfg(&func.graph, &cfg_preorder);
+            let body = &func.body;
+            let cfg_preorder: Vec<_> = cfg_preorder(&body.graph, body.entry).collect();
+            let (cfg, block_map) = compute_block_cfg(&body.graph, &cfg_preorder);
             let mut seen_blocks = EntitySet::new();
-            write_graph_with_trailing_comments(&mut output, module, func, |s, node| {
+            write_body_with_trailing_comments(&mut output, module, func, |s, node| {
                 if let Some(block) = block_map.containing_block(node) {
                     write!(s, "{block}; ").unwrap();
 

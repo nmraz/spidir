@@ -174,7 +174,7 @@ impl ModuleVerifierError {
         match self {
             Self::Graph { function, error } => {
                 let function = &module.functions[*function];
-                Some((function, error.node(&function.graph)))
+                Some((function, error.node(&function.body.graph)))
             }
             _ => None,
         }
@@ -206,7 +206,7 @@ impl fmt::Display for DisplayError<'_> {
         match self.error {
             ModuleVerifierError::Graph { function, error } => {
                 let function = &self.module.functions[*function];
-                write!(f, "{}", error.display(&function.graph))
+                write!(f, "{}", error.display(&function.body.graph))
             }
             ModuleVerifierError::ReusedFunctionName(name) => {
                 write!(f, "function name `{name}` reused")
@@ -226,8 +226,8 @@ impl<'a> fmt::Display for DisplayErrorWithContext<'a> {
             write!(
                 f,
                 "in function `{}`: `{}`: {}",
-                function.name,
-                display_node(self.module, &function.graph, node),
+                function.metadata.name,
+                display_node(self.module, &function.body, node),
                 self.error.display(self.module)
             )
         } else {
@@ -257,7 +257,7 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
     }
 
     for (function, function_data) in &module.functions {
-        check_name(&function_data.name, &mut errors);
+        check_name(&function_data.metadata.name, &mut errors);
         if let Err(graph_errors) = verify_func(module, function_data) {
             errors.extend(
                 graph_errors
@@ -275,15 +275,17 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
 }
 
 pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<GraphVerifierError>> {
+    let body = &func.body;
+
     let mut errors = Vec::new();
 
-    if func.graph.node_kind(func.entry) != &NodeKind::Entry {
-        errors.push(GraphVerifierError::BadEntry(func.entry));
+    if body.graph.node_kind(body.entry) != &NodeKind::Entry {
+        errors.push(GraphVerifierError::BadEntry(body.entry));
     }
 
-    for node in walk_live_nodes(&func.graph, func.entry) {
+    for node in walk_live_nodes(&body.graph, body.entry) {
         verify_node_kind(module, func, node, &mut errors);
-        verify_control_outputs(&func.graph, node, &mut errors);
+        verify_control_outputs(&body.graph, node, &mut errors);
     }
 
     if !errors.is_empty() {
@@ -292,7 +294,7 @@ pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<Graph
         return Err(errors);
     }
 
-    verify_dataflow(&func.graph, func.entry, &mut errors);
+    verify_dataflow(&body.graph, body.entry, &mut errors);
 
     if errors.is_empty() {
         Ok(())

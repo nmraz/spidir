@@ -3,7 +3,7 @@ use std::fmt::Write;
 use anyhow::Result;
 use ir::{domtree::DomTree, loops::LoopForest, module::Module};
 
-use crate::utils::write_graph_with_trailing_comments;
+use crate::utils::write_body_with_trailing_comments;
 
 use super::{update_per_func_output, TestProvider, Updater};
 
@@ -13,11 +13,11 @@ impl TestProvider for LoopForestProvider {
         let mut output = String::new();
 
         for func in module.functions.values() {
-            let graph = &func.graph;
-            let domtree = DomTree::compute(graph, func.entry);
-            let loop_forest = LoopForest::compute(graph, &domtree);
+            let body = &func.body;
+            let domtree = DomTree::compute(&body.graph, body.entry);
+            let loop_forest = LoopForest::compute(&body.graph, &domtree);
 
-            write_graph_with_trailing_comments(&mut output, module, func, |s, node| {
+            write_body_with_trailing_comments(&mut output, module, func, |s, node| {
                 if let Some(domtree_node) = domtree.get_tree_node(node) {
                     if let Some(containing_loop) = loop_forest.containing_loop(domtree_node) {
                         write!(s, "loop {}; ", containing_loop.as_u32()).unwrap();
@@ -37,7 +37,8 @@ impl TestProvider for LoopForestProvider {
                         }
 
                         for loop_node in loop_forest.loop_ancestors(containing_loop) {
-                            if loop_forest.is_latch(graph, &domtree, loop_node, domtree_node) {
+                            if loop_forest.is_latch(&body.graph, &domtree, loop_node, domtree_node)
+                            {
                                 write!(s, "latch {}; ", loop_node.as_u32()).unwrap();
                             }
                         }

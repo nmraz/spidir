@@ -56,7 +56,7 @@ pub fn codegen_func<M: Machine>(
     func: &FunctionData,
     machine: &M,
 ) -> Result<CodeBlob, CodegenError> {
-    info!("generating code for: {}", func.metadata());
+    info!("generating code for: {}", func.metadata);
     let (cfg_ctx, lir) = lower_func(module, func, machine)?;
     let assignment = regalloc::run(&lir, &cfg_ctx, machine)?;
     let code = emit_code(&lir, &cfg_ctx, &assignment, machine);
@@ -68,7 +68,7 @@ pub fn lower_func<M: MachineLower>(
     func: &FunctionData,
     machine: &M,
 ) -> Result<(CfgContext, Lir<M>), IselError> {
-    let (cfg_ctx, block_map, schedule) = schedule_graph(&func.graph, func.entry);
+    let (cfg_ctx, block_map, schedule) = schedule_graph(&func.body.graph, func.body.entry);
     let lir = select_instrs(module, func, &schedule, &cfg_ctx, &block_map, machine)?;
     Ok((cfg_ctx, lir))
 }

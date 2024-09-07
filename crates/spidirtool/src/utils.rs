@@ -31,6 +31,6 @@ pub fn function_by_name<'a>(
     module
         .functions
         .iter()
-        .find(|(_func, data)| data.name == name)
+        .find(|(_func, data)| data.metadata.name == name)
         .ok_or_else(|| anyhow!("function `{}` not found in module", name))
 }

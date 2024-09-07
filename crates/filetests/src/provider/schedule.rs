@@ -22,14 +22,16 @@ impl TestProvider for ScheduleProvider {
         let mut output = String::new();
 
         for func in module.functions.values() {
-            writeln!(output, "function `{}`:", func.name).unwrap();
+            let body = &func.body;
 
-            let (cfg_ctx, _, schedule) = schedule_graph(&func.graph, func.entry);
+            writeln!(output, "function `{}`:", func.metadata.name).unwrap();
+
+            let (cfg_ctx, _, schedule) = schedule_graph(&body.graph, body.entry);
 
             write!(
                 output,
                 "{}",
-                schedule.display(module, &func.graph, &cfg_ctx.cfg, &cfg_ctx.block_order)
+                schedule.display(module, body, &cfg_ctx.cfg, &cfg_ctx.block_order)
             )
             .unwrap();
         }

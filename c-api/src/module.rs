@@ -6,7 +6,7 @@ use core::{
 use alloc::boxed::Box;
 use frontend::FunctionBuilder;
 use ir::{
-    module::{ExternFunctionData, FunctionData, Module},
+    module::{FunctionData, FunctionMetadata, Module},
     node::FunctionRef,
 };
 
@@ -57,9 +57,7 @@ unsafe extern "C" fn spidir_module_create_extern_function(
         let module = &mut *module;
 
         let (name, sig) = name_signature_from_api(name, ret_type, param_count, param_types);
-        let func = module
-            .extern_functions
-            .push(ExternFunctionData { name, sig });
+        let func = module.extern_functions.push(FunctionMetadata { name, sig });
         funcref_to_api(FunctionRef::External(func))
     }
 }

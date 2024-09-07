@@ -10,7 +10,7 @@ use dominators::depth_map::DepthMap;
 use fx_utils::{FxHashMap, FxHashSet};
 use graphwalk::{GraphRef, PostOrderContext};
 use ir::{
-    module::Module,
+    module::{FunctionBody, Module},
     node::NodeKind,
     schedule::{schedule_early, schedule_late, ScheduleContext},
     valgraph::{DepValue, Node, ValGraph},
@@ -95,13 +95,13 @@ impl Schedule {
     pub fn display<'a>(
         &'a self,
         module: &'a Module,
-        graph: &'a ValGraph,
+        body: &'a FunctionBody,
         cfg: &'a BlockCfg,
         block_order: &'a [Block],
     ) -> Display<'a> {
         Display {
             module,
-            graph,
+            body,
             cfg,
             schedule: self,
             block_order,

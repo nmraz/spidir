@@ -8,9 +8,8 @@ use core::fmt;
 use itertools::Itertools;
 
 use ir::{
-    module::Module,
+    module::{FunctionBody, Module},
     node::NodeKind,
-    valgraph::{Node, ValGraph},
     valwalk::LiveNodeInfo,
     write::write_node_kind,
 };
@@ -23,10 +22,10 @@ pub fn write_graphviz(
     w: &mut dyn fmt::Write,
     annotators: &mut [Box<dyn Annotate + '_>],
     module: &Module,
-    graph: &ValGraph,
-    entry: Node,
+    body: &FunctionBody,
 ) -> fmt::Result {
-    let live_info = &LiveNodeInfo::compute(graph, entry);
+    let graph = &body.graph;
+    let live_info = &LiveNodeInfo::compute(graph, body.entry);
     let rpo = live_info.reverse_postorder(graph);
 
     writeln!(w, "digraph {{")?;
@@ -54,7 +53,7 @@ pub fn write_graphviz(
         write!(
             w,
             "{}",
-            stringify_dot_node_kind(module, graph.node_kind(node))
+            stringify_dot_node_kind(module, body, graph.node_kind(node))
         )?;
 
         if !outputs.is_empty() {
@@ -105,7 +104,7 @@ pub fn write_graphviz(
     }
 
     for annotator in annotators {
-        for structural_edge in annotator.structural_edges(graph, entry) {
+        for structural_edge in annotator.structural_edges(graph, body.entry) {
             write!(w, "    {} -> {}", structural_edge.from, structural_edge.to)?;
             if !structural_edge.attrs.is_empty() {
                 write!(w, " [{}]", format_dot_attributes(&structural_edge.attrs))?;
@@ -129,9 +128,9 @@ fn format_dot_attributes(attrs: &DotAttributes) -> impl fmt::Display + '_ {
     })
 }
 
-fn stringify_dot_node_kind(module: &Module, node_kind: &NodeKind) -> String {
+fn stringify_dot_node_kind(module: &Module, body: &FunctionBody, node_kind: &NodeKind) -> String {
     let mut s = String::new();
-    write_node_kind(&mut s, module, node_kind).unwrap();
+    write_node_kind(&mut s, module, body, node_kind).unwrap();
     escape_dot_attr_value(&s)
 }
 

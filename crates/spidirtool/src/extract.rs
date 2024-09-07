@@ -1,7 +1,7 @@
 use anyhow::Result;
 use fx_utils::{FxHashMap, FxHashSet};
 use ir::{
-    module::{ExternFunctionData, FunctionData, Module},
+    module::{FunctionBody, FunctionMetadata, Module},
     node::{FunctionRef, NodeKind},
     valwalk::walk_live_nodes,
 };
@@ -11,7 +11,7 @@ use crate::utils::function_by_name;
 pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> {
     let (func, func_data) = function_by_name(module, function_name)?;
 
-    let referenced_functions = collect_referenced_functions(func_data);
+    let referenced_functions = collect_referenced_functions(&func_data.body);
 
     let mut new_module = Module::new();
     let mut function_map = FxHashMap::default();
@@ -23,7 +23,7 @@ pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> 
         }
 
         let metadata = module.resolve_funcref(funcref);
-        let new_funcref = new_module.extern_functions.push(ExternFunctionData {
+        let new_funcref = new_module.extern_functions.push(FunctionMetadata {
             name: metadata.name.to_owned(),
             sig: metadata.sig.clone(),
         });
@@ -32,11 +32,11 @@ pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> 
 
     let new_func_data = func_data.clone();
     let new_func = new_module.functions.push(new_func_data);
-    let new_func_data = &mut new_module.functions[new_func];
-    let live_nodes: Vec<_> = walk_live_nodes(&new_func_data.graph, new_func_data.entry).collect();
+    let new_body = &mut new_module.functions[new_func].body;
+    let live_nodes: Vec<_> = walk_live_nodes(&new_body.graph, new_body.entry).collect();
 
     for &node in &live_nodes {
-        if let NodeKind::Call(funcref) = new_func_data.graph.node_kind_mut(node) {
+        if let NodeKind::Call(funcref) = new_body.graph.node_kind_mut(node) {
             if *funcref == FunctionRef::Internal(func) {
                 // Recursive calls get translated into the new module's copy of the function.
                 *funcref = FunctionRef::Internal(new_func);
@@ -51,11 +51,11 @@ pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> 
     Ok(new_module)
 }
 
-fn collect_referenced_functions(func_data: &FunctionData) -> FxHashSet<FunctionRef> {
+fn collect_referenced_functions(body: &FunctionBody) -> FxHashSet<FunctionRef> {
     let mut functions = FxHashSet::default();
 
-    for node in walk_live_nodes(&func_data.graph, func_data.entry) {
-        if let &NodeKind::Call(funcref) = func_data.graph.node_kind(node) {
+    for node in walk_live_nodes(&body.graph, body.entry) {
+        if let &NodeKind::Call(funcref) = body.graph.node_kind(node) {
             functions.insert(funcref);
         }
     }

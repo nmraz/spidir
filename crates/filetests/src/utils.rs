@@ -4,9 +4,9 @@ use anyhow::Result;
 use fx_utils::FxHashMap;
 use hashbrown::hash_map::Entry;
 use ir::{
-    module::{FunctionData, Module},
-    valgraph::{DepValue, Node, ValGraph},
-    write::{write_annotated_graph, write_annotated_node, write_node_kind, AnnotateGraph},
+    module::{FunctionBody, FunctionData, Module},
+    valgraph::{DepValue, Node},
+    write::{write_annotated_body, write_annotated_node, write_node_kind, AnnotateGraph},
 };
 use regex::{Captures, Regex};
 use std::{cmp, sync::OnceLock};
@@ -20,24 +20,16 @@ macro_rules! regex {
     }};
 }
 
-pub fn write_graph_with_trailing_comments(
+pub fn write_body_with_trailing_comments(
     output: &mut String,
     module: &Module,
     func: &FunctionData,
     comment_fn: impl FnMut(&mut String, Node),
 ) {
-    writeln!(output, "function `{}`:", func.name).unwrap();
+    writeln!(output, "function `{}`:", func.metadata.name).unwrap();
     let mut comment_annotator = CommentAnnotator { comment_fn };
 
-    write_annotated_graph(
-        output,
-        &mut comment_annotator,
-        module,
-        &func.graph,
-        func.entry,
-        0,
-    )
-    .unwrap();
+    write_annotated_body(output, &mut comment_annotator, module, &func.body, 0).unwrap();
 }
 
 struct CommentAnnotator<F> {
@@ -49,14 +41,14 @@ impl<F: FnMut(&mut String, Node)> AnnotateGraph<String> for CommentAnnotator<F> 
         &mut self,
         s: &mut String,
         module: &Module,
-        graph: &ValGraph,
+        body: &FunctionBody,
         node: Node,
     ) -> fmt::Result {
         const MIN_LINE_LIMIT: usize = 40;
         const TAB_WIDTH: usize = 8;
 
         let orig_len = s.len();
-        write_annotated_node(s, self, module, graph, node).unwrap();
+        write_annotated_node(s, self, module, body, node).unwrap();
         let node_line_len = s.len() - orig_len;
         let comment_start = round_up(cmp::max(MIN_LINE_LIMIT, node_line_len + 2), TAB_WIDTH);
         let pad_len = comment_start - node_line_len;
@@ -113,7 +105,10 @@ pub fn generalize_value_names(module: &Module, output_str: &str) -> Result<Strin
 
     for line in output_str.lines() {
         if let Some(new_func) = parse_output_func_heading(line) {
-            cur_func = module.functions.values().find(|func| func.name == new_func);
+            cur_func = module
+                .functions
+                .values()
+                .find(|func| func.metadata.name == new_func);
             name_counter.clear();
             val_names.clear();
             writeln!(new_output, "{line}").unwrap();
@@ -130,7 +125,7 @@ pub fn generalize_value_names(module: &Module, output_str: &str) -> Result<Strin
             match val_names.entry(value) {
                 Entry::Occupied(existing_name) => format!("${}", existing_name.get()),
                 Entry::Vacant(vacant_entry) => {
-                    let name = get_value_var_name(module, cur_func, &mut name_counter, value);
+                    let name = get_value_var_name(module, &cur_func.body, &mut name_counter, value);
                     let replacement = format!("$({name}=$val)");
                     vacant_entry.insert(name);
                     replacement
@@ -146,13 +141,13 @@ pub fn generalize_value_names(module: &Module, output_str: &str) -> Result<Strin
 
 fn get_value_var_name(
     module: &Module,
-    func: &FunctionData,
+    body: &FunctionBody,
     name_counter: &mut FxHashMap<String, usize>,
     value: DepValue,
 ) -> String {
-    let node_kind = func.graph.node_kind(func.graph.value_def(value).0);
+    let node_kind = body.graph.node_kind(body.graph.value_def(value).0);
     let mut node_string = String::new();
-    write_node_kind(&mut node_string, module, node_kind).unwrap();
+    write_node_kind(&mut node_string, module, body, node_kind).unwrap();
     let name_prefix = node_string.split(&[' ', '.']).next().unwrap();
     let counter = name_counter.entry(name_prefix.to_owned()).or_default();
     let name = format!("{name_prefix}{counter}");

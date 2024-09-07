@@ -69,6 +69,10 @@ impl<'a> Builder for ConsBuilder<'a> {
     fn body(&self) -> &FunctionBody {
         self.body
     }
+
+    fn body_mut(&mut self) -> &mut FunctionBody {
+        self.body
+    }
 }
 
 fn existing_node_equal(

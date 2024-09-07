@@ -6,7 +6,7 @@ use log::trace;
 use ir::{
     builder::{Builder, BuilderExt},
     cons_builder::{Cache, ConsBuilder},
-    function::FunctionBody,
+    function::{FunctionBody, Signature},
     module::{Function, Module},
     node::{DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
@@ -105,6 +105,18 @@ impl<'a> FunctionBuilder<'a> {
         let ret_ty = self.module.resolve_funcref(func).sig.ret_type;
         let ctrl = self.cur_block_ctrl();
         let built = self.builder().build_call(ret_ty, func, ctrl, args);
+        self.advance_cur_block_ctrl(built.ctrl);
+        built.retval
+    }
+
+    pub fn build_callind(
+        &mut self,
+        sig: Signature,
+        target: DepValue,
+        args: &[DepValue],
+    ) -> Option<DepValue> {
+        let ctrl = self.cur_block_ctrl();
+        let built = self.builder().build_callind(sig, ctrl, target, args);
         self.advance_cur_block_ctrl(built.ctrl);
         built.retval
     }
@@ -339,13 +351,17 @@ impl<'a> Builder for GraphBuilderWrapper<'a> {
         let node = builder.create_node(kind, inputs, output_kinds);
         trace!(
             "built node: `{}`",
-            display_node(self.module, &self.module.functions[self.func].body, node)
+            display_node(self.module, self.body(), node)
         );
         node
     }
 
     fn body(&self) -> &FunctionBody {
         &self.module.functions[self.func].body
+    }
+
+    fn body_mut(&mut self) -> &mut FunctionBody {
+        &mut self.module.functions[self.func].body
     }
 }
 
@@ -544,5 +560,35 @@ mod tests {
                     return %8
                 }"#]],
         );
+    }
+
+    #[test]
+    fn build_callind() {
+        check_built_function(
+            None,
+            &[Type::Ptr],
+            |builder| {
+                let entry_block = builder.create_block();
+                builder.set_entry_block(entry_block);
+                builder.set_block(entry_block);
+                let target = builder.build_param_ref(0);
+                builder.build_callind(
+                    Signature {
+                        ret_type: None,
+                        param_types: vec![],
+                    },
+                    target,
+                    &[],
+                );
+                builder.build_return(None);
+            },
+            expect![[r#"
+                func @func(ptr) {
+                    %0:ctrl, %1:ptr = entry
+                    %2:ctrl, %3:phisel = region %0
+                    %4:ctrl = callind () %2, %1
+                    return %4
+                }"#]],
+        )
     }
 }

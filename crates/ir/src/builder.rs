@@ -1,7 +1,7 @@
 use core::iter;
 
 use crate::{
-    function::FunctionBody,
+    function::{FunctionBody, Signature},
     node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -45,6 +45,7 @@ pub trait Builder {
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node;
     fn body(&self) -> &FunctionBody;
+    fn body_mut(&mut self) -> &mut FunctionBody;
 }
 
 pub struct SimpleBuilder<'a>(pub &'a mut FunctionBody);
@@ -60,6 +61,10 @@ impl<'a> Builder for SimpleBuilder<'a> {
     }
 
     fn body(&self) -> &FunctionBody {
+        self.0
+    }
+
+    fn body_mut(&mut self) -> &mut FunctionBody {
         self.0
     }
 }
@@ -129,6 +134,27 @@ pub trait BuilderExt: Builder {
         let call = self.create_node(
             NodeKind::Call(func),
             iter::once(ctrl).chain(args.iter().copied()),
+            iter::once(DepValueKind::Control).chain(ret_ty.into_iter().map(DepValueKind::Value)),
+        );
+        let outputs = self.graph().node_outputs(call);
+        BuiltCall {
+            ctrl: outputs[0],
+            retval: outputs.get(1).copied(),
+        }
+    }
+
+    fn build_callind(
+        &mut self,
+        sig: Signature,
+        ctrl: DepValue,
+        target: DepValue,
+        args: &[DepValue],
+    ) -> BuiltCall {
+        let ret_ty = sig.ret_type;
+        let sig = self.body_mut().call_ind_sigs.push(sig);
+        let call = self.create_node(
+            NodeKind::CallInd(sig),
+            [ctrl, target].into_iter().chain(args.iter().copied()),
             iter::once(DepValueKind::Control).chain(ret_ty.into_iter().map(DepValueKind::Value)),
         );
         let outputs = self.graph().node_outputs(call);

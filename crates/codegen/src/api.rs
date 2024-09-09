@@ -1,3 +1,5 @@
+use core::fmt;
+
 use alloc::vec::Vec;
 
 use ir::{
@@ -33,6 +35,36 @@ impl From<IselError> for CodegenError {
 impl From<RegallocError> for CodegenError {
     fn from(v: RegallocError) -> Self {
         Self::Regalloc(v)
+    }
+}
+
+impl CodegenError {
+    pub fn display<'a>(
+        &'a self,
+        module: &'a Module,
+        func: &'a FunctionData,
+    ) -> DisplayCodegenError<'a> {
+        DisplayCodegenError {
+            module,
+            func,
+            error: self,
+        }
+    }
+}
+
+pub struct DisplayCodegenError<'a> {
+    module: &'a Module,
+    func: &'a FunctionData,
+    error: &'a CodegenError,
+}
+
+impl<'a> fmt::Display for DisplayCodegenError<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "codegen for `{}` failed: ", self.func.metadata.name)?;
+        match self.error {
+            CodegenError::Isel(isel) => write!(f, "{}", isel.display(self.module, &self.func.body)),
+            CodegenError::Regalloc(regalloc) => write!(f, "{}", regalloc),
+        }
     }
 }
 

@@ -2,7 +2,7 @@ use core::fmt::Write;
 
 use anyhow::{anyhow, Result};
 use codegen::{api::lower_func, target::x64::X64Machine};
-use ir::{module::Module, write::display_node};
+use ir::module::Module;
 
 use crate::utils::sanitize_raw_output;
 
@@ -25,11 +25,11 @@ impl TestProvider for IselProvider {
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let (cfg_ctx, lir) = lower_func(module, func, &self.machine).map_err(|err| {
+            let (cfg_ctx, lir) = lower_func(module, func, &self.machine).map_err(|e| {
                 anyhow!(
-                    "failed to select `{}`: `{}`",
+                    "isel failed for `{}`: {}",
                     func.metadata.name,
-                    display_node(module, &func.body, err.node)
+                    e.display(module, &func.body)
                 )
             })?;
 

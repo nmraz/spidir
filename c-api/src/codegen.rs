@@ -5,9 +5,8 @@ use codegen::{
     api::{codegen_func, CodegenError},
     emit::CodeBlob,
     machine::Machine,
-    regalloc::RegallocError,
 };
-use ir::{function::FunctionData, module::Module, node::FunctionRef, write::display_node};
+use ir::{function::FunctionData, module::Module, node::FunctionRef};
 use log::error;
 
 use crate::types::{
@@ -137,19 +136,11 @@ unsafe extern "C" fn spidir_codegen_emit_function(
     let blob = match res {
         Ok(blob) => blob,
         Err(err) => {
+            error!("{}", err.display(module, func));
+
             let err = match err {
-                CodegenError::Isel(err) => {
-                    error!(
-                        "failed to select `{}`: `{}`",
-                        func.metadata.name,
-                        display_node(module, &func.body, err.node)
-                    );
-                    SPIDIR_CODEGEN_ERROR_ISEL
-                }
-                CodegenError::Regalloc(RegallocError::OutOfRegisters(instr)) => {
-                    error!("out of registers at instruction {instr}");
-                    SPIDIR_CODEGEN_ERROR_REGALLOC
-                }
+                CodegenError::Isel(_) => SPIDIR_CODEGEN_ERROR_ISEL,
+                CodegenError::Regalloc(_) => SPIDIR_CODEGEN_ERROR_REGALLOC,
             };
 
             unsafe {

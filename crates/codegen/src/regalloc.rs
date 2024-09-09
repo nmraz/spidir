@@ -1,3 +1,5 @@
+use core::fmt;
+
 use alloc::vec::Vec;
 
 use cranelift_entity::{entity_impl, Keys, PrimaryMap, SecondaryMap};
@@ -29,6 +31,16 @@ pub use types::AssignmentCopy;
 #[derive(Debug, Clone, Copy)]
 pub enum RegallocError {
     OutOfRegisters(Instr),
+}
+
+impl fmt::Display for RegallocError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RegallocError::OutOfRegisters(instr) => {
+                write!(f, "out of registers at instruction {instr}")
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

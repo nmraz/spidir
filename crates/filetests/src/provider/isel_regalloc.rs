@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use codegen::{
     api::lower_func, frame::FrameLayout, machine::MachineCore, regalloc, target::x64::X64Machine,
 };
-use ir::{module::Module, write::display_node};
+use ir::module::Module;
 use itertools::Itertools;
 
 use crate::utils::sanitize_raw_output;
@@ -28,15 +28,15 @@ impl TestProvider for IselRegallocProvider {
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let (cfg_ctx, lir) = lower_func(module, func, &self.machine).map_err(|err| {
+            let (cfg_ctx, lir) = lower_func(module, func, &self.machine).map_err(|e| {
                 anyhow!(
-                    "failed to select `{}`: `{}`",
+                    "isel failed for `{}`: {}",
                     func.metadata.name,
-                    display_node(module, &func.body, err.node)
+                    e.display(module, &func.body)
                 )
             })?;
             let assignment = regalloc::run(&lir, &cfg_ctx, &self.machine)
-                .map_err(|err| anyhow!("register allocation failed: {err:?}"))?;
+                .map_err(|err| anyhow!("regalloc failed for `{}`: {err}", func.metadata.name))?;
 
             writeln!(
                 output,

@@ -27,7 +27,7 @@ impl TestProvider for CodegenProvider {
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
             let code = codegen_func(module, func, &self.machine)
-                .map_err(|err| anyhow!("codegen failed: {:?}", err))?;
+                .map_err(|err| anyhow!("{}", err.display(module, func)))?;
             disasm_code(module, &code, 0, &mut output)?;
         }
 

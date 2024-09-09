@@ -1,5 +1,5 @@
 use alloc::vec::Vec;
-use core::array;
+use core::{array, fmt};
 
 use cranelift_entity::{packed_option::PackedOption, SecondaryMap};
 use fx_utils::FxHashMap;
@@ -140,6 +140,32 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
 #[derive(Debug, Clone, Copy)]
 pub struct IselError {
     pub node: Node,
+}
+
+impl IselError {
+    pub fn display<'a>(self, module: &'a Module, body: &'a FunctionBody) -> DisplayIselError<'a> {
+        DisplayIselError {
+            module,
+            body,
+            error: self,
+        }
+    }
+}
+
+pub struct DisplayIselError<'a> {
+    module: &'a Module,
+    body: &'a FunctionBody,
+    error: IselError,
+}
+
+impl<'a> fmt::Display for DisplayIselError<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "failed to select `{}`",
+            display_node(self.module, self.body, self.error.node)
+        )
+    }
 }
 
 pub fn select_instrs<M: MachineLower>(

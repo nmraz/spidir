@@ -1,0 +1,17 @@
+# run: codegen
+
+# This test exists to make sure that `setcc dil` is encoded correctly with a REX prefix, and not
+# as `setcc bh`.
+
+extfunc @g(i32)
+
+func @f(i32) {
+    # check: function `f`:
+    # check: sete dil
+
+    %0:ctrl, %p:i32 = entry
+    %5:i32 = iconst 5
+    %c:i32 = icmp eq %p, %5
+    %1:ctrl = call @g %0, %c
+    return %1
+}

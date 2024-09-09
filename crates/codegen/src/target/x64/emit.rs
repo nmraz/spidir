@@ -437,6 +437,7 @@ fn emit_mov_rm_r(
 
 fn emit_setcc_r(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, dest: PhysReg) {
     let mut rex = RexPrefix::new();
+    rex.use_reg8(dest);
     let dest = rex.encode_modrm_base(dest);
     rex.emit(buffer);
     buffer.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, dest)]);

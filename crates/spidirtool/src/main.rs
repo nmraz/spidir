@@ -11,9 +11,10 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
 use codegen::{
-    api::{lower_func, schedule_graph},
+    api::{codegen_func, lower_func, schedule_graph},
     target::x64::X64Machine,
 };
+use codegen_disasm::disasm_code;
 use ir::{
     domtree::DomTree,
     function::FunctionData,
@@ -125,6 +126,8 @@ enum ToolCommand {
         #[arg(long)]
         regalloc: bool,
     },
+    /// Generate code for an IR module and dump the disassembly
+    Codegen { input_file: PathBuf },
 }
 
 fn main() -> Result<()> {
@@ -204,6 +207,10 @@ fn main() -> Result<()> {
         } => {
             let module = read_and_verify_module(&input_file)?;
             io::stdout().write_all(get_module_lir_str(&module, regalloc)?.as_bytes())?;
+        }
+        ToolCommand::Codegen { input_file } => {
+            let module = read_and_verify_module(&input_file)?;
+            io::stdout().write_all(get_module_code_str(&module)?.as_bytes())?;
         }
     }
 
@@ -327,6 +334,19 @@ fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
         writeln!(output, "}}\n").unwrap();
     }
 
+    Ok(output)
+}
+
+fn get_module_code_str(module: &Module) -> Result<String> {
+    let mut output = String::new();
+    let machine = X64Machine::default();
+    for func in module.functions.values() {
+        let code = codegen_func(module, func, &machine)
+            .map_err(|err| anyhow!("{}", err.display(module, func)))?;
+        writeln!(output, "{}:", quote_ident(&func.metadata.name)).unwrap();
+        disasm_code(module, &code, 4, &mut output)?;
+        writeln!(output).unwrap();
+    }
     Ok(output)
 }
 

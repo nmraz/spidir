@@ -19,10 +19,13 @@ use crate::jit_buf::JitBuf;
 /// # Safety
 ///
 /// This function generates and runs untrusted code, which can cause arbitrary UB/memory corruption.
+///
+/// When `break_at_entry` is set, it will also trigger a breakpoint.
 pub unsafe fn codegen_and_exec(
     module: &Module,
     entry_point: Function,
     args: &[isize],
+    break_at_entry: bool,
 ) -> Result<isize> {
     let mut code_blobs = SecondaryMap::with_capacity(module.functions.len());
 
@@ -34,6 +37,7 @@ pub unsafe fn codegen_and_exec(
     let mut buffer_size: u32 = 0;
 
     for (func, code) in code_blobs.iter() {
+        // Padding *before* the function is important for break-at-entry support.
         buffer_size = pad_offset(buffer_size).ok_or_else(|| anyhow!("code too large"))?;
         func_offsets[func] = buffer_size;
         buffer_size = buffer_size
@@ -43,6 +47,10 @@ pub unsafe fn codegen_and_exec(
 
     let mut jit_buf = JitBuf::new(buffer_size as usize)?;
     let buf = unsafe { jit_buf.buf_mut() };
+
+    // Fill everything with breakpoints, for two reasons:
+    // * Accidental fallthroughs/bad jumps can be caught more easily.
+    // * Break-at-entry can be implemented by moving the call target one byte back.
     buf.fill(0xcc);
 
     for func in module.functions.keys() {
@@ -57,15 +65,15 @@ pub unsafe fn codegen_and_exec(
 
     jit_buf.make_exec()?;
     unsafe {
-        let entry_func = jit_buf
-            .base()
-            .as_ptr()
-            .add(func_offsets[entry_point] as usize);
+        let mut entry_func = jit_buf.base().as_ptr() as usize + func_offsets[entry_point] as usize;
+        if break_at_entry {
+            entry_func -= 1;
+        }
         call_func(entry_func, args)
     }
 }
 
-unsafe fn call_func(func: *const u8, args: &[isize]) -> Result<isize> {
+unsafe fn call_func(func: usize, args: &[isize]) -> Result<isize> {
     fn arg(args: &[isize], i: usize) -> isize {
         args.get(i).copied().unwrap_or_default()
     }
@@ -194,7 +202,7 @@ fn codegen_func_with_machine(
 fn pad_offset(offset: u32) -> Option<u32> {
     const FUNC_ALIGN: u32 = 0x10;
     // Note: we add `FUNC_ALIGN` and not `FUNC_ALGIN - 1` so there is always at least one byte of
-    // padding between functions.
+    // padding between functions. This is important for break-at-entry support.
     let bumped = offset.checked_add(FUNC_ALIGN)?;
     Some(bumped & 0u32.wrapping_sub(FUNC_ALIGN))
 }

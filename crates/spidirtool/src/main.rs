@@ -136,6 +136,12 @@ enum ToolCommand {
         function: String,
         /// Integer arguments to pass to the function
         args: Vec<isize>,
+        /// Place a breakpoint before the start of the function
+        ///
+        /// This breakpoint will have to be manually skipped using a debugger, and will cause a
+        /// crash if no debugger is attached.
+        #[arg(long, short)]
+        r#break: bool,
     },
 }
 
@@ -225,10 +231,11 @@ fn main() -> Result<()> {
             input_file,
             function,
             args,
+            r#break,
         } => {
             let module = read_and_verify_module(&input_file)?;
             let (func, _) = function_by_name(&module, &function)?;
-            let ret = unsafe { codegen_and_exec(&module, func, &args)? };
+            let ret = unsafe { codegen_and_exec(&module, func, &args, r#break)? };
             println!("{ret}");
         }
     }

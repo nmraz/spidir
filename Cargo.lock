@@ -195,7 +195,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "codegen-disasm"
+name = "codegen-test-tools"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -358,7 +358,7 @@ dependencies = [
  "anyhow",
  "clap",
  "codegen",
- "codegen-disasm",
+ "codegen-test-tools",
  "cranelift-entity",
  "expect-test",
  "filecheck",
@@ -745,7 +745,7 @@ dependencies = [
  "anyhow",
  "clap",
  "codegen",
- "codegen-disasm",
+ "codegen-test-tools",
  "env_logger 0.10.1",
  "expect-test",
  "fx-utils",

@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 codegen.workspace = true
-codegen-disasm.workspace = true
+codegen-test-tools.workspace = true
 fx-utils.workspace = true
 ir.workspace = true
 ir-graphviz.workspace = true

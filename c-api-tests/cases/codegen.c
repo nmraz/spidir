@@ -74,7 +74,8 @@ void apply_relocs(uintptr_t base, spidir_function_t inner, uintptr_t inner_addr,
             break;
         }
         case SPIDIR_RELOC_X64_ABS64: {
-            memcpy((void*) patch_addr, &target_value, sizeof(uint64_t));
+            uint64_t reloc_value = target_value + reloc->addend;
+            memcpy((void*) patch_addr, &reloc_value, sizeof(uint64_t));
             break;
         }
         default:

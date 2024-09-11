@@ -7,6 +7,9 @@ edition = "2021"
 ir.workspace = true
 codegen.workspace = true
 
+cranelift-entity.workspace = true
 anyhow.workspace = true
 capstone.workspace = true
 itertools.workspace = true
+
+libc = "0.2.158"

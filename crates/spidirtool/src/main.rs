@@ -14,7 +14,7 @@ use codegen::{
     api::{codegen_func, lower_func, schedule_graph},
     target::x64::X64Machine,
 };
-use codegen_test_tools::disasm::disasm_code;
+use codegen_test_tools::{disasm::disasm_code, exec::codegen_and_exec};
 use ir::{
     domtree::DomTree,
     function::FunctionData,
@@ -128,6 +128,15 @@ enum ToolCommand {
     },
     /// Generate code for an IR module and dump the disassembly
     Codegen { input_file: PathBuf },
+    /// Generate native code for an IR module and execute it
+    CodegenExec {
+        /// The input IR file
+        input_file: PathBuf,
+        /// The function to run
+        function: String,
+        /// Integer arguments to pass to the function
+        args: Vec<isize>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -211,6 +220,16 @@ fn main() -> Result<()> {
         ToolCommand::Codegen { input_file } => {
             let module = read_and_verify_module(&input_file)?;
             io::stdout().write_all(get_module_code_str(&module)?.as_bytes())?;
+        }
+        ToolCommand::CodegenExec {
+            input_file,
+            function,
+            args,
+        } => {
+            let module = read_and_verify_module(&input_file)?;
+            let (func, _) = function_by_name(&module, &function)?;
+            let ret = unsafe { codegen_and_exec(&module, func, &args)? };
+            println!("{ret}");
         }
     }
 

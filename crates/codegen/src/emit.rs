@@ -23,6 +23,7 @@ pub struct Reloc {
     pub addend: i64,
 }
 
+#[derive(Default, Clone)]
 pub struct CodeBlob {
     pub code: Vec<u8>,
     pub relocs: Vec<Reloc>,

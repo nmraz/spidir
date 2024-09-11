@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use anyhow::{anyhow, Result};
 use codegen::{api::codegen_func, target::x64::X64Machine};
-use codegen_test_tools::disasm_code;
+use codegen_test_tools::disasm::disasm_code;
 use ir::module::Module;
 
 use crate::utils::sanitize_raw_output;

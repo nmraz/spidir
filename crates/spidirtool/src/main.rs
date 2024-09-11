@@ -14,7 +14,7 @@ use codegen::{
     api::{codegen_func, lower_func, schedule_graph},
     target::x64::X64Machine,
 };
-use codegen_test_tools::disasm_code;
+use codegen_test_tools::disasm::disasm_code;
 use ir::{
     domtree::DomTree,
     function::FunctionData,

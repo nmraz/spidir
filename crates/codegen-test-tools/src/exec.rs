@@ -129,14 +129,22 @@ fn relocate_buf(
     func_offsets: &SecondaryMap<Function, u32>,
 ) -> Result<()> {
     for (func, code) in code_blobs.iter() {
-        let start = func_offsets[func];
+        let start = func_offsets[func] as usize;
+        let end = start + code.code.len();
+
         for reloc in &code.relocs {
-            let target = match reloc.target {
-                FunctionRef::Internal(func) => func_offsets[func],
+            let target_abs = match reloc.target {
+                FunctionRef::Internal(func) => buf.as_ptr() as u64 + func_offsets[func] as u64,
                 FunctionRef::External(_) => bail!("externals not supported"),
             };
 
-            apply_reloc(buf, reloc.kind, reloc.offset + start, target, reloc.addend)?;
+            apply_reloc(
+                &mut buf[start..end],
+                reloc.kind,
+                reloc.offset as usize,
+                target_abs,
+                reloc.addend,
+            )?;
         }
     }
 
@@ -146,22 +154,22 @@ fn relocate_buf(
 fn apply_reloc(
     buf: &mut [u8],
     kind: RelocKind,
-    offset: u32,
-    target: u32,
+    offset: usize,
+    target_abs: u64,
     addend: i64,
 ) -> Result<()> {
+    let offset_abs = buf.as_ptr() as u64 + offset as u64;
+
     if cfg!(target_arch = "x86_64") {
         match kind {
             RELOC_PC32 => {
                 // Note: sign extend to 64 bits.
-                let value = (target.wrapping_sub(offset) as i32 as i64).wrapping_add(addend);
+                let value = (target_abs.wrapping_sub(offset_abs) as i64).wrapping_add(addend);
                 let value: i32 = value.try_into().context("relocation out of range")?;
-                let offset = offset as usize;
                 buf[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
             }
             RELOC_ABS64 => {
-                let value = (buf.as_ptr() as u64 + target as u64).wrapping_add(addend as u64);
-                let offset = offset as usize;
+                let value = target_abs.wrapping_add(addend as u64);
                 buf[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
             }
             _ => bail!("unknown relocation kind"),

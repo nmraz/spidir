@@ -5,9 +5,6 @@ extfunc @"System.Boolean Tests.Bool_No_Op::simple_func_bool()":i32()
 extfunc @throw_index_out_of_range_exception()
 extfunc @"System.Void Tests.Bool_No_Op::.ctor()"(ptr)
 
-# This test currently contains a large number of redundant spills/reloads for $spill4 (1) and
-# $spill5 (0).
-
 func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # check: function `System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()`:
     # nextln: 000000: 55                              push rbp

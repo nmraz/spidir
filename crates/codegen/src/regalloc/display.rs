@@ -4,7 +4,6 @@ use core::{
 };
 
 use itertools::Itertools;
-use log::info;
 
 use crate::{
     cfg::Block,
@@ -26,7 +25,6 @@ pub struct DisplayAssignment<'a, M: MachineCore> {
 impl<M: MachineCore> fmt::Display for DisplayAssignment<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for &block in self.block_order {
-            info!("{block}");
             writeln!(f, "{}{block}:", display_instr_gutter_padding())?;
 
             for instr in self

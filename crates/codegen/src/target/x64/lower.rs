@@ -322,7 +322,7 @@ fn emit_call_wrapper(
         stack_size += 8;
     }
 
-    for &stack_arg in &stack_args {
+    for &stack_arg in stack_args.iter().rev() {
         ctx.emit_instr(X64Instr::Push, &[], &[UseOperand::any_reg(stack_arg)]);
         stack_size += 8;
     }

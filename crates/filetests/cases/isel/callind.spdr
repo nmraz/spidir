@@ -28,8 +28,8 @@ func @call_virt_many_params(ptr, ptr) {
     # nextln: 0000:      %1:gpr(reg)[late] = MovRI(0)
     # nextln: 0001:      %2:gpr(reg)[late] = MovRI(0)
     # nextln: 0002:      Push %2(reg)[early]
-    # nextln: 0003:      Push %3(reg)[early]
-    # nextln: 0004:      Push %1(reg)[early]
+    # nextln: 0003:      Push %1(reg)[early]
+    # nextln: 0004:      Push %3(reg)[early]
     # nextln: 0005:      Push %2(reg)[early]
     # nextln: 0006:      CallRm %0(any)[early], %1($$rdi)[early], %2($$rsi)[early], %3($$rdx)[early], %2($$rcx)[early], %1($$r8)[early], %1($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln: 0007:      AddSp(32)

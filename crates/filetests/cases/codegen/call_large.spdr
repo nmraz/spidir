@@ -143,8 +143,8 @@ func @call_many_params(ptr) {
     # nextln: 00000c: b9 00 00 00 00                  mov ecx, 0
     # nextln: 000011: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @many_params + 0
     # nextln: 00001b: 51                              push rcx
-    # nextln: 00001c: 52                              push rdx
-    # nextln: 00001d: 57                              push rdi
+    # nextln: 00001c: 57                              push rdi
+    # nextln: 00001d: 52                              push rdx
     # nextln: 00001e: 51                              push rcx
     # nextln: 00001f: 48 89 ce                        mov rsi, rcx
     # nextln: 000022: 49 89 f9                        mov r9, rdi

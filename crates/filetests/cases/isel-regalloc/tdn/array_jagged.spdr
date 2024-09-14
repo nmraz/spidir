@@ -1,4 +1,4 @@
-# run: isel-regalloc[small-pic, large-abs]
+# run: isel-regalloc
 
 extfunc @malloc:ptr(i64)
 
@@ -19,7 +19,7 @@ func @gc_new:ptr(i32, i64) {
 
 func @throw_index_out_of_range_exception() {
     # check: function `throw_index_out_of_range_exception`:
-    # nextln: clobbers: 
+    # nextln: clobbers:
     # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln: 0000:     Ret

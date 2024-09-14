@@ -1,4 +1,4 @@
-# run: codegen
+# run: codegen[large-abs]
 
 extfunc @extfunc(ptr, i32)
 extfunc @extfunc2:i32(ptr, i32)

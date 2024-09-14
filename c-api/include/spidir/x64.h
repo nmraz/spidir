@@ -38,7 +38,7 @@ enum spidir_x64_code_model {
 /// Configuration options that can be passed to the x64 backend.
 typedef struct spidir_x64_machine_config {
     /// The code model to use for internal (module-local) calls.
-    /// This option defaults to `SPIDIR_X64_CM_LARGE_ABS`.
+    /// This option defaults to `SPIDIR_X64_CM_SMALL_PIC`.
     spidir_x64_code_model_t internal_code_model;
     /// The code model to use for external calls.
     /// This option defaults to `SPIDIR_X64_CM_LARGE_ABS`.

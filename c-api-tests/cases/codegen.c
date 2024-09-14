@@ -166,7 +166,7 @@ int main(void) {
     spidir_codegen_machine_handle_t default_machine =
         spidir_codegen_create_x64_machine();
     codegen_and_run(module, inner, outer, default_machine,
-                    SPIDIR_RELOC_X64_ABS64);
+                    SPIDIR_RELOC_X64_PC32);
     spidir_codegen_machine_destroy(default_machine);
 
     spidir_codegen_machine_handle_t large_machine =

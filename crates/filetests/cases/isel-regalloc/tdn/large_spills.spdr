@@ -1,4 +1,4 @@
-# run: isel-regalloc[small-pic, large-abs]
+# run: isel-regalloc
 
 extfunc @gc_new:ptr(ptr, i64)
 extfunc @"System.Boolean Tests.Bool_No_Op::simple_func_bool()":i32()

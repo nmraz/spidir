@@ -1,4 +1,4 @@
-# run: codegen[small-pic, large-abs]
+# run: codegen
 
 extfunc @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)":i32(i32, i32)
 extfunc @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)":i32(i32, i32)

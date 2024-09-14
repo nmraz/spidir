@@ -137,17 +137,25 @@ pub enum X64Instr {
     Ud2,
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CodeModel {
     SmallPic,
-    #[default]
     LargeAbs,
 }
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct X64MachineConfig {
     pub internal_code_model: CodeModel,
     pub extern_code_model: CodeModel,
+}
+
+impl Default for X64MachineConfig {
+    fn default() -> Self {
+        Self {
+            internal_code_model: CodeModel::SmallPic,
+            extern_code_model: CodeModel::LargeAbs,
+        }
+    }
 }
 
 #[derive(Default)]

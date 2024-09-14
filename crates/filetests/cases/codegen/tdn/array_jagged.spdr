@@ -1,4 +1,4 @@
-# run: codegen[small-pic, large-abs]
+# run: codegen
 
 extfunc @malloc:ptr(i64)
 

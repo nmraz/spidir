@@ -151,7 +151,7 @@ int main(void) {
     };
 
     spidir_function_t inner = spidir_module_create_function(
-        module, "inner", SPIDIR_TYPE_NONE, 1, inner_param_types);
+        module, "inner", SPIDIR_TYPE_I32, 1, inner_param_types);
     spidir_module_build_function(module, inner, inner_builder_callback, NULL);
 
     func_context_t func_ctx = {

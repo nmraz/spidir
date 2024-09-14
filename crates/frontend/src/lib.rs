@@ -260,6 +260,13 @@ impl<'a> FunctionBuilder<'a> {
         self.builder().build_ptroff(ptr, off)
     }
 
+    pub fn build_inttoptr(&mut self, value: DepValue) -> DepValue {
+        self.builder().build_inttoptr(value)
+    }
+    pub fn build_ptrtoint(&mut self, value: DepValue) -> DepValue {
+        self.builder().build_ptrtoint(value)
+    }
+
     pub fn build_load(&mut self, size: MemSize, ty: Type, ptr: DepValue) -> DepValue {
         let ctrl = self.cur_block_ctrl();
         let built = self.builder().build_load(size, ty, ctrl, ptr);

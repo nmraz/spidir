@@ -774,6 +774,28 @@ spidir_value_t spidir_builder_build_ptroff(spidir_builder_handle_t builder,
                                            spidir_value_t ptr,
                                            spidir_value_t off);
 
+/// Builds an integer-to-pointer operation at the current insertion point.
+///
+/// This operation turns a 64-bit integer into a pointer.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] value   The value to convert. This must be a 64-bit integer.
+/// @return An SSA value representing the result of the operation. This value
+///         will be a pointer.
+spidir_value_t spidir_builder_build_inttoptr(spidir_builder_handle_t builder,
+                                             spidir_value_t value);
+
+/// Builds a pointer-to-integer operation at the current insertion point.
+///
+/// This operation turns a pointer into a 64-bit integer.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] value   The value to convert. This must be a pointer.
+/// @return An SSA value representing the result of the operation. This value
+///         will be a 64-bit integer.
+spidir_value_t spidir_builder_build_ptrtoint(spidir_builder_handle_t builder,
+                                             spidir_value_t value);
+
 /// Builds a load operation at the current insertion point.
 ///
 /// @param[in] builder A handle to the function builder.

@@ -132,7 +132,7 @@ impl MachineLower for X64Machine {
                 let (_, rdx) = emit_sdiv(ctx, op1, op2);
                 ctx.copy_vreg(output, rdx);
             }
-            NodeKind::Iext | NodeKind::Itrunc => {
+            NodeKind::Iext | NodeKind::Itrunc | NodeKind::IntToPtr | NodeKind::PtrToInt => {
                 let [input] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
                 let input = ctx.get_value_vreg(input);

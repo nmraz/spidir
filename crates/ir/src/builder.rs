@@ -255,6 +255,13 @@ pub trait BuilderExt: Builder {
         build_single_output_pure(self, NodeKind::PtrOff, [ptr, off], Type::Ptr)
     }
 
+    fn build_inttoptr(&mut self, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::IntToPtr, [value], Type::Ptr)
+    }
+    fn build_ptrtoint(&mut self, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::PtrToInt, [value], Type::I64)
+    }
+
     fn build_load(
         &mut self,
         size: MemSize,

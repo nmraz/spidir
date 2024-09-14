@@ -44,6 +44,8 @@ pub fn verify_node_kind(
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
         NodeKind::FConst(_) => verify_fconst(graph, node, errors),
         NodeKind::PtrOff => verify_ptroff(graph, node, errors),
+        NodeKind::IntToPtr => verify_inttoptr(graph, node, errors),
+        NodeKind::PtrToInt => verify_ptrtoint(graph, node, errors),
         NodeKind::Load(size) => verify_load(graph, node, *size, errors),
         NodeKind::Store(size) => verify_store(graph, node, *size, errors),
         NodeKind::StackSlot { align, .. } => verify_stack_slot(graph, node, *align, errors),
@@ -309,6 +311,22 @@ fn verify_ptroff(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifier
     let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::Ptr)], errors);
     let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::Ptr)], errors);
     let _ = verify_input_kind(graph, node, 1, &[DepValueKind::Value(Type::I64)], errors);
+}
+
+fn verify_inttoptr(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 1, errors) else {
+        return;
+    };
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::Ptr)], errors);
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::I64)], errors);
+}
+
+fn verify_ptrtoint(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 1, errors) else {
+        return;
+    };
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::I64)], errors);
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::Ptr)], errors);
 }
 
 fn verify_load(

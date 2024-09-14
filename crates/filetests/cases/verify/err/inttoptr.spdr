@@ -1,0 +1,39 @@
+# run: verify-err
+
+func @inttoptr_bad_input_count:i64() {
+    # check: function `inttoptr_bad_input_count`:
+    # unordered: `$val:i64 = inttoptr $val, $val, $val`: bad input count, expected 1
+    # unordered: `$val:i64 = inttoptr`: bad input count, expected 1
+
+    %0:ctrl = entry
+    %1:i64 = inttoptr
+    %2:i64 = inttoptr %1, %1, %1
+    return %0, %2
+}
+
+func @inttoptr_bad_output_count:ptr(i64) {
+    # check: function `inttoptr_bad_output_count`:
+    # unordered: `$val:ptr, $val:ptr = inttoptr $val`: bad output count, expected 1
+
+    %0:ctrl, %1:i64 = entry
+    %2:ptr, %3:ptr = inttoptr %1
+    return %0, %2
+}
+
+func @inttoptr_bad_output_kind:i64(i64) {
+    # check: function `inttoptr_bad_output_kind`:
+    # unordered: `$val:i64 = inttoptr $val`: bad value kind for output 0, expected one of `ptr`, got `i64`
+
+    %0:ctrl, %1:i64 = entry
+    %2:i64 = inttoptr %1
+    return %0, %2
+}
+
+func @inttoptr_bad_input_kind:ptr(i32) {
+    # check: function `inttoptr_bad_input_kind`:
+    # unordered: `$val:ptr = inttoptr $val`: bad value kind for input 0, expected one of `i64`, got `i32`
+
+    %0:ctrl, %1:i32 = entry
+    %2:ptr = inttoptr %1
+    return %0, %2
+}

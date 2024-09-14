@@ -1,0 +1,21 @@
+# run: isel
+
+func @inttoptr:ptr(i64) {
+    # check: function `inttoptr`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      Ret %1($$rax)[early]
+
+    %0:ctrl, %1:i64 = entry
+    %2:ptr = inttoptr %1
+    return %0, %2
+}
+
+func @ptrtoint:i64(ptr) {
+    # check: function `ptrtoint`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      Ret %1($$rax)[early]
+
+    %0:ctrl, %1:ptr = entry
+    %2:i64 = ptrtoint %1
+    return %0, %2
+}

@@ -270,6 +270,8 @@ fn extract_node_kind(
         "iext" => Ok(NodeKind::Iext),
         "itrunc" => Ok(NodeKind::Itrunc),
         "ptroff" => Ok(NodeKind::PtrOff),
+        "inttoptr" => Ok(NodeKind::IntToPtr),
+        "ptrtoint" => Ok(NodeKind::PtrToInt),
         "brcond" => Ok(NodeKind::BrCond),
         _ => extract_special_node_kind(node_kind_pair, function_names, body),
     }
@@ -654,6 +656,8 @@ mod tests {
             "icmp ule",
             "fconst 2.71828",
             "ptroff",
+            "inttoptr",
+            "ptrtoint",
             "load.1",
             "load.2",
             "load.4",

@@ -1,0 +1,9 @@
+# run: verify-ok
+
+# check: $()
+
+func @inttoptr:ptr(i64) {
+    %0:ctrl, %1:i64 = entry
+    %2:ptr = inttoptr %1
+    return %0, %2
+}

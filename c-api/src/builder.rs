@@ -258,6 +258,8 @@ macro_rules! impl_builder_unop {
 
 impl_builder_unop!(iext);
 impl_builder_unop!(itrunc);
+impl_builder_unop!(inttoptr);
+impl_builder_unop!(ptrtoint);
 
 #[no_mangle]
 unsafe extern "C" fn spidir_builder_build_sfill(

@@ -65,6 +65,8 @@ nodekind           =  {
   | sfill_nodekind
   | icmp_nodekind
   | "ptroff"
+  | "inttoptr"
+  | "ptrtoint"
   | load_nodekind
   | store_nodekind
   | stackslot_nodekind

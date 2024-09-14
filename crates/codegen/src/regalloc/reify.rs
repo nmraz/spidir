@@ -195,22 +195,24 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) {
         trace!("collecting intra-block copies: {vreg}");
 
-        let mut last_spill: Option<(LiveRange, SpillSlot)> = None;
-        let mut prev_range: Option<(LiveRange, OperandAssignment)> = None;
+        let mut cur_spill: Option<(LiveRange, SpillSlot)> = None;
+        let mut last_canonical_range: Option<(LiveRange, OperandAssignment)> = None;
 
         for &range in ranges {
             let range_assignment = self.get_range_assignment(range);
             let range_instrs = &self.live_ranges[range].instrs;
             let prog_range = self.live_ranges[range].prog_range;
+
             let mut copied_from_prev = false;
+            let mut is_spill_connector = false;
 
             trace!("    {prog_range:?}");
 
             // Stitch together live ranges with touching endpoints.
-            if let Some((prev_range, prev_assignment)) = prev_range {
-                let prev_range_data = &self.live_ranges[prev_range];
-                let prev_prog_range = prev_range_data.prog_range;
-                if prev_prog_range.end == prog_range.start {
+            if let Some((last_range, last_assignment)) = last_canonical_range {
+                let last_range_data = &self.live_ranges[last_range];
+                let last_prog_range = last_range_data.prog_range;
+                if last_prog_range.end == prog_range.start {
                     let boundary = prog_range.start;
                     let instr = boundary.instr();
 
@@ -228,8 +230,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             copies,
                             instr,
                             ParallelCopyPhase::Before,
-                            self.lir.vreg_class(prev_range_data.vreg),
-                            prev_assignment,
+                            self.lir.vreg_class(last_range_data.vreg),
+                            last_assignment,
                             range_assignment,
                         );
                         copied_from_prev = true;
@@ -237,10 +239,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 }
             }
 
-            prev_range = Some((range, range_assignment));
-
-            // Check if we have any spills/reloads to perform.
-            if let Some((spill_range, spill_slot)) = last_spill {
+            // Check if we have a spill/reload to perform.
+            if let Some((spill_range, spill_slot)) = cur_spill {
                 let spill_range_data = &self.live_ranges[spill_range];
                 let spill_prog_range = spill_range_data.prog_range;
 
@@ -252,15 +252,17 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 // If we have a later range intersecting the current spill range, it should
                 // be a small spill/reload connector; record the copy for that now.
                 if prog_range.end <= spill_prog_range.end {
+                    // All such connectors should be small ranges requiring registers and covering a
+                    // single instruction.
+                    debug_assert!(range_assignment.is_reg());
+                    debug_assert!(range_instrs.len() == 1);
+
+                    is_spill_connector = true;
+
                     // If the spilled def comes from the range just before us, there's no need
                     // to reload from the stack; we've already copied into our new register
                     // above.
                     if !copied_from_prev {
-                        // All such spill/reload connectors should be small ranges requiring
-                        // registers and covering a single instruction.
-                        debug_assert!(range_assignment.is_reg());
-                        debug_assert!(range_instrs.len() == 1);
-
                         let range_instr = range_instrs[0];
                         let instr = range_instr.instr();
                         // We should never have inserted spills/reloads for non-`needs_reg`
@@ -300,16 +302,23 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                 OperandAssignment::Spill(spill_slot),
                                 range_assignment,
                             );
-                        };
+                        }
                     }
                 } else {
                     // We've run off the end of the spill range, reset things.
-                    last_spill = None;
+                    cur_spill = None;
                 }
             }
 
+            // Never treat spill connectors as "canonical" ranges for cross-range copying purposes;
+            // they are wholly contained within the spill, and the spill is still the canonical
+            // location for the vreg throughout its range.
+            if !is_spill_connector {
+                last_canonical_range = Some((range, range_assignment));
+            }
+
             if let OperandAssignment::Spill(spill_slot) = range_assignment {
-                last_spill = Some((range, spill_slot));
+                cur_spill = Some((range, spill_slot));
             }
         }
     }

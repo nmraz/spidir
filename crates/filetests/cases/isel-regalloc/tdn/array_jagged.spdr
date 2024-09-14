@@ -96,34 +96,34 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:           $$r9 = $$rdi
     # nextln: 0017:     $$r13 = MovsxRRm(Ext32_64) $$r14
     # nextln: 0018:     $$rdi = MovRI(171)
-    # nextln:           $$spill8 = $$r9
     # nextln:           $$spill4 = $$r13
-    # nextln:           $$spill7 = $$r11
-    # nextln:           $$spill2 = $$rax
-    # nextln:           $$spill0 = $$r12
-    # nextln:           $$r12 = $$r8
+    # nextln:           $$spill8 = $$r9
     # nextln:           $$r13 = $$rbx
     # nextln:           $$rbx = $$rcx
-    # nextln:           $$spill3 = $$r10
     # nextln:           $$spill9 = $$rdx
+    # nextln:           $$spill7 = $$r11
+    # nextln:           $$spill0 = $$r12
+    # nextln:           $$r12 = $$r8
+    # nextln:           $$spill3 = $$r10
+    # nextln:           $$spill2 = $$rax
     # nextln: 0019:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
     # nextln:           $$rcx = $$rax
     # nextln: 0020:     $$rcx = AluRRm(S64, Add) $$rcx, $$r12
     # nextln: 0021:     MovMR(S32) $$rcx, $$r15
     # nextln: 0022:     MovStackR(!0, S64) $$rax
-    # nextln:           $$rdi = $$spill4
-    # nextln:           $$rdx = $$r12
     # nextln:           $$r8 = $$spill2
     # nextln:           $$rax = $$r13
     # nextln:           $$rsi = $$rbx
     # nextln:           $$rcx = $$spill3
+    # nextln:           $$rdi = $$spill4
+    # nextln:           $$rdx = $$r12
     # nextln: 0023:     $$r13 = MovRStack(!0, S64)
-    # nextln:           $$rbx = $$rdi
     # nextln:           $$r12 = $$rdx
     # nextln:           $$spill2 = $$r8
     # nextln:           $$spill5 = $$rax
     # nextln:           $$spill1 = $$rsi
     # nextln:           $$spill3 = $$rcx
+    # nextln:           $$rbx = $$rdi
     # nextln:           $$rsi = $$spill9
     # nextln:           $$rdi = $$spill8
     # nextln: 0024:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
@@ -140,10 +140,11 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0030:     $$rsi = AluRRm(S64, Imul) $$rsi, $$rbx
     # nextln:           $$r9 = $$r13
     # nextln: 0031:     $$r9 = AluRRm(S64, Add) $$r9, $$r12
-    # nextln:           $$r8 = $$r12
     # nextln:           $$r10 = $$spill2
     # nextln:           $$rdx = $$spill5
+    # nextln:           $$r11 = $$spill1
     # nextln:           $$rdi = $$spill3
+    # nextln:           $$r8 = $$r12
     # nextln:           $$rcx = $$spill0
     # nextln: 0032:     $$rcx = AluRRm(S64, Add) $$rcx, $$rsi
     # nextln:           $$rsi = $$rax
@@ -172,11 +173,11 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:           $$rsi = $$r9
     # nextln: 0044:     $$rbx = MovRStack(!0, S64)
     # nextln:           $$r12 = $$r8
-    # nextln:           $$spill2 = $$rsi
+    # nextln:           $$spill1 = $$rdi
     # nextln:           $$spill6 = $$rcx
     # nextln:           $$spill5 = $$rax
+    # nextln:           $$spill2 = $$rsi
     # nextln:           $$spill3 = $$rdx
-    # nextln:           $$spill1 = $$rdi
     # nextln:           $$rdi = $$spill8
     # nextln:           $$rsi = $$spill9
     # nextln: 0045:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
@@ -185,12 +186,13 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:           $$r10 = $$rax
     # nextln: 0046:     $$r10 = AluRRm(S64, Add) $$r10, $$r12
     # nextln: 0047:     MovMR(S32) $$r10, $$r15
-    # nextln:           $$rdi = $$rdx
     # nextln:           $$r11 = $$spill7
     # nextln:           $$rsi = $$r12
-    # nextln:           $$r12 = $$spill5
-    # nextln:           $$r8 = $$spill3
     # nextln:           $$r9 = $$spill6
+    # nextln:           $$r12 = $$spill5
+    # nextln:           $$rdi = $$rdx
+    # nextln:           $$rdx = $$spill0
+    # nextln:           $$r8 = $$spill3
     # nextln: 0048:     $$r15 = MovRM(S32) $$r10
     # nextln: 0049:     AluRRm(S64, Cmp) $$r14, $$r15
     # nextln: 0050:     Jumpcc(L, block8, block9)

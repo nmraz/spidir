@@ -269,6 +269,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     new_fragment,
                     new_prog_range,
                     smallvec![*instr],
+                    true,
                 );
 
                 last_instr = Some(instr.instr());
@@ -408,7 +409,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but we
         // don't care within the core loop.
         let new_live_range =
-            self.push_vreg_fragment_live_range(vreg, old_fragment, low_range, instrs);
+            self.push_vreg_fragment_live_range(vreg, old_fragment, low_range, instrs, false);
 
         // If this range came with any attached register hints, split them as well.
         if let Entry::Occupied(mut entry) = self.live_range_hints.entry(split_live_range) {
@@ -603,8 +604,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         fragment: LiveSetFragment,
         prog_range: ProgramRange,
         instrs: LiveRangeInstrs,
+        is_spill_connector: bool,
     ) -> LiveRange {
-        let live_range = self.push_vreg_live_range(vreg, fragment, prog_range, instrs);
+        let live_range =
+            self.push_vreg_live_range(vreg, fragment, prog_range, instrs, is_spill_connector);
         self.live_set_fragments[fragment]
             .ranges
             .push(TaggedLiveRange {

@@ -31,12 +31,14 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
         fragment: LiveSetFragment,
         prog_range: ProgramRange,
         instrs: LiveRangeInstrs,
+        is_spill_connector: bool,
     ) -> LiveRange {
         let live_range = self.live_ranges.push(LiveRangeData {
             prog_range,
             vreg,
             fragment,
             instrs,
+            is_spill_connector,
         });
         self.vreg_ranges[vreg].push(live_range);
         live_range
@@ -509,6 +511,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             LiveSetFragment::reserved_value(),
             ProgramRange::new(start, end),
             smallvec![],
+            false,
         )
     }
 }

@@ -200,125 +200,93 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         for &range in ranges {
             let range_assignment = self.get_range_assignment(range);
-            let range_instrs = &self.live_ranges[range].instrs;
-            let prog_range = self.live_ranges[range].prog_range;
-
-            let mut copied_from_prev = false;
-            let mut is_spill_connector = false;
+            let range_data = &self.live_ranges[range];
+            let prog_range = range_data.prog_range;
 
             trace!("    {prog_range:?}");
 
-            // Stitch together live ranges with touching endpoints.
-            if let Some((last_range, last_assignment)) = last_canonical_range {
-                let last_range_data = &self.live_ranges[last_range];
-                let last_prog_range = last_range_data.prog_range;
-                if last_prog_range.end == prog_range.start {
-                    let boundary = prog_range.start;
-                    let instr = boundary.instr();
+            if !range_data.is_spill_connector {
+                // Ordinary (canonical) ranges: stitch together live ranges with touching endpoints.
 
-                    // Adjacent ranges belonging to the same vreg should only happen because of
-                    // basic block boundaries or splits, and both those cases use the `Before`
-                    // slot.
-                    debug_assert!(boundary.slot() == InstrSlot::Before);
+                if let Some((last_range, last_assignment)) = last_canonical_range {
+                    let last_range_data = &self.live_ranges[last_range];
+                    let last_prog_range = last_range_data.prog_range;
+                    if last_prog_range.end == prog_range.start {
+                        let boundary = prog_range.start;
+                        let instr = boundary.instr();
 
-                    // Inter-block copies need to be handled more delicately, so we do them
-                    // separately.
-                    if !is_block_header(self.lir, self.cfg_ctx, instr) {
-                        trace!("        copy: {instr}");
+                        // Adjacent ranges belonging to the same vreg should only happen because of
+                        // basic block boundaries or splits, and both those cases use the `Before`
+                        // slot.
+                        debug_assert!(boundary.slot() == InstrSlot::Before);
 
-                        record_parallel_copy(
-                            copies,
-                            instr,
-                            ParallelCopyPhase::Before,
-                            self.lir.vreg_class(last_range_data.vreg),
-                            last_assignment,
-                            range_assignment,
-                        );
-                        copied_from_prev = true;
-                    }
-                }
-            }
+                        // Inter-block copies need to be handled more delicately, so we do them
+                        // separately.
+                        if !is_block_header(self.lir, self.cfg_ctx, instr) {
+                            trace!("        copy: {instr}");
 
-            // Check if we have a spill/reload to perform.
-            if let Some((spill_range, spill_slot)) = cur_spill {
-                let spill_range_data = &self.live_ranges[spill_range];
-                let spill_prog_range = spill_range_data.prog_range;
-
-                // Note: we expect to start _strictly_ after the current spill because
-                // register ranges should be sorted before spill ranges starting at the same
-                // point.
-                debug_assert!(prog_range.start > spill_prog_range.start);
-
-                // If we have a later range intersecting the current spill range, it should
-                // be a small spill/reload connector; record the copy for that now.
-                if prog_range.end <= spill_prog_range.end {
-                    // All such connectors should be small ranges requiring registers and covering a
-                    // single instruction.
-                    debug_assert!(range_assignment.is_reg());
-                    debug_assert!(range_instrs.len() == 1);
-
-                    is_spill_connector = true;
-
-                    // If the spilled def comes from the range just before us, there's no need
-                    // to reload from the stack; we've already copied into our new register
-                    // above.
-                    if !copied_from_prev {
-                        let range_instr = range_instrs[0];
-                        let instr = range_instr.instr();
-                        // We should never have inserted spills/reloads for non-`needs_reg`
-                        // operands.
-                        debug_assert!(range_instr.needs_reg());
-
-                        let vreg = spill_range_data.vreg;
-                        let class = self.lir.vreg_class(vreg);
-
-                        if range_instr.is_def() {
-                            // Spill:
-                            // This store could end up dead if the only use of the spilled value
-                            // is the next instruction, in which case a simple register copy
-                            // will be inserted. In practice, dealing with that would require
-                            // dramatically complicating things here for very little tangible
-                            // benefit (we expect these situations not to crop up often because
-                            // shorter live ranges have higher spill weights).
-
-                            trace!("        spill ({spill_slot}): {}", instr.next());
-
-                            record_parallel_copy(
-                                copies,
-                                instr.next(),
-                                ParallelCopyPhase::Before,
-                                class,
-                                range_assignment,
-                                OperandAssignment::Spill(spill_slot),
-                            );
-                        } else {
-                            // Reload:
-                            trace!("        reload ({spill_slot}): {instr}");
                             record_parallel_copy(
                                 copies,
                                 instr,
-                                ParallelCopyPhase::Reload,
-                                class,
-                                OperandAssignment::Spill(spill_slot),
+                                ParallelCopyPhase::Before,
+                                self.lir.vreg_class(last_range_data.vreg),
+                                last_assignment,
                                 range_assignment,
                             );
                         }
                     }
-                } else {
-                    // We've run off the end of the spill range, reset things.
-                    cur_spill = None;
                 }
-            }
 
-            // Never treat spill connectors as "canonical" ranges for cross-range copying purposes;
-            // they are wholly contained within the spill, and the spill is still the canonical
-            // location for the vreg throughout its range.
-            if !is_spill_connector {
                 last_canonical_range = Some((range, range_assignment));
-            }
+                if let OperandAssignment::Spill(spill_slot) = range_assignment {
+                    cur_spill = Some((range, spill_slot));
+                }
+            } else {
+                // Spill connectors: insert a spill/reload.
 
-            if let OperandAssignment::Spill(spill_slot) = range_assignment {
-                cur_spill = Some((range, spill_slot));
+                let (spill_range, spill_slot) =
+                    cur_spill.expect("spill/reload connector without current spill");
+
+                let spill_range_data = &self.live_ranges[spill_range];
+                let spill_prog_range = spill_range_data.prog_range;
+
+                debug_assert!(spill_prog_range.contains(prog_range));
+
+                // All such connectors should be small ranges requiring registers and covering a
+                // single instruction.
+                debug_assert!(range_assignment.is_reg());
+                debug_assert!(range_data.instrs.len() == 1);
+
+                let range_instr = range_data.instrs[0];
+                let instr = range_instr.instr();
+                // We should never have inserted spills/reloads for non-`needs_reg`
+                // operands.
+                debug_assert!(range_instr.needs_reg());
+
+                let vreg = spill_range_data.vreg;
+                let class = self.lir.vreg_class(vreg);
+
+                if range_instr.is_def() {
+                    trace!("        spill ({spill_slot}): {}", instr.next());
+                    record_parallel_copy(
+                        copies,
+                        instr.next(),
+                        ParallelCopyPhase::Before,
+                        class,
+                        range_assignment,
+                        OperandAssignment::Spill(spill_slot),
+                    );
+                } else {
+                    trace!("        reload ({spill_slot}): {instr}");
+                    record_parallel_copy(
+                        copies,
+                        instr,
+                        ParallelCopyPhase::Reload,
+                        class,
+                        OperandAssignment::Spill(spill_slot),
+                        range_assignment,
+                    );
+                }
             }
         }
     }
@@ -352,12 +320,15 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 break;
             };
 
-            // When dealing with spill/reload connector ranges, we'll have ranges later in the list
-            // that end before a previous one. Just skip those ranges, since they can never carry
-            // the value into/out of blocks anyway.
-            if prog_range.end < ProgramPoint::before(self.lir.block_instrs(last_block).start) {
+            // Spill connectors can never carry a value into/out of a block, so skip them.
+            if self.live_ranges[range].is_spill_connector {
                 continue;
             }
+
+            // Canonical ranges should always be disjoint and sorted.
+            debug_assert!(
+                prog_range.end >= ProgramPoint::before(self.lir.block_instrs(last_block).start)
+            );
 
             let mut block_idx = self.lir.instr_block_index(prog_range.start.instr());
 
@@ -584,10 +555,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 let range_data = &self.live_ranges[range];
                 let fragment_data = &self.live_set_fragments[range_data.fragment];
 
-                // Allow ranges to overlap, but when a spilled and a non-spilled range start at the
-                // same point, make sure the non-spilled range comes first.
+                // Allow ranges to overlap (for spill connectors), but make sure reload connectors
+                // starting with a spill always come after spills starting at the same point.
                 ((range_data.prog_range.start.index() as u64) << 1)
-                    | (fragment_data.assignment.is_none() as u64)
+                    | (fragment_data.assignment.is_some() as u64)
             });
         }
     }

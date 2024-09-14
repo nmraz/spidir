@@ -291,6 +291,7 @@ pub struct LiveRangeData {
     pub vreg: VirtRegNum,
     pub fragment: LiveSetFragment,
     pub instrs: LiveRangeInstrs,
+    pub is_spill_connector: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

@@ -3285,10 +3285,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 00326c: 8b 7c 24 58                     mov edi, dword ptr [rsp + 0x58]
     # nextln: 003270: 41 03 fe                        add edi, r14d
     # nextln: 003273: 89 7c 24 58                     mov dword ptr [rsp + 0x58], edi
-    # nextln: 003277: 48 89 d7                        mov rdi, rdx
-    # nextln: 00327a: 48 89 ca                        mov rdx, rcx
-    # nextln: 00327d: 48 89 c1                        mov rcx, rax
-    # nextln: 003280: 48 89 f8                        mov rax, rdi
+    # nextln: 003277: 48 89 c7                        mov rdi, rax
+    # nextln: 00327a: 48 89 d0                        mov rax, rdx
+    # nextln: 00327d: 48 89 ca                        mov rdx, rcx
+    # nextln: 003280: 48 89 f9                        mov rcx, rdi
     # nextln: 003283: e9 22 00 00 00                  jmp 0x32aa
     # nextln: 003288: 48 89 c7                        mov rdi, rax
     # nextln: 00328b: 48 89 c8                        mov rax, rcx
@@ -3306,14 +3306,14 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0032b8: 48 8b 3c 24                     mov rdi, qword ptr [rsp]
     # nextln: 0032bc: 48 03 fb                        add rdi, rbx
     # nextln: 0032bf: 0f b6 3f                        movzx edi, byte ptr [rdi]
-    # nextln: 0032c2: 48 89 d7                        mov rdi, rdx
-    # nextln: 0032c5: 48 89 c2                        mov rdx, rax
-    # nextln: 0032c8: 48 89 c8                        mov rax, rcx
-    # nextln: 0032cb: 48 89 f9                        mov rcx, rdi
+    # nextln: 0032c2: 48 89 c7                        mov rdi, rax
+    # nextln: 0032c5: 48 89 c8                        mov rax, rcx
+    # nextln: 0032c8: 48 89 d1                        mov rcx, rdx
+    # nextln: 0032cb: 48 89 fa                        mov rdx, rdi
     # nextln: 0032ce: e9 1c 00 00 00                  jmp 0x32ef
-    # nextln: 0032d3: 48 89 d7                        mov rdi, rdx
-    # nextln: 0032d6: 48 89 c2                        mov rdx, rax
-    # nextln: 0032d9: 48 89 f8                        mov rax, rdi
+    # nextln: 0032d3: 48 89 c7                        mov rdi, rax
+    # nextln: 0032d6: 48 89 d0                        mov rax, rdx
+    # nextln: 0032d9: 48 89 fa                        mov rdx, rdi
     # nextln: 0032dc: 48 8b 7c 24 18                  mov rdi, qword ptr [rsp + 0x18]
     # nextln: 0032e1: 48 89 ce                        mov rsi, rcx
     # nextln: 0032e4: 48 89 c1                        mov rcx, rax
@@ -3332,9 +3332,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003315: 8b 7c 24 50                     mov edi, dword ptr [rsp + 0x50]
     # nextln: 003319: 41 03 fe                        add edi, r14d
     # nextln: 00331c: 89 7c 24 50                     mov dword ptr [rsp + 0x50], edi
-    # nextln: 003320: 48 89 cf                        mov rdi, rcx
-    # nextln: 003323: 48 89 d1                        mov rcx, rdx
-    # nextln: 003326: 48 89 fa                        mov rdx, rdi
+    # nextln: 003320: 48 89 d7                        mov rdi, rdx
+    # nextln: 003323: 48 89 ca                        mov rdx, rcx
+    # nextln: 003326: 48 89 f9                        mov rcx, rdi
     # nextln: 003329: e9 00 00 00 00                  jmp 0x332e
     # nextln: 00332e: 45 85 ed                        test r13d, r13d
     # nextln: 003331: 0f 85 05 00 00 00               jne 0x333c
@@ -3342,13 +3342,13 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 00333c: 48 8b 3c 24                     mov rdi, qword ptr [rsp]
     # nextln: 003340: 48 03 fb                        add rdi, rbx
     # nextln: 003343: 0f b6 3f                        movzx edi, byte ptr [rdi]
-    # nextln: 003346: 48 89 cf                        mov rdi, rcx
-    # nextln: 003349: 48 89 d1                        mov rcx, rdx
-    # nextln: 00334c: 48 89 fa                        mov rdx, rdi
+    # nextln: 003346: 48 89 d7                        mov rdi, rdx
+    # nextln: 003349: 48 89 ca                        mov rdx, rcx
+    # nextln: 00334c: 48 89 f9                        mov rcx, rdi
     # nextln: 00334f: e9 13 00 00 00                  jmp 0x3367
-    # nextln: 003354: 48 89 cf                        mov rdi, rcx
-    # nextln: 003357: 48 89 d1                        mov rcx, rdx
-    # nextln: 00335a: 48 89 fa                        mov rdx, rdi
+    # nextln: 003354: 48 89 d7                        mov rdi, rdx
+    # nextln: 003357: 48 89 ca                        mov rdx, rcx
+    # nextln: 00335a: 48 89 f9                        mov rcx, rdi
     # nextln: 00335d: 0f b6 7c 24 5c                  movzx edi, byte ptr [rsp + 0x5c]
     # nextln: 003362: e9 00 00 00 00                  jmp 0x3367
     # nextln: 003367: 85 ff                           test edi, edi
@@ -3386,10 +3386,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0033db: 48 89 c8                        mov rax, rcx
     # nextln: 0033de: 48 89 f9                        mov rcx, rdi
     # nextln: 0033e1: 0f b6 39                        movzx edi, byte ptr [rcx]
-    # nextln: 0033e4: 48 89 cf                        mov rdi, rcx
-    # nextln: 0033e7: 48 89 d1                        mov rcx, rdx
-    # nextln: 0033ea: 48 89 c2                        mov rdx, rax
-    # nextln: 0033ed: 48 89 f8                        mov rax, rdi
+    # nextln: 0033e4: 48 89 c7                        mov rdi, rax
+    # nextln: 0033e7: 48 89 c8                        mov rax, rcx
+    # nextln: 0033ea: 48 89 d1                        mov rcx, rdx
+    # nextln: 0033ed: 48 89 fa                        mov rdx, rdi
     # nextln: 0033f0: e9 00 00 00 00                  jmp 0x33f5
     # nextln: 0033f5: 85 ff                           test edi, edi
     # nextln: 0033f7: 0f 85 05 00 00 00               jne 0x3402
@@ -3397,9 +3397,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003402: 8b 7c 24 58                     mov edi, dword ptr [rsp + 0x58]
     # nextln: 003406: 41 03 fe                        add edi, r14d
     # nextln: 003409: 89 7c 24 58                     mov dword ptr [rsp + 0x58], edi
-    # nextln: 00340d: 48 89 d7                        mov rdi, rdx
-    # nextln: 003410: 48 89 ca                        mov rdx, rcx
-    # nextln: 003413: 48 89 f9                        mov rcx, rdi
+    # nextln: 00340d: 48 89 cf                        mov rdi, rcx
+    # nextln: 003410: 48 89 d1                        mov rcx, rdx
+    # nextln: 003413: 48 89 fa                        mov rdx, rdi
     # nextln: 003416: e9 25 00 00 00                  jmp 0x3440
     # nextln: 00341b: 48 89 c7                        mov rdi, rax
     # nextln: 00341e: 48 89 d0                        mov rax, rdx
@@ -3408,9 +3408,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003427: 8b 7c 24 50                     mov edi, dword ptr [rsp + 0x50]
     # nextln: 00342b: 41 03 fe                        add edi, r14d
     # nextln: 00342e: 89 7c 24 50                     mov dword ptr [rsp + 0x50], edi
-    # nextln: 003432: 48 89 c7                        mov rdi, rax
-    # nextln: 003435: 48 89 c8                        mov rax, rcx
-    # nextln: 003438: 48 89 f9                        mov rcx, rdi
+    # nextln: 003432: 48 89 cf                        mov rdi, rcx
+    # nextln: 003435: 48 89 c1                        mov rcx, rax
+    # nextln: 003438: 48 89 f8                        mov rax, rdi
     # nextln: 00343b: e9 00 00 00 00                  jmp 0x3440
     # nextln: 003440: 45 85 ed                        test r13d, r13d
     # nextln: 003443: 0f 85 05 00 00 00               jne 0x344e
@@ -3425,9 +3425,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003466: 48 8b 3c 24                     mov rdi, qword ptr [rsp]
     # nextln: 00346a: 48 03 fb                        add rdi, rbx
     # nextln: 00346d: 0f b6 3f                        movzx edi, byte ptr [rdi]
-    # nextln: 003470: 48 89 cf                        mov rdi, rcx
-    # nextln: 003473: 48 89 d1                        mov rcx, rdx
-    # nextln: 003476: 48 89 fa                        mov rdx, rdi
+    # nextln: 003470: 48 89 d7                        mov rdi, rdx
+    # nextln: 003473: 48 89 ca                        mov rdx, rcx
+    # nextln: 003476: 48 89 f9                        mov rcx, rdi
     # nextln: 003479: e9 00 00 00 00                  jmp 0x347e
     # nextln: 00347e: 85 ff                           test edi, edi
     # nextln: 003480: 0f 85 05 00 00 00               jne 0x348b
@@ -3454,20 +3454,20 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0034d1: 48 8b 04 24                     mov rax, qword ptr [rsp]
     # nextln: 0034d5: 48 03 c3                        add rax, rbx
     # nextln: 0034d8: 0f b6 00                        movzx eax, byte ptr [rax]
-    # nextln: 0034db: 48 89 d0                        mov rax, rdx
-    # nextln: 0034de: 48 89 fa                        mov rdx, rdi
-    # nextln: 0034e1: 48 89 c7                        mov rdi, rax
+    # nextln: 0034db: 48 89 f8                        mov rax, rdi
+    # nextln: 0034de: 48 89 d7                        mov rdi, rdx
+    # nextln: 0034e1: 48 89 c2                        mov rdx, rax
     # nextln: 0034e4: e9 34 00 00 00                  jmp 0x351d
     # nextln: 0034e9: 48 89 d0                        mov rax, rdx
     # nextln: 0034ec: 48 89 fa                        mov rdx, rdi
     # nextln: 0034ef: 48 89 cf                        mov rdi, rcx
     # nextln: 0034f2: 48 b9 00 00 00 00 00 00 00 00   movabs rcx, 0  # RELOC_ABS64 -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + 0
-    # nextln: 0034fc: 48 89 54 24 30                  mov qword ptr [rsp + 0x30], rdx
-    # nextln: 003501: 49 89 c7                        mov r15, rax
-    # nextln: 003504: 48 89 7c 24 48                  mov qword ptr [rsp + 0x48], rdi
+    # nextln: 0034fc: 49 89 c7                        mov r15, rax
+    # nextln: 0034ff: 48 89 7c 24 48                  mov qword ptr [rsp + 0x48], rdi
+    # nextln: 003504: 48 89 54 24 30                  mov qword ptr [rsp + 0x30], rdx
     # nextln: 003509: ff d1                           call rcx
-    # nextln: 00350b: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
-    # nextln: 003510: 4c 89 ff                        mov rdi, r15
+    # nextln: 00350b: 4c 89 ff                        mov rdi, r15
+    # nextln: 00350e: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
     # nextln: 003513: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
     # nextln: 003518: e9 00 00 00 00                  jmp 0x351d
     # nextln: 00351d: 85 c0                           test eax, eax
@@ -3484,10 +3484,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003546: 8b 7c 24 50                     mov edi, dword ptr [rsp + 0x50]
     # nextln: 00354a: 41 03 fe                        add edi, r14d
     # nextln: 00354d: 89 7c 24 50                     mov dword ptr [rsp + 0x50], edi
-    # nextln: 003551: 48 89 d7                        mov rdi, rdx
-    # nextln: 003554: 48 89 ca                        mov rdx, rcx
-    # nextln: 003557: 48 89 c1                        mov rcx, rax
-    # nextln: 00355a: 48 89 f8                        mov rax, rdi
+    # nextln: 003551: 48 89 cf                        mov rdi, rcx
+    # nextln: 003554: 48 89 c1                        mov rcx, rax
+    # nextln: 003557: 48 89 d0                        mov rax, rdx
+    # nextln: 00355a: 48 89 fa                        mov rdx, rdi
     # nextln: 00355d: e9 00 00 00 00                  jmp 0x3562
     # nextln: 003562: 45 85 ed                        test r13d, r13d
     # nextln: 003565: 0f 85 05 00 00 00               jne 0x3570
@@ -3495,9 +3495,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003570: 48 8b 3c 24                     mov rdi, qword ptr [rsp]
     # nextln: 003574: 48 03 fb                        add rdi, rbx
     # nextln: 003577: 0f b6 3f                        movzx edi, byte ptr [rdi]
-    # nextln: 00357a: 48 89 c7                        mov rdi, rax
-    # nextln: 00357d: 48 89 c8                        mov rax, rcx
-    # nextln: 003580: 48 89 f9                        mov rcx, rdi
+    # nextln: 00357a: 48 89 cf                        mov rdi, rcx
+    # nextln: 00357d: 48 89 c1                        mov rcx, rax
+    # nextln: 003580: 48 89 f8                        mov rax, rdi
     # nextln: 003583: e9 45 00 00 00                  jmp 0x35cd
     # nextln: 003588: 48 89 cf                        mov rdi, rcx
     # nextln: 00358b: 48 89 c1                        mov rcx, rax
@@ -3559,9 +3559,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003664: 41 03 fe                        add edi, r14d
     # nextln: 003667: 89 7c 24 58                     mov dword ptr [rsp + 0x58], edi
     # nextln: 00366b: e9 22 00 00 00                  jmp 0x3692
-    # nextln: 003670: 48 89 cf                        mov rdi, rcx
-    # nextln: 003673: 48 89 c1                        mov rcx, rax
-    # nextln: 003676: 48 89 f8                        mov rax, rdi
+    # nextln: 003670: 48 89 c7                        mov rdi, rax
+    # nextln: 003673: 48 89 c8                        mov rax, rcx
+    # nextln: 003676: 48 89 f9                        mov rcx, rdi
     # nextln: 003679: 8b 7c 24 50                     mov edi, dword ptr [rsp + 0x50]
     # nextln: 00367d: 41 03 fe                        add edi, r14d
     # nextln: 003680: 89 7c 24 50                     mov dword ptr [rsp + 0x50], edi
@@ -3573,17 +3573,17 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003695: 0f 85 05 00 00 00               jne 0x36a0
     # nextln: 00369b: e9 2b 00 00 00                  jmp 0x36cb
     # nextln: 0036a0: 48 bf 00 00 00 00 00 00 00 00   movabs rdi, 0  # RELOC_ABS64 -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + 0
-    # nextln: 0036aa: 48 89 4c 24 38                  mov qword ptr [rsp + 0x38], rcx
-    # nextln: 0036af: 49 89 c7                        mov r15, rax
-    # nextln: 0036b2: 48 89 54 24 30                  mov qword ptr [rsp + 0x30], rdx
+    # nextln: 0036aa: 48 89 54 24 30                  mov qword ptr [rsp + 0x30], rdx
+    # nextln: 0036af: 48 89 4c 24 38                  mov qword ptr [rsp + 0x38], rcx
+    # nextln: 0036b4: 49 89 c7                        mov r15, rax
     # nextln: 0036b7: ff d7                           call rdi
-    # nextln: 0036b9: 48 8b 7c 24 30                  mov rdi, qword ptr [rsp + 0x30]
-    # nextln: 0036be: 4c 89 fa                        mov rdx, r15
-    # nextln: 0036c1: 48 8b 4c 24 38                  mov rcx, qword ptr [rsp + 0x38]
+    # nextln: 0036b9: 48 8b 4c 24 38                  mov rcx, qword ptr [rsp + 0x38]
+    # nextln: 0036be: 48 8b 7c 24 30                  mov rdi, qword ptr [rsp + 0x30]
+    # nextln: 0036c3: 4c 89 fa                        mov rdx, r15
     # nextln: 0036c6: e9 14 00 00 00                  jmp 0x36df
-    # nextln: 0036cb: 48 89 d7                        mov rdi, rdx
-    # nextln: 0036ce: 48 89 c2                        mov rdx, rax
-    # nextln: 0036d1: 48 89 f8                        mov rax, rdi
+    # nextln: 0036cb: 48 89 c7                        mov rdi, rax
+    # nextln: 0036ce: 48 89 d0                        mov rax, rdx
+    # nextln: 0036d1: 48 89 fa                        mov rdx, rdi
     # nextln: 0036d4: 48 89 c7                        mov rdi, rax
     # nextln: 0036d7: 4c 89 f0                        mov rax, r14
     # nextln: 0036da: e9 00 00 00 00                  jmp 0x36df
@@ -3610,8 +3610,8 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003727: 0f 85 05 00 00 00               jne 0x3732
     # nextln: 00372d: e9 2b 00 00 00                  jmp 0x375d
     # nextln: 003732: 48 bf 00 00 00 00 00 00 00 00   movabs rdi, 0  # RELOC_ABS64 -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + 0
-    # nextln: 00373c: 48 89 44 24 38                  mov qword ptr [rsp + 0x38], rax
-    # nextln: 003741: 48 89 4c 24 30                  mov qword ptr [rsp + 0x30], rcx
+    # nextln: 00373c: 48 89 4c 24 30                  mov qword ptr [rsp + 0x30], rcx
+    # nextln: 003741: 48 89 44 24 38                  mov qword ptr [rsp + 0x38], rax
     # nextln: 003746: 49 89 d7                        mov r15, rdx
     # nextln: 003749: ff d7                           call rdi
     # nextln: 00374b: 48 8b 54 24 38                  mov rdx, qword ptr [rsp + 0x38]
@@ -3646,13 +3646,13 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0037b8: 0f 85 05 00 00 00               jne 0x37c3
     # nextln: 0037be: e9 2b 00 00 00                  jmp 0x37ee
     # nextln: 0037c3: 48 bf 00 00 00 00 00 00 00 00   movabs rdi, 0  # RELOC_ABS64 -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + 0
-    # nextln: 0037cd: 48 89 54 24 38                  mov qword ptr [rsp + 0x38], rdx
-    # nextln: 0037d2: 49 89 c7                        mov r15, rax
-    # nextln: 0037d5: 48 89 4c 24 30                  mov qword ptr [rsp + 0x30], rcx
+    # nextln: 0037cd: 48 89 4c 24 30                  mov qword ptr [rsp + 0x30], rcx
+    # nextln: 0037d2: 48 89 54 24 38                  mov qword ptr [rsp + 0x38], rdx
+    # nextln: 0037d7: 49 89 c7                        mov r15, rax
     # nextln: 0037da: ff d7                           call rdi
-    # nextln: 0037dc: 48 8b 7c 24 38                  mov rdi, qword ptr [rsp + 0x38]
+    # nextln: 0037dc: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
     # nextln: 0037e1: 4c 89 f9                        mov rcx, r15
-    # nextln: 0037e4: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
+    # nextln: 0037e4: 48 8b 7c 24 38                  mov rdi, qword ptr [rsp + 0x38]
     # nextln: 0037e9: e9 19 00 00 00                  jmp 0x3807
     # nextln: 0037ee: 48 89 cf                        mov rdi, rcx
     # nextln: 0037f1: 48 89 c1                        mov rcx, rax
@@ -3684,13 +3684,13 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 00384f: 0f 85 05 00 00 00               jne 0x385a
     # nextln: 003855: e9 2b 00 00 00                  jmp 0x3885
     # nextln: 00385a: 48 bf 00 00 00 00 00 00 00 00   movabs rdi, 0  # RELOC_ABS64 -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + 0
-    # nextln: 003864: 48 89 4c 24 30                  mov qword ptr [rsp + 0x30], rcx
+    # nextln: 003864: 48 89 54 24 38                  mov qword ptr [rsp + 0x38], rdx
     # nextln: 003869: 49 89 c7                        mov r15, rax
-    # nextln: 00386c: 48 89 54 24 38                  mov qword ptr [rsp + 0x38], rdx
+    # nextln: 00386c: 48 89 4c 24 30                  mov qword ptr [rsp + 0x30], rcx
     # nextln: 003871: ff d7                           call rdi
     # nextln: 003873: 48 8b 7c 24 38                  mov rdi, qword ptr [rsp + 0x38]
-    # nextln: 003878: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
-    # nextln: 00387d: 4c 89 f9                        mov rcx, r15
+    # nextln: 003878: 4c 89 f9                        mov rcx, r15
+    # nextln: 00387b: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
     # nextln: 003880: e9 11 00 00 00                  jmp 0x3896
     # nextln: 003885: 48 89 d7                        mov rdi, rdx
     # nextln: 003888: 48 89 ca                        mov rdx, rcx
@@ -3718,9 +3718,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0038d8: 0f 85 05 00 00 00               jne 0x38e3
     # nextln: 0038de: e9 2b 00 00 00                  jmp 0x390e
     # nextln: 0038e3: 48 bf 00 00 00 00 00 00 00 00   movabs rdi, 0  # RELOC_ABS64 -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + 0
-    # nextln: 0038ed: 48 89 54 24 38                  mov qword ptr [rsp + 0x38], rdx
+    # nextln: 0038ed: 48 89 44 24 48                  mov qword ptr [rsp + 0x48], rax
     # nextln: 0038f2: 49 89 cf                        mov r15, rcx
-    # nextln: 0038f5: 48 89 44 24 48                  mov qword ptr [rsp + 0x48], rax
+    # nextln: 0038f5: 48 89 54 24 38                  mov qword ptr [rsp + 0x38], rdx
     # nextln: 0038fa: ff d7                           call rdi
     # nextln: 0038fc: 48 8b 7c 24 38                  mov rdi, qword ptr [rsp + 0x38]
     # nextln: 003901: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
@@ -3757,12 +3757,12 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003974: e9 2b 00 00 00                  jmp 0x39a4
     # nextln: 003979: 48 bf 00 00 00 00 00 00 00 00   movabs rdi, 0  # RELOC_ABS64 -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + 0
     # nextln: 003983: 49 89 d7                        mov r15, rdx
-    # nextln: 003986: 48 89 4c 24 30                  mov qword ptr [rsp + 0x30], rcx
-    # nextln: 00398b: 48 89 44 24 48                  mov qword ptr [rsp + 0x48], rax
+    # nextln: 003986: 48 89 44 24 48                  mov qword ptr [rsp + 0x48], rax
+    # nextln: 00398b: 48 89 4c 24 30                  mov qword ptr [rsp + 0x30], rcx
     # nextln: 003990: ff d7                           call rdi
-    # nextln: 003992: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
-    # nextln: 003997: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
-    # nextln: 00399c: 4c 89 ff                        mov rdi, r15
+    # nextln: 003992: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
+    # nextln: 003997: 4c 89 ff                        mov rdi, r15
+    # nextln: 00399a: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
     # nextln: 00399f: e9 31 00 00 00                  jmp 0x39d5
     # nextln: 0039a4: 48 89 c7                        mov rdi, rax
     # nextln: 0039a7: 48 89 c8                        mov rax, rcx
@@ -3771,9 +3771,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0039b7: 48 89 44 24 30                  mov qword ptr [rsp + 0x30], rax
     # nextln: 0039bc: 48 89 7c 24 48                  mov qword ptr [rsp + 0x48], rdi
     # nextln: 0039c1: ff d1                           call rcx
-    # nextln: 0039c3: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
-    # nextln: 0039c8: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
-    # nextln: 0039cd: 4c 89 ff                        mov rdi, r15
+    # nextln: 0039c3: 4c 89 ff                        mov rdi, r15
+    # nextln: 0039c6: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
+    # nextln: 0039cb: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
     # nextln: 0039d0: e9 00 00 00 00                  jmp 0x39d5
     # nextln: 0039d5: 85 c0                           test eax, eax
     # nextln: 0039d7: 0f 85 05 00 00 00               jne 0x39e2
@@ -3788,20 +3788,20 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0039fb: 8b 7c 24 50                     mov edi, dword ptr [rsp + 0x50]
     # nextln: 0039ff: 41 03 fe                        add edi, r14d
     # nextln: 003a02: 89 7c 24 50                     mov dword ptr [rsp + 0x50], edi
-    # nextln: 003a06: 48 89 c7                        mov rdi, rax
-    # nextln: 003a09: 48 89 c8                        mov rax, rcx
-    # nextln: 003a0c: 48 89 f9                        mov rcx, rdi
+    # nextln: 003a06: 48 89 cf                        mov rdi, rcx
+    # nextln: 003a09: 48 89 c1                        mov rcx, rax
+    # nextln: 003a0c: 48 89 f8                        mov rax, rdi
     # nextln: 003a0f: e9 00 00 00 00                  jmp 0x3a14
     # nextln: 003a14: 45 85 ed                        test r13d, r13d
     # nextln: 003a17: 0f 85 05 00 00 00               jne 0x3a22
     # nextln: 003a1d: e9 28 00 00 00                  jmp 0x3a4a
     # nextln: 003a22: 48 bf 00 00 00 00 00 00 00 00   movabs rdi, 0  # RELOC_ABS64 -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + 0
     # nextln: 003a2c: 49 89 c7                        mov r15, rax
-    # nextln: 003a2f: 48 89 4c 24 48                  mov qword ptr [rsp + 0x48], rcx
-    # nextln: 003a34: 48 89 54 24 30                  mov qword ptr [rsp + 0x30], rdx
+    # nextln: 003a2f: 48 89 54 24 30                  mov qword ptr [rsp + 0x30], rdx
+    # nextln: 003a34: 48 89 4c 24 48                  mov qword ptr [rsp + 0x48], rcx
     # nextln: 003a39: ff d7                           call rdi
-    # nextln: 003a3b: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
-    # nextln: 003a40: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
+    # nextln: 003a3b: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
+    # nextln: 003a40: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
     # nextln: 003a45: e9 3e 00 00 00                  jmp 0x3a88
     # nextln: 003a4a: 49 89 c7                        mov r15, rax
     # nextln: 003a4d: 48 8b 44 24 10                  mov rax, qword ptr [rsp + 0x10]
@@ -3833,16 +3833,16 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003aae: 8b 54 24 50                     mov edx, dword ptr [rsp + 0x50]
     # nextln: 003ab2: 41 03 d6                        add edx, r14d
     # nextln: 003ab5: 89 54 24 50                     mov dword ptr [rsp + 0x50], edx
-    # nextln: 003ab9: 48 89 ca                        mov rdx, rcx
-    # nextln: 003abc: 48 89 c1                        mov rcx, rax
-    # nextln: 003abf: 48 89 d0                        mov rax, rdx
+    # nextln: 003ab9: 48 89 c2                        mov rdx, rax
+    # nextln: 003abc: 48 89 c8                        mov rax, rcx
+    # nextln: 003abf: 48 89 d1                        mov rcx, rdx
     # nextln: 003ac2: e9 00 00 00 00                  jmp 0x3ac7
     # nextln: 003ac7: 45 85 ed                        test r13d, r13d
     # nextln: 003aca: 0f 85 05 00 00 00               jne 0x3ad5
     # nextln: 003ad0: e9 25 00 00 00                  jmp 0x3afa
     # nextln: 003ad5: 48 ba 00 00 00 00 00 00 00 00   movabs rdx, 0  # RELOC_ABS64 -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + 0
-    # nextln: 003adf: 48 89 44 24 30                  mov qword ptr [rsp + 0x30], rax
-    # nextln: 003ae4: 48 89 4c 24 48                  mov qword ptr [rsp + 0x48], rcx
+    # nextln: 003adf: 48 89 4c 24 48                  mov qword ptr [rsp + 0x48], rcx
+    # nextln: 003ae4: 48 89 44 24 30                  mov qword ptr [rsp + 0x30], rax
     # nextln: 003ae9: ff d2                           call rdx
     # nextln: 003aeb: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
     # nextln: 003af0: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
@@ -3877,9 +3877,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003b5e: 8b 54 24 50                     mov edx, dword ptr [rsp + 0x50]
     # nextln: 003b62: 41 03 d6                        add edx, r14d
     # nextln: 003b65: 89 54 24 50                     mov dword ptr [rsp + 0x50], edx
-    # nextln: 003b69: 48 89 c2                        mov rdx, rax
-    # nextln: 003b6c: 48 89 c8                        mov rax, rcx
-    # nextln: 003b6f: 48 89 d1                        mov rcx, rdx
+    # nextln: 003b69: 48 89 ca                        mov rdx, rcx
+    # nextln: 003b6c: 48 89 c1                        mov rcx, rax
+    # nextln: 003b6f: 48 89 d0                        mov rax, rdx
     # nextln: 003b72: e9 00 00 00 00                  jmp 0x3b77
     # nextln: 003b77: 45 85 ed                        test r13d, r13d
     # nextln: 003b7a: 0f 85 05 00 00 00               jne 0x3b85
@@ -3899,16 +3899,16 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003bb2: 48 03 fe                        add rdi, rsi
     # nextln: 003bb5: 48 03 d7                        add rdx, rdi
     # nextln: 003bb8: 0f b6 12                        movzx edx, byte ptr [rdx]
-    # nextln: 003bbb: 48 89 c2                        mov rdx, rax
-    # nextln: 003bbe: 48 89 c8                        mov rax, rcx
-    # nextln: 003bc1: 48 89 d1                        mov rcx, rdx
+    # nextln: 003bbb: 48 89 ca                        mov rdx, rcx
+    # nextln: 003bbe: 48 89 c1                        mov rcx, rax
+    # nextln: 003bc1: 48 89 d0                        mov rax, rdx
     # nextln: 003bc4: e9 1f 00 00 00                  jmp 0x3be8
     # nextln: 003bc9: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @throw_index_out_of_range_exception + 0
     # nextln: 003bd3: ff d0                           call rax
     # nextln: 003bd5: 0f 0b                           ud2
-    # nextln: 003bd7: 48 89 c2                        mov rdx, rax
-    # nextln: 003bda: 48 89 c8                        mov rax, rcx
-    # nextln: 003bdd: 48 89 d1                        mov rcx, rdx
+    # nextln: 003bd7: 48 89 ca                        mov rdx, rcx
+    # nextln: 003bda: 48 89 c1                        mov rcx, rax
+    # nextln: 003bdd: 48 89 d0                        mov rax, rdx
     # nextln: 003be0: 4c 89 f2                        mov rdx, r14
     # nextln: 003be3: e9 00 00 00 00                  jmp 0x3be8
     # nextln: 003be8: 85 d2                           test edx, edx
@@ -4094,11 +4094,11 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003eb6: 48 89 c8                        mov rax, rcx
     # nextln: 003eb9: 48 89 d1                        mov rcx, rdx
     # nextln: 003ebc: 48 ba 00 00 00 00 00 00 00 00   movabs rdx, 0  # RELOC_ABS64 -> @"System.Boolean Tests.Bool_No_Op::simple_func_bool()" + 0
-    # nextln: 003ec6: 48 89 44 24 30                  mov qword ptr [rsp + 0x30], rax
-    # nextln: 003ecb: 48 89 4c 24 48                  mov qword ptr [rsp + 0x48], rcx
+    # nextln: 003ec6: 48 89 4c 24 48                  mov qword ptr [rsp + 0x48], rcx
+    # nextln: 003ecb: 48 89 44 24 30                  mov qword ptr [rsp + 0x30], rax
     # nextln: 003ed0: ff d2                           call rdx
-    # nextln: 003ed2: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
-    # nextln: 003ed7: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
+    # nextln: 003ed2: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
+    # nextln: 003ed7: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
     # nextln: 003edc: e9 00 00 00 00                  jmp 0x3ee1
     # nextln: 003ee1: 85 c0                           test eax, eax
     # nextln: 003ee3: 0f 85 05 00 00 00               jne 0x3eee
@@ -4113,9 +4113,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003f07: 8b 54 24 50                     mov edx, dword ptr [rsp + 0x50]
     # nextln: 003f0b: 41 03 d6                        add edx, r14d
     # nextln: 003f0e: 89 54 24 50                     mov dword ptr [rsp + 0x50], edx
-    # nextln: 003f12: 48 89 ca                        mov rdx, rcx
-    # nextln: 003f15: 48 89 c1                        mov rcx, rax
-    # nextln: 003f18: 48 89 d0                        mov rax, rdx
+    # nextln: 003f12: 48 89 c2                        mov rdx, rax
+    # nextln: 003f15: 48 89 c8                        mov rax, rcx
+    # nextln: 003f18: 48 89 d1                        mov rcx, rdx
     # nextln: 003f1b: e9 00 00 00 00                  jmp 0x3f20
     # nextln: 003f20: 45 85 ed                        test r13d, r13d
     # nextln: 003f23: 0f 85 05 00 00 00               jne 0x3f2e
@@ -4135,16 +4135,16 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003f5b: 48 03 fe                        add rdi, rsi
     # nextln: 003f5e: 48 03 d7                        add rdx, rdi
     # nextln: 003f61: 0f b6 12                        movzx edx, byte ptr [rdx]
-    # nextln: 003f64: 48 89 c2                        mov rdx, rax
-    # nextln: 003f67: 48 89 c8                        mov rax, rcx
-    # nextln: 003f6a: 48 89 d1                        mov rcx, rdx
+    # nextln: 003f64: 48 89 ca                        mov rdx, rcx
+    # nextln: 003f67: 48 89 c1                        mov rcx, rax
+    # nextln: 003f6a: 48 89 d0                        mov rax, rdx
     # nextln: 003f6d: e9 52 00 00 00                  jmp 0x3fc4
     # nextln: 003f72: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @throw_index_out_of_range_exception + 0
     # nextln: 003f7c: ff d0                           call rax
     # nextln: 003f7e: 0f 0b                           ud2
-    # nextln: 003f80: 48 89 c2                        mov rdx, rax
-    # nextln: 003f83: 48 89 c8                        mov rax, rcx
-    # nextln: 003f86: 48 89 d1                        mov rcx, rdx
+    # nextln: 003f80: 48 89 ca                        mov rdx, rcx
+    # nextln: 003f83: 48 89 c1                        mov rcx, rax
+    # nextln: 003f86: 48 89 d0                        mov rax, rdx
     # nextln: 003f89: 48 8b 54 24 10                  mov rdx, qword ptr [rsp + 0x10]
     # nextln: 003f8e: 48 89 d7                        mov rdi, rdx
     # nextln: 003f91: 48 03 fb                        add rdi, rbx
@@ -4243,13 +4243,13 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0040f9: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @throw_index_out_of_range_exception + 0
     # nextln: 004103: ff d0                           call rax
     # nextln: 004105: 0f 0b                           ud2
-    # nextln: 004107: 48 89 ca                        mov rdx, rcx
-    # nextln: 00410a: 48 89 c1                        mov rcx, rax
-    # nextln: 00410d: 48 89 d0                        mov rax, rdx
+    # nextln: 004107: 48 89 c2                        mov rdx, rax
+    # nextln: 00410a: 48 89 c8                        mov rax, rcx
+    # nextln: 00410d: 48 89 d1                        mov rcx, rdx
     # nextln: 004110: 4c 89 f2                        mov rdx, r14
-    # nextln: 004113: 48 89 cf                        mov rdi, rcx
-    # nextln: 004116: 48 89 c1                        mov rcx, rax
-    # nextln: 004119: 48 89 f8                        mov rax, rdi
+    # nextln: 004113: 48 89 c7                        mov rdi, rax
+    # nextln: 004116: 48 89 c8                        mov rax, rcx
+    # nextln: 004119: 48 89 f9                        mov rcx, rdi
     # nextln: 00411c: e9 00 00 00 00                  jmp 0x4121
     # nextln: 004121: 85 d2                           test edx, edx
     # nextln: 004123: 0f 85 05 00 00 00               jne 0x412e
@@ -4284,9 +4284,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 004197: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @throw_index_out_of_range_exception + 0
     # nextln: 0041a1: ff d0                           call rax
     # nextln: 0041a3: 0f 0b                           ud2
-    # nextln: 0041a5: 48 89 c2                        mov rdx, rax
-    # nextln: 0041a8: 48 89 c8                        mov rax, rcx
-    # nextln: 0041ab: 48 89 d1                        mov rcx, rdx
+    # nextln: 0041a5: 48 89 ca                        mov rdx, rcx
+    # nextln: 0041a8: 48 89 c1                        mov rcx, rax
+    # nextln: 0041ab: 48 89 d0                        mov rax, rdx
     # nextln: 0041ae: 48 8b 54 24 18                  mov rdx, qword ptr [rsp + 0x18]
     # nextln: 0041b3: 48 89 c7                        mov rdi, rax
     # nextln: 0041b6: 48 89 c8                        mov rax, rcx
@@ -4442,8 +4442,8 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 00440e: 48 89 44 24 30                  mov qword ptr [rsp + 0x30], rax
     # nextln: 004413: 48 89 54 24 48                  mov qword ptr [rsp + 0x48], rdx
     # nextln: 004418: ff d1                           call rcx
-    # nextln: 00441a: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
-    # nextln: 00441f: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
+    # nextln: 00441a: 48 8b 54 24 30                  mov rdx, qword ptr [rsp + 0x30]
+    # nextln: 00441f: 48 8b 4c 24 48                  mov rcx, qword ptr [rsp + 0x48]
     # nextln: 004424: e9 00 00 00 00                  jmp 0x4429
     # nextln: 004429: 85 c0                           test eax, eax
     # nextln: 00442b: 0f 85 05 00 00 00               jne 0x4436
@@ -6060,13 +6060,13 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 005ddf: 48 03 d7                        add rdx, rdi
     # nextln: 005de2: 48 03 c2                        add rax, rdx
     # nextln: 005de5: 0f b6 00                        movzx eax, byte ptr [rax]
-    # nextln: 005de8: 48 8b 44 24 18                  mov rax, qword ptr [rsp + 0x18]
-    # nextln: 005ded: e9 18 00 00 00                  jmp 0x5e0a
+    # nextln: 005de8: 48 89 44 24 18                  mov qword ptr [rsp + 0x18], rax
+    # nextln: 005ded: e9 13 00 00 00                  jmp 0x5e05
     # nextln: 005df2: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @throw_index_out_of_range_exception + 0
     # nextln: 005dfc: ff d0                           call rax
     # nextln: 005dfe: 0f 0b                           ud2
-    # nextln: 005e00: 48 8b 44 24 18                  mov rax, qword ptr [rsp + 0x18]
-    # nextln: 005e05: e9 00 00 00 00                  jmp 0x5e0a
+    # nextln: 005e00: e9 00 00 00 00                  jmp 0x5e05
+    # nextln: 005e05: 48 8b 44 24 18                  mov rax, qword ptr [rsp + 0x18]
     # nextln: 005e0a: 85 c0                           test eax, eax
     # nextln: 005e0c: 0f 85 05 00 00 00               jne 0x5e17
     # nextln: 005e12: e9 10 00 00 00                  jmp 0x5e27

@@ -12,7 +12,7 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 
 use codegen::{
     api::{codegen_func, lower_func, schedule_graph},
-    target::x64::X64Machine,
+    target::x64::{CodeModel, X64Machine, X64MachineConfig},
 };
 use codegen_test_tools::{disasm::disasm_code, exec::codegen_and_exec};
 use ir::{
@@ -73,6 +73,31 @@ struct AnnotatorOptions {
     loops: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum CliCodeModel {
+    /// Calls have +/-2GiB range
+    SmallPic,
+    /// Calls have full 64-bit address range
+    LargeAbs,
+}
+
+impl CliCodeModel {
+    fn as_code_model(self) -> CodeModel {
+        match self {
+            CliCodeModel::SmallPic => CodeModel::SmallPic,
+            CliCodeModel::LargeAbs => CodeModel::LargeAbs,
+        }
+    }
+}
+
+#[derive(Args)]
+struct MachineOptions {
+    #[arg(long)]
+    internal_code_model: Option<CliCodeModel>,
+    #[arg(long)]
+    extern_code_model: Option<CliCodeModel>,
+}
+
 #[derive(Subcommand)]
 enum ToolCommand {
     /// Display the specified function as a graphviz graph
@@ -125,9 +150,16 @@ enum ToolCommand {
         /// Run register allocator on generated LIR
         #[arg(long)]
         regalloc: bool,
+
+        #[clap(flatten)]
+        machine_opts: MachineOptions,
     },
     /// Generate code for an IR module and dump the disassembly
-    Codegen { input_file: PathBuf },
+    Codegen {
+        input_file: PathBuf,
+        #[clap(flatten)]
+        machine_opts: MachineOptions,
+    },
     /// Generate native code for an IR module and execute it
     CodegenExec {
         /// The input IR file
@@ -219,13 +251,18 @@ fn main() -> Result<()> {
         ToolCommand::Lir {
             input_file,
             regalloc,
+            machine_opts,
         } => {
             let module = read_and_verify_module(&input_file)?;
-            io::stdout().write_all(get_module_lir_str(&module, regalloc)?.as_bytes())?;
+            io::stdout()
+                .write_all(get_module_lir_str(&module, &machine_opts, regalloc)?.as_bytes())?;
         }
-        ToolCommand::Codegen { input_file } => {
+        ToolCommand::Codegen {
+            input_file,
+            machine_opts,
+        } => {
             let module = read_and_verify_module(&input_file)?;
-            io::stdout().write_all(get_module_code_str(&module)?.as_bytes())?;
+            io::stdout().write_all(get_module_code_str(&module, &machine_opts)?.as_bytes())?;
         }
         ToolCommand::CodegenExec {
             input_file,
@@ -332,12 +369,18 @@ fn get_module_schedule_str(module: &Module) -> String {
     output
 }
 
-fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
+fn get_module_lir_str(
+    module: &Module,
+    machine_opts: &MachineOptions,
+    regalloc: bool,
+) -> Result<String> {
     let mut output = String::new();
+
+    let machine = create_machine(machine_opts);
 
     for func in module.functions.values() {
         writeln!(output, "func @{} {{", quote_ident(&func.metadata.name)).unwrap();
-        let (cfg_ctx, lir) = lower_func(module, func, &X64Machine::default()).map_err(|err| {
+        let (cfg_ctx, lir) = lower_func(module, func, &machine).map_err(|err| {
             anyhow!(
                 "failed to select `{}`: `{}`",
                 func.metadata.name,
@@ -346,7 +389,7 @@ fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
         })?;
 
         if regalloc {
-            let assignment = codegen::regalloc::run(&lir, &cfg_ctx, &X64Machine::default())
+            let assignment = codegen::regalloc::run(&lir, &cfg_ctx, &machine)
                 .map_err(|err| anyhow!("register allocation failed: {err:?}"))?;
             write!(output, "{}", assignment.display(&cfg_ctx.block_order, &lir)).unwrap();
         } else {
@@ -363,9 +406,9 @@ fn get_module_lir_str(module: &Module, regalloc: bool) -> Result<String> {
     Ok(output)
 }
 
-fn get_module_code_str(module: &Module) -> Result<String> {
+fn get_module_code_str(module: &Module, machine_opts: &MachineOptions) -> Result<String> {
     let mut output = String::new();
-    let machine = X64Machine::default();
+    let machine = create_machine(machine_opts);
     for func in module.functions.values() {
         let code = codegen_func(module, func, &machine)
             .map_err(|err| anyhow!("{}", err.display(module, func)))?;
@@ -384,4 +427,16 @@ fn get_graphviz_str(
     let mut s = String::new();
     write_graphviz(&mut s, annotators, module, &func.body).context("failed to format dot graph")?;
     Ok(s)
+}
+
+fn create_machine(machine_opts: &MachineOptions) -> X64Machine {
+    let mut config = X64MachineConfig::default();
+    if let Some(internal_code_model) = machine_opts.internal_code_model {
+        config.internal_code_model = internal_code_model.as_code_model();
+    }
+    if let Some(extern_code_model) = machine_opts.extern_code_model {
+        config.extern_code_model = extern_code_model.as_code_model();
+    }
+
+    X64Machine::new(config)
 }

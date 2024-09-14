@@ -58,8 +58,10 @@ codegen_function(spidir_codegen_machine_handle_t machine,
                  spidir_module_handle_t module, spidir_function_t func) {
     spidir_codegen_blob_handle_t blob = NULL;
 
-    ASSERT(spidir_codegen_emit_function(machine, module, func, &blob) ==
-           SPIDIR_CODEGEN_OK);
+    spidir_codegen_config_t config = {.verify_ir = true};
+
+    ASSERT(spidir_codegen_emit_function(machine, &config, module, func,
+                                        &blob) == SPIDIR_CODEGEN_OK);
 
     return blob;
 }

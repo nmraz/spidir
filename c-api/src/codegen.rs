@@ -6,11 +6,14 @@ use codegen::{
     emit::CodeBlob,
     machine::Machine,
 };
-use ir::{function::FunctionData, module::Module, node::FunctionRef};
+use ir::{
+    function::FunctionData, module::Module, node::FunctionRef, verify::verify_func,
+    write::display_node,
+};
 use log::error;
 
 use crate::types::{
-    funcref_from_api, reloc_to_api, ApiCodegenStatus, ApiFunction, ApiReloc,
+    funcref_from_api, reloc_to_api, ApiCodegenConfig, ApiCodegenStatus, ApiFunction, ApiReloc,
     SPIDIR_CODEGEN_ERROR_ISEL, SPIDIR_CODEGEN_ERROR_REGALLOC, SPIDIR_CODEGEN_OK,
 };
 
@@ -117,6 +120,7 @@ unsafe extern "C" fn spidir_codegen_blob_get_relocs(
 #[no_mangle]
 unsafe extern "C" fn spidir_codegen_emit_function(
     machine: *mut ApiCodegenMachine,
+    config: *const ApiCodegenConfig,
     module: *const Module,
     func: ApiFunction,
     out_blob: *mut *mut ApiCodegenBlob,
@@ -126,7 +130,13 @@ unsafe extern "C" fn spidir_codegen_emit_function(
     };
 
     let module = unsafe { &*module };
+    let config = unsafe { &*config };
+
     let func = &module.functions[func];
+
+    if config.verify_ir {
+        verify_ir_function(module, func);
+    }
 
     let res = unsafe {
         let codegen_func = (*machine).vtable.codegen_func;
@@ -156,4 +166,18 @@ unsafe extern "C" fn spidir_codegen_emit_function(
     }
 
     SPIDIR_CODEGEN_OK
+}
+
+fn verify_ir_function(module: &Module, func: &FunctionData) {
+    if let Err(errs) = verify_func(module, func) {
+        error!("codegen verification of `{}` failed:", func.metadata.name);
+        for err in errs {
+            error!(
+                "    `{}`: {}",
+                display_node(module, &func.body, err.node(&func.body.graph)),
+                err.display(&func.body.graph)
+            );
+        }
+        panic!("`{}` contained invalid IR", func.metadata.name);
+    }
 }

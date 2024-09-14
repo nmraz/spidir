@@ -36,6 +36,12 @@ pub struct ApiReloc {
     pub kind: u8,
 }
 
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
+pub struct ApiCodegenConfig {
+    pub verify_ir: bool,
+}
+
 pub type ApiType = u8;
 pub type ApiIcmpKind = u8;
 pub type ApiMemSize = u8;

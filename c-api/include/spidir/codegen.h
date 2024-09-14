@@ -6,6 +6,7 @@
 
 #include <spidir/module.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -22,6 +23,13 @@ enum spidir_codegen_status {
     /// Register allocation failed.
     SPIDIR_CODEGEN_ERROR_REGALLOC = 2,
 };
+
+/// Machine-agnostic configuration options to pass to the code generator.
+typedef struct spidir_codegen_config {
+    /// Verify the IR before performing code generation and panic if there are
+    /// errors.
+    bool verify_ir;
+} spidir_codegen_config_t;
 
 /// Represents the different types of relocations to apply to generated code.
 /// See individual backend definitions for possible values.
@@ -100,6 +108,7 @@ spidir_codegen_blob_get_relocs(spidir_codegen_blob_handle_t blob);
 ///
 /// @param[in] machine   The machine backend to use for code generation. Use a
 ///                      backend-specific API to create a suitable machine.
+/// @param[in] config    Machine-agnostic configuration to use.
 /// @param[in] module    The module containing the function to be emitted.
 /// @param[in] func      The function for which to generate code. This function
 ///                      must be internal to the module.
@@ -107,7 +116,8 @@ spidir_codegen_blob_get_relocs(spidir_codegen_blob_handle_t blob);
 ///                      upon success. This parameter will be cleared on error.
 /// @return A status indicating whether code generation was successful.
 spidir_codegen_status_t spidir_codegen_emit_function(
-    spidir_codegen_machine_handle_t machine, spidir_module_handle_t module,
+    spidir_codegen_machine_handle_t machine,
+    const spidir_codegen_config_t* config, spidir_module_handle_t module,
     spidir_function_t func, spidir_codegen_blob_handle_t* out_blob);
 
 #endif

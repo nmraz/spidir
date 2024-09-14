@@ -220,6 +220,8 @@ fn populate_builtins(module: &Module) -> SecondaryMap<ExternFunction, Option<usi
     let builtins = FxHashMap::from_iter([
         ("malloc", libc::malloc as usize),
         ("free", libc::free as usize),
+        ("memcpy", libc::memcpy as usize),
+        ("memset", libc::memset as usize),
     ]);
 
     let mut mapping = SecondaryMap::new();

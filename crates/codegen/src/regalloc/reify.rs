@@ -147,7 +147,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // Step 1: Gather all vreg-local copies, tracking information about block params for the
         // next step.
         for (vreg, ranges) in self.vreg_ranges.iter() {
-            self.collect_intra_block_range_copies(ranges, copies);
+            self.collect_intra_block_range_copies(vreg, ranges, copies);
             self.collect_inter_block_range_copies(
                 vreg,
                 ranges,
@@ -189,9 +189,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
     fn collect_intra_block_range_copies(
         &self,
+        vreg: VirtRegNum,
         ranges: &[LiveRange],
         copies: &mut Vec<ParallelCopy>,
     ) {
+        trace!("collecting intra-block copies: {vreg}");
+
         let mut last_spill: Option<(LiveRange, SpillSlot)> = None;
         let mut prev_range: Option<(LiveRange, OperandAssignment)> = None;
 
@@ -200,6 +203,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             let range_instrs = &self.live_ranges[range].instrs;
             let prog_range = self.live_ranges[range].prog_range;
             let mut copied_from_prev = false;
+
+            trace!("    {prog_range:?}");
 
             // Stitch together live ranges with touching endpoints.
             if let Some((prev_range, prev_assignment)) = prev_range {
@@ -217,6 +222,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     // Inter-block copies need to be handled more delicately, so we do them
                     // separately.
                     if !is_block_header(self.lir, self.cfg_ctx, instr) {
+                        trace!("        copy: {instr}");
+
                         record_parallel_copy(
                             copies,
                             instr,
@@ -270,7 +277,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             // will be inserted. In practice, dealing with that would require
                             // dramatically complicating things here for very little tangible
                             // benefit (we expect these situations not to crop up often because
-                            // shorter live ranges have highger spill weights).
+                            // shorter live ranges have higher spill weights).
+
+                            trace!("        spill ({spill_slot}): {}", instr.next());
+
                             record_parallel_copy(
                                 copies,
                                 instr.next(),
@@ -281,6 +291,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             );
                         } else {
                             // Reload:
+                            trace!("        reload ({spill_slot}): {instr}");
                             record_parallel_copy(
                                 copies,
                                 instr,

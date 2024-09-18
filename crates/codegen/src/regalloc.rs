@@ -3,7 +3,6 @@ use core::fmt;
 use alloc::vec::Vec;
 
 use cranelift_entity::{entity_impl, Keys, PrimaryMap, SecondaryMap};
-use types::TaggedAssignmentCopy;
 
 use crate::{
     cfg::{Block, CfgContext},
@@ -26,7 +25,7 @@ mod utils;
 mod virt_reg_set;
 
 pub use display::DisplayAssignment;
-pub use types::AssignmentCopy;
+pub use types::{AssignmentCopy, TaggedAssignmentCopy};
 
 #[derive(Debug, Clone, Copy)]
 pub enum RegallocError {
@@ -97,6 +96,10 @@ impl Assignment {
         self.spill_slots.keys()
     }
 
+    pub fn copies(&self) -> &[TaggedAssignmentCopy] {
+        &self.copies
+    }
+
     pub fn spill_slot_layout(&self, slot: SpillSlot) -> MemLayout {
         self.spill_slots[slot]
     }
@@ -115,12 +118,23 @@ impl Assignment {
         &self.operand_assignment_pool[base..base + len]
     }
 
+    pub fn copy_tracker_from(&self, instr: Instr) -> AssignmentCopyTracker<'_> {
+        let copy_idx = self
+            .copies
+            .partition_point(|copy| copy.instr < instr)
+            .try_into()
+            .unwrap();
+        AssignmentCopyTracker {
+            copies: &self.copies,
+            copy_idx,
+        }
+    }
+
     pub fn instrs_and_copies(&self, range: InstrRange) -> AssignmentInstrIter<'_> {
-        let first_copy = self.copies.partition_point(|copy| copy.instr < range.start);
         AssignmentInstrIter {
             instr: range.start,
             instr_end: range.end,
-            copies: &self.copies[first_copy..],
+            copies: self.copy_tracker_from(range.start),
         }
     }
 
@@ -159,6 +173,24 @@ impl Assignment {
     }
 }
 
+pub struct AssignmentCopyTracker<'a> {
+    copies: &'a [TaggedAssignmentCopy],
+    copy_idx: u32,
+}
+
+impl<'a> AssignmentCopyTracker<'a> {
+    pub fn next_copy_for(&mut self, instr: Instr) -> Option<(u32, AssignmentCopy)> {
+        self.copies
+            .get(self.copy_idx as usize)
+            .filter(|copy| copy.instr == instr)
+            .map(|copy| {
+                let ret = (self.copy_idx, copy.copy);
+                self.copy_idx += 1;
+                ret
+            })
+    }
+}
+
 pub enum InstrOrCopy {
     Instr(Instr),
     Copy(AssignmentCopy),
@@ -167,7 +199,7 @@ pub enum InstrOrCopy {
 pub struct AssignmentInstrIter<'a> {
     instr: Instr,
     instr_end: Instr,
-    copies: &'a [TaggedAssignmentCopy],
+    copies: AssignmentCopyTracker<'a>,
 }
 
 impl<'a> Iterator for AssignmentInstrIter<'a> {
@@ -180,13 +212,10 @@ impl<'a> Iterator for AssignmentInstrIter<'a> {
             return None;
         }
 
-        if let Some(copy) = self.copies.first() {
+        if let Some((_, copy)) = self.copies.next_copy_for(instr) {
             // This copy pertains to the current instruction, so return it before the instruction
             // itself.
-            if copy.instr == instr {
-                self.copies = &self.copies[1..];
-                return Some(InstrOrCopy::Copy(copy.copy));
-            }
+            return Some(InstrOrCopy::Copy(copy));
         }
 
         self.instr = instr.next();

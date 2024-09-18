@@ -6,6 +6,18 @@ use crate::{
     machine::MachineRegalloc,
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChangeStatus {
+    Unchanged,
+    Changed,
+}
+
+impl ChangeStatus {
+    pub fn is_changed(&self) -> bool {
+        matches!(self, Self::Changed)
+    }
+}
+
 pub fn get_instr_weight<M: MachineRegalloc>(
     lir: &Lir<M>,
     cfg_ctx: &CfgContext,

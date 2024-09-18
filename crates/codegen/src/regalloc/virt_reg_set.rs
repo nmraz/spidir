@@ -4,17 +4,7 @@ use fx_utils::FxHashMap;
 
 use crate::lir::VirtRegNum;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ChangeStatus {
-    Unchanged,
-    Changed,
-}
-
-impl ChangeStatus {
-    pub fn is_changed(&self) -> bool {
-        matches!(self, Self::Changed)
-    }
-}
+use super::utils::ChangeStatus;
 
 type MapWord = u64;
 

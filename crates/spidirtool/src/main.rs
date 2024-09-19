@@ -151,6 +151,10 @@ enum ToolCommand {
         #[arg(long)]
         regalloc: bool,
 
+        /// Verify register allocation performed by `--regalloc`
+        #[arg(long, requires("regalloc"))]
+        verify_regalloc: bool,
+
         #[clap(flatten)]
         machine_opts: MachineOptions,
     },
@@ -251,11 +255,13 @@ fn main() -> Result<()> {
         ToolCommand::Lir {
             input_file,
             regalloc,
+            verify_regalloc,
             machine_opts,
         } => {
             let module = read_and_verify_module(&input_file)?;
-            io::stdout()
-                .write_all(get_module_lir_str(&module, &machine_opts, regalloc)?.as_bytes())?;
+            io::stdout().write_all(
+                get_module_lir_str(&module, &machine_opts, regalloc, verify_regalloc)?.as_bytes(),
+            )?;
         }
         ToolCommand::Codegen {
             input_file,
@@ -373,6 +379,7 @@ fn get_module_lir_str(
     module: &Module,
     machine_opts: &MachineOptions,
     regalloc: bool,
+    verify_regalloc: bool,
 ) -> Result<String> {
     let mut output = String::new();
 
@@ -391,6 +398,17 @@ fn get_module_lir_str(
         if regalloc {
             let assignment = codegen::regalloc::run(&lir, &cfg_ctx, &machine)
                 .map_err(|err| anyhow!("register allocation failed: {err:?}"))?;
+
+            if verify_regalloc {
+                codegen::regalloc::verify(&lir, &cfg_ctx, &assignment).map_err(|err| {
+                    anyhow!(
+                        "register allocation for `{}` invalid: {}",
+                        func.metadata.name,
+                        err.display(&lir, &assignment)
+                    )
+                })?;
+            }
+
             write!(output, "{}", assignment.display(&cfg_ctx.block_order, &lir)).unwrap();
         } else {
             write!(

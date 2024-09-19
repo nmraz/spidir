@@ -1,4 +1,4 @@
-use core::fmt;
+use core::{fmt, marker::PhantomData};
 
 use alloc::vec::Vec;
 
@@ -22,10 +22,13 @@ mod parallel_copy;
 mod reify;
 mod types;
 mod utils;
+mod verify;
 mod virt_reg_set;
 
 pub use display::DisplayAssignment;
 pub use types::{AssignmentCopy, TaggedAssignmentCopy};
+
+pub use verify::{verify, VerifierError};
 
 #[derive(Debug, Clone, Copy)]
 pub enum RegallocError {

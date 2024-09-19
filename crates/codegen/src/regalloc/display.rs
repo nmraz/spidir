@@ -61,10 +61,7 @@ impl<M: MachineCore> fmt::Display for DisplayAssignment<'_, M> {
 fn format_op_assignments<M: MachineCore>(
     op_assignments: impl Iterator<Item = OperandAssignment>,
 ) -> impl Display {
-    op_assignments.format_with(", ", |op, f| match op {
-        OperandAssignment::Reg(reg) => f(&format_args!("${}", M::reg_name(reg))),
-        OperandAssignment::Spill(slot) => f(&format_args!("${}", slot)),
-    })
+    op_assignments.format_with(", ", |op, f| f(&op.display::<M>()))
 }
 
 fn write_op<M: MachineCore>(f: &mut fmt::Formatter<'_>, op: OperandAssignment) -> fmt::Result {

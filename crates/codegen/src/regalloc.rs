@@ -74,6 +74,27 @@ impl OperandAssignment {
             _ => None,
         }
     }
+
+    pub fn display<M: MachineCore>(self) -> DisplayOperandAssignment<M> {
+        DisplayOperandAssignment {
+            assignment: self,
+            _marker: PhantomData,
+        }
+    }
+}
+
+pub struct DisplayOperandAssignment<M: MachineCore> {
+    assignment: OperandAssignment,
+    _marker: PhantomData<M>,
+}
+
+impl<M: MachineCore> fmt::Display for DisplayOperandAssignment<M> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.assignment {
+            OperandAssignment::Reg(reg) => write!(f, "${}", M::reg_name(reg)),
+            OperandAssignment::Spill(spill) => write!(f, "${spill}"),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Default)]

@@ -112,11 +112,11 @@ impl<'a, M: MachineCore> fmt::Display for DisplayVerifierError<'a, M> {
                 )
             }
             VerifierError::SpillToSpillCopy { copy_idx } => {
-                let copy = &self.assignment.copies()[copy_idx as usize];
+                let copy = &self.assignment.copies[copy_idx as usize];
                 write!(f, "copy before {} copies between spill slots", copy.instr)
             }
             VerifierError::UndefCopySource { copy_idx } => {
-                let copy = &self.assignment.copies()[copy_idx as usize];
+                let copy = &self.assignment.copies[copy_idx as usize];
                 write!(
                     f,
                     "copy `{} = {}` before {} has garbage source",

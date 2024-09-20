@@ -2,7 +2,7 @@ use core::{fmt, marker::PhantomData};
 
 use alloc::vec::Vec;
 
-use cranelift_entity::{entity_impl, Keys, PrimaryMap, SecondaryMap};
+use cranelift_entity::{entity_impl, PrimaryMap, SecondaryMap};
 
 use crate::{
     cfg::{Block, CfgContext},
@@ -100,6 +100,10 @@ impl<M: MachineCore> fmt::Display for DisplayOperandAssignment<M> {
     }
 }
 
+pub struct SpillSlotData {
+    pub layout: MemLayout,
+}
+
 #[derive(Clone, Copy, Default)]
 struct InstrAssignmentData {
     def_base: u32,
@@ -109,25 +113,13 @@ struct InstrAssignmentData {
 }
 
 pub struct Assignment {
-    spill_slots: PrimaryMap<SpillSlot, MemLayout>,
+    pub spill_slots: PrimaryMap<SpillSlot, SpillSlotData>,
+    pub copies: Vec<TaggedAssignmentCopy>,
     instr_assignments: SecondaryMap<Instr, InstrAssignmentData>,
     operand_assignment_pool: Vec<OperandAssignment>,
-    copies: Vec<TaggedAssignmentCopy>,
 }
 
 impl Assignment {
-    pub fn spill_slots(&self) -> Keys<SpillSlot> {
-        self.spill_slots.keys()
-    }
-
-    pub fn copies(&self) -> &[TaggedAssignmentCopy] {
-        &self.copies
-    }
-
-    pub fn spill_slot_layout(&self, slot: SpillSlot) -> MemLayout {
-        self.spill_slots[slot]
-    }
-
     pub fn instr_def_assignments(&self, instr: Instr) -> &[OperandAssignment] {
         let assignment_data = &self.instr_assignments[instr];
         let base = assignment_data.def_base as usize;

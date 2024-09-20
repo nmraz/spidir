@@ -25,7 +25,7 @@ use super::{
         LiveRange, ParallelCopies, ParallelCopy, ParallelCopyPhase, ProgramPoint,
         TaggedAssignmentCopies, TaggedAssignmentCopy,
     },
-    Assignment, InstrAssignmentData, OperandAssignment, SpillSlot,
+    Assignment, InstrAssignmentData, OperandAssignment, SpillSlot, SpillSlotData,
 };
 
 // Every block parameter is uniquely identified by its destination vreg because everything is in
@@ -720,11 +720,11 @@ impl Assignment {
     }
 
     fn create_spill_slot(&mut self, layout: MemLayout) -> SpillSlot {
-        self.spill_slots.push(layout)
+        self.spill_slots.push(SpillSlotData { layout })
     }
 
     fn expand_spill_slot(&mut self, spill: SpillSlot, new_layout: MemLayout) {
-        let existing_layout = &mut self.spill_slots[spill];
+        let existing_layout = &mut self.spill_slots[spill].layout;
         existing_layout.size = cmp::max(existing_layout.size, new_layout.size);
         existing_layout.align = cmp::max(existing_layout.align, new_layout.align);
     }

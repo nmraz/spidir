@@ -28,10 +28,10 @@ impl FrameLayout {
             });
         }
 
-        for spill in regalloc_assignment.spill_slots() {
+        for (spill, spill_data) in regalloc_assignment.spill_slots.iter() {
             frame_objects.push(FrameObject {
                 index: AllocOrSpill::Spill(spill),
-                layout: regalloc_assignment.spill_slot_layout(spill),
+                layout: spill_data.layout,
                 offset: 0,
             })
         }
@@ -54,9 +54,7 @@ impl FrameLayout {
                 align: frame_align,
             },
             stack_slot_offsets: SecondaryMap::with_capacity(lir.stack_slots().len()),
-            spill_slot_offsets: SecondaryMap::with_capacity(
-                regalloc_assignment.spill_slots().len(),
-            ),
+            spill_slot_offsets: SecondaryMap::with_capacity(regalloc_assignment.spill_slots.len()),
         };
 
         for obj in &frame_objects {

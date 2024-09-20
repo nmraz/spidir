@@ -122,13 +122,13 @@ struct Scheduler<'a> {
 
 impl<'a> Scheduler<'a> {
     fn pin_nodes(&mut self, ctx: &ScheduleContext<'_>) {
-        for &cfg_node in ctx.cfg_preorder() {
+        for &cfg_node in ctx.cfg_preorder {
             let block = self
                 .block_map
                 .containing_block(cfg_node)
                 .expect("live CFG node not in block CFG");
 
-            match ctx.graph().node_kind(cfg_node) {
+            match ctx.graph.node_kind(cfg_node) {
                 terminator_kind if terminator_kind.is_terminator() => {
                     // Track terminators separately so we know to place them last during intra-block
                     // scheduling.
@@ -260,7 +260,7 @@ impl<'a> Scheduler<'a> {
 
     fn early_schedule_location(&self, ctx: &ScheduleContext<'_>, node: Node) -> Block {
         trace!("early: node {}", node.as_u32());
-        let loc = dataflow_preds(ctx.graph(), node)
+        let loc = dataflow_preds(ctx.graph, node)
             .map(|pred| {
                 let pred_loc = self.blocks_by_node[pred].expect("data flow cycle or dead input");
                 trace!("    pred: node {} ({pred_loc})", pred.as_u32());
@@ -281,11 +281,11 @@ impl<'a> Scheduler<'a> {
     }
 
     fn late_schedule_location(&self, ctx: &ScheduleContext<'_>, node: Node) -> Block {
-        let graph = ctx.graph();
+        let graph = ctx.graph;
 
         trace!("late: node {}", node.as_u32());
 
-        let loc = dataflow_succs(ctx.graph(), ctx.live_nodes(), node)
+        let loc = dataflow_succs(ctx.graph, ctx.live_nodes(), node)
             .filter_map(|(succ, input_idx)| {
                 if matches!(graph.node_kind(succ), NodeKind::Phi) {
                     // Phi nodes are special, because they "use" their inputs in the corresponding

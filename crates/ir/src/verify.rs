@@ -349,7 +349,7 @@ fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<FunctionVerif
             .into();
     });
 
-    for &cfg_node in ctx.cfg_preorder() {
+    for &cfg_node in ctx.cfg_preorder {
         let domtree_node = domtree.get_tree_node(cfg_node).unwrap();
         scheduler.verify_dataflow_cfg_node_inputs(&ctx, domtree_node);
 
@@ -368,7 +368,7 @@ struct VerifierScheduler<'a> {
 
 impl VerifierScheduler<'_> {
     fn pin_nodes(&mut self, ctx: &ScheduleContext<'_>) {
-        for &cfg_node in ctx.cfg_preorder() {
+        for &cfg_node in ctx.cfg_preorder {
             let domtree_node = self
                 .domtree
                 .get_tree_node(cfg_node)
@@ -408,7 +408,7 @@ impl VerifierScheduler<'_> {
         cfg_node: Node,
         phi: Node,
     ) {
-        let graph = ctx.graph();
+        let graph = ctx.graph;
         for (i, phi_input, ctrl_input) in izip!(
             1..,
             graph.node_inputs(phi).into_iter().skip(1),
@@ -453,7 +453,7 @@ impl VerifierScheduler<'_> {
         ctx: &ScheduleContext<'_>,
         node: Node,
     ) -> Option<(DomTreeNode, u32)> {
-        let graph = ctx.graph();
+        let graph = ctx.graph;
 
         let input_loc_scratch = &mut self.input_loc_scratch;
         input_loc_scratch.clear();

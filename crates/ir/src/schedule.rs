@@ -10,9 +10,9 @@ use crate::{
 };
 
 pub struct ScheduleContext<'a> {
-    graph: &'a ValGraph,
-    cfg_preorder: &'a [Node],
-    live_node_info: &'a LiveNodeInfo,
+    pub graph: &'a ValGraph,
+    pub cfg_preorder: &'a [Node],
+    pub live_node_info: &'a LiveNodeInfo,
 }
 
 impl<'a> ScheduleContext<'a> {
@@ -26,21 +26,6 @@ impl<'a> ScheduleContext<'a> {
             cfg_preorder,
             live_node_info,
         }
-    }
-
-    #[inline]
-    pub fn graph(&self) -> &ValGraph {
-        self.graph
-    }
-
-    #[inline]
-    pub fn cfg_preorder(&self) -> &[Node] {
-        self.cfg_preorder
-    }
-
-    #[inline]
-    pub fn live_node_info(&self) -> &LiveNodeInfo {
-        self.live_node_info
     }
 
     #[inline]
@@ -70,12 +55,12 @@ pub fn schedule_early(
     mut schedule: impl FnMut(&ScheduleContext<'_>, Node),
 ) {
     let mut visited = EntitySet::new();
-    let unpinned_data_preds = UnpinnedDataPreds::new(ctx.graph());
+    let unpinned_data_preds = UnpinnedDataPreds::new(ctx.graph);
 
     for pinned in ctx.walk_pinned_nodes() {
-        scratch_postorder.reset(unpinned_dataflow_preds(ctx.graph(), pinned));
+        scratch_postorder.reset(unpinned_dataflow_preds(ctx.graph, pinned));
         while let Some(pred) = scratch_postorder.next(&unpinned_data_preds, &mut visited) {
-            debug_assert!(!is_pinned_node(ctx.graph(), pred));
+            debug_assert!(!is_pinned_node(ctx.graph, pred));
             schedule(ctx, pred);
         }
     }
@@ -87,25 +72,25 @@ pub fn schedule_late(
     mut schedule: impl FnMut(&ScheduleContext<'_>, Node),
 ) {
     let mut visited = EntitySet::new();
-    let unpinned_data_succs = UnpinnedDataSuccs::new(ctx.graph(), ctx.live_nodes());
+    let unpinned_data_succs = UnpinnedDataSuccs::new(ctx.graph, ctx.live_nodes());
 
     for pinned in ctx.walk_pinned_nodes() {
         scratch_postorder.reset(
-            unpinned_dataflow_succs(ctx.graph(), ctx.live_nodes(), pinned)
+            unpinned_dataflow_succs(ctx.graph, ctx.live_nodes(), pinned)
                 .map(|(node, _input_idx)| node),
         );
         while let Some(succ) = scratch_postorder.next(&unpinned_data_succs, &mut visited) {
-            debug_assert!(!is_pinned_node(ctx.graph(), succ));
+            debug_assert!(!is_pinned_node(ctx.graph, succ));
             schedule(ctx, succ);
         }
     }
 
-    let entry = ctx.cfg_preorder()[0];
-    for &root in ctx.live_node_info().roots() {
+    let entry = ctx.cfg_preorder[0];
+    for &root in ctx.live_node_info.roots() {
         if root != entry {
             scratch_postorder.reset([root]);
             while let Some(succ) = scratch_postorder.next(&unpinned_data_succs, &mut visited) {
-                debug_assert!(!is_pinned_node(ctx.graph(), succ));
+                debug_assert!(!is_pinned_node(ctx.graph, succ));
                 schedule(ctx, succ);
             }
         }

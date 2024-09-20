@@ -159,32 +159,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         // Step 2: Insert copies for block params once we've gathered block param information for
         // all vregs.
-        trace!("inserting block param copies");
-        for incoming in &block_param_ins {
-            trace!("  -> {} ({})", incoming.vreg, incoming.block);
-            let class = self.lir.vreg_class(incoming.vreg);
-            for &pred in self.cfg_ctx.cfg.block_preds(incoming.block) {
-                trace!("    {pred}");
-                let from_assignment = *block_param_outs
-                    .get(&BlockParamEdgeKey {
-                        from_block: pred,
-                        to_vreg: incoming.vreg,
-                    })
-                    .expect("block param source not recorded for predecessor");
-
-                // We always insert copies for block params in the predecessor because we know we
-                // are its unique successor.
-                let pred_terminator = self.lir.block_terminator(pred);
-                record_parallel_copy(
-                    copies,
-                    pred_terminator,
-                    ParallelCopyPhase::PreCopy,
-                    class,
-                    from_assignment,
-                    incoming.assignment,
-                );
-            }
-        }
+        self.collect_block_param_copies(&block_param_ins, &block_param_outs, copies);
     }
 
     fn collect_intra_block_range_copies(
@@ -449,6 +424,41 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     from: pred_assignment,
                     to: assignment,
                 });
+            }
+        }
+    }
+
+    fn collect_block_param_copies(
+        &self,
+        block_param_ins: &BlockParamIns,
+        block_param_outs: &BlockParamOutMap,
+        copies: &mut Vec<ParallelCopy>,
+    ) {
+        trace!("collecting block param copies");
+
+        for incoming in block_param_ins {
+            trace!("  -> {} ({})", incoming.vreg, incoming.block);
+            let class = self.lir.vreg_class(incoming.vreg);
+            for &pred in self.cfg_ctx.cfg.block_preds(incoming.block) {
+                trace!("    {pred}");
+                let from_assignment = *block_param_outs
+                    .get(&BlockParamEdgeKey {
+                        from_block: pred,
+                        to_vreg: incoming.vreg,
+                    })
+                    .expect("block param source not recorded for predecessor");
+
+                // We always insert copies for block params in the predecessor because we know we
+                // are its unique successor.
+                let pred_terminator = self.lir.block_terminator(pred);
+                record_parallel_copy(
+                    copies,
+                    pred_terminator,
+                    ParallelCopyPhase::PreCopy,
+                    class,
+                    from_assignment,
+                    incoming.assignment,
+                );
             }
         }
     }

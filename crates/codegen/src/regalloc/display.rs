@@ -1,6 +1,7 @@
 use core::{
     fmt::{self, Display},
     iter,
+    marker::PhantomData,
 };
 
 use itertools::Itertools;
@@ -15,6 +16,20 @@ use crate::{
 };
 
 use super::{Assignment, InstrOrCopy, OperandAssignment};
+
+pub struct DisplayOperandAssignment<M: MachineCore> {
+    pub(super) assignment: OperandAssignment,
+    pub(super) _marker: PhantomData<M>,
+}
+
+impl<M: MachineCore> fmt::Display for DisplayOperandAssignment<M> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.assignment {
+            OperandAssignment::Reg(reg) => write!(f, "${}", M::reg_name(reg)),
+            OperandAssignment::Spill(spill) => write!(f, "${spill}"),
+        }
+    }
+}
 
 pub struct DisplayAssignment<'a, M: MachineCore> {
     pub(super) assignment: &'a Assignment,

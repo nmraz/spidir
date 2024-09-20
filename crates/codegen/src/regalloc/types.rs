@@ -1,13 +1,20 @@
-use core::{cmp::Ordering, fmt};
+use core::{cmp::Ordering, fmt, marker::PhantomData};
 
 use alloc::{collections::BinaryHeap, vec::Vec};
 use bitflags::bitflags;
 use cranelift_entity::{entity_impl, packed_option::PackedOption};
 use smallvec::SmallVec;
 
-use crate::lir::{Instr, OperandPos, PhysReg, RegClass, VirtRegNum};
+use crate::{
+    lir::{Instr, MemLayout, OperandPos, PhysReg, RegClass, VirtRegNum},
+    machine::MachineCore,
+};
 
-use super::{OperandAssignment, SpillSlot};
+use super::display::DisplayOperandAssignment;
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SpillSlot(u32);
+entity_impl!(SpillSlot, "spill");
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InstrSlot {
@@ -429,6 +436,56 @@ impl ParallelCopyPhase {
             ParallelCopyPhase::PreCopy => InstrSlot::PreCopy,
         }
     }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub enum OperandAssignment {
+    Reg(PhysReg),
+    Spill(SpillSlot),
+}
+
+impl OperandAssignment {
+    pub fn is_spill(self) -> bool {
+        matches!(self, Self::Spill(..))
+    }
+
+    pub fn is_reg(&self) -> bool {
+        matches!(self, Self::Reg(..))
+    }
+
+    pub fn as_reg(&self) -> Option<PhysReg> {
+        match self {
+            &Self::Reg(reg) => Some(reg),
+            _ => None,
+        }
+    }
+
+    pub fn as_spill(&self) -> Option<SpillSlot> {
+        match self {
+            &Self::Spill(spill) => Some(spill),
+            _ => None,
+        }
+    }
+
+    pub fn display<M: MachineCore>(self) -> DisplayOperandAssignment<M> {
+        DisplayOperandAssignment {
+            assignment: self,
+            _marker: PhantomData,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SpillSlotData {
+    pub layout: MemLayout,
+}
+
+#[derive(Clone, Copy, Default)]
+pub struct InstrAssignmentData {
+    pub def_base: u32,
+    pub def_len: u16,
+    pub use_base: u32,
+    pub use_len: u16,
 }
 
 #[derive(Clone, Copy)]

@@ -1,16 +1,16 @@
-use core::{fmt, marker::PhantomData};
+use core::fmt;
 
 use alloc::vec::Vec;
 
-use cranelift_entity::{entity_impl, PrimaryMap, SecondaryMap};
+use cranelift_entity::{PrimaryMap, SecondaryMap};
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Instr, InstrRange, Lir, MemLayout, PhysReg, PhysRegSet},
+    lir::{Instr, InstrRange, Lir, PhysRegSet},
     machine::{MachineCore, MachineRegalloc},
 };
 
-use self::context::RegAllocContext;
+use self::{context::RegAllocContext, types::InstrAssignmentData};
 
 mod conflict;
 mod context;
@@ -25,8 +25,10 @@ mod utils;
 mod verify;
 mod virt_reg_set;
 
-pub use display::DisplayAssignment;
-pub use types::{AssignmentCopy, TaggedAssignmentCopy};
+pub use display::{DisplayAssignment, DisplayOperandAssignment};
+pub use types::{
+    AssignmentCopy, OperandAssignment, SpillSlot, SpillSlotData, TaggedAssignmentCopy,
+};
 
 pub use verify::{verify, VerifierError};
 
@@ -43,73 +45,6 @@ impl fmt::Display for RegallocError {
             }
         }
     }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SpillSlot(u32);
-entity_impl!(SpillSlot, "spill");
-
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub enum OperandAssignment {
-    Reg(PhysReg),
-    Spill(SpillSlot),
-}
-
-impl OperandAssignment {
-    pub fn is_spill(self) -> bool {
-        matches!(self, Self::Spill(..))
-    }
-
-    pub fn is_reg(&self) -> bool {
-        matches!(self, Self::Reg(..))
-    }
-
-    pub fn as_reg(&self) -> Option<PhysReg> {
-        match self {
-            &Self::Reg(reg) => Some(reg),
-            _ => None,
-        }
-    }
-
-    pub fn as_spill(&self) -> Option<SpillSlot> {
-        match self {
-            &Self::Spill(spill) => Some(spill),
-            _ => None,
-        }
-    }
-
-    pub fn display<M: MachineCore>(self) -> DisplayOperandAssignment<M> {
-        DisplayOperandAssignment {
-            assignment: self,
-            _marker: PhantomData,
-        }
-    }
-}
-
-pub struct DisplayOperandAssignment<M: MachineCore> {
-    assignment: OperandAssignment,
-    _marker: PhantomData<M>,
-}
-
-impl<M: MachineCore> fmt::Display for DisplayOperandAssignment<M> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.assignment {
-            OperandAssignment::Reg(reg) => write!(f, "${}", M::reg_name(reg)),
-            OperandAssignment::Spill(spill) => write!(f, "${spill}"),
-        }
-    }
-}
-
-pub struct SpillSlotData {
-    pub layout: MemLayout,
-}
-
-#[derive(Clone, Copy, Default)]
-struct InstrAssignmentData {
-    def_base: u32,
-    def_len: u16,
-    use_base: u32,
-    use_len: u16,
 }
 
 pub struct Assignment {

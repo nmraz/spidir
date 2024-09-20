@@ -10,7 +10,7 @@ use log::trace;
 use crate::{
     cfg::{Block, CfgContext},
     lir::{
-        DefOperand, DefOperandConstraint, Instr, Lir, UseOperand, UseOperandConstraint, VirtReg,
+        DefOperand, DefOperandConstraint, Instr, Lir, UseOperand, UseOperandConstraint, VirtRegNum,
     },
     machine::MachineCore,
 };
@@ -32,7 +32,7 @@ pub enum VerifierError {
     BadUse {
         instr: Instr,
         op: u32,
-        found_vreg: Option<VirtReg>,
+        found_vreg: Option<VirtRegNum>,
     },
     SpillToSpillCopy {
         copy_idx: u32,
@@ -102,9 +102,8 @@ impl<'a, M: MachineCore> fmt::Display for DisplayVerifierError<'a, M> {
                 op,
                 found_vreg,
             } => {
-                let found_vreg = found_vreg.map_or("garbage".to_owned(), |found_vreg| {
-                    found_vreg.reg_num().to_string()
-                });
+                let found_vreg =
+                    found_vreg.map_or("garbage".to_owned(), |found_vreg| found_vreg.to_string());
                 let expected_vreg = self.lir.instr_uses(instr)[op as usize].reg().reg_num();
                 write!(
                     f,
@@ -139,7 +138,7 @@ pub fn verify<M: MachineCore>(
     let entry = cfg_ctx.block_order[0];
     let mut reg_state = KnownRegState::default();
     for (&live_in, &preg) in lir.block_params(entry).iter().zip(lir.live_in_regs()) {
-        reg_state.insert(OperandAssignment::Reg(preg), live_in);
+        reg_state.insert(OperandAssignment::Reg(preg), live_in.reg_num());
     }
 
     let mut worklist = VecDeque::new();
@@ -165,7 +164,7 @@ pub fn verify<M: MachineCore>(
     Ok(())
 }
 
-type KnownRegState = FxHashMap<OperandAssignment, VirtReg>;
+type KnownRegState = FxHashMap<OperandAssignment, VirtRegNum>;
 type BlockKnownRegState = SecondaryMap<Block, Option<KnownRegState>>;
 
 fn verify_block_instrs<M: MachineCore>(
@@ -244,7 +243,7 @@ fn verify_instr<M: MachineCore>(
         if !def_matches_constraint(def_op, def_assignment) {
             return Err(VerifierError::DefConstraintViolation { instr, op: i });
         }
-        reg_state.insert(def_assignment, def_op.reg());
+        reg_state.insert(def_assignment, def_op.reg().reg_num());
     }
 
     Ok(())
@@ -254,8 +253,8 @@ fn check_use_assignment(
     use_op: UseOperand,
     use_assignment: OperandAssignment,
     reg_state: &KnownRegState,
-) -> Result<(), Option<VirtReg>> {
-    let vreg = use_op.reg();
+) -> Result<(), Option<VirtRegNum>> {
+    let vreg = use_op.reg().reg_num();
     let found_vreg = reg_state.get(&use_assignment).copied();
     if found_vreg != Some(vreg) {
         return Err(found_vreg);

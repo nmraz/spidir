@@ -23,7 +23,7 @@ use super::{
     parallel_copy::{self, RegScavenger},
     types::{
         LiveRange, ParallelCopies, ParallelCopy, ParallelCopyPhase, ProgramPoint,
-        TaggedAssignmentCopies, TaggedAssignmentCopy,
+        TaggedAssignmentCopy,
     },
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot, SpillSlotData,
 };
@@ -659,7 +659,7 @@ impl Assignment {
             // but should usually be compensated for by the fact that many instructions have more
             // than one operand.
             operand_assignment_pool: Vec::with_capacity(instr_count),
-            copies: TaggedAssignmentCopies::new(),
+            copies: Vec::new(),
         };
 
         for instr in lir.all_instrs() {

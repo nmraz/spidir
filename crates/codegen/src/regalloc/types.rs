@@ -454,8 +454,6 @@ pub struct TaggedAssignmentCopy {
     pub copy: AssignmentCopy,
 }
 
-pub type TaggedAssignmentCopies = Vec<TaggedAssignmentCopy>;
-
 #[cfg(test)]
 mod tests {
     use cranelift_entity::EntityRef;

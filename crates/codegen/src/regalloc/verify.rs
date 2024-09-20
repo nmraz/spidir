@@ -154,16 +154,7 @@ pub fn verify<M: MachineCore>(
 
         trace!("verifying {block}");
 
-        let block_instrs = lir.block_instrs(block);
-        let mut copies = assignment.copy_tracker_from(block_instrs.start);
-
-        for instr in block_instrs {
-            while let Some((copy_idx, copy)) = copies.next_copy_for(instr) {
-                transform_reg_state_by_copy(copy_idx, &copy, &mut reg_state)?;
-            }
-
-            transform_reg_state_by_instr(lir, assignment, instr, &mut reg_state)?;
-        }
+        verify_block_instrs(lir, assignment, block, &mut reg_state)?;
 
         for &succ in cfg_ctx.cfg.block_succs(block) {
             trace!("    succ {succ}");
@@ -177,7 +168,26 @@ pub fn verify<M: MachineCore>(
 type KnownRegState = FxHashMap<OperandAssignment, VirtReg>;
 type BlockKnownRegState = SecondaryMap<Block, Option<KnownRegState>>;
 
-fn transform_reg_state_by_copy(
+fn verify_block_instrs<M: MachineCore>(
+    lir: &Lir<M>,
+    assignment: &Assignment,
+    block: Block,
+    reg_state: &mut KnownRegState,
+) -> Result<(), VerifierError> {
+    let block_instrs = lir.block_instrs(block);
+    let mut copies = assignment.copy_tracker_from(block_instrs.start);
+
+    for instr in block_instrs {
+        while let Some((copy_idx, copy)) = copies.next_copy_for(instr) {
+            verify_copy(copy_idx, &copy, reg_state)?;
+        }
+        verify_instr(lir, assignment, instr, reg_state)?;
+    }
+
+    Ok(())
+}
+
+fn verify_copy(
     copy_idx: u32,
     copy: &AssignmentCopy,
     reg_state: &mut KnownRegState,
@@ -195,7 +205,7 @@ fn transform_reg_state_by_copy(
     Ok(())
 }
 
-fn transform_reg_state_by_instr<M: MachineCore>(
+fn verify_instr<M: MachineCore>(
     lir: &Lir<M>,
     assignment: &Assignment,
     instr: Instr,

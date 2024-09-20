@@ -1,4 +1,4 @@
-use core::fmt;
+use core::{fmt, ops::Range};
 
 use alloc::vec::Vec;
 
@@ -27,7 +27,8 @@ mod virt_reg_set;
 
 pub use display::{DisplayAssignment, DisplayOperandAssignment};
 pub use types::{
-    AssignmentCopy, OperandAssignment, SpillSlot, SpillSlotData, TaggedAssignmentCopy,
+    AssignmentCopy, BlockExitGhostCopy, OperandAssignment, SpillSlot, SpillSlotData,
+    TaggedAssignmentCopy,
 };
 
 pub use verify::{verify, VerifierError};
@@ -50,6 +51,7 @@ impl fmt::Display for RegallocError {
 pub struct Assignment {
     pub spill_slots: PrimaryMap<SpillSlot, SpillSlotData>,
     pub copies: Vec<TaggedAssignmentCopy>,
+    pub block_exit_ghost_copies: Vec<BlockExitGhostCopy>,
     instr_assignments: SecondaryMap<Instr, InstrAssignmentData>,
     operand_assignment_pool: Vec<OperandAssignment>,
 }
@@ -87,6 +89,18 @@ impl Assignment {
             instr_end: range.end,
             copies: self.copy_tracker_from(range.start),
         }
+    }
+
+    pub fn block_exit_ghost_copy_range(&self, block: Block) -> Range<usize> {
+        let copy_idx = self
+            .block_exit_ghost_copies
+            .partition_point(|ghost_copy| ghost_copy.block.as_u32() < block.as_u32());
+        let copies = &self.block_exit_ghost_copies[copy_idx..];
+        let copy_count = copies
+            .iter()
+            .take_while(|ghost_copy| ghost_copy.block == block)
+            .count();
+        copy_idx..copy_idx + copy_count
     }
 
     pub fn compute_global_clobbers<M: MachineCore>(&self, lir: &Lir<M>) -> PhysRegSet {

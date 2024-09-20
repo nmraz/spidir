@@ -6,6 +6,7 @@ use cranelift_entity::{entity_impl, packed_option::PackedOption};
 use smallvec::SmallVec;
 
 use crate::{
+    cfg::Block,
     lir::{Instr, MemLayout, OperandPos, PhysReg, RegClass, VirtRegNum},
     machine::MachineCore,
 };
@@ -509,6 +510,14 @@ pub struct AssignmentCopy {
 pub struct TaggedAssignmentCopy {
     pub instr: Instr,
     pub copy: AssignmentCopy,
+}
+
+#[derive(Clone, Copy)]
+pub struct BlockExitGhostCopy {
+    pub block: Block,
+    pub assignment: OperandAssignment,
+    pub from_vreg: VirtRegNum,
+    pub to_vreg: VirtRegNum,
 }
 
 #[cfg(test)]

@@ -14,7 +14,6 @@ use crate::{
         UseOperandConstraint, VirtRegNum,
     },
     machine::{MachineCore, MachineRegalloc},
-    regalloc::types::InstrSlot,
 };
 
 use super::{
@@ -22,8 +21,8 @@ use super::{
     context::RegAllocContext,
     parallel_copy::{self, RegScavenger},
     types::{
-        LiveRange, ParallelCopies, ParallelCopy, ParallelCopyPhase, ProgramPoint,
-        TaggedAssignmentCopy,
+        BlockExitGhostCopy, InstrSlot, LiveRange, ParallelCopies, ParallelCopy, ParallelCopyPhase,
+        ProgramPoint, TaggedAssignmentCopy,
     },
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot, SpillSlotData,
 };
@@ -37,7 +36,7 @@ struct BlockParamEdgeKey {
     to_vreg: VirtRegNum,
 }
 
-type BlockParamOutMap = FxHashMap<BlockParamEdgeKey, OperandAssignment>;
+type BlockParamOutMap = FxHashMap<BlockParamEdgeKey, (VirtRegNum, OperandAssignment)>;
 
 struct BlockParamIn {
     block: Block,
@@ -82,7 +81,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.sort_vreg_ranges();
         self.assign_allocated_operands(&mut assignment, &mut copies);
         self.collect_func_live_in_copies(&mut copies);
-        self.collect_cross_fragment_copies(&mut copies);
+        self.collect_cross_fragment_copies(&mut assignment, &mut copies);
 
         copies.sort_unstable_by_key(parallel_copy_key);
 
@@ -140,7 +139,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
-    fn collect_cross_fragment_copies(&self, copies: &mut ParallelCopies) {
+    fn collect_cross_fragment_copies(
+        &self,
+        assignment: &mut Assignment,
+        copies: &mut ParallelCopies,
+    ) {
         let mut block_param_ins = BlockParamIns::new();
         let mut block_param_outs = BlockParamOutMap::default();
 
@@ -159,7 +162,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         // Step 2: Insert copies for block params once we've gathered block param information for
         // all vregs.
-        self.collect_block_param_copies(&block_param_ins, &block_param_outs, copies);
+        self.collect_block_param_copies(&block_param_ins, &block_param_outs, assignment, copies);
     }
 
     fn collect_intra_block_range_copies(
@@ -368,7 +371,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             from_block: block,
                             to_vreg,
                         };
-                        block_param_outs.insert(key, assignment);
+                        block_param_outs.insert(key, (vreg, assignment));
                     }
                 }
 
@@ -432,6 +435,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         &self,
         block_param_ins: &BlockParamIns,
         block_param_outs: &BlockParamOutMap,
+        assignment: &mut Assignment,
         copies: &mut Vec<ParallelCopy>,
     ) {
         trace!("collecting block param copies");
@@ -441,7 +445,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             let class = self.lir.vreg_class(incoming.vreg);
             for &pred in self.cfg_ctx.cfg.block_preds(incoming.block) {
                 trace!("    {pred}");
-                let from_assignment = *block_param_outs
+                let (from_vreg, from_assignment) = *block_param_outs
                     .get(&BlockParamEdgeKey {
                         from_block: pred,
                         to_vreg: incoming.vreg,
@@ -459,8 +463,22 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     from_assignment,
                     incoming.assignment,
                 );
+
+                // Record a "ghost copy" indicating that the new assignment now belongs to the
+                // destination vreg and not the source vreg.
+                assignment.block_exit_ghost_copies.push(BlockExitGhostCopy {
+                    block: pred,
+                    assignment: incoming.assignment,
+                    from_vreg,
+                    to_vreg: incoming.vreg,
+                });
             }
         }
+
+        // Keep things sorted by block so we can look them up easily later.
+        assignment
+            .block_exit_ghost_copies
+            .sort_unstable_by_key(|ghost_copy| ghost_copy.block.as_u32());
     }
 
     fn assign_allocated_operands(&self, assignment: &mut Assignment, copies: &mut ParallelCopies) {
@@ -664,12 +682,13 @@ impl Assignment {
 
         let mut assignment = Assignment {
             spill_slots: PrimaryMap::new(),
+            copies: Vec::new(),
+            block_exit_ghost_copies: Vec::new(),
             instr_assignments: SecondaryMap::with_capacity(instr_count),
             // Estimate: every instruction has at least one use or def. This isn't actually true,
             // but should usually be compensated for by the fact that many instructions have more
             // than one operand.
             operand_assignment_pool: Vec::with_capacity(instr_count),
-            copies: Vec::new(),
         };
 
         for instr in lir.all_instrs() {

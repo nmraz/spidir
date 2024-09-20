@@ -52,9 +52,7 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> 
         "domtree" => Ok(Box::new(DomTreeProvider)),
         "graphviz" => Ok(Box::new(GraphvizTestProvider::new(&params)?)),
         "isel" => Ok(Box::new(IselProvider::new(create_x64_machine(&params)?))),
-        "isel-regalloc" => Ok(Box::new(IselRegallocProvider::new(create_x64_machine(
-            &params,
-        )?))),
+        "isel-regalloc" => Ok(Box::new(IselRegallocProvider::from_params(&params)?)),
         "codegen" => Ok(Box::new(CodegenProvider::new(create_x64_machine(&params)?))),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),
         "schedule" => Ok(Box::new(ScheduleProvider)),

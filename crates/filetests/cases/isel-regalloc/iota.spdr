@@ -1,4 +1,4 @@
-# run: isel-regalloc[no-verify-regalloc]
+# run: isel-regalloc
 
 func @iota(ptr, i64) {
     # check: function `iota`:

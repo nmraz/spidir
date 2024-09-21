@@ -1,4 +1,4 @@
-# run: isel-regalloc[no-verify-regalloc]
+# run: isel-regalloc
 
 func @sum_to_n:i32(i32) {
     # check: function `sum_to_n`:

@@ -11,7 +11,7 @@ use crate::{
     cfg::{Block, CfgContext},
     lir::{
         DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, PhysRegSet, RegClass,
-        UseOperandConstraint, VirtRegNum,
+        UseOperandConstraint, VirtReg,
     },
     machine::{MachineCore, MachineRegalloc},
 };
@@ -33,14 +33,14 @@ use super::{
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct BlockParamEdgeKey {
     from_block: Block,
-    to_vreg: VirtRegNum,
+    to_vreg: VirtReg,
 }
 
-type BlockParamOutMap = FxHashMap<BlockParamEdgeKey, (VirtRegNum, OperandAssignment)>;
+type BlockParamOutMap = FxHashMap<BlockParamEdgeKey, (VirtReg, OperandAssignment)>;
 
 struct BlockParamIn {
     block: Block,
-    vreg: VirtRegNum,
+    vreg: VirtReg,
     assignment: OperandAssignment,
 }
 
@@ -167,7 +167,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
     fn collect_intra_block_range_copies(
         &self,
-        vreg: VirtRegNum,
+        vreg: VirtReg,
         ranges: &[LiveRange],
         copies: &mut Vec<ParallelCopy>,
     ) {
@@ -271,7 +271,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
     fn collect_inter_block_range_copies(
         &self,
-        vreg: VirtRegNum,
+        vreg: VirtReg,
         ranges: &[LiveRange],
         copies: &mut ParallelCopies,
         block_param_ins: &mut BlockParamIns,

@@ -7,7 +7,7 @@ use smallvec::SmallVec;
 
 use crate::{
     cfg::Block,
-    lir::{Instr, MemLayout, OperandPos, PhysReg, RegClass, VirtRegNum},
+    lir::{Instr, MemLayout, OperandPos, PhysReg, RegClass, VirtReg},
     machine::MachineCore,
 };
 
@@ -296,7 +296,7 @@ pub type LiveRangeInstrs = SmallVec<[LiveRangeInstr; 4]>;
 
 pub struct LiveRangeData {
     pub prog_range: ProgramRange,
-    pub vreg: VirtRegNum,
+    pub vreg: VirtReg,
     pub fragment: LiveSetFragment,
     pub instrs: LiveRangeInstrs,
     pub is_spill_connector: bool,
@@ -516,8 +516,8 @@ pub struct TaggedAssignmentCopy {
 pub struct BlockExitGhostCopy {
     pub block: Block,
     pub assignment: OperandAssignment,
-    pub from_vreg: VirtRegNum,
-    pub to_vreg: VirtRegNum,
+    pub from_vreg: VirtReg,
+    pub to_vreg: VirtReg,
 }
 
 #[cfg(test)]

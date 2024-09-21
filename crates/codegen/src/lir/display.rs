@@ -9,11 +9,11 @@ use crate::{
 
 use super::{
     DefOperand, DefOperandConstraint, Instr, Lir, PhysRegSet, RegClass, UseOperand,
-    UseOperandConstraint, VirtRegNum,
+    UseOperandConstraint, VirtReg,
 };
 
 pub struct DisplayVirtRegWithClass<M> {
-    pub(super) reg: VirtRegNum,
+    pub(super) reg: VirtReg,
     pub(super) class: RegClass,
     pub(super) _marker: PhantomData<M>,
 }
@@ -114,7 +114,7 @@ impl<M: MachineCore> fmt::Display for DisplayInstrData<'_, M> {
 
 pub(super) fn display_block_params<'a, M: MachineCore>(
     lir: &'a Lir<M>,
-    block_params: &'a [VirtRegNum],
+    block_params: &'a [VirtReg],
 ) -> DisplayBlockParams<'a, M> {
     DisplayBlockParams {
         lir,
@@ -125,7 +125,7 @@ pub(super) fn display_block_params<'a, M: MachineCore>(
 
 pub struct DisplayBlockParams<'a, M: MachineCore> {
     lir: &'a Lir<M>,
-    block_params: &'a [VirtRegNum],
+    block_params: &'a [VirtReg],
     _marker: PhantomData<M>,
 }
 

@@ -6,9 +6,7 @@ use smallvec::{smallvec, SmallVec};
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{
-        DefOperandConstraint, Instr, Lir, OperandPos, PhysReg, UseOperandConstraint, VirtRegNum,
-    },
+    lir::{DefOperandConstraint, Instr, Lir, OperandPos, PhysReg, UseOperandConstraint, VirtReg},
     machine::MachineRegalloc,
     regalloc::utils::is_sorted_by_key,
 };
@@ -27,7 +25,7 @@ use super::{
 impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
     pub fn push_vreg_live_range(
         &mut self,
-        vreg: VirtRegNum,
+        vreg: VirtReg,
         fragment: LiveSetFragment,
         prog_range: ProgramRange,
         instrs: LiveRangeInstrs,
@@ -359,7 +357,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
 
     fn record_instr_def(
         &mut self,
-        vreg: VirtRegNum,
+        vreg: VirtReg,
         instr: Instr,
         needs_reg: bool,
         op_pos: Option<LiveRangeOpPos>,
@@ -381,7 +379,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
 
     fn record_def(
         &mut self,
-        vreg: VirtRegNum,
+        vreg: VirtReg,
         def_point: ProgramPoint,
         dead_use_point: ProgramPoint,
     ) -> Option<LiveRange> {
@@ -410,7 +408,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
 
     fn record_live_use(
         &mut self,
-        vreg: VirtRegNum,
+        vreg: VirtReg,
         use_point: ProgramPoint,
         needs_reg: bool,
         block: Block,
@@ -454,7 +452,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
 
     fn open_use_range(
         &mut self,
-        vreg: VirtRegNum,
+        vreg: VirtReg,
         use_point: ProgramPoint,
         block: Block,
     ) -> LiveRange {
@@ -471,7 +469,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
         self.open_vreg_live_range(vreg, block_start, use_point)
     }
 
-    fn open_live_out_range(&mut self, vreg: VirtRegNum, block: Block) {
+    fn open_live_out_range(&mut self, vreg: VirtReg, block: Block) {
         let block_range = self.lir.block_instrs(block);
 
         // Note: ranges are half-open, and we want this range to end *after* the last
@@ -487,7 +485,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
 
     fn open_vreg_live_range(
         &mut self,
-        vreg: VirtRegNum,
+        vreg: VirtReg,
         start: ProgramPoint,
         end: ProgramPoint,
     ) -> LiveRange {

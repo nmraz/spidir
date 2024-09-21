@@ -38,10 +38,10 @@ impl RegClass {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct VirtRegNum(u32);
-entity_impl!(VirtRegNum, "%");
+pub struct VirtReg(u32);
+entity_impl!(VirtReg, "%");
 
-impl VirtRegNum {
+impl VirtReg {
     pub fn display_with_class<M: MachineCore>(self, class: RegClass) -> DisplayVirtRegWithClass<M> {
         DisplayVirtRegWithClass {
             reg: self,
@@ -197,13 +197,13 @@ pub enum DefOperandConstraint {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct UseOperand {
-    reg: VirtRegNum,
+    reg: VirtReg,
     constraint: UseOperandConstraint,
     pos: OperandPos,
 }
 
 impl UseOperand {
-    pub fn new(reg: VirtRegNum, constraint: UseOperandConstraint, pos: OperandPos) -> Self {
+    pub fn new(reg: VirtReg, constraint: UseOperandConstraint, pos: OperandPos) -> Self {
         Self {
             reg,
             constraint,
@@ -211,19 +211,19 @@ impl UseOperand {
         }
     }
 
-    pub fn any(reg: VirtRegNum) -> Self {
+    pub fn any(reg: VirtReg) -> Self {
         Self::new(reg, UseOperandConstraint::Any, OperandPos::Early)
     }
 
-    pub fn any_reg(reg: VirtRegNum) -> Self {
+    pub fn any_reg(reg: VirtReg) -> Self {
         Self::new(reg, UseOperandConstraint::AnyReg, OperandPos::Early)
     }
 
-    pub fn fixed(reg: VirtRegNum, phys: PhysReg) -> Self {
+    pub fn fixed(reg: VirtReg, phys: PhysReg) -> Self {
         Self::new(reg, UseOperandConstraint::Fixed(phys), OperandPos::Early)
     }
 
-    pub fn tied(reg: VirtRegNum, def_idx: u8) -> Self {
+    pub fn tied(reg: VirtReg, def_idx: u8) -> Self {
         Self::new(
             reg,
             UseOperandConstraint::TiedToDef(def_idx),
@@ -231,7 +231,7 @@ impl UseOperand {
         )
     }
 
-    pub fn reg(&self) -> VirtRegNum {
+    pub fn reg(&self) -> VirtReg {
         self.reg
     }
 
@@ -253,13 +253,13 @@ impl UseOperand {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct DefOperand {
-    reg: VirtRegNum,
+    reg: VirtReg,
     constraint: DefOperandConstraint,
     pos: OperandPos,
 }
 
 impl DefOperand {
-    pub fn new(reg: VirtRegNum, constraint: DefOperandConstraint, pos: OperandPos) -> Self {
+    pub fn new(reg: VirtReg, constraint: DefOperandConstraint, pos: OperandPos) -> Self {
         Self {
             reg,
             constraint,
@@ -267,19 +267,19 @@ impl DefOperand {
         }
     }
 
-    pub fn any(reg: VirtRegNum) -> Self {
+    pub fn any(reg: VirtReg) -> Self {
         Self::new(reg, DefOperandConstraint::Any, OperandPos::Late)
     }
 
-    pub fn any_reg(reg: VirtRegNum) -> Self {
+    pub fn any_reg(reg: VirtReg) -> Self {
         Self::new(reg, DefOperandConstraint::AnyReg, OperandPos::Late)
     }
 
-    pub fn fixed(reg: VirtRegNum, phys: PhysReg) -> Self {
+    pub fn fixed(reg: VirtReg, phys: PhysReg) -> Self {
         Self::new(reg, DefOperandConstraint::Fixed(phys), OperandPos::Late)
     }
 
-    pub fn reg(&self) -> VirtRegNum {
+    pub fn reg(&self) -> VirtReg {
         self.reg
     }
 
@@ -396,7 +396,7 @@ pub struct Lir<M: MachineCore> {
     block_instr_ranges: SecondaryMap<Block, (Instr, Instr)>,
     block_params: SecondaryMap<Block, BlockParamData>,
     live_in_regs: Vec<PhysReg>,
-    block_param_pool: Vec<VirtRegNum>,
+    block_param_pool: Vec<VirtReg>,
     instrs: Vec<M::Instr>,
     instr_block_indices: Vec<u32>,
     instr_operands: Vec<InstrOperands>,
@@ -405,7 +405,7 @@ pub struct Lir<M: MachineCore> {
     use_pool: Vec<UseOperand>,
     clobbers: PrimaryMap<ClobberIndex, PhysRegSet>,
     stack_slots: PrimaryMap<StackSlot, MemLayout>,
-    vreg_classes: PrimaryMap<VirtRegNum, RegClass>,
+    vreg_classes: PrimaryMap<VirtReg, RegClass>,
 }
 
 impl<M: MachineCore> Lir<M> {
@@ -454,13 +454,13 @@ impl<M: MachineCore> Lir<M> {
         &self.live_in_regs
     }
 
-    pub fn block_params(&self, block: Block) -> &[VirtRegNum] {
+    pub fn block_params(&self, block: Block) -> &[VirtReg] {
         let params = &self.block_params[block];
         let base = params.incoming_base as usize;
         &self.block_param_pool[base..base + params.incoming_len as usize]
     }
 
-    pub fn outgoing_block_params(&self, block: Block) -> &[VirtRegNum] {
+    pub fn outgoing_block_params(&self, block: Block) -> &[VirtReg] {
         let params = &self.block_params[block];
         let base = params.outgoing_base as usize;
         &self.block_param_pool[base..base + params.outgoing_len as usize]
@@ -474,7 +474,7 @@ impl<M: MachineCore> Lir<M> {
         self.stack_slots[slot]
     }
 
-    pub fn vreg_class(&self, vreg: VirtRegNum) -> RegClass {
+    pub fn vreg_class(&self, vreg: VirtReg) -> RegClass {
         self.vreg_classes[vreg]
     }
 
@@ -484,7 +484,7 @@ impl<M: MachineCore> Lir<M> {
 }
 
 impl<M: MachineCore> Lir<M> {
-    pub fn display_vreg_with_class(&self, vreg: VirtRegNum) -> DisplayVirtRegWithClass<M> {
+    pub fn display_vreg_with_class(&self, vreg: VirtReg) -> DisplayVirtRegWithClass<M> {
         vreg.display_with_class(self.vreg_class(vreg))
     }
 
@@ -516,11 +516,11 @@ impl<'o, M: MachineCore> InstrBuilder<'o, '_, M> {
         self.builder
     }
 
-    pub fn create_vreg(&mut self, class: RegClass) -> VirtRegNum {
+    pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
         self.builder.create_vreg(class)
     }
 
-    pub fn copy_vreg(&mut self, dest: VirtRegNum, src: VirtRegNum) {
+    pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
         self.builder.copy_vreg(dest, src)
     }
 
@@ -582,7 +582,7 @@ impl<'o, M: MachineCore> InstrBuilder<'o, '_, M> {
 pub struct Builder<'o, M: MachineCore> {
     lir: Lir<M>,
     block_order: &'o [Block],
-    vreg_copies: FxHashMap<VirtRegNum, VirtRegNum>,
+    vreg_copies: FxHashMap<VirtReg, VirtReg>,
     cur_block: isize,
 }
 
@@ -637,11 +637,11 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         }
     }
 
-    pub fn create_vreg(&mut self, class: RegClass) -> VirtRegNum {
+    pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
         self.lir.vreg_classes.push(class)
     }
 
-    pub fn copy_vreg(&mut self, dest: VirtRegNum, src: VirtRegNum) {
+    pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
         let src = resolve_vreg_copy(&mut self.vreg_copies, src).unwrap_or(src);
         assert!(dest != src, "vreg copy cycle on register {}", dest);
         let src_class = self.lir.vreg_class(src);
@@ -667,7 +667,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         self.lir.live_in_regs = live_in_regs;
     }
 
-    pub fn set_incoming_block_params(&mut self, params: impl IntoIterator<Item = VirtRegNum>) {
+    pub fn set_incoming_block_params(&mut self, params: impl IntoIterator<Item = VirtReg>) {
         let block = self.cur_block();
         let base = self.lir.block_param_pool.len();
         self.lir.block_param_pool.extend(params);
@@ -676,7 +676,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         self.lir.block_params[block].incoming_len = len.try_into().unwrap();
     }
 
-    pub fn set_outgoing_block_params(&mut self, params: impl IntoIterator<Item = VirtRegNum>) {
+    pub fn set_outgoing_block_params(&mut self, params: impl IntoIterator<Item = VirtReg>) {
         let block = self.cur_block();
         let base = self.lir.block_param_pool.len();
         self.lir.block_param_pool.extend(params);
@@ -771,16 +771,16 @@ impl<M: MachineCore> Builder<'_, M> {
 
     pub fn display_block_params<'a>(
         &'a self,
-        block_params: &'a [VirtRegNum],
+        block_params: &'a [VirtReg],
     ) -> DisplayBlockParams<'a, M> {
         display_block_params(&self.lir, block_params)
     }
 }
 
 fn resolve_vreg_copy(
-    vreg_copies: &mut FxHashMap<VirtRegNum, VirtRegNum>,
-    vreg: VirtRegNum,
-) -> Option<VirtRegNum> {
+    vreg_copies: &mut FxHashMap<VirtReg, VirtReg>,
+    vreg: VirtReg,
+) -> Option<VirtReg> {
     let def = vreg_copies.get(&vreg).copied()?;
 
     // Look through all existing copies we have here.

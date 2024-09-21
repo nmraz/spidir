@@ -2,7 +2,7 @@ use hashbrown::hash_map::{Entry, Iter as HashMapIter};
 
 use fx_utils::FxHashMap;
 
-use crate::lir::VirtRegNum;
+use crate::lir::VirtReg;
 
 use super::utils::ChangeStatus;
 
@@ -21,12 +21,12 @@ impl VirtRegSet {
         }
     }
 
-    pub fn add(&mut self, reg: VirtRegNum) {
+    pub fn add(&mut self, reg: VirtReg) {
         let (word, bit) = word_bit_offset(reg.as_u32());
         *self.map.entry(word).or_insert(0) |= 1 << bit;
     }
 
-    pub fn contains(&self, reg: VirtRegNum) -> bool {
+    pub fn contains(&self, reg: VirtReg) -> bool {
         let (word, bit) = word_bit_offset(reg.as_u32());
         self.map
             .get(&word)
@@ -73,7 +73,7 @@ impl VirtRegSet {
 }
 
 impl<'a> IntoIterator for &'a VirtRegSet {
-    type Item = VirtRegNum;
+    type Item = VirtReg;
     type IntoIter = VirtRegSetIter<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -87,7 +87,7 @@ pub struct VirtRegSetIter<'a> {
 }
 
 impl<'a> Iterator for VirtRegSetIter<'a> {
-    type Item = VirtRegNum;
+    type Item = VirtReg;
 
     fn next(&mut self) -> Option<Self::Item> {
         let num = loop {
@@ -115,7 +115,7 @@ impl<'a> Iterator for VirtRegSetIter<'a> {
             break *word_num * MapWord::BITS + inner_bit;
         };
 
-        Some(VirtRegNum::from_bits(num))
+        Some(VirtReg::from_bits(num))
     }
 }
 
@@ -135,7 +135,7 @@ mod tests {
 
         // Put everything we got into the set.
         for &val in vals {
-            reg_set.add(VirtRegNum::from_bits(val));
+            reg_set.add(VirtReg::from_bits(val));
         }
 
         reg_set
@@ -165,10 +165,10 @@ mod tests {
 
         let reg_set = reg_set_from_vals(&vals);
         vals.iter()
-            .all(|&val| reg_set.contains(VirtRegNum::from_bits(val)))
+            .all(|&val| reg_set.contains(VirtReg::from_bits(val)))
             && !other_vals
                 .iter()
-                .any(|&val| reg_set.contains(VirtRegNum::from_bits(val)))
+                .any(|&val| reg_set.contains(VirtReg::from_bits(val)))
     }
 
     #[quickcheck]

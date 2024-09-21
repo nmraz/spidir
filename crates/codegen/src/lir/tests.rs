@@ -8,7 +8,7 @@ use crate::{
 
 use super::{
     Builder, DefOperand, Lir, MemLayout, OperandPos, PhysReg, PhysRegSet, RegClass, UseOperand,
-    UseOperandConstraint, VirtRegNum,
+    UseOperandConstraint, VirtReg,
 };
 
 // Work around a possible dead_code/traits issue (https://github.com/rust-lang/rust/issues/122833):
@@ -60,8 +60,8 @@ fn push_instr_with_clobbers<const U: usize>(
     defs: impl IntoIterator<Item = DefOperand>,
     uses: [(UseOperandConstraint, OperandPos); U],
     clobbers: PhysRegSet,
-) -> [VirtRegNum; U] {
-    let mut use_regs = [VirtRegNum::reserved_value(); U];
+) -> [VirtReg; U] {
+    let mut use_regs = [VirtReg::reserved_value(); U];
     builder.build_instrs(|mut b| {
         for use_reg in &mut use_regs {
             *use_reg = b.create_vreg(RC_GPR);
@@ -83,7 +83,7 @@ fn push_instr<const U: usize>(
     instr: DummyInstr,
     defs: impl IntoIterator<Item = DefOperand>,
     uses: [(UseOperandConstraint, OperandPos); U],
-) -> [VirtRegNum; U] {
+) -> [VirtReg; U] {
     push_instr_with_clobbers(builder, instr, defs, uses, PhysRegSet::empty())
 }
 

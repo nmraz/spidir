@@ -9,7 +9,7 @@ use smallvec::SmallVec;
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Lir, PhysReg, VirtRegNum},
+    lir::{Lir, PhysReg, VirtReg},
     machine::MachineRegalloc,
 };
 
@@ -26,7 +26,7 @@ pub struct RegAllocContext<'a, M: MachineRegalloc> {
     pub cfg_ctx: &'a CfgContext,
     pub machine: &'a M,
     pub block_live_ins: SecondaryMap<Block, VirtRegSet>,
-    pub vreg_ranges: SecondaryMap<VirtRegNum, SmallVec<[LiveRange; 4]>>,
+    pub vreg_ranges: SecondaryMap<VirtReg, SmallVec<[LiveRange; 4]>>,
     pub live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
     pub live_range_hints: FxHashMap<LiveRange, SmallVec<[AnnotatedPhysRegHint; 2]>>,
     pub live_set_fragments: PrimaryMap<LiveSetFragment, LiveSetFragmentData>,

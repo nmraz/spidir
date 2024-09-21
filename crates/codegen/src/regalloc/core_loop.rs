@@ -6,7 +6,7 @@ use log::{log_enabled, trace};
 use smallvec::{smallvec, SmallVec};
 
 use crate::{
-    lir::{Instr, PhysReg, PhysRegSet, VirtRegNum},
+    lir::{Instr, PhysReg, PhysRegSet, VirtReg},
     machine::MachineRegalloc,
     regalloc::types::{
         AnnotatedPhysRegHint, InstrSlot, LiveRangeInstr, LiveRangeOpPos, ProgramPoint,
@@ -600,7 +600,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
     fn push_vreg_fragment_live_range(
         &mut self,
-        vreg: VirtRegNum,
+        vreg: VirtReg,
         fragment: LiveSetFragment,
         prog_range: ProgramRange,
         instrs: LiveRangeInstrs,

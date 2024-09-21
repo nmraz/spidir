@@ -10,7 +10,7 @@ use log::trace;
 use crate::{
     cfg::{Block, CfgContext},
     lir::{
-        DefOperand, DefOperandConstraint, Instr, Lir, UseOperand, UseOperandConstraint, VirtRegNum,
+        DefOperand, DefOperandConstraint, Instr, Lir, UseOperand, UseOperandConstraint, VirtReg,
     },
     machine::MachineCore,
 };
@@ -32,7 +32,7 @@ pub enum VerifierError {
     BadUse {
         instr: Instr,
         op: u32,
-        found_vreg: Option<VirtRegNum>,
+        found_vreg: Option<VirtReg>,
     },
     SpillToSpillCopy {
         copy_idx: u32,
@@ -45,7 +45,7 @@ pub enum VerifierError {
     },
     BadGhostCopySource {
         ghost_copy_idx: u32,
-        found_vreg: Option<VirtRegNum>,
+        found_vreg: Option<VirtReg>,
     },
 }
 
@@ -109,10 +109,9 @@ impl<'a, M: MachineCore> fmt::Display for DisplayVerifierError<'a, M> {
                 op,
                 found_vreg,
             } => {
-                let found_vreg = found_vreg
-                    .map_or("garbage".to_owned(), |found_vreg: VirtRegNum| {
-                        found_vreg.to_string()
-                    });
+                let found_vreg = found_vreg.map_or("garbage".to_owned(), |found_vreg: VirtReg| {
+                    found_vreg.to_string()
+                });
                 let expected_vreg = self.lir.instr_uses(instr)[op as usize].reg();
                 write!(
                     f,
@@ -192,7 +191,7 @@ pub fn verify<M: MachineCore>(
     Ok(())
 }
 
-type KnownRegState = FxHashMap<OperandAssignment, VirtRegNum>;
+type KnownRegState = FxHashMap<OperandAssignment, VirtReg>;
 type BlockKnownRegState = SecondaryMap<Block, Option<KnownRegState>>;
 
 fn verify_block_ghost_copies(
@@ -307,15 +306,15 @@ fn check_use_assignment(
     use_op: UseOperand,
     use_assignment: OperandAssignment,
     reg_state: &KnownRegState,
-) -> Result<(), Option<VirtRegNum>> {
+) -> Result<(), Option<VirtReg>> {
     check_assigned_vreg(use_assignment, use_op.reg(), reg_state)
 }
 
 fn check_assigned_vreg(
     assignment: OperandAssignment,
-    expected_vreg: VirtRegNum,
+    expected_vreg: VirtReg,
     reg_state: &KnownRegState,
-) -> Result<(), Option<VirtRegNum>> {
+) -> Result<(), Option<VirtReg>> {
     let found_vreg = reg_state.get(&assignment).copied();
     if found_vreg != Some(expected_vreg) {
         return Err(found_vreg);

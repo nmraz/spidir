@@ -9,7 +9,7 @@ use log::trace;
 use smallvec::smallvec;
 
 use crate::{
-    lir::{UseOperandConstraint, VirtRegNum},
+    lir::{UseOperandConstraint, VirtReg},
     machine::MachineRegalloc,
 };
 
@@ -23,11 +23,11 @@ use super::{
     utils::{coalesce_slice, get_instr_weight},
 };
 
-type VirtRegFragmentMap = SecondaryMap<VirtRegNum, PackedOption<LiveSetFragment>>;
+type VirtRegFragmentMap = SecondaryMap<VirtReg, PackedOption<LiveSetFragment>>;
 
 struct CopyCandidate {
-    src: VirtRegNum,
-    dest: VirtRegNum,
+    src: VirtReg,
+    dest: VirtReg,
     weight: f32,
 }
 
@@ -188,8 +188,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn try_coalesce(
         &mut self,
         fragments_by_vreg: &mut VirtRegFragmentMap,
-        dest: VirtRegNum,
-        src: VirtRegNum,
+        dest: VirtReg,
+        src: VirtReg,
     ) {
         let dest_fragment = fragments_by_vreg[dest].unwrap();
         let src_fragment = fragments_by_vreg[src].unwrap();

@@ -18,7 +18,7 @@ use crate::{
     cfg::{Block, CfgContext, FunctionBlockMap},
     lir::{
         Builder as LirBuilder, DefOperand, InstrBuilder, Lir, MemLayout, PhysRegSet, RegClass,
-        StackSlot, UseOperand, VirtRegNum,
+        StackSlot, UseOperand, VirtReg,
     },
     machine::{MachineLower, ParamLoc},
     schedule::Schedule,
@@ -91,7 +91,7 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
         ret
     }
 
-    pub fn get_value_vreg(&mut self, value: DepValue) -> VirtRegNum {
+    pub fn get_value_vreg(&mut self, value: DepValue) -> VirtReg {
         let graph = self.state.graph();
         get_value_vreg_helper(
             |value, class| {
@@ -106,11 +106,11 @@ impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
         )
     }
 
-    pub fn create_temp_vreg(&mut self, class: RegClass) -> VirtRegNum {
+    pub fn create_temp_vreg(&mut self, class: RegClass) -> VirtReg {
         self.builder.create_vreg(class)
     }
 
-    pub fn copy_vreg(&mut self, dest: VirtRegNum, src: VirtRegNum) {
+    pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
         // We assume that the destination register is live here, meaning that it's okay to just bump
         // the use count of `src`.
         self.state.bump_vreg_use_count(src);
@@ -188,8 +188,8 @@ pub fn select_instrs<M: MachineLower>(
     Ok(builder.finish())
 }
 
-type ValueRegMap = SecondaryMap<DepValue, PackedOption<VirtRegNum>>;
-type RegValueMap = SecondaryMap<VirtRegNum, PackedOption<DepValue>>;
+type ValueRegMap = SecondaryMap<DepValue, PackedOption<VirtReg>>;
+type RegValueMap = SecondaryMap<VirtReg, PackedOption<DepValue>>;
 type ValueUseCounts = SecondaryMap<DepValue, u32>;
 type NodeStackSlotMap = FxHashMap<Node, StackSlot>;
 
@@ -326,7 +326,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                 let entry_outputs = self.graph().node_outputs(node);
                 assert!(param_locs.len() == entry_outputs.len() - 1);
 
-                let mut param_regs = SmallVec::<[VirtRegNum; 8]>::new();
+                let mut param_regs = SmallVec::<[VirtReg; 8]>::new();
                 let mut live_in_regs = Vec::new();
                 for (value, loc) in entry_outputs.into_iter().skip(1).zip(param_locs) {
                     if !self.is_value_used(value) {
@@ -439,7 +439,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         }
     }
 
-    fn get_value_vreg(&mut self, builder: &mut LirBuilder<'ctx, M>, value: DepValue) -> VirtRegNum {
+    fn get_value_vreg(&mut self, builder: &mut LirBuilder<'ctx, M>, value: DepValue) -> VirtReg {
         let graph = self.graph();
         get_value_vreg_helper(
             |value, class| {
@@ -454,11 +454,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         )
     }
 
-    fn create_phi_vreg(
-        &mut self,
-        builder: &mut LirBuilder<'ctx, M>,
-        value: DepValue,
-    ) -> VirtRegNum {
+    fn create_phi_vreg(&mut self, builder: &mut LirBuilder<'ctx, M>, value: DepValue) -> VirtReg {
         let class = self
             .machine
             .reg_class_for_type(self.graph().value_kind(value).as_value().unwrap());
@@ -475,7 +471,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         self.value_use_counts[value] > 0
     }
 
-    fn bump_vreg_use_count(&mut self, vreg: VirtRegNum) {
+    fn bump_vreg_use_count(&mut self, vreg: VirtReg) {
         if let Some(value) = self.reg_value_map[vreg].expand() {
             self.value_use_counts[value] += 1;
         }
@@ -513,12 +509,12 @@ fn emit_instr<M: MachineLower>(
 }
 
 fn get_value_vreg_helper<M: MachineLower>(
-    builder: impl FnOnce(DepValue, RegClass) -> VirtRegNum,
+    builder: impl FnOnce(DepValue, RegClass) -> VirtReg,
     value_reg_map: &mut ValueRegMap,
     machine: &M,
     valgraph: &ValGraph,
     value: DepValue,
-) -> VirtRegNum {
+) -> VirtReg {
     let class = machine.reg_class_for_type(valgraph.value_kind(value).as_value().unwrap());
     match value_reg_map[value].expand() {
         Some(vreg) => vreg,

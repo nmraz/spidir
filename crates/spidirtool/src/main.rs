@@ -11,7 +11,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
 use codegen::{
-    api::{codegen_func, lower_func, schedule_graph},
+    api::{codegen_func, lower_func, schedule_graph, CodegenOpts},
     target::x64::{CodeModel, X64Machine, X64MachineConfig},
 };
 use codegen_test_tools::{disasm::disasm_code, exec::codegen_and_exec};
@@ -428,7 +428,7 @@ fn get_module_code_str(module: &Module, machine_opts: &MachineOptions) -> Result
     let mut output = String::new();
     let machine = create_machine(machine_opts);
     for func in module.functions.values() {
-        let code = codegen_func(module, func, &machine)
+        let code = codegen_func(module, func, &machine, &CodegenOpts::default())
             .map_err(|err| anyhow!("{}", err.display(module, func)))?;
         writeln!(output, "{}:", quote_ident(&func.metadata.name)).unwrap();
         disasm_code(module, &code, 4, &mut output)?;

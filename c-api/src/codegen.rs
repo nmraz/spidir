@@ -2,7 +2,7 @@ use core::ptr;
 
 use alloc::{boxed::Box, vec::Vec};
 use codegen::{
-    api::{codegen_func, CodegenError},
+    api::{codegen_func, CodegenError, CodegenOpts},
     emit::CodeBlob,
     machine::Machine,
 };
@@ -55,7 +55,7 @@ unsafe fn codegen_machine_codegen_func<M: Machine>(
     func: &FunctionData,
 ) -> Result<CodeBlob, CodegenError> {
     let inner = unsafe { &*(codegen_machine as *const ApiCodegenMachineInner<M>) };
-    codegen_func(module, func, &inner.machine)
+    codegen_func(module, func, &inner.machine, &CodegenOpts::default())
 }
 
 pub fn codegen_machine_to_api<M: Machine>(machine: M) -> *mut ApiCodegenMachine {

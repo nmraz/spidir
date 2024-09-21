@@ -8,7 +8,7 @@ use ir::{
     valgraph::{Node, ValGraph},
     valwalk::cfg_preorder,
 };
-use log::info;
+use log::{debug, info};
 
 use crate::{
     cfg::{CfgContext, FunctionBlockMap},
@@ -68,19 +68,34 @@ impl<'a> fmt::Display for DisplayCodegenError<'a> {
     }
 }
 
+#[derive(Default)]
+pub struct CodegenOpts {
+    pub verify_regalloc: bool,
+}
+
 mod private {
     pub trait Sealed {}
 }
 
 pub trait Codegen: private::Sealed {
-    fn codegen_func(&self, module: &Module, func: &FunctionData) -> Result<CodeBlob, CodegenError>;
+    fn codegen_func(
+        &self,
+        module: &Module,
+        func: &FunctionData,
+        opts: &CodegenOpts,
+    ) -> Result<CodeBlob, CodegenError>;
 }
 
 impl<M: Machine> private::Sealed for M {}
 
 impl<M: Machine> Codegen for M {
-    fn codegen_func(&self, module: &Module, func: &FunctionData) -> Result<CodeBlob, CodegenError> {
-        codegen_func(module, func, self)
+    fn codegen_func(
+        &self,
+        module: &Module,
+        func: &FunctionData,
+        opts: &CodegenOpts,
+    ) -> Result<CodeBlob, CodegenError> {
+        codegen_func(module, func, self, opts)
     }
 }
 
@@ -88,10 +103,23 @@ pub fn codegen_func<M: Machine>(
     module: &Module,
     func: &FunctionData,
     machine: &M,
+    opts: &CodegenOpts,
 ) -> Result<CodeBlob, CodegenError> {
     info!("generating code for: {}", func.metadata);
     let (cfg_ctx, lir) = lower_func(module, func, machine)?;
+
     let assignment = regalloc::run(&lir, &cfg_ctx, machine)?;
+    if opts.verify_regalloc {
+        debug!("verifying regalloc for `{}`", func.metadata.name);
+        if let Err(err) = regalloc::verify(&lir, &cfg_ctx, &assignment) {
+            panic!(
+                "register allocation for `{}` invalid: {}",
+                func.metadata.name,
+                err.display(&lir, &assignment)
+            );
+        }
+    }
+
     let code = emit_code(&lir, &cfg_ctx, &assignment, machine);
     Ok(code)
 }

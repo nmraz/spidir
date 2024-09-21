@@ -2,7 +2,7 @@ use std::mem;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use codegen::{
-    api::Codegen,
+    api::{Codegen, CodegenOpts},
     emit::{CodeBlob, RelocKind},
     target::x64::{CodeModel, X64Machine, X64MachineConfig, RELOC_ABS64, RELOC_PC32},
 };
@@ -212,7 +212,7 @@ fn codegen_func_with_machine(
 ) -> Result<CodeBlob> {
     let func = &module.functions[func];
     machine
-        .codegen_func(module, func)
+        .codegen_func(module, func, &CodegenOpts::default())
         .map_err(|err| anyhow!("codegen failed: {}", err.display(module, func)))
 }
 

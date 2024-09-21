@@ -1,7 +1,10 @@
 use std::fmt::Write;
 
 use anyhow::{anyhow, Result};
-use codegen::{api::codegen_func, target::x64::X64Machine};
+use codegen::{
+    api::{codegen_func, CodegenOpts},
+    target::x64::X64Machine,
+};
 use codegen_test_tools::disasm::disasm_code;
 use ir::module::Module;
 
@@ -26,7 +29,7 @@ impl TestProvider for CodegenProvider {
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let code = codegen_func(module, func, &self.machine)
+            let code = codegen_func(module, func, &self.machine, &CodegenOpts::default())
                 .map_err(|err| anyhow!("{}", err.display(module, func)))?;
             disasm_code(module, &code, 0, &mut output)?;
         }

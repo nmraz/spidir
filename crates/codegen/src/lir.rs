@@ -17,7 +17,10 @@ use crate::{
     machine::MachineCore,
 };
 
-use display::{Display, DisplayDefOperand, DisplayInstr, DisplayUseOperand, DisplayVirtReg};
+use display::{
+    display_block_params, Display, DisplayBlockParams, DisplayDefOperand, DisplayInstrData,
+    DisplayUseOperand, DisplayVirtRegWithClass,
+};
 
 pub mod display;
 
@@ -41,6 +44,16 @@ const REG_NUM_BOUND: u32 = 1 << REG_NUM_BITS;
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct VirtRegNum(u32);
 entity_impl!(VirtRegNum, "%");
+
+impl VirtRegNum {
+    pub fn display_with_class<M: MachineCore>(self, class: RegClass) -> DisplayVirtRegWithClass<M> {
+        DisplayVirtRegWithClass {
+            reg: self,
+            class,
+            _marker: PhantomData,
+        }
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct VirtReg(u32);
@@ -66,13 +79,6 @@ impl VirtReg {
 
     pub fn from_u32(value: u32) -> Self {
         Self(value)
-    }
-
-    pub fn display<M: MachineCore>(self) -> DisplayVirtReg<M> {
-        DisplayVirtReg {
-            reg: self,
-            _marker: PhantomData,
-        }
     }
 }
 
@@ -326,8 +332,9 @@ impl DefOperand {
         self.pos
     }
 
-    pub fn display<M: MachineCore>(&self) -> DisplayDefOperand<'_, M> {
+    pub fn display<'a, M: MachineCore>(&'a self, lir: &'a Lir<M>) -> DisplayDefOperand<'_, M> {
         DisplayDefOperand {
+            lir,
             operand: self,
             _marker: PhantomData,
         }
@@ -522,8 +529,18 @@ impl<M: MachineCore> Lir<M> {
 }
 
 impl<M: MachineCore> Lir<M> {
-    pub fn display_instr(&self, instr: Instr) -> DisplayInstr<'_, M> {
-        DisplayInstr { lir: self, instr }
+    pub fn display_vreg_with_class(&self, vreg: VirtRegNum) -> DisplayVirtRegWithClass<M> {
+        vreg.display_with_class(self.vreg_class(vreg))
+    }
+
+    pub fn display_instr(&self, instr: Instr) -> DisplayInstrData<'_, M> {
+        DisplayInstrData {
+            lir: self,
+            instr: *self.instr_data(instr),
+            defs: self.instr_defs(instr),
+            uses: self.instr_uses(instr),
+            clobbers: self.instr_clobbers(instr),
+        }
     }
 
     pub fn display<'a>(&'a self, cfg: &'a BlockCfg, block_order: &'a [Block]) -> Display<'a, M> {
@@ -539,7 +556,11 @@ pub struct InstrBuilder<'o, 'b, M: MachineCore> {
     builder: &'b mut Builder<'o, M>,
 }
 
-impl<M: MachineCore> InstrBuilder<'_, '_, M> {
+impl<'o, M: MachineCore> InstrBuilder<'o, '_, M> {
+    pub fn lir_builder(&self) -> &Builder<'o, M> {
+        self.builder
+    }
+
     pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
         self.builder.create_vreg(class)
     }
@@ -776,6 +797,31 @@ impl<'o, M: MachineCore> Builder<'o, M> {
                 }
             }
         }
+    }
+}
+
+impl<M: MachineCore> Builder<'_, M> {
+    pub fn display_instr_data<'a>(
+        &'a self,
+        instr: M::Instr,
+        defs: &'a [DefOperand],
+        uses: &'a [UseOperand],
+        clobbers: PhysRegSet,
+    ) -> DisplayInstrData<'_, M> {
+        DisplayInstrData {
+            lir: &self.lir,
+            instr,
+            defs,
+            uses,
+            clobbers,
+        }
+    }
+
+    pub fn display_block_params<'a>(
+        &'a self,
+        block_params: &'a [VirtReg],
+    ) -> DisplayBlockParams<'a, M> {
+        display_block_params(&self.lir, block_params)
     }
 }
 

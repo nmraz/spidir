@@ -17,7 +17,6 @@ use smallvec::SmallVec;
 use crate::{
     cfg::{Block, CfgContext, FunctionBlockMap},
     lir::{
-        display::{display_block_params, display_instr_data},
         Builder as LirBuilder, DefOperand, InstrBuilder, Lir, MemLayout, PhysRegSet, RegClass,
         StackSlot, UseOperand, VirtReg, VirtRegNum,
     },
@@ -434,7 +433,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             trace!(
                 "    => {}{}",
                 succ,
-                display_block_params::<M>(&outgoing_params)
+                builder.display_block_params(&outgoing_params)
             );
             builder.set_outgoing_block_params(outgoing_params);
         }
@@ -502,7 +501,9 @@ fn emit_instr<M: MachineLower>(
 ) {
     trace!(
         "    {}",
-        display_instr_data::<M>(instr, defs, uses, clobbers)
+        builder
+            .lir_builder()
+            .display_instr_data(instr, defs, uses, clobbers)
     );
     builder.push_instr(instr, defs.iter().copied(), uses.iter().copied(), clobbers);
 }

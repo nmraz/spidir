@@ -8,23 +8,19 @@ use crate::{
 };
 
 use super::{
-    DefOperand, DefOperandConstraint, Instr, Lir, PhysRegSet, UseOperand, UseOperandConstraint,
-    VirtReg,
+    DefOperand, DefOperandConstraint, Instr, Lir, PhysRegSet, RegClass, UseOperand,
+    UseOperandConstraint, VirtReg, VirtRegNum,
 };
 
-pub struct DisplayVirtReg<M> {
-    pub(super) reg: VirtReg,
+pub struct DisplayVirtRegWithClass<M> {
+    pub(super) reg: VirtRegNum,
+    pub(super) class: RegClass,
     pub(super) _marker: PhantomData<M>,
 }
 
-impl<M: MachineCore> fmt::Display for DisplayVirtReg<M> {
+impl<M: MachineCore> fmt::Display for DisplayVirtRegWithClass<M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}:{}",
-            self.reg.reg_num(),
-            M::reg_class_name(self.reg.class())
-        )
+        write!(f, "{}:{}", self.reg, M::reg_class_name(self.class))
     }
 }
 
@@ -46,14 +42,16 @@ impl<M: MachineCore> fmt::Display for DisplayUseOperand<'_, M> {
     }
 }
 
-pub struct DisplayDefOperand<'a, M> {
+pub struct DisplayDefOperand<'a, M: MachineCore> {
+    pub(super) lir: &'a Lir<M>,
     pub(super) operand: &'a DefOperand,
     pub(super) _marker: PhantomData<M>,
 }
 
 impl<M: MachineCore> fmt::Display for DisplayDefOperand<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.operand.reg.display::<M>())?;
+        let vreg = self.operand.reg.reg_num();
+        write!(f, "{}", self.lir.display_vreg_with_class(vreg))?;
         match self.operand.constraint {
             DefOperandConstraint::Any => f.write_str("(any)")?,
             DefOperandConstraint::AnyReg => f.write_str("(reg)")?,
@@ -63,25 +61,12 @@ impl<M: MachineCore> fmt::Display for DisplayDefOperand<'_, M> {
     }
 }
 
-pub fn display_instr_data<'a, M: MachineCore>(
-    instr: M::Instr,
-    defs: &'a [DefOperand],
-    uses: &'a [UseOperand],
-    clobbers: PhysRegSet,
-) -> DisplayInstrData<'a, M> {
-    DisplayInstrData {
-        instr,
-        defs,
-        uses,
-        clobbers,
-    }
-}
-
 pub struct DisplayInstrData<'a, M: MachineCore> {
-    instr: M::Instr,
-    defs: &'a [DefOperand],
-    uses: &'a [UseOperand],
-    clobbers: PhysRegSet,
+    pub(super) lir: &'a Lir<M>,
+    pub(super) instr: M::Instr,
+    pub(super) defs: &'a [DefOperand],
+    pub(super) uses: &'a [UseOperand],
+    pub(super) clobbers: PhysRegSet,
 }
 
 impl<M: MachineCore> fmt::Display for DisplayInstrData<'_, M> {
@@ -92,7 +77,7 @@ impl<M: MachineCore> fmt::Display for DisplayInstrData<'_, M> {
                 "{}",
                 self.defs
                     .iter()
-                    .format_with(", ", |def, f| { f(&def.display::<M>()) })
+                    .format_with(", ", |def, f| { f(&def.display(self.lir)) })
             )?;
             f.write_str(" = ")?;
         }
@@ -127,34 +112,19 @@ impl<M: MachineCore> fmt::Display for DisplayInstrData<'_, M> {
     }
 }
 
-pub struct DisplayInstr<'a, M: MachineCore> {
-    pub(super) lir: &'a Lir<M>,
-    pub(super) instr: Instr,
-}
-
-impl<M: MachineCore> fmt::Display for DisplayInstr<'_, M> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            display_instr_data::<M>(
-                *self.lir.instr_data(self.instr),
-                self.lir.instr_defs(self.instr),
-                self.lir.instr_uses(self.instr),
-                self.lir.instr_clobbers(self.instr),
-            )
-        )
-    }
-}
-
-pub fn display_block_params<M: MachineCore>(block_params: &[VirtReg]) -> DisplayBlockParams<'_, M> {
+pub(super) fn display_block_params<'a, M: MachineCore>(
+    lir: &'a Lir<M>,
+    block_params: &'a [VirtReg],
+) -> DisplayBlockParams<'a, M> {
     DisplayBlockParams {
+        lir,
         block_params,
         _marker: PhantomData,
     }
 }
 
 pub struct DisplayBlockParams<'a, M: MachineCore> {
+    lir: &'a Lir<M>,
     block_params: &'a [VirtReg],
     _marker: PhantomData<M>,
 }
@@ -165,9 +135,13 @@ impl<M: MachineCore> fmt::Display for DisplayBlockParams<'_, M> {
             write!(
                 f,
                 "[{}]",
-                self.block_params
-                    .iter()
-                    .format_with(", ", |param, f| f(&param.display::<M>()))
+                self.block_params.iter().format_with(", ", |param, f| {
+                    let param = param.reg_num();
+                    f(&format_args!(
+                        "{param}:{}",
+                        M::reg_class_name(self.lir.vreg_class(param))
+                    ))
+                })
             )?;
         }
         Ok(())
@@ -227,18 +201,21 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
                         .block_params(block)
                         .iter()
                         .zip(&self.lir.live_in_regs)
-                        .format_with(", ", |(param, reg), f| f(&format_args!(
-                            "{}(${})",
-                            param.display::<M>(),
-                            M::reg_name(*reg)
-                        ))),
+                        .format_with(", ", |(param, reg), f| {
+                            let param = param.reg_num();
+                            f(&format_args!(
+                                "{}(${})",
+                                self.lir.display_vreg_with_class(param),
+                                M::reg_name(*reg)
+                            ))
+                        }),
                 )?;
             } else {
                 writeln!(
                     f,
                     "{}{block}{}:",
                     display_instr_gutter_padding(),
-                    display_block_params::<M>(self.lir.block_params(block)),
+                    display_block_params(self.lir, self.lir.block_params(block)),
                 )?;
             }
             first_block = false;
@@ -260,7 +237,7 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
                     "{}=> {}{}",
                     display_instr_gutter_padding(),
                     succ,
-                    display_block_params::<M>(self.lir.outgoing_block_params(block))
+                    display_block_params(self.lir, self.lir.outgoing_block_params(block))
                 )?;
             } else if !succs.is_empty() {
                 // If there are multiple successors, just list them all.

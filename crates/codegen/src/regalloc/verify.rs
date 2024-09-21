@@ -101,7 +101,7 @@ impl<'a, M: MachineCore> fmt::Display for DisplayVerifierError<'a, M> {
                     f,
                     "assignment '{}' violated constraint of '{}' in {instr}",
                     assignment.display::<M>(),
-                    op.display::<M>()
+                    op.display(self.lir)
                 )
             }
             VerifierError::BadUse {

@@ -29,6 +29,11 @@ typedef struct spidir_codegen_config {
     /// Verify the IR before performing code generation and panic if there are
     /// errors.
     bool verify_ir;
+    /// Verify that register allocation has been performed correctly after
+    /// performing it, and panic if anything is incorrect. This option should
+    /// only be used when debugging the code generator/register allocator
+    /// itself.
+    bool verify_regalloc;
 } spidir_codegen_config_t;
 
 /// Represents the different types of relocations to apply to generated code.

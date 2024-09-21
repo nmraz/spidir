@@ -40,6 +40,7 @@ pub struct ApiReloc {
 #[repr(C)]
 pub struct ApiCodegenConfig {
     pub verify_ir: bool,
+    pub verify_regalloc: bool,
 }
 
 pub type ApiType = u8;

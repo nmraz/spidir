@@ -4,6 +4,8 @@
 #include <spidir/codegen.h>
 #include <spidir/module.h>
 
+#include <stdbool.h>
+
 #define ASSERT(expr)                                                           \
     do {                                                                       \
         if (!(expr))                                                           \
@@ -17,6 +19,7 @@ void dump_module_to_stdout(spidir_module_handle_t module);
 
 spidir_codegen_blob_handle_t
 codegen_function(spidir_codegen_machine_handle_t machine,
-                 spidir_module_handle_t module, spidir_function_t func);
+                 spidir_module_handle_t module, spidir_function_t func,
+                 bool verify_regalloc);
 
 #endif

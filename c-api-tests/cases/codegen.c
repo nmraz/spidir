@@ -3,6 +3,7 @@
 #include <spidir/module.h>
 #include <spidir/x64.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -130,11 +131,11 @@ void map_and_run(spidir_function_t inner,
 void codegen_and_run(spidir_module_handle_t module, spidir_function_t inner,
                      spidir_function_t outer,
                      spidir_codegen_machine_handle_t machine,
-                     spidir_reloc_kind_t expected_reloc) {
+                     bool verify_regalloc, spidir_reloc_kind_t expected_reloc) {
     spidir_codegen_blob_handle_t inner_code =
-        codegen_function(machine, module, inner);
+        codegen_function(machine, module, inner, verify_regalloc);
     spidir_codegen_blob_handle_t outer_code =
-        codegen_function(machine, module, outer);
+        codegen_function(machine, module, outer, verify_regalloc);
     map_and_run(inner, inner_code, outer, outer_code, expected_reloc);
     spidir_codegen_blob_destroy(inner_code);
     spidir_codegen_blob_destroy(outer_code);
@@ -142,7 +143,7 @@ void codegen_and_run(spidir_module_handle_t module, spidir_function_t inner,
 
 int main(void) {
     init_stdout_spidir_log();
-    spidir_log_set_max_level(SPIDIR_LOG_LEVEL_INFO);
+    spidir_log_set_max_level(SPIDIR_LOG_LEVEL_DEBUG);
 
     spidir_module_handle_t module = spidir_module_create();
 
@@ -165,7 +166,9 @@ int main(void) {
 
     spidir_codegen_machine_handle_t default_machine =
         spidir_codegen_create_x64_machine();
-    codegen_and_run(module, inner, outer, default_machine,
+    codegen_and_run(module, inner, outer, default_machine, false,
+                    SPIDIR_RELOC_X64_PC32);
+    codegen_and_run(module, inner, outer, default_machine, true,
                     SPIDIR_RELOC_X64_PC32);
     spidir_codegen_machine_destroy(default_machine);
 
@@ -175,7 +178,7 @@ int main(void) {
                 .internal_code_model = SPIDIR_X64_CM_LARGE_ABS,
                 .extern_code_model = SPIDIR_X64_CM_LARGE_ABS,
             }));
-    codegen_and_run(module, inner, outer, large_machine,
+    codegen_and_run(module, inner, outer, large_machine, false,
                     SPIDIR_RELOC_X64_ABS64);
     spidir_codegen_machine_destroy(large_machine);
 
@@ -185,7 +188,8 @@ int main(void) {
                 .internal_code_model = SPIDIR_X64_CM_SMALL_PIC,
                 .extern_code_model = SPIDIR_X64_CM_SMALL_PIC,
             }));
-    codegen_and_run(module, inner, outer, small_machine, SPIDIR_RELOC_X64_PC32);
+    codegen_and_run(module, inner, outer, small_machine, false,
+                    SPIDIR_RELOC_X64_PC32);
     spidir_codegen_machine_destroy(small_machine);
 
     return 0;

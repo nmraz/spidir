@@ -55,10 +55,14 @@ void dump_module_to_stdout(spidir_module_handle_t module) {
 
 spidir_codegen_blob_handle_t
 codegen_function(spidir_codegen_machine_handle_t machine,
-                 spidir_module_handle_t module, spidir_function_t func) {
+                 spidir_module_handle_t module, spidir_function_t func,
+                 bool verify_regalloc) {
     spidir_codegen_blob_handle_t blob = NULL;
 
-    spidir_codegen_config_t config = {.verify_ir = true};
+    spidir_codegen_config_t config = {
+        .verify_ir = true,
+        .verify_regalloc = verify_regalloc,
+    };
 
     ASSERT(spidir_codegen_emit_function(machine, &config, module, func,
                                         &blob) == SPIDIR_CODEGEN_OK);

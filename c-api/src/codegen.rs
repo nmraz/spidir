@@ -23,6 +23,7 @@ struct ApiCodegenMachineVtable {
         *const ApiCodegenMachine,
         module: &Module,
         func: &FunctionData,
+        opts: &CodegenOpts,
     ) -> Result<CodeBlob, CodegenError>,
 }
 
@@ -53,9 +54,10 @@ unsafe fn codegen_machine_codegen_func<M: Machine>(
     codegen_machine: *const ApiCodegenMachine,
     module: &Module,
     func: &FunctionData,
+    opts: &CodegenOpts,
 ) -> Result<CodeBlob, CodegenError> {
     let inner = unsafe { &*(codegen_machine as *const ApiCodegenMachineInner<M>) };
-    codegen_func(module, func, &inner.machine, &CodegenOpts::default())
+    codegen_func(module, func, &inner.machine, opts)
 }
 
 pub fn codegen_machine_to_api<M: Machine>(machine: M) -> *mut ApiCodegenMachine {
@@ -138,9 +140,13 @@ unsafe extern "C" fn spidir_codegen_emit_function(
         verify_ir_function(module, func);
     }
 
+    let codegen_opts = CodegenOpts {
+        verify_regalloc: config.verify_regalloc,
+    };
+
     let res = unsafe {
         let codegen_func = (*machine).vtable.codegen_func;
-        codegen_func(machine, module, func)
+        codegen_func(machine, module, func, &codegen_opts)
     };
 
     let blob = match res {

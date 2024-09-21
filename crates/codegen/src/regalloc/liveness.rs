@@ -76,6 +76,14 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             for &outgoing_vreg in self.lir.outgoing_block_params(block) {
                 trace!("    outgoing param {outgoing_vreg}");
 
+                // Even though the copy ultimately gets placed as a `PreCopy`, extend the live
+                // range of the outgoing value across the terminator. This compensates for the fact
+                // that we don't acually model liveness in block terminators accurately: if the copy
+                // ends up being coalesced, we don't want a "hole" in the terminator, since
+                // reification could decide that the register is free for parallel copy resolution
+                // when it isn't.
+                self.open_use_range(outgoing_vreg, ProgramPoint::before(block_range.end), block);
+
                 // We can safely treat the last instruction in the block as using the value for
                 // spill weight purposes, because we know the copy (if there is one) will ultimately
                 // be placed here, as critical edges are already split.

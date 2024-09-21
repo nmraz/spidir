@@ -40,6 +40,13 @@ pub enum VerifierError {
     UndefCopySource {
         copy_idx: u32,
     },
+    BadGhostCopyBlock {
+        block: Block,
+    },
+    BadGhostCopySource {
+        ghost_copy_idx: u32,
+        found_vreg: Option<VirtRegNum>,
+    },
 }
 
 impl VerifierError {
@@ -102,8 +109,10 @@ impl<'a, M: MachineCore> fmt::Display for DisplayVerifierError<'a, M> {
                 op,
                 found_vreg,
             } => {
-                let found_vreg =
-                    found_vreg.map_or("garbage".to_owned(), |found_vreg| found_vreg.to_string());
+                let found_vreg = found_vreg
+                    .map_or("garbage".to_owned(), |found_vreg: VirtRegNum| {
+                        found_vreg.to_string()
+                    });
                 let expected_vreg = self.lir.instr_uses(instr)[op as usize].reg().reg_num();
                 write!(
                     f,
@@ -122,6 +131,24 @@ impl<'a, M: MachineCore> fmt::Display for DisplayVerifierError<'a, M> {
                     copy.copy.to.display::<M>(),
                     copy.copy.from.display::<M>(),
                     copy.instr
+                )
+            }
+            VerifierError::BadGhostCopyBlock { block } => {
+                write!(f, "block '{block}' contained exit ghost copies despite not having a single successor")
+            }
+            VerifierError::BadGhostCopySource {
+                ghost_copy_idx,
+                found_vreg,
+            } => {
+                let found_vreg =
+                    found_vreg.map_or("garbage".to_owned(), |found_vreg| found_vreg.to_string());
+                let ghost_copy = &self.assignment.block_exit_ghost_copies[ghost_copy_idx as usize];
+                let block = ghost_copy.block;
+                let expected_vreg = ghost_copy.from_vreg;
+                write!(
+                    f,
+                    "expected ghost copy for '{}' at end of '{block}' to be from {expected_vreg}, found {found_vreg}",
+                    ghost_copy.assignment.display::<M>(),
                 )
             }
         }
@@ -154,6 +181,7 @@ pub fn verify<M: MachineCore>(
         trace!("verifying {block}");
 
         verify_block_instrs(lir, assignment, block, &mut reg_state)?;
+        verify_block_ghost_copies(cfg_ctx, assignment, block, &mut reg_state)?;
 
         for &succ in cfg_ctx.cfg.block_succs(block) {
             trace!("    succ {succ}");
@@ -166,6 +194,32 @@ pub fn verify<M: MachineCore>(
 
 type KnownRegState = FxHashMap<OperandAssignment, VirtRegNum>;
 type BlockKnownRegState = SecondaryMap<Block, Option<KnownRegState>>;
+
+fn verify_block_ghost_copies(
+    cfg_ctx: &CfgContext,
+    assignment: &Assignment,
+    block: Block,
+    reg_state: &mut KnownRegState,
+) -> Result<(), VerifierError> {
+    let ghost_copy_range = assignment.block_exit_ghost_copy_range(block);
+    if !ghost_copy_range.is_empty() && cfg_ctx.cfg.block_succs(block).len() != 1 {
+        return Err(VerifierError::BadGhostCopyBlock { block });
+    }
+
+    for ghost_copy_idx in ghost_copy_range {
+        let ghost_copy = &assignment.block_exit_ghost_copies[ghost_copy_idx];
+        let operand = ghost_copy.assignment;
+        check_assigned_vreg(operand, ghost_copy.from_vreg, &*reg_state).map_err(|found_vreg| {
+            VerifierError::BadGhostCopySource {
+                ghost_copy_idx: ghost_copy_idx.try_into().unwrap(),
+                found_vreg,
+            }
+        })?;
+        reg_state.insert(operand, ghost_copy.to_vreg);
+    }
+
+    Ok(())
+}
 
 fn verify_block_instrs<M: MachineCore>(
     lir: &Lir<M>,
@@ -254,9 +308,16 @@ fn check_use_assignment(
     use_assignment: OperandAssignment,
     reg_state: &KnownRegState,
 ) -> Result<(), Option<VirtRegNum>> {
-    let vreg = use_op.reg().reg_num();
-    let found_vreg = reg_state.get(&use_assignment).copied();
-    if found_vreg != Some(vreg) {
+    check_assigned_vreg(use_assignment, use_op.reg().reg_num(), reg_state)
+}
+
+fn check_assigned_vreg(
+    assignment: OperandAssignment,
+    expected_vreg: VirtRegNum,
+    reg_state: &KnownRegState,
+) -> Result<(), Option<VirtRegNum>> {
+    let found_vreg = reg_state.get(&assignment).copied();
+    if found_vreg != Some(expected_vreg) {
         return Err(found_vreg);
     }
     Ok(())

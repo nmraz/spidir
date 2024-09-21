@@ -11,7 +11,7 @@ use smallvec::{smallvec, SmallVec};
 use crate::{
     cfg::Block,
     isel::IselContext,
-    lir::{DefOperand, PhysReg, PhysRegSet, RegClass, StackSlot, UseOperand, VirtReg},
+    lir::{DefOperand, PhysReg, PhysRegSet, RegClass, StackSlot, UseOperand, VirtRegNum},
     machine::{MachineIselError, MachineLower, ParamLoc},
 };
 
@@ -279,7 +279,7 @@ fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Fu
 fn emit_callind(
     ctx: &mut IselContext<'_, '_, X64Machine>,
     node: Node,
-    target: VirtReg,
+    target: VirtRegNum,
     args: impl Iterator<Item = DepValue>,
 ) {
     emit_call_wrapper(ctx, node, args, |ctx, retvals, args| {
@@ -394,7 +394,7 @@ fn emit_udiv(
     ctx: &mut IselContext<'_, '_, X64Machine>,
     op1: DepValue,
     op2: DepValue,
-) -> (VirtReg, VirtReg) {
+) -> (VirtRegNum, VirtRegNum) {
     let ty = ctx.value_type(op1);
     let op1 = ctx.get_value_vreg(op1);
     let op2 = ctx.get_value_vreg(op2);
@@ -424,7 +424,7 @@ fn emit_sdiv(
     ctx: &mut IselContext<'_, '_, X64Machine>,
     op1: DepValue,
     op2: DepValue,
-) -> (VirtReg, VirtReg) {
+) -> (VirtRegNum, VirtRegNum) {
     let ty = ctx.value_type(op1);
     let op1 = ctx.get_value_vreg(op1);
     let op2 = ctx.get_value_vreg(op2);
@@ -472,9 +472,9 @@ fn emit_movsx_rr(
 fn emit_shift_ri(
     ctx: &mut IselContext<'_, '_, X64Machine>,
     ty: Type,
-    input: VirtReg,
+    input: VirtRegNum,
     amount: u8,
-    output: VirtReg,
+    output: VirtRegNum,
     op: ShiftOp,
 ) {
     ctx.emit_instr(

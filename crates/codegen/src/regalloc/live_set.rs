@@ -65,8 +65,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     if let UseOperandConstraint::TiedToDef(i) = use_op.constraint() {
                         let def = self.lir.instr_defs(instr)[i as usize];
                         candidates.push(CopyCandidate {
-                            src: use_op.reg().reg_num(),
-                            dest: def.reg().reg_num(),
+                            src: use_op.reg(),
+                            dest: def.reg(),
                             weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
                         });
                     }
@@ -86,8 +86,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     // terminator for weight purposes.
                     let terminator = self.lir.block_terminator(block);
                     candidates.push(CopyCandidate {
-                        src: outgoing.reg_num(),
-                        dest: incoming.reg_num(),
+                        src: outgoing,
+                        dest: incoming,
                         weight: get_instr_weight(self.lir, self.cfg_ctx, terminator),
                     });
                 }

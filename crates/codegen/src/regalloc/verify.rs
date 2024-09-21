@@ -113,7 +113,7 @@ impl<'a, M: MachineCore> fmt::Display for DisplayVerifierError<'a, M> {
                     .map_or("garbage".to_owned(), |found_vreg: VirtRegNum| {
                         found_vreg.to_string()
                     });
-                let expected_vreg = self.lir.instr_uses(instr)[op as usize].reg().reg_num();
+                let expected_vreg = self.lir.instr_uses(instr)[op as usize].reg();
                 write!(
                     f,
                     "expected {instr} use {op} to be of {expected_vreg}, found {found_vreg}"
@@ -165,7 +165,7 @@ pub fn verify<M: MachineCore>(
     let entry = cfg_ctx.block_order[0];
     let mut reg_state = KnownRegState::default();
     for (&live_in, &preg) in lir.block_params(entry).iter().zip(lir.live_in_regs()) {
-        reg_state.insert(OperandAssignment::Reg(preg), live_in.reg_num());
+        reg_state.insert(OperandAssignment::Reg(preg), live_in);
     }
 
     let mut worklist = VecDeque::new();
@@ -297,7 +297,7 @@ fn verify_instr<M: MachineCore>(
         if !def_matches_constraint(def_op, def_assignment) {
             return Err(VerifierError::DefConstraintViolation { instr, op: i });
         }
-        reg_state.insert(def_assignment, def_op.reg().reg_num());
+        reg_state.insert(def_assignment, def_op.reg());
     }
 
     Ok(())
@@ -308,7 +308,7 @@ fn check_use_assignment(
     use_assignment: OperandAssignment,
     reg_state: &KnownRegState,
 ) -> Result<(), Option<VirtRegNum>> {
-    check_assigned_vreg(use_assignment, use_op.reg().reg_num(), reg_state)
+    check_assigned_vreg(use_assignment, use_op.reg(), reg_state)
 }
 
 fn check_assigned_vreg(

@@ -106,7 +106,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
                     .iter()
                     .zip(self.lir.block_params(self.cfg_ctx.block_order[0]))
                     .format_with(", ", |(&preg, &vreg), f| {
-                        f(&format_args!("{} -> {}", M::reg_name(preg), vreg.reg_num()))
+                        f(&format_args!("{} -> {}", M::reg_name(preg), vreg))
                     })
             )
         }

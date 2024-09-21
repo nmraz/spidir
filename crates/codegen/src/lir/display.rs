@@ -9,7 +9,7 @@ use crate::{
 
 use super::{
     DefOperand, DefOperandConstraint, Instr, Lir, PhysRegSet, RegClass, UseOperand,
-    UseOperandConstraint, VirtReg, VirtRegNum,
+    UseOperandConstraint, VirtRegNum,
 };
 
 pub struct DisplayVirtRegWithClass<M> {
@@ -31,7 +31,7 @@ pub struct DisplayUseOperand<'a, M> {
 
 impl<M: MachineCore> fmt::Display for DisplayUseOperand<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.operand.reg.reg_num())?;
+        write!(f, "{}", self.operand.reg())?;
         match self.operand.constraint {
             UseOperandConstraint::Any => f.write_str("(any)")?,
             UseOperandConstraint::AnyReg => f.write_str("(reg)")?,
@@ -50,7 +50,7 @@ pub struct DisplayDefOperand<'a, M: MachineCore> {
 
 impl<M: MachineCore> fmt::Display for DisplayDefOperand<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let vreg = self.operand.reg.reg_num();
+        let vreg = self.operand.reg();
         write!(f, "{}", self.lir.display_vreg_with_class(vreg))?;
         match self.operand.constraint {
             DefOperandConstraint::Any => f.write_str("(any)")?,
@@ -114,7 +114,7 @@ impl<M: MachineCore> fmt::Display for DisplayInstrData<'_, M> {
 
 pub(super) fn display_block_params<'a, M: MachineCore>(
     lir: &'a Lir<M>,
-    block_params: &'a [VirtReg],
+    block_params: &'a [VirtRegNum],
 ) -> DisplayBlockParams<'a, M> {
     DisplayBlockParams {
         lir,
@@ -125,7 +125,7 @@ pub(super) fn display_block_params<'a, M: MachineCore>(
 
 pub struct DisplayBlockParams<'a, M: MachineCore> {
     lir: &'a Lir<M>,
-    block_params: &'a [VirtReg],
+    block_params: &'a [VirtRegNum],
     _marker: PhantomData<M>,
 }
 
@@ -135,12 +135,8 @@ impl<M: MachineCore> fmt::Display for DisplayBlockParams<'_, M> {
             write!(
                 f,
                 "[{}]",
-                self.block_params.iter().format_with(", ", |param, f| {
-                    let param = param.reg_num();
-                    f(&format_args!(
-                        "{param}:{}",
-                        M::reg_class_name(self.lir.vreg_class(param))
-                    ))
+                self.block_params.iter().format_with(", ", |&param, f| {
+                    f(&self.lir.display_vreg_with_class(param))
                 })
             )?;
         }
@@ -201,8 +197,7 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
                         .block_params(block)
                         .iter()
                         .zip(&self.lir.live_in_regs)
-                        .format_with(", ", |(param, reg), f| {
-                            let param = param.reg_num();
+                        .format_with(", ", |(&param, reg), f| {
                             f(&format_args!(
                                 "{}(${})",
                                 self.lir.display_vreg_with_class(param),

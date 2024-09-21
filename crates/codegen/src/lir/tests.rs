@@ -1,3 +1,4 @@
+use cranelift_entity::packed_option::ReservedValue;
 use expect_test::{expect, Expect};
 
 use crate::{
@@ -7,7 +8,7 @@ use crate::{
 
 use super::{
     Builder, DefOperand, Lir, MemLayout, OperandPos, PhysReg, PhysRegSet, RegClass, UseOperand,
-    UseOperandConstraint, VirtReg, VirtRegNum,
+    UseOperandConstraint, VirtRegNum,
 };
 
 // Work around a possible dead_code/traits issue (https://github.com/rust-lang/rust/issues/122833):
@@ -59,8 +60,8 @@ fn push_instr_with_clobbers<const U: usize>(
     defs: impl IntoIterator<Item = DefOperand>,
     uses: [(UseOperandConstraint, OperandPos); U],
     clobbers: PhysRegSet,
-) -> [VirtReg; U] {
-    let mut use_regs = [VirtReg::new(VirtRegNum::from_u32(0), RC_GPR); U];
+) -> [VirtRegNum; U] {
+    let mut use_regs = [VirtRegNum::reserved_value(); U];
     builder.build_instrs(|mut b| {
         for use_reg in &mut use_regs {
             *use_reg = b.create_vreg(RC_GPR);
@@ -82,7 +83,7 @@ fn push_instr<const U: usize>(
     instr: DummyInstr,
     defs: impl IntoIterator<Item = DefOperand>,
     uses: [(UseOperandConstraint, OperandPos); U],
-) -> [VirtReg; U] {
+) -> [VirtRegNum; U] {
     push_instr_with_clobbers(builder, instr, defs, uses, PhysRegSet::empty())
 }
 
@@ -266,8 +267,8 @@ fn multi_block() {
             (UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
-    builder.copy_vreg(right_param2.reg_num(), param2.reg_num());
-    builder.copy_vreg(left_param2.reg_num(), param2.reg_num());
+    builder.copy_vreg(right_param2, param2);
+    builder.copy_vreg(left_param2, param2);
 
     builder.set_incoming_block_params([param1, param2, left_param3]);
     builder.advance_block();
@@ -332,7 +333,7 @@ fn block_param_vreg_copies() {
         [],
     );
 
-    builder.copy_vreg(outgoing_param.reg_num(), five.reg_num());
+    builder.copy_vreg(outgoing_param, five);
     builder.advance_block();
 
     let lir = builder.finish();

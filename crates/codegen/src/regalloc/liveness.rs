@@ -76,7 +76,6 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             }
 
             for &outgoing_vreg in self.lir.outgoing_block_params(block) {
-                let outgoing_vreg = outgoing_vreg.reg_num();
                 trace!("    outgoing param {outgoing_vreg}");
 
                 // We can safely treat the last instruction in the block as using the value for
@@ -97,7 +96,6 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             }
 
             for &incoming_vreg in self.lir.block_params(block) {
-                let incoming_vreg = incoming_vreg.reg_num();
                 trace!("    incoming param {incoming_vreg}");
                 self.record_def(
                     incoming_vreg,
@@ -146,7 +144,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             .iter()
             .zip(self.lir.block_params(self.cfg_ctx.block_order[0]))
         {
-            let Some(&first_range) = self.vreg_ranges[vreg.reg_num()].first() else {
+            let Some(&first_range) = self.vreg_ranges[vreg].first() else {
                 continue;
             };
 
@@ -220,7 +218,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             };
 
             let live_range = self.record_instr_def(
-                def_op.reg().reg_num(),
+                def_op.reg(),
                 instr,
                 def_constraint_needs_reg(def_op.constraint()),
                 range_op_pos,
@@ -260,7 +258,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
 
         // Now that defs have been processed, move on to the uses.
         for use_op in uses {
-            let vreg = use_op.reg().reg_num();
+            let vreg = use_op.reg();
 
             let op_pos = ProgramPoint::for_operand(instr, use_op.pos()).next();
             let pos = match use_op.constraint() {
@@ -541,26 +539,26 @@ fn compute_block_liveness<M: MachineRegalloc>(
         let raw_defs = &mut raw_block_defs[block];
 
         for &outgoing_vreg in lir.outgoing_block_params(block) {
-            trace!("    use {}", outgoing_vreg.reg_num());
-            raw_uses.add(outgoing_vreg.reg_num());
+            trace!("    use {}", outgoing_vreg);
+            raw_uses.add(outgoing_vreg);
         }
 
         for instr in lir.block_instrs(block) {
             // We can process defs/uses in bulk here because everything is in SSA.
             for use_op in lir.instr_uses(instr) {
-                trace!("    use {}", use_op.reg().reg_num());
-                raw_uses.add(use_op.reg().reg_num());
+                trace!("    use {}", use_op.reg());
+                raw_uses.add(use_op.reg());
             }
 
             for def_op in lir.instr_defs(instr) {
-                trace!("    def {}", def_op.reg().reg_num());
-                raw_defs.add(def_op.reg().reg_num());
+                trace!("    def {}", def_op.reg());
+                raw_defs.add(def_op.reg());
             }
         }
 
         for &incoming_vreg in lir.block_params(block) {
-            trace!("    def {}", incoming_vreg.reg_num());
-            raw_defs.add(incoming_vreg.reg_num());
+            trace!("    def {}", incoming_vreg);
+            raw_defs.add(incoming_vreg);
         }
     }
 

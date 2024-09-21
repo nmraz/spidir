@@ -123,7 +123,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .iter()
             .zip(self.lir.live_in_regs())
         {
-            let Some(&first_range) = self.vreg_ranges[block_param.reg_num()].first() else {
+            let Some(&first_range) = self.vreg_ranges[block_param].first() else {
                 continue;
             };
             let assignment = self.get_range_assignment(first_range);
@@ -132,7 +132,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 copies,
                 Instr::new(0),
                 ParallelCopyPhase::Before,
-                block_param.class(),
+                self.lir.vreg_class(block_param),
                 OperandAssignment::Reg(preg),
                 assignment,
             );
@@ -334,7 +334,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             .lir
                             .block_params(block)
                             .iter()
-                            .any(|param| param.reg_num() == vreg));
+                            .any(|&param| param == vreg));
 
                         block_param_ins.push(BlockParamIn {
                             block,
@@ -360,13 +360,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     .iter()
                     .copied()
                     .enumerate()
-                    .filter(|(_idx, param)| param.reg_num() == vreg)
+                    .filter(|(_idx, param)| *param == vreg)
                     .map(|(idx, _param)| idx);
 
                 for param_idx in outgoing_param_uses {
                     trace!("      out (block param {param_idx})");
                     for &succ in self.cfg_ctx.cfg.block_succs(block) {
-                        let to_vreg = self.lir.block_params(succ)[param_idx].reg_num();
+                        let to_vreg = self.lir.block_params(succ)[param_idx];
                         let key = BlockParamEdgeKey {
                             from_block: block,
                             to_vreg,
@@ -500,7 +500,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         .instr_defs(instr)
                         .iter()
                         .enumerate()
-                        .find(|(_, def_op)| def_op.reg().reg_num() == vreg)
+                        .find(|(_, def_op)| def_op.reg() == vreg)
                         .unwrap();
 
                     if let DefOperandConstraint::Fixed(preg) = def_op.constraint() {
@@ -535,7 +535,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     let instr = range_instr.instr();
                     // An instruction may use a vreg multiple times.
                     for (i, use_op) in self.lir.instr_uses(instr).iter().enumerate() {
-                        if use_op.reg().reg_num() != vreg {
+                        if use_op.reg() != vreg {
                             continue;
                         }
 

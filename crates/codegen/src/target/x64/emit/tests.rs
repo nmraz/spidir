@@ -10,7 +10,7 @@ use itertools::Itertools;
 
 use super::*;
 
-fn disasm_instr(code: &[u8]) -> String {
+fn disasm_instr(code: &[u8], addr: u64) -> String {
     let cs = Capstone::new()
         .x86()
         .mode(ArchMode::Mode64)
@@ -18,7 +18,7 @@ fn disasm_instr(code: &[u8]) -> String {
         .build()
         .expect("failed to create disassembler");
 
-    let insns = cs.disasm_all(code, 0).expect("failed to disassemble");
+    let insns = cs.disasm_all(code, addr).expect("failed to disassemble");
     let insns = insns.as_ref();
     assert_eq!(insns.len(), 1);
     let insn = &insns[0];
@@ -36,7 +36,26 @@ fn disasm_instr(code: &[u8]) -> String {
 fn check_emit_instr(f: impl FnOnce(&mut CodeBuffer<X64Machine>), expected: Expect) {
     let mut buffer = CodeBuffer::new();
     f(&mut buffer);
-    expected.assert_eq(&disasm_instr(&buffer.finish().code));
+    expected.assert_eq(&disasm_instr(&buffer.finish().code, 0));
+}
+
+fn check_emit_rel_back(
+    offset: u32,
+    f: impl FnOnce(&mut CodeBuffer<X64Machine>, Label),
+    expected: Expect,
+) {
+    let mut buffer = CodeBuffer::new();
+    let label = buffer.create_label();
+    buffer.bind_label(label);
+
+    for _ in 0..offset {
+        buffer.emit(&[0x90]);
+    }
+
+    f(&mut buffer, label);
+
+    let instr = disasm_instr(&buffer.finish().code[offset as usize..], offset as u64);
+    expected.assert_eq(&instr);
 }
 
 fn check_emit_addr_mode(addr: BaseIndexOff, expected: Expect) {
@@ -471,4 +490,54 @@ fn disp32_addr_mode() {
         },
         expect!["41 89 87 00 00 01 00      mov dword ptr [r15 + 0x10000], eax"],
     );
+}
+
+fn check_emit_jmp(offset: u32, expected: Expect) {
+    check_emit_rel_back(
+        offset,
+        |buffer, label| {
+            emit_jmp(buffer, label);
+        },
+        expected,
+    );
+}
+
+#[test]
+fn emit_jmp_back_small() {
+    check_emit_jmp(5, expect!["eb f9                     jmp 0"]);
+}
+
+#[test]
+fn emit_jmp_back_small_last() {
+    check_emit_jmp(126, expect!["eb 80                     jmp 0"]);
+}
+
+#[test]
+fn emit_jmp_back_large_first() {
+    check_emit_jmp(127, expect!["e9 7c ff ff ff            jmp 0"]);
+}
+
+fn check_emit_jcc(offset: u32, expected: Expect) {
+    check_emit_rel_back(
+        offset,
+        |buffer, label| {
+            emit_jcc(buffer, CondCode::E, label);
+        },
+        expected,
+    );
+}
+
+#[test]
+fn emit_jcc_back_small() {
+    check_emit_jcc(5, expect!["74 f9                     je 0"]);
+}
+
+#[test]
+fn emit_jcc_back_small_last() {
+    check_emit_jcc(126, expect!["74 80                     je 0"]);
+}
+
+#[test]
+fn emit_jcc_back_large_first() {
+    check_emit_jcc(127, expect!["0f 84 7b ff ff ff         je 0"]);
 }

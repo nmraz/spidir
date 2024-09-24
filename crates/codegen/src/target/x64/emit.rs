@@ -659,15 +659,38 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
 }
 
 fn emit_jmp(buffer: &mut CodeBuffer<X64Machine>, target: Label) {
-    buffer.emit(&[0xe9]);
-    buffer.emit_fixup(target, X64Fixup::Rela4(-4));
-    buffer.emit(&0u32.to_le_bytes());
+    emit_rel(buffer, &[0xeb], &[0xe9], target);
 }
 
 fn emit_jcc(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, target: Label) {
-    buffer.emit(&[0xf, 0x80 + encode_cond_code(code)]);
-    buffer.emit_fixup(target, X64Fixup::Rela4(-4));
-    buffer.emit(&0u32.to_le_bytes());
+    let code = encode_cond_code(code);
+    emit_rel(buffer, &[0x70 + code], &[0xf, 0x80 + code], target);
+}
+
+fn emit_rel(
+    buffer: &mut CodeBuffer<X64Machine>,
+    rel8_opcode: &[u8],
+    rel32_opcode: &[u8],
+    target: Label,
+) {
+    if let Some(offset) = buffer.resolve_label(target) {
+        let rel = (offset as i64 - buffer.offset() as i64) as u64;
+        let rel8 = rel - (rel8_opcode.len() as u64 + 1);
+
+        if is_sint::<8>(rel8) {
+            buffer.emit(rel8_opcode);
+            buffer.emit(&[rel8 as u8]);
+        } else {
+            let rel32 = rel - (rel32_opcode.len() as u64 + 4);
+            buffer.emit(rel32_opcode);
+            buffer.emit(&(rel32 as u32).to_le_bytes());
+        }
+    } else {
+        // Conservatively use the full rel32 version if we have an unknown target.
+        buffer.emit(rel32_opcode);
+        buffer.emit_fixup(target, X64Fixup::Rela4(-4));
+        buffer.emit(&0u32.to_le_bytes());
+    }
 }
 
 // Prefixes and encoding

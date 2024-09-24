@@ -8,7 +8,7 @@ func @iota(ptr, i64) {
     # nextln: 000009: 48 3b f0                        cmp rsi, rax
     # nextln: 00000c: 0f 84 05 00 00 00               je 0x17
     # nextln: 000012: e9 05 00 00 00                  jmp 0x1c
-    # nextln: 000017: e9 3f 00 00 00                  jmp 0x5b
+    # nextln: 000017: e9 3c 00 00 00                  jmp 0x58
     # nextln: 00001c: b9 03 00 00 00                  mov ecx, 3
     # nextln: 000021: ba 01 00 00 00                  mov edx, 1
     # nextln: 000026: e9 00 00 00 00                  jmp 0x2b
@@ -20,13 +20,13 @@ func @iota(ptr, i64) {
     # nextln: 00003a: 4c 03 c2                        add r8, rdx
     # nextln: 00003d: 49 89 01                        mov qword ptr [r9], rax
     # nextln: 000040: 4c 3b c6                        cmp r8, rsi
-    # nextln: 000043: 0f 84 0d 00 00 00               je 0x56
+    # nextln: 000043: 0f 84 0a 00 00 00               je 0x53
     # nextln: 000049: e9 00 00 00 00                  jmp 0x4e
     # nextln: 00004e: 4c 89 c0                        mov rax, r8
-    # nextln: 000051: e9 d5 ff ff ff                  jmp 0x2b
-    # nextln: 000056: e9 00 00 00 00                  jmp 0x5b
-    # nextln: 00005b: 5d                              pop rbp
-    # nextln: 00005c: c3                              ret
+    # nextln: 000051: eb d8                           jmp 0x2b
+    # nextln: 000053: e9 00 00 00 00                  jmp 0x58
+    # nextln: 000058: 5d                              pop rbp
+    # nextln: 000059: c3                              ret
 
     %entry_ctrl:ctrl, %arr:ptr, %n:i64 = entry
     %zero:i64 = iconst 0

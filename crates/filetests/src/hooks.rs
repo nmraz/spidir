@@ -10,6 +10,13 @@ pub fn init_log_capture() {
     log::set_logger(&CapturingLogger).unwrap();
 }
 
+pub fn with_panic_capture<R>(f: impl FnOnce() -> R) -> R {
+    panic::set_hook(Box::new(panic_hook));
+    let ret = f();
+    let _ = panic::take_hook();
+    ret
+}
+
 pub fn capture_logs<R>(f: impl FnOnce() -> R) -> (R, Vec<String>) {
     clear_captured_logs();
     let ret = f();
@@ -19,9 +26,7 @@ pub fn capture_logs<R>(f: impl FnOnce() -> R) -> (R, Vec<String>) {
 
 pub fn catch_panic_message<R>(f: impl FnOnce() -> R + UnwindSafe) -> Result<R, String> {
     clear_panic_message();
-    panic::set_hook(Box::new(panic_hook));
     let ret = panic::catch_unwind(f);
-    let _ = panic::take_hook();
     ret.map_err(|_| take_panic_message().unwrap_or("unknown panic".to_owned()))
 }
 

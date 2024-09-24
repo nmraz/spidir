@@ -12,7 +12,7 @@ use std::{
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
 use filetests::{
-    hooks::{capture_logs, init_log_capture},
+    hooks::{capture_logs, init_log_capture, with_panic_capture},
     run_file_test, TestOutcome, UpdateMode,
 };
 use glob::Pattern;
@@ -118,26 +118,30 @@ fn main() -> Result<()> {
 
     let start_time = Instant::now();
 
-    cases.par_iter().try_for_each(|case_path| -> Result<()> {
-        let case_name = case_path.strip_prefix(&case_dir)?;
-        let display_prefix = format!("test {} ... ", case_name.display());
+    // The panic hook is a global resource, so we need to set it up in advance, but try to minimize
+    // the period of time the surrounding code is running without one.
+    with_panic_capture(|| {
+        cases.par_iter().try_for_each(|case_path| -> Result<()> {
+            let case_name = case_path.strip_prefix(&case_dir)?;
+            let display_prefix = format!("test {} ... ", case_name.display());
 
-        let (result, logs) = capture_logs(|| run_file_test(case_path, update_mode));
-        match result {
-            Ok(TestOutcome::Ok) => {
-                passed.fetch_add(1, Ordering::Relaxed);
-                eprintln!("{display_prefix}{OK}");
+            let (result, logs) = capture_logs(|| run_file_test(case_path, update_mode));
+            match result {
+                Ok(TestOutcome::Ok) => {
+                    passed.fetch_add(1, Ordering::Relaxed);
+                    eprintln!("{display_prefix}{OK}");
+                }
+                Ok(TestOutcome::Update(())) => {
+                    updated.fetch_add(1, Ordering::Relaxed);
+                    eprintln!("{display_prefix}{UPDATED}")
+                }
+                Err(err) => {
+                    failures.lock().unwrap().push((case_name, err, logs));
+                    eprintln!("{display_prefix}{FAILED}")
+                }
             }
-            Ok(TestOutcome::Update(())) => {
-                updated.fetch_add(1, Ordering::Relaxed);
-                eprintln!("{display_prefix}{UPDATED}")
-            }
-            Err(err) => {
-                failures.lock().unwrap().push((case_name, err, logs));
-                eprintln!("{display_prefix}{FAILED}")
-            }
-        }
-        Ok(())
+            Ok(())
+        })
     })?;
 
     let test_duration = start_time.elapsed();

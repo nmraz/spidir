@@ -353,6 +353,37 @@ fn emit_mov_rr(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, src: PhysReg)
     emit_mov_rm_r(buffer, FullOperandSize::S64, RegMem::Reg(dest), src);
 }
 
+fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
+    if is_uint::<32>(imm) {
+        // Smallest case: move imm32 to r32, clearing upper bits.
+        let mut rex = RexPrefix::new();
+        let dest = rex.encode_modrm_base(dest);
+        rex.emit(buffer);
+        buffer.emit(&[0xb8 + dest]);
+        buffer.emit(&(imm as u32).to_le_bytes());
+    } else if is_sint::<32>(imm) {
+        // Next smallest case: sign-extend imm32 to r64.
+        let mut rex = RexPrefix::new();
+        let dest = rex.encode_modrm_base(dest);
+        rex.encode_operand_size(OperandSize::S64);
+        rex.emit(buffer);
+        buffer.emit(&[0xc7, encode_modrm_r(0, dest)]);
+        buffer.emit(&(imm as u32).to_le_bytes());
+    } else {
+        // Large case: use full 64-bit immediate.
+        emit_movabs_ri(buffer, dest, imm);
+    }
+}
+
+fn emit_movabs_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
+    let mut rex = RexPrefix::new();
+    let dest = rex.encode_modrm_base(dest);
+    rex.encode_operand_size(OperandSize::S64);
+    rex.emit(buffer);
+    buffer.emit(&[0xb8 + dest]);
+    buffer.emit(&imm.to_le_bytes());
+}
+
 fn emit_movzx_r_rm(
     buffer: &mut CodeBuffer<X64Machine>,
     full_op_size: FullOperandSize,
@@ -485,6 +516,15 @@ fn emit_call_rm(buffer: &mut CodeBuffer<X64Machine>, target: RegMem) {
     modrm_sib.emit(buffer);
 }
 
+fn emit_jmp(buffer: &mut CodeBuffer<X64Machine>, target: Label) {
+    emit_rel(buffer, &[0xeb], &[0xe9], target);
+}
+
+fn emit_jcc(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, target: Label) {
+    let code = encode_cond_code(code);
+    emit_rel(buffer, &[0x70 + code], &[0xf, 0x80 + code], target);
+}
+
 fn emit_ret(buffer: &mut CodeBuffer<X64Machine>) {
     buffer.emit(&[0xc3]);
 }
@@ -594,37 +634,6 @@ fn emit_shift_rm_i(
     }
 }
 
-fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
-    if is_uint::<32>(imm) {
-        // Smallest case: move imm32 to r32, clearing upper bits.
-        let mut rex = RexPrefix::new();
-        let dest = rex.encode_modrm_base(dest);
-        rex.emit(buffer);
-        buffer.emit(&[0xb8 + dest]);
-        buffer.emit(&(imm as u32).to_le_bytes());
-    } else if is_sint::<32>(imm) {
-        // Next smallest case: sign-extend imm32 to r64.
-        let mut rex = RexPrefix::new();
-        let dest = rex.encode_modrm_base(dest);
-        rex.encode_operand_size(OperandSize::S64);
-        rex.emit(buffer);
-        buffer.emit(&[0xc7, encode_modrm_r(0, dest)]);
-        buffer.emit(&(imm as u32).to_le_bytes());
-    } else {
-        // Large case: use full 64-bit immediate.
-        emit_movabs_ri(buffer, dest, imm);
-    }
-}
-
-fn emit_movabs_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
-    let mut rex = RexPrefix::new();
-    let dest = rex.encode_modrm_base(dest);
-    rex.encode_operand_size(OperandSize::S64);
-    rex.emit(buffer);
-    buffer.emit(&[0xb8 + dest]);
-    buffer.emit(&imm.to_le_bytes());
-}
-
 fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, imm: i32) {
     let mut is_imm8 = is_sint::<8>(imm as u64);
     let mut opcode = if is_imm8 { 0x83 } else { 0x81 };
@@ -656,15 +665,6 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
     } else {
         buffer.emit(&imm.to_le_bytes());
     }
-}
-
-fn emit_jmp(buffer: &mut CodeBuffer<X64Machine>, target: Label) {
-    emit_rel(buffer, &[0xeb], &[0xe9], target);
-}
-
-fn emit_jcc(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, target: Label) {
-    let code = encode_cond_code(code);
-    emit_rel(buffer, &[0x70 + code], &[0xf, 0x80 + code], target);
 }
 
 fn emit_rel(

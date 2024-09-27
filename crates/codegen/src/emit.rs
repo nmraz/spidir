@@ -1,6 +1,7 @@
 use alloc::vec::Vec;
 use cranelift_entity::{entity_impl, packed_option::ReservedValue, PrimaryMap, SecondaryMap};
 use ir::node::FunctionRef;
+use smallvec::SmallVec;
 
 use crate::{
     cfg::{Block, CfgContext},
@@ -39,11 +40,16 @@ struct Fixup<F> {
     kind: F,
 }
 
+struct LastBranch {
+    start: u32,
+}
+
 pub struct CodeBuffer<M: MachineEmit> {
     bytes: Vec<u8>,
     labels: PrimaryMap<Label, Option<u32>>,
     fixups: Vec<Fixup<M::Fixup>>,
     relocs: Vec<Reloc>,
+    last_branches: SmallVec<[LastBranch; 4]>,
 }
 
 impl<M: MachineEmit> CodeBuffer<M> {
@@ -53,6 +59,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
             labels: PrimaryMap::new(),
             fixups: Vec::new(),
             relocs: Vec::new(),
+            last_branches: SmallVec::new(),
         }
     }
 
@@ -61,29 +68,28 @@ impl<M: MachineEmit> CodeBuffer<M> {
     }
 
     pub fn instr(&mut self, f: impl FnOnce(&mut InstrBuffer<'_>)) {
-        f(&mut InstrBuffer {
-            bytes: &mut self.bytes,
-        });
+        self.instr_raw(f);
+        // This isn't a tracked branch.
+        self.last_branches.clear();
     }
 
     pub fn instr_with_reloc(
         &mut self,
-        instr_offset: u32,
         target: FunctionRef,
         addend: i64,
-        kind: RelocKind,
+        reloc_instr_offset: u32,
+        reloc_kind: RelocKind,
         f: impl FnOnce(&mut InstrBuffer<'_>),
     ) {
-        let offset = self.offset() + instr_offset;
+        let offset = self.offset() + reloc_instr_offset;
         self.relocs.push(Reloc {
-            kind,
+            kind: reloc_kind,
             offset,
             target,
             addend,
         });
-        f(&mut InstrBuffer {
-            bytes: &mut self.bytes,
-        });
+        // This isn't a tracked branch, so use `instr` and not `instr_raw`.
+        self.instr(f);
         // We don't actually know when the reloc ends, but at the very least it shouldn't start
         // outside the emitted instruction.
         debug_assert!(offset <= self.offset());
@@ -91,22 +97,27 @@ impl<M: MachineEmit> CodeBuffer<M> {
 
     pub fn instr_with_fixup(
         &mut self,
-        instr_offset: u32,
         label: Label,
-        kind: M::Fixup,
+        fixup_instr_offset: u32,
+        fixup_kind: M::Fixup,
         f: impl FnOnce(&mut InstrBuffer<'_>),
     ) {
-        let offset = self.offset() + instr_offset;
-        self.fixups.push(Fixup {
-            offset,
-            label,
-            kind,
-        });
-        let fixup_end_offset = offset + u32::try_from(kind.byte_size()).unwrap();
-        f(&mut InstrBuffer {
-            bytes: &mut self.bytes,
-        });
-        debug_assert!(fixup_end_offset <= self.offset());
+        self.instr_with_fixup_raw(label, fixup_instr_offset, fixup_kind, f);
+        // This isn't a tracked branch.
+        self.last_branches.clear();
+    }
+
+    pub fn branch(
+        &mut self,
+        target: Label,
+        fixup_instr_offset: u32,
+        fixup_kind: M::Fixup,
+        f: impl FnOnce(&mut InstrBuffer<'_>),
+    ) {
+        let start = self.offset();
+        // Note: we're recording fixups and branches in lock step.
+        self.instr_with_fixup_raw(target, fixup_instr_offset, fixup_kind, f);
+        self.last_branches.push(LastBranch { start });
     }
 
     pub fn create_label(&mut self) -> Label {
@@ -115,6 +126,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
 
     pub fn bind_label(&mut self, label: Label) {
         assert!(self.labels[label].is_none(), "label already bound");
+        self.prune_branches_before_label(label);
         self.labels[label] = Some(self.offset());
     }
 
@@ -143,6 +155,44 @@ impl<M: MachineEmit> CodeBuffer<M> {
             code: self.bytes,
             relocs: self.relocs,
         }
+    }
+
+    fn prune_branches_before_label(&mut self, label: Label) {
+        while let Some(last_branch) = self.last_branches.last() {
+            // Every recorded last branch should always come with a corresponding fixup.
+            let branch_target = self.fixups.last().unwrap().label;
+            if branch_target == label {
+                self.bytes.truncate(last_branch.start as usize);
+                self.fixups.pop();
+                self.last_branches.pop();
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn instr_raw(&mut self, f: impl FnOnce(&mut InstrBuffer<'_>)) {
+        f(&mut InstrBuffer {
+            bytes: &mut self.bytes,
+        });
+    }
+
+    fn instr_with_fixup_raw(
+        &mut self,
+        label: Label,
+        fixup_instr_offset: u32,
+        fixup_kind: M::Fixup,
+        f: impl FnOnce(&mut InstrBuffer<'_>),
+    ) {
+        let offset = self.offset() + fixup_instr_offset;
+        self.fixups.push(Fixup {
+            offset,
+            label,
+            kind: fixup_kind,
+        });
+        let fixup_end_offset = offset + u32::try_from(fixup_kind.byte_size()).unwrap();
+        self.instr_raw(f);
+        debug_assert!(fixup_end_offset <= self.offset());
     }
 }
 

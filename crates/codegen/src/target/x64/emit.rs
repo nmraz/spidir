@@ -389,7 +389,7 @@ fn emit_movabs_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) 
 }
 
 fn emit_movabs_ri_reloc(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, target: FunctionRef) {
-    buffer.instr_with_reloc(2, target, 0, RELOC_ABS64, |instr| {
+    buffer.instr_with_reloc(target, 0, 2, RELOC_ABS64, |instr| {
         emit_movabs_ri_instr(instr, dest, 0)
     });
 }
@@ -531,7 +531,7 @@ fn emit_movsx_r_rm(
 }
 
 fn emit_call_rel(buffer: &mut CodeBuffer<X64Machine>, target: FunctionRef) {
-    buffer.instr_with_reloc(1, target, -4, RELOC_PC32, |instr| {
+    buffer.instr_with_reloc(target, -4, 1, RELOC_PC32, |instr| {
         instr.emit(&[0xe8]);
         instr.emit(&0u32.to_le_bytes());
     });
@@ -736,8 +736,8 @@ fn emit_rel(
     } else {
         // Conservatively use the full rel32 version if we have an unknown target.
         buffer.instr_with_fixup(
-            rel32_opcode.len() as u32,
             target,
+            rel32_opcode.len() as u32,
             X64Fixup::Rela4(-4),
             |instr| {
                 instr.emit(rel32_opcode);

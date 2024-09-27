@@ -40,6 +40,7 @@ struct Fixup<F> {
 
 struct LastBranch {
     start: u32,
+    bound_label_end: u32,
 }
 
 pub struct CodeBuffer<F: FixupKind> {
@@ -68,9 +69,9 @@ impl<F: FixupKind> CodeBuffer<F> {
     }
 
     pub fn instr(&mut self, f: impl FnOnce(&mut InstrBuffer<'_>)) {
-        self.instr_raw(f);
         // This isn't a tracked branch.
         self.clear_branch_tracking();
+        self.instr_raw(f);
     }
 
     pub fn instr_with_reloc(
@@ -102,9 +103,9 @@ impl<F: FixupKind> CodeBuffer<F> {
         fixup_kind: F,
         f: impl FnOnce(&mut InstrBuffer<'_>),
     ) {
-        self.instr_with_fixup_raw(label, fixup_instr_offset, fixup_kind, f);
         // This isn't a tracked branch.
         self.clear_branch_tracking();
+        self.instr_with_fixup_raw(label, fixup_instr_offset, fixup_kind, f);
     }
 
     pub fn branch(
@@ -115,9 +116,14 @@ impl<F: FixupKind> CodeBuffer<F> {
         f: impl FnOnce(&mut InstrBuffer<'_>),
     ) {
         let start = self.offset();
+
         // Note: we're recording fixups and branches in lock step.
         self.instr_with_fixup_raw(target, fixup_instr_offset, fixup_kind, f);
-        self.last_branches.push(LastBranch { start });
+        let bound_label_end = self.last_bound_labels.len() as u32;
+        self.last_branches.push(LastBranch {
+            start,
+            bound_label_end,
+        });
     }
 
     pub fn create_label(&mut self) -> Label {
@@ -126,6 +132,9 @@ impl<F: FixupKind> CodeBuffer<F> {
 
     pub fn bind_label(&mut self, label: Label) {
         assert!(self.labels[label].is_none(), "label already bound");
+
+        // This offset might be temporary if we are inside a "last branch" area. The label may be
+        // moved earlier and will be pinned at its final offset in `clear_branch_tracking`.
         self.labels[label] = Some(self.offset());
         self.last_bound_labels.push(label);
         self.prune_last_branches();
@@ -135,8 +144,10 @@ impl<F: FixupKind> CodeBuffer<F> {
         let offset = self.labels[label]?;
 
         // Don't treat any labels pointing strictly *inside* our "last branch" working area as
-        // bound, as a future branch/label bind could cause the label to shift back. A label
-        // pointing just before the area is okay, since code before it can never be deleted.
+        // bound, as a past or future branch/label bind could cause the label to shift back. The
+        // labels are only "pinned" in `clear_branch_tracking`.
+        //
+        // A label pointing just before the area is okay, since code before it can never be deleted.
         if self
             .last_branches
             .first()
@@ -172,10 +183,11 @@ impl<F: FixupKind> CodeBuffer<F> {
     }
 
     fn prune_last_branches(&mut self) {
-        let mut first_affected_bound_label = self.last_bound_labels.len();
-
         loop {
             let Some(last_branch) = self.last_branches.last() else {
+                // If we've cleaned everything up, make sure to pin any remaining labels in place;
+                // they can't move back if there are no branches to prune before them.
+                self.clear_branch_tracking();
                 break;
             };
 
@@ -186,10 +198,10 @@ impl<F: FixupKind> CodeBuffer<F> {
                 break;
             };
 
-            // Any resolved targets that are at or above the current offset will end up exactly
-            // at the current offset, so their branches can be pruned. We might get targets
-            // above the current immediate offset because we haven't retargeted labels from
-            // previous iterations yet.
+            // Any resolved targets that are at or above the current offset will end up exactly at
+            // the current offset, so their branches can be pruned. We might get targets above the
+            // current immediate offset because we haven't retargeted labels from previous
+            // iterations/invocations yet.
             if branch_target < self.offset() {
                 break;
             }
@@ -197,18 +209,6 @@ impl<F: FixupKind> CodeBuffer<F> {
             self.bytes.truncate(last_branch.start as usize);
             self.fixups.pop();
             self.last_branches.pop();
-
-            // Now that we've removed previously emitted code, make sure to repair all labels
-            // bound after it.
-            let new_offset = self.offset();
-            first_affected_bound_label = self.last_bound_labels[..first_affected_bound_label]
-                .partition_point(|&label| self.labels[label].unwrap() < new_offset);
-        }
-
-        // Retarget any labels we may have moved back.
-        let offset = self.offset();
-        for &label in &self.last_bound_labels[first_affected_bound_label..] {
-            self.labels[label] = Some(offset);
         }
     }
 
@@ -237,7 +237,27 @@ impl<F: FixupKind> CodeBuffer<F> {
     }
 
     fn clear_branch_tracking(&mut self) {
+        let mut bound_labels = &self.last_bound_labels[..];
+
+        // Finalize any branches that are still "trapped" and shift any labels pointing to them
+        // to their final targets.
+        for branch in &self.last_branches {
+            let bound_label_end = branch.bound_label_end as usize;
+            for &label in &bound_labels[..bound_label_end] {
+                move_label_back(&mut self.labels, label, branch.start);
+            }
+            bound_labels = &bound_labels[bound_label_end..];
+        }
+
         self.last_branches.clear();
+
+        // Any remaining trailing labels just need to be moved back to the current offset after
+        // pruning.
+        let cur_offset = self.offset();
+        for &label in bound_labels {
+            move_label_back(&mut self.labels, label, cur_offset);
+        }
+
         self.last_bound_labels.clear();
     }
 }
@@ -256,6 +276,11 @@ impl<'a> InstrBuffer<'a> {
     pub fn emit(&mut self, bytes: &[u8]) {
         self.bytes.extend_from_slice(bytes);
     }
+}
+
+fn move_label_back(labels: &mut PrimaryMap<Label, Option<u32>>, label: Label, offset: u32) {
+    debug_assert!(labels[label].unwrap() >= offset);
+    labels[label] = Some(offset);
 }
 
 #[cfg(test)]

@@ -409,11 +409,23 @@ fn emit_movzx_r_rm(
     dest: PhysReg,
     src: RegMem,
 ) {
-    // For anything less than 64 bits, write to a 32-bit register, which will implicitly clear the
-    // high bits.
-    let op_size = match full_op_size {
-        FullOperandSize::S64 => OperandSize::S64,
-        _ => OperandSize::S32,
+    let (opcode, op_size): (&[u8], _) = match full_op_size {
+        FullOperandSize::S8 => {
+            // Emit a `movzx r32, r/m8`, which will also implicitly clear the high bits.
+            (&[0xf, 0xb6], OperandSize::S32)
+        }
+        FullOperandSize::S16 => {
+            // Emit a `movzx r32, r/m16`, which will also implicitly clear the high bits.
+            (&[0xf, 0xb7], OperandSize::S32)
+        }
+        FullOperandSize::S32 => {
+            // Emit a simple 32-bit `mov`, which will implicitly clear the high bits.
+            (&[0x8b], OperandSize::S32)
+        }
+        FullOperandSize::S64 => {
+            // Emit a simple 64-bit `mov`.
+            (&[0x8b], OperandSize::S64)
+        }
     };
 
     let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| {
@@ -423,22 +435,7 @@ fn emit_movzx_r_rm(
 
     buffer.instr(|instr| {
         rex.emit(instr);
-
-        match full_op_size {
-            FullOperandSize::S8 => {
-                // Emit a `movzx r32, r/m8`, which will also implicitly clear the high bits.
-                instr.emit(&[0xf, 0xb6])
-            }
-            FullOperandSize::S16 => {
-                // Emit a `movzx r32, r/m16`, which will also implicitly clear the high bits.
-                instr.emit(&[0xf, 0xb7])
-            }
-            FullOperandSize::S32 | FullOperandSize::S64 => {
-                // Emit a simple `mov`, which will implicitly clear the high bits in the 32-bit case.
-                instr.emit(&[0x8b])
-            }
-        }
-
+        instr.emit(opcode);
         modrm_sib.emit(instr);
     });
 }

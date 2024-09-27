@@ -32,6 +32,16 @@ pub trait FixupKind: Copy {
     fn apply(&self, offset: u32, label_offset: u32, bytes: &mut [u8]);
 }
 
+pub struct InstrBuffer<'a> {
+    bytes: &'a mut Vec<u8>,
+}
+
+impl<'a> InstrBuffer<'a> {
+    pub fn emit(&mut self, bytes: &[u8]) {
+        self.bytes.extend_from_slice(bytes);
+    }
+}
+
 struct Fixup<F> {
     offset: u32,
     label: Label,
@@ -265,16 +275,6 @@ impl<F: FixupKind> CodeBuffer<F> {
 impl<F: FixupKind> Default for CodeBuffer<F> {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-pub struct InstrBuffer<'a> {
-    bytes: &'a mut Vec<u8>,
-}
-
-impl<'a> InstrBuffer<'a> {
-    pub fn emit(&mut self, bytes: &[u8]) {
-        self.bytes.extend_from_slice(bytes);
     }
 }
 

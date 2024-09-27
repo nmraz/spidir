@@ -126,9 +126,9 @@ impl<F: FixupKind> CodeBuffer<F> {
 
     pub fn bind_label(&mut self, label: Label) {
         assert!(self.labels[label].is_none(), "label already bound");
-        self.prune_branches_before_label(label);
         self.labels[label] = Some(self.offset());
         self.last_bound_labels.push(label);
+        self.prune_last_branches();
     }
 
     pub fn resolve_label(&self, label: Label) -> Option<u32> {
@@ -171,25 +171,34 @@ impl<F: FixupKind> CodeBuffer<F> {
         }
     }
 
-    fn prune_branches_before_label(&mut self, label: Label) {
+    fn prune_last_branches(&mut self) {
         let mut first_affected_bound_label = self.last_bound_labels.len();
 
         while let Some(last_branch) = self.last_branches.last() {
             // Every recorded last branch should always come with a corresponding fixup.
             let branch_target = self.fixups.last().unwrap().label;
-            if branch_target == label {
-                self.bytes.truncate(last_branch.start as usize);
-                self.fixups.pop();
-                self.last_branches.pop();
 
-                // Now that we've removed previously emitted code, make sure to repair all labels
-                // bound after it.
-                let new_offset = self.offset();
-                first_affected_bound_label = self.last_bound_labels[..first_affected_bound_label]
-                    .partition_point(|&label| self.labels[label].unwrap() < new_offset);
-            } else {
-                break;
+            if let Some(branch_target) = self.labels[branch_target] {
+                // Any resolved targets that are at or above the current offset will end up exactly
+                // at the current offset, so their branches can be pruned. We might get targets
+                // above the current immediate offset because we haven't retargeted labels from
+                // previous iterations yet.
+                if branch_target >= self.offset() {
+                    self.bytes.truncate(last_branch.start as usize);
+                    self.fixups.pop();
+                    self.last_branches.pop();
+
+                    // Now that we've removed previously emitted code, make sure to repair all labels
+                    // bound after it.
+                    let new_offset = self.offset();
+                    first_affected_bound_label = self.last_bound_labels
+                        [..first_affected_bound_label]
+                        .partition_point(|&label| self.labels[label].unwrap() < new_offset);
+                    continue;
+                }
             }
+
+            break;
         }
 
         // Retarget any labels we may have moved back.

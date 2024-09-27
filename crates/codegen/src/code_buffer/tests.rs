@@ -194,11 +194,13 @@ fn prune_parallel_branches() {
             buffer.bind_label(target2);
 
             emit_instr(buffer, 0x2);
+
+            assert_eq!(buffer.resolve_label(target1), Some(1));
+            assert_eq!(buffer.resolve_label(target2), Some(1));
+            assert_eq!(buffer.resolve_label(label1), Some(1));
+            assert_eq!(buffer.resolve_label(label2), Some(1));
         },
-        // We currently don't prune the branch to `target1` because doing so would require comparing
-        // every last branch against every last bound label, and this pattern likely isn't common
-        // enough to make that worthwhile.
-        expect!["01 b1 02"],
+        expect!["01 02"],
     );
 }
 

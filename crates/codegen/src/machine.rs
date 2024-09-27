@@ -62,12 +62,12 @@ pub trait MachineEmit: MachineCore + Sized {
 
     fn prepare_state(&self, lir: &Lir<Self>, assignment: &Assignment) -> Self::EmitState;
 
-    fn emit_prologue(&self, state: &mut Self::EmitState, buffer: &mut CodeBuffer<Self>);
+    fn emit_prologue(&self, state: &mut Self::EmitState, buffer: &mut CodeBuffer<Self::Fixup>);
 
     fn emit_instr(
         &self,
         state: &mut Self::EmitState,
-        buffer: &mut CodeBuffer<Self>,
+        buffer: &mut CodeBuffer<Self::Fixup>,
         block_labels: &BlockLabelMap,
         instr: &Self::Instr,
         defs: &[OperandAssignment],
@@ -77,7 +77,7 @@ pub trait MachineEmit: MachineCore + Sized {
     fn emit_copy(
         &self,
         state: &mut Self::EmitState,
-        buffer: &mut CodeBuffer<Self>,
+        buffer: &mut CodeBuffer<Self::Fixup>,
         from: OperandAssignment,
         to: OperandAssignment,
     );

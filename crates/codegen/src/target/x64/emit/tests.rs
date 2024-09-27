@@ -33,7 +33,7 @@ fn disasm_instr(code: &[u8], addr: u64) -> String {
     )
 }
 
-fn check_emit_instr(f: impl FnOnce(&mut CodeBuffer<X64Machine>), expected: Expect) {
+fn check_emit_instr(f: impl FnOnce(&mut CodeBuffer<X64Fixup>), expected: Expect) {
     let mut buffer = CodeBuffer::new();
     f(&mut buffer);
     expected.assert_eq(&disasm_instr(&buffer.finish().code, 0));
@@ -41,7 +41,7 @@ fn check_emit_instr(f: impl FnOnce(&mut CodeBuffer<X64Machine>), expected: Expec
 
 fn check_emit_rel_back(
     offset: u32,
-    f: impl FnOnce(&mut CodeBuffer<X64Machine>, Label),
+    f: impl FnOnce(&mut CodeBuffer<X64Fixup>, Label),
     expected: Expect,
 ) {
     let mut buffer = CodeBuffer::new();

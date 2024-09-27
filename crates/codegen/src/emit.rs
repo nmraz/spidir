@@ -44,16 +44,16 @@ struct LastBranch {
     start: u32,
 }
 
-pub struct CodeBuffer<M: MachineEmit> {
+pub struct CodeBuffer<F: FixupKind> {
     bytes: Vec<u8>,
     labels: PrimaryMap<Label, Option<u32>>,
-    fixups: Vec<Fixup<M::Fixup>>,
+    fixups: Vec<Fixup<F>>,
     relocs: Vec<Reloc>,
     last_branches: SmallVec<[LastBranch; 4]>,
     last_bound_labels: SmallVec<[Label; 4]>,
 }
 
-impl<M: MachineEmit> CodeBuffer<M> {
+impl<F: FixupKind> CodeBuffer<F> {
     pub fn new() -> Self {
         Self {
             bytes: Vec::new(),
@@ -101,7 +101,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
         &mut self,
         label: Label,
         fixup_instr_offset: u32,
-        fixup_kind: M::Fixup,
+        fixup_kind: F,
         f: impl FnOnce(&mut InstrBuffer<'_>),
     ) {
         self.instr_with_fixup_raw(label, fixup_instr_offset, fixup_kind, f);
@@ -113,7 +113,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
         &mut self,
         target: Label,
         fixup_instr_offset: u32,
-        fixup_kind: M::Fixup,
+        fixup_kind: F,
         f: impl FnOnce(&mut InstrBuffer<'_>),
     ) {
         let start = self.offset();
@@ -211,7 +211,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
         &mut self,
         label: Label,
         fixup_instr_offset: u32,
-        fixup_kind: M::Fixup,
+        fixup_kind: F,
         f: impl FnOnce(&mut InstrBuffer<'_>),
     ) {
         let offset = self.offset() + fixup_instr_offset;
@@ -231,7 +231,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
     }
 }
 
-impl<M: MachineEmit> Default for CodeBuffer<M> {
+impl<F: FixupKind> Default for CodeBuffer<F> {
     fn default() -> Self {
         Self::new()
     }

@@ -132,7 +132,7 @@ impl MachineEmit for X64Machine {
         }
     }
 
-    fn emit_prologue(&self, state: &mut X64EmitState, buffer: &mut CodeBuffer<Self>) {
+    fn emit_prologue(&self, state: &mut X64EmitState, buffer: &mut CodeBuffer<X64Fixup>) {
         emit_push(buffer, REG_RBP);
         emit_mov_rr(buffer, REG_RBP, REG_RSP);
 
@@ -152,7 +152,7 @@ impl MachineEmit for X64Machine {
     fn emit_instr(
         &self,
         state: &mut X64EmitState,
-        buffer: &mut CodeBuffer<Self>,
+        buffer: &mut CodeBuffer<X64Fixup>,
         block_labels: &BlockLabelMap,
         instr: &X64Instr,
         defs: &[OperandAssignment],
@@ -278,7 +278,7 @@ impl MachineEmit for X64Machine {
     fn emit_copy(
         &self,
         state: &mut X64EmitState,
-        buffer: &mut CodeBuffer<Self>,
+        buffer: &mut CodeBuffer<X64Fixup>,
         from: OperandAssignment,
         to: OperandAssignment,
     ) {
@@ -307,7 +307,7 @@ impl MachineEmit for X64Machine {
 
 // Code sequence emission helpers
 
-fn emit_epilogue(buffer: &mut CodeBuffer<X64Machine>, state: &X64EmitState) {
+fn emit_epilogue(buffer: &mut CodeBuffer<X64Fixup>, state: &X64EmitState) {
     match state.restore_method {
         FrameRestoreMethod::None => {}
         FrameRestoreMethod::AddSp(offset) => emit_add_sp(buffer, offset),
@@ -321,7 +321,7 @@ fn emit_epilogue(buffer: &mut CodeBuffer<X64Machine>, state: &X64EmitState) {
     emit_pop(buffer, REG_RBP);
 }
 
-fn emit_add_sp(buffer: &mut CodeBuffer<X64Machine>, offset: i32) {
+fn emit_add_sp(buffer: &mut CodeBuffer<X64Fixup>, offset: i32) {
     if offset == -8 {
         // This generates smaller code without penalizing performance.
         emit_push(buffer, REG_RAX);
@@ -334,7 +334,7 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Machine>, offset: i32) {
 
 // Single-instruction emission helpers
 
-fn emit_push(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
+fn emit_push(buffer: &mut CodeBuffer<X64Fixup>, reg: PhysReg) {
     let mut rex = RexPrefix::new();
     let reg = rex.encode_modrm_base(reg);
 
@@ -344,7 +344,7 @@ fn emit_push(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
     });
 }
 
-fn emit_pop(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
+fn emit_pop(buffer: &mut CodeBuffer<X64Fixup>, reg: PhysReg) {
     let mut rex = RexPrefix::new();
     let reg = rex.encode_modrm_base(reg);
 
@@ -354,11 +354,11 @@ fn emit_pop(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
     });
 }
 
-fn emit_mov_rr(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, src: PhysReg) {
+fn emit_mov_rr(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: PhysReg) {
     emit_mov_rm_r(buffer, FullOperandSize::S64, RegMem::Reg(dest), src);
 }
 
-fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
+fn emit_mov_ri(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
     if is_uint::<32>(imm) {
         // Smallest case: move imm32 to r32, clearing upper bits.
         let mut rex = RexPrefix::new();
@@ -384,11 +384,11 @@ fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
     }
 }
 
-fn emit_movabs_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
+fn emit_movabs_ri(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
     buffer.instr(|instr| emit_movabs_ri_instr(instr, dest, imm));
 }
 
-fn emit_movabs_ri_reloc(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, target: FunctionRef) {
+fn emit_movabs_ri_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
     buffer.instr_with_reloc(target, 0, 2, RELOC_ABS64, |instr| {
         emit_movabs_ri_instr(instr, dest, 0)
     });
@@ -404,7 +404,7 @@ fn emit_movabs_ri_instr(instr: &mut InstrBuffer<'_>, dest: PhysReg, imm: u64) {
 }
 
 fn emit_movzx_r_rm(
-    buffer: &mut CodeBuffer<X64Machine>,
+    buffer: &mut CodeBuffer<X64Fixup>,
     full_op_size: FullOperandSize,
     dest: PhysReg,
     src: RegMem,
@@ -440,7 +440,7 @@ fn emit_movzx_r_rm(
     });
 }
 
-fn emit_lea(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, addr: BaseIndexOff) {
+fn emit_lea(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: BaseIndexOff) {
     let (rex, modrm_sib) = encode_mem_parts(addr, |rex: &mut RexPrefix| {
         rex.encode_operand_size(OperandSize::S64);
         rex.encode_modrm_reg(dest)
@@ -454,7 +454,7 @@ fn emit_lea(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, addr: BaseIndexO
 }
 
 fn emit_mov_rm_r(
-    buffer: &mut CodeBuffer<X64Machine>,
+    buffer: &mut CodeBuffer<X64Fixup>,
     full_op_size: FullOperandSize,
     dest: RegMem,
     src: PhysReg,
@@ -488,7 +488,7 @@ fn emit_mov_rm_r(
     });
 }
 
-fn emit_setcc_r(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, dest: PhysReg) {
+fn emit_setcc_r(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, dest: PhysReg) {
     let mut rex = RexPrefix::new();
     rex.use_reg8(dest);
     let dest = rex.encode_modrm_base(dest);
@@ -499,12 +499,7 @@ fn emit_setcc_r(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, dest: PhysR
     });
 }
 
-fn emit_movsx_r_rm(
-    buffer: &mut CodeBuffer<X64Machine>,
-    width: ExtWidth,
-    dest: PhysReg,
-    src: RegMem,
-) {
+fn emit_movsx_r_rm(buffer: &mut CodeBuffer<X64Fixup>, width: ExtWidth, dest: PhysReg, src: RegMem) {
     let (opcode, op_size): (&[u8], _) = match width {
         ExtWidth::Ext8_32 => (&[0xf, 0xbe], OperandSize::S32),
         ExtWidth::Ext8_64 => (&[0xf, 0xbe], OperandSize::S64),
@@ -530,14 +525,14 @@ fn emit_movsx_r_rm(
     });
 }
 
-fn emit_call_rel(buffer: &mut CodeBuffer<X64Machine>, target: FunctionRef) {
+fn emit_call_rel(buffer: &mut CodeBuffer<X64Fixup>, target: FunctionRef) {
     buffer.instr_with_reloc(target, -4, 1, RELOC_PC32, |instr| {
         instr.emit(&[0xe8]);
         instr.emit(&0u32.to_le_bytes());
     });
 }
 
-fn emit_call_rm(buffer: &mut CodeBuffer<X64Machine>, target: RegMem) {
+fn emit_call_rm(buffer: &mut CodeBuffer<X64Fixup>, target: RegMem) {
     let (rex, modrm_sib) = encode_reg_mem_parts(target, |_rex| 2);
     buffer.instr(|instr| {
         rex.emit(instr);
@@ -546,27 +541,27 @@ fn emit_call_rm(buffer: &mut CodeBuffer<X64Machine>, target: RegMem) {
     });
 }
 
-fn emit_jmp(buffer: &mut CodeBuffer<X64Machine>, target: Label) {
+fn emit_jmp(buffer: &mut CodeBuffer<X64Fixup>, target: Label) {
     emit_rel_branch(buffer, &[0xeb], &[0xe9], target);
 }
 
-fn emit_jcc(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, target: Label) {
+fn emit_jcc(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, target: Label) {
     let code = encode_cond_code(code);
     emit_rel_branch(buffer, &[0x70 + code], &[0xf, 0x80 + code], target);
 }
 
-fn emit_ret(buffer: &mut CodeBuffer<X64Machine>) {
+fn emit_ret(buffer: &mut CodeBuffer<X64Fixup>) {
     buffer.instr(|instr| instr.emit(&[0xc3]));
 }
 
-fn emit_ud2(buffer: &mut CodeBuffer<X64Machine>) {
+fn emit_ud2(buffer: &mut CodeBuffer<X64Fixup>) {
     buffer.instr(|instr| instr.emit(&[0xf, 0xb]));
 }
 
 // Instruction group emission helpers
 
 fn emit_alu_r_rm(
-    buffer: &mut CodeBuffer<X64Machine>,
+    buffer: &mut CodeBuffer<X64Fixup>,
     op: AluOp,
     op_size: OperandSize,
     arg0: PhysReg,
@@ -599,7 +594,7 @@ fn emit_alu_r_rm(
     });
 }
 
-fn emit_div_rm(buffer: &mut CodeBuffer<X64Machine>, op: DivOp, op_size: OperandSize, arg: RegMem) {
+fn emit_div_rm(buffer: &mut CodeBuffer<X64Fixup>, op: DivOp, op_size: OperandSize, arg: RegMem) {
     let reg_opcode = match op {
         DivOp::Div => 0x6,
         DivOp::Idiv => 0x7,
@@ -616,7 +611,7 @@ fn emit_div_rm(buffer: &mut CodeBuffer<X64Machine>, op: DivOp, op_size: OperandS
     });
 }
 
-fn emit_convert_word(buffer: &mut CodeBuffer<X64Machine>, op_size: OperandSize) {
+fn emit_convert_word(buffer: &mut CodeBuffer<X64Fixup>, op_size: OperandSize) {
     let mut rex = RexPrefix::new();
     rex.encode_operand_size(op_size);
 
@@ -627,7 +622,7 @@ fn emit_convert_word(buffer: &mut CodeBuffer<X64Machine>, op_size: OperandSize) 
 }
 
 fn emit_shift_rm_cx(
-    buffer: &mut CodeBuffer<X64Machine>,
+    buffer: &mut CodeBuffer<X64Fixup>,
     op: ShiftOp,
     op_size: OperandSize,
     arg: RegMem,
@@ -646,7 +641,7 @@ fn emit_shift_rm_cx(
 }
 
 fn emit_shift_rm_i(
-    buffer: &mut CodeBuffer<X64Machine>,
+    buffer: &mut CodeBuffer<X64Fixup>,
     op: ShiftOp,
     op_size: OperandSize,
     arg: RegMem,
@@ -675,7 +670,7 @@ fn emit_shift_rm_i(
     });
 }
 
-fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, imm: i32) {
+fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Fixup>, op: AluOp, dest: PhysReg, imm: i32) {
     let mut is_imm8 = is_sint::<8>(imm as u64);
     let mut opcode = if is_imm8 { 0x83 } else { 0x81 };
 
@@ -712,7 +707,7 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
 }
 
 fn emit_rel_branch(
-    buffer: &mut CodeBuffer<X64Machine>,
+    buffer: &mut CodeBuffer<X64Fixup>,
     rel8_opcode: &[u8],
     rel32_opcode: &[u8],
     target: Label,

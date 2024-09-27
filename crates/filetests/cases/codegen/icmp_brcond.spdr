@@ -8,11 +8,10 @@ func @select_eq:i32(i32, i32, i32, i32) {
     # nextln: 000007: 3b fe                           cmp edi, esi
     # nextln: 000009: 0f 84 05 00 00 00               je 0x14
     # nextln: 00000f: e9 05 00 00 00                  jmp 0x19
-    # nextln: 000014: e9 08 00 00 00                  jmp 0x21
+    # nextln: 000014: e9 03 00 00 00                  jmp 0x1c
     # nextln: 000019: 48 89 c8                        mov rax, rcx
-    # nextln: 00001c: e9 00 00 00 00                  jmp 0x21
-    # nextln: 000021: 5d                              pop rbp
-    # nextln: 000022: c3                              ret
+    # nextln: 00001c: 5d                              pop rbp
+    # nextln: 00001d: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp eq %a, %b
@@ -30,11 +29,10 @@ func @select_ne:i32(i32, i32, i32, i32) {
     # nextln: 000007: 3b fe                           cmp edi, esi
     # nextln: 000009: 0f 85 05 00 00 00               jne 0x14
     # nextln: 00000f: e9 05 00 00 00                  jmp 0x19
-    # nextln: 000014: e9 08 00 00 00                  jmp 0x21
+    # nextln: 000014: e9 03 00 00 00                  jmp 0x1c
     # nextln: 000019: 48 89 c8                        mov rax, rcx
-    # nextln: 00001c: e9 00 00 00 00                  jmp 0x21
-    # nextln: 000021: 5d                              pop rbp
-    # nextln: 000022: c3                              ret
+    # nextln: 00001c: 5d                              pop rbp
+    # nextln: 00001d: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp ne %a, %b
@@ -52,11 +50,10 @@ func @select_slt:i32(i32, i32, i32, i32) {
     # nextln: 000007: 3b fe                           cmp edi, esi
     # nextln: 000009: 0f 8c 05 00 00 00               jl 0x14
     # nextln: 00000f: e9 05 00 00 00                  jmp 0x19
-    # nextln: 000014: e9 08 00 00 00                  jmp 0x21
+    # nextln: 000014: e9 03 00 00 00                  jmp 0x1c
     # nextln: 000019: 48 89 c8                        mov rax, rcx
-    # nextln: 00001c: e9 00 00 00 00                  jmp 0x21
-    # nextln: 000021: 5d                              pop rbp
-    # nextln: 000022: c3                              ret
+    # nextln: 00001c: 5d                              pop rbp
+    # nextln: 00001d: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp slt %a, %b
@@ -74,11 +71,10 @@ func @select_sle:i32(i32, i32, i32, i32) {
     # nextln: 000007: 3b fe                           cmp edi, esi
     # nextln: 000009: 0f 8e 05 00 00 00               jle 0x14
     # nextln: 00000f: e9 05 00 00 00                  jmp 0x19
-    # nextln: 000014: e9 08 00 00 00                  jmp 0x21
+    # nextln: 000014: e9 03 00 00 00                  jmp 0x1c
     # nextln: 000019: 48 89 c8                        mov rax, rcx
-    # nextln: 00001c: e9 00 00 00 00                  jmp 0x21
-    # nextln: 000021: 5d                              pop rbp
-    # nextln: 000022: c3                              ret
+    # nextln: 00001c: 5d                              pop rbp
+    # nextln: 00001d: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp sle %a, %b
@@ -96,11 +92,10 @@ func @select_ult:i32(i32, i32, i32, i32) {
     # nextln: 000007: 3b fe                           cmp edi, esi
     # nextln: 000009: 0f 82 05 00 00 00               jb 0x14
     # nextln: 00000f: e9 05 00 00 00                  jmp 0x19
-    # nextln: 000014: e9 08 00 00 00                  jmp 0x21
+    # nextln: 000014: e9 03 00 00 00                  jmp 0x1c
     # nextln: 000019: 48 89 c8                        mov rax, rcx
-    # nextln: 00001c: e9 00 00 00 00                  jmp 0x21
-    # nextln: 000021: 5d                              pop rbp
-    # nextln: 000022: c3                              ret
+    # nextln: 00001c: 5d                              pop rbp
+    # nextln: 00001d: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp ult %a, %b
@@ -118,11 +113,10 @@ func @select_ule:i32(i32, i32, i32, i32) {
     # nextln: 000007: 3b fe                           cmp edi, esi
     # nextln: 000009: 0f 86 05 00 00 00               jbe 0x14
     # nextln: 00000f: e9 05 00 00 00                  jmp 0x19
-    # nextln: 000014: e9 08 00 00 00                  jmp 0x21
+    # nextln: 000014: e9 03 00 00 00                  jmp 0x1c
     # nextln: 000019: 48 89 c8                        mov rax, rcx
-    # nextln: 00001c: e9 00 00 00 00                  jmp 0x21
-    # nextln: 000021: 5d                              pop rbp
-    # nextln: 000022: c3                              ret
+    # nextln: 00001c: 5d                              pop rbp
+    # nextln: 00001d: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp ule %a, %b
@@ -143,14 +137,13 @@ func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # nextln: 00000e: 85 d2                           test edx, edx
     # nextln: 000010: 0f 85 05 00 00 00               jne 0x1b
     # nextln: 000016: e9 05 00 00 00                  jmp 0x20
-    # nextln: 00001b: e9 08 00 00 00                  jmp 0x28
+    # nextln: 00001b: e9 03 00 00 00                  jmp 0x23
     # nextln: 000020: 48 89 c8                        mov rax, rcx
-    # nextln: 000023: e9 00 00 00 00                  jmp 0x28
-    # nextln: 000028: b9 05 00 00 00                  mov ecx, 5
-    # nextln: 00002d: 33 d1                           xor edx, ecx
-    # nextln: 00002f: 03 c2                           add eax, edx
-    # nextln: 000031: 5d                              pop rbp
-    # nextln: 000032: c3                              ret
+    # nextln: 000023: b9 05 00 00 00                  mov ecx, 5
+    # nextln: 000028: 33 d1                           xor edx, ecx
+    # nextln: 00002a: 03 c2                           add eax, edx
+    # nextln: 00002c: 5d                              pop rbp
+    # nextln: 00002d: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp slt %a, %b

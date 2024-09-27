@@ -4,9 +4,8 @@ func @jump() {
     # check: function `jump`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: e9 00 00 00 00                  jmp 9
-    # nextln: 000009: 5d                              pop rbp
-    # nextln: 00000a: c3                              ret
+    # nextln: 000004: 5d                              pop rbp
+    # nextln: 000005: c3                              ret
 
     %0:ctrl = entry
     %1:ctrl, %2:phisel = region %0

@@ -547,12 +547,12 @@ fn emit_call_rm(buffer: &mut CodeBuffer<X64Machine>, target: RegMem) {
 }
 
 fn emit_jmp(buffer: &mut CodeBuffer<X64Machine>, target: Label) {
-    emit_rel(buffer, &[0xeb], &[0xe9], target);
+    emit_rel_branch(buffer, &[0xeb], &[0xe9], target);
 }
 
 fn emit_jcc(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, target: Label) {
     let code = encode_cond_code(code);
-    emit_rel(buffer, &[0x70 + code], &[0xf, 0x80 + code], target);
+    emit_rel_branch(buffer, &[0x70 + code], &[0xf, 0x80 + code], target);
 }
 
 fn emit_ret(buffer: &mut CodeBuffer<X64Machine>) {
@@ -711,7 +711,7 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
     });
 }
 
-fn emit_rel(
+fn emit_rel_branch(
     buffer: &mut CodeBuffer<X64Machine>,
     rel8_opcode: &[u8],
     rel32_opcode: &[u8],
@@ -735,7 +735,7 @@ fn emit_rel(
         }
     } else {
         // Conservatively use the full rel32 version if we have an unknown target.
-        buffer.instr_with_fixup(
+        buffer.branch(
             target,
             rel32_opcode.len() as u32,
             X64Fixup::Rela4(-4),

@@ -134,13 +134,26 @@ impl<M: MachineEmit> CodeBuffer<M> {
     }
 
     pub fn resolve_label(&self, label: Label) -> Option<u32> {
-        self.labels[label]
+        let offset = self.labels[label]?;
+
+        // Don't treat any labels pointing strictly *inside* our "last branch" working area as
+        // bound, as a future branch/label bind could cause the label to shift back. A label
+        // pointing just before the area is okay, since code before it can never be deleted.
+        if self
+            .last_branches
+            .first()
+            .is_some_and(|oldest_branch| offset > oldest_branch.start)
+        {
+            return None;
+        }
+
+        Some(offset)
     }
 
     pub fn finish(mut self) -> CodeBlob {
         // Resolve all outstanding fixups now that the final layout is known.
         for fixup in &self.fixups {
-            let label_offset = self.resolve_label(fixup.label).expect("label not bound");
+            let label_offset = self.labels[fixup.label].expect("label not bound");
 
             let offset_usize = fixup.offset as usize;
             let size = fixup.kind.byte_size();

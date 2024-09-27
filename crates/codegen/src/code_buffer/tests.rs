@@ -238,3 +238,32 @@ fn dont_prune_unrelated_branch_forward() {
         expect!["01 b2 02 03"],
     );
 }
+
+#[test]
+fn correct_retargeting_after_prune_replacement() {
+    check_emitted_code(
+        |buffer| {
+            let before = buffer.create_label();
+            let after_pruned_branch = buffer.create_label();
+            let after = buffer.create_label();
+
+            buffer.bind_label(before);
+            emit_instr(buffer, 0x1);
+
+            // Emit only branches now to keep branch tracking active.
+            emit_branch(buffer, before);
+            emit_branch(buffer, after_pruned_branch);
+            buffer.bind_label(after_pruned_branch);
+            emit_branch(buffer, after);
+
+            // Emit a plain instruction to finalize any tracked branches.
+            emit_instr(buffer, 0x2);
+            buffer.bind_label(after);
+            emit_instr(buffer, 0x3);
+
+            // The label should still be before the branch to `after`.
+            assert_eq!(buffer.resolve_label(after_pruned_branch), Some(2));
+        },
+        expect!["01 bf b2 02 03"],
+    );
+}

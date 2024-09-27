@@ -1,10 +1,11 @@
 use ir::node::FunctionRef;
 
 use crate::{
-    emit::{BlockLabelMap, CodeBuffer, InstrBuffer, Label},
+    code_buffer::{CodeBuffer, FixupKind, InstrBuffer, Label},
+    emit::BlockLabelMap,
     frame::FrameLayout,
     lir::{Lir, PhysReg, PhysRegSet, StackSlot},
-    machine::{FixupKind, MachineEmit},
+    machine::MachineEmit,
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{Assignment, OperandAssignment, SpillSlot},
     target::x64::CALLEE_SAVED_REGS,

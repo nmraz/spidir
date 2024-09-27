@@ -4,7 +4,7 @@ use core::{
 };
 
 use alloc::{borrow::ToOwned, string::String};
-use codegen::emit::Reloc;
+use codegen::code_buffer::Reloc;
 use frontend::{Block, FunctionBuilder};
 use ir::{
     function::Signature,

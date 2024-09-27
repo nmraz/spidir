@@ -9,7 +9,7 @@ use capstone::{
     Capstone,
 };
 use codegen::{
-    emit::{CodeBlob, RelocKind},
+    code_buffer::{CodeBlob, RelocKind},
     target::x64::{RELOC_ABS64, RELOC_PC32},
 };
 use ir::{module::Module, write::quote_ident};

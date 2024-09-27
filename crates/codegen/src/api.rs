@@ -12,7 +12,8 @@ use log::{debug, info};
 
 use crate::{
     cfg::{CfgContext, FunctionBlockMap},
-    emit::{emit_code, CodeBlob},
+    code_buffer::CodeBlob,
+    emit::emit_code,
     isel::{select_instrs, IselError},
     lir::Lir,
     machine::{Machine, MachineLower},

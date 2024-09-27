@@ -3,7 +3,7 @@ use core::ptr;
 use alloc::{boxed::Box, vec::Vec};
 use codegen::{
     api::{codegen_func, CodegenError, CodegenOpts},
-    emit::CodeBlob,
+    code_buffer::CodeBlob,
     machine::Machine,
 };
 use ir::{

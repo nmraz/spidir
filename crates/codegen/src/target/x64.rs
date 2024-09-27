@@ -2,7 +2,7 @@ use ir::node::FunctionRef;
 
 use crate::{
     cfg::Block,
-    emit::RelocKind,
+    code_buffer::RelocKind,
     lir::{MemLayout, PhysReg, RegClass, StackSlot},
     machine::{MachineCore, MachineRegalloc},
 };

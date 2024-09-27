@@ -5,6 +5,7 @@ extern crate alloc;
 pub mod api;
 pub mod blockorder;
 pub mod cfg;
+pub mod code_buffer;
 pub mod emit;
 pub mod frame;
 pub mod isel;

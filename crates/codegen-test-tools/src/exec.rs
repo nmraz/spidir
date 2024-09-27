@@ -3,7 +3,7 @@ use std::mem;
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use codegen::{
     api::{Codegen, CodegenOpts},
-    emit::{CodeBlob, RelocKind},
+    code_buffer::{CodeBlob, RelocKind},
     target::x64::{CodeModel, X64Machine, X64MachineConfig, RELOC_ABS64, RELOC_PC32},
 };
 use cranelift_entity::SecondaryMap;

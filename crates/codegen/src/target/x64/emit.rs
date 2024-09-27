@@ -1,7 +1,7 @@
 use ir::node::FunctionRef;
 
 use crate::{
-    emit::{BlockLabelMap, CodeBuffer, Label},
+    emit::{BlockLabelMap, CodeBuffer, InstrBuffer, Label},
     frame::FrameLayout,
     lir::{Lir, PhysReg, PhysRegSet, StackSlot},
     machine::{FixupKind, MachineEmit},
@@ -259,8 +259,7 @@ impl MachineEmit for X64Machine {
                 state.sp_frame_offset += 8;
             }
             &X64Instr::FuncAddrAbs(target) => {
-                buffer.emit_reloc_at(buffer.offset() + 2, target, 0, RELOC_ABS64);
-                emit_movabs_ri(buffer, defs[0].as_reg().unwrap(), 0);
+                emit_movabs_ri_reloc(buffer, defs[0].as_reg().unwrap(), target);
             }
             &X64Instr::CallRel(target) => {
                 emit_call_rel(buffer, target);
@@ -338,15 +337,21 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Machine>, offset: i32) {
 fn emit_push(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
     let mut rex = RexPrefix::new();
     let reg = rex.encode_modrm_base(reg);
-    rex.emit(buffer);
-    buffer.emit(&[0x50 + reg]);
+
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(&[0x50 + reg]);
+    });
 }
 
 fn emit_pop(buffer: &mut CodeBuffer<X64Machine>, reg: PhysReg) {
     let mut rex = RexPrefix::new();
     let reg = rex.encode_modrm_base(reg);
-    rex.emit(buffer);
-    buffer.emit(&[0x58 + reg]);
+
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(&[0x58 + reg]);
+    });
 }
 
 fn emit_mov_rr(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, src: PhysReg) {
@@ -358,17 +363,21 @@ fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
         // Smallest case: move imm32 to r32, clearing upper bits.
         let mut rex = RexPrefix::new();
         let dest = rex.encode_modrm_base(dest);
-        rex.emit(buffer);
-        buffer.emit(&[0xb8 + dest]);
-        buffer.emit(&(imm as u32).to_le_bytes());
+        buffer.instr(|instr| {
+            rex.emit(instr);
+            instr.emit(&[0xb8 + dest]);
+            instr.emit(&(imm as u32).to_le_bytes());
+        });
     } else if is_sint::<32>(imm) {
         // Next smallest case: sign-extend imm32 to r64.
         let mut rex = RexPrefix::new();
         let dest = rex.encode_modrm_base(dest);
         rex.encode_operand_size(OperandSize::S64);
-        rex.emit(buffer);
-        buffer.emit(&[0xc7, encode_modrm_r(0, dest)]);
-        buffer.emit(&(imm as u32).to_le_bytes());
+        buffer.instr(|instr| {
+            rex.emit(instr);
+            instr.emit(&[0xc7, encode_modrm_r(0, dest)]);
+            instr.emit(&(imm as u32).to_le_bytes());
+        });
     } else {
         // Large case: use full 64-bit immediate.
         emit_movabs_ri(buffer, dest, imm);
@@ -376,12 +385,22 @@ fn emit_mov_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
 }
 
 fn emit_movabs_ri(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, imm: u64) {
+    buffer.instr(|instr| emit_movabs_ri_instr(instr, dest, imm));
+}
+
+fn emit_movabs_ri_reloc(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, target: FunctionRef) {
+    buffer.instr_with_reloc(2, target, 0, RELOC_ABS64, |instr| {
+        emit_movabs_ri_instr(instr, dest, 0)
+    });
+}
+
+fn emit_movabs_ri_instr(instr: &mut InstrBuffer<'_>, dest: PhysReg, imm: u64) {
     let mut rex = RexPrefix::new();
     let dest = rex.encode_modrm_base(dest);
     rex.encode_operand_size(OperandSize::S64);
-    rex.emit(buffer);
-    buffer.emit(&[0xb8 + dest]);
-    buffer.emit(&imm.to_le_bytes());
+    rex.emit(instr);
+    instr.emit(&[0xb8 + dest]);
+    instr.emit(&imm.to_le_bytes());
 }
 
 fn emit_movzx_r_rm(
@@ -402,24 +421,26 @@ fn emit_movzx_r_rm(
         rex.encode_modrm_reg(dest)
     });
 
-    rex.emit(buffer);
+    buffer.instr(|instr| {
+        rex.emit(instr);
 
-    match full_op_size {
-        FullOperandSize::S8 => {
-            // Emit a `movzx r32, r/m8`, which will also implicitly clear the high bits.
-            buffer.emit(&[0xf, 0xb6])
+        match full_op_size {
+            FullOperandSize::S8 => {
+                // Emit a `movzx r32, r/m8`, which will also implicitly clear the high bits.
+                instr.emit(&[0xf, 0xb6])
+            }
+            FullOperandSize::S16 => {
+                // Emit a `movzx r32, r/m16`, which will also implicitly clear the high bits.
+                instr.emit(&[0xf, 0xb7])
+            }
+            FullOperandSize::S32 | FullOperandSize::S64 => {
+                // Emit a simple `mov`, which will implicitly clear the high bits in the 32-bit case.
+                instr.emit(&[0x8b])
+            }
         }
-        FullOperandSize::S16 => {
-            // Emit a `movzx r32, r/m16`, which will also implicitly clear the high bits.
-            buffer.emit(&[0xf, 0xb7])
-        }
-        FullOperandSize::S32 | FullOperandSize::S64 => {
-            // Emit a simple `mov`, which will implicitly clear the high bits in the 32-bit case.
-            buffer.emit(&[0x8b])
-        }
-    }
 
-    modrm_sib.emit(buffer);
+        modrm_sib.emit(instr);
+    });
 }
 
 fn emit_lea(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, addr: BaseIndexOff) {
@@ -428,9 +449,11 @@ fn emit_lea(buffer: &mut CodeBuffer<X64Machine>, dest: PhysReg, addr: BaseIndexO
         rex.encode_modrm_reg(dest)
     });
 
-    rex.emit(buffer);
-    buffer.emit(&[0x8d]);
-    modrm_sib.emit(buffer);
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(&[0x8d]);
+        modrm_sib.emit(instr);
+    });
 }
 
 fn emit_mov_rm_r(
@@ -452,26 +475,31 @@ fn emit_mov_rm_r(
         rex.encode_modrm_reg(src)
     });
 
-    if full_op_size == FullOperandSize::S16 {
-        buffer.emit(&[PREFIX_OPERAND_SIZE]);
-    }
+    buffer.instr(|instr| {
+        if full_op_size == FullOperandSize::S16 {
+            instr.emit(&[PREFIX_OPERAND_SIZE]);
+        }
 
-    rex.emit(buffer);
-    if full_op_size == FullOperandSize::S8 {
-        buffer.emit(&[0x88]);
-    } else {
-        buffer.emit(&[0x89]);
-    }
+        rex.emit(instr);
+        if full_op_size == FullOperandSize::S8 {
+            instr.emit(&[0x88]);
+        } else {
+            instr.emit(&[0x89]);
+        }
 
-    modrm_sib.emit(buffer);
+        modrm_sib.emit(instr);
+    });
 }
 
 fn emit_setcc_r(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, dest: PhysReg) {
     let mut rex = RexPrefix::new();
     rex.use_reg8(dest);
     let dest = rex.encode_modrm_base(dest);
-    rex.emit(buffer);
-    buffer.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, dest)]);
+
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, dest)]);
+    });
 }
 
 fn emit_movsx_r_rm(
@@ -498,22 +526,27 @@ fn emit_movsx_r_rm(
         rex.encode_modrm_reg(dest)
     });
 
-    rex.emit(buffer);
-    buffer.emit(opcode);
-    modrm_sib.emit(buffer);
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(opcode);
+        modrm_sib.emit(instr);
+    });
 }
 
 fn emit_call_rel(buffer: &mut CodeBuffer<X64Machine>, target: FunctionRef) {
-    buffer.emit(&[0xe8]);
-    buffer.emit_reloc(target, -4, RELOC_PC32);
-    buffer.emit(&0u32.to_le_bytes());
+    buffer.instr_with_reloc(1, target, -4, RELOC_PC32, |instr| {
+        instr.emit(&[0xe8]);
+        instr.emit(&0u32.to_le_bytes());
+    });
 }
 
 fn emit_call_rm(buffer: &mut CodeBuffer<X64Machine>, target: RegMem) {
     let (rex, modrm_sib) = encode_reg_mem_parts(target, |_rex| 2);
-    rex.emit(buffer);
-    buffer.emit(&[0xff]);
-    modrm_sib.emit(buffer);
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(&[0xff]);
+        modrm_sib.emit(instr);
+    });
 }
 
 fn emit_jmp(buffer: &mut CodeBuffer<X64Machine>, target: Label) {
@@ -526,11 +559,11 @@ fn emit_jcc(buffer: &mut CodeBuffer<X64Machine>, code: CondCode, target: Label) 
 }
 
 fn emit_ret(buffer: &mut CodeBuffer<X64Machine>) {
-    buffer.emit(&[0xc3]);
+    buffer.instr(|instr| instr.emit(&[0xc3]));
 }
 
 fn emit_ud2(buffer: &mut CodeBuffer<X64Machine>) {
-    buffer.emit(&[0xf, 0xb]);
+    buffer.instr(|instr| instr.emit(&[0xf, 0xb]));
 }
 
 // Instruction group emission helpers
@@ -562,9 +595,11 @@ fn emit_alu_r_rm(
         rex.encode_modrm_reg(arg0)
     });
 
-    rex.emit(buffer);
-    buffer.emit(opcode);
-    modrm_sib.emit(buffer);
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(opcode);
+        modrm_sib.emit(instr);
+    });
 }
 
 fn emit_div_rm(buffer: &mut CodeBuffer<X64Machine>, op: DivOp, op_size: OperandSize, arg: RegMem) {
@@ -577,16 +612,21 @@ fn emit_div_rm(buffer: &mut CodeBuffer<X64Machine>, op: DivOp, op_size: OperandS
         reg_opcode
     });
 
-    rex.emit(buffer);
-    buffer.emit(&[0xf7]);
-    modrm_sib.emit(buffer);
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(&[0xf7]);
+        modrm_sib.emit(instr);
+    });
 }
 
 fn emit_convert_word(buffer: &mut CodeBuffer<X64Machine>, op_size: OperandSize) {
     let mut rex = RexPrefix::new();
     rex.encode_operand_size(op_size);
-    rex.emit(buffer);
-    buffer.emit(&[0x99]);
+
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(&[0x99]);
+    });
 }
 
 fn emit_shift_rm_cx(
@@ -601,9 +641,11 @@ fn emit_shift_rm_cx(
         reg_opcode
     });
 
-    rex.emit(buffer);
-    buffer.emit(&[0xd3]);
-    modrm_sib.emit(buffer);
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(&[0xd3]);
+        modrm_sib.emit(instr);
+    });
 }
 
 fn emit_shift_rm_i(
@@ -626,12 +668,14 @@ fn emit_shift_rm_i(
         reg_opcode
     });
 
-    rex.emit(buffer);
-    buffer.emit(&[opcode]);
-    modrm_sib.emit(buffer);
-    if emit_imm {
-        buffer.emit(&[imm]);
-    }
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(&[opcode]);
+        modrm_sib.emit(instr);
+        if emit_imm {
+            instr.emit(&[imm]);
+        }
+    });
 }
 
 fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, imm: i32) {
@@ -657,14 +701,17 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Machine>, op: AluOp, dest: PhysReg, 
     let mut rex = RexPrefix::new();
     rex.encode_operand_size(OperandSize::S64);
     let dest = rex.encode_modrm_base(dest);
-    rex.emit(buffer);
-    buffer.emit(&[opcode, encode_modrm_r(reg, dest)]);
 
-    if is_imm8 {
-        buffer.emit(&[imm as u8]);
-    } else {
-        buffer.emit(&imm.to_le_bytes());
-    }
+    buffer.instr(|instr| {
+        rex.emit(instr);
+        instr.emit(&[opcode, encode_modrm_r(reg, dest)]);
+
+        if is_imm8 {
+            instr.emit(&[imm as u8]);
+        } else {
+            instr.emit(&imm.to_le_bytes());
+        }
+    });
 }
 
 fn emit_rel(
@@ -678,18 +725,28 @@ fn emit_rel(
         let rel8 = rel - (rel8_opcode.len() as u64 + 1);
 
         if is_sint::<8>(rel8) {
-            buffer.emit(rel8_opcode);
-            buffer.emit(&[rel8 as u8]);
+            buffer.instr(|instr| {
+                instr.emit(rel8_opcode);
+                instr.emit(&[rel8 as u8]);
+            });
         } else {
             let rel32 = rel - (rel32_opcode.len() as u64 + 4);
-            buffer.emit(rel32_opcode);
-            buffer.emit(&(rel32 as u32).to_le_bytes());
+            buffer.instr(|instr| {
+                instr.emit(rel32_opcode);
+                instr.emit(&(rel32 as u32).to_le_bytes());
+            });
         }
     } else {
         // Conservatively use the full rel32 version if we have an unknown target.
-        buffer.emit(rel32_opcode);
-        buffer.emit_fixup(target, X64Fixup::Rela4(-4));
-        buffer.emit(&0u32.to_le_bytes());
+        buffer.instr_with_fixup(
+            rel32_opcode.len() as u32,
+            target,
+            X64Fixup::Rela4(-4),
+            |instr| {
+                instr.emit(rel32_opcode);
+                instr.emit(&0u32.to_le_bytes());
+            },
+        );
     }
 }
 
@@ -724,15 +781,15 @@ struct ModRmSib {
 }
 
 impl ModRmSib {
-    fn emit(self, buffer: &mut CodeBuffer<X64Machine>) {
-        buffer.emit(&[self.modrm]);
+    fn emit(self, instr: &mut InstrBuffer<'_>) {
+        instr.emit(&[self.modrm]);
         if let Some(sib) = self.sib {
-            buffer.emit(&[sib]);
+            instr.emit(&[sib]);
         }
         match self.mem_mode {
             MemMode::NoDisp => {}
-            MemMode::Disp8 => buffer.emit(&[self.disp as u8]),
-            MemMode::Disp32 | MemMode::Disp32Special => buffer.emit(&self.disp.to_le_bytes()),
+            MemMode::Disp8 => instr.emit(&[self.disp as u8]),
+            MemMode::Disp32 | MemMode::Disp32Special => instr.emit(&self.disp.to_le_bytes()),
         }
     }
 }
@@ -787,14 +844,14 @@ impl RexPrefix {
         }
     }
 
-    fn emit(self, buffer: &mut CodeBuffer<X64Machine>) {
+    fn emit(self, instr: &mut InstrBuffer<'_>) {
         let value = 0x40
             | (self.b as u8)
             | ((self.x as u8) << 1)
             | ((self.r as u8) << 2)
             | ((self.w as u8) << 3);
         if self.force || value != 0x40 {
-            buffer.emit(&[value]);
+            instr.emit(&[value]);
         }
     }
 }

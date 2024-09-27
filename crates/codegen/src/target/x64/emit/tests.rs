@@ -49,7 +49,7 @@ fn check_emit_rel_back(
     buffer.bind_label(label);
 
     for _ in 0..offset {
-        buffer.emit(&[0x90]);
+        buffer.instr(|instr| instr.emit(&[0x90]));
     }
 
     f(&mut buffer, label);

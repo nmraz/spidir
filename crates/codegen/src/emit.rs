@@ -60,39 +60,53 @@ impl<M: MachineEmit> CodeBuffer<M> {
         self.bytes.len().try_into().unwrap()
     }
 
-    pub fn emit(&mut self, bytes: &[u8]) {
-        self.bytes.extend_from_slice(bytes);
-    }
-
-    pub fn emit_fixup_at(&mut self, offset: u32, label: Label, kind: M::Fixup) {
-        self.fixups.push(Fixup {
-            offset,
-            label,
-            kind,
+    pub fn instr(&mut self, f: impl FnOnce(&mut InstrBuffer<'_>)) {
+        f(&mut InstrBuffer {
+            bytes: &mut self.bytes,
         });
     }
 
-    pub fn emit_fixup(&mut self, label: Label, kind: M::Fixup) {
-        self.emit_fixup_at(self.offset(), label, kind);
-    }
-
-    pub fn emit_reloc_at(
+    pub fn instr_with_reloc(
         &mut self,
-        offset: u32,
+        instr_offset: u32,
         target: FunctionRef,
         addend: i64,
         kind: RelocKind,
+        f: impl FnOnce(&mut InstrBuffer<'_>),
     ) {
+        let offset = self.offset() + instr_offset;
         self.relocs.push(Reloc {
             kind,
             offset,
             target,
             addend,
         });
+        f(&mut InstrBuffer {
+            bytes: &mut self.bytes,
+        });
+        // We don't actually know when the reloc ends, but at the very least it shouldn't start
+        // outside the emitted instruction.
+        debug_assert!(offset <= self.offset());
     }
 
-    pub fn emit_reloc(&mut self, target: FunctionRef, addend: i64, kind: RelocKind) {
-        self.emit_reloc_at(self.offset(), target, addend, kind);
+    pub fn instr_with_fixup(
+        &mut self,
+        instr_offset: u32,
+        label: Label,
+        kind: M::Fixup,
+        f: impl FnOnce(&mut InstrBuffer<'_>),
+    ) {
+        let offset = self.offset() + instr_offset;
+        self.fixups.push(Fixup {
+            offset,
+            label,
+            kind,
+        });
+        let fixup_end_offset = offset + u32::try_from(kind.byte_size()).unwrap();
+        f(&mut InstrBuffer {
+            bytes: &mut self.bytes,
+        });
+        debug_assert!(fixup_end_offset <= self.offset());
     }
 
     pub fn create_label(&mut self) -> Label {
@@ -123,8 +137,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
             );
         }
 
-        // Let's be nice to everyone else who wants to use this.
-        self.relocs.sort_unstable_by_key(|reloc| reloc.offset);
+        // Relocations should already be sorted by offset thanks to limited public API.
 
         CodeBlob {
             code: self.bytes,
@@ -136,6 +149,16 @@ impl<M: MachineEmit> CodeBuffer<M> {
 impl<M: MachineEmit> Default for CodeBuffer<M> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+pub struct InstrBuffer<'a> {
+    bytes: &'a mut Vec<u8>,
+}
+
+impl<'a> InstrBuffer<'a> {
+    pub fn emit(&mut self, bytes: &[u8]) {
+        self.bytes.extend_from_slice(bytes);
     }
 }
 

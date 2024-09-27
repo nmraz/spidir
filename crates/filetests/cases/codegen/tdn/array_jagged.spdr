@@ -123,7 +123,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 000147: 8b 09                           mov ecx, dword ptr [rcx]
     # nextln: 000149: 48 3b d9                        cmp rbx, rcx
     # nextln: 00014c: 0f 8c 05 00 00 00               jl 0x157
-    # nextln: 000152: e9 c7 01 00 00                  jmp 0x31e
+    # nextln: 000152: e9 a9 01 00 00                  jmp 0x300
     # nextln: 000157: 48 8b 4c 24 10                  mov rcx, qword ptr [rsp + 0x10]
     # nextln: 00015c: 48 89 ce                        mov rsi, rcx
     # nextln: 00015f: 48 0f af f3                     imul rsi, rbx
@@ -147,7 +147,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0001a3: 4d 63 f4                        movsxd r14, r12d
     # nextln: 0001a6: 4d 3b f3                        cmp r14, r11
     # nextln: 0001a9: 0f 8c 05 00 00 00               jl 0x1b4
-    # nextln: 0001af: e9 65 01 00 00                  jmp 0x319
+    # nextln: 0001af: e9 4c 01 00 00                  jmp 0x300
     # nextln: 0001b4: 49 89 d3                        mov r11, rdx
     # nextln: 0001b7: 4d 0f af de                     imul r11, r14
     # nextln: 0001bb: 48 89 fe                        mov rsi, rdi
@@ -185,7 +185,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 00023b: 45 8b 3a                        mov r15d, dword ptr [r10]
     # nextln: 00023e: 4d 3b f7                        cmp r14, r15
     # nextln: 000241: 0f 8c 05 00 00 00               jl 0x24c
-    # nextln: 000247: e9 c8 00 00 00                  jmp 0x314
+    # nextln: 000247: e9 b4 00 00 00                  jmp 0x300
     # nextln: 00024c: 49 89 cf                        mov r15, rcx
     # nextln: 00024f: 4d 0f af fe                     imul r15, r14
     # nextln: 000253: 49 89 fe                        mov r14, rdi
@@ -198,7 +198,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 000268: 41 8b 3a                        mov edi, dword ptr [r10]
     # nextln: 00026b: 4c 3b ef                        cmp r13, rdi
     # nextln: 00026e: 0f 8c 05 00 00 00               jl 0x279
-    # nextln: 000274: e9 96 00 00 00                  jmp 0x30f
+    # nextln: 000274: e9 87 00 00 00                  jmp 0x300
     # nextln: 000279: 49 89 da                        mov r10, rbx
     # nextln: 00027c: 4c 03 d6                        add r10, rsi
     # nextln: 00027f: 49 89 c3                        mov r11, rax
@@ -208,7 +208,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 00028d: 41 8b 3a                        mov edi, dword ptr [r10]
     # nextln: 000290: 4c 3b ef                        cmp r13, rdi
     # nextln: 000293: 0f 8c 05 00 00 00               jl 0x29e
-    # nextln: 000299: e9 6c 00 00 00                  jmp 0x30a
+    # nextln: 000299: e9 62 00 00 00                  jmp 0x300
     # nextln: 00029e: 4d 0f af e5                     imul r12, r13
     # nextln: 0002a2: 4d 03 c4                        add r8, r12
     # nextln: 0002a5: 49 03 d8                        add rbx, r8
@@ -219,7 +219,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0002b5: 8b 3f                           mov edi, dword ptr [rdi]
     # nextln: 0002b7: 4c 3b ef                        cmp r13, rdi
     # nextln: 0002ba: 0f 8c 05 00 00 00               jl 0x2c5
-    # nextln: 0002c0: e9 40 00 00 00                  jmp 0x305
+    # nextln: 0002c0: e9 3b 00 00 00                  jmp 0x300
     # nextln: 0002c5: 49 03 c0                        add rax, r8
     # nextln: 0002c8: 48 8b 00                        mov rax, qword ptr [rax]
     # nextln: 0002cb: 49 89 c0                        mov r8, rax

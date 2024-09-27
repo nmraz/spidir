@@ -50,6 +50,7 @@ pub struct CodeBuffer<M: MachineEmit> {
     fixups: Vec<Fixup<M::Fixup>>,
     relocs: Vec<Reloc>,
     last_branches: SmallVec<[LastBranch; 4]>,
+    last_bound_labels: SmallVec<[Label; 4]>,
 }
 
 impl<M: MachineEmit> CodeBuffer<M> {
@@ -60,6 +61,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
             fixups: Vec::new(),
             relocs: Vec::new(),
             last_branches: SmallVec::new(),
+            last_bound_labels: SmallVec::new(),
         }
     }
 
@@ -70,7 +72,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
     pub fn instr(&mut self, f: impl FnOnce(&mut InstrBuffer<'_>)) {
         self.instr_raw(f);
         // This isn't a tracked branch.
-        self.last_branches.clear();
+        self.clear_branch_tracking();
     }
 
     pub fn instr_with_reloc(
@@ -104,7 +106,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
     ) {
         self.instr_with_fixup_raw(label, fixup_instr_offset, fixup_kind, f);
         // This isn't a tracked branch.
-        self.last_branches.clear();
+        self.clear_branch_tracking();
     }
 
     pub fn branch(
@@ -128,6 +130,7 @@ impl<M: MachineEmit> CodeBuffer<M> {
         assert!(self.labels[label].is_none(), "label already bound");
         self.prune_branches_before_label(label);
         self.labels[label] = Some(self.offset());
+        self.last_bound_labels.push(label);
     }
 
     pub fn resolve_label(&self, label: Label) -> Option<u32> {
@@ -158,6 +161,8 @@ impl<M: MachineEmit> CodeBuffer<M> {
     }
 
     fn prune_branches_before_label(&mut self, label: Label) {
+        let mut first_affected_bound_label = self.last_bound_labels.len();
+
         while let Some(last_branch) = self.last_branches.last() {
             // Every recorded last branch should always come with a corresponding fixup.
             let branch_target = self.fixups.last().unwrap().label;
@@ -165,9 +170,21 @@ impl<M: MachineEmit> CodeBuffer<M> {
                 self.bytes.truncate(last_branch.start as usize);
                 self.fixups.pop();
                 self.last_branches.pop();
+
+                // Now that we've removed previously emitted code, make sure to repair all labels
+                // bound after it.
+                let new_offset = self.offset();
+                first_affected_bound_label = self.last_bound_labels[..first_affected_bound_label]
+                    .partition_point(|&label| self.labels[label].unwrap() < new_offset);
             } else {
                 break;
             }
+        }
+
+        // Retarget any labels we may have moved back.
+        let offset = self.offset();
+        for &label in &self.last_bound_labels[first_affected_bound_label..] {
+            self.labels[label] = Some(offset);
         }
     }
 
@@ -193,6 +210,11 @@ impl<M: MachineEmit> CodeBuffer<M> {
         let fixup_end_offset = offset + u32::try_from(fixup_kind.byte_size()).unwrap();
         self.instr_raw(f);
         debug_assert!(fixup_end_offset <= self.offset());
+    }
+
+    fn clear_branch_tracking(&mut self) {
+        self.last_branches.clear();
+        self.last_bound_labels.clear();
     }
 }
 

@@ -115,7 +115,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::JTrueGeInt1(System.Int32)":i32(i3
     # nextln: 0001ab: 0f b6 44 24 0b                  movzx eax, byte ptr [rsp + 0xb]
     # nextln: 0001b0: 85 c0                           test eax, eax
     # nextln: 0001b2: 0f 85 05 00 00 00               jne 0x1bd
-    # nextln: 0001b8: e9 09 00 00 00                  jmp 0x1c6
+    # nextln: 0001b8: e9 04 00 00 00                  jmp 0x1c1
     # nextln: 0001bd: 89 4c 24 04                     mov dword ptr [rsp + 4], ecx
     # nextln: 0001c1: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
     # nextln: 0001c5: 89 04 24                        mov dword ptr [rsp], eax

@@ -244,3 +244,6 @@ impl<'a> InstrBuffer<'a> {
         self.bytes.extend_from_slice(bytes);
     }
 }
+
+#[cfg(test)]
+mod tests;

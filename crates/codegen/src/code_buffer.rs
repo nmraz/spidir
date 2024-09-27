@@ -106,18 +106,6 @@ impl<F: FixupKind> CodeBuffer<F> {
         debug_assert!(offset <= self.offset());
     }
 
-    pub fn instr_with_fixup(
-        &mut self,
-        label: Label,
-        fixup_instr_offset: u32,
-        fixup_kind: F,
-        f: impl FnOnce(&mut InstrBuffer<'_>),
-    ) {
-        // This isn't a tracked branch.
-        self.clear_branch_tracking();
-        self.instr_with_fixup_raw(label, fixup_instr_offset, fixup_kind, f);
-    }
-
     pub fn branch(
         &mut self,
         target: Label,

@@ -26,11 +26,11 @@ fn check_emitted_code(f: impl FnOnce(&mut CodeBuffer<DummyFixup>), expected: Exp
 }
 
 fn emit_instr(buffer: &mut CodeBuffer<DummyFixup>, op: u8) {
-    buffer.instr(|instr| instr.emit(&[op]));
+    buffer.instr(|sink| sink.emit(&[op]));
 }
 
 fn emit_uncond_branch(buffer: &mut CodeBuffer<DummyFixup>, target: Label) {
-    buffer.uncond_branch(target, 0, DummyFixup, |instr| instr.emit(&[0xb0]));
+    buffer.uncond_branch(target, 0, DummyFixup, |sink| sink.emit(&[0xb0]));
 }
 
 fn emit_cond_branch(buffer: &mut CodeBuffer<DummyFixup>, target: Label) {
@@ -38,8 +38,8 @@ fn emit_cond_branch(buffer: &mut CodeBuffer<DummyFixup>, target: Label) {
         target,
         0,
         DummyFixup,
-        |instr| instr.emit(&[0xc0]),
-        |instr| instr.emit(&[0xd0]),
+        |sink| sink.emit(&[0xc0]),
+        |sink| sink.emit(&[0xd0]),
     );
 }
 

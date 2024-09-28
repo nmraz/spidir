@@ -1,7 +1,7 @@
 use ir::node::FunctionRef;
 
 use crate::{
-    code_buffer::{CodeBuffer, FixupKind, InstrBuffer, Label},
+    code_buffer::{CodeBuffer, FixupKind, InstrSink, Label},
     emit::BlockLabelMap,
     frame::FrameLayout,
     lir::{Lir, PhysReg, PhysRegSet, StackSlot},
@@ -339,9 +339,9 @@ fn emit_push(buffer: &mut CodeBuffer<X64Fixup>, reg: PhysReg) {
     let mut rex = RexPrefix::new();
     let reg = rex.encode_modrm_base(reg);
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(&[0x50 + reg]);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0x50 + reg]);
     });
 }
 
@@ -349,9 +349,9 @@ fn emit_pop(buffer: &mut CodeBuffer<X64Fixup>, reg: PhysReg) {
     let mut rex = RexPrefix::new();
     let reg = rex.encode_modrm_base(reg);
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(&[0x58 + reg]);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0x58 + reg]);
     });
 }
 
@@ -364,20 +364,20 @@ fn emit_mov_ri(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
         // Smallest case: move imm32 to r32, clearing upper bits.
         let mut rex = RexPrefix::new();
         let dest = rex.encode_modrm_base(dest);
-        buffer.instr(|instr| {
-            rex.emit(instr);
-            instr.emit(&[0xb8 + dest]);
-            instr.emit(&(imm as u32).to_le_bytes());
+        buffer.instr(|sink| {
+            rex.emit(sink);
+            sink.emit(&[0xb8 + dest]);
+            sink.emit(&(imm as u32).to_le_bytes());
         });
     } else if is_sint::<32>(imm) {
         // Next smallest case: sign-extend imm32 to r64.
         let mut rex = RexPrefix::new();
         let dest = rex.encode_modrm_base(dest);
         rex.encode_operand_size(OperandSize::S64);
-        buffer.instr(|instr| {
-            rex.emit(instr);
-            instr.emit(&[0xc7, encode_modrm_r(0, dest)]);
-            instr.emit(&(imm as u32).to_le_bytes());
+        buffer.instr(|sink| {
+            rex.emit(sink);
+            sink.emit(&[0xc7, encode_modrm_r(0, dest)]);
+            sink.emit(&(imm as u32).to_le_bytes());
         });
     } else {
         // Large case: use full 64-bit immediate.
@@ -386,16 +386,16 @@ fn emit_mov_ri(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
 }
 
 fn emit_movabs_ri(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
-    buffer.instr(|instr| emit_movabs_ri_instr(instr, dest, imm));
+    buffer.instr(|sink| emit_movabs_ri_instr(sink, dest, imm));
 }
 
 fn emit_movabs_ri_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
-    buffer.instr_with_reloc(target, 0, 2, RELOC_ABS64, |instr| {
-        emit_movabs_ri_instr(instr, dest, 0)
+    buffer.instr_with_reloc(target, 0, 2, RELOC_ABS64, |sink| {
+        emit_movabs_ri_instr(sink, dest, 0)
     });
 }
 
-fn emit_movabs_ri_instr(instr: &mut InstrBuffer<'_>, dest: PhysReg, imm: u64) {
+fn emit_movabs_ri_instr(instr: &mut InstrSink<'_>, dest: PhysReg, imm: u64) {
     let mut rex = RexPrefix::new();
     let dest = rex.encode_modrm_base(dest);
     rex.encode_operand_size(OperandSize::S64);
@@ -434,10 +434,10 @@ fn emit_movzx_r_rm(
         rex.encode_modrm_reg(dest)
     });
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(opcode);
-        modrm_sib.emit(instr);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(opcode);
+        modrm_sib.emit(sink);
     });
 }
 
@@ -447,10 +447,10 @@ fn emit_lea(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: BaseIndexOff
         rex.encode_modrm_reg(dest)
     });
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(&[0x8d]);
-        modrm_sib.emit(instr);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0x8d]);
+        modrm_sib.emit(sink);
     });
 }
 
@@ -473,19 +473,19 @@ fn emit_mov_rm_r(
         rex.encode_modrm_reg(src)
     });
 
-    buffer.instr(|instr| {
+    buffer.instr(|sink| {
         if full_op_size == FullOperandSize::S16 {
-            instr.emit(&[PREFIX_OPERAND_SIZE]);
+            sink.emit(&[PREFIX_OPERAND_SIZE]);
         }
 
-        rex.emit(instr);
+        rex.emit(sink);
         if full_op_size == FullOperandSize::S8 {
-            instr.emit(&[0x88]);
+            sink.emit(&[0x88]);
         } else {
-            instr.emit(&[0x89]);
+            sink.emit(&[0x89]);
         }
 
-        modrm_sib.emit(instr);
+        modrm_sib.emit(sink);
     });
 }
 
@@ -494,9 +494,9 @@ fn emit_setcc_r(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, dest: PhysReg
     rex.use_reg8(dest);
     let dest = rex.encode_modrm_base(dest);
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, dest)]);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, dest)]);
     });
 }
 
@@ -519,33 +519,33 @@ fn emit_movsx_r_rm(buffer: &mut CodeBuffer<X64Fixup>, width: ExtWidth, dest: Phy
         rex.encode_modrm_reg(dest)
     });
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(opcode);
-        modrm_sib.emit(instr);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(opcode);
+        modrm_sib.emit(sink);
     });
 }
 
 fn emit_call_rel(buffer: &mut CodeBuffer<X64Fixup>, target: FunctionRef) {
-    buffer.instr_with_reloc(target, -4, 1, RELOC_PC32, |instr| {
-        instr.emit(&[0xe8]);
-        instr.emit(&0u32.to_le_bytes());
+    buffer.instr_with_reloc(target, -4, 1, RELOC_PC32, |sink| {
+        sink.emit(&[0xe8]);
+        sink.emit(&0u32.to_le_bytes());
     });
 }
 
 fn emit_call_rm(buffer: &mut CodeBuffer<X64Fixup>, target: RegMem) {
     let (rex, modrm_sib) = encode_reg_mem_parts(target, |_rex| 2);
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(&[0xff]);
-        modrm_sib.emit(instr);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xff]);
+        modrm_sib.emit(sink);
     });
 }
 
 fn emit_jmp(buffer: &mut CodeBuffer<X64Fixup>, target: Label) {
-    buffer.uncond_branch(target, 1, X64Fixup::Rela4(-4), |instr| {
-        instr.emit(&[0xe9]);
-        instr.emit(&0u32.to_le_bytes());
+    buffer.uncond_branch(target, 1, X64Fixup::Rela4(-4), |sink| {
+        sink.emit(&[0xe9]);
+        sink.emit(&0u32.to_le_bytes());
     });
 }
 
@@ -554,23 +554,23 @@ fn emit_jcc(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, target: Label) {
         target,
         2,
         X64Fixup::Rela4(-4),
-        |instr| emit_jcc_instr(instr, code),
-        |instr| emit_jcc_instr(instr, code.negate()),
+        |sink| emit_jcc_instr(sink, code),
+        |sink| emit_jcc_instr(sink, code.negate()),
     );
 }
 
-fn emit_jcc_instr(instr: &mut InstrBuffer<'_>, code: CondCode) {
+fn emit_jcc_instr(instr: &mut InstrSink<'_>, code: CondCode) {
     let code = encode_cond_code(code);
     instr.emit(&[0xf, 0x80 + code]);
     instr.emit(&0u32.to_le_bytes());
 }
 
 fn emit_ret(buffer: &mut CodeBuffer<X64Fixup>) {
-    buffer.instr(|instr| instr.emit(&[0xc3]));
+    buffer.instr(|sink| sink.emit(&[0xc3]));
 }
 
 fn emit_ud2(buffer: &mut CodeBuffer<X64Fixup>) {
-    buffer.instr(|instr| instr.emit(&[0xf, 0xb]));
+    buffer.instr(|sink| sink.emit(&[0xf, 0xb]));
 }
 
 // Instruction group emission helpers
@@ -602,10 +602,10 @@ fn emit_alu_r_rm(
         rex.encode_modrm_reg(arg0)
     });
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(opcode);
-        modrm_sib.emit(instr);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(opcode);
+        modrm_sib.emit(sink);
     });
 }
 
@@ -619,10 +619,10 @@ fn emit_div_rm(buffer: &mut CodeBuffer<X64Fixup>, op: DivOp, op_size: OperandSiz
         reg_opcode
     });
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(&[0xf7]);
-        modrm_sib.emit(instr);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf7]);
+        modrm_sib.emit(sink);
     });
 }
 
@@ -630,9 +630,9 @@ fn emit_convert_word(buffer: &mut CodeBuffer<X64Fixup>, op_size: OperandSize) {
     let mut rex = RexPrefix::new();
     rex.encode_operand_size(op_size);
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(&[0x99]);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0x99]);
     });
 }
 
@@ -648,10 +648,10 @@ fn emit_shift_rm_cx(
         reg_opcode
     });
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(&[0xd3]);
-        modrm_sib.emit(instr);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xd3]);
+        modrm_sib.emit(sink);
     });
 }
 
@@ -675,12 +675,12 @@ fn emit_shift_rm_i(
         reg_opcode
     });
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(&[opcode]);
-        modrm_sib.emit(instr);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[opcode]);
+        modrm_sib.emit(sink);
         if emit_imm {
-            instr.emit(&[imm]);
+            sink.emit(&[imm]);
         }
     });
 }
@@ -709,14 +709,14 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Fixup>, op: AluOp, dest: PhysReg, im
     rex.encode_operand_size(OperandSize::S64);
     let dest = rex.encode_modrm_base(dest);
 
-    buffer.instr(|instr| {
-        rex.emit(instr);
-        instr.emit(&[opcode, encode_modrm_r(reg, dest)]);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[opcode, encode_modrm_r(reg, dest)]);
 
         if is_imm8 {
-            instr.emit(&[imm as u8]);
+            sink.emit(&[imm as u8]);
         } else {
-            instr.emit(&imm.to_le_bytes());
+            sink.emit(&imm.to_le_bytes());
         }
     });
 }
@@ -752,7 +752,7 @@ struct ModRmSib {
 }
 
 impl ModRmSib {
-    fn emit(self, instr: &mut InstrBuffer<'_>) {
+    fn emit(self, instr: &mut InstrSink<'_>) {
         instr.emit(&[self.modrm]);
         if let Some(sib) = self.sib {
             instr.emit(&[sib]);
@@ -815,7 +815,7 @@ impl RexPrefix {
         }
     }
 
-    fn emit(self, instr: &mut InstrBuffer<'_>) {
+    fn emit(self, instr: &mut InstrSink<'_>) {
         let value = 0x40
             | (self.b as u8)
             | ((self.x as u8) << 1)

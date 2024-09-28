@@ -34,11 +34,11 @@ pub trait FixupKind: Copy {
     fn apply(&self, offset: u32, label_offset: u32, bytes: &mut [u8]);
 }
 
-pub struct InstrBuffer<'a> {
+pub struct InstrSink<'a> {
     bytes: &'a mut SmallVec<[u8; 16]>,
 }
 
-impl<'a> InstrBuffer<'a> {
+impl<'a> InstrSink<'a> {
     pub fn emit(&mut self, bytes: &[u8]) {
         self.bytes.extend_from_slice(bytes);
     }
@@ -89,7 +89,7 @@ impl<F: FixupKind> CodeBuffer<F> {
         }
     }
 
-    pub fn instr(&mut self, f: impl FnOnce(&mut InstrBuffer<'_>)) {
+    pub fn instr(&mut self, f: impl FnOnce(&mut InstrSink<'_>)) {
         // Forget all branch tracking information we currently have, we're about to emit a
         // non-branch.
         self.clear_branch_tracking();
@@ -102,7 +102,7 @@ impl<F: FixupKind> CodeBuffer<F> {
         addend: i64,
         reloc_instr_offset: u32,
         reloc_kind: RelocKind,
-        f: impl FnOnce(&mut InstrBuffer<'_>),
+        f: impl FnOnce(&mut InstrSink<'_>),
     ) {
         let offset = self.offset() + reloc_instr_offset;
         self.relocs.push(Reloc {
@@ -123,11 +123,11 @@ impl<F: FixupKind> CodeBuffer<F> {
         target: Label,
         fixup_instr_offset: u32,
         fixup_kind: F,
-        emit_normal: impl FnOnce(&mut InstrBuffer<'_>),
-        emit_reversed: impl FnOnce(&mut InstrBuffer<'_>),
+        emit_normal: impl FnOnce(&mut InstrSink<'_>),
+        emit_reversed: impl FnOnce(&mut InstrSink<'_>),
     ) {
         let reversed_start: u32 = self.reversed_cond_branch_bytes.len().try_into().unwrap();
-        emit_reversed(&mut InstrBuffer {
+        emit_reversed(&mut InstrSink {
             bytes: &mut self.reversed_cond_branch_bytes,
         });
         let reversed_end: u32 = self.reversed_cond_branch_bytes.len().try_into().unwrap();
@@ -152,7 +152,7 @@ impl<F: FixupKind> CodeBuffer<F> {
         target: Label,
         fixup_instr_offset: u32,
         fixup_kind: F,
-        f: impl FnOnce(&mut InstrBuffer<'_>),
+        f: impl FnOnce(&mut InstrSink<'_>),
     ) {
         let last_branch_was_uncond = self
             .last_branches
@@ -216,9 +216,9 @@ impl<F: FixupKind> CodeBuffer<F> {
         }
     }
 
-    fn instr_raw(&mut self, f: impl FnOnce(&mut InstrBuffer<'_>)) {
+    fn instr_raw(&mut self, f: impl FnOnce(&mut InstrSink<'_>)) {
         let mut bytes = SmallVec::new();
-        f(&mut InstrBuffer { bytes: &mut bytes });
+        f(&mut InstrSink { bytes: &mut bytes });
         self.bytes.extend_from_slice(&bytes);
     }
 
@@ -227,7 +227,7 @@ impl<F: FixupKind> CodeBuffer<F> {
         label: Label,
         fixup_instr_offset: u32,
         fixup_kind: F,
-        f: impl FnOnce(&mut InstrBuffer<'_>),
+        f: impl FnOnce(&mut InstrSink<'_>),
     ) {
         let offset = self.offset() + fixup_instr_offset;
         self.fixups.push(Fixup {
@@ -246,7 +246,7 @@ impl<F: FixupKind> CodeBuffer<F> {
         target: Label,
         fixup_instr_offset: u32,
         fixup_kind: F,
-        f: impl FnOnce(&mut InstrBuffer<'_>),
+        f: impl FnOnce(&mut InstrSink<'_>),
     ) {
         let start = self.offset();
 

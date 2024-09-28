@@ -81,10 +81,6 @@ impl<F: FixupKind> CodeBuffer<F> {
         }
     }
 
-    pub fn offset(&self) -> u32 {
-        self.bytes.len().try_into().unwrap()
-    }
-
     pub fn instr(&mut self, f: impl FnOnce(&mut InstrBuffer<'_>)) {
         // Forget all branch tracking information we currently have, we're about to emit a
         // non-branch.
@@ -344,6 +340,10 @@ impl<F: FixupKind> CodeBuffer<F> {
         // Remember that all existing labels have now been pinned: they can't be moved back any
         // longer, but we still want them around for branch threading.
         self.first_unpinned_bound_label = self.last_bound_labels.len();
+    }
+
+    fn offset(&self) -> u32 {
+        self.bytes.len().try_into().unwrap()
     }
 }
 

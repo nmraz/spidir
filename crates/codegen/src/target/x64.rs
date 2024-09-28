@@ -72,6 +72,37 @@ pub enum CondCode {
     G,
 }
 
+impl CondCode {
+    #[allow(dead_code)]
+    fn negate(self) -> Self {
+        match self {
+            Self::O => Self::No,
+            Self::No => Self::O,
+
+            Self::B => Self::Ae,
+            Self::Ae => Self::B,
+
+            Self::E => Self::Ne,
+            Self::Ne => Self::E,
+
+            Self::Be => Self::A,
+            Self::A => Self::Be,
+
+            Self::S => Self::Ns,
+            Self::Ns => Self::S,
+
+            Self::P => Self::Np,
+            Self::Np => Self::P,
+
+            Self::L => Self::Ge,
+            Self::Ge => Self::L,
+
+            Self::Le => Self::G,
+            Self::G => Self::Le,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AluOp {
     Add,

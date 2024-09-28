@@ -164,31 +164,10 @@ impl<F: FixupKind> CodeBuffer<F> {
         self.prune_last_branches();
     }
 
-    pub fn resolve_label(&mut self, label: Label) -> Option<u32> {
-        let offset = self.resolve_label_raw(label)?;
-
-        // Don't treat any labels pointing strictly *inside* our "last branch" working area as
-        // bound, as a past or future branch/label bind could cause the label to shift back. The
-        // labels are only "pinned" in `flush_tracked_branches`.
-        //
-        // A label pointing just before the area is okay, since code before it can never be deleted.
-        if self
-            .last_branches
-            .first()
-            .is_some_and(|oldest_branch| offset > oldest_branch.start)
-        {
-            return None;
-        }
-
-        Some(offset)
-    }
-
     pub fn finish(mut self) -> CodeBlob {
         // Resolve all outstanding fixups now that the final layout is known.
         for fixup in mem::take(&mut self.fixups) {
-            let label_offset = self
-                .resolve_label_raw(fixup.label)
-                .expect("label not bound");
+            let label_offset = self.resolve_label(fixup.label).expect("label not bound");
 
             let offset_usize = fixup.offset as usize;
             let size = fixup.kind.byte_size();
@@ -222,7 +201,7 @@ impl<F: FixupKind> CodeBuffer<F> {
             // Every recorded last branch should always come with a corresponding fixup.
             let branch_target = self.fixups.last().unwrap().label;
 
-            let Some(branch_target) = self.resolve_label_raw(branch_target) else {
+            let Some(branch_target) = self.resolve_label(branch_target) else {
                 break;
             };
 
@@ -284,7 +263,7 @@ impl<F: FixupKind> CodeBuffer<F> {
         });
     }
 
-    fn resolve_label_raw(&mut self, label: Label) -> Option<u32> {
+    fn resolve_label(&mut self, label: Label) -> Option<u32> {
         let final_label = self.resolve_threaded_target(label);
         self.labels[final_label]
     }

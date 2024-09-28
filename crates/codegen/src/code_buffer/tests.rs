@@ -48,8 +48,6 @@ fn branch_over_instr() {
             // A new label inside the last branch area should still be unresolvable.
             let label = buffer.create_label();
             buffer.bind_label(label);
-            assert_eq!(buffer.resolve_label(label), None);
-
             emit_instr(buffer, 0x2);
 
             // Emitting a non-branch instruction should pin the label.
@@ -124,19 +122,11 @@ fn prune_branch_funnel() {
                 })
                 .collect();
 
-            // The branches should all still be pending at this point even though the labels are
-            // bound. This means that all labels but the first should still be unresolvable.
-            assert_eq!(buffer.resolve_label(temp_labels[0]), Some(1));
-
-            for &label in temp_labels.iter().skip(1) {
-                assert_eq!(buffer.resolve_label(label), None);
-            }
-
             buffer.bind_label(target);
 
             // Binding the target should force all branches to collapse, pinning all the labels to
             // offset 1.
-            for &label in temp_labels.iter().skip(1) {
+            for &label in temp_labels.iter() {
                 assert_eq!(buffer.resolve_label(label), Some(1));
             }
 

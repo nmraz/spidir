@@ -161,7 +161,6 @@ impl MachineLower for X64Machine {
                 }
             }
             NodeKind::Icmp(kind) => {
-                let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
                 let output = ctx.get_value_vreg(output);
 
@@ -174,9 +173,9 @@ impl MachineLower for X64Machine {
 
                 // Note: the `xor` must precede the `cmp` because it clobbers flags.
                 emit_mov_rz(ctx, temp);
-                emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
+                let cond_code = select_icmp(ctx, node, kind);
                 ctx.emit_instr(
-                    X64Instr::Setcc(cond_code_for_icmp(kind)),
+                    X64Instr::Setcc(cond_code),
                     &[DefOperand::any_reg(output)],
                     &[UseOperand::tied(temp, 0)],
                 );
@@ -199,10 +198,9 @@ impl MachineLower for X64Machine {
                 if ctx.has_one_use(cond) {
                     if let Some((cond_node, 0)) = ctx.value_def(cond) {
                         if let NodeKind::Icmp(kind) = ctx.node_kind(cond_node) {
-                            let [op1, op2] = ctx.node_inputs_exact(cond_node);
-                            emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
+                            let cond_code = select_icmp(ctx, cond_node, kind);
                             ctx.emit_instr(
-                                X64Instr::Jumpcc(cond_code_for_icmp(kind), targets[0], targets[1]),
+                                X64Instr::Jumpcc(cond_code, targets[0], targets[1]),
                                 &[],
                                 &[],
                             );
@@ -358,6 +356,23 @@ fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, output: DepValue, va
     } else {
         ctx.emit_instr(X64Instr::MovRI(val), &[DefOperand::any_reg(output)], &[]);
     }
+}
+
+fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: IcmpKind) -> CondCode {
+    let [op1, op2] = ctx.node_inputs_exact(node);
+
+    if match_iconst(ctx, op1) == Some(0) {
+        emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
+        return cond_code_for_icmp_zr(kind);
+    }
+
+    if match_iconst(ctx, op2) == Some(0) {
+        emit_alu_rr_discarded(ctx, op1, op1, AluOp::Test);
+        return cond_code_for_icmp_rz(kind);
+    }
+
+    emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
+    cond_code_for_icmp(kind)
 }
 
 fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {
@@ -527,19 +542,6 @@ fn emit_shift_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: Shif
     );
 }
 
-fn match_stack_slot(
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    value: DepValue,
-) -> Option<StackSlot> {
-    if let Some((node, 0)) = ctx.value_def(value) {
-        if matches!(ctx.node_kind(node), NodeKind::StackSlot { .. }) {
-            return Some(ctx.node_stack_slot(node));
-        }
-    }
-
-    None
-}
-
 fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp) {
     let [output] = ctx.node_outputs_exact(node);
     let [op1, op2] = ctx.node_inputs_exact(node);
@@ -575,8 +577,53 @@ fn emit_alu_rr_discarded(
     );
 }
 
-fn cond_code_for_icmp(icmp: IcmpKind) -> CondCode {
-    match icmp {
+fn match_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<u64> {
+    if let Some((node, 0)) = ctx.value_def(value) {
+        if let NodeKind::IConst(val) = ctx.node_kind(node) {
+            return Some(val);
+        }
+    }
+
+    None
+}
+
+fn match_stack_slot(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    value: DepValue,
+) -> Option<StackSlot> {
+    if let Some((node, 0)) = ctx.value_def(value) {
+        if matches!(ctx.node_kind(node), NodeKind::StackSlot { .. }) {
+            return Some(ctx.node_stack_slot(node));
+        }
+    }
+
+    None
+}
+
+fn cond_code_for_icmp_zr(kind: IcmpKind) -> CondCode {
+    match kind {
+        IcmpKind::Eq => CondCode::E,
+        IcmpKind::Ne => CondCode::Ne,
+        IcmpKind::Slt => CondCode::G,
+        IcmpKind::Sle => CondCode::Ns,
+        IcmpKind::Ult => CondCode::Ne,
+        IcmpKind::Ule => CondCode::Ae,
+    }
+}
+
+fn cond_code_for_icmp_rz(kind: IcmpKind) -> CondCode {
+    match kind {
+        IcmpKind::Eq => CondCode::E,
+        IcmpKind::Ne => CondCode::Ne,
+        IcmpKind::Slt => CondCode::S,
+        IcmpKind::Sle => CondCode::Le,
+        IcmpKind::Ult => CondCode::B,
+        IcmpKind::Ule => CondCode::E,
+    }
+}
+
+fn cond_code_for_icmp(kind: IcmpKind) -> CondCode {
+    match kind {
         IcmpKind::Eq => CondCode::E,
         IcmpKind::Ne => CondCode::Ne,
         IcmpKind::Slt => CondCode::L,

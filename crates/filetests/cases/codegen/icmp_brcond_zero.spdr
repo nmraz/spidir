@@ -1,0 +1,242 @@
+# run: codegen
+
+func @select_eqz:i32(i32, i32, i32) {
+    # check: function `select_eqz`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 84 03 00 00 00               je 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp eq %a, %z
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_nez:i32(i32, i32, i32) {
+    # check: function `select_nez`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 85 03 00 00 00               jne 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp ne %a, %z
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_sltz:i32(i32, i32, i32) {
+    # check: function `select_sltz`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 88 03 00 00 00               js 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp slt %a, %z
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_slez:i32(i32, i32, i32) {
+    # check: function `select_slez`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 8e 03 00 00 00               jle 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp sle %a, %z
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_ultz:i32(i32, i32, i32) {
+    # check: function `select_ultz`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 82 03 00 00 00               jb 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp ult %a, %z
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_ulez:i32(i32, i32, i32) {
+    # check: function `select_ulez`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 84 03 00 00 00               je 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp ule %a, %z
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+
+func @select_zeq:i32(i32, i32, i32) {
+    # check: function `select_zeq`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 84 03 00 00 00               je 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp eq %z, %a
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_zne:i32(i32, i32, i32) {
+    # check: function `select_zne`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 85 03 00 00 00               jne 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp ne %z, %a
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_zslt:i32(i32, i32, i32) {
+    # check: function `select_zslt`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 8f 03 00 00 00               jg 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp slt %z, %a
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_zsle:i32(i32, i32, i32) {
+    # check: function `select_zsle`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 89 03 00 00 00               jns 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp sle %z, %a
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_zult:i32(i32, i32, i32) {
+    # check: function `select_zult`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 85 03 00 00 00               jne 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp ult %z, %a
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}
+
+func @select_zule:i32(i32, i32, i32) {
+    # check: function `select_zule`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f0                        mov rax, rsi
+    # nextln: 000007: 85 ff                           test edi, edi
+    # nextln: 000009: 0f 83 03 00 00 00               jae 0x12
+    # nextln: 00000f: 48 89 d0                        mov rax, rdx
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+
+    %0:ctrl, %a:i32, %2:i32, %3:i32 = entry
+    %z:i32 = iconst 0
+    %1:i32 = icmp ule %z, %a
+    %8:ctrl, %9:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %8, %9
+    %10:i32 = phi %7, %2, %3
+    return %6, %10
+}

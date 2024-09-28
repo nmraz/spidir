@@ -5,20 +5,18 @@ func @sum_to_n:i32(i32) {
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 33 c0                           xor eax, eax
-    # nextln: 000006: 3b f8                           cmp edi, eax
-    # nextln: 000008: 0f 84 22 00 00 00               je 0x30
+    # nextln: 000006: 85 ff                           test edi, edi
+    # nextln: 000008: 0f 84 1c 00 00 00               je 0x2a
     # nextln: 00000e: b9 01 00 00 00                  mov ecx, 1
-    # nextln: 000013: 48 89 c2                        mov rdx, rax
-    # nextln: 000016: 48 89 fe                        mov rsi, rdi
-    # nextln: 000019: 2b f1                           sub esi, ecx
-    # nextln: 00001b: 03 d7                           add edx, edi
-    # nextln: 00001d: 3b f0                           cmp esi, eax
-    # nextln: 00001f: 0f 84 08 00 00 00               je 0x2d
-    # nextln: 000025: 48 89 f7                        mov rdi, rsi
-    # nextln: 000028: e9 e9 ff ff ff                  jmp 0x16
-    # nextln: 00002d: 48 89 d0                        mov rax, rdx
-    # nextln: 000030: 5d                              pop rbp
-    # nextln: 000031: c3                              ret
+    # nextln: 000013: 48 89 fa                        mov rdx, rdi
+    # nextln: 000016: 2b d1                           sub edx, ecx
+    # nextln: 000018: 03 c7                           add eax, edi
+    # nextln: 00001a: 85 d2                           test edx, edx
+    # nextln: 00001c: 0f 84 08 00 00 00               je 0x2a
+    # nextln: 000022: 48 89 d7                        mov rdi, rdx
+    # nextln: 000025: e9 e9 ff ff ff                  jmp 0x13
+    # nextln: 00002a: 5d                              pop rbp
+    # nextln: 00002b: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %10:i32 = iconst 1
@@ -46,17 +44,17 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 000008: 33 c0                           xor eax, eax
     # nextln: 00000a: 89 3c 24                        mov dword ptr [rsp], edi
     # nextln: 00000d: 89 44 24 04                     mov dword ptr [rsp + 4], eax
-    # nextln: 000011: b9 01 00 00 00                  mov ecx, 1
-    # nextln: 000016: 8b 14 24                        mov edx, dword ptr [rsp]
-    # nextln: 000019: 3b d0                           cmp edx, eax
+    # nextln: 000011: b8 01 00 00 00                  mov eax, 1
+    # nextln: 000016: 8b 0c 24                        mov ecx, dword ptr [rsp]
+    # nextln: 000019: 85 c9                           test ecx, ecx
     # nextln: 00001b: 0f 84 1a 00 00 00               je 0x3b
-    # nextln: 000021: 8b 34 24                        mov esi, dword ptr [rsp]
-    # nextln: 000024: 48 89 f2                        mov rdx, rsi
-    # nextln: 000027: 2b d1                           sub edx, ecx
-    # nextln: 000029: 8b 7c 24 04                     mov edi, dword ptr [rsp + 4]
-    # nextln: 00002d: 03 fe                           add edi, esi
-    # nextln: 00002f: 89 14 24                        mov dword ptr [rsp], edx
-    # nextln: 000032: 89 7c 24 04                     mov dword ptr [rsp + 4], edi
+    # nextln: 000021: 8b 3c 24                        mov edi, dword ptr [rsp]
+    # nextln: 000024: 48 89 f9                        mov rcx, rdi
+    # nextln: 000027: 2b c8                           sub ecx, eax
+    # nextln: 000029: 8b 54 24 04                     mov edx, dword ptr [rsp + 4]
+    # nextln: 00002d: 03 d7                           add edx, edi
+    # nextln: 00002f: 89 0c 24                        mov dword ptr [rsp], ecx
+    # nextln: 000032: 89 54 24 04                     mov dword ptr [rsp + 4], edx
     # nextln: 000036: e9 db ff ff ff                  jmp 0x16
     # nextln: 00003b: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
     # nextln: 00003f: 48 83 c4 10                     add rsp, 0x10

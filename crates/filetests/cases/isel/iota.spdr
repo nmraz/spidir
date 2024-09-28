@@ -4,7 +4,7 @@ func @iota(ptr, i64) {
     # check: function `iota`:
     # nextln:       block0[%5:gpr($$rdi), %2:gpr($$rsi)]:
     # nextln: 0000:      %8:gpr(reg)[late] = MovRZ
-    # nextln: 0001:      AluRRm(S64, Cmp) %2(reg)[early], %8(any)[early]
+    # nextln: 0001:      AluRRm(S64, Test) %2(reg)[early], %2(any)[early]
     # nextln: 0002:      Jumpcc(E, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:

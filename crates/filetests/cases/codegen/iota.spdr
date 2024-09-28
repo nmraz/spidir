@@ -5,7 +5,7 @@ func @iota(ptr, i64) {
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 33 c0                           xor eax, eax
-    # nextln: 000006: 48 3b f0                        cmp rsi, rax
+    # nextln: 000006: 48 85 f6                        test rsi, rsi
     # nextln: 000009: 0f 84 30 00 00 00               je 0x3f
     # nextln: 00000f: b9 03 00 00 00                  mov ecx, 3
     # nextln: 000014: ba 01 00 00 00                  mov edx, 1

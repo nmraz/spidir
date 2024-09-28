@@ -35,7 +35,7 @@ pub trait FixupKind: Copy {
 }
 
 pub struct InstrSink<'a> {
-    bytes: &'a mut SmallVec<[u8; 16]>,
+    bytes: &'a mut Vec<u8>,
 }
 
 impl<'a> InstrSink<'a> {
@@ -126,10 +126,16 @@ impl<F: FixupKind> CodeBuffer<F> {
         emit_normal: impl FnOnce(&mut InstrSink<'_>),
         emit_reversed: impl FnOnce(&mut InstrSink<'_>),
     ) {
-        let reversed_start: u32 = self.reversed_cond_branch_bytes.len().try_into().unwrap();
+        let tmp_reversed_start = self.bytes.len();
         emit_reversed(&mut InstrSink {
-            bytes: &mut self.reversed_cond_branch_bytes,
+            bytes: &mut self.bytes,
         });
+
+        // Stash the reversed form for when we need it.
+        let reversed_start: u32 = self.reversed_cond_branch_bytes.len().try_into().unwrap();
+        self.reversed_cond_branch_bytes
+            .extend_from_slice(&self.bytes[tmp_reversed_start..]);
+        self.bytes.truncate(tmp_reversed_start);
         let reversed_end: u32 = self.reversed_cond_branch_bytes.len().try_into().unwrap();
 
         let normal_start = self.offset();
@@ -217,9 +223,9 @@ impl<F: FixupKind> CodeBuffer<F> {
     }
 
     fn instr_raw(&mut self, f: impl FnOnce(&mut InstrSink<'_>)) {
-        let mut bytes = SmallVec::new();
-        f(&mut InstrSink { bytes: &mut bytes });
-        self.bytes.extend_from_slice(&bytes);
+        f(&mut InstrSink {
+            bytes: &mut self.bytes,
+        });
     }
 
     fn instr_with_fixup_raw(

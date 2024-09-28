@@ -251,16 +251,7 @@ fn emit_call(
 ) {
     match machine.code_model_for_function(func) {
         CodeModel::SmallPic => emit_call_rel(ctx, node, func),
-        CodeModel::LargeAbs => {
-            let target = ctx.create_temp_vreg(RC_GPR);
-            ctx.emit_instr(
-                X64Instr::FuncAddrAbs(func),
-                &[DefOperand::any_reg(target)],
-                &[],
-            );
-            let args = ctx.node_inputs(node);
-            emit_callind(ctx, node, target, args);
-        }
+        CodeModel::LargeAbs => emit_call_abs(ctx, node, func),
     }
 }
 
@@ -273,6 +264,26 @@ fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Fu
             PhysRegSet::from_iter(CALLER_SAVED_REGS),
         );
     });
+}
+
+fn emit_call_abs(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
+    emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
+        let target = ctx.create_temp_vreg(RC_GPR);
+        ctx.emit_instr(
+            X64Instr::FuncAddrAbs(func),
+            &[DefOperand::any_reg(target)],
+            &[],
+        );
+
+        let mut uses: SmallVec<[_; FIXED_ARG_COUNT + 1]> = smallvec![UseOperand::any(target)];
+        uses.extend_from_slice(args);
+        ctx.emit_instr_with_clobbers(
+            X64Instr::CallRm,
+            retvals,
+            &uses,
+            PhysRegSet::from_iter(CALLER_SAVED_REGS),
+        );
+    })
 }
 
 fn emit_callind(

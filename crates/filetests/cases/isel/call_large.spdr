@@ -58,18 +58,18 @@ func @many_params(i32, i64, ptr, i64, i32, i32, i64, ptr, i32, i64) {
 
 func @caller:i32(ptr, i32) {
     # check: function `caller`:
-    # nextln:       block0[%5:gpr($$rdi), %6:gpr($$rsi)]:
+    # nextln:       block0[%4:gpr($$rdi), %5:gpr($$rsi)]:
     # nextln: 0000:      Jump(block1)
     # nextln:       => block1
     # nextln:       block1:
     # nextln: 0001:      %9:gpr(reg)[late] = FuncAddrAbs(External(extfunc0))
-    # nextln: 0002:      CallRm %9(any)[early], %5($$rdi)[early], %6($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln: 0002:      CallRm %9(any)[early], %4($$rdi)[early], %5($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln: 0003:      %8:gpr(reg)[late] = FuncAddrAbs(External(extfunc1))
-    # nextln: 0004:      %2:gpr($$rax)[late] = CallRm %8(any)[early], %5($$rdi)[early], %6($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln: 0004:      %2:gpr($$rax)[late] = CallRm %8(any)[early], %4($$rdi)[early], %5($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln: 0005:      %7:gpr(reg)[late] = FuncAddrAbs(Internal(func0))
-    # nextln: 0006:      CallRm %7(any)[early], %5($$rdi)[early], %6($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
-    # nextln: 0007:      %4:gpr(reg)[late] = FuncAddrAbs(Internal(func1))
-    # nextln: 0008:      %3:gpr($$rax)[late] = CallRm %4(any)[early], %5($$rdi)[early], %6($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln: 0006:      CallRm %7(any)[early], %4($$rdi)[early], %5($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln: 0007:      %6:gpr(reg)[late] = FuncAddrAbs(Internal(func1))
+    # nextln: 0008:      %3:gpr($$rax)[late] = CallRm %6(any)[early], %4($$rdi)[early], %5($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln: 0009:      %0:gpr(reg)[late] = AluRRm(S32, Add) %2(tied:0)[early], %3(any)[early]
     # nextln: 0010:      %1:gpr(reg)[late] = FuncAddrAbs(Internal(func2))
     # nextln: 0011:      CallRm %1(any)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
@@ -92,11 +92,11 @@ func @caller:i32(ptr, i32) {
 func @call_single_stack_arg() {
     # check: function `call_single_stack_arg`:
     # nextln:       block0[]:
-    # nextln: 0000:      %1:gpr(reg)[late] = MovRI(7)
-    # nextln: 0001:      %0:gpr(reg)[late] = FuncAddrAbs(Internal(func3))
-    # nextln: 0002:      AddSp(-8)
-    # nextln: 0003:      Push %1(reg)[early]
-    # nextln: 0004:      CallRm %0(any)[early], %1($$rdi)[early], %1($$rsi)[early], %1($$rdx)[early], %1($$rcx)[early], %1($$r8)[early], %1($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln: 0000:      %0:gpr(reg)[late] = MovRI(7)
+    # nextln: 0001:      AddSp(-8)
+    # nextln: 0002:      Push %0(reg)[early]
+    # nextln: 0003:      %1:gpr(reg)[late] = FuncAddrAbs(Internal(func3))
+    # nextln: 0004:      CallRm %1(any)[early], %0($$rdi)[early], %0($$rsi)[early], %0($$rdx)[early], %0($$rcx)[early], %0($$r8)[early], %0($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln: 0005:      AddSp(16)
     # nextln: 0006:      Ret
 
@@ -108,15 +108,15 @@ func @call_single_stack_arg() {
 
 func @call_many_params(ptr) {
     # check: function `call_many_params`:
-    # nextln:       block0[%3:gpr($$rdi)]:
-    # nextln: 0000:      %1:gpr(reg)[late] = MovRZ
-    # nextln: 0001:      %2:gpr(reg)[late] = MovRZ
-    # nextln: 0002:      %0:gpr(reg)[late] = FuncAddrAbs(Internal(func4))
-    # nextln: 0003:      Push %2(reg)[early]
-    # nextln: 0004:      Push %1(reg)[early]
-    # nextln: 0005:      Push %3(reg)[early]
-    # nextln: 0006:      Push %2(reg)[early]
-    # nextln: 0007:      CallRm %0(any)[early], %1($$rdi)[early], %2($$rsi)[early], %3($$rdx)[early], %2($$rcx)[early], %1($$r8)[early], %1($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
+    # nextln:       block0[%2:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(reg)[late] = MovRZ
+    # nextln: 0001:      %1:gpr(reg)[late] = MovRZ
+    # nextln: 0002:      Push %1(reg)[early]
+    # nextln: 0003:      Push %0(reg)[early]
+    # nextln: 0004:      Push %2(reg)[early]
+    # nextln: 0005:      Push %1(reg)[early]
+    # nextln: 0006:      %3:gpr(reg)[late] = FuncAddrAbs(Internal(func4))
+    # nextln: 0007:      CallRm %3(any)[early], %0($$rdi)[early], %1($$rsi)[early], %2($$rdx)[early], %1($$rcx)[early], %0($$r8)[early], %0($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)
     # nextln: 0008:      AddSp(32)
     # nextln: 0009:      Ret
 

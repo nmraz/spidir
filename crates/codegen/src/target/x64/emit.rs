@@ -543,12 +543,18 @@ fn emit_call_rm(buffer: &mut CodeBuffer<X64Fixup>, target: RegMem) {
 }
 
 fn emit_jmp(buffer: &mut CodeBuffer<X64Fixup>, target: Label) {
-    emit_rel_branch(buffer, &[0xeb], &[0xe9], target);
+    buffer.branch(target, 1, X64Fixup::Rela4(-4), |instr| {
+        instr.emit(&[0xe9]);
+        instr.emit(&0u32.to_le_bytes());
+    });
 }
 
 fn emit_jcc(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, target: Label) {
     let code = encode_cond_code(code);
-    emit_rel_branch(buffer, &[0x70 + code], &[0xf, 0x80 + code], target);
+    buffer.branch(target, 2, X64Fixup::Rela4(-4), |instr| {
+        instr.emit(&[0xf, 0x80 + code]);
+        instr.emit(&0u32.to_le_bytes());
+    });
 }
 
 fn emit_ret(buffer: &mut CodeBuffer<X64Fixup>) {
@@ -705,42 +711,6 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Fixup>, op: AluOp, dest: PhysReg, im
             instr.emit(&imm.to_le_bytes());
         }
     });
-}
-
-fn emit_rel_branch(
-    buffer: &mut CodeBuffer<X64Fixup>,
-    rel8_opcode: &[u8],
-    rel32_opcode: &[u8],
-    target: Label,
-) {
-    if let Some(offset) = buffer.resolve_label(target) {
-        let rel = (offset as i64 - buffer.offset() as i64) as u64;
-        let rel8 = rel - (rel8_opcode.len() as u64 + 1);
-
-        if is_sint::<8>(rel8) {
-            buffer.instr(|instr| {
-                instr.emit(rel8_opcode);
-                instr.emit(&[rel8 as u8]);
-            });
-        } else {
-            let rel32 = rel - (rel32_opcode.len() as u64 + 4);
-            buffer.instr(|instr| {
-                instr.emit(rel32_opcode);
-                instr.emit(&(rel32 as u32).to_le_bytes());
-            });
-        }
-    } else {
-        // Conservatively use the full rel32 version if we have an unknown target.
-        buffer.branch(
-            target,
-            rel32_opcode.len() as u32,
-            X64Fixup::Rela4(-4),
-            |instr| {
-                instr.emit(rel32_opcode);
-                instr.emit(&0u32.to_le_bytes());
-            },
-        );
-    }
 }
 
 // Prefixes and encoding

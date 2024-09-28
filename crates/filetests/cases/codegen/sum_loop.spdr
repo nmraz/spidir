@@ -8,19 +8,19 @@ func @sum_to_n:i32(i32) {
     # nextln: 000009: 3b f8                           cmp edi, eax
     # nextln: 00000b: 0f 84 05 00 00 00               je 0x16
     # nextln: 000011: e9 05 00 00 00                  jmp 0x1b
-    # nextln: 000016: e9 1f 00 00 00                  jmp 0x3a
+    # nextln: 000016: e9 22 00 00 00                  jmp 0x3d
     # nextln: 00001b: b9 01 00 00 00                  mov ecx, 1
     # nextln: 000020: 48 89 c2                        mov rdx, rax
     # nextln: 000023: 48 89 fe                        mov rsi, rdi
     # nextln: 000026: 2b f1                           sub esi, ecx
     # nextln: 000028: 03 d7                           add edx, edi
     # nextln: 00002a: 3b f0                           cmp esi, eax
-    # nextln: 00002c: 0f 84 05 00 00 00               je 0x37
+    # nextln: 00002c: 0f 84 08 00 00 00               je 0x3a
     # nextln: 000032: 48 89 f7                        mov rdi, rsi
-    # nextln: 000035: eb ec                           jmp 0x23
-    # nextln: 000037: 48 89 d0                        mov rax, rdx
-    # nextln: 00003a: 5d                              pop rbp
-    # nextln: 00003b: c3                              ret
+    # nextln: 000035: e9 e9 ff ff ff                  jmp 0x23
+    # nextln: 00003a: 48 89 d0                        mov rax, rdx
+    # nextln: 00003d: 5d                              pop rbp
+    # nextln: 00003e: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %10:i32 = iconst 1
@@ -51,7 +51,7 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 000014: b9 01 00 00 00                  mov ecx, 1
     # nextln: 000019: 8b 14 24                        mov edx, dword ptr [rsp]
     # nextln: 00001c: 3b d0                           cmp edx, eax
-    # nextln: 00001e: 0f 84 17 00 00 00               je 0x3b
+    # nextln: 00001e: 0f 84 1a 00 00 00               je 0x3e
     # nextln: 000024: 8b 34 24                        mov esi, dword ptr [rsp]
     # nextln: 000027: 48 89 f2                        mov rdx, rsi
     # nextln: 00002a: 2b d1                           sub edx, ecx
@@ -59,11 +59,11 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 000030: 03 fe                           add edi, esi
     # nextln: 000032: 89 14 24                        mov dword ptr [rsp], edx
     # nextln: 000035: 89 7c 24 04                     mov dword ptr [rsp + 4], edi
-    # nextln: 000039: eb de                           jmp 0x19
-    # nextln: 00003b: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
-    # nextln: 00003f: 48 83 c4 10                     add rsp, 0x10
-    # nextln: 000043: 5d                              pop rbp
-    # nextln: 000044: c3                              ret
+    # nextln: 000039: e9 db ff ff ff                  jmp 0x19
+    # nextln: 00003e: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
+    # nextln: 000042: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 000046: 5d                              pop rbp
+    # nextln: 000047: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:ctrl, %3:phisel = region %0

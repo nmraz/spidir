@@ -34,7 +34,13 @@ fn emit_uncond_branch(buffer: &mut CodeBuffer<DummyFixup>, target: Label) {
 }
 
 fn emit_cond_branch(buffer: &mut CodeBuffer<DummyFixup>, target: Label) {
-    buffer.branch(target, 0, DummyFixup, |instr| instr.emit(&[0xc0]));
+    buffer.cond_branch(
+        target,
+        0,
+        DummyFixup,
+        |instr| instr.emit(&[0xc0]),
+        |instr| instr.emit(&[0xd0]),
+    );
 }
 
 #[test]
@@ -501,7 +507,7 @@ fn cond_branch_over_uncond_branch() {
             buffer.bind_label(target);
             emit_instr(buffer, 0x3);
         },
-        expect!["01 c2 b2 02 03"],
+        expect!["01 d2 02 03"],
     );
 }
 

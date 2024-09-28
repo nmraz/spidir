@@ -550,11 +550,19 @@ fn emit_jmp(buffer: &mut CodeBuffer<X64Fixup>, target: Label) {
 }
 
 fn emit_jcc(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, target: Label) {
+    buffer.cond_branch(
+        target,
+        2,
+        X64Fixup::Rela4(-4),
+        |instr| emit_jcc_instr(instr, code),
+        |instr| emit_jcc_instr(instr, code.negate()),
+    );
+}
+
+fn emit_jcc_instr(instr: &mut InstrBuffer<'_>, code: CondCode) {
     let code = encode_cond_code(code);
-    buffer.branch(target, 2, X64Fixup::Rela4(-4), |instr| {
-        instr.emit(&[0xf, 0x80 + code]);
-        instr.emit(&0u32.to_le_bytes());
-    });
+    instr.emit(&[0xf, 0x80 + code]);
+    instr.emit(&0u32.to_le_bytes());
 }
 
 fn emit_ret(buffer: &mut CodeBuffer<X64Fixup>) {

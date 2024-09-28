@@ -73,7 +73,6 @@ pub enum CondCode {
 }
 
 impl CondCode {
-    #[allow(dead_code)]
     fn negate(self) -> Self {
         match self {
             Self::O => Self::No,

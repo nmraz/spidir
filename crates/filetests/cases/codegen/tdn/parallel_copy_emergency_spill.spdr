@@ -1091,26 +1091,25 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0013b4: 0f 94 c1                        sete cl
     # nextln: 0013b7: 44 23 e9                        and r13d, ecx
     # nextln: 0013ba: 45 85 ed                        test r13d, r13d
-    # nextln: 0013bd: 0f 85 05 00 00 00               jne 0x13c8
-    # nextln: 0013c3: e9 15 00 00 00                  jmp 0x13dd
-    # nextln: 0013c8: 4c 89 f8                        mov rax, r15
-    # nextln: 0013cb: 48 81 c4 c8 00 00 00            add rsp, 0xc8
-    # nextln: 0013d2: 5b                              pop rbx
-    # nextln: 0013d3: 41 5c                           pop r12
-    # nextln: 0013d5: 41 5d                           pop r13
-    # nextln: 0013d7: 41 5e                           pop r14
-    # nextln: 0013d9: 41 5f                           pop r15
-    # nextln: 0013db: 5d                              pop rbp
-    # nextln: 0013dc: c3                              ret
-    # nextln: 0013dd: 48 89 d8                        mov rax, rbx
-    # nextln: 0013e0: 48 81 c4 c8 00 00 00            add rsp, 0xc8
-    # nextln: 0013e7: 5b                              pop rbx
-    # nextln: 0013e8: 41 5c                           pop r12
-    # nextln: 0013ea: 41 5d                           pop r13
-    # nextln: 0013ec: 41 5e                           pop r14
-    # nextln: 0013ee: 41 5f                           pop r15
-    # nextln: 0013f0: 5d                              pop rbp
-    # nextln: 0013f1: c3                              ret
+    # nextln: 0013bd: 0f 84 15 00 00 00               je 0x13d8
+    # nextln: 0013c3: 4c 89 f8                        mov rax, r15
+    # nextln: 0013c6: 48 81 c4 c8 00 00 00            add rsp, 0xc8
+    # nextln: 0013cd: 5b                              pop rbx
+    # nextln: 0013ce: 41 5c                           pop r12
+    # nextln: 0013d0: 41 5d                           pop r13
+    # nextln: 0013d2: 41 5e                           pop r14
+    # nextln: 0013d4: 41 5f                           pop r15
+    # nextln: 0013d6: 5d                              pop rbp
+    # nextln: 0013d7: c3                              ret
+    # nextln: 0013d8: 48 89 d8                        mov rax, rbx
+    # nextln: 0013db: 48 81 c4 c8 00 00 00            add rsp, 0xc8
+    # nextln: 0013e2: 5b                              pop rbx
+    # nextln: 0013e3: 41 5c                           pop r12
+    # nextln: 0013e5: 41 5d                           pop r13
+    # nextln: 0013e7: 41 5e                           pop r14
+    # nextln: 0013e9: 41 5f                           pop r15
+    # nextln: 0013eb: 5d                              pop rbp
+    # nextln: 0013ec: c3                              ret
 
     %0:ctrl = entry
     %1:ctrl, %2:phisel = region %0

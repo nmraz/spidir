@@ -6,21 +6,19 @@ func @sum_to_n:i32(i32) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: b8 00 00 00 00                  mov eax, 0
     # nextln: 000009: 3b f8                           cmp edi, eax
-    # nextln: 00000b: 0f 84 05 00 00 00               je 0x16
-    # nextln: 000011: e9 05 00 00 00                  jmp 0x1b
-    # nextln: 000016: e9 22 00 00 00                  jmp 0x3d
-    # nextln: 00001b: b9 01 00 00 00                  mov ecx, 1
-    # nextln: 000020: 48 89 c2                        mov rdx, rax
-    # nextln: 000023: 48 89 fe                        mov rsi, rdi
-    # nextln: 000026: 2b f1                           sub esi, ecx
-    # nextln: 000028: 03 d7                           add edx, edi
-    # nextln: 00002a: 3b f0                           cmp esi, eax
-    # nextln: 00002c: 0f 84 08 00 00 00               je 0x3a
-    # nextln: 000032: 48 89 f7                        mov rdi, rsi
-    # nextln: 000035: e9 e9 ff ff ff                  jmp 0x23
-    # nextln: 00003a: 48 89 d0                        mov rax, rdx
-    # nextln: 00003d: 5d                              pop rbp
-    # nextln: 00003e: c3                              ret
+    # nextln: 00000b: 0f 84 22 00 00 00               je 0x33
+    # nextln: 000011: b9 01 00 00 00                  mov ecx, 1
+    # nextln: 000016: 48 89 c2                        mov rdx, rax
+    # nextln: 000019: 48 89 fe                        mov rsi, rdi
+    # nextln: 00001c: 2b f1                           sub esi, ecx
+    # nextln: 00001e: 03 d7                           add edx, edi
+    # nextln: 000020: 3b f0                           cmp esi, eax
+    # nextln: 000022: 0f 84 08 00 00 00               je 0x30
+    # nextln: 000028: 48 89 f7                        mov rdi, rsi
+    # nextln: 00002b: e9 e9 ff ff ff                  jmp 0x19
+    # nextln: 000030: 48 89 d0                        mov rax, rdx
+    # nextln: 000033: 5d                              pop rbp
+    # nextln: 000034: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %10:i32 = iconst 1

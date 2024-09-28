@@ -543,7 +543,7 @@ fn emit_call_rm(buffer: &mut CodeBuffer<X64Fixup>, target: RegMem) {
 }
 
 fn emit_jmp(buffer: &mut CodeBuffer<X64Fixup>, target: Label) {
-    buffer.branch(target, 1, X64Fixup::Rela4(-4), |instr| {
+    buffer.uncond_branch(target, 1, X64Fixup::Rela4(-4), |instr| {
         instr.emit(&[0xe9]);
         instr.emit(&0u32.to_le_bytes());
     });

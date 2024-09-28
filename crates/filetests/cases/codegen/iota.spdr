@@ -6,24 +6,22 @@ func @iota(ptr, i64) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: b8 00 00 00 00                  mov eax, 0
     # nextln: 000009: 48 3b f0                        cmp rsi, rax
-    # nextln: 00000c: 0f 84 05 00 00 00               je 0x17
-    # nextln: 000012: e9 05 00 00 00                  jmp 0x1c
-    # nextln: 000017: e9 30 00 00 00                  jmp 0x4c
-    # nextln: 00001c: b9 03 00 00 00                  mov ecx, 3
-    # nextln: 000021: ba 01 00 00 00                  mov edx, 1
-    # nextln: 000026: 49 89 c0                        mov r8, rax
-    # nextln: 000029: 49 d3 e0                        shl r8, cl
-    # nextln: 00002c: 49 89 f9                        mov r9, rdi
-    # nextln: 00002f: 4d 03 c8                        add r9, r8
-    # nextln: 000032: 49 89 c0                        mov r8, rax
-    # nextln: 000035: 4c 03 c2                        add r8, rdx
-    # nextln: 000038: 49 89 01                        mov qword ptr [r9], rax
-    # nextln: 00003b: 4c 3b c6                        cmp r8, rsi
-    # nextln: 00003e: 0f 84 08 00 00 00               je 0x4c
-    # nextln: 000044: 4c 89 c0                        mov rax, r8
-    # nextln: 000047: e9 da ff ff ff                  jmp 0x26
-    # nextln: 00004c: 5d                              pop rbp
-    # nextln: 00004d: c3                              ret
+    # nextln: 00000c: 0f 84 30 00 00 00               je 0x42
+    # nextln: 000012: b9 03 00 00 00                  mov ecx, 3
+    # nextln: 000017: ba 01 00 00 00                  mov edx, 1
+    # nextln: 00001c: 49 89 c0                        mov r8, rax
+    # nextln: 00001f: 49 d3 e0                        shl r8, cl
+    # nextln: 000022: 49 89 f9                        mov r9, rdi
+    # nextln: 000025: 4d 03 c8                        add r9, r8
+    # nextln: 000028: 49 89 c0                        mov r8, rax
+    # nextln: 00002b: 4c 03 c2                        add r8, rdx
+    # nextln: 00002e: 49 89 01                        mov qword ptr [r9], rax
+    # nextln: 000031: 4c 3b c6                        cmp r8, rsi
+    # nextln: 000034: 0f 84 08 00 00 00               je 0x42
+    # nextln: 00003a: 4c 89 c0                        mov rax, r8
+    # nextln: 00003d: e9 da ff ff ff                  jmp 0x1c
+    # nextln: 000042: 5d                              pop rbp
+    # nextln: 000043: c3                              ret
 
     %entry_ctrl:ctrl, %arr:ptr, %n:i64 = entry
     %zero:i64 = iconst 0

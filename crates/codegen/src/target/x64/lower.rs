@@ -92,8 +92,7 @@ impl MachineLower for X64Machine {
         match ctx.node_kind(node) {
             NodeKind::IConst(val) => {
                 let [output] = ctx.node_outputs_exact(node);
-                let output = ctx.get_value_vreg(output);
-                ctx.emit_instr(X64Instr::MovRI(val), &[DefOperand::any_reg(output)], &[]);
+                select_iconst(ctx, output, val);
             }
             NodeKind::Iadd => emit_alu_rr(ctx, node, AluOp::Add),
             NodeKind::And => emit_alu_rr(ctx, node, AluOp::And),
@@ -174,7 +173,7 @@ impl MachineLower for X64Machine {
                 let temp = ctx.create_temp_vreg(RC_GPR);
 
                 // Note: the `xor` must precede the `cmp` because it clobbers flags.
-                ctx.emit_instr(X64Instr::MovRZ, &[DefOperand::any_reg(temp)], &[]);
+                emit_mov_rz(ctx, temp);
                 emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
                 ctx.emit_instr(
                     X64Instr::Setcc(cond_code_for_icmp(kind)),
@@ -340,6 +339,16 @@ fn emit_call_wrapper(
     }
 }
 
+fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, output: DepValue, val: u64) {
+    let output = ctx.get_value_vreg(output);
+
+    if val == 0 {
+        emit_mov_rz(ctx, output);
+    } else {
+        ctx.emit_instr(X64Instr::MovRI(val), &[DefOperand::any_reg(output)], &[]);
+    }
+}
+
 fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {
     let [addr] = ctx.node_inputs_exact(node);
     let [output] = ctx.node_outputs_exact(node);
@@ -400,7 +409,7 @@ fn emit_udiv(
     let op2 = ctx.get_value_vreg(op2);
 
     let rdx_in = ctx.create_temp_vreg(RC_GPR);
-    ctx.emit_instr(X64Instr::MovRZ, &[DefOperand::any_reg(rdx_in)], &[]);
+    emit_mov_rz(ctx, rdx_in);
 
     let rax_out = ctx.create_temp_vreg(RC_GPR);
     let rdx_out = ctx.create_temp_vreg(RC_GPR);
@@ -452,6 +461,10 @@ fn emit_sdiv(
     );
 
     (rax_out, rdx_out)
+}
+
+fn emit_mov_rz(ctx: &mut IselContext<'_, '_, X64Machine>, output: VirtReg) {
+    ctx.emit_instr(X64Instr::MovRZ, &[DefOperand::any_reg(output)], &[]);
 }
 
 fn emit_movsx_rr(

@@ -139,20 +139,20 @@ func @call_many_params(ptr) {
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 48 89 fa                        mov rdx, rdi
-    # nextln: 000007: bf 00 00 00 00                  mov edi, 0
-    # nextln: 00000c: b9 00 00 00 00                  mov ecx, 0
-    # nextln: 000011: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @many_params + 0
-    # nextln: 00001b: 51                              push rcx
-    # nextln: 00001c: 57                              push rdi
-    # nextln: 00001d: 52                              push rdx
-    # nextln: 00001e: 51                              push rcx
-    # nextln: 00001f: 48 89 ce                        mov rsi, rcx
-    # nextln: 000022: 49 89 f9                        mov r9, rdi
-    # nextln: 000025: 49 89 f8                        mov r8, rdi
-    # nextln: 000028: ff d0                           call rax
-    # nextln: 00002a: 48 83 c4 20                     add rsp, 0x20
-    # nextln: 00002e: 5d                              pop rbp
-    # nextln: 00002f: c3                              ret
+    # nextln: 000007: 33 ff                           xor edi, edi
+    # nextln: 000009: 33 c9                           xor ecx, ecx
+    # nextln: 00000b: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @many_params + 0
+    # nextln: 000015: 51                              push rcx
+    # nextln: 000016: 57                              push rdi
+    # nextln: 000017: 52                              push rdx
+    # nextln: 000018: 51                              push rcx
+    # nextln: 000019: 48 89 ce                        mov rsi, rcx
+    # nextln: 00001c: 49 89 f9                        mov r9, rdi
+    # nextln: 00001f: 49 89 f8                        mov r8, rdi
+    # nextln: 000022: ff d0                           call rax
+    # nextln: 000024: 48 83 c4 20                     add rsp, 0x20
+    # nextln: 000028: 5d                              pop rbp
+    # nextln: 000029: c3                              ret
 
     %0:ctrl, %p:ptr = entry
     %zero32:i32 = iconst 0

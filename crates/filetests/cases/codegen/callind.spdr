@@ -34,19 +34,19 @@ func @call_virt_many_params(ptr, ptr) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 48 89 f2                        mov rdx, rsi
     # nextln: 000007: 48 89 f8                        mov rax, rdi
-    # nextln: 00000a: bf 00 00 00 00                  mov edi, 0
-    # nextln: 00000f: b9 00 00 00 00                  mov ecx, 0
-    # nextln: 000014: 51                              push rcx
-    # nextln: 000015: 57                              push rdi
-    # nextln: 000016: 52                              push rdx
-    # nextln: 000017: 51                              push rcx
-    # nextln: 000018: 48 89 ce                        mov rsi, rcx
-    # nextln: 00001b: 49 89 f9                        mov r9, rdi
-    # nextln: 00001e: 49 89 f8                        mov r8, rdi
-    # nextln: 000021: ff d0                           call rax
-    # nextln: 000023: 48 83 c4 20                     add rsp, 0x20
-    # nextln: 000027: 5d                              pop rbp
-    # nextln: 000028: c3                              ret
+    # nextln: 00000a: 33 ff                           xor edi, edi
+    # nextln: 00000c: 33 c9                           xor ecx, ecx
+    # nextln: 00000e: 51                              push rcx
+    # nextln: 00000f: 57                              push rdi
+    # nextln: 000010: 52                              push rdx
+    # nextln: 000011: 51                              push rcx
+    # nextln: 000012: 48 89 ce                        mov rsi, rcx
+    # nextln: 000015: 49 89 f9                        mov r9, rdi
+    # nextln: 000018: 49 89 f8                        mov r8, rdi
+    # nextln: 00001b: ff d0                           call rax
+    # nextln: 00001d: 48 83 c4 20                     add rsp, 0x20
+    # nextln: 000021: 5d                              pop rbp
+    # nextln: 000022: c3                              ret
 
     %0:ctrl, %f:ptr, %p:ptr = entry
     %zero32:i32 = iconst 0

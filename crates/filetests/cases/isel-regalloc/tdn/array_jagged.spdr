@@ -19,7 +19,7 @@ func @gc_new:ptr(i32, i64) {
 
 func @throw_index_out_of_range_exception() {
     # check: function `throw_index_out_of_range_exception`:
-    # nextln: clobbers:
+    # nextln: clobbers: 
     # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln: 0000:     Ret
@@ -46,7 +46,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:       block0:
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:
-    # nextln: 0001:     $$rax = MovRI(0)
+    # nextln: 0001:     $$rax = MovRZ
     # nextln: 0002:     MovStackR(!0, S64) $$rax
     # nextln: 0003:     Jump(block2)
     # nextln:       block2:
@@ -151,7 +151,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0034:     MovMR(S32) $$rsi, $$r14
     # nextln:           $$rsi = $$r11
     # nextln: 0035:     $$r11 = MovRM(S32) $$r9
-    # nextln: 0036:     $$r12 = MovRI(0)
+    # nextln: 0036:     $$r12 = MovRZ
     # nextln:           $$r9 = $$r10
     # nextln:           $$r10 = $$rsi
     # nextln: 0037:     $$r14 = MovsxRRm(Ext32_64) $$r12

@@ -3,7 +3,7 @@
 func @sum_to_n:i32(i32) {
     # check: function `sum_to_n`:
     # nextln:       block0[%7:gpr($$rdi)]:
-    # nextln: 0000:      %5:gpr(reg)[late] = MovRI(0)
+    # nextln: 0000:      %5:gpr(reg)[late] = MovRZ
     # nextln: 0001:      AluRRm(S32, Cmp) %7(reg)[early], %5(any)[early]
     # nextln: 0002:      Jumpcc(E, block1, block3)
     # nextln:       => block1, block3
@@ -54,7 +54,7 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 0000:      Jump(block1)
     # nextln:       => block1
     # nextln:       block1:
-    # nextln: 0001:      %7:gpr(reg)[late] = MovRI(0)
+    # nextln: 0001:      %7:gpr(reg)[late] = MovRZ
     # nextln: 0002:      MovStackR(!0, S32) %8(reg)[early]
     # nextln: 0003:      MovStackR(!1, S32) %7(reg)[early]
     # nextln: 0004:      %5:gpr(reg)[late] = MovRI(1)

@@ -133,19 +133,19 @@ func @call_many_params(ptr) {
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 48 89 fa                        mov rdx, rdi
-    # nextln: 000007: bf 00 00 00 00                  mov edi, 0
-    # nextln: 00000c: b9 00 00 00 00                  mov ecx, 0
-    # nextln: 000011: 51                              push rcx
-    # nextln: 000012: 57                              push rdi
-    # nextln: 000013: 52                              push rdx
-    # nextln: 000014: 51                              push rcx
-    # nextln: 000015: 48 89 ce                        mov rsi, rcx
-    # nextln: 000018: 49 89 f9                        mov r9, rdi
-    # nextln: 00001b: 49 89 f8                        mov r8, rdi
-    # nextln: 00001e: e8 00 00 00 00                  call 0x23  # RELOC_PC32 -> @many_params + -4
-    # nextln: 000023: 48 83 c4 20                     add rsp, 0x20
-    # nextln: 000027: 5d                              pop rbp
-    # nextln: 000028: c3                              ret
+    # nextln: 000007: 33 ff                           xor edi, edi
+    # nextln: 000009: 33 c9                           xor ecx, ecx
+    # nextln: 00000b: 51                              push rcx
+    # nextln: 00000c: 57                              push rdi
+    # nextln: 00000d: 52                              push rdx
+    # nextln: 00000e: 51                              push rcx
+    # nextln: 00000f: 48 89 ce                        mov rsi, rcx
+    # nextln: 000012: 49 89 f9                        mov r9, rdi
+    # nextln: 000015: 49 89 f8                        mov r8, rdi
+    # nextln: 000018: e8 00 00 00 00                  call 0x1d  # RELOC_PC32 -> @many_params + -4
+    # nextln: 00001d: 48 83 c4 20                     add rsp, 0x20
+    # nextln: 000021: 5d                              pop rbp
+    # nextln: 000022: c3                              ret
 
     %0:ctrl, %p:ptr = entry
     %zero32:i32 = iconst 0

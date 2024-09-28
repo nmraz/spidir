@@ -46,10 +46,10 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:       block0:
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:
-    # nextln: 0001:     $$rax = MovRI(0)
+    # nextln: 0001:     $$rax = MovRZ
     # nextln: 0002:     $$rcx = StackAddr(!0)
     # nextln: 0003:     $$rdx = StackAddr(!1)
-    # nextln: 0004:     $$rbx = MovRI(0)
+    # nextln: 0004:     $$rbx = MovRZ
     # nextln: 0005:     $$rdi = StackAddr(!2)
     # nextln:           $$r8 = $$rdx
     # nextln:           $$rdx = $$rdi

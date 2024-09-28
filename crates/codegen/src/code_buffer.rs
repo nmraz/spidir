@@ -1,6 +1,8 @@
+use core::{cmp, iter, mem};
+
 use alloc::vec::Vec;
 
-use cranelift_entity::{entity_impl, PrimaryMap};
+use cranelift_entity::{entity_impl, packed_option::PackedOption, PrimaryMap, SecondaryMap};
 use ir::node::FunctionRef;
 use smallvec::SmallVec;
 
@@ -51,15 +53,18 @@ struct Fixup<F> {
 struct LastBranch {
     start: u32,
     bound_label_end: u32,
+    is_uncond: bool,
 }
 
 pub struct CodeBuffer<F: FixupKind> {
     bytes: Vec<u8>,
     labels: PrimaryMap<Label, Option<u32>>,
+    threaded_branches: SecondaryMap<Label, PackedOption<Label>>,
     fixups: Vec<Fixup<F>>,
     relocs: Vec<Reloc>,
     last_branches: SmallVec<[LastBranch; 4]>,
-    last_bound_labels: SmallVec<[Label; 4]>,
+    last_bound_labels: SmallVec<[Label; 16]>,
+    first_unpinned_bound_label: usize,
 }
 
 impl<F: FixupKind> CodeBuffer<F> {
@@ -67,10 +72,12 @@ impl<F: FixupKind> CodeBuffer<F> {
         Self {
             bytes: Vec::new(),
             labels: PrimaryMap::new(),
+            threaded_branches: SecondaryMap::new(),
             fixups: Vec::new(),
             relocs: Vec::new(),
             last_branches: SmallVec::new(),
             last_bound_labels: SmallVec::new(),
+            first_unpinned_bound_label: 0,
         }
     }
 
@@ -79,7 +86,8 @@ impl<F: FixupKind> CodeBuffer<F> {
     }
 
     pub fn instr(&mut self, f: impl FnOnce(&mut InstrBuffer<'_>)) {
-        // This isn't a tracked branch.
+        // Forget all branch tracking information we currently have, we're about to emit a
+        // non-branch.
         self.clear_branch_tracking();
         self.instr_raw(f);
     }
@@ -113,15 +121,33 @@ impl<F: FixupKind> CodeBuffer<F> {
         fixup_kind: F,
         f: impl FnOnce(&mut InstrBuffer<'_>),
     ) {
-        let start = self.offset();
+        self.branch_raw(false, target, fixup_instr_offset, fixup_kind, f);
+    }
 
-        // Note: we're recording fixups and branches in lock step.
-        self.instr_with_fixup_raw(target, fixup_instr_offset, fixup_kind, f);
-        let bound_label_end = self.last_bound_labels.len() as u32;
-        self.last_branches.push(LastBranch {
-            start,
-            bound_label_end,
-        });
+    pub fn uncond_branch(
+        &mut self,
+        target: Label,
+        fixup_instr_offset: u32,
+        fixup_kind: F,
+        f: impl FnOnce(&mut InstrBuffer<'_>),
+    ) {
+        let last_was_uncond = self
+            .last_branches
+            .last()
+            .is_some_and(|last_branch| last_branch.is_uncond);
+
+        // Redirect any labels bound here to `target`, regardless of whether we end up being able to
+        // remove the branch entirely.
+        let threaded_all_labels = self.thread_last_bound_labels(target);
+
+        // If the last instruction was a terminator (currently approximated by "unconditional
+        // branch"), we can avoid the current branch completely if we manage to thread all incoming
+        // branches to it onward.
+        if last_was_uncond && threaded_all_labels {
+            return;
+        }
+
+        self.branch_raw(true, target, fixup_instr_offset, fixup_kind, f);
     }
 
     pub fn create_label(&mut self) -> Label {
@@ -132,18 +158,18 @@ impl<F: FixupKind> CodeBuffer<F> {
         assert!(self.labels[label].is_none(), "label already bound");
 
         // This offset might be temporary if we are inside a "last branch" area. The label may be
-        // moved earlier and will be pinned at its final offset in `clear_branch_tracking`.
+        // moved earlier and will be pinned at its final offset in `flush_tracked_branches`.
         self.labels[label] = Some(self.offset());
         self.last_bound_labels.push(label);
         self.prune_last_branches();
     }
 
-    pub fn resolve_label(&self, label: Label) -> Option<u32> {
-        let offset = self.labels[label]?;
+    pub fn resolve_label(&mut self, label: Label) -> Option<u32> {
+        let offset = self.resolve_label_raw(label)?;
 
         // Don't treat any labels pointing strictly *inside* our "last branch" working area as
         // bound, as a past or future branch/label bind could cause the label to shift back. The
-        // labels are only "pinned" in `clear_branch_tracking`.
+        // labels are only "pinned" in `flush_tracked_branches`.
         //
         // A label pointing just before the area is okay, since code before it can never be deleted.
         if self
@@ -159,8 +185,10 @@ impl<F: FixupKind> CodeBuffer<F> {
 
     pub fn finish(mut self) -> CodeBlob {
         // Resolve all outstanding fixups now that the final layout is known.
-        for fixup in &self.fixups {
-            let label_offset = self.labels[fixup.label].expect("label not bound");
+        for fixup in mem::take(&mut self.fixups) {
+            let label_offset = self
+                .resolve_label_raw(fixup.label)
+                .expect("label not bound");
 
             let offset_usize = fixup.offset as usize;
             let size = fixup.kind.byte_size();
@@ -185,14 +213,16 @@ impl<F: FixupKind> CodeBuffer<F> {
             let Some(last_branch) = self.last_branches.last() else {
                 // If we've cleaned everything up, make sure to pin any remaining labels in place;
                 // they can't move back if there are no branches to prune before them.
-                self.clear_branch_tracking();
+                self.flush_tracked_branches();
                 break;
             };
+
+            let branch_start = last_branch.start as usize;
 
             // Every recorded last branch should always come with a corresponding fixup.
             let branch_target = self.fixups.last().unwrap().label;
 
-            let Some(branch_target) = self.labels[branch_target] else {
+            let Some(branch_target) = self.resolve_label_raw(branch_target) else {
                 break;
             };
 
@@ -204,7 +234,7 @@ impl<F: FixupKind> CodeBuffer<F> {
                 break;
             }
 
-            self.bytes.truncate(last_branch.start as usize);
+            self.bytes.truncate(branch_start);
             self.fixups.pop();
             self.last_branches.pop();
         }
@@ -234,17 +264,93 @@ impl<F: FixupKind> CodeBuffer<F> {
         debug_assert!(fixup_end_offset <= self.offset());
     }
 
+    fn branch_raw(
+        &mut self,
+        is_uncond: bool,
+        target: Label,
+        fixup_instr_offset: u32,
+        fixup_kind: F,
+        f: impl FnOnce(&mut InstrBuffer<'_>),
+    ) {
+        let start = self.offset();
+
+        // Note: we're recording fixups and branches in lock step.
+        self.instr_with_fixup_raw(target, fixup_instr_offset, fixup_kind, f);
+        let bound_label_end = self.last_bound_labels.len() as u32;
+        self.last_branches.push(LastBranch {
+            start,
+            bound_label_end,
+            is_uncond,
+        });
+    }
+
+    fn resolve_label_raw(&mut self, label: Label) -> Option<u32> {
+        let final_label = self.resolve_threaded_target(label);
+        self.labels[final_label]
+    }
+
+    fn resolve_threaded_target(&mut self, target: Label) -> Label {
+        let Some(threaded_target) = self.threaded_branches[target].expand() else {
+            // Don't do any more work if this target hasn't been threaded at all.
+            return target;
+        };
+
+        let final_target = iter::successors(Some(threaded_target), |&label| {
+            self.threaded_branches[label].expand()
+        })
+        .last()
+        .unwrap();
+
+        // Opportunistically compress the path we've just walked.
+        self.threaded_branches[target] = final_target.into();
+        final_target
+    }
+
+    fn thread_last_bound_labels(&mut self, target: Label) -> bool {
+        let offset = self.offset();
+        let final_target = self.resolve_threaded_target(target);
+
+        if self.labels[final_target] == Some(offset) {
+            // Don't alias a label to itself or to other labels bound at the same offset; doing so
+            // could cause an infinite loop later.
+            return false;
+        }
+
+        // Grab all recently bound labels pertaining to the current offset.
+        let cur_label_base = self
+            .last_bound_labels
+            .partition_point(|&label| self.labels[label].unwrap() != offset);
+        let cur_labels = &self.last_bound_labels[cur_label_base..];
+
+        for &cur_label in cur_labels {
+            self.threaded_branches[cur_label] = final_target.into();
+        }
+
+        // Completely forget about the redirected labels now that they don't really point to the
+        // current offset anymore.
+        self.last_bound_labels.truncate(cur_label_base);
+        self.first_unpinned_bound_label = cmp::min(self.first_unpinned_bound_label, cur_label_base);
+
+        true
+    }
+
     fn clear_branch_tracking(&mut self) {
-        let mut bound_labels = &self.last_bound_labels[..];
+        self.flush_tracked_branches();
+        self.last_bound_labels.clear();
+        self.first_unpinned_bound_label = 0;
+    }
+
+    fn flush_tracked_branches(&mut self) {
+        let mut first_unpinned_bound_label = self.first_unpinned_bound_label;
 
         // Finalize any branches that are still "trapped" and shift any labels pointing to them
         // to their final targets.
         for branch in &self.last_branches {
             let bound_label_end = branch.bound_label_end as usize;
-            for &label in &bound_labels[..bound_label_end] {
+            for &label in &self.last_bound_labels[first_unpinned_bound_label..bound_label_end] {
                 move_label_back(&mut self.labels, label, branch.start);
             }
-            bound_labels = &bound_labels[bound_label_end..];
+            first_unpinned_bound_label = bound_label_end;
         }
 
         self.last_branches.clear();
@@ -252,11 +358,13 @@ impl<F: FixupKind> CodeBuffer<F> {
         // Any remaining trailing labels just need to be moved back to the current offset after
         // pruning.
         let cur_offset = self.offset();
-        for &label in bound_labels {
+        for &label in &self.last_bound_labels[first_unpinned_bound_label..] {
             move_label_back(&mut self.labels, label, cur_offset);
         }
 
-        self.last_bound_labels.clear();
+        // Remember that all existing labels have now been pinned: they can't be moved back any
+        // longer, but we still want them around for branch threading.
+        self.first_unpinned_bound_label = self.last_bound_labels.len();
     }
 }
 

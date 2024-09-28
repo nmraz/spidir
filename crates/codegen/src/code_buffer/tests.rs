@@ -29,8 +29,12 @@ fn emit_instr(buffer: &mut CodeBuffer<DummyFixup>, op: u8) {
     buffer.instr(|instr| instr.emit(&[op]));
 }
 
-fn emit_branch(buffer: &mut CodeBuffer<DummyFixup>, target: Label) {
-    buffer.branch(target, 0, DummyFixup, |instr| instr.emit(&[0xb0]));
+fn emit_uncond_branch(buffer: &mut CodeBuffer<DummyFixup>, target: Label) {
+    buffer.uncond_branch(target, 0, DummyFixup, |instr| instr.emit(&[0xb0]));
+}
+
+fn emit_cond_branch(buffer: &mut CodeBuffer<DummyFixup>, target: Label) {
+    buffer.branch(target, 0, DummyFixup, |instr| instr.emit(&[0xc0]));
 }
 
 #[test]
@@ -39,7 +43,7 @@ fn branch_over_instr() {
         |buffer| {
             emit_instr(buffer, 0x1);
             let target = buffer.create_label();
-            emit_branch(buffer, target);
+            emit_uncond_branch(buffer, target);
 
             // A new label inside the last branch area should still be unresolvable.
             let label = buffer.create_label();
@@ -65,7 +69,7 @@ fn tight_loop() {
         |buffer| {
             let label = buffer.create_label();
             buffer.bind_label(label);
-            emit_branch(buffer, label);
+            emit_uncond_branch(buffer, label);
         },
         expect!["b0"],
     );
@@ -77,7 +81,7 @@ fn prune_simple_branch() {
         |buffer| {
             emit_instr(buffer, 0x1);
             let label = buffer.create_label();
-            emit_branch(buffer, label);
+            emit_uncond_branch(buffer, label);
             buffer.bind_label(label);
             emit_instr(buffer, 0x2);
         },
@@ -93,7 +97,7 @@ fn prune_simple_branch_chain() {
 
             for _ in 0..3 {
                 let label = buffer.create_label();
-                emit_branch(buffer, label);
+                emit_uncond_branch(buffer, label);
                 buffer.bind_label(label);
             }
 
@@ -115,7 +119,7 @@ fn prune_branch_funnel() {
                 .map(|_| {
                     let label = buffer.create_label();
                     buffer.bind_label(label);
-                    emit_branch(buffer, target);
+                    emit_cond_branch(buffer, target);
                     label
                 })
                 .collect();
@@ -151,11 +155,11 @@ fn prune_nested_branches() {
 
             emit_instr(buffer, 0x1);
 
-            emit_branch(buffer, target1);
+            emit_uncond_branch(buffer, target1);
             let label1 = buffer.create_label();
             buffer.bind_label(label1);
 
-            emit_branch(buffer, target2);
+            emit_uncond_branch(buffer, target2);
             let label2 = buffer.create_label();
             buffer.bind_label(label2);
 
@@ -182,11 +186,11 @@ fn prune_parallel_branches() {
 
             emit_instr(buffer, 0x1);
 
-            emit_branch(buffer, target1);
+            emit_uncond_branch(buffer, target1);
             let label1 = buffer.create_label();
             buffer.bind_label(label1);
 
-            emit_branch(buffer, target2);
+            emit_uncond_branch(buffer, target2);
             let label2 = buffer.create_label();
             buffer.bind_label(label2);
 
@@ -212,8 +216,8 @@ fn dont_prune_unrelated_branch_back() {
             let target2 = buffer.create_label();
             buffer.bind_label(target1);
             emit_instr(buffer, 0x1);
-            emit_branch(buffer, target1);
-            emit_branch(buffer, target2);
+            emit_uncond_branch(buffer, target1);
+            emit_uncond_branch(buffer, target2);
             buffer.bind_label(target2);
             emit_instr(buffer, 0x2);
         },
@@ -228,8 +232,8 @@ fn dont_prune_unrelated_branch_forward() {
             let target1 = buffer.create_label();
             let target2 = buffer.create_label();
             emit_instr(buffer, 0x1);
-            emit_branch(buffer, target1);
-            emit_branch(buffer, target2);
+            emit_uncond_branch(buffer, target1);
+            emit_uncond_branch(buffer, target2);
             buffer.bind_label(target2);
             emit_instr(buffer, 0x2);
             buffer.bind_label(target1);
@@ -250,11 +254,12 @@ fn correct_retargeting_after_prune_replacement() {
             buffer.bind_label(before);
             emit_instr(buffer, 0x1);
 
-            // Emit only branches now to keep branch tracking active.
-            emit_branch(buffer, before);
-            emit_branch(buffer, after_pruned_branch);
+            // Emit only branches now to keep branch tracking active. Make sure not to use
+            // unconditional branches so branch threading doesn't try to kick in at all.
+            emit_cond_branch(buffer, before);
+            emit_cond_branch(buffer, after_pruned_branch);
             buffer.bind_label(after_pruned_branch);
-            emit_branch(buffer, after);
+            emit_cond_branch(buffer, after);
 
             // Emit a plain instruction to finalize any tracked branches.
             emit_instr(buffer, 0x2);
@@ -264,6 +269,252 @@ fn correct_retargeting_after_prune_replacement() {
             // The label should still be before the branch to `after`.
             assert_eq!(buffer.resolve_label(after_pruned_branch), Some(2));
         },
-        expect!["01 bf b2 02 03"],
+        expect!["01 cf c2 02 03"],
+    );
+}
+
+#[test]
+fn dont_thread_after_cond_branch() {
+    check_emitted_code(
+        |buffer| {
+            let before = buffer.create_label();
+            let after_pruned_branch = buffer.create_label();
+            let after = buffer.create_label();
+
+            buffer.bind_label(before);
+            emit_instr(buffer, 0x1);
+
+            // Emit only branches now to keep branch tracking active.
+            emit_cond_branch(buffer, before);
+            emit_cond_branch(buffer, after_pruned_branch);
+            buffer.bind_label(after_pruned_branch);
+            emit_uncond_branch(buffer, after);
+
+            // Emit a plain instruction to finalize any tracked branches.
+            emit_instr(buffer, 0x2);
+            buffer.bind_label(after);
+            emit_instr(buffer, 0x3);
+
+            // The label should still be before the branch to `after`.
+            assert_eq!(buffer.resolve_label(after_pruned_branch), Some(2));
+        },
+        expect!["01 cf b2 02 03"],
+    );
+}
+
+#[test]
+fn dont_thread_after_revealed_cond_branch() {
+    check_emitted_code(
+        |buffer| {
+            let before = buffer.create_label();
+            let after_pruned_branch = buffer.create_label();
+            let after = buffer.create_label();
+
+            buffer.bind_label(before);
+            emit_instr(buffer, 0x1);
+
+            // Emit only branches now to keep branch tracking active.
+            emit_cond_branch(buffer, before);
+            emit_uncond_branch(buffer, after_pruned_branch);
+            buffer.bind_label(after_pruned_branch);
+            emit_uncond_branch(buffer, after);
+
+            // Emit a plain instruction to finalize any tracked branches.
+            emit_instr(buffer, 0x2);
+            buffer.bind_label(after);
+            emit_instr(buffer, 0x3);
+
+            // The label should still be before the branch to `after`.
+            assert_eq!(buffer.resolve_label(after_pruned_branch), Some(2));
+        },
+        expect!["01 cf b2 02 03"],
+    );
+}
+
+#[test]
+fn thread_uncond_branch_after_uncond_branch() {
+    check_emitted_code(
+        |buffer| {
+            let before = buffer.create_label();
+            let after_pruned_branch = buffer.create_label();
+            let after = buffer.create_label();
+
+            buffer.bind_label(before);
+            emit_instr(buffer, 0x1);
+
+            // Emit only branches now to keep branch tracking active.
+            emit_uncond_branch(buffer, before);
+            emit_uncond_branch(buffer, after_pruned_branch);
+            buffer.bind_label(after_pruned_branch);
+            emit_uncond_branch(buffer, after);
+
+            // Emit a plain instruction to finalize any tracked branches.
+            emit_instr(buffer, 0x2);
+            buffer.bind_label(after);
+            emit_instr(buffer, 0x3);
+
+            // The label should now have been threaded directly to `after`.
+            assert_eq!(
+                buffer.resolve_label(after_pruned_branch),
+                buffer.resolve_label(after)
+            );
+        },
+        expect!["01 bf 02 03"],
+    );
+}
+
+#[test]
+fn clean_up_empty_split_critical_edges() {
+    check_emitted_code(
+        |buffer| {
+            let split_edge_1 = buffer.create_label();
+            let split_edge_2 = buffer.create_label();
+            let after = buffer.create_label();
+
+            emit_instr(buffer, 0x1);
+            emit_cond_branch(buffer, split_edge_2);
+            emit_uncond_branch(buffer, split_edge_1);
+            buffer.bind_label(split_edge_1);
+            emit_uncond_branch(buffer, after);
+            buffer.bind_label(split_edge_2);
+            emit_uncond_branch(buffer, after);
+            buffer.bind_label(after);
+            emit_instr(buffer, 0x2);
+        },
+        expect!["01 02"],
+    );
+}
+
+#[test]
+fn clean_up_empty_split_critical_with_padding() {
+    check_emitted_code(
+        |buffer| {
+            let split_edge_1 = buffer.create_label();
+            let split_edge_2 = buffer.create_label();
+            let after = buffer.create_label();
+
+            let padding_1 = buffer.create_label();
+            let padding_2 = buffer.create_label();
+            let padding_3 = buffer.create_label();
+
+            emit_instr(buffer, 0x1);
+            emit_cond_branch(buffer, split_edge_2);
+            emit_uncond_branch(buffer, split_edge_1);
+
+            buffer.bind_label(padding_1);
+            emit_instr(buffer, 0x2);
+
+            buffer.bind_label(split_edge_1);
+            emit_uncond_branch(buffer, after);
+
+            buffer.bind_label(padding_2);
+            emit_instr(buffer, 0x3);
+
+            buffer.bind_label(split_edge_2);
+            emit_uncond_branch(buffer, after);
+
+            buffer.bind_label(padding_3);
+            emit_instr(buffer, 0x4);
+
+            buffer.bind_label(after);
+            emit_instr(buffer, 0x5);
+        },
+        expect!["01 c7 b6 02 b4 03 b2 04 05"],
+    );
+}
+
+#[test]
+fn clean_up_empty_split_critical_with_terminated_padding() {
+    check_emitted_code(
+        |buffer| {
+            let split_edge_1 = buffer.create_label();
+            let split_edge_2 = buffer.create_label();
+            let after = buffer.create_label();
+
+            let elsewhere = buffer.create_label();
+            let padding_1 = buffer.create_label();
+            let padding_2 = buffer.create_label();
+            let padding_3 = buffer.create_label();
+
+            emit_instr(buffer, 0x1);
+            emit_cond_branch(buffer, split_edge_2);
+            emit_uncond_branch(buffer, split_edge_1);
+
+            buffer.bind_label(padding_1);
+            emit_instr(buffer, 0x2);
+            emit_uncond_branch(buffer, elsewhere);
+
+            buffer.bind_label(split_edge_1);
+            emit_uncond_branch(buffer, after);
+
+            buffer.bind_label(padding_2);
+            emit_instr(buffer, 0x3);
+            emit_uncond_branch(buffer, elsewhere);
+
+            buffer.bind_label(split_edge_2);
+            emit_uncond_branch(buffer, after);
+
+            buffer.bind_label(padding_3);
+            emit_instr(buffer, 0x4);
+            emit_uncond_branch(buffer, elsewhere);
+
+            buffer.bind_label(after);
+            emit_instr(buffer, 0x5);
+
+            buffer.bind_label(elsewhere);
+        },
+        expect!["01 c8 b7 02 b6 03 b4 04 b2 05"],
+    );
+}
+
+#[test]
+fn dont_thread_twice() {
+    check_emitted_code(
+        |buffer| {
+            let before = buffer.create_label();
+            let mid = buffer.create_label();
+            let elsewhere = buffer.create_label();
+
+            buffer.bind_label(before);
+            emit_instr(buffer, 0x1);
+            emit_cond_branch(buffer, mid);
+            emit_instr(buffer, 0x2);
+            emit_uncond_branch(buffer, elsewhere);
+
+            buffer.bind_label(mid);
+            // This should redirect `mid` to `before`.
+            emit_uncond_branch(buffer, before);
+            // This should *not* redirect `mid` to `elsewhere`.
+            emit_uncond_branch(buffer, elsewhere);
+
+            emit_instr(buffer, 0x3);
+            buffer.bind_label(elsewhere);
+        },
+        expect!["01 cf 02 b2 03"],
+    );
+}
+
+#[test]
+fn cond_branch_over_uncond_branch() {
+    check_emitted_code(
+        |buffer| {
+            let mid1 = buffer.create_label();
+            let mid2 = buffer.create_label();
+            let target = buffer.create_label();
+
+            emit_instr(buffer, 0x1);
+            emit_cond_branch(buffer, mid1);
+            emit_uncond_branch(buffer, mid2);
+
+            buffer.bind_label(mid1);
+            emit_uncond_branch(buffer, target);
+
+            buffer.bind_label(mid2);
+            emit_instr(buffer, 0x2);
+
+            buffer.bind_label(target);
+            emit_instr(buffer, 0x3);
+        },
+        expect!["01 c2 02 03"],
     );
 }

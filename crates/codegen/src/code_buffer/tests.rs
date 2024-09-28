@@ -488,6 +488,27 @@ fn dont_thread_twice() {
 fn cond_branch_over_uncond_branch() {
     check_emitted_code(
         |buffer| {
+            let mid = buffer.create_label();
+            let target = buffer.create_label();
+
+            emit_instr(buffer, 0x1);
+            emit_cond_branch(buffer, mid);
+            emit_uncond_branch(buffer, target);
+
+            buffer.bind_label(mid);
+            emit_instr(buffer, 0x2);
+
+            buffer.bind_label(target);
+            emit_instr(buffer, 0x3);
+        },
+        expect!["01 c2 b2 02 03"],
+    );
+}
+
+#[test]
+fn double_cond_branch_over_uncond_branch() {
+    check_emitted_code(
+        |buffer| {
             let mid1 = buffer.create_label();
             let mid2 = buffer.create_label();
             let target = buffer.create_label();

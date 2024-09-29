@@ -1,3 +1,5 @@
+use core::ops::ControlFlow;
+
 use alloc::vec::Vec;
 use cranelift_entity::{
     entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap, SecondaryMap,
@@ -66,14 +68,18 @@ impl BlockCfg {
 impl GraphRef for &'_ BlockCfg {
     type Node = Block;
 
-    fn successors(&self, node: Block, f: impl FnMut(Block)) {
-        self.block_succs(node).iter().copied().for_each(f);
+    fn successors(&self, node: Block, f: impl FnMut(Block) -> ControlFlow<()>) -> ControlFlow<()> {
+        self.block_succs(node).iter().copied().try_for_each(f)
     }
 }
 
 impl PredGraphRef for &'_ BlockCfg {
-    fn predecessors(&self, node: Block, f: impl FnMut(Block)) {
-        self.block_preds(node).iter().copied().for_each(f);
+    fn predecessors(
+        &self,
+        node: Block,
+        f: impl FnMut(Block) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        self.block_preds(node).iter().copied().try_for_each(f)
     }
 }
 

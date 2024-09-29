@@ -1,4 +1,4 @@
-use core::iter;
+use core::{iter, ops::ControlFlow};
 
 use alloc::{vec, vec::Vec};
 
@@ -46,8 +46,8 @@ impl<'a> LiveNodeSuccs<'a> {
 impl<'a> graphwalk::GraphRef for LiveNodeSuccs<'a> {
     type Node = Node;
 
-    fn successors(&self, node: Node, f: impl FnMut(Node)) {
-        live_node_succs(self.0, node).for_each(f);
+    fn successors(&self, node: Node, f: impl FnMut(Node) -> ControlFlow<()>) -> ControlFlow<()> {
+        live_node_succs(self.0, node).try_for_each(f)
     }
 }
 
@@ -92,8 +92,12 @@ impl<'a> DefUseSuccs<'a> {
 impl<'a> graphwalk::GraphRef for DefUseSuccs<'a> {
     type Node = Node;
 
-    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
-        def_use_succs(self.graph, self.live_nodes, node).for_each(|(succ, _input_idx)| f(succ));
+    fn successors(
+        &self,
+        node: Node,
+        mut f: impl FnMut(Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        def_use_succs(self.graph, self.live_nodes, node).try_for_each(|(succ, _input_idx)| f(succ))
     }
 }
 
@@ -208,14 +212,22 @@ impl<'a> ForwardCfg<'a> {
 impl graphwalk::GraphRef for ForwardCfg<'_> {
     type Node = Node;
 
-    fn successors(&self, node: Self::Node, f: impl FnMut(Node)) {
-        cfg_succs(self.0, node).for_each(f);
+    fn successors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        cfg_succs(self.0, node).try_for_each(f)
     }
 }
 
 impl graphwalk::PredGraphRef for ForwardCfg<'_> {
-    fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
-        cfg_preds(self.0, node).for_each(f);
+    fn predecessors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        cfg_preds(self.0, node).try_for_each(f)
     }
 }
 

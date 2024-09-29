@@ -1,4 +1,4 @@
-use core::cmp::Ordering;
+use core::{cmp::Ordering, ops::ControlFlow};
 
 use alloc::{collections::BinaryHeap, vec::Vec};
 
@@ -679,12 +679,16 @@ struct BlockSubgraph<'a> {
 impl GraphRef for BlockSubgraph<'_> {
     type Node = Node;
 
-    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
+    fn successors(
+        &self,
+        node: Node,
+        mut f: impl FnMut(Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
         raw_def_use_succs(self.graph, node)
             .filter(|&(succ, _use_idx)| {
                 is_block_interior_node(self.graph, self.blocks_by_node, self.block, succ)
             })
-            .for_each(|(node, _use_idx)| f(node));
+            .try_for_each(|(node, _use_idx)| f(node))
     }
 }
 

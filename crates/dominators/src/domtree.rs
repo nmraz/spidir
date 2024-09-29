@@ -1,6 +1,6 @@
 use core::{
     cmp,
-    ops::{Index, IndexMut},
+    ops::{ControlFlow, Index, IndexMut},
 };
 
 use alloc::{vec, vec::Vec};
@@ -168,18 +168,27 @@ impl<N: EntityRef> DomTree<N> {
 impl<N: EntityRef> graphwalk::GraphRef for &'_ DomTree<N> {
     type Node = DomTreeNode;
 
-    fn successors(&self, node: Self::Node, mut f: impl FnMut(Self::Node)) {
+    fn successors(
+        &self,
+        node: Self::Node,
+        mut f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
         for &child in self.children(node) {
-            f(child);
+            f(child)?;
         }
+        ControlFlow::Continue(())
     }
 }
 
 impl<N: EntityRef> graphwalk::GraphRef for &'_ mut DomTree<N> {
     type Node = DomTreeNode;
 
-    fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
-        (&**self).successors(node, f);
+    fn successors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        (&**self).successors(node, f)
     }
 }
 
@@ -318,6 +327,8 @@ fn do_dfs<N: EntityRef>(
                         parent: num.into(),
                     });
                 }
+
+                ControlFlow::Continue(())
             });
         }
     }
@@ -379,7 +390,7 @@ fn compute_reldoms<N: EntityRef>(
             let Some(pred) = preorder_by_node[pred].expand() else {
                 // This predecessor isn't reachable in the CFG, so it can (and should) be completely
                 // ignored.
-                return;
+                return ControlFlow::Continue(());
             };
 
             // Apply Theorem 4.
@@ -408,6 +419,8 @@ fn compute_reldoms<N: EntityRef>(
 
             let info = &mut preorder[node];
             info.sdom = cmp::min(info.sdom, pred_ancestor_sdom);
+
+            ControlFlow::Continue(())
         });
 
         let sdom = preorder[node].sdom;

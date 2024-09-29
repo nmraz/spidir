@@ -2,6 +2,8 @@
 
 extern crate alloc;
 
+use core::ops::ControlFlow;
+
 use alloc::vec::Vec;
 use cranelift_entity::{EntityRef, EntitySet};
 
@@ -13,24 +15,39 @@ pub enum WalkPhase {
 
 pub trait GraphRef {
     type Node: Copy;
-    fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node));
+    fn successors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()>;
 }
 
 impl<G: GraphRef> GraphRef for &'_ G {
     type Node = G::Node;
 
-    fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
-        (*self).successors(node, f);
+    fn successors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        (*self).successors(node, f)
     }
 }
-
 pub trait PredGraphRef: GraphRef {
-    fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node));
+    fn predecessors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()>;
 }
 
 impl<G: PredGraphRef> PredGraphRef for &'_ G {
-    fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
-        (*self).predecessors(node, f);
+    fn predecessors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        (*self).predecessors(node, f)
     }
 }
 
@@ -95,6 +112,8 @@ impl<N: Copy> PreOrderContext<N> {
             if !visited.is_visited(succ) {
                 self.stack.push(succ);
             }
+
+            ControlFlow::Continue(())
         });
 
         Some(node)
@@ -202,6 +221,8 @@ impl<N: Copy> PostOrderContext<N> {
                             if !visited.is_visited(succ) {
                                 self.stack.push((WalkPhase::Pre, succ));
                             }
+
+                            ControlFlow::Continue(())
                         });
 
                         return Some((WalkPhase::Pre, node));

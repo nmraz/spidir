@@ -1,3 +1,5 @@
+use std::ops::ControlFlow;
+
 use cranelift_entity::{entity_impl, PrimaryMap};
 use fx_utils::FxHashMap;
 use graphwalk::{GraphRef, PredGraphRef};
@@ -80,14 +82,22 @@ pub fn graph(input: &str) -> Graph {
 impl GraphRef for &'_ Graph {
     type Node = Node;
 
-    fn successors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
-        self.nodes[node].succs.iter().copied().for_each(f);
+    fn successors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        self.nodes[node].succs.iter().copied().try_for_each(f)
     }
 }
 
 impl PredGraphRef for &'_ Graph {
-    fn predecessors(&self, node: Self::Node, f: impl FnMut(Self::Node)) {
-        self.nodes[node].preds.iter().copied().for_each(f);
+    fn predecessors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        self.nodes[node].preds.iter().copied().try_for_each(f)
     }
 }
 

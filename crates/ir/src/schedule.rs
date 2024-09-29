@@ -1,4 +1,4 @@
-use core::iter;
+use core::{iter, ops::ControlFlow};
 
 use cranelift_entity::EntitySet;
 use graphwalk::PostOrderContext;
@@ -119,8 +119,8 @@ impl<'a> UnpinnedDataPreds<'a> {
 impl<'a> graphwalk::GraphRef for UnpinnedDataPreds<'a> {
     type Node = Node;
 
-    fn successors(&self, node: Node, f: impl FnMut(Node)) {
-        unpinned_dataflow_preds(self.graph, node).for_each(f);
+    fn successors(&self, node: Node, f: impl FnMut(Node) -> ControlFlow<()>) -> ControlFlow<()> {
+        unpinned_dataflow_preds(self.graph, node).try_for_each(f)
     }
 }
 
@@ -147,9 +147,13 @@ impl<'a> UnpinnedDataSuccs<'a> {
 impl<'a> graphwalk::GraphRef for UnpinnedDataSuccs<'a> {
     type Node = Node;
 
-    fn successors(&self, node: Node, mut f: impl FnMut(Node)) {
+    fn successors(
+        &self,
+        node: Node,
+        mut f: impl FnMut(Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
         unpinned_dataflow_succs(self.graph, self.live_nodes, node)
-            .for_each(|(succ, _input_idx)| f(succ));
+            .try_for_each(|(succ, _input_idx)| f(succ))
     }
 }
 

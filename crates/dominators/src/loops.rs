@@ -1,5 +1,5 @@
 use alloc::{borrow::ToOwned, vec::Vec};
-use core::iter;
+use core::{iter, ops::ControlFlow};
 
 use cranelift_entity::{
     entity_impl, packed_option::PackedOption, EntityRef, PrimaryMap, SecondaryMap,
@@ -46,12 +46,14 @@ impl LoopForest {
             graph.predecessors(cfg_node, |pred| {
                 let Some(pred_tree_node) = domtree.get_tree_node(pred) else {
                     // Skip any unreachable nodes.
-                    return;
+                    return ControlFlow::Continue(());
                 };
 
                 if domtree.dominates(tree_node, pred_tree_node) {
                     latches.push(pred_tree_node);
                 }
+
+                ControlFlow::Continue(())
             });
 
             if !latches.is_empty() {
@@ -114,18 +116,16 @@ impl LoopForest {
 
         let node = domtree.get_cfg_node(node);
 
-        // TODO: We don't have a way of returning early with the current `predecessors` API, but is
-        // it really worth the extra complexity?
-        let mut is_latch = false;
         graph
             .into_cfg()
             .predecessors(domtree.get_cfg_node(header), |pred| {
                 if pred == node {
-                    is_latch = true;
+                    ControlFlow::Break(())
+                } else {
+                    ControlFlow::Continue(())
                 }
-            });
-
-        is_latch
+            })
+            .is_break()
     }
 
     /// Discovers the maximal loop containing `latches` and populates `loop_node` accordingly,
@@ -197,5 +197,7 @@ fn push_loop_preds<N: EntityRef>(
                 stack.push(tree_pred);
             }
         }
+
+        ControlFlow::Continue(())
     });
 }

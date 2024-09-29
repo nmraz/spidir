@@ -1,4 +1,4 @@
-use core::cell::RefCell;
+use core::{cell::RefCell, ops::ControlFlow};
 
 use alloc::vec::Vec;
 
@@ -39,7 +39,11 @@ struct LoopGroupedCfg<'a> {
 impl GraphRef for LoopGroupedCfg<'_> {
     type Node = Block;
 
-    fn successors(&self, node: Self::Node, mut f: impl FnMut(Self::Node)) {
+    fn successors(
+        &self,
+        node: Self::Node,
+        mut f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
         // Guiding principle: try to cause successors of node that are not nested in its loop to be
         // visited by the DFS *after* nodes that are not nested in the loop, so that the loop nodes
         // will end up earlier in the RPO.
@@ -66,7 +70,7 @@ impl GraphRef for LoopGroupedCfg<'_> {
 
             if succ_loop == containing_loop {
                 trace!("    same loop");
-                f(succ);
+                f(succ)?;
                 continue;
             }
 
@@ -80,13 +84,13 @@ impl GraphRef for LoopGroupedCfg<'_> {
             // a child loop without passing through its header.
             if tree_succ == self.loop_forest.loop_header(succ_loop) {
                 trace!("    entering child loop");
-                f(succ);
+                f(succ)?;
             } else {
                 trace!("    sibling or parent loop");
                 other_loop.push(succ);
             }
         }
 
-        other_loop.iter().copied().for_each(f);
+        other_loop.iter().copied().try_for_each(f)
     }
 }

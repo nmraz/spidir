@@ -85,9 +85,9 @@ pub fn schedule_late(
         }
     }
 
-    let entry = ctx.cfg_preorder[0];
     for &root in ctx.live_node_info.roots() {
-        if root != entry {
+        // We want only floating data nodes here, not dead regions and the like.
+        if !is_pinned_node(ctx.graph, root) {
             scratch_postorder.reset([root]);
             while let Some(succ) = scratch_postorder.next(&unpinned_data_succs, &mut visited) {
                 debug_assert!(!is_pinned_node(ctx.graph, succ));

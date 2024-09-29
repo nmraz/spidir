@@ -199,9 +199,13 @@ impl<'a> Scheduler<'a> {
 
     fn schedule_late(&mut self, ctx: &ScheduleContext<'_>, node: Node) {
         let early_loc = self.blocks_by_node[node].expect("node should have been scheduled early");
-        let late_loc = self.late_schedule_location(ctx, node);
-        let loc = self.best_schedule_location(node, early_loc, late_loc);
-        self.assign_and_append(loc, node);
+
+        // We might not have a late schedule location at all if all uses are dead phi inputs - just
+        // don't schedule in that case.
+        if let Some(late_loc) = self.late_schedule_location(ctx, node) {
+            let loc = self.best_schedule_location(node, early_loc, late_loc);
+            self.assign_and_append(loc, node);
+        }
     }
 
     fn best_schedule_location(&self, node: Node, early_loc: Block, late_loc: Block) -> Block {
@@ -280,7 +284,7 @@ impl<'a> Scheduler<'a> {
         loc
     }
 
-    fn late_schedule_location(&self, ctx: &ScheduleContext<'_>, node: Node) -> Block {
+    fn late_schedule_location(&self, ctx: &ScheduleContext<'_>, node: Node) -> Option<Block> {
         let graph = ctx.graph;
 
         trace!("late: node {}", node.as_u32());
@@ -325,11 +329,11 @@ impl<'a> Scheduler<'a> {
                     Some(loc)
                 }
             })
-            .reduce(|acc, cur| self.domtree_lca(acc, cur))
-            .expect("live non-pinned node has no data uses");
+            // The node might not have any live uses if all uses are dead phi inputs.
+            .reduce(|acc, cur| self.domtree_lca(acc, cur))?;
 
         trace!("late: node {} -> {loc}", node.as_u32());
-        loc
+        Some(loc)
     }
 
     fn assign_and_append(&mut self, block: Block, node: Node) {

@@ -1,0 +1,21 @@
+# run: isel
+
+# We shouldn't emit the 5 at all, as it is only used in the dead phi input.
+
+func @has_dead_phi_input:i32() {
+    # check: function `has_dead_phi_input`:
+    # nextln:       block0[]:
+    # nextln: 0000:      %1:gpr(reg)[late] = MovRI(1)
+    # nextln: 0001:      Jump(block1)
+    # nextln:       => block1
+    # nextln:       block1:
+    # nextln: 0002:      Ret %1($$rax)[early]
+
+    %entry:ctrl = entry
+    %1:i32 = iconst 1
+    %5:i32 = iconst 5
+    %dead:ctrl, %deadsel:phisel = region
+    %exit:ctrl, %exitsel:phisel = region %entry, %dead
+    %retval:i32 = phi %exitsel, %1, %5
+    return %exit, %retval
+}

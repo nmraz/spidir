@@ -1,0 +1,73 @@
+# run: isel
+
+func @shl_const32:i32(i32) {
+    # check: function `shl_const32`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmI(S32, Shl, 5) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %value:i32 = entry
+    %amount:i32 = iconst 5
+    %ret:i32 = shl %value, %amount
+    return %c, %ret
+}
+
+func @shl_const64:i64(i64) {
+    # check: function `shl_const64`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmI(S64, Shl, 5) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %value:i64 = entry
+    %amount:i32 = iconst 5
+    %ret:i64 = shl %value, %amount
+    return %c, %ret
+}
+
+func @lshr_const32:i32(i32) {
+    # check: function `lshr_const32`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmI(S32, Shr, 5) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %value:i32 = entry
+    %amount:i32 = iconst 5
+    %ret:i32 = lshr %value, %amount
+    return %c, %ret
+}
+
+func @lshr_const64:i64(i64) {
+    # check: function `lshr_const64`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmI(S64, Shr, 5) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %value:i64 = entry
+    %amount:i32 = iconst 5
+    %ret:i64 = lshr %value, %amount
+    return %c, %ret
+}
+
+func @ashr_const32:i32(i32) {
+    # check: function `ashr_const32`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmI(S32, Sar, 5) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %value:i32 = entry
+    %amount:i32 = iconst 5
+    %ret:i32 = ashr %value, %amount
+    return %c, %ret
+}
+
+func @ashr_const64:i64(i64) {
+    # check: function `ashr_const64`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmI(S64, Sar, 5) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %value:i64 = entry
+    %amount:i32 = iconst 5
+    %ret:i64 = ashr %value, %amount
+    return %c, %ret
+}

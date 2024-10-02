@@ -97,9 +97,9 @@ impl MachineLower for X64Machine {
             NodeKind::Or => select_alu(ctx, node, AluOp::Or),
             NodeKind::Isub => select_alu(ctx, node, AluOp::Sub),
             NodeKind::Xor => select_alu(ctx, node, AluOp::Xor),
-            NodeKind::Shl => emit_shift_rr(ctx, node, ShiftOp::Shl),
-            NodeKind::Lshr => emit_shift_rr(ctx, node, ShiftOp::Shr),
-            NodeKind::Ashr => emit_shift_rr(ctx, node, ShiftOp::Sar),
+            NodeKind::Shl => select_shift(ctx, node, ShiftOp::Shl),
+            NodeKind::Lshr => select_shift(ctx, node, ShiftOp::Shr),
+            NodeKind::Ashr => select_shift(ctx, node, ShiftOp::Sar),
             NodeKind::Imul => emit_imul_rr(ctx, node),
             NodeKind::Udiv => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
@@ -400,6 +400,31 @@ fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp) 
     }
 }
 
+fn select_shift(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: ShiftOp) {
+    let [value, amount] = ctx.node_inputs_exact(node);
+    let [output] = ctx.node_outputs_exact(node);
+    let ty = ctx.value_type(output);
+
+    let output = ctx.get_value_vreg(output);
+    let value = ctx.get_value_vreg(value);
+
+    if let Some(amount) = match_iconst(ctx, amount) {
+        // Shifting past the bit width of the type produces an unspecified value in spidir anyway,
+        // so it's easiest to just mask here.
+        emit_shift_ri(ctx, ty, value, amount as u8, output, op);
+    } else {
+        let amount = ctx.get_value_vreg(amount);
+        ctx.emit_instr(
+            X64Instr::ShiftRmR(operand_size_for_ty(ty), op),
+            &[DefOperand::any(output)],
+            &[
+                UseOperand::tied(value, 0),
+                UseOperand::fixed(amount, REG_RCX),
+            ],
+        );
+    }
+}
+
 fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: IcmpKind) -> CondCode {
     let [op1, op2] = ctx.node_inputs_exact(node);
 
@@ -562,25 +587,6 @@ fn emit_shift_ri(
         X64Instr::ShiftRmI(operand_size_for_ty(ty), op, amount),
         &[DefOperand::any(output)],
         &[UseOperand::tied(input, 0)],
-    );
-}
-
-fn emit_shift_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: ShiftOp) {
-    let [value, amount] = ctx.node_inputs_exact(node);
-    let [output] = ctx.node_outputs_exact(node);
-    let ty = ctx.value_type(output);
-
-    let value = ctx.get_value_vreg(value);
-    let amount = ctx.get_value_vreg(amount);
-    let output = ctx.get_value_vreg(output);
-
-    ctx.emit_instr(
-        X64Instr::ShiftRmR(operand_size_for_ty(ty), op),
-        &[DefOperand::any(output)],
-        &[
-            UseOperand::tied(value, 0),
-            UseOperand::fixed(amount, REG_RCX),
-        ],
     );
 }
 

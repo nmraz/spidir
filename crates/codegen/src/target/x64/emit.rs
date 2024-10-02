@@ -135,7 +135,7 @@ impl MachineEmit for X64Machine {
 
     fn emit_prologue(&self, state: &mut X64EmitState, buffer: &mut CodeBuffer<X64Fixup>) {
         emit_push(buffer, REG_RBP);
-        emit_mov_rr(buffer, REG_RBP, REG_RSP);
+        emit_mov_r_r(buffer, REG_RBP, REG_RSP);
 
         for saved_reg in state.saved_regs.iter().rev() {
             emit_push(buffer, saved_reg);
@@ -295,7 +295,7 @@ impl MachineEmit for X64Machine {
     ) {
         match (from, to) {
             (OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
-                emit_mov_rr(buffer, to, from)
+                emit_mov_r_r(buffer, to, from)
             }
             (OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => emit_movzx_r_rm(
                 buffer,
@@ -322,7 +322,7 @@ fn emit_epilogue(buffer: &mut CodeBuffer<X64Fixup>, state: &X64EmitState) {
     match state.restore_method {
         FrameRestoreMethod::None => {}
         FrameRestoreMethod::AddSp(offset) => emit_add_sp(buffer, offset),
-        FrameRestoreMethod::FromRbp => emit_mov_rr(buffer, REG_RSP, REG_RBP),
+        FrameRestoreMethod::FromRbp => emit_mov_r_r(buffer, REG_RSP, REG_RBP),
     }
 
     for saved_reg in state.saved_regs.iter() {
@@ -365,7 +365,7 @@ fn emit_pop(buffer: &mut CodeBuffer<X64Fixup>, reg: PhysReg) {
     });
 }
 
-fn emit_mov_rr(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: PhysReg) {
+fn emit_mov_r_r(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: PhysReg) {
     emit_mov_rm_r(buffer, FullOperandSize::S64, RegMem::Reg(dest), src);
 }
 

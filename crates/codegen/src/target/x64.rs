@@ -137,6 +137,7 @@ pub enum IndexScale {
 #[derive(Debug, Clone, Copy)]
 pub enum X64Instr {
     AluRRm(OperandSize, AluOp),
+    AluRmI(OperandSize, AluOp, i32),
     ImulRRm(OperandSize),
     ShiftRmR(OperandSize, ShiftOp),
     ShiftRmI(OperandSize, ShiftOp, u8),

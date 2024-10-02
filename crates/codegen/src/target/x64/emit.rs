@@ -146,7 +146,7 @@ impl MachineEmit for X64Machine {
         }
 
         if let FrameRealign::AlignTo(align) = state.realign {
-            emit_alu_r64i(buffer, AluOp::And, REG_RSP, -align);
+            emit_alu_r64_i(buffer, AluOp::And, REG_RSP, -align);
         }
     }
 
@@ -164,6 +164,10 @@ impl MachineEmit for X64Machine {
                 let arg0 = uses[0].as_reg().unwrap();
                 let arg1 = state.operand_reg_mem(uses[1]);
                 emit_alu_r_rm(buffer, op, op_size, arg0, arg1);
+            }
+            &X64Instr::AluRmI(op_size, op, imm) => {
+                let dest = state.operand_reg_mem(defs[0]);
+                emit_alu_rm_i(buffer, op, op_size, dest, imm);
             }
             &X64Instr::ImulRRm(op_size) => emit_imul_r_rm(
                 buffer,
@@ -337,9 +341,9 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Fixup>, offset: i32) {
         // This generates smaller code without penalizing performance.
         emit_push(buffer, REG_RAX);
     } else if offset < 0 {
-        emit_alu_r64i(buffer, AluOp::Sub, REG_RSP, -offset);
+        emit_alu_r64_i(buffer, AluOp::Sub, REG_RSP, -offset);
     } else {
-        emit_alu_r64i(buffer, AluOp::Add, REG_RSP, offset);
+        emit_alu_r64_i(buffer, AluOp::Add, REG_RSP, offset);
     }
 }
 
@@ -626,6 +630,53 @@ fn emit_alu_r_rm(
     });
 }
 
+fn emit_alu_rm_i(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op: AluOp,
+    op_size: OperandSize,
+    dest: RegMem,
+    imm: i32,
+) {
+    let mut is_imm8 = is_sint::<8>(imm as u64);
+    let mut opcode = if is_imm8 { 0x83 } else { 0x81 };
+
+    let reg_opcode = match op {
+        AluOp::Add => 0x0,
+        AluOp::And => 0x4,
+        AluOp::Cmp => 0x7,
+        AluOp::Or => 0x1,
+        AluOp::Sub => 0x5,
+        AluOp::Test => {
+            // `test` is special. Who knows why.
+            opcode = 0xf7;
+            is_imm8 = false;
+            0x0
+        }
+        AluOp::Xor => 0x6,
+    };
+
+    let (rex, modrm_sib) = encode_reg_mem_parts(dest, |rex| {
+        rex.encode_operand_size(op_size);
+        reg_opcode
+    });
+
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[opcode]);
+        modrm_sib.emit(sink);
+
+        if is_imm8 {
+            sink.emit(&[imm as u8]);
+        } else {
+            sink.emit(&imm.to_le_bytes());
+        }
+    });
+}
+
+fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: AluOp, dest: PhysReg, imm: i32) {
+    emit_alu_rm_i(buffer, op, OperandSize::S64, RegMem::Reg(dest), imm);
+}
+
 fn emit_imul_r_rm(
     buffer: &mut CodeBuffer<X64Fixup>,
     op_size: OperandSize,
@@ -716,41 +767,6 @@ fn emit_shift_rm_i(
         modrm_sib.emit(sink);
         if emit_imm {
             sink.emit(&[imm]);
-        }
-    });
-}
-
-fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Fixup>, op: AluOp, dest: PhysReg, imm: i32) {
-    let mut is_imm8 = is_sint::<8>(imm as u64);
-    let mut opcode = if is_imm8 { 0x83 } else { 0x81 };
-
-    let reg = match op {
-        AluOp::Add => 0x0,
-        AluOp::And => 0x4,
-        AluOp::Cmp => 0x7,
-        AluOp::Or => 0x1,
-        AluOp::Sub => 0x5,
-        AluOp::Test => {
-            // `test` is special. Who knows why.
-            opcode = 0xf7;
-            is_imm8 = false;
-            0x0
-        }
-        AluOp::Xor => 0x6,
-    };
-
-    let mut rex = RexPrefix::new();
-    rex.encode_operand_size(OperandSize::S64);
-    let dest = rex.encode_modrm_base(dest);
-
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[opcode, encode_modrm_r(reg, dest)]);
-
-        if is_imm8 {
-            sink.emit(&[imm as u8]);
-        } else {
-            sink.emit(&imm.to_le_bytes());
         }
     });
 }

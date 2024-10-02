@@ -187,7 +187,6 @@ impl MachineEmit for X64Machine {
                 let dest = defs[0].as_reg().unwrap();
                 emit_setcc_r(buffer, code, dest);
             }
-            &X64Instr::MovRI(val) => emit_mov_ri(buffer, defs[0].as_reg().unwrap(), val),
             X64Instr::MovRZ => {
                 let dest = defs[0].as_reg().unwrap();
                 // Note: some renamers recognize only the 32-bit instruction as a zeroing idiom.
@@ -199,6 +198,11 @@ impl MachineEmit for X64Machine {
                     RegMem::Reg(dest),
                 );
             }
+            &X64Instr::MovRmS32(val) => {
+                emit_mov_rm_s32(buffer, state.operand_reg_mem(defs[0]), val)
+            }
+            &X64Instr::MovRU32(val) => emit_mov_r_u32(buffer, defs[0].as_reg().unwrap(), val),
+            &X64Instr::MovRI64(val) => emit_movabs_r_i(buffer, defs[0].as_reg().unwrap(), val),
             &X64Instr::MovsxRRm(width) => emit_movsx_r_rm(
                 buffer,
                 width,
@@ -266,7 +270,7 @@ impl MachineEmit for X64Machine {
                 state.sp_frame_offset += 8;
             }
             &X64Instr::FuncAddrAbs(target) => {
-                emit_movabs_ri_reloc(buffer, defs[0].as_reg().unwrap(), target);
+                emit_movabs_r_i_reloc(buffer, defs[0].as_reg().unwrap(), target);
             }
             &X64Instr::CallRel(target) => {
                 emit_call_rel(buffer, target);
@@ -365,43 +369,51 @@ fn emit_mov_rr(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: PhysReg) {
     emit_mov_rm_r(buffer, FullOperandSize::S64, RegMem::Reg(dest), src);
 }
 
-fn emit_mov_ri(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
-    if is_uint::<32>(imm) {
-        // Smallest case: move imm32 to r32, clearing upper bits.
-        let mut rex = RexPrefix::new();
-        let dest = rex.encode_modrm_base(dest);
-        buffer.instr(|sink| {
-            rex.emit(sink);
-            sink.emit(&[0xb8 + dest]);
-            sink.emit(&(imm as u32).to_le_bytes());
-        });
-    } else if is_sint::<32>(imm) {
-        // Next smallest case: sign-extend imm32 to r64.
-        let mut rex = RexPrefix::new();
-        let dest = rex.encode_modrm_base(dest);
-        rex.encode_operand_size(OperandSize::S64);
-        buffer.instr(|sink| {
-            rex.emit(sink);
-            sink.emit(&[0xc7, encode_modrm_r(0, dest)]);
-            sink.emit(&(imm as u32).to_le_bytes());
-        });
-    } else {
-        // Large case: use full 64-bit immediate.
-        emit_movabs_ri(buffer, dest, imm);
+fn emit_mov_rm_s32(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, imm: i32) {
+    // Use the shorter `mov r32, imm32` encoding when possible.
+    if let RegMem::Reg(dest) = dest {
+        // Note: sign-extend the immediate before checking.
+        if is_uint::<32>(imm as i64 as u64) {
+            emit_mov_r_u32(buffer, dest, imm as u32);
+            return;
+        }
     }
-}
 
-fn emit_movabs_ri(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
-    buffer.instr(|sink| emit_movabs_ri_instr(sink, dest, imm));
-}
+    // Otherwise: move sign-extended imm32 to r/m64.
 
-fn emit_movabs_ri_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
-    buffer.instr_with_reloc(target, 0, 2, RELOC_ABS64, |sink| {
-        emit_movabs_ri_instr(sink, dest, 0)
+    let (rex, modrm_sib) = encode_reg_mem_parts(dest, |rex| {
+        rex.encode_operand_size(OperandSize::S64);
+        0
+    });
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xc7]);
+        modrm_sib.emit(sink);
+        sink.emit(&(imm as u32).to_le_bytes());
     });
 }
 
-fn emit_movabs_ri_instr(instr: &mut InstrSink<'_>, dest: PhysReg, imm: u64) {
+fn emit_mov_r_u32(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u32) {
+    let mut rex = RexPrefix::new();
+    let dest = rex.encode_modrm_base(dest);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xb8 + dest]);
+        sink.emit(&imm.to_le_bytes());
+    });
+}
+
+fn emit_movabs_r_i(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
+    buffer.instr(|sink| emit_movabs_r_i_instr(sink, dest, imm));
+}
+
+fn emit_movabs_r_i_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
+    buffer.instr_with_reloc(target, 0, 2, RELOC_ABS64, |sink| {
+        emit_movabs_r_i_instr(sink, dest, 0)
+    });
+}
+
+fn emit_movabs_r_i_instr(instr: &mut InstrSink<'_>, dest: PhysReg, imm: u64) {
     let mut rex = RexPrefix::new();
     let dest = rex.encode_modrm_base(dest);
     rex.encode_operand_size(OperandSize::S64);

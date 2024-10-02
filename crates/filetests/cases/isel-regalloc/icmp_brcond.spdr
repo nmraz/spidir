@@ -161,7 +161,7 @@ func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # nextln:           $$rax = $$rcx
     # nextln: 0006:     Jump(block2)
     # nextln:       block2:
-    # nextln: 0007:     $$rcx = MovRI(5)
+    # nextln: 0007:     $$rcx = MovRmS32(5)
     # nextln: 0008:     $$rdx = AluRRm(S32, Xor) $$rdx, $$rcx
     # nextln: 0009:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0010:     Ret $$rax

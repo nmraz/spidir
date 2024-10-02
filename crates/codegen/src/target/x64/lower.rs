@@ -13,6 +13,7 @@ use crate::{
     isel::IselContext,
     lir::{DefOperand, PhysReg, PhysRegSet, RegClass, StackSlot, UseOperand, VirtReg},
     machine::{MachineIselError, MachineLower, ParamLoc},
+    num_utils::{is_sint, is_uint},
 };
 
 use super::{
@@ -353,8 +354,25 @@ fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, output: DepValue, va
 
     if val == 0 {
         emit_mov_rz(ctx, output);
+    } else if is_sint::<32>(val) {
+        // Prefer the signed 32-bit variant where possible, since we can use both registers and
+        // memory there.
+        ctx.emit_instr(
+            X64Instr::MovRmS32(val as i32),
+            &[DefOperand::any_reg(output)],
+            &[],
+        );
+    } else if is_uint::<32>(val) {
+        // If that doesn't fit, use the unsigned 32-bit variant, which only works for registers
+        // because it depends on the upper 32 bits being cleared by a 32-bit operation.
+        ctx.emit_instr(
+            X64Instr::MovRU32(val as u32),
+            &[DefOperand::any_reg(output)],
+            &[],
+        );
     } else {
-        ctx.emit_instr(X64Instr::MovRI(val), &[DefOperand::any_reg(output)], &[]);
+        // Otherwise, go for the full 64 bits.
+        ctx.emit_instr(X64Instr::MovRI64(val), &[DefOperand::any_reg(output)], &[]);
     }
 }
 

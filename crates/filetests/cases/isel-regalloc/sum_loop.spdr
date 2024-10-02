@@ -11,7 +11,7 @@ func @sum_to_n:i32(i32) {
     # nextln:       block1:
     # nextln: 0003:     Jump(block2)
     # nextln:       block3:
-    # nextln: 0004:     $$rcx = MovRI(1)
+    # nextln: 0004:     $$rcx = MovRmS32(1)
     # nextln: 0005:     Jump(block4)
     # nextln:       block4:
     # nextln:           $$rdx = $$rdi

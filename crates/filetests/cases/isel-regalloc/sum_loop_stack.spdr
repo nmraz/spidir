@@ -12,7 +12,7 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 0001:     $$rax = MovRZ
     # nextln: 0002:     MovStackR(!0, S32) $$rdi
     # nextln: 0003:     MovStackR(!1, S32) $$rax
-    # nextln: 0004:     $$rax = MovRI(1)
+    # nextln: 0004:     $$rax = MovRmS32(1)
     # nextln: 0005:     Jump(block2)
     # nextln:       block2:
     # nextln: 0006:     $$rcx = MovRStack(!0, S32)

@@ -142,9 +142,10 @@ pub enum X64Instr {
     ShiftRmI(OperandSize, ShiftOp, u8),
     Div(OperandSize, DivOp),
     ConvertWord(OperandSize),
-    /// Special version of `MovRI` for zero, when clobbering flags is allowed
     MovRZ,
-    MovRI(u64),
+    MovRmS32(i32),
+    MovRU32(u32),
+    MovRI64(u64),
     MovsxRRm(ExtWidth),
     Setcc(CondCode),
     /// Load from [rbp + offset]

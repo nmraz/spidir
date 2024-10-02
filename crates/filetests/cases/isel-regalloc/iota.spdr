@@ -11,8 +11,8 @@ func @iota(ptr, i64) {
     # nextln:       block1:
     # nextln: 0003:     Jump(block2)
     # nextln:       block3:
-    # nextln: 0004:     $$rcx = MovRI(3)
-    # nextln: 0005:     $$rdx = MovRI(1)
+    # nextln: 0004:     $$rcx = MovRmS32(3)
+    # nextln: 0005:     $$rdx = MovRmS32(1)
     # nextln: 0006:     Jump(block4)
     # nextln:       block4:
     # nextln:           $$r8 = $$rax

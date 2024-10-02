@@ -11,8 +11,8 @@ func @iota(ptr, i64) {
     # nextln: 0003:      Jump(block2)
     # nextln:       => block2
     # nextln:       block3:
-    # nextln: 0004:      %7:gpr(reg)[late] = MovRI(3)
-    # nextln: 0005:      %4:gpr(reg)[late] = MovRI(1)
+    # nextln: 0004:      %7:gpr(reg)[late] = MovRmS32(3)
+    # nextln: 0005:      %4:gpr(reg)[late] = MovRmS32(1)
     # nextln: 0006:      Jump(block4)
     # nextln:       => block4[%8:gpr]
     # nextln:       block4[%0:gpr]:

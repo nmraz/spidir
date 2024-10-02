@@ -38,31 +38,31 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0007:     MovStackR(!0, S64) $$rax
     # nextln: 0008:     Jump(block2)
     # nextln:       block2:
-    # nextln: 0009:     $$rax = MovRI(3)
+    # nextln: 0009:     $$rax = MovRmS32(3)
     # nextln: 0010:     $$rcx = MovsxRRm(Ext32_64) $$rax
-    # nextln: 0011:     $$rdx = MovRI(1)
+    # nextln: 0011:     $$rdx = MovRmS32(1)
     # nextln:           $$rdi = $$rcx
     # nextln:           $$rcx = $$rax
     # nextln:           $$rax = $$rdi
     # nextln:           $$r13 = $$rax
     # nextln: 0012:     $$r13 = ImulRRm(S64) $$r13, $$rdx
-    # nextln: 0013:     $$rdi = MovRI(48)
+    # nextln: 0013:     $$rdi = MovRmS32(48)
     # nextln: 0014:     $$r13 = AluRRm(S64, Add) $$r13, $$rdi
     # nextln:           $$r11 = $$rdx
     # nextln:           $$r15 = $$rax
     # nextln:           $$rsi = $$rcx
     # nextln:           $$rcx = $$rdi
-    # nextln: 0015:     $$r12 = MovRI(106721347401152)
-    # nextln: 0016:     $$r8 = MovRI(32)
-    # nextln: 0017:     $$r9 = MovRI(40)
-    # nextln: 0018:     $$rdi = MovRI(106721347409792)
+    # nextln: 0015:     $$r12 = MovRI64(106721347401152)
+    # nextln: 0016:     $$r8 = MovRmS32(32)
+    # nextln: 0017:     $$r9 = MovRmS32(40)
+    # nextln: 0018:     $$rdi = MovRI64(106721347409792)
     # nextln: 0019:     $$rdx = MovsxRRm(Ext32_64) $$rbx
     # nextln:           $$rax = $$r9
     # nextln:           $$r9 = $$rsi
     # nextln:           $$rsi = $$r8
     # nextln:           $$r8 = $$rax
-    # nextln: 0020:     $$r10 = MovRI(4294967291)
-    # nextln: 0021:     $$r14 = MovRI(1)
+    # nextln: 0020:     $$r10 = MovRU32(4294967291)
+    # nextln: 0021:     $$r14 = MovRmS32(1)
     # nextln: 0022:     MovStackR(!4, S32) $$r14
     # nextln: 0023:     MovStackR(!1, S32) $$r10
     # nextln: 0024:     MovStackR(!2, S8) $$rbx
@@ -172,7 +172,7 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0053:     $$rcx = MovRM(S32) $$r10
     # nextln:           $$r10 = $$r15
     # nextln:           $$r15 = $$rdx
-    # nextln: 0054:     $$rdx = MovRI(2)
+    # nextln: 0054:     $$rdx = MovRmS32(2)
     # nextln:           $$spill1 = $$r15
     # nextln:           $$r15 = $$r11
     # nextln:           $$r11 = $$r10
@@ -192,11 +192,11 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0060:     $$rax = AluRRm(S64, Add) $$rax, $$r10
     # nextln: 0061:     MovMR(S8) $$rax, $$r9
     # nextln:           $$r13 = $$rsi
-    # nextln: 0062:     $$r10 = MovRI(4)
+    # nextln: 0062:     $$r10 = MovRmS32(4)
     # nextln:           $$rsi = $$r15
     # nextln: 0063:     $$rsi = ImulRRm(S64) $$rsi, $$r10
     # nextln: 0064:     $$rsi = AluRRm(S64, Add) $$rsi, $$rdi
-    # nextln: 0065:     $$rdi = MovRI(106721347438592)
+    # nextln: 0065:     $$rdi = MovRI64(106721347438592)
     # nextln: 0066:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$spill5 = $$r9
     # nextln:           $$spill0 = $$r11
@@ -232,7 +232,7 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln:           $$r9 = $$rax
     # nextln: 0077:     $$r9 = AluRRm(S64, Add) $$r9, $$r12
     # nextln: 0078:     $$r8 = AluRRm(S64, Add) $$r8, $$r9
-    # nextln: 0079:     $$r9 = MovRI(21)
+    # nextln: 0079:     $$r9 = MovRmS32(21)
     # nextln: 0080:     MovMR(S32) $$r8, $$r9
     # nextln: 0081:     $$r8 = MovRStack(!0, S64)
     # nextln:           $$r9 = $$r8
@@ -246,7 +246,7 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln:           $$r12 = $$rax
     # nextln: 0087:     $$r12 = AluRRm(S64, Add) $$r12, $$r9
     # nextln: 0088:     $$r8 = AluRRm(S64, Add) $$r8, $$r12
-    # nextln: 0089:     $$r9 = MovRI(4294967269)
+    # nextln: 0089:     $$r9 = MovRU32(4294967269)
     # nextln: 0090:     MovMR(S32) $$r8, $$r9
     # nextln: 0091:     $$r8 = MovRStack(!0, S64)
     # nextln:           $$r9 = $$r8
@@ -260,15 +260,15 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln:           $$r9 = $$rax
     # nextln: 0097:     $$r9 = AluRRm(S64, Add) $$r9, $$r12
     # nextln: 0098:     $$r8 = AluRRm(S64, Add) $$r8, $$r9
-    # nextln: 0099:     $$r9 = MovRI(37)
-    # nextln: 0100:     $$r10 = MovRI(36)
-    # nextln: 0101:     $$r12 = MovRI(4294967265)
+    # nextln: 0099:     $$r9 = MovRmS32(37)
+    # nextln: 0100:     $$r10 = MovRmS32(36)
+    # nextln: 0101:     $$r12 = MovRU32(4294967265)
     # nextln: 0102:     MovMR(S32) $$r8, $$r12
-    # nextln: 0103:     $$r13 = MovRI(105690555221104)
-    # nextln: 0104:     $$r8 = MovRI(105690555221072)
-    # nextln: 0105:     $$r14 = MovRI(105690555221136)
-    # nextln: 0106:     $$r12 = MovRI(4294967283)
-    # nextln: 0107:     $$r15 = MovRI(7)
+    # nextln: 0103:     $$r13 = MovRI64(105690555221104)
+    # nextln: 0104:     $$r8 = MovRI64(105690555221072)
+    # nextln: 0105:     $$r14 = MovRI64(105690555221136)
+    # nextln: 0106:     $$r12 = MovRU32(4294967283)
+    # nextln: 0107:     $$r15 = MovRmS32(7)
     # nextln: 0108:     MovMR(S32) $$r8, $$r15
     # nextln: 0109:     MovMR(S8) $$r13, $$rbx
     # nextln: 0110:     MovMR(S8) $$r14, $$rdi

@@ -234,9 +234,18 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
 
         for &block in &self.cfg_ctx.block_order {
             for &phi in self.schedule.block_phis(block) {
-                // Values flowing into block parameters are always live.
-                // TODO: Except for values from dead control inputs?
-                for input in dataflow_inputs(self.graph(), phi) {
+                let phi_inputs = self.graph().node_inputs(phi);
+
+                for &pred in self.cfg_ctx.cfg.block_preds(block) {
+                    // Values flowing into block parameters are live if they come in a cross a live
+                    // control edge; they are dead otherwise.
+                    let Some(valgraph_pred_idx) = self.block_map.valgraph_pred_index(block, pred)
+                    else {
+                        continue;
+                    };
+
+                    // Note: input 0 is the selector from the containing block.
+                    let input = phi_inputs[valgraph_pred_idx as usize + 1];
                     self.value_use_counts[input] += 1;
                 }
 

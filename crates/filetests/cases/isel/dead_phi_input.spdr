@@ -20,27 +20,23 @@ func @has_dead_phi_input:i32() {
     return %exit, %retval
 }
 
-# This function uses an `icmp` in both a dead phi input and a conditional branch. Ideally, isel
-# would ignore the dead phi input and realize the value is only used once, but it currently assumes
-# all phi inputs are live.
+# This function uses an `icmp` in both a dead phi input and a conditional branch. We expect isel not
+# to count the dead phi input as a use at all, resulting in a folded single-use-compare + branch.
 
 func @icmp_dead_phi_input:i32(i32) {
     # check: function `icmp_dead_phi_input`:
-    # nextln:       block0[%4:gpr($$rdi)]:
+    # nextln:       block0[%2:gpr($$rdi)]:
     # nextln: 0000:      %1:gpr(reg)[late] = MovRI(5)
     # nextln: 0001:      Jump(block1)
     # nextln:       => block1
     # nextln:       block1:
-    # nextln: 0002:      %3:gpr(reg)[late] = MovRZ
-    # nextln: 0003:      AluRRm(S32, Test) %4(reg)[early], %4(any)[early]
-    # nextln: 0004:      %2:gpr(reg)[late] = Setcc(E) %3(tied:0)[early]
-    # nextln: 0005:      AluRRm(S32, Test) %2(reg)[early], %2(any)[early]
-    # nextln: 0006:      Jumpcc(Ne, block2, block3)
+    # nextln: 0002:      AluRRm(S32, Test) %2(reg)[early], %2(any)[early]
+    # nextln: 0003:      Jumpcc(E, block2, block3)
     # nextln:       => block2, block3
     # nextln:       block2:
-    # nextln: 0007:      Ret %1($$rax)[early]
+    # nextln: 0004:      Ret %1($$rax)[early]
     # nextln:       block3:
-    # nextln: 0008:      Ret %1($$rax)[early]
+    # nextln: 0005:      Ret %1($$rax)[early]
 
     %entry:ctrl, %p:i32 = entry
     %0:i32 = iconst 0

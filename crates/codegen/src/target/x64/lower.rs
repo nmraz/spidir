@@ -612,7 +612,7 @@ fn emit_alu_rr_discarded(
     );
 }
 
-fn match_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<u64> {
+fn match_iconst(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<u64> {
     if let Some((node, 0)) = ctx.value_def(value) {
         if let NodeKind::IConst(val) = ctx.node_kind(node) {
             return Some(val);
@@ -622,10 +622,7 @@ fn match_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, value: DepValue) -> O
     None
 }
 
-fn match_stack_slot(
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    value: DepValue,
-) -> Option<StackSlot> {
+fn match_stack_slot(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<StackSlot> {
     if let Some((node, 0)) = ctx.value_def(value) {
         if matches!(ctx.node_kind(node), NodeKind::StackSlot { .. }) {
             return Some(ctx.node_stack_slot(node));

@@ -239,112 +239,7 @@ impl MachineLower for X64Machine {
     }
 }
 
-fn emit_call(
-    machine: &X64Machine,
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    node: Node,
-    func: FunctionRef,
-) {
-    match machine.code_model_for_function(func) {
-        CodeModel::SmallPic => emit_call_rel(ctx, node, func),
-        CodeModel::LargeAbs => emit_call_abs(ctx, node, func),
-    }
-}
-
-fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
-    emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
-        ctx.emit_instr_with_clobbers(
-            X64Instr::CallRel(func),
-            retvals,
-            args,
-            PhysRegSet::from_iter(CALLER_SAVED_REGS),
-        );
-    });
-}
-
-fn emit_call_abs(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
-    emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
-        let target = ctx.create_temp_vreg(RC_GPR);
-        ctx.emit_instr(
-            X64Instr::FuncAddrAbs(func),
-            &[DefOperand::any_reg(target)],
-            &[],
-        );
-
-        let mut uses: SmallVec<[_; FIXED_ARG_COUNT + 1]> = smallvec![UseOperand::any(target)];
-        uses.extend_from_slice(args);
-        ctx.emit_instr_with_clobbers(
-            X64Instr::CallRm,
-            retvals,
-            &uses,
-            PhysRegSet::from_iter(CALLER_SAVED_REGS),
-        );
-    })
-}
-
-fn emit_callind(
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    node: Node,
-    target: VirtReg,
-    args: impl Iterator<Item = DepValue>,
-) {
-    emit_call_wrapper(ctx, node, args, |ctx, retvals, args| {
-        let mut uses: SmallVec<[_; FIXED_ARG_COUNT + 1]> = smallvec![UseOperand::any(target)];
-        uses.extend_from_slice(args);
-        ctx.emit_instr_with_clobbers(
-            X64Instr::CallRm,
-            retvals,
-            &uses,
-            PhysRegSet::from_iter(CALLER_SAVED_REGS),
-        );
-    })
-}
-
-fn emit_call_wrapper(
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    node: Node,
-    mut args: impl Iterator<Item = DepValue>,
-    emit_inner: impl FnOnce(&mut IselContext<'_, '_, X64Machine>, &[DefOperand], &[UseOperand]),
-) {
-    // The `take` here is important, because `zip` will advance the argument iterator before
-    // realizing it has run out of physical registers, causing the first stack argument to be
-    // dropped.
-    let reg_args: SmallVec<[_; FIXED_ARG_COUNT]> = args
-        .by_ref()
-        .take(FIXED_ARG_COUNT)
-        .zip(FIXED_ARG_REGS)
-        .map(|(arg, reg)| {
-            let arg = ctx.get_value_vreg(arg);
-            UseOperand::fixed(arg, reg)
-        })
-        .collect();
-
-    let stack_args: SmallVec<[_; 4]> = args.map(|arg| ctx.get_value_vreg(arg)).collect();
-
-    let mut stack_size = 0;
-    if stack_args.len() % 2 != 0 {
-        // Just pushing these arguments would misalign the stack, so make sure to compensate.
-        ctx.emit_instr(X64Instr::AddSp(-8), &[], &[]);
-        stack_size += 8;
-    }
-
-    for &stack_arg in stack_args.iter().rev() {
-        ctx.emit_instr(X64Instr::Push, &[], &[UseOperand::any_reg(stack_arg)]);
-        stack_size += 8;
-    }
-
-    let retval = ctx.node_outputs(node).next().map(|retval| {
-        let retval = ctx.get_value_vreg(retval);
-        DefOperand::fixed(retval, REG_RAX)
-    });
-
-    let call_defs = retval.as_ref().map(slice::from_ref).unwrap_or_default();
-    emit_inner(ctx, call_defs, &reg_args);
-
-    if stack_size > 0 {
-        ctx.emit_instr(X64Instr::AddSp(stack_size), &[], &[]);
-    }
-}
+// "Selection" (matching + emission) helpers
 
 fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, val: u64) {
     let [output] = ctx.node_outputs_exact(node);
@@ -492,6 +387,115 @@ fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size:
     }
 }
 
+// Raw emission helpers
+
+fn emit_call(
+    machine: &X64Machine,
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+    func: FunctionRef,
+) {
+    match machine.code_model_for_function(func) {
+        CodeModel::SmallPic => emit_call_rel(ctx, node, func),
+        CodeModel::LargeAbs => emit_call_abs(ctx, node, func),
+    }
+}
+
+fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
+    emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
+        ctx.emit_instr_with_clobbers(
+            X64Instr::CallRel(func),
+            retvals,
+            args,
+            PhysRegSet::from_iter(CALLER_SAVED_REGS),
+        );
+    });
+}
+
+fn emit_call_abs(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
+    emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
+        let target = ctx.create_temp_vreg(RC_GPR);
+        ctx.emit_instr(
+            X64Instr::FuncAddrAbs(func),
+            &[DefOperand::any_reg(target)],
+            &[],
+        );
+
+        let mut uses: SmallVec<[_; FIXED_ARG_COUNT + 1]> = smallvec![UseOperand::any(target)];
+        uses.extend_from_slice(args);
+        ctx.emit_instr_with_clobbers(
+            X64Instr::CallRm,
+            retvals,
+            &uses,
+            PhysRegSet::from_iter(CALLER_SAVED_REGS),
+        );
+    })
+}
+
+fn emit_callind(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+    target: VirtReg,
+    args: impl Iterator<Item = DepValue>,
+) {
+    emit_call_wrapper(ctx, node, args, |ctx, retvals, args| {
+        let mut uses: SmallVec<[_; FIXED_ARG_COUNT + 1]> = smallvec![UseOperand::any(target)];
+        uses.extend_from_slice(args);
+        ctx.emit_instr_with_clobbers(
+            X64Instr::CallRm,
+            retvals,
+            &uses,
+            PhysRegSet::from_iter(CALLER_SAVED_REGS),
+        );
+    })
+}
+
+fn emit_call_wrapper(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+    mut args: impl Iterator<Item = DepValue>,
+    emit_inner: impl FnOnce(&mut IselContext<'_, '_, X64Machine>, &[DefOperand], &[UseOperand]),
+) {
+    // The `take` here is important, because `zip` will advance the argument iterator before
+    // realizing it has run out of physical registers, causing the first stack argument to be
+    // dropped.
+    let reg_args: SmallVec<[_; FIXED_ARG_COUNT]> = args
+        .by_ref()
+        .take(FIXED_ARG_COUNT)
+        .zip(FIXED_ARG_REGS)
+        .map(|(arg, reg)| {
+            let arg = ctx.get_value_vreg(arg);
+            UseOperand::fixed(arg, reg)
+        })
+        .collect();
+
+    let stack_args: SmallVec<[_; 4]> = args.map(|arg| ctx.get_value_vreg(arg)).collect();
+
+    let mut stack_size = 0;
+    if stack_args.len() % 2 != 0 {
+        // Just pushing these arguments would misalign the stack, so make sure to compensate.
+        ctx.emit_instr(X64Instr::AddSp(-8), &[], &[]);
+        stack_size += 8;
+    }
+
+    for &stack_arg in stack_args.iter().rev() {
+        ctx.emit_instr(X64Instr::Push, &[], &[UseOperand::any_reg(stack_arg)]);
+        stack_size += 8;
+    }
+
+    let retval = ctx.node_outputs(node).next().map(|retval| {
+        let retval = ctx.get_value_vreg(retval);
+        DefOperand::fixed(retval, REG_RAX)
+    });
+
+    let call_defs = retval.as_ref().map(slice::from_ref).unwrap_or_default();
+    emit_inner(ctx, call_defs, &reg_args);
+
+    if stack_size > 0 {
+        ctx.emit_instr(X64Instr::AddSp(stack_size), &[], &[]);
+    }
+}
+
 fn emit_udiv(
     ctx: &mut IselContext<'_, '_, X64Machine>,
     op1: DepValue,
@@ -624,6 +628,8 @@ fn emit_alu_rr_discarded(
         &[UseOperand::any_reg(op1), UseOperand::any(op2)],
     );
 }
+
+// Matching helpers
 
 fn match_imm32(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<i32> {
     if let Some(const_val) = match_iconst(ctx, value) {

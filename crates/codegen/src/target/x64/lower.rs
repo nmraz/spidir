@@ -91,15 +91,12 @@ impl MachineLower for X64Machine {
     {
         let _ = targets;
         match ctx.node_kind(node) {
-            NodeKind::IConst(val) => {
-                let [output] = ctx.node_outputs_exact(node);
-                select_iconst(ctx, output, val);
-            }
-            NodeKind::Iadd => select_alu_rr(ctx, node, AluOp::Add),
-            NodeKind::And => select_alu_rr(ctx, node, AluOp::And),
-            NodeKind::Or => select_alu_rr(ctx, node, AluOp::Or),
-            NodeKind::Isub => select_alu_rr(ctx, node, AluOp::Sub),
-            NodeKind::Xor => select_alu_rr(ctx, node, AluOp::Xor),
+            NodeKind::IConst(val) => select_iconst(ctx, node, val),
+            NodeKind::Iadd => select_alu(ctx, node, AluOp::Add),
+            NodeKind::And => select_alu(ctx, node, AluOp::And),
+            NodeKind::Or => select_alu(ctx, node, AluOp::Or),
+            NodeKind::Isub => select_alu(ctx, node, AluOp::Sub),
+            NodeKind::Xor => select_alu(ctx, node, AluOp::Xor),
             NodeKind::Shl => emit_shift_rr(ctx, node, ShiftOp::Shl),
             NodeKind::Lshr => emit_shift_rr(ctx, node, ShiftOp::Shr),
             NodeKind::Ashr => emit_shift_rr(ctx, node, ShiftOp::Sar),
@@ -181,7 +178,7 @@ impl MachineLower for X64Machine {
                     &[UseOperand::tied(temp, 0)],
                 );
             }
-            NodeKind::PtrOff => select_alu_rr(ctx, node, AluOp::Add),
+            NodeKind::PtrOff => select_alu(ctx, node, AluOp::Add),
             NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
             NodeKind::StackSlot { .. } => {
@@ -349,7 +346,8 @@ fn emit_call_wrapper(
     }
 }
 
-fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, output: DepValue, val: u64) {
+fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, val: u64) {
+    let [output] = ctx.node_outputs_exact(node);
     let output = ctx.get_value_vreg(output);
 
     if val == 0 {
@@ -376,7 +374,7 @@ fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, output: DepValue, va
     }
 }
 
-fn select_alu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp) {
+fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp) {
     let [output] = ctx.node_outputs_exact(node);
     let [op1, op2] = ctx.node_inputs_exact(node);
 

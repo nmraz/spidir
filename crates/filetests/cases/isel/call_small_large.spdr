@@ -89,7 +89,7 @@ func @caller:i32(ptr, i32) {
 func @call_single_stack_arg() {
     # check: function `call_single_stack_arg`:
     # nextln:       block0[]:
-    # nextln: 0000:      %0:gpr(reg)[late] = MovRmS32(7)
+    # nextln: 0000:      %0:gpr(any)[late] = MovRmS32(7)
     # nextln: 0001:      AddSp(-8)
     # nextln: 0002:      Push %0(reg)[early]
     # nextln: 0003:      CallRel(Internal(func3)) %0($$rdi)[early], %0($$rsi)[early], %0($$rdx)[early], %0($$rcx)[early], %0($$r8)[early], %0($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11)

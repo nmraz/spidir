@@ -5,7 +5,7 @@
 func @has_dead_phi_input:i32() {
     # check: function `has_dead_phi_input`:
     # nextln:       block0[]:
-    # nextln: 0000:      %1:gpr(reg)[late] = MovRmS32(1)
+    # nextln: 0000:      %1:gpr(any)[late] = MovRmS32(1)
     # nextln: 0001:      Jump(block1)
     # nextln:       => block1
     # nextln:       block1:
@@ -26,7 +26,7 @@ func @has_dead_phi_input:i32() {
 func @icmp_dead_phi_input:i32(i32) {
     # check: function `icmp_dead_phi_input`:
     # nextln:       block0[%2:gpr($$rdi)]:
-    # nextln: 0000:      %1:gpr(reg)[late] = MovRmS32(5)
+    # nextln: 0000:      %1:gpr(any)[late] = MovRmS32(5)
     # nextln: 0001:      Jump(block1)
     # nextln:       => block1
     # nextln:       block1:

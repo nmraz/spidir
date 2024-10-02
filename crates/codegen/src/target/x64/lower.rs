@@ -359,7 +359,7 @@ fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, output: DepValue, va
         // memory there.
         ctx.emit_instr(
             X64Instr::MovRmS32(val as i32),
-            &[DefOperand::any_reg(output)],
+            &[DefOperand::any(output)],
             &[],
         );
     } else if is_uint::<32>(val) {

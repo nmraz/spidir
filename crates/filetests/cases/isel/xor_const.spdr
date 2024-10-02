@@ -1,0 +1,87 @@
+# run: isel
+
+func @xor_pos64:i64(i64) {
+    # check: function `xor_pos64`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = AluRmI(S64, Xor, 5) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 5
+    %val:i64 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_neg64:i64(i64) {
+    # check: function `xor_neg64`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = AluRmI(S64, Xor, -5) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744073709551611
+    %val:i64 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_pos_large64:i64(i64) {
+    # check: function `xor_pos_large64`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %2:gpr(reg)[late] = MovRU32(4294967295)
+    # nextln: 0001:      %0:gpr(reg)[late] = AluRRm(S64, Xor) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 4294967295
+    %val:i64 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_neg_large64:i64(i64) {
+    # check: function `xor_neg_large64`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %2:gpr(reg)[late] = MovRI64(18446744069414584321)
+    # nextln: 0001:      %0:gpr(reg)[late] = AluRRm(S64, Xor) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744069414584321
+    %val:i64 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_pos32:i32(i32) {
+    # check: function `xor_pos32`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = AluRmI(S32, Xor, 5) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 5
+    %val:i32 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_neg32:i32(i32) {
+    # check: function `xor_neg32`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = AluRmI(S32, Xor, -5) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 4294967291
+    %val:i32 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_max32:i32(i32) {
+    # check: function `xor_max32`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:gpr(any)[late] = AluRmI(S32, Xor, 2147483647) %1(tied:0)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 2147483647
+    %val:i32 = xor %a, %b
+    return %c, %val
+}

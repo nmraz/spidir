@@ -95,11 +95,11 @@ impl MachineLower for X64Machine {
                 let [output] = ctx.node_outputs_exact(node);
                 select_iconst(ctx, output, val);
             }
-            NodeKind::Iadd => emit_alu_rr(ctx, node, AluOp::Add),
-            NodeKind::And => emit_alu_rr(ctx, node, AluOp::And),
-            NodeKind::Or => emit_alu_rr(ctx, node, AluOp::Or),
-            NodeKind::Isub => emit_alu_rr(ctx, node, AluOp::Sub),
-            NodeKind::Xor => emit_alu_rr(ctx, node, AluOp::Xor),
+            NodeKind::Iadd => select_alu_rr(ctx, node, AluOp::Add),
+            NodeKind::And => select_alu_rr(ctx, node, AluOp::And),
+            NodeKind::Or => select_alu_rr(ctx, node, AluOp::Or),
+            NodeKind::Isub => select_alu_rr(ctx, node, AluOp::Sub),
+            NodeKind::Xor => select_alu_rr(ctx, node, AluOp::Xor),
             NodeKind::Shl => emit_shift_rr(ctx, node, ShiftOp::Shl),
             NodeKind::Lshr => emit_shift_rr(ctx, node, ShiftOp::Shr),
             NodeKind::Ashr => emit_shift_rr(ctx, node, ShiftOp::Sar),
@@ -181,7 +181,7 @@ impl MachineLower for X64Machine {
                     &[UseOperand::tied(temp, 0)],
                 );
             }
-            NodeKind::PtrOff => emit_alu_rr(ctx, node, AluOp::Add),
+            NodeKind::PtrOff => select_alu_rr(ctx, node, AluOp::Add),
             NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
             NodeKind::StackSlot { .. } => {
@@ -373,6 +373,32 @@ fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, output: DepValue, va
     } else {
         // Otherwise, go for the full 64 bits.
         ctx.emit_instr(X64Instr::MovRI64(val), &[DefOperand::any_reg(output)], &[]);
+    }
+}
+
+fn select_alu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp) {
+    let [output] = ctx.node_outputs_exact(node);
+    let [op1, op2] = ctx.node_inputs_exact(node);
+
+    let ty = ctx.value_type(output);
+    let op_size = operand_size_for_ty(ty);
+    let output = ctx.get_value_vreg(output);
+
+    if let Some(imm) = match_imm32(ctx, op2) {
+        let op1 = ctx.get_value_vreg(op1);
+        ctx.emit_instr(
+            X64Instr::AluRmI(op_size, op, imm),
+            &[DefOperand::any(output)],
+            &[UseOperand::tied(op1, 0)],
+        );
+    } else {
+        let op1 = ctx.get_value_vreg(op1);
+        let op2 = ctx.get_value_vreg(op2);
+        ctx.emit_instr(
+            X64Instr::AluRRm(op_size, op),
+            &[DefOperand::any_reg(output)],
+            &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
+        );
     }
 }
 
@@ -577,23 +603,6 @@ fn emit_imul_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     );
 }
 
-fn emit_alu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp) {
-    let [output] = ctx.node_outputs_exact(node);
-    let [op1, op2] = ctx.node_inputs_exact(node);
-
-    let ty = ctx.value_type(output);
-
-    let output = ctx.get_value_vreg(output);
-    let op1 = ctx.get_value_vreg(op1);
-    let op2 = ctx.get_value_vreg(op2);
-
-    ctx.emit_instr(
-        X64Instr::AluRRm(operand_size_for_ty(ty), op),
-        &[DefOperand::any_reg(output)],
-        &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
-    );
-}
-
 fn emit_alu_rr_discarded(
     ctx: &mut IselContext<'_, '_, X64Machine>,
     op1: DepValue,
@@ -610,6 +619,17 @@ fn emit_alu_rr_discarded(
         &[],
         &[UseOperand::any_reg(op1), UseOperand::any(op2)],
     );
+}
+
+fn match_imm32(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<i32> {
+    if let Some(const_val) = match_iconst(ctx, value) {
+        let ty = ctx.value_type(value);
+        if ty == Type::I32 || is_sint::<32>(const_val) {
+            return Some(const_val as i32);
+        }
+    }
+
+    None
 }
 
 fn match_iconst(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<u64> {

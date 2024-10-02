@@ -6,17 +6,16 @@ func @sum_to_n:i32(i32) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 33 c0                           xor eax, eax
     # nextln: 000006: 85 ff                           test edi, edi
-    # nextln: 000008: 0f 84 1c 00 00 00               je 0x2a
-    # nextln: 00000e: b9 01 00 00 00                  mov ecx, 1
-    # nextln: 000013: 48 89 fa                        mov rdx, rdi
-    # nextln: 000016: 2b d1                           sub edx, ecx
-    # nextln: 000018: 03 c7                           add eax, edi
-    # nextln: 00001a: 85 d2                           test edx, edx
-    # nextln: 00001c: 0f 84 08 00 00 00               je 0x2a
-    # nextln: 000022: 48 89 d7                        mov rdi, rdx
-    # nextln: 000025: e9 e9 ff ff ff                  jmp 0x13
-    # nextln: 00002a: 5d                              pop rbp
-    # nextln: 00002b: c3                              ret
+    # nextln: 000008: 0f 84 18 00 00 00               je 0x26
+    # nextln: 00000e: 48 89 f9                        mov rcx, rdi
+    # nextln: 000011: 83 e9 01                        sub ecx, 1
+    # nextln: 000014: 03 c7                           add eax, edi
+    # nextln: 000016: 85 c9                           test ecx, ecx
+    # nextln: 000018: 0f 84 08 00 00 00               je 0x26
+    # nextln: 00001e: 48 89 cf                        mov rdi, rcx
+    # nextln: 000021: e9 e8 ff ff ff                  jmp 0xe
+    # nextln: 000026: 5d                              pop rbp
+    # nextln: 000027: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %10:i32 = iconst 1
@@ -44,22 +43,21 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 000008: 33 c0                           xor eax, eax
     # nextln: 00000a: 89 3c 24                        mov dword ptr [rsp], edi
     # nextln: 00000d: 89 44 24 04                     mov dword ptr [rsp + 4], eax
-    # nextln: 000011: b8 01 00 00 00                  mov eax, 1
-    # nextln: 000016: 8b 0c 24                        mov ecx, dword ptr [rsp]
-    # nextln: 000019: 85 c9                           test ecx, ecx
-    # nextln: 00001b: 0f 84 1a 00 00 00               je 0x3b
-    # nextln: 000021: 8b 3c 24                        mov edi, dword ptr [rsp]
-    # nextln: 000024: 48 89 f9                        mov rcx, rdi
-    # nextln: 000027: 2b c8                           sub ecx, eax
-    # nextln: 000029: 8b 54 24 04                     mov edx, dword ptr [rsp + 4]
-    # nextln: 00002d: 03 d7                           add edx, edi
-    # nextln: 00002f: 89 0c 24                        mov dword ptr [rsp], ecx
-    # nextln: 000032: 89 54 24 04                     mov dword ptr [rsp + 4], edx
-    # nextln: 000036: e9 db ff ff ff                  jmp 0x16
-    # nextln: 00003b: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
-    # nextln: 00003f: 48 83 c4 10                     add rsp, 0x10
-    # nextln: 000043: 5d                              pop rbp
-    # nextln: 000044: c3                              ret
+    # nextln: 000011: 8b 04 24                        mov eax, dword ptr [rsp]
+    # nextln: 000014: 85 c0                           test eax, eax
+    # nextln: 000016: 0f 84 1b 00 00 00               je 0x37
+    # nextln: 00001c: 8b 14 24                        mov edx, dword ptr [rsp]
+    # nextln: 00001f: 48 89 d0                        mov rax, rdx
+    # nextln: 000022: 83 e8 01                        sub eax, 1
+    # nextln: 000025: 8b 4c 24 04                     mov ecx, dword ptr [rsp + 4]
+    # nextln: 000029: 03 ca                           add ecx, edx
+    # nextln: 00002b: 89 04 24                        mov dword ptr [rsp], eax
+    # nextln: 00002e: 89 4c 24 04                     mov dword ptr [rsp + 4], ecx
+    # nextln: 000032: e9 da ff ff ff                  jmp 0x11
+    # nextln: 000037: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
+    # nextln: 00003b: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 00003f: 5d                              pop rbp
+    # nextln: 000040: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:ctrl, %3:phisel = region %0

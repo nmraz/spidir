@@ -6,22 +6,21 @@ func @iota(ptr, i64) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 33 c0                           xor eax, eax
     # nextln: 000006: 48 85 f6                        test rsi, rsi
-    # nextln: 000009: 0f 84 30 00 00 00               je 0x3f
+    # nextln: 000009: 0f 84 2c 00 00 00               je 0x3b
     # nextln: 00000f: b9 03 00 00 00                  mov ecx, 3
-    # nextln: 000014: ba 01 00 00 00                  mov edx, 1
-    # nextln: 000019: 49 89 c0                        mov r8, rax
-    # nextln: 00001c: 49 d3 e0                        shl r8, cl
-    # nextln: 00001f: 49 89 f9                        mov r9, rdi
-    # nextln: 000022: 4d 03 c8                        add r9, r8
-    # nextln: 000025: 49 89 c0                        mov r8, rax
-    # nextln: 000028: 4c 03 c2                        add r8, rdx
-    # nextln: 00002b: 49 89 01                        mov qword ptr [r9], rax
-    # nextln: 00002e: 4c 3b c6                        cmp r8, rsi
-    # nextln: 000031: 0f 84 08 00 00 00               je 0x3f
-    # nextln: 000037: 4c 89 c0                        mov rax, r8
-    # nextln: 00003a: e9 da ff ff ff                  jmp 0x19
-    # nextln: 00003f: 5d                              pop rbp
-    # nextln: 000040: c3                              ret
+    # nextln: 000014: 48 89 c2                        mov rdx, rax
+    # nextln: 000017: 48 d3 e2                        shl rdx, cl
+    # nextln: 00001a: 49 89 f8                        mov r8, rdi
+    # nextln: 00001d: 4c 03 c2                        add r8, rdx
+    # nextln: 000020: 48 89 c2                        mov rdx, rax
+    # nextln: 000023: 48 83 c2 01                     add rdx, 1
+    # nextln: 000027: 49 89 00                        mov qword ptr [r8], rax
+    # nextln: 00002a: 48 3b d6                        cmp rdx, rsi
+    # nextln: 00002d: 0f 84 08 00 00 00               je 0x3b
+    # nextln: 000033: 48 89 d0                        mov rax, rdx
+    # nextln: 000036: e9 d9 ff ff ff                  jmp 0x14
+    # nextln: 00003b: 5d                              pop rbp
+    # nextln: 00003c: c3                              ret
 
     %entry_ctrl:ctrl, %arr:ptr, %n:i64 = entry
     %zero:i64 = iconst 0

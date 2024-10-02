@@ -1,0 +1,108 @@
+# run: codegen
+
+func @xor_pos64:i64(i64) {
+    # check: function `xor_pos64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 83 f0 05                     xor rax, 5
+    # nextln: 00000b: 5d                              pop rbp
+    # nextln: 00000c: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 5
+    %val:i64 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_neg64:i64(i64) {
+    # check: function `xor_neg64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 83 f0 fb                     xor rax, 0xfffffffffffffffb
+    # nextln: 00000b: 5d                              pop rbp
+    # nextln: 00000c: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744073709551611
+    %val:i64 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_pos_large64:i64(i64) {
+    # check: function `xor_pos_large64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: b9 ff ff ff ff                  mov ecx, 0xffffffff
+    # nextln: 00000c: 48 33 c1                        xor rax, rcx
+    # nextln: 00000f: 5d                              pop rbp
+    # nextln: 000010: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 4294967295
+    %val:i64 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_neg_large64:i64(i64) {
+    # check: function `xor_neg_large64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 b9 01 00 00 00 ff ff ff ff   movabs rcx, 0xffffffff00000001
+    # nextln: 000011: 48 33 c1                        xor rax, rcx
+    # nextln: 000014: 5d                              pop rbp
+    # nextln: 000015: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744069414584321
+    %val:i64 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_pos32:i32(i32) {
+    # check: function `xor_pos32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 83 f0 05                        xor eax, 5
+    # nextln: 00000a: 5d                              pop rbp
+    # nextln: 00000b: c3                              ret
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 5
+    %val:i32 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_neg32:i32(i32) {
+    # check: function `xor_neg32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 83 f0 fb                        xor eax, 0xfffffffb
+    # nextln: 00000a: 5d                              pop rbp
+    # nextln: 00000b: c3                              ret
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 4294967291
+    %val:i32 = xor %a, %b
+    return %c, %val
+}
+
+func @xor_max32:i32(i32) {
+    # check: function `xor_max32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 81 f0 ff ff ff 7f               xor eax, 0x7fffffff
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 2147483647
+    %val:i32 = xor %a, %b
+    return %c, %val
+}

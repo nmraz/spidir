@@ -1,0 +1,108 @@
+# run: codegen
+
+func @or_pos64:i64(i64) {
+    # check: function `or_pos64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 83 c8 05                     or rax, 5
+    # nextln: 00000b: 5d                              pop rbp
+    # nextln: 00000c: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 5
+    %val:i64 = or %a, %b
+    return %c, %val
+}
+
+func @or_neg64:i64(i64) {
+    # check: function `or_neg64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 83 c8 fb                     or rax, 0xfffffffffffffffb
+    # nextln: 00000b: 5d                              pop rbp
+    # nextln: 00000c: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744073709551611
+    %val:i64 = or %a, %b
+    return %c, %val
+}
+
+func @or_pos_large64:i64(i64) {
+    # check: function `or_pos_large64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: b9 ff ff ff ff                  mov ecx, 0xffffffff
+    # nextln: 00000c: 48 0b c1                        or rax, rcx
+    # nextln: 00000f: 5d                              pop rbp
+    # nextln: 000010: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 4294967295
+    %val:i64 = or %a, %b
+    return %c, %val
+}
+
+func @or_neg_large64:i64(i64) {
+    # check: function `or_neg_large64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 b9 01 00 00 00 ff ff ff ff   movabs rcx, 0xffffffff00000001
+    # nextln: 000011: 48 0b c1                        or rax, rcx
+    # nextln: 000014: 5d                              pop rbp
+    # nextln: 000015: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744069414584321
+    %val:i64 = or %a, %b
+    return %c, %val
+}
+
+func @or_pos32:i32(i32) {
+    # check: function `or_pos32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 83 c8 05                        or eax, 5
+    # nextln: 00000a: 5d                              pop rbp
+    # nextln: 00000b: c3                              ret
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 5
+    %val:i32 = or %a, %b
+    return %c, %val
+}
+
+func @or_neg32:i32(i32) {
+    # check: function `or_neg32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 83 c8 fb                        or eax, 0xfffffffb
+    # nextln: 00000a: 5d                              pop rbp
+    # nextln: 00000b: c3                              ret
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 4294967291
+    %val:i32 = or %a, %b
+    return %c, %val
+}
+
+func @or_max32:i32(i32) {
+    # check: function `or_max32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 81 c8 ff ff ff 7f               or eax, 0x7fffffff
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 2147483647
+    %val:i32 = or %a, %b
+    return %c, %val
+}

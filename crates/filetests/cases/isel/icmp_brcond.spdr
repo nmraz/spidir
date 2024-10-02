@@ -140,24 +140,23 @@ func @select_ule:i32(i32, i32, i32, i32) {
 
 func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # check: function `select_slt_cond_reused`:
-    # nextln:       block0[%8:gpr($$rdi), %9:gpr($$rsi), %6:gpr($$rdx), %5:gpr($$rcx)]:
-    # nextln: 0000:      %7:gpr(reg)[late] = MovRZ
-    # nextln: 0001:      AluRRm(S32, Cmp) %8(reg)[early], %9(any)[early]
-    # nextln: 0002:      %3:gpr(reg)[late] = Setcc(L) %7(tied:0)[early]
+    # nextln:       block0[%7:gpr($$rdi), %8:gpr($$rsi), %5:gpr($$rdx), %4:gpr($$rcx)]:
+    # nextln: 0000:      %6:gpr(reg)[late] = MovRZ
+    # nextln: 0001:      AluRRm(S32, Cmp) %7(reg)[early], %8(any)[early]
+    # nextln: 0002:      %3:gpr(reg)[late] = Setcc(L) %6(tied:0)[early]
     # nextln: 0003:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0004:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0005:      Jump(block2)
-    # nextln:       => block2[%6:gpr]
+    # nextln:       => block2[%5:gpr]
     # nextln:       block3:
     # nextln: 0006:      Jump(block2)
-    # nextln:       => block2[%5:gpr]
+    # nextln:       => block2[%4:gpr]
     # nextln:       block2[%0:gpr]:
-    # nextln: 0007:      %4:gpr(any)[late] = MovRmS32(5)
-    # nextln: 0008:      %2:gpr(reg)[late] = AluRRm(S32, Xor) %3(tied:0)[early], %4(any)[early]
-    # nextln: 0009:      %1:gpr(reg)[late] = AluRRm(S32, Add) %0(tied:0)[early], %2(any)[early]
-    # nextln: 0010:      Ret %1($$rax)[early]
+    # nextln: 0007:      %2:gpr(any)[late] = AluRmI(S32, Xor, 5) %3(tied:0)[early]
+    # nextln: 0008:      %1:gpr(reg)[late] = AluRRm(S32, Add) %0(tied:0)[early], %2(any)[early]
+    # nextln: 0009:      Ret %1($$rax)[early]
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp slt %a, %b

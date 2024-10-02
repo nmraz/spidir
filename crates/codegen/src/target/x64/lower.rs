@@ -102,7 +102,7 @@ impl MachineLower for X64Machine {
             NodeKind::Shl => emit_shift_rr(ctx, node, ShiftOp::Shl),
             NodeKind::Lshr => emit_shift_rr(ctx, node, ShiftOp::Shr),
             NodeKind::Ashr => emit_shift_rr(ctx, node, ShiftOp::Sar),
-            NodeKind::Imul => emit_alu_rr(ctx, node, AluOp::Imul),
+            NodeKind::Imul => emit_imul_rr(ctx, node),
             NodeKind::Udiv => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
@@ -539,6 +539,23 @@ fn emit_shift_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: Shif
             UseOperand::tied(value, 0),
             UseOperand::fixed(amount, REG_RCX),
         ],
+    );
+}
+
+fn emit_imul_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
+    let [output] = ctx.node_outputs_exact(node);
+    let [op1, op2] = ctx.node_inputs_exact(node);
+
+    let ty = ctx.value_type(output);
+
+    let output = ctx.get_value_vreg(output);
+    let op1 = ctx.get_value_vreg(op1);
+    let op2 = ctx.get_value_vreg(op2);
+
+    ctx.emit_instr(
+        X64Instr::ImulRRm(operand_size_for_ty(ty)),
+        &[DefOperand::any_reg(output)],
+        &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
 }
 

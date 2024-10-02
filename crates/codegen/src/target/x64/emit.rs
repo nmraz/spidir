@@ -165,6 +165,12 @@ impl MachineEmit for X64Machine {
                 let arg1 = state.operand_reg_mem(uses[1]);
                 emit_alu_r_rm(buffer, op, op_size, arg0, arg1);
             }
+            &X64Instr::ImulRRm(op_size) => emit_imul_r_rm(
+                buffer,
+                op_size,
+                uses[0].as_reg().unwrap(),
+                state.operand_reg_mem(uses[1]),
+            ),
             &X64Instr::ShiftRmR(op_size, op) => {
                 emit_shift_rm_cx(buffer, op, op_size, state.operand_reg_mem(uses[0]))
             }
@@ -594,7 +600,6 @@ fn emit_alu_r_rm(
             &[0x85]
         }
         AluOp::Xor => &[0x33],
-        AluOp::Imul => &[0xf, 0xaf],
     };
 
     let (rex, modrm_sib) = encode_reg_mem_parts(arg1, |rex| {
@@ -605,6 +610,24 @@ fn emit_alu_r_rm(
     buffer.instr(|sink| {
         rex.emit(sink);
         sink.emit(opcode);
+        modrm_sib.emit(sink);
+    });
+}
+
+fn emit_imul_r_rm(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op_size: OperandSize,
+    arg0: PhysReg,
+    arg1: RegMem,
+) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(arg1, |rex| {
+        rex.encode_operand_size(op_size);
+        rex.encode_modrm_reg(arg0)
+    });
+
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf, 0xaf]);
         modrm_sib.emit(sink);
     });
 }
@@ -702,7 +725,6 @@ fn emit_alu_r64i(buffer: &mut CodeBuffer<X64Fixup>, op: AluOp, dest: PhysReg, im
             0x0
         }
         AluOp::Xor => 0x6,
-        AluOp::Imul => unimplemented!(),
     };
 
     let mut rex = RexPrefix::new();

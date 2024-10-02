@@ -111,7 +111,6 @@ pub enum AluOp {
     Sub,
     Test,
     Xor,
-    Imul,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -138,6 +137,7 @@ pub enum IndexScale {
 #[derive(Debug, Clone, Copy)]
 pub enum X64Instr {
     AluRRm(OperandSize, AluOp),
+    ImulRRm(OperandSize),
     ShiftRmR(OperandSize, ShiftOp),
     ShiftRmI(OperandSize, ShiftOp, u8),
     Div(OperandSize, DivOp),

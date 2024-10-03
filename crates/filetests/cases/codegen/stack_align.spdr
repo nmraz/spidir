@@ -1,5 +1,7 @@
 # run: codegen
 
+extfunc @g(ptr)
+
 func @aligned_stack(i32) {
     # check: function `aligned_stack`:
     # nextln: 000000: 55                              push rbp
@@ -7,12 +9,35 @@ func @aligned_stack(i32) {
     # nextln: 000004: 48 83 ec 20                     sub rsp, 0x20
     # nextln: 000008: 48 83 e4 e0                     and rsp, 0xffffffffffffffe0
     # nextln: 00000c: 89 3c 24                        mov dword ptr [rsp], edi
-    # nextln: 00000f: 48 89 ec                        mov rsp, rbp
-    # nextln: 000012: 5d                              pop rbp
-    # nextln: 000013: c3                              ret
+    # nextln: 00000f: 48 8d 65 00                     lea rsp, [rbp]
+    # nextln: 000013: 5d                              pop rbp
+    # nextln: 000014: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %s:ptr = stackslot 32:32
     %2:ctrl = store.4 %0, %1, %s
     return %2
+}
+
+func @aligned_stack_with_saved_regs:i32(i32) {
+    # check: function `aligned_stack_with_saved_regs`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 53                              push rbx
+    # nextln: 000005: 48 83 ec 20                     sub rsp, 0x20
+    # nextln: 000009: 48 83 e4 e0                     and rsp, 0xffffffffffffffe0
+    # nextln: 00000d: 48 89 fb                        mov rbx, rdi
+    # nextln: 000010: 48 8d 3c 24                     lea rdi, [rsp]
+    # nextln: 000014: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @g + 0
+    # nextln: 00001e: ff d0                           call rax
+    # nextln: 000020: 48 89 d8                        mov rax, rbx
+    # nextln: 000023: 48 8d 65 f8                     lea rsp, [rbp - 8]
+    # nextln: 000027: 5b                              pop rbx
+    # nextln: 000028: 5d                              pop rbp
+    # nextln: 000029: c3                              ret
+
+    %0:ctrl, %1:i32 = entry
+    %s:ptr = stackslot 32:32
+    %2:ctrl = call @g %0, %s
+    return %2, %1
 }

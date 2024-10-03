@@ -333,7 +333,18 @@ fn emit_epilogue(buffer: &mut CodeBuffer<X64Fixup>, state: &X64EmitState) {
     match state.restore_method {
         FrameRestoreMethod::None => {}
         FrameRestoreMethod::AddSp(offset) => emit_add_sp(buffer, offset),
-        FrameRestoreMethod::FromRbp => emit_mov_r_r(buffer, REG_RSP, REG_RBP),
+        FrameRestoreMethod::FromRbp => {
+            let saved_reg_size = (state.saved_regs.len() * 8) as i32;
+            emit_lea(
+                buffer,
+                REG_RSP,
+                BaseIndexOff {
+                    base: Some(REG_RBP),
+                    index: None,
+                    disp: -saved_reg_size,
+                },
+            );
+        }
     }
 
     for saved_reg in state.saved_regs.iter() {

@@ -424,13 +424,13 @@ fn emit_movabs_r_i_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, targe
     });
 }
 
-fn emit_movabs_r_i_instr(instr: &mut InstrSink<'_>, dest: PhysReg, imm: u64) {
+fn emit_movabs_r_i_instr(sink: &mut InstrSink<'_>, dest: PhysReg, imm: u64) {
     let mut rex = RexPrefix::new();
     let dest = rex.encode_modrm_base(dest);
     rex.encode_operand_size(OperandSize::S64);
-    rex.emit(instr);
-    instr.emit(&[0xb8 + dest]);
-    instr.emit(&imm.to_le_bytes());
+    rex.emit(sink);
+    sink.emit(&[0xb8 + dest]);
+    sink.emit(&imm.to_le_bytes());
 }
 
 fn emit_movzx_r_rm(
@@ -588,10 +588,10 @@ fn emit_jcc(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, target: Label) {
     );
 }
 
-fn emit_jcc_instr(instr: &mut InstrSink<'_>, code: CondCode) {
+fn emit_jcc_instr(sink: &mut InstrSink<'_>, code: CondCode) {
     let code = encode_cond_code(code);
-    instr.emit(&[0xf, 0x80 + code]);
-    instr.emit(&0u32.to_le_bytes());
+    sink.emit(&[0xf, 0x80 + code]);
+    sink.emit(&0u32.to_le_bytes());
 }
 
 fn emit_ret(buffer: &mut CodeBuffer<X64Fixup>) {
@@ -837,15 +837,15 @@ struct ModRmSib {
 }
 
 impl ModRmSib {
-    fn emit(self, instr: &mut InstrSink<'_>) {
-        instr.emit(&[self.modrm]);
+    fn emit(self, sink: &mut InstrSink<'_>) {
+        sink.emit(&[self.modrm]);
         if let Some(sib) = self.sib {
-            instr.emit(&[sib]);
+            sink.emit(&[sib]);
         }
         match self.mem_mode {
             MemMode::NoDisp => {}
-            MemMode::Disp8 => instr.emit(&[self.disp as u8]),
-            MemMode::Disp32 | MemMode::Disp32Special => instr.emit(&self.disp.to_le_bytes()),
+            MemMode::Disp8 => sink.emit(&[self.disp as u8]),
+            MemMode::Disp32 | MemMode::Disp32Special => sink.emit(&self.disp.to_le_bytes()),
         }
     }
 }
@@ -900,14 +900,14 @@ impl RexPrefix {
         }
     }
 
-    fn emit(self, instr: &mut InstrSink<'_>) {
+    fn emit(self, sink: &mut InstrSink<'_>) {
         let value = 0x40
             | (self.b as u8)
             | ((self.x as u8) << 1)
             | ((self.r as u8) << 2)
             | ((self.w as u8) << 3);
         if self.force || value != 0x40 {
-            instr.emit(&[value]);
+            sink.emit(&[value]);
         }
     }
 }

@@ -262,7 +262,7 @@ impl MachineEmit for X64Machine {
                 RegMem::Mem(state.stack_slot_addr(slot)),
                 uses[0].as_reg().unwrap(),
             ),
-            &X64Instr::StackAddr(slot) => emit_lea(
+            &X64Instr::StackAddr(slot) => emit_lea_or_mov(
                 buffer,
                 defs[0].as_reg().unwrap(),
                 state.stack_slot_addr(slot),
@@ -335,7 +335,7 @@ fn emit_epilogue(buffer: &mut CodeBuffer<X64Fixup>, state: &X64EmitState) {
         FrameRestoreMethod::AddSp(offset) => emit_add_sp(buffer, offset),
         FrameRestoreMethod::FromRbp => {
             let saved_reg_size = (state.saved_regs.len() * 8) as i32;
-            emit_lea(
+            emit_lea_or_mov(
                 buffer,
                 REG_RSP,
                 BaseIndexOff {
@@ -479,6 +479,17 @@ fn emit_movzx_r_rm(
         sink.emit(opcode);
         modrm_sib.emit(sink);
     });
+}
+
+fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: BaseIndexOff) {
+    match addr {
+        BaseIndexOff {
+            base: Some(base),
+            index: None,
+            disp: 0,
+        } => emit_mov_r_r(buffer, dest, base),
+        _ => emit_lea(buffer, dest, addr),
+    }
 }
 
 fn emit_lea(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: BaseIndexOff) {

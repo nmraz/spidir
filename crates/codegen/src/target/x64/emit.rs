@@ -175,6 +175,13 @@ impl MachineEmit for X64Machine {
                 uses[0].as_reg().unwrap(),
                 state.operand_reg_mem(uses[1]),
             ),
+            &X64Instr::ImulRRmI(op_size, imm) => emit_imul_r_rm_i(
+                buffer,
+                op_size,
+                defs[0].as_reg().unwrap(),
+                state.operand_reg_mem(uses[0]),
+                imm,
+            ),
             &X64Instr::ShiftRmR(op_size, op) => {
                 emit_shift_rm_cx(buffer, op, op_size, state.operand_reg_mem(uses[0]))
             }
@@ -692,6 +699,34 @@ fn emit_imul_r_rm(
         rex.emit(sink);
         sink.emit(&[0xf, 0xaf]);
         modrm_sib.emit(sink);
+    });
+}
+
+fn emit_imul_r_rm_i(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op_size: OperandSize,
+    dest: PhysReg,
+    op1: RegMem,
+    imm: i32,
+) {
+    let is_imm8 = is_sint::<8>(imm as u64);
+    let opcode = if is_imm8 { 0x6b } else { 0x69 };
+
+    let (rex, modrm_sib) = encode_reg_mem_parts(op1, |rex| {
+        rex.encode_operand_size(op_size);
+        rex.encode_modrm_reg(dest)
+    });
+
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[opcode]);
+        modrm_sib.emit(sink);
+
+        if is_imm8 {
+            sink.emit(&[imm as u8]);
+        } else {
+            sink.emit(&imm.to_le_bytes());
+        }
     });
 }
 

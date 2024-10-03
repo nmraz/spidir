@@ -100,7 +100,7 @@ impl MachineLower for X64Machine {
             NodeKind::Shl => select_shift(ctx, node, ShiftOp::Shl),
             NodeKind::Lshr => select_shift(ctx, node, ShiftOp::Shr),
             NodeKind::Ashr => select_shift(ctx, node, ShiftOp::Sar),
-            NodeKind::Imul => emit_imul_rr(ctx, node),
+            NodeKind::Imul => select_imul(ctx, node),
             NodeKind::Udiv => {
                 let [op1, op2] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
@@ -316,6 +316,32 @@ fn select_shift(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: Shift
                 UseOperand::tied(value, 0),
                 UseOperand::fixed(amount, REG_RCX),
             ],
+        );
+    }
+}
+
+fn select_imul(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
+    let [output] = ctx.node_outputs_exact(node);
+    let [op1, op2] = ctx.node_inputs_exact(node);
+
+    let ty = ctx.value_type(output);
+    let op_size = operand_size_for_ty(ty);
+
+    let output = ctx.get_value_vreg(output);
+    let op1 = ctx.get_value_vreg(op1);
+
+    if let Some(imm) = match_imm32(ctx, op2) {
+        ctx.emit_instr(
+            X64Instr::ImulRRmI(op_size, imm),
+            &[DefOperand::any_reg(output)],
+            &[UseOperand::any(op1)],
+        );
+    } else {
+        let op2 = ctx.get_value_vreg(op2);
+        ctx.emit_instr(
+            X64Instr::ImulRRm(op_size),
+            &[DefOperand::any_reg(output)],
+            &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
         );
     }
 }
@@ -591,23 +617,6 @@ fn emit_shift_ri(
         X64Instr::ShiftRmI(operand_size_for_ty(ty), op, amount),
         &[DefOperand::any(output)],
         &[UseOperand::tied(input, 0)],
-    );
-}
-
-fn emit_imul_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
-    let [output] = ctx.node_outputs_exact(node);
-    let [op1, op2] = ctx.node_inputs_exact(node);
-
-    let ty = ctx.value_type(output);
-
-    let output = ctx.get_value_vreg(output);
-    let op1 = ctx.get_value_vreg(op1);
-    let op2 = ctx.get_value_vreg(op2);
-
-    ctx.emit_instr(
-        X64Instr::ImulRRm(operand_size_for_ty(ty)),
-        &[DefOperand::any_reg(output)],
-        &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
 }
 

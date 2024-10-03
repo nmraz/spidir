@@ -51,175 +51,194 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0003:     Jump(block2)
     # nextln:       block2:
     # nextln: 0004:     $$rax = MovRmS32(2)
-    # nextln: 0005:     $$r13 = MovsxRRm(Ext32_64) $$rax
-    # nextln: 0006:     $$rdx = MovRmS32(4)
-    # nextln:           $$rcx = $$r13
-    # nextln: 0007:     $$rcx = ImulRRm(S64) $$rcx, $$rdx
-    # nextln:           $$r8 = $$rdx
-    # nextln:           $$rsi = $$rax
-    # nextln: 0008:     $$rdx = MovRmS32(8)
-    # nextln:           $$rax = $$r13
-    # nextln: 0009:     $$rax = ImulRRm(S64) $$rax, $$rdx
-    # nextln:           $$r9 = $$rdi
-    # nextln: 0010:     $$rdi = MovRmS32(20)
-    # nextln:           $$r10 = $$rdi
-    # nextln: 0011:     $$r10 = AluRRm(S64, Add) $$r10, $$rcx
-    # nextln:           $$rcx = $$r9
-    # nextln:           $$r9 = $$r8
-    # nextln:           $$r8 = $$r10
-    # nextln: 0012:     $$r10 = MovRmS32(170)
-    # nextln:           $$r11 = $$rdx
-    # nextln:           $$rdx = $$rcx
-    # nextln:           $$rcx = $$r8
-    # nextln:           $$r8 = $$r10
-    # nextln:           $$r10 = $$r9
+    # nextln: 0005:     $$r12 = MovsxRRm(Ext32_64) $$rax
+    # nextln:           $$rdx = $$rdi
+    # nextln: 0006:     $$rcx = MovRmS32(4)
+    # nextln: 0007:     $$rdi = ImulRRmI(S64, 4) $$r12
+    # nextln:           $$rsi = $$rcx
+    # nextln: 0008:     $$r8 = MovRmS32(8)
+    # nextln: 0009:     $$rcx = ImulRRmI(S64, 8) $$r12
     # nextln:           $$r9 = $$rsi
+    # nextln:           $$rsi = $$rdx
+    # nextln:           $$rdx = $$rax
+    # nextln: 0010:     $$rax = MovRmS32(20)
+    # nextln:           $$r10 = $$r8
+    # nextln:           $$r8 = $$r9
+    # nextln:           $$r9 = $$rsi
+    # nextln:           $$rsi = $$r10
+    # nextln:           $$r10 = $$rax
+    # nextln: 0011:     $$r10 = AluRRm(S64, Add) $$r10, $$rdi
+    # nextln:           $$rdi = $$rsi
+    # nextln:           $$rsi = $$r9
+    # nextln:           $$r9 = $$r8
+    # nextln:           $$r8 = $$rdx
+    # nextln:           $$rdx = $$r10
+    # nextln: 0012:     $$r10 = MovRmS32(170)
+    # nextln:           $$r11 = $$r8
+    # nextln:           $$r8 = $$rax
+    # nextln:           $$rax = $$r9
+    # nextln:           $$r9 = $$r10
+    # nextln:           $$r10 = $$rdx
+    # nextln:           $$rdx = $$rsi
     # nextln: 0013:     $$rbx = MovRmS32(24)
     # nextln:           $$rsi = $$rbx
-    # nextln: 0014:     $$rsi = AluRRm(S64, Add) $$rsi, $$rax
-    # nextln:           $$rax = $$rbx
-    # nextln: 0015:     $$r15 = MovRmS32(1)
-    # nextln:           $$rbx = $$r11
-    # nextln:           $$r11 = $$rax
-    # nextln:           $$r12 = $$r9
-    # nextln:           $$r9 = $$r10
-    # nextln:           $$r10 = $$r12
-    # nextln:           $$rax = $$rdi
-    # nextln: 0016:     $$r12 = MovsxRRm(Ext32_64) $$r15
+    # nextln: 0014:     $$rsi = AluRRm(S64, Add) $$rsi, $$rcx
+    # nextln:           $$rcx = $$rbx
+    # nextln: 0015:     $$r13 = MovRmS32(1)
+    # nextln:           $$rbx = $$r10
+    # nextln:           $$r10 = $$r8
+    # nextln:           $$r8 = $$r11
+    # nextln:           $$r11 = $$r9
+    # nextln:           $$r9 = $$rcx
+    # nextln:           $$rcx = $$rdi
+    # nextln: 0016:     $$r14 = MovsxRRm(Ext32_64) $$r13
     # nextln: 0017:     $$rdi = MovRmS32(171)
-    # nextln:           $$spill8 = $$r8
-    # nextln:           $$spill7 = $$r10
-    # nextln:           $$spill3 = $$r11
-    # nextln:           $$spill4 = $$r12
-    # nextln:           $$r12 = $$rbx
-    # nextln:           $$r14 = $$rdx
-    # nextln:           $$rbx = $$r9
-    # nextln:           $$spill0 = $$rax
-    # nextln:           $$spill9 = $$rcx
+    # nextln:           $$spill2 = $$rdx
+    # nextln:           $$spill1 = $$rax
+    # nextln:           $$spill7 = $$r11
+    # nextln:           $$spill3 = $$r9
+    # nextln:           $$r15 = $$r10
+    # nextln:           $$spill4 = $$rcx
+    # nextln:           $$spill8 = $$rbx
+    # nextln:           $$rbx = $$r8
     # nextln: 0018:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
     # nextln:           $$rcx = $$rax
     # nextln: 0019:     $$rcx = AluRmI(S64, Add, 16) $$rcx
-    # nextln: 0020:     MovMR(S32) $$rcx, $$r13
+    # nextln: 0020:     MovMR(S32) $$rcx, $$r12
     # nextln: 0021:     MovStackR(!0, S64) $$rax
-    # nextln:           $$rdi = $$r12
-    # nextln:           $$rsi = $$spill3
-    # nextln:           $$rdx = $$spill4
-    # nextln:           $$rcx = $$r14
-    # nextln:           $$rax = $$spill0
-    # nextln: 0022:     $$r12 = MovRStack(!0, S64)
-    # nextln:           $$spill5 = $$rdi
+    # nextln:           $$rdx = $$spill1
+    # nextln:           $$r9 = $$spill7
+    # nextln:           $$r8 = $$spill3
+    # nextln:           $$rcx = $$rbx
+    # nextln:           $$rax = $$r15
+    # nextln:           $$rdi = $$spill2
+    # nextln:           $$rsi = $$spill4
+    # nextln: 0022:     $$r15 = MovRStack(!0, S64)
+    # nextln:           $$spill4 = $$rsi
+    # nextln:           $$rbx = $$r9
+    # nextln:           $$spill3 = $$r8
+    # nextln:           $$spill6 = $$rcx
+    # nextln:           $$spill1 = $$rdx
     # nextln:           $$spill0 = $$rax
-    # nextln:           $$spill2 = $$rcx
-    # nextln:           $$spill3 = $$rsi
-    # nextln:           $$r14 = $$rdx
-    # nextln:           $$rsi = $$spill9
-    # nextln:           $$rdi = $$spill8
+    # nextln:           $$spill2 = $$rdi
+    # nextln:           $$rsi = $$spill8
+    # nextln:           $$rdi = $$rbx
     # nextln: 0023:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
     # nextln:           $$rcx = $$rax
     # nextln: 0024:     $$rcx = AluRmI(S64, Add, 16) $$rcx
-    # nextln: 0025:     MovMR(S32) $$rcx, $$r13
+    # nextln: 0025:     MovMR(S32) $$rcx, $$r12
     # nextln: 0026:     $$rcx = MovRM(S32) $$rcx
     # nextln: 0027:     AluRRm(S64, Cmp) $$r14, $$rcx
     # nextln: 0028:     Jumpcc(L, block3, block4)
     # nextln:       block3:
-    # nextln:           $$r11 = $$rbx
-    # nextln: 0029:     $$r11 = ImulRRm(S64) $$r11, $$r14
-    # nextln:           $$rdi = $$r12
-    # nextln: 0030:     $$rdi = AluRmI(S64, Add, 16) $$rdi
-    # nextln:           $$r9 = $$rbx
-    # nextln:           $$r8 = $$spill3
+    # nextln:           $$rcx = $$spill1
+    # nextln:           $$rsi = $$rcx
+    # nextln: 0029:     $$rsi = ImulRRm(S64) $$rsi, $$r14
+    # nextln:           $$rdx = $$r15
+    # nextln: 0030:     $$rdx = AluRmI(S64, Add, 16) $$rdx
+    # nextln:           $$rdi = $$rbx
+    # nextln:           $$rbx = $$spill3
+    # nextln:           $$r8 = $$spill6
     # nextln:           $$rcx = $$spill0
     # nextln:           $$r10 = $$spill2
-    # nextln:           $$rsi = $$spill5
-    # nextln:           $$rdx = $$rcx
-    # nextln: 0031:     $$rdx = AluRRm(S64, Add) $$rdx, $$r11
-    # nextln:           $$r11 = $$rax
-    # nextln: 0032:     $$r11 = AluRRm(S64, Add) $$r11, $$rdx
-    # nextln: 0033:     MovMR(S32) $$r11, $$r15
-    # nextln:           $$r11 = $$rsi
-    # nextln:           $$rbx = $$r9
-    # nextln:           $$r9 = $$r8
-    # nextln:           $$r8 = $$r14
-    # nextln:           $$rsi = $$r10
-    # nextln: 0034:     $$r10 = MovRM(S32) $$rdi
-    # nextln: 0035:     $$r15 = MovRZ
-    # nextln:           $$r14 = $$r11
-    # nextln:           $$rdi = $$r9
-    # nextln:           $$r9 = $$r8
-    # nextln:           $$r8 = $$rsi
-    # nextln:           $$rsi = $$rbx
-    # nextln: 0036:     $$rbx = MovsxRRm(Ext32_64) $$r15
-    # nextln: 0037:     AluRRm(S64, Cmp) $$rbx, $$r10
+    # nextln:           $$r9 = $$spill4
+    # nextln:           $$r11 = $$rcx
+    # nextln: 0031:     $$r11 = AluRRm(S64, Add) $$r11, $$rsi
+    # nextln:           $$rsi = $$rax
+    # nextln: 0032:     $$rsi = AluRRm(S64, Add) $$rsi, $$r11
+    # nextln: 0033:     MovMR(S32) $$rsi, $$r13
+    # nextln:           $$r13 = $$spill1
+    # nextln:           $$rsi = $$r8
+    # nextln:           $$r8 = $$r9
+    # nextln:           $$r9 = $$r10
+    # nextln:           $$r10 = $$r11
+    # nextln: 0034:     $$r11 = MovRM(S32) $$rdx
+    # nextln: 0035:     $$rdx = MovRZ
+    # nextln:           $$spill9 = $$rsi
+    # nextln:           $$rsi = $$r8
+    # nextln:           $$r8 = $$spill9
+    # nextln:           $$spill1 = $$r13
+    # nextln: 0036:     $$r13 = MovsxRRm(Ext32_64) $$rdx
+    # nextln:           $$rdx = $$spill1
+    # nextln: 0037:     AluRRm(S64, Cmp) $$r13, $$r11
     # nextln: 0038:     Jumpcc(L, block6, block7)
     # nextln:       block6:
-    # nextln:           $$r10 = $$r14
-    # nextln: 0039:     $$r10 = ImulRRm(S64) $$r10, $$rbx
-    # nextln:           $$r11 = $$rdi
-    # nextln: 0040:     $$r11 = AluRRm(S64, Add) $$r11, $$r10
-    # nextln: 0041:     $$r12 = AluRRm(S64, Add) $$r12, $$r11
-    # nextln:           $$r15 = $$r9
-    # nextln:           $$r10 = $$rsi
-    # nextln:           $$rsi = $$rdi
-    # nextln:           $$rdi = $$r10
-    # nextln: 0042:     MovMR(S64) $$r12, $$rax
-    # nextln:           $$rax = $$rdi
-    # nextln:           $$rdi = $$rdx
-    # nextln:           $$rdx = $$r8
-    # nextln: 0043:     $$r12 = MovRStack(!0, S64)
-    # nextln:           $$spill1 = $$rax
-    # nextln:           $$spill6 = $$rdi
-    # nextln:           $$spill0 = $$rcx
-    # nextln:           $$spill3 = $$rsi
-    # nextln:           $$spill2 = $$rdx
-    # nextln:           $$rdi = $$spill8
-    # nextln:           $$rsi = $$spill9
+    # nextln:           $$r11 = $$rdx
+    # nextln:           $$rdx = $$rsi
+    # nextln: 0039:     $$rdx = ImulRRm(S64) $$rdx, $$r13
+    # nextln:           $$spill1 = $$r11
+    # nextln:           $$r11 = $$rbx
+    # nextln: 0040:     $$r11 = AluRRm(S64, Add) $$r11, $$rdx
+    # nextln:           $$rdx = $$spill1
+    # nextln: 0041:     $$r15 = AluRRm(S64, Add) $$r15, $$r11
+    # nextln:           $$r11 = $$rdx
+    # nextln:           $$rdx = $$r10
+    # nextln:           $$r10 = $$r9
+    # nextln:           $$r9 = $$rsi
+    # nextln:           $$rsi = $$r11
+    # nextln: 0042:     MovMR(S64) $$r15, $$rax
+    # nextln:           $$rax = $$r8
+    # nextln:           $$r8 = $$rsi
+    # nextln:           $$rsi = $$r10
+    # nextln:           $$r11 = $$r9
+    # nextln:           $$r9 = $$rdx
+    # nextln:           $$rdx = $$rcx
+    # nextln:           $$rcx = $$r11
+    # nextln: 0043:     $$r15 = MovRStack(!0, S64)
+    # nextln:           $$spill4 = $$rcx
+    # nextln:           $$spill2 = $$rsi
+    # nextln:           $$spill6 = $$rax
+    # nextln:           $$spill0 = $$rdx
+    # nextln:           $$spill5 = $$r9
+    # nextln:           $$spill1 = $$r8
+    # nextln:           $$rsi = $$spill8
     # nextln: 0044:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
-    # nextln:           $$rcx = $$spill1
     # nextln:           $$rdx = $$spill2
+    # nextln:           $$r10 = $$spill6
+    # nextln:           $$rcx = $$spill1
+    # nextln:           $$rsi = $$spill4
     # nextln:           $$r9 = $$rax
     # nextln: 0045:     $$r9 = AluRmI(S64, Add, 16) $$r9
-    # nextln: 0046:     MovMR(S32) $$r9, $$r13
-    # nextln:           $$r10 = $$spill7
-    # nextln:           $$r8 = $$spill6
+    # nextln: 0046:     MovMR(S32) $$r9, $$r12
     # nextln:           $$rdi = $$spill0
-    # nextln:           $$rsi = $$spill3
+    # nextln:           $$r8 = $$spill5
     # nextln: 0047:     $$r11 = MovRM(S32) $$r9
-    # nextln: 0048:     AluRRm(S64, Cmp) $$rbx, $$r11
+    # nextln: 0048:     AluRRm(S64, Cmp) $$r13, $$r11
     # nextln: 0049:     Jumpcc(L, block8, block9)
     # nextln:       block8:
-    # nextln:           $$r13 = $$rcx
-    # nextln: 0050:     $$r13 = ImulRRm(S64) $$r13, $$rbx
-    # nextln:           $$r11 = $$rdi
-    # nextln: 0051:     $$r11 = AluRRm(S64, Add) $$r11, $$r13
-    # nextln:           $$rbx = $$rax
-    # nextln: 0052:     $$rbx = AluRRm(S64, Add) $$rbx, $$r11
-    # nextln: 0053:     MovMR(S32) $$rbx, $$r10
+    # nextln:           $$r11 = $$rcx
+    # nextln: 0050:     $$r11 = ImulRRm(S64) $$r11, $$r13
+    # nextln:           $$r12 = $$rdi
+    # nextln: 0051:     $$r12 = AluRRm(S64, Add) $$r12, $$r11
+    # nextln:           $$r11 = $$rax
+    # nextln: 0052:     $$r11 = AluRRm(S64, Add) $$r11, $$r12
+    # nextln: 0053:     MovMR(S32) $$r11, $$r10
     # nextln: 0054:     $$r9 = MovRM(S32) $$r9
-    # nextln: 0055:     AluRRm(S64, Cmp) $$r15, $$r9
+    # nextln: 0055:     AluRRm(S64, Cmp) $$r14, $$r9
     # nextln: 0056:     Jumpcc(L, block10, block11)
     # nextln:       block10:
-    # nextln:           $$r9 = $$r12
+    # nextln:           $$r9 = $$r15
     # nextln: 0057:     $$r9 = AluRmI(S64, Add, 16) $$r9
     # nextln:           $$r10 = $$rax
     # nextln: 0058:     $$r10 = AluRRm(S64, Add) $$r10, $$r8
     # nextln: 0059:     $$r8 = MovRmS32(3)
     # nextln: 0060:     MovMR(S32) $$r10, $$r8
     # nextln: 0061:     $$r8 = MovRM(S32) $$r9
-    # nextln: 0062:     AluRRm(S64, Cmp) $$r15, $$r8
+    # nextln: 0062:     AluRRm(S64, Cmp) $$r14, $$r8
     # nextln: 0063:     Jumpcc(L, block12, block13)
     # nextln:       block12:
-    # nextln: 0064:     $$r14 = ImulRRm(S64) $$r14, $$r15
-    # nextln: 0065:     $$rsi = AluRRm(S64, Add) $$rsi, $$r14
-    # nextln: 0066:     $$r12 = AluRRm(S64, Add) $$r12, $$rsi
-    # nextln: 0067:     MovMR(S64) $$r12, $$rax
+    # nextln: 0064:     $$rsi = ImulRRm(S64) $$rsi, $$r14
+    # nextln: 0065:     $$rbx = AluRRm(S64, Add) $$rbx, $$rsi
+    # nextln: 0066:     $$r15 = AluRRm(S64, Add) $$r15, $$rbx
+    # nextln: 0067:     MovMR(S64) $$r15, $$rax
     # nextln: 0068:     $$rax = MovRStack(!0, S64)
-    # nextln:           $$r8 = $$rax
-    # nextln: 0069:     $$r8 = AluRmI(S64, Add, 16) $$r8
-    # nextln: 0070:     $$r8 = MovRM(S32) $$r8
-    # nextln: 0071:     AluRRm(S64, Cmp) $$r15, $$r8
+    # nextln:           $$rsi = $$rax
+    # nextln: 0069:     $$rsi = AluRmI(S64, Add, 16) $$rsi
+    # nextln: 0070:     $$rsi = MovRM(S32) $$rsi
+    # nextln: 0071:     AluRRm(S64, Cmp) $$r14, $$rsi
     # nextln: 0072:     Jumpcc(L, block14, block15)
     # nextln:       block14:
-    # nextln: 0073:     $$rax = AluRRm(S64, Add) $$rax, $$rsi
+    # nextln: 0073:     $$rax = AluRRm(S64, Add) $$rax, $$rbx
     # nextln: 0074:     $$rax = MovRM(S64) $$rax
     # nextln:           $$rsi = $$rax
     # nextln: 0075:     $$rsi = AluRmI(S64, Add, 16) $$rsi

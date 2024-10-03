@@ -139,6 +139,7 @@ pub enum X64Instr {
     AluRRm(OperandSize, AluOp),
     AluRmI(OperandSize, AluOp, i32),
     ImulRRm(OperandSize),
+    ImulRRmI(OperandSize, i32),
     ShiftRmR(OperandSize, ShiftOp),
     ShiftRmI(OperandSize, ShiftOp, u8),
     Div(OperandSize, DivOp),

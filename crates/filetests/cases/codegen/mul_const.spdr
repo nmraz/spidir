@@ -1,0 +1,103 @@
+# run: codegen
+
+func @mul_pos64:i64(i64) {
+    # check: function `mul_pos64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 6b c7 05                     imul rax, rdi, 5
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 5
+    %val:i64 = imul %a, %b
+    return %c, %val
+}
+
+func @mul_neg64:i64(i64) {
+    # check: function `mul_neg64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 6b c7 fb                     imul rax, rdi, -5
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744073709551611
+    %val:i64 = imul %a, %b
+    return %c, %val
+}
+
+func @mul_pos_large64:i64(i64) {
+    # check: function `mul_pos_large64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: b9 ff ff ff ff                  mov ecx, 0xffffffff
+    # nextln: 00000c: 48 0f af c1                     imul rax, rcx
+    # nextln: 000010: 5d                              pop rbp
+    # nextln: 000011: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 4294967295
+    %val:i64 = imul %a, %b
+    return %c, %val
+}
+
+func @mul_neg_large64:i64(i64) {
+    # check: function `mul_neg_large64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 b9 01 00 00 00 ff ff ff ff   movabs rcx, 0xffffffff00000001
+    # nextln: 000011: 48 0f af c1                     imul rax, rcx
+    # nextln: 000015: 5d                              pop rbp
+    # nextln: 000016: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744069414584321
+    %val:i64 = imul %a, %b
+    return %c, %val
+}
+
+func @mul_pos32:i32(i32) {
+    # check: function `mul_pos32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 6b c7 05                        imul eax, edi, 5
+    # nextln: 000007: 5d                              pop rbp
+    # nextln: 000008: c3                              ret
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 5
+    %val:i32 = imul %a, %b
+    return %c, %val
+}
+
+func @mul_neg32:i32(i32) {
+    # check: function `mul_neg32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 6b c7 fb                        imul eax, edi, -5
+    # nextln: 000007: 5d                              pop rbp
+    # nextln: 000008: c3                              ret
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 4294967291
+    %val:i32 = imul %a, %b
+    return %c, %val
+}
+
+func @mul_max32:i32(i32) {
+    # check: function `mul_max32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 69 c7 ff ff ff 7f               imul eax, edi, 0x7fffffff
+    # nextln: 00000a: 5d                              pop rbp
+    # nextln: 00000b: c3                              ret
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 2147483647
+    %val:i32 = imul %a, %b
+    return %c, %val
+}

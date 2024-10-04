@@ -1,6 +1,6 @@
 use core::fmt::{self, Write};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use fx_utils::FxHashMap;
 use hashbrown::hash_map::Entry;
 use ir::{
@@ -9,7 +9,7 @@ use ir::{
     valgraph::{DepValue, Node},
     write::{write_annotated_body, write_annotated_node, write_node_kind, AnnotateGraph},
 };
-use parser::unqoute_ident;
+use parser::{parse_module, unqoute_ident};
 use regex::{Captures, Regex};
 use std::{borrow::Cow, cmp, sync::OnceLock};
 
@@ -110,7 +110,26 @@ pub fn sanitize_raw_output(output: &str) -> String {
     output.replace('$', "$$")
 }
 
-pub fn generalize_value_names(module: &Module, output_str: &str) -> Result<String> {
+pub fn generalize_per_function_value_names(module: &Module, output_str: &str) -> Result<String> {
+    generalize_value_names(module, output_str, |line| {
+        parse_output_func_heading(line).map(|func| func.into())
+    })
+}
+
+pub fn generalize_module_value_names(module_str: &str) -> Result<String> {
+    let module = parse_module(module_str).context("output is not a valid module")?;
+    // HACK: The value names in the original output might not correlate with the numbers assigned
+    // after the module has been parsed. To make sure things align, just re-stringify the module
+    // here (we're removing all value names anyway).
+    let module_str = module.to_string();
+    generalize_value_names(&module, &module_str, parse_module_func_start)
+}
+
+pub fn generalize_value_names(
+    module: &Module,
+    output_str: &str,
+    find_new_func: impl Fn(&str) -> Option<Cow<'_, str>>,
+) -> Result<String> {
     let mut new_output = String::new();
     let mut cur_func = None;
 
@@ -120,7 +139,7 @@ pub fn generalize_value_names(module: &Module, output_str: &str) -> Result<Strin
     let val_regex = regex!(VAL_REGEX);
 
     for line in output_str.lines() {
-        if let Some(new_func) = parse_output_func_heading(line) {
+        if let Some(new_func) = find_new_func(line) {
             cur_func = module
                 .functions
                 .values()

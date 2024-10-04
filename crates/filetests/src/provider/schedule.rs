@@ -6,7 +6,7 @@ use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::module::Module;
 
-use crate::{regexes::VAL_REGEX, utils::generalize_value_names};
+use crate::{regexes::VAL_REGEX, utils::generalize_per_function_value_names};
 
 use super::{update_per_func_output, TestProvider, Updater};
 
@@ -40,7 +40,7 @@ impl TestProvider for ScheduleProvider {
     }
 
     fn update(&self, updater: &mut Updater<'_>, module: &Module, output_str: &str) -> Result<()> {
-        let output_str = generalize_value_names(module, output_str)?;
+        let output_str = generalize_per_function_value_names(module, output_str)?;
         update_per_func_output(updater, &output_str)
     }
 }

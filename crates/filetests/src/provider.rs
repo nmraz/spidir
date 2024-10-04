@@ -9,7 +9,9 @@ use ir::{module::Module, write::quote_ident};
 use isel_regalloc::IselRegallocProvider;
 use x64::create_x64_machine;
 
-use crate::utils::{parse_module_func_start, parse_output_func_heading};
+use crate::utils::{
+    generalize_module_value_names, parse_module_func_start, parse_output_func_heading,
+};
 
 use self::{
     cfg::CfgProvider,
@@ -108,26 +110,42 @@ fn update_per_func_output(updater: &mut Updater<'_>, output_str: &str) -> Result
     Ok(())
 }
 
-fn update_transformed_module_output(updater: &mut Updater<'_>, output_str: &str) -> Result<()> {
+fn update_transformed_module_output(updater: &mut Updater<'_>, module_str: &str) -> Result<()> {
+    let output_str = generalize_module_value_names(module_str)?;
+
     let mut in_func = false;
+    let mut first_node = false;
 
     for output_line in output_str.lines() {
         if output_line.is_empty() {
             continue;
         }
+
         if let Some(new_func) = parse_module_func_start(output_line) {
-            if in_func {
-                updater.blank_line();
-            }
             updater.advance_to_function(&new_func)?;
-            updater.directive(4, "check", &format!(" {output_line}"));
+            updater.directive(4, "check", &format!("     {output_line}"));
             in_func = true;
+            first_node = true;
+            continue;
+        } else if !in_func {
+            continue;
+        }
+
+        if output_line.trim() == "}" {
+            updater.directive(4, "nextln", &format!("    {output_line}"));
+            updater.blank_line();
+        } else if first_node {
+            // Enforce ordering for the first node, since it is treated as the entry.
+            updater.directive(4, "nextln", &format!("    {output_line}"));
+            first_node = false;
         } else {
-            updater.directive(4, "nextln", output_line);
+            // We don't actually care about the order in which nodes are printed, just that they are
+            // all attached correctly. This is also important because the node order here might be
+            // different from the original `module_str` due to `generalize_module_value_names`
+            // re-parsing it.
+            updater.directive(4, "unordered", &format!(" {output_line}"));
         }
     }
-
-    updater.blank_line();
 
     Ok(())
 }

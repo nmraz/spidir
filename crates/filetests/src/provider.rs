@@ -1,6 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::{anyhow, bail, ensure, Result};
+use canonicalize::CanonicalizeProvider;
 use codegen::CodegenProvider;
 use filecheck::Value;
 use fx_utils::FxHashMap;
@@ -8,7 +9,7 @@ use ir::{module::Module, write::quote_ident};
 use isel_regalloc::IselRegallocProvider;
 use x64::create_x64_machine;
 
-use crate::utils::parse_output_func_heading;
+use crate::utils::{parse_module_func_start, parse_output_func_heading};
 
 use self::{
     cfg::CfgProvider,
@@ -20,6 +21,7 @@ use self::{
     verify::{VerifyErrProvider, VerifyOkProvider},
 };
 
+mod canonicalize;
 mod cfg;
 mod codegen;
 mod domtree;
@@ -53,6 +55,7 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> 
         "graphviz" => Ok(Box::new(GraphvizTestProvider::new(&params)?)),
         "isel" => Ok(Box::new(IselProvider::new(create_x64_machine(&params)?))),
         "isel-regalloc" => Ok(Box::new(IselRegallocProvider::from_params(&params)?)),
+        "canonicalize" => Ok(Box::new(CanonicalizeProvider)),
         "codegen" => Ok(Box::new(CodegenProvider::new(create_x64_machine(&params)?))),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),
         "schedule" => Ok(Box::new(ScheduleProvider)),
@@ -94,6 +97,30 @@ fn update_per_func_output(updater: &mut Updater<'_>, output_str: &str) -> Result
             }
             updater.advance_to_function(new_func)?;
             updater.directive(4, "check", output_line);
+            in_func = true;
+        } else {
+            updater.directive(4, "nextln", output_line);
+        }
+    }
+
+    updater.blank_line();
+
+    Ok(())
+}
+
+fn update_transformed_module_output(updater: &mut Updater<'_>, output_str: &str) -> Result<()> {
+    let mut in_func = false;
+
+    for output_line in output_str.lines() {
+        if output_line.is_empty() {
+            continue;
+        }
+        if let Some(new_func) = parse_module_func_start(output_line) {
+            if in_func {
+                updater.blank_line();
+            }
+            updater.advance_to_function(&new_func)?;
+            updater.directive(4, "check", &format!(" {output_line}"));
             in_func = true;
         } else {
             updater.directive(4, "nextln", output_line);

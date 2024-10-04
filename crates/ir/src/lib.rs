@@ -3,6 +3,7 @@
 extern crate alloc;
 
 pub mod builder;
+pub mod canonicalize;
 pub mod cons_builder;
 pub mod domtree;
 pub mod function;

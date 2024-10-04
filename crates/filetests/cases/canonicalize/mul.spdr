@@ -1,0 +1,237 @@
+# run: canonicalize
+
+func @mul32:i32(i32, i32) {
+    # check:  func @mul32:i32(i32, i32) {
+    # nextln:     %0:ctrl, %1:i32, %2:i32 = entry
+    # nextln:     %3:i32 = imul %1, %2
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @mul_fold32:i32() {
+    # check:  func @mul_fold32:i32() {
+    # nextln:     %0:ctrl = entry
+    # nextln:     %4:i32 = iconst 35
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @mul_fold_wrap32:i32() {
+    # check:  func @mul_fold_wrap32:i32() {
+    # nextln:     %0:ctrl = entry
+    # nextln:     %4:i32 = iconst 4294967261
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 4294967289
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @mulo32:i32(i32) {
+    # check:  func @mulo32:i32(i32) {
+    # nextln:     %0:ctrl, %1:i32 = entry
+    # nextln:     return %0, %1
+    # nextln: }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 1
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @omul32:i32(i32) {
+    # check:  func @omul32:i32(i32) {
+    # nextln:     %0:ctrl, %1:i32 = entry
+    # nextln:     return %0, %1
+    # nextln: }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 1
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @mulz32:i32(i32) {
+    # check:  func @mulz32:i32(i32) {
+    # nextln:     %0:ctrl, %1:i32 = entry
+    # nextln:     %4:i32 = iconst 0
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 0
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @zmul32:i32(i32) {
+    # check:  func @zmul32:i32(i32) {
+    # nextln:     %0:ctrl, %1:i32 = entry
+    # nextln:     %4:i32 = iconst 0
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 0
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @mulc32:i32(i32) {
+    # check:  func @mulc32:i32(i32) {
+    # nextln:     %0:ctrl, %1:i32 = entry
+    # nextln:     %2:i32 = iconst 5
+    # nextln:     %3:i32 = imul %1, %2
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 5
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @cmul32:i32(i32) {
+    # check:  func @cmul32:i32(i32) {
+    # nextln:     %0:ctrl, %1:i32 = entry
+    # nextln:     %2:i32 = iconst 5
+    # nextln:     %4:i32 = imul %1, %2
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @mul64:i64(i64, i64) {
+    # check:  func @mul64:i64(i64, i64) {
+    # nextln:     %0:ctrl, %1:i64, %2:i64 = entry
+    # nextln:     %3:i64 = imul %1, %2
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = imul %a, %b
+    return %c, %r
+}
+
+func @mul_fold64:i64() {
+    # check:  func @mul_fold64:i64() {
+    # nextln:     %0:ctrl = entry
+    # nextln:     %4:i64 = iconst 35
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = imul %a, %b
+    return %c, %r
+}
+
+func @mul_fold_wrap64:i64() {
+    # check:  func @mul_fold_wrap64:i64() {
+    # nextln:     %0:ctrl = entry
+    # nextln:     %4:i64 = iconst 18446744073709551581
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 18446744073709551609
+    %r:i64 = imul %a, %b
+    return %c, %r
+}
+
+func @mulo64:i64(i64) {
+    # check:  func @mulo64:i64(i64) {
+    # nextln:     %0:ctrl, %1:i64 = entry
+    # nextln:     return %0, %1
+    # nextln: }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 1
+    %r:i64 = imul %a, %b
+    return %c, %r
+}
+
+func @omul64:i64(i64) {
+    # check:  func @omul64:i64(i64) {
+    # nextln:     %0:ctrl, %1:i64 = entry
+    # nextln:     return %0, %1
+    # nextln: }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 1
+    %r:i64 = imul %a, %b
+    return %c, %r
+}
+
+func @mulz64:i64(i64) {
+    # check:  func @mulz64:i64(i64) {
+    # nextln:     %0:ctrl, %1:i64 = entry
+    # nextln:     %4:i64 = iconst 0
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %r:i64 = imul %a, %b
+    return %c, %r
+}
+
+func @zmul64:i64(i64) {
+    # check:  func @zmul64:i64(i64) {
+    # nextln:     %0:ctrl, %1:i64 = entry
+    # nextln:     %4:i64 = iconst 0
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 0
+    %r:i64 = imul %a, %b
+    return %c, %r
+}
+
+func @mulc64:i64(i64) {
+    # check:  func @mulc64:i64(i64) {
+    # nextln:     %0:ctrl, %1:i64 = entry
+    # nextln:     %2:i64 = iconst 5
+    # nextln:     %3:i64 = imul %1, %2
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 5
+    %r:i64 = imul %a, %b
+    return %c, %r
+}
+
+func @cmul64:i64(i64) {
+    # check:  func @cmul64:i64(i64) {
+    # nextln:     %0:ctrl, %1:i64 = entry
+    # nextln:     %2:i64 = iconst 5
+    # nextln:     %4:i64 = imul %1, %2
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = imul %a, %b
+    return %c, %r
+}

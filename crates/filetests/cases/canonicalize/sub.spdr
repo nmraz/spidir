@@ -1,0 +1,189 @@
+# run: canonicalize
+
+func @sub32:i32(i32, i32) {
+    # check:  func @sub32:i32(i32, i32) {
+    # nextln:     %0:ctrl, %1:i32, %2:i32 = entry
+    # nextln:     %3:i32 = isub %1, %2
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = isub %a, %b
+    return %c, %r
+}
+
+func @sub_fold32:i32() {
+    # check:  func @sub_fold32:i32() {
+    # nextln:     %0:ctrl = entry
+    # nextln:     %4:i32 = iconst 4294967294
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = isub %a, %b
+    return %c, %r
+}
+
+func @sub_fold_wrap32:i32() {
+    # check:  func @sub_fold_wrap32:i32() {
+    # nextln:     %0:ctrl = entry
+    # nextln:     %4:i32 = iconst 12
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 4294967289
+    %r:i32 = isub %a, %b
+    return %c, %r
+}
+
+func @subz32:i32(i32) {
+    # check:  func @subz32:i32(i32) {
+    # nextln:     %0:ctrl, %1:i32 = entry
+    # nextln:     return %0, %1
+    # nextln: }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 0
+    %r:i32 = isub %a, %b
+    return %c, %r
+}
+
+func @zsub32:i32(i32) {
+    # check:  func @zsub32:i32(i32) {
+    # nextln:     %0:ctrl, %1:i32 = entry
+    # nextln:     %2:i32 = iconst 0
+    # nextln:     %3:i32 = isub %2, %1
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 0
+    %r:i32 = isub %a, %b
+    return %c, %r
+}
+
+func @subc32:i32(i32) {
+    # check:  func @subc32:i32(i32) {
+    # nextln:     %0:ctrl, %1:i32 = entry
+    # nextln:     %2:i32 = iconst 5
+    # nextln:     %3:i32 = isub %1, %2
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 5
+    %r:i32 = isub %a, %b
+    return %c, %r
+}
+
+func @csub32:i32(i32) {
+    # check:  func @csub32:i32(i32) {
+    # nextln:     %0:ctrl, %1:i32 = entry
+    # nextln:     %2:i32 = iconst 5
+    # nextln:     %3:i32 = isub %2, %1
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = isub %a, %b
+    return %c, %r
+}
+
+func @sub64:i64(i64, i64) {
+    # check:  func @sub64:i64(i64, i64) {
+    # nextln:     %0:ctrl, %1:i64, %2:i64 = entry
+    # nextln:     %3:i64 = isub %1, %2
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = isub %a, %b
+    return %c, %r
+}
+
+func @sub_fold64:i64() {
+    # check:  func @sub_fold64:i64() {
+    # nextln:     %0:ctrl = entry
+    # nextln:     %4:i64 = iconst 18446744073709551614
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = isub %a, %b
+    return %c, %r
+}
+
+func @sub_fold_wrap64:i64() {
+    # check:  func @sub_fold_wrap64:i64() {
+    # nextln:     %0:ctrl = entry
+    # nextln:     %4:i64 = iconst 12
+    # nextln:     return %0, %4
+    # nextln: }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 18446744073709551609
+    %r:i64 = isub %a, %b
+    return %c, %r
+}
+
+func @subz64:i64(i64) {
+    # check:  func @subz64:i64(i64) {
+    # nextln:     %0:ctrl, %1:i64 = entry
+    # nextln:     return %0, %1
+    # nextln: }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %r:i64 = isub %a, %b
+    return %c, %r
+}
+
+func @zsub64:i64(i64) {
+    # check:  func @zsub64:i64(i64) {
+    # nextln:     %0:ctrl, %1:i64 = entry
+    # nextln:     %2:i64 = iconst 0
+    # nextln:     %3:i64 = isub %2, %1
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 0
+    %r:i64 = isub %a, %b
+    return %c, %r
+}
+
+func @subc64:i64(i64) {
+    # check:  func @subc64:i64(i64) {
+    # nextln:     %0:ctrl, %1:i64 = entry
+    # nextln:     %2:i64 = iconst 5
+    # nextln:     %3:i64 = isub %1, %2
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 5
+    %r:i64 = isub %a, %b
+    return %c, %r
+}
+
+func @csub64:i64(i64) {
+    # check:  func @csub64:i64(i64) {
+    # nextln:     %0:ctrl, %1:i64 = entry
+    # nextln:     %2:i64 = iconst 5
+    # nextln:     %3:i64 = isub %2, %1
+    # nextln:     return %0, %3
+    # nextln: }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = isub %a, %b
+    return %c, %r
+}

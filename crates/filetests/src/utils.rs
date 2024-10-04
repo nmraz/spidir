@@ -9,8 +9,9 @@ use ir::{
     valgraph::{DepValue, Node},
     write::{write_annotated_body, write_annotated_node, write_node_kind, AnnotateGraph},
 };
+use parser::unqoute_ident;
 use regex::{Captures, Regex};
-use std::{cmp, sync::OnceLock};
+use std::{borrow::Cow, cmp, sync::OnceLock};
 
 use crate::regexes::VAL_REGEX;
 
@@ -70,6 +71,20 @@ pub fn parse_output_func_heading(output_line: &str) -> Option<&str> {
     func_regex
         .captures(output_line)
         .map(|caps| caps.get(1).unwrap().as_str())
+}
+
+pub fn parse_module_func_start(output_line: &str) -> Option<Cow<'_, str>> {
+    let func_regex = regex!(r"^func @(.+)\(");
+    let ret_ty_regex = regex!(r":[a-z0-9]+$");
+    func_regex.captures(output_line).map(|caps| {
+        let raw_name = caps.get(1).unwrap().as_str();
+        let name = if let Some(ret_ty) = ret_ty_regex.find(raw_name) {
+            &raw_name[..ret_ty.start()]
+        } else {
+            raw_name
+        };
+        unqoute_ident(name)
+    })
 }
 
 pub fn find_run_line<'a>(lines: impl Iterator<Item = &'a str>) -> Option<(usize, &'a str)> {

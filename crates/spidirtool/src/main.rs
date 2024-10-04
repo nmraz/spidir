@@ -137,6 +137,11 @@ enum ToolCommand {
         /// The function to extract
         function: String,
     },
+    /// Optimize an IR module and dump it
+    Opt {
+        /// The input IR file
+        input_file: PathBuf,
+    },
     /// Schedule an IR module in preparation for codegen
     Schedule {
         /// The input IR file
@@ -248,6 +253,11 @@ fn main() -> Result<()> {
             let extracted_module = extract_function(&module, &function)?;
             write!(io::stdout(), "{extracted_module}")?;
         }
+        ToolCommand::Opt { input_file } => {
+            let mut module = read_and_verify_module(&input_file)?;
+            optimize_module(&mut module);
+            write!(io::stdout(), "{module}")?;
+        }
         ToolCommand::Schedule { input_file } => {
             let module = read_and_verify_module(&input_file)?;
             io::stdout().write_all(get_module_schedule_str(&module).as_bytes())?;
@@ -354,6 +364,13 @@ fn output_dot_file(
         .context("failed to write dot file")?;
 
     Ok(())
+}
+
+fn optimize_module(module: &mut Module) {
+    // For now: just run the canonicalization pass on everything.
+    for func in module.functions.values_mut() {
+        ir::canonicalize::canonicalize(&mut func.body);
+    }
 }
 
 fn get_module_schedule_str(module: &Module) -> String {

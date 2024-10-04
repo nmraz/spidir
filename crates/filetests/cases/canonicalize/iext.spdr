@@ -1,0 +1,26 @@
+# run: canonicalize
+
+func @iext:i64(i32) {
+    # check:      func @iext:i64(i32) {
+    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # unordered:      $(iext0=$val):i64 = iext $entry1
+    # unordered:      return $entry0, $iext0
+    # nextln:     }
+
+    %c:ctrl, %a:i32 = entry
+    %r:i64 = iext %a
+    return %c, %r
+}
+
+func @iext_const:i64() {
+    # check:      func @iext_const:i64() {
+    # nextln:         $(entry0=$val):ctrl = entry
+    # unordered:      $(iconst0=$val):i64 = iconst 7
+    # unordered:      return $entry0, $iconst0
+    # nextln:     }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 7
+    %r:i64 = iext %a
+    return %c, %r
+}

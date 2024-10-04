@@ -36,40 +36,39 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # unordered:      $(iconst2=$val):i64 = iconst 16
     # unordered:      $(iconst3=$val):i64 = iconst 24
     # unordered:      $(iconst4=$val):i64 = iconst 8
-    # unordered:      $(iconst5=$val):i32 = iconst 1
-    # unordered:      $(iext1=$val):i64 = iext $iconst5
-    # unordered:      $(sfill1=$val):i64 = sfill 32 $iext1
+    # unordered:      $(iconst5=$val):i64 = iconst 1
+    # unordered:      $(sfill1=$val):i64 = sfill 32 $iconst5
     # unordered:      $(imul1=$val):i64 = imul $sfill1, $iconst1
     # unordered:      $(iadd1=$val):i64 = iadd $imul1, $iconst0
     # unordered:      $(imul2=$val):i64 = imul $sfill1, $iconst4
     # unordered:      $(iadd2=$val):i64 = iadd $imul2, $iconst3
     # unordered:      $(stackslot0=$val):ptr = stackslot 8:8
     # unordered:      $(iconst6=$val):i32 = iconst 3
-    # unordered:      $(iconst7=$val):i32 = iconst 0
-    # unordered:      $(iext2=$val):i64 = iext $iconst7
-    # unordered:      $(sfill2=$val):i64 = sfill 32 $iext2
+    # unordered:      $(iconst7=$val):i64 = iconst 0
+    # unordered:      $(sfill2=$val):i64 = sfill 32 $iconst7
     # unordered:      $(imul3=$val):i64 = imul $sfill2, $iconst1
     # unordered:      $(iadd3=$val):i64 = iadd $imul3, $iconst0
     # unordered:      $(imul4=$val):i64 = imul $sfill2, $iconst4
     # unordered:      $(iadd4=$val):i64 = iadd $imul4, $iconst3
     # unordered:      $(iconst8=$val):i32 = iconst 2
-    # unordered:      $(iext3=$val):i64 = iext $iconst8
-    # unordered:      $(sfill3=$val):i64 = sfill 32 $iext3
+    # unordered:      $(iconst9=$val):i64 = iconst 2
+    # unordered:      $(sfill3=$val):i64 = sfill 32 $iconst9
     # unordered:      $(imul5=$val):i64 = imul $sfill3, $iconst4
     # unordered:      $(iadd5=$val):i64 = iadd $imul5, $iconst3
     # unordered:      $(imul6=$val):i64 = imul $sfill3, $iconst1
     # unordered:      $(iadd6=$val):i64 = iadd $imul6, $iconst0
-    # unordered:      $(iconst9=$val):i32 = iconst 170
-    # unordered:      $(iconst10=$val):i32 = iconst 171
-    # unordered:      $(iconst11=$val):ptr = iconst 0
-    # unordered:      $(store0=$val):ctrl = store.8 $region0, $iconst11, $stackslot0
+    # unordered:      $(iconst10=$val):i32 = iconst 170
+    # unordered:      $(iconst11=$val):i32 = iconst 1
+    # unordered:      $(iconst12=$val):i32 = iconst 171
+    # unordered:      $(iconst13=$val):ptr = iconst 0
+    # unordered:      $(store0=$val):ctrl = store.8 $region0, $iconst13, $stackslot0
     # unordered:      $(region2=$val):ctrl, $(region3=$val):phisel = region $store0
-    # unordered:      $(call0=$val):ctrl, $(call1=$val):ptr = call @gc_new $region2, $iconst10, $iadd5
+    # unordered:      $(call0=$val):ctrl, $(call1=$val):ptr = call @gc_new $region2, $iconst12, $iadd5
     # unordered:      $(ptroff0=$val):ptr = ptroff $call1, $iconst2
     # unordered:      $(store1=$val):ctrl = store.4 $call0, $sfill3, $ptroff0
     # unordered:      $(store2=$val):ctrl = store.8 $store1, $call1, $stackslot0
     # unordered:      $(load0=$val):ctrl, $(load1=$val):ptr = load.8 $store2, $stackslot0
-    # unordered:      $(call2=$val):ctrl, $(call3=$val):ptr = call @gc_new $load0, $iconst9, $iadd6
+    # unordered:      $(call2=$val):ctrl, $(call3=$val):ptr = call @gc_new $load0, $iconst10, $iadd6
     # unordered:      $(ptroff1=$val):ptr = ptroff $call3, $iconst2
     # unordered:      $(store3=$val):ctrl = store.4 $call2, $sfill3, $ptroff1
     # unordered:      $(load2=$val):ctrl, $(load3=$val):i64 = load.4 $store3, $ptroff1
@@ -77,7 +76,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # unordered:      $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $load2, $icmp0
     # unordered:      $(region4=$val):ctrl, $(region5=$val):phisel = region $brcond0
     # unordered:      $(ptroff2=$val):ptr = ptroff $call3, $iadd1
-    # unordered:      $(store4=$val):ctrl = store.4 $region4, $iconst5, $ptroff2
+    # unordered:      $(store4=$val):ctrl = store.4 $region4, $iconst11, $ptroff2
     # unordered:      $(ptroff3=$val):ptr = ptroff $load1, $iconst2
     # unordered:      $(load4=$val):ctrl, $(load5=$val):i64 = load.4 $store4, $ptroff3
     # unordered:      $(icmp1=$val):i64 = icmp slt $sfill2, $load5
@@ -86,7 +85,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # unordered:      $(ptroff4=$val):ptr = ptroff $load1, $iadd4
     # unordered:      $(store5=$val):ctrl = store.8 $region6, $call3, $ptroff4
     # unordered:      $(load6=$val):ctrl, $(load7=$val):ptr = load.8 $store5, $stackslot0
-    # unordered:      $(call4=$val):ctrl, $(call5=$val):ptr = call @gc_new $load6, $iconst9, $iadd6
+    # unordered:      $(call4=$val):ctrl, $(call5=$val):ptr = call @gc_new $load6, $iconst10, $iadd6
     # unordered:      $(ptroff5=$val):ptr = ptroff $call5, $iconst2
     # unordered:      $(store6=$val):ctrl = store.4 $call4, $sfill3, $ptroff5
     # unordered:      $(load8=$val):ctrl, $(load9=$val):i64 = load.4 $store6, $ptroff5

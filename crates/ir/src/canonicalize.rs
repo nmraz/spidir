@@ -90,6 +90,22 @@ fn canonicalize_node(body: &mut FunctionBody, worklist: &mut Worklist, node: Nod
                 _ => {}
             }
         }
+        NodeKind::Iext => {
+            let [input] = node_inputs_exact(graph, node);
+            let output = graph.node_outputs(node)[0];
+            if let Some(value) = match_iconst(graph, input) {
+                let new_output = SimpleBuilder(body).build_iconst(Type::I64, value);
+                replace_value(&mut body.graph, worklist, output, new_output);
+            }
+        }
+        NodeKind::Itrunc => {
+            let [input] = node_inputs_exact(graph, node);
+            let output = graph.node_outputs(node)[0];
+            if let Some(value) = match_iconst(graph, input) {
+                let new_output = SimpleBuilder(body).build_iconst(Type::I32, value as u32 as u64);
+                replace_value(&mut body.graph, worklist, output, new_output);
+            }
+        }
         _ => {}
     }
 }

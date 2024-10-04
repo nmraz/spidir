@@ -53,6 +53,15 @@ struct PendingFunction<'a> {
     graph_pair: Pair<'a, Rule>,
 }
 
+pub fn unqoute_ident(ident: &str) -> Cow<'_, str> {
+    if ident.starts_with('"') {
+        let quoted = &ident[1..ident.len() - 1];
+        quoted.replace("\\\"", "\"").into()
+    } else {
+        ident.into()
+    }
+}
+
 pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
     let parsed = IrParser::parse(Rule::module, input)?
         .next()
@@ -414,13 +423,7 @@ fn extract_signature(mut pairs: Pairs<'_, Rule>) -> Signature {
 }
 
 fn name_from_span<'a>(span: &Span<'a>) -> Cow<'a, str> {
-    let ident = &span.as_str()[1..];
-    if ident.starts_with('"') {
-        let quoted = &ident[1..ident.len() - 1];
-        quoted.replace("\\\"", "\"").into()
-    } else {
-        ident.into()
-    }
+    unqoute_ident(&span.as_str()[1..])
 }
 
 fn extract_value_kind(kind_pair: Pair<'_, Rule>) -> DepValueKind {

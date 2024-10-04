@@ -169,6 +169,12 @@ enum ToolCommand {
         #[clap(flatten)]
         machine_opts: MachineOptions,
     },
+    /// Optimize and generate code for an IR module, then dump the disassembly
+    Compile {
+        input_file: PathBuf,
+        #[clap(flatten)]
+        machine_opts: MachineOptions,
+    },
     /// Generate native code for an IR module and execute it
     CodegenExec {
         /// The input IR file
@@ -278,6 +284,14 @@ fn main() -> Result<()> {
             machine_opts,
         } => {
             let module = read_and_verify_module(&input_file)?;
+            io::stdout().write_all(get_module_code_str(&module, &machine_opts)?.as_bytes())?;
+        }
+        ToolCommand::Compile {
+            input_file,
+            machine_opts,
+        } => {
+            let mut module = read_and_verify_module(&input_file)?;
+            optimize_module(&mut module);
             io::stdout().write_all(get_module_code_str(&module, &machine_opts)?.as_bytes())?;
         }
         ToolCommand::CodegenExec {

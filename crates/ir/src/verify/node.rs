@@ -273,11 +273,7 @@ fn verify_sfill(graph: &ValGraph, node: Node, width: u8, errors: &mut Vec<Functi
     let result_kind = graph.value_kind(result);
     let _ = verify_input_kind(graph, node, 0, &[result_kind], errors);
 
-    let bit_width = match result_kind.as_value().unwrap() {
-        Type::I32 => 32,
-        Type::I64 => 64,
-        _ => unreachable!("type verified"),
-    };
+    let bit_width = result_kind.as_value().unwrap().bit_width().unwrap() as u8;
 
     if !(1..bit_width).contains(&width) {
         errors.push(FunctionVerifierError::BadFillWidth(node));

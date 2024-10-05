@@ -8,7 +8,7 @@ use ir::module::Module;
 use itertools::Itertools;
 
 use crate::{
-    provider::{update_per_func_output, TestProvider, Updater},
+    provider::{update_per_func_output, SimpleTestProvider, Updater},
     utils::sanitize_raw_output,
 };
 
@@ -39,18 +39,18 @@ impl IselRegallocProvider {
     }
 }
 
-impl TestProvider for IselRegallocProvider {
-    fn output_for(&self, module: &Module) -> Result<String> {
+impl SimpleTestProvider for IselRegallocProvider {
+    fn output_for(&self, module: Module) -> Result<String> {
         let mut output = String::new();
 
         for func in module.functions.values() {
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let (cfg_ctx, lir) = lower_func(module, func, &self.machine).map_err(|e| {
+            let (cfg_ctx, lir) = lower_func(&module, func, &self.machine).map_err(|e| {
                 anyhow!(
                     "isel failed for `{}`: {}",
                     func.metadata.name,
-                    e.display(module, &func.body)
+                    e.display(&module, &func.body)
                 )
             })?;
             let assignment = regalloc::run(&lir, &cfg_ctx, &self.machine)
@@ -98,7 +98,7 @@ impl TestProvider for IselRegallocProvider {
         Ok(output)
     }
 
-    fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) -> Result<()> {
+    fn update(&self, updater: &mut Updater<'_>, output_str: &str) -> Result<()> {
         update_per_func_output(updater, &sanitize_raw_output(output_str))
     }
 }

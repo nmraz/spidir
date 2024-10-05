@@ -1,7 +1,7 @@
 use anyhow::{bail, ensure, Result};
 use isel_regalloc::IselRegallocProvider;
 
-use crate::provider::TestProvider;
+use crate::provider::DynTestProvider;
 
 use self::{
     canonicalize::CanonicalizeProvider,
@@ -28,7 +28,7 @@ mod schedule;
 mod verify;
 mod x64;
 
-pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> {
+pub fn select_test_provider(run_command: &str) -> Result<Box<dyn DynTestProvider>> {
     let (command, params) = parse_run_command(run_command)?;
 
     match command {

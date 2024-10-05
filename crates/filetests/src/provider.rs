@@ -1,16 +1,34 @@
-use std::fmt::Write;
+use std::{fmt::Write, iter};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Context, Result};
+use filecheck::{Checker, CheckerBuilder, Value, VariableMap};
+use itertools::Itertools;
 
-use filecheck::Value;
 use fx_utils::FxHashMap;
-use ir::{module::Module, write::quote_ident};
+use ir::{module::Module, verify::verify_module, write::quote_ident};
+use parser::parse_module;
 
 use crate::utils::{
-    generalize_module_value_names, parse_module_func_start, parse_output_func_heading,
+    find_comment_start, generalize_module_value_names, parse_module_func_start,
+    parse_output_func_heading, parse_run_line,
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UpdateMode {
+    Never,
+    IfFailed,
+    Always,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TestOutcome<U> {
+    Ok,
+    Update(U),
+}
+
 pub trait TestProvider {
+    type AuxOutput;
+
     fn expects_valid_module(&self) -> bool {
         true
     }
@@ -19,8 +37,78 @@ pub trait TestProvider {
         FxHashMap::default()
     }
 
-    fn output_for(&self, module: &Module) -> Result<String>;
-    fn update(&self, updater: &mut Updater<'_>, module: &Module, output_str: &str) -> Result<()>;
+    fn output_for(&self, module: Module) -> Result<(String, Self::AuxOutput)>;
+    fn update(
+        &self,
+        updater: &mut Updater<'_>,
+        output_str: &str,
+        aux: Self::AuxOutput,
+    ) -> Result<()>;
+}
+
+pub trait SimpleTestProvider {
+    fn expects_valid_module(&self) -> bool {
+        true
+    }
+
+    fn env(&self) -> FxHashMap<String, Value<'_>> {
+        FxHashMap::default()
+    }
+
+    fn output_for(&self, module: Module) -> Result<String>;
+    fn update(&self, updater: &mut Updater<'_>, output_str: &str) -> Result<()>;
+}
+
+impl<P: SimpleTestProvider> TestProvider for P {
+    type AuxOutput = ();
+
+    fn expects_valid_module(&self) -> bool {
+        SimpleTestProvider::expects_valid_module(self)
+    }
+
+    fn env(&self) -> FxHashMap<String, Value<'_>> {
+        SimpleTestProvider::env(self)
+    }
+
+    fn output_for(&self, module: Module) -> Result<(String, ())> {
+        SimpleTestProvider::output_for(self, module).map(|output| (output, ()))
+    }
+
+    fn update(&self, updater: &mut Updater<'_>, output_str: &str, _aux: ()) -> Result<()> {
+        SimpleTestProvider::update(self, updater, output_str)
+    }
+}
+
+pub trait DynTestProvider {
+    fn run(&self, input: &str, update_mode: UpdateMode) -> Result<TestOutcome<String>>;
+}
+
+impl<P: TestProvider> DynTestProvider for P {
+    fn run(&self, input: &str, update_mode: UpdateMode) -> Result<TestOutcome<String>> {
+        let module = parse_module(input).context("failed to parse module")?;
+        if self.expects_valid_module() {
+            verify_parsed_module(&module)?;
+        }
+        let (output, aux) = self.output_for(module)?;
+
+        match update_mode {
+            UpdateMode::Never => {
+                run_test_checks(self.env(), input, &output, true)?;
+                Ok(TestOutcome::Ok)
+            }
+            UpdateMode::IfFailed => {
+                if run_test_checks(self.env(), input, &output, false).is_err() {
+                    return Ok(TestOutcome::Update(compute_update(
+                        self, input, &output, aux,
+                    )?));
+                }
+                Ok(TestOutcome::Ok)
+            }
+            UpdateMode::Always => Ok(TestOutcome::Update(compute_update(
+                self, input, &output, aux,
+            )?)),
+        }
+    }
 }
 
 pub struct Updater<'a> {
@@ -156,3 +244,129 @@ pub fn update_transformed_module_output(updater: &mut Updater<'_>, module_str: &
 
     Ok(())
 }
+
+fn verify_parsed_module(module: &Module) -> Result<()> {
+    verify_module(module).map_err(|errs| {
+        let message = errs
+            .iter()
+            .map(|err| err.display_with_context(module))
+            .format("\n");
+        anyhow!("{}", message)
+    })
+}
+
+struct HashMapEnv<'a>(FxHashMap<String, Value<'a>>);
+impl<'a> VariableMap for HashMapEnv<'a> {
+    fn lookup(&self, varname: &str) -> Option<Value> {
+        self.0.get(varname).cloned()
+    }
+}
+
+fn run_test_checks(
+    env: FxHashMap<String, Value<'_>>,
+    input: &str,
+    output: &str,
+    explain: bool,
+) -> Result<()> {
+    let checker = build_checker(input)?;
+    let env = HashMapEnv(env);
+
+    let ok = checker.check(output, &env).context("filecheck failed")?;
+
+    if !ok {
+        if explain {
+            let (_, explanation) = checker
+                .explain(output, &env)
+                .context("filecheck explain failed")?;
+            bail!("filecheck failed:\n{explanation}");
+        } else {
+            bail!("filecheck failed");
+        }
+    }
+
+    Ok(())
+}
+
+fn compute_update<P: TestProvider>(
+    provider: &P,
+    input: &str,
+    output: &str,
+    aux: P::AuxOutput,
+) -> Result<String> {
+    let lines = get_non_directive_lines(input);
+    let mut updater = Updater::new(&lines);
+    updater
+        .advance_to_after(|line| parse_run_line(line).is_some())
+        .context("failed to find run line")?;
+    provider
+        .update(&mut updater, output, aux)
+        .context("failed to update file directives")?;
+    Ok(updater.output())
+}
+
+fn build_checker(input: &str) -> Result<Checker> {
+    let mut builder = CheckerBuilder::new();
+    for (i, line) in input.lines().enumerate() {
+        if let Some(comment_start) = find_comment_start(line) {
+            let comment = line[comment_start + 1..].trim();
+            builder
+                .directive(comment)
+                .with_context(|| format!("invalid filecheck directive on line {}", i + 1))?;
+        }
+    }
+    let checker = builder.finish();
+    if checker.is_empty() {
+        bail!("no filecheck directives found in input file");
+    }
+    Ok(checker)
+}
+
+fn get_non_directive_lines(input: &str) -> Vec<&str> {
+    let mut other_lines = Vec::new();
+    let mut builder = CheckerBuilder::new();
+    let mut empty_line_run = 0;
+    let mut post_directive_only = false;
+
+    for line in input.lines() {
+        if line.trim().is_empty() {
+            if !post_directive_only {
+                // Record any empty lines that don't follow a directive-only line so we can add them
+                // back in later.
+                empty_line_run += 1;
+            }
+            continue;
+        }
+
+        if let Some(comment_start) = find_comment_start(line) {
+            let comment = line[comment_start + 1..].trim();
+
+            let was_directive = builder.directive(comment).unwrap_or(true);
+
+            let pre_line = if was_directive {
+                line[..comment_start].trim()
+            } else {
+                line
+            };
+
+            if pre_line.is_empty() {
+                // This was a directive-only line, so delete any empty lines that came before it.
+                post_directive_only = was_directive;
+            } else {
+                other_lines.extend(iter::repeat("").take(empty_line_run));
+                other_lines.push(pre_line);
+                post_directive_only = false;
+            }
+        } else {
+            other_lines.extend(iter::repeat("").take(empty_line_run));
+            other_lines.push(line);
+            post_directive_only = false;
+        }
+
+        empty_line_run = 0;
+    }
+
+    other_lines
+}
+
+#[cfg(test)]
+mod tests;

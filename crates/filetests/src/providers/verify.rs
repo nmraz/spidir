@@ -13,28 +13,28 @@ use itertools::Itertools;
 use regex::Regex;
 
 use crate::{
-    provider::{TestProvider, Updater},
+    provider::{SimpleTestProvider, Updater},
     regexes::VAL_REGEX,
     utils::parse_output_func_heading,
 };
 
 pub struct VerifyOkProvider;
-impl TestProvider for VerifyOkProvider {
+impl SimpleTestProvider for VerifyOkProvider {
     fn expects_valid_module(&self) -> bool {
         false
     }
 
-    fn output_for(&self, module: &Module) -> Result<String> {
-        verify_module(module).map_err(|errs| {
+    fn output_for(&self, module: Module) -> Result<String> {
+        verify_module(&module).map_err(|errs| {
             let errs = errs
                 .iter()
-                .format_with("\n", |err, f| f(&err.display_with_context(module)));
+                .format_with("\n", |err, f| f(&err.display_with_context(&module)));
             anyhow!("verification failed:\n{errs}")
         })?;
         Ok("".to_owned())
     }
 
-    fn update(&self, updater: &mut Updater<'_>, _module: &Module, _output_str: &str) -> Result<()> {
+    fn update(&self, updater: &mut Updater<'_>, _output_str: &str) -> Result<()> {
         updater.blank_line();
         updater.directive(0, "check", "$()");
         Ok(())
@@ -42,7 +42,7 @@ impl TestProvider for VerifyOkProvider {
 }
 
 pub struct VerifyErrProvider;
-impl TestProvider for VerifyErrProvider {
+impl SimpleTestProvider for VerifyErrProvider {
     fn expects_valid_module(&self) -> bool {
         false
     }
@@ -53,8 +53,8 @@ impl TestProvider for VerifyErrProvider {
             .collect()
     }
 
-    fn output_for(&self, module: &Module) -> Result<String> {
-        let Err(errors) = verify_module(module) else {
+    fn output_for(&self, module: Module) -> Result<String> {
+        let Err(errors) = verify_module(&module) else {
             bail!("module contained no verifier errors");
         };
 
@@ -74,7 +74,7 @@ impl TestProvider for VerifyErrProvider {
         writeln!(output, "global:").unwrap();
         if !global_errors.is_empty() {
             for error in global_errors {
-                writeln!(output, "{}", error.display(module)).unwrap();
+                writeln!(output, "{}", error.display(&module)).unwrap();
             }
         }
         writeln!(output).unwrap();
@@ -88,7 +88,7 @@ impl TestProvider for VerifyErrProvider {
                     writeln!(
                         output,
                         "`{}`: {}",
-                        display_node(module, body, error.node(graph)),
+                        display_node(&module, body, error.node(graph)),
                         error.display(graph)
                     )
                     .unwrap();
@@ -100,7 +100,7 @@ impl TestProvider for VerifyErrProvider {
         Ok(output)
     }
 
-    fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) -> Result<()> {
+    fn update(&self, updater: &mut Updater<'_>, output_str: &str) -> Result<()> {
         let mut output_lines = output_str.lines();
         assert!(output_lines.next().unwrap() == "global:");
 

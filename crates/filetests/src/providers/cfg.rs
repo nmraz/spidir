@@ -7,13 +7,13 @@ use ir::module::Module;
 use itertools::Itertools;
 
 use crate::{
-    provider::{update_per_func_output, TestProvider, Updater},
+    provider::{update_per_func_output, SimpleTestProvider, Updater},
     utils::write_body_with_trailing_comments,
 };
 
 pub struct CfgProvider;
-impl TestProvider for CfgProvider {
-    fn output_for(&self, module: &Module) -> Result<String> {
+impl SimpleTestProvider for CfgProvider {
+    fn output_for(&self, module: Module) -> Result<String> {
         let mut output = String::new();
 
         for func in module.functions.values() {
@@ -21,7 +21,7 @@ impl TestProvider for CfgProvider {
             let cfg_preorder: Vec<_> = body.cfg_preorder().collect();
             let (cfg, block_map) = compute_block_cfg(&body.graph, &cfg_preorder);
             let mut seen_blocks = EntitySet::new();
-            write_body_with_trailing_comments(&mut output, module, func, |s, node| {
+            write_body_with_trailing_comments(&mut output, &module, func, |s, node| {
                 if let Some(block) = block_map.containing_block(node) {
                     write!(s, "{block}; ").unwrap();
 
@@ -57,7 +57,7 @@ impl TestProvider for CfgProvider {
         Ok(output)
     }
 
-    fn update(&self, updater: &mut Updater<'_>, _module: &Module, output_str: &str) -> Result<()> {
+    fn update(&self, updater: &mut Updater<'_>, output_str: &str) -> Result<()> {
         update_per_func_output(updater, output_str)
     }
 }

@@ -12,28 +12,28 @@ use crate::{
 };
 
 #[derive(Default, Clone)]
-pub struct Cache(RawTable<Node>);
+pub struct NodeCache(RawTable<Node>);
 
-impl Cache {
+impl NodeCache {
     #[inline]
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-pub struct ConsBuilder<'a> {
+pub struct CachingBuilder<'a> {
     body: &'a mut FunctionBody,
-    cache: &'a mut Cache,
+    cache: &'a mut NodeCache,
 }
 
-impl<'a> ConsBuilder<'a> {
+impl<'a> CachingBuilder<'a> {
     #[inline]
-    pub fn new(body: &'a mut FunctionBody, cache: &'a mut Cache) -> Self {
+    pub fn new(body: &'a mut FunctionBody, cache: &'a mut NodeCache) -> Self {
         Self { body, cache }
     }
 }
 
-impl<'a> Builder for ConsBuilder<'a> {
+impl<'a> Builder for CachingBuilder<'a> {
     fn create_node(
         &mut self,
         kind: NodeKind,
@@ -42,7 +42,7 @@ impl<'a> Builder for ConsBuilder<'a> {
     ) -> Node {
         let graph = &mut self.body.graph;
 
-        if !should_cons_node_kind(&kind) {
+        if !should_cache_node_kind(&kind) {
             return graph.create_node(kind, inputs, output_kinds);
         }
 
@@ -126,7 +126,7 @@ fn hash_node(
     state.finish()
 }
 
-fn should_cons_node_kind(kind: &NodeKind) -> bool {
+fn should_cache_node_kind(kind: &NodeKind) -> bool {
     // Never hash-cons nodes that actually need to be distinct (such as stack slots).
     !has_build_identity(kind) &&
     // Also avoid storing nodes that are control-dependent, since it will never be possible to
@@ -147,10 +147,10 @@ mod tests {
 
     use super::*;
 
-    fn check(f: impl FnOnce(&mut ConsBuilder<'_>)) {
+    fn check(f: impl FnOnce(&mut CachingBuilder<'_>)) {
         let mut body = FunctionBody::new_invalid();
-        let mut cache = Cache::new();
-        f(&mut ConsBuilder::new(&mut body, &mut cache));
+        let mut cache = NodeCache::new();
+        f(&mut CachingBuilder::new(&mut body, &mut cache));
     }
 
     #[test]

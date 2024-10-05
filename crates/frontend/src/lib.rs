@@ -5,7 +5,7 @@ use log::trace;
 
 use ir::{
     builder::{Builder, BuilderExt},
-    cons_builder::{Cache, ConsBuilder},
+    cache::{CachingBuilder, NodeCache},
     function::{FunctionBody, Signature},
     module::{Function, Module},
     node::{DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
@@ -43,7 +43,7 @@ pub struct FunctionBuilder<'a> {
     func: Function,
     blocks: PrimaryMap<Block, BlockData>,
     cur_block: Option<Block>,
-    node_cache: Cache,
+    node_cache: NodeCache,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -54,7 +54,7 @@ impl<'a> FunctionBuilder<'a> {
             func,
             blocks: PrimaryMap::new(),
             cur_block: None,
-            node_cache: Cache::new(),
+            node_cache: NodeCache::new(),
         }
     }
 
@@ -343,7 +343,7 @@ impl<'a> FunctionBuilder<'a> {
 struct GraphBuilderWrapper<'a> {
     module: &'a mut Module,
     func: Function,
-    node_cache: &'a mut Cache,
+    node_cache: &'a mut NodeCache,
 }
 
 impl<'a> Builder for GraphBuilderWrapper<'a> {
@@ -354,7 +354,7 @@ impl<'a> Builder for GraphBuilderWrapper<'a> {
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node {
         let mut builder =
-            ConsBuilder::new(&mut self.module.functions[self.func].body, self.node_cache);
+            CachingBuilder::new(&mut self.module.functions[self.func].body, self.node_cache);
         let node = builder.create_node(kind, inputs, output_kinds);
         trace!(
             "built node: `{}`",

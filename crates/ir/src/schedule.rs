@@ -30,7 +30,7 @@ impl<'a> ScheduleContext<'a> {
 
     #[inline]
     pub fn live_nodes(&self) -> &EntitySet<Node> {
-        self.live_node_info.live_nodes()
+        &self.live_node_info.live_nodes
     }
 
     #[inline]
@@ -85,7 +85,7 @@ pub fn schedule_late(
         }
     }
 
-    for &root in ctx.live_node_info.roots() {
+    for &root in &ctx.live_node_info.roots {
         // We want only floating data nodes here, not dead regions and the like.
         if !is_pinned_node(ctx.graph, root) {
             scratch_postorder.reset([root]);

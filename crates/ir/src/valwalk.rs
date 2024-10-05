@@ -112,8 +112,8 @@ pub fn def_use_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node>
 
 #[derive(Debug, Clone)]
 pub struct LiveNodeInfo {
-    roots: Vec<Node>,
-    live_nodes: EntitySet<Node>,
+    pub roots: Vec<Node>,
+    pub live_nodes: EntitySet<Node>,
 }
 
 impl LiveNodeInfo {
@@ -130,16 +130,6 @@ impl LiveNodeInfo {
             roots,
             live_nodes: walk.visited,
         }
-    }
-
-    #[inline]
-    pub fn roots(&self) -> &[Node] {
-        &self.roots
-    }
-
-    #[inline]
-    pub fn live_nodes(&self) -> &EntitySet<Node> {
-        &self.live_nodes
     }
 
     pub fn postorder<'a>(&'a self, graph: &'a ValGraph) -> DefUsePostorder<'a> {
@@ -285,9 +275,9 @@ mod tests {
         expected_live_nodes: &[Node],
     ) {
         let live_info = LiveNodeInfo::compute(graph, entry);
-        assert_eq!(live_info.roots(), expected_roots);
+        assert_eq!(live_info.roots, expected_roots);
 
-        let live_node_set = live_info.live_nodes();
+        let live_node_set = &live_info.live_nodes;
         let expected_live_nodes: FxHashSet<_> = expected_live_nodes.iter().copied().collect();
         let actual_live_nodes: FxHashSet<_> = live_node_set
             .keys()

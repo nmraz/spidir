@@ -19,9 +19,9 @@ fn check_live_scheduled(
     kind: &str,
 ) {
     for node in live_node_info
-        .live_nodes()
+        .live_nodes
         .keys()
-        .filter(|&node| live_node_info.live_nodes().contains(node))
+        .filter(|&node| live_node_info.live_nodes.contains(node))
         .filter(|&node| !is_pinned_node(graph, node))
     {
         assert!(scheduled.contains(node), "{node} not scheduled {kind}");

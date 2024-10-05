@@ -159,13 +159,10 @@ fn replace_value(
     old_value: DepValue,
     new_value: DepValue,
 ) {
-    enqueue_uses(graph, worklist, old_value);
-    graph.replace_all_uses(old_value, new_value);
-}
-
-fn enqueue_uses(graph: &ValGraph, worklist: &mut Worklist, value: DepValue) {
-    for (val_use, _) in graph.value_uses(value) {
-        worklist.enqueue(val_use);
+    let mut cursor = graph.value_use_cursor(old_value);
+    while let Some((node, _)) = cursor.current() {
+        worklist.enqueue(node);
+        cursor.replace_current_with(new_value);
     }
 }
 

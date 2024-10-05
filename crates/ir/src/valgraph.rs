@@ -156,6 +156,35 @@ impl<'a> Iterator for UseIter<'a> {
     }
 }
 
+pub struct UseCursor<'a> {
+    graph: &'a mut ValGraph,
+    current: Option<Use>,
+}
+
+impl<'a> UseCursor<'a> {
+    pub fn graph(&self) -> &ValGraph {
+        self.graph
+    }
+
+    pub fn current(&self) -> Option<(Node, u32)> {
+        let current = &self.graph.uses[self.current?];
+        Some((current.user, current.input_index))
+    }
+
+    pub fn move_next(&mut self) {
+        let Some(current) = self.current else {
+            return;
+        };
+        self.current = self.graph.uses[current].next.expand();
+    }
+
+    pub fn replace_current_with(&mut self, new_value: DepValue) {
+        let current = self.current.expect("attempted to replace null use");
+        self.move_next();
+        self.graph.set_use_value(current, new_value);
+    }
+}
+
 type DepValueList = EntityList<DepValue>;
 type UseList = EntityList<Use>;
 
@@ -323,30 +352,24 @@ impl ValGraph {
     }
 
     #[inline]
+    pub fn value_use_cursor(&mut self, value: DepValue) -> UseCursor<'_> {
+        let first_use = self.values[value].first_use.expand();
+        UseCursor {
+            graph: self,
+            current: first_use,
+        }
+    }
+
+    #[inline]
     pub fn has_one_use(&self, value: DepValue) -> bool {
         let mut uses = self.value_uses(value);
         uses.next().is_some() && uses.next().is_none()
     }
 
-    pub fn replace_all_uses(&mut self, old: DepValue, new: DepValue) {
-        let first_use = self.values[old].first_use.take();
-
-        let mut cursor = first_use;
-        let mut last_use = None;
-        while let Some(cur_use) = cursor {
-            last_use = Some(cur_use);
-            self.uses[cur_use].value = new;
-            cursor = self.uses[cur_use].next.expand();
-        }
-
-        if let Some(last_use) = last_use {
-            let orig_new_first_use = self.values[new].first_use;
-            self.values[new].first_use = first_use.into();
-            self.uses[last_use].next = orig_new_first_use;
-            if let Some(orig_new_first_use) = orig_new_first_use.expand() {
-                self.uses[orig_new_first_use].prev = last_use.into();
-            }
-        }
+    fn set_use_value(&mut self, value_use: Use, new_value: DepValue) {
+        self.unlink_use(value_use);
+        self.uses[value_use].value = new_value;
+        self.link_use(value_use);
     }
 
     fn link_use(&mut self, value_use: Use) {
@@ -376,6 +399,9 @@ impl ValGraph {
         if let Some(next) = use_data.next.expand() {
             self.uses[next].prev = use_data.prev;
         }
+
+        self.uses[value_use].prev = None.into();
+        self.uses[value_use].next = None.into();
     }
 }
 
@@ -412,6 +438,13 @@ mod tests {
         let expected: Vec<_> = expected.into_iter().collect();
         let actual: Vec<_> = graph.node_inputs(node).into_iter().collect();
         assert_eq!(actual, expected);
+    }
+
+    fn replace_all_uses(graph: &mut ValGraph, old_value: DepValue, new_value: DepValue) {
+        let mut cursor = graph.value_use_cursor(old_value);
+        while cursor.current().is_some() {
+            cursor.replace_current_with(new_value);
+        }
     }
 
     #[test]
@@ -494,7 +527,7 @@ mod tests {
     }
 
     #[test]
-    fn replace_all_uses() {
+    fn cursor_replace_all_uses() {
         let mut graph = ValGraph::new();
 
         let old_const_val = create_const32(&mut graph);
@@ -516,7 +549,7 @@ mod tests {
         let seven = graph.create_node(NodeKind::IConst(7), [], [DepValueKind::Value(Type::I32)]);
         let seven_val = graph.node_outputs(seven)[0];
 
-        graph.replace_all_uses(old_const_val, seven_val);
+        replace_all_uses(&mut graph, old_const_val, seven_val);
 
         check_value_uses(&graph, old_const_val, []);
         check_value_uses(&graph, seven_val, [(add2, 0), (add, 1), (add, 0)]);
@@ -539,7 +572,7 @@ mod tests {
     }
 
     #[test]
-    fn remove_node_input_after_replace_all_uses() {
+    fn remove_node_input_after_cursor_replace_all_uses() {
         let mut graph = ValGraph::new();
 
         let const1 = create_const32(&mut graph);
@@ -568,7 +601,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
 
-        graph.replace_all_uses(const1, const2);
+        replace_all_uses(&mut graph, const1, const2);
         check_value_uses(&graph, const1, []);
         check_value_uses(
             &graph,
@@ -581,7 +614,7 @@ mod tests {
     }
 
     #[test]
-    fn replace_all_uses_with_self() {
+    fn cursor_replace_all_uses_with_self() {
         let mut graph = ValGraph::new();
 
         let const1 = create_const32(&mut graph);
@@ -605,7 +638,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
 
-        graph.replace_all_uses(const1, const1);
+        replace_all_uses(&mut graph, const1, const1);
         check_value_uses(&graph, const1, [(add3, 1), (add2, 0), (add1, 0)]);
 
         graph.remove_node_input(add1, 0);
@@ -613,7 +646,7 @@ mod tests {
     }
 
     #[test]
-    fn replace_all_uses_with_self_reused_uses() {
+    fn cursor_replace_all_uses_with_self_reused_uses() {
         let mut graph = ValGraph::new();
         let const1 = create_const32(&mut graph);
         let const2 = create_const32(&mut graph);
@@ -622,7 +655,7 @@ mod tests {
             [const1, const2],
             [DepValueKind::Value(Type::I32)],
         );
-        graph.replace_all_uses(const1, const1);
+        replace_all_uses(&mut graph, const1, const1);
         check_value_uses(&graph, const1, [(add1, 0)]);
 
         let const3 = create_const32(&mut graph);
@@ -636,7 +669,7 @@ mod tests {
     }
 
     #[test]
-    fn replace_all_uses_unused() {
+    fn cursor_replace_all_uses_unused() {
         let mut graph = ValGraph::new();
         let const1 = create_const32(&mut graph);
         let const2 = create_const32(&mut graph);
@@ -645,12 +678,12 @@ mod tests {
             [const2, const2],
             [DepValueKind::Value(Type::I32)],
         );
-        graph.replace_all_uses(const1, const2);
+        replace_all_uses(&mut graph, const1, const2);
         check_value_uses(&graph, const2, [(add, 1), (add, 0)]);
     }
 
     #[test]
-    fn replace_all_uses_fresh() {
+    fn cursor_replace_all_uses_fresh() {
         let mut graph = ValGraph::new();
         let const1 = create_const32(&mut graph);
         let add = graph.create_node(
@@ -660,7 +693,7 @@ mod tests {
         );
 
         let const2 = create_const32(&mut graph);
-        graph.replace_all_uses(const1, const2);
+        replace_all_uses(&mut graph, const1, const2);
         check_value_uses(&graph, const1, []);
         check_value_uses(&graph, const2, [(add, 1), (add, 0)]);
     }

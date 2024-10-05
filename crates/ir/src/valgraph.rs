@@ -383,12 +383,36 @@ impl ValGraph {
 mod tests {
     use core::mem;
 
+    use fx_utils::FxHashSet;
+
     use crate::{
         node::Type,
         test_utils::{create_const32, create_entry, create_region, create_return},
     };
 
     use super::*;
+
+    #[track_caller]
+    fn check_value_uses(
+        graph: &ValGraph,
+        value: DepValue,
+        expected: impl IntoIterator<Item = (Node, u32)>,
+    ) {
+        let expected: FxHashSet<_> = expected.into_iter().collect();
+        let actual: FxHashSet<_> = graph.value_uses(value).collect();
+        assert_eq!(actual, expected);
+    }
+
+    #[track_caller]
+    fn check_node_inputs(
+        graph: &ValGraph,
+        node: Node,
+        expected: impl IntoIterator<Item = DepValue>,
+    ) {
+        let expected: Vec<_> = expected.into_iter().collect();
+        let actual: Vec<_> = graph.node_inputs(node).into_iter().collect();
+        assert_eq!(actual, expected);
+    }
 
     #[test]
     fn node_size() {
@@ -410,7 +434,7 @@ mod tests {
         let mut graph = ValGraph::new();
         let node = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
         assert_eq!(graph.node_kind(node), &NodeKind::IConst(5));
-        assert_eq!(Vec::from_iter(graph.node_inputs(node)), vec![]);
+        check_node_inputs(&graph, node, []);
         let outputs = graph.node_outputs(node);
         let output_kinds: Vec<_> = outputs
             .into_iter()
@@ -437,13 +461,11 @@ mod tests {
 
         assert_eq!(graph.value_def(param1), (entry, 1));
         assert_eq!(graph.value_def(param2), (entry, 2));
-        assert_eq!(Vec::from_iter(graph.node_inputs(add)), vec![param1, param2]);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(control_value)),
-            vec![(ret, 0)]
-        );
-        assert_eq!(Vec::from_iter(graph.value_uses(param1)), vec![(add, 0)]);
-        assert_eq!(Vec::from_iter(graph.value_uses(param2)), vec![(add, 1)]);
+        check_node_inputs(&graph, add, [param1, param2]);
+
+        check_value_uses(&graph, control_value, [(ret, 0)]);
+        check_value_uses(&graph, param1, [(add, 0)]);
+        check_value_uses(&graph, param2, [(add, 1)]);
     }
 
     #[test]
@@ -467,11 +489,8 @@ mod tests {
         assert!(!graph.has_one_use(const1));
         assert!(graph.has_one_use(const2));
 
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(const1)),
-            vec![(add2, 0), (add, 1), (add, 0)]
-        );
-        assert_eq!(Vec::from_iter(graph.value_uses(const2)), vec![(add2, 1)]);
+        check_value_uses(&graph, const1, [(add2, 0), (add, 1), (add, 0)]);
+        check_value_uses(&graph, const2, [(add2, 1)]);
     }
 
     #[test]
@@ -499,11 +518,8 @@ mod tests {
 
         graph.replace_all_uses(old_const_val, seven_val);
 
-        assert_eq!(Vec::from_iter(graph.value_uses(old_const_val)), vec![]);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(seven_val)),
-            vec![(add2, 0), (add, 1), (add, 0)]
-        );
+        check_value_uses(&graph, old_const_val, []);
+        check_value_uses(&graph, seven_val, [(add2, 0), (add, 1), (add, 0)]);
         assert_eq!(
             graph
                 .node_inputs(add)
@@ -553,17 +569,15 @@ mod tests {
         );
 
         graph.replace_all_uses(const1, const2);
-        assert_eq!(Vec::from_iter(graph.value_uses(const1)), vec![]);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(const2)),
-            vec![(add4, 0), (add2, 0), (add1, 0), (add3, 0), (add1, 1)]
+        check_value_uses(&graph, const1, []);
+        check_value_uses(
+            &graph,
+            const2,
+            [(add4, 0), (add2, 0), (add1, 0), (add3, 0), (add1, 1)],
         );
 
         graph.remove_node_input(add2, 0);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(const2)),
-            vec![(add4, 0), (add1, 0), (add3, 0), (add1, 1)]
-        );
+        check_value_uses(&graph, const2, [(add4, 0), (add1, 0), (add3, 0), (add1, 1)]);
     }
 
     #[test]
@@ -592,16 +606,10 @@ mod tests {
         );
 
         graph.replace_all_uses(const1, const1);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(const1)),
-            vec![(add3, 1), (add2, 0), (add1, 0)]
-        );
+        check_value_uses(&graph, const1, [(add3, 1), (add2, 0), (add1, 0)]);
 
         graph.remove_node_input(add1, 0);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(const1)),
-            vec![(add3, 1), (add2, 0)]
-        );
+        check_value_uses(&graph, const1, [(add3, 1), (add2, 0)]);
     }
 
     #[test]
@@ -615,7 +623,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         graph.replace_all_uses(const1, const1);
-        assert_eq!(Vec::from_iter(graph.value_uses(const1)), vec![(add1, 0)]);
+        check_value_uses(&graph, const1, [(add1, 0)]);
 
         let const3 = create_const32(&mut graph);
         let add2 = graph.create_node(
@@ -623,11 +631,8 @@ mod tests {
             [const2, const3],
             [DepValueKind::Value(Type::I32)],
         );
-        assert_eq!(Vec::from_iter(graph.value_uses(const1)), vec![(add1, 0)]);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(const2)),
-            vec![(add2, 0), (add1, 1)]
-        );
+        check_value_uses(&graph, const1, [(add1, 0)]);
+        check_value_uses(&graph, const2, [(add2, 0), (add1, 1)]);
     }
 
     #[test]
@@ -641,10 +646,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
         graph.replace_all_uses(const1, const2);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(const2)),
-            vec![(add, 1), (add, 0)]
-        );
+        check_value_uses(&graph, const2, [(add, 1), (add, 0)]);
     }
 
     #[test]
@@ -659,11 +661,8 @@ mod tests {
 
         let const2 = create_const32(&mut graph);
         graph.replace_all_uses(const1, const2);
-        assert_eq!(Vec::from_iter(graph.value_uses(const1)), vec![]);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(const2)),
-            vec![(add, 1), (add, 0)]
-        );
+        check_value_uses(&graph, const1, []);
+        check_value_uses(&graph, const2, [(add, 1), (add, 0)]);
     }
 
     #[test]
@@ -674,9 +673,9 @@ mod tests {
         let add = graph.create_node(NodeKind::Iadd, [param1], [DepValueKind::Value(Type::I32)]);
         graph.add_node_input(add, param2);
 
-        assert_eq!(Vec::from_iter(graph.node_inputs(add)), vec![param1, param2]);
-        assert_eq!(Vec::from_iter(graph.value_uses(param1)), vec![(add, 0)]);
-        assert_eq!(Vec::from_iter(graph.value_uses(param2)), vec![(add, 1)]);
+        check_node_inputs(&graph, add, [param1, param2]);
+        check_value_uses(&graph, param1, [(add, 0)]);
+        check_value_uses(&graph, param2, [(add, 1)]);
     }
 
     #[test]
@@ -694,40 +693,16 @@ mod tests {
         );
 
         graph.remove_node_input(exit_region, 1);
-        assert_eq!(
-            Vec::from_iter(graph.node_inputs(exit_region)),
-            vec![entry_control, dead_region2_control]
-        );
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(entry_control)),
-            vec![(exit_region, 0)]
-        );
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(dead_region1_control)),
-            vec![]
-        );
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(dead_region2_control)),
-            vec![(exit_region, 1)]
-        );
+        check_node_inputs(&graph, exit_region, [entry_control, dead_region2_control]);
+        check_value_uses(&graph, entry_control, [(exit_region, 0)]);
+        check_value_uses(&graph, dead_region1_control, []);
+        check_value_uses(&graph, dead_region2_control, [(exit_region, 1)]);
 
         graph.remove_node_input(exit_region, 1);
-        assert_eq!(
-            Vec::from_iter(graph.node_inputs(exit_region)),
-            vec![entry_control]
-        );
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(entry_control)),
-            vec![(exit_region, 0)]
-        );
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(dead_region1_control)),
-            vec![]
-        );
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(dead_region2_control)),
-            vec![]
-        );
+        check_node_inputs(&graph, exit_region, [entry_control]);
+        check_value_uses(&graph, entry_control, [(exit_region, 0)]);
+        check_value_uses(&graph, dead_region1_control, []);
+        check_value_uses(&graph, dead_region2_control, []);
     }
 
     #[test]
@@ -744,50 +719,33 @@ mod tests {
         let ac = graph.create_node(NodeKind::Iadd, [a, c], []);
         let abc = graph.create_node(NodeKind::Iadd, [a, b, c], []);
 
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(a)),
-            vec![(abc, 0), (ac, 0), (ab, 0)]
-        );
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(b)),
-            vec![(abc, 1), (bc, 0), (ab, 1)]
-        );
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(c)),
-            vec![(abc, 2), (ac, 1), (bc, 1)]
-        );
+        check_value_uses(&graph, a, [(abc, 0), (ac, 0), (ab, 0)]);
+        check_value_uses(&graph, b, [(abc, 1), (bc, 0), (ab, 1)]);
+        check_value_uses(&graph, c, [(abc, 2), (ac, 1), (bc, 1)]);
 
         // Start by removing a use from the middle of the use list
         graph.remove_node_input(ac, 0);
-        assert_eq!(Vec::from_iter(graph.node_inputs(ac)), vec![c]);
-        assert_eq!(Vec::from_iter(graph.value_uses(a)), vec![(abc, 0), (ab, 0)]);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(c)),
-            vec![(abc, 2), (ac, 0), (bc, 1)]
-        );
+        check_node_inputs(&graph, ac, [c]);
+        check_value_uses(&graph, a, [(abc, 0), (ab, 0)]);
+        check_value_uses(&graph, c, [(abc, 2), (ac, 0), (bc, 1)]);
 
         // Remove a use from the end of the use list
         graph.remove_node_input(abc, 0);
-        assert_eq!(Vec::from_iter(graph.node_inputs(abc)), vec![b, c]);
-        assert_eq!(Vec::from_iter(graph.value_uses(a)), vec![(ab, 0)]);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(b)),
-            vec![(abc, 0), (bc, 0), (ab, 1)]
-        );
+        check_node_inputs(&graph, abc, [b, c]);
+        check_value_uses(&graph, a, [(ab, 0)]);
+        check_value_uses(&graph, b, [(abc, 0), (bc, 0), (ab, 1)]);
 
         // Remove a use from the end of the use list
         graph.remove_node_input(abc, 0);
-        assert_eq!(Vec::from_iter(graph.node_inputs(abc)), vec![c]);
-        assert_eq!(Vec::from_iter(graph.value_uses(b)), vec![(bc, 0), (ab, 1)]);
-        assert_eq!(
-            Vec::from_iter(graph.value_uses(c)),
-            vec![(abc, 0), (ac, 0), (bc, 1)]
-        );
+        check_node_inputs(&graph, abc, [c]);
+        check_value_uses(&graph, b, [(bc, 0), (ab, 1)]);
+
+        check_value_uses(&graph, c, [(abc, 0), (ac, 0), (bc, 1)]);
 
         // Remove a use from the beginning of the use list
         graph.remove_node_input(ab, 1);
-        assert_eq!(Vec::from_iter(graph.node_inputs(ab)), vec![a]);
-        assert_eq!(Vec::from_iter(graph.value_uses(b)), vec![(bc, 0)]);
+        check_node_inputs(&graph, ab, [a]);
+        check_value_uses(&graph, b, [(bc, 0)]);
     }
 
     #[test]

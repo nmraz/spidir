@@ -1,6 +1,6 @@
 use core::fmt::{self, Write};
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use fx_utils::FxHashMap;
 use hashbrown::hash_map::Entry;
 use ir::{
@@ -9,7 +9,7 @@ use ir::{
     valgraph::{DepValue, Node},
     write::{write_annotated_body, write_annotated_node, write_node_kind, AnnotateGraph},
 };
-use parser::{parse_module, unqoute_ident};
+use parser::unqoute_ident;
 use regex::{Captures, Regex};
 use std::{borrow::Cow, cmp, sync::OnceLock};
 
@@ -116,13 +116,8 @@ pub fn generalize_per_function_value_names(module: &Module, output_str: &str) ->
     })
 }
 
-pub fn generalize_module_value_names(module_str: &str) -> Result<String> {
-    let module = parse_module(module_str).context("output is not a valid module")?;
-    // HACK: The value names in the original output might not correlate with the numbers assigned
-    // after the module has been parsed. To make sure things align, just re-stringify the module
-    // here (we're removing all value names anyway).
-    let module_str = module.to_string();
-    generalize_value_names(&module, &module_str, parse_module_func_start)
+pub fn generalize_module_value_names(module: &Module, module_str: &str) -> Result<String> {
+    generalize_value_names(module, module_str, parse_module_func_start)
 }
 
 pub fn generalize_value_names(

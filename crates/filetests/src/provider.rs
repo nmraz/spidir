@@ -205,8 +205,12 @@ pub fn update_per_func_output(updater: &mut Updater<'_>, output_str: &str) -> Re
     Ok(())
 }
 
-pub fn update_transformed_module_output(updater: &mut Updater<'_>, module_str: &str) -> Result<()> {
-    let output_str = generalize_module_value_names(module_str)?;
+pub fn update_transformed_module_output(
+    updater: &mut Updater<'_>,
+    module: &Module,
+    module_str: &str,
+) -> Result<()> {
+    let output_str = generalize_module_value_names(module, module_str)?;
 
     let mut in_func = false;
     let mut first_node = false;
@@ -235,9 +239,7 @@ pub fn update_transformed_module_output(updater: &mut Updater<'_>, module_str: &
             first_node = false;
         } else {
             // We don't actually care about the order in which nodes are printed, just that they are
-            // all attached correctly. This is also important because the node order here might be
-            // different from the original `module_str` due to `generalize_module_value_names`
-            // re-parsing it.
+            // all attached correctly. This should make tests more resilient to minor reshuffles.
             updater.directive(4, "unordered", &format!(" {output_line}"));
         }
     }

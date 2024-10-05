@@ -6,9 +6,10 @@ use cranelift_entity::EntitySet;
 use ir::module::Module;
 use itertools::Itertools;
 
-use crate::utils::write_body_with_trailing_comments;
-
-use super::{update_per_func_output, TestProvider, Updater};
+use crate::{
+    provider::{update_per_func_output, TestProvider, Updater},
+    utils::write_body_with_trailing_comments,
+};
 
 pub struct CfgProvider;
 impl TestProvider for CfgProvider {

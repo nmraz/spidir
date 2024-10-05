@@ -4,9 +4,10 @@ use anyhow::{anyhow, Result};
 use codegen::{api::lower_func, target::x64::X64Machine};
 use ir::module::Module;
 
-use crate::utils::sanitize_raw_output;
-
-use super::{update_per_func_output, TestProvider, Updater};
+use crate::{
+    provider::{update_per_func_output, TestProvider, Updater},
+    utils::sanitize_raw_output,
+};
 
 pub struct IselProvider {
     machine: X64Machine,

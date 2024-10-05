@@ -5,9 +5,10 @@ use cranelift_entity::SecondaryMap;
 use ir::{domtree::DomTree, module::Module};
 use itertools::Itertools;
 
-use crate::utils::write_body_with_trailing_comments;
-
-use super::{update_per_func_output, TestProvider, Updater};
+use crate::{
+    provider::{update_per_func_output, TestProvider, Updater},
+    utils::write_body_with_trailing_comments,
+};
 
 pub struct DomTreeProvider;
 impl TestProvider for DomTreeProvider {

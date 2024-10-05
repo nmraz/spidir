@@ -7,9 +7,12 @@ use codegen::{
 use ir::module::Module;
 use itertools::Itertools;
 
-use crate::utils::sanitize_raw_output;
+use crate::{
+    provider::{update_per_func_output, TestProvider, Updater},
+    utils::sanitize_raw_output,
+};
 
-use super::{update_per_func_output, x64::create_x64_machine, TestProvider, Updater};
+use super::x64::create_x64_machine;
 
 pub struct IselRegallocProvider {
     machine: X64Machine,

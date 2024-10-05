@@ -8,9 +8,10 @@ use codegen::{
 use codegen_test_tools::disasm::disasm_code;
 use ir::module::Module;
 
-use crate::utils::sanitize_raw_output;
-
-use super::{update_per_func_output, TestProvider, Updater};
+use crate::{
+    provider::{update_per_func_output, TestProvider, Updater},
+    utils::sanitize_raw_output,
+};
 
 pub struct CodegenProvider {
     machine: X64Machine,

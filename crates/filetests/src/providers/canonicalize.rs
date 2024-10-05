@@ -3,9 +3,10 @@ use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{canonicalize::canonicalize, module::Module};
 
-use crate::regexes::VAL_REGEX;
-
-use super::{update_transformed_module_output, TestProvider, Updater};
+use crate::{
+    provider::{update_transformed_module_output, TestProvider, Updater},
+    regexes::VAL_REGEX,
+};
 
 pub struct CanonicalizeProvider;
 

@@ -13,7 +13,7 @@ use ir_graphviz::{
     write_graphviz,
 };
 
-use super::{update_per_func_output, TestProvider, Updater};
+use crate::provider::{update_per_func_output, TestProvider, Updater};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum AnnotatorKind {

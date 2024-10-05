@@ -9,17 +9,16 @@ use ir::{module::Module, verify::verify_module};
 use itertools::Itertools;
 use parser::parse_module;
 
-use provider::{select_test_provider, TestProvider};
+use provider::{TestProvider, Updater};
+use providers::select_test_provider;
 use utils::find_comment_start;
 
-use crate::{
-    provider::Updater,
-    utils::{find_run_line, parse_run_line},
-};
+use crate::utils::{find_run_line, parse_run_line};
 
 #[macro_use]
 mod utils;
 mod provider;
+mod providers;
 mod regexes;
 
 pub mod hooks;

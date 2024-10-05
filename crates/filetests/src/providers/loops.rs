@@ -3,9 +3,10 @@ use std::fmt::Write;
 use anyhow::Result;
 use ir::{domtree::DomTree, loops::LoopForest, module::Module};
 
-use crate::utils::write_body_with_trailing_comments;
-
-use super::{update_per_func_output, TestProvider, Updater};
+use crate::{
+    provider::{update_per_func_output, TestProvider, Updater},
+    utils::write_body_with_trailing_comments,
+};
 
 pub struct LoopForestProvider;
 impl TestProvider for LoopForestProvider {

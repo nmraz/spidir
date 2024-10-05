@@ -12,9 +12,11 @@ use ir::{
 use itertools::Itertools;
 use regex::Regex;
 
-use crate::{regexes::VAL_REGEX, utils::parse_output_func_heading};
-
-use super::{TestProvider, Updater};
+use crate::{
+    provider::{TestProvider, Updater},
+    regexes::VAL_REGEX,
+    utils::parse_output_func_heading,
+};
 
 pub struct VerifyOkProvider;
 impl TestProvider for VerifyOkProvider {

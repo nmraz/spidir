@@ -6,9 +6,11 @@ use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::module::Module;
 
-use crate::{regexes::VAL_REGEX, utils::generalize_per_function_value_names};
-
-use super::{update_per_func_output, TestProvider, Updater};
+use crate::{
+    provider::{update_per_func_output, TestProvider, Updater},
+    regexes::VAL_REGEX,
+    utils::generalize_per_function_value_names,
+};
 
 pub struct ScheduleProvider;
 impl TestProvider for ScheduleProvider {

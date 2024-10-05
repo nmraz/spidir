@@ -1,39 +1,14 @@
 use std::fmt::Write;
 
-use anyhow::{anyhow, bail, ensure, Result};
-use canonicalize::CanonicalizeProvider;
-use codegen::CodegenProvider;
+use anyhow::{anyhow, Result};
+
 use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{module::Module, write::quote_ident};
-use isel_regalloc::IselRegallocProvider;
-use x64::create_x64_machine;
 
 use crate::utils::{
     generalize_module_value_names, parse_module_func_start, parse_output_func_heading,
 };
-
-use self::{
-    cfg::CfgProvider,
-    domtree::DomTreeProvider,
-    graphviz::GraphvizTestProvider,
-    isel::IselProvider,
-    loops::LoopForestProvider,
-    schedule::ScheduleProvider,
-    verify::{VerifyErrProvider, VerifyOkProvider},
-};
-
-mod canonicalize;
-mod cfg;
-mod codegen;
-mod domtree;
-mod graphviz;
-mod isel;
-mod isel_regalloc;
-mod loops;
-mod schedule;
-mod verify;
-mod x64;
 
 pub trait TestProvider {
     fn expects_valid_module(&self) -> bool {
@@ -46,108 +21,6 @@ pub trait TestProvider {
 
     fn output_for(&self, module: &Module) -> Result<String>;
     fn update(&self, updater: &mut Updater<'_>, module: &Module, output_str: &str) -> Result<()>;
-}
-
-pub fn select_test_provider(run_command: &str) -> Result<Box<dyn TestProvider>> {
-    let (command, params) = parse_run_command(run_command)?;
-
-    match command {
-        "cfg" => Ok(Box::new(CfgProvider)),
-        "domtree" => Ok(Box::new(DomTreeProvider)),
-        "graphviz" => Ok(Box::new(GraphvizTestProvider::new(&params)?)),
-        "isel" => Ok(Box::new(IselProvider::new(create_x64_machine(&params)?))),
-        "isel-regalloc" => Ok(Box::new(IselRegallocProvider::from_params(&params)?)),
-        "canonicalize" => Ok(Box::new(CanonicalizeProvider)),
-        "codegen" => Ok(Box::new(CodegenProvider::new(create_x64_machine(&params)?))),
-        "loop-forest" => Ok(Box::new(LoopForestProvider)),
-        "schedule" => Ok(Box::new(ScheduleProvider)),
-        "verify-err" => Ok(Box::new(VerifyErrProvider)),
-        "verify-ok" => Ok(Box::new(VerifyOkProvider)),
-        _ => bail!("unknown run command '{run_command}'"),
-    }
-}
-
-fn parse_run_command(run_command: &str) -> Result<(&str, Vec<&str>)> {
-    let Some(base_end) = run_command.find('[') else {
-        // Simple case: no parameters.
-        return Ok((run_command, vec![]));
-    };
-
-    let (command, params) = run_command.split_at(base_end);
-    ensure!(
-        params.find(']') == Some(params.len() - 1),
-        "invalid provider parameter string"
-    );
-    let params = params[1..params.len() - 1]
-        .split(',')
-        .map(|param| param.trim())
-        .collect();
-
-    Ok((command, params))
-}
-
-fn update_per_func_output(updater: &mut Updater<'_>, output_str: &str) -> Result<()> {
-    let mut in_func = false;
-
-    for output_line in output_str.lines() {
-        if output_line.is_empty() {
-            continue;
-        }
-        if let Some(new_func) = parse_output_func_heading(output_line) {
-            if in_func {
-                updater.blank_line();
-            }
-            updater.advance_to_function(new_func)?;
-            updater.directive(4, "check", output_line);
-            in_func = true;
-        } else {
-            updater.directive(4, "nextln", output_line);
-        }
-    }
-
-    updater.blank_line();
-
-    Ok(())
-}
-
-fn update_transformed_module_output(updater: &mut Updater<'_>, module_str: &str) -> Result<()> {
-    let output_str = generalize_module_value_names(module_str)?;
-
-    let mut in_func = false;
-    let mut first_node = false;
-
-    for output_line in output_str.lines() {
-        if output_line.is_empty() {
-            continue;
-        }
-
-        if let Some(new_func) = parse_module_func_start(output_line) {
-            updater.advance_to_function(&new_func)?;
-            updater.directive(4, "check", &format!("     {output_line}"));
-            in_func = true;
-            first_node = true;
-            continue;
-        } else if !in_func {
-            continue;
-        }
-
-        if output_line.trim() == "}" {
-            updater.directive(4, "nextln", &format!("    {output_line}"));
-            updater.blank_line();
-        } else if first_node {
-            // Enforce ordering for the first node, since it is treated as the entry.
-            updater.directive(4, "nextln", &format!("    {output_line}"));
-            first_node = false;
-        } else {
-            // We don't actually care about the order in which nodes are printed, just that they are
-            // all attached correctly. This is also important because the node order here might be
-            // different from the original `module_str` due to `generalize_module_value_names`
-            // re-parsing it.
-            updater.directive(4, "unordered", &format!(" {output_line}"));
-        }
-    }
-
-    Ok(())
 }
 
 pub struct Updater<'a> {
@@ -218,4 +91,68 @@ impl<'a> Updater<'a> {
             }
         }
     }
+}
+
+pub fn update_per_func_output(updater: &mut Updater<'_>, output_str: &str) -> Result<()> {
+    let mut in_func = false;
+
+    for output_line in output_str.lines() {
+        if output_line.is_empty() {
+            continue;
+        }
+        if let Some(new_func) = parse_output_func_heading(output_line) {
+            if in_func {
+                updater.blank_line();
+            }
+            updater.advance_to_function(new_func)?;
+            updater.directive(4, "check", output_line);
+            in_func = true;
+        } else {
+            updater.directive(4, "nextln", output_line);
+        }
+    }
+
+    updater.blank_line();
+
+    Ok(())
+}
+
+pub fn update_transformed_module_output(updater: &mut Updater<'_>, module_str: &str) -> Result<()> {
+    let output_str = generalize_module_value_names(module_str)?;
+
+    let mut in_func = false;
+    let mut first_node = false;
+
+    for output_line in output_str.lines() {
+        if output_line.is_empty() {
+            continue;
+        }
+
+        if let Some(new_func) = parse_module_func_start(output_line) {
+            updater.advance_to_function(&new_func)?;
+            updater.directive(4, "check", &format!("     {output_line}"));
+            in_func = true;
+            first_node = true;
+            continue;
+        } else if !in_func {
+            continue;
+        }
+
+        if output_line.trim() == "}" {
+            updater.directive(4, "nextln", &format!("    {output_line}"));
+            updater.blank_line();
+        } else if first_node {
+            // Enforce ordering for the first node, since it is treated as the entry.
+            updater.directive(4, "nextln", &format!("    {output_line}"));
+            first_node = false;
+        } else {
+            // We don't actually care about the order in which nodes are printed, just that they are
+            // all attached correctly. This is also important because the node order here might be
+            // different from the original `module_str` due to `generalize_module_value_names`
+            // re-parsing it.
+            updater.directive(4, "unordered", &format!(" {output_line}"));
+        }
+    }
+
+    Ok(())
 }

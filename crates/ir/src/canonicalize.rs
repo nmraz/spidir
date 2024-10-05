@@ -106,6 +106,23 @@ fn canonicalize_node(body: &mut FunctionBody, worklist: &mut Worklist, node: Nod
                 replace_value(&mut body.graph, worklist, output, new_output);
             }
         }
+        &NodeKind::Sfill(width) => {
+            let [input] = node_inputs_exact(graph, node);
+            let output = graph.node_outputs(node)[0];
+            let ty = graph.value_kind(output).as_value().unwrap();
+
+            if let Some(value) = match_iconst(graph, input) {
+                let shift_width = 64 - width;
+
+                let mut new_value = (((value << shift_width) as i64) >> shift_width) as u64;
+                if ty == Type::I32 {
+                    new_value = new_value as u32 as u64;
+                }
+
+                let new_output = SimpleBuilder(body).build_iconst(ty, new_value);
+                replace_value(&mut body.graph, worklist, output, new_output);
+            }
+        }
         _ => {}
     }
 }

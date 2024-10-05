@@ -34,98 +34,93 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # unordered:      $(imul0=$val):i64 = imul $sfill0, $iconst1
     # unordered:      $(iadd0=$val):i64 = iadd $imul0, $iconst0
     # unordered:      $(iconst2=$val):i64 = iconst 16
-    # unordered:      $(iconst3=$val):i64 = iconst 24
-    # unordered:      $(iconst4=$val):i64 = iconst 8
-    # unordered:      $(iconst5=$val):i64 = iconst 1
-    # unordered:      $(sfill1=$val):i64 = sfill 32 $iconst5
-    # unordered:      $(imul1=$val):i64 = imul $sfill1, $iconst1
-    # unordered:      $(iadd1=$val):i64 = iadd $imul1, $iconst0
-    # unordered:      $(imul2=$val):i64 = imul $sfill1, $iconst4
-    # unordered:      $(iadd2=$val):i64 = iadd $imul2, $iconst3
+    # unordered:      $(iconst3=$val):i64 = iconst 32
+    # unordered:      $(iconst4=$val):i64 = iconst 1
     # unordered:      $(stackslot0=$val):ptr = stackslot 8:8
-    # unordered:      $(iconst6=$val):i32 = iconst 3
-    # unordered:      $(iconst7=$val):i64 = iconst 0
-    # unordered:      $(sfill2=$val):i64 = sfill 32 $iconst7
-    # unordered:      $(imul3=$val):i64 = imul $sfill2, $iconst1
-    # unordered:      $(iadd3=$val):i64 = iadd $imul3, $iconst0
-    # unordered:      $(imul4=$val):i64 = imul $sfill2, $iconst4
-    # unordered:      $(iadd4=$val):i64 = iadd $imul4, $iconst3
+    # unordered:      $(iconst5=$val):i64 = iconst 24
+
+    # HACK: The duplicated `iconst 20` and `iconst 24` confuse the file checks, so place this
+    # "barrier" to separate both the 20 and 24 instances from one another until we properly combine
+    # them.
+
+    # check:          $(iconst6=$val):i32 = iconst 3
+
+    # unordered:      $(iconst7=$val):i64 = iconst 20
     # unordered:      $(iconst8=$val):i32 = iconst 2
-    # unordered:      $(iconst9=$val):i64 = iconst 2
-    # unordered:      $(sfill3=$val):i64 = sfill 32 $iconst9
-    # unordered:      $(imul5=$val):i64 = imul $sfill3, $iconst4
-    # unordered:      $(iadd5=$val):i64 = iadd $imul5, $iconst3
-    # unordered:      $(imul6=$val):i64 = imul $sfill3, $iconst1
-    # unordered:      $(iadd6=$val):i64 = iadd $imul6, $iconst0
-    # unordered:      $(iconst10=$val):i32 = iconst 170
-    # unordered:      $(iconst11=$val):i32 = iconst 1
-    # unordered:      $(iconst12=$val):i32 = iconst 171
-    # unordered:      $(iconst13=$val):ptr = iconst 0
-    # unordered:      $(store0=$val):ctrl = store.8 $region0, $iconst13, $stackslot0
+    # unordered:      $(iconst9=$val):i64 = iconst 0
+    # unordered:      $(iconst10=$val):i64 = iconst 2
+    # unordered:      $(iconst11=$val):i64 = iconst 28
+    # unordered:      $(iconst12=$val):i32 = iconst 170
+    # unordered:      $(iconst13=$val):i64 = iconst 24
+    # unordered:      $(iconst14=$val):i32 = iconst 1
+    # unordered:      $(iconst15=$val):i64 = iconst 40
+    # unordered:      $(iconst16=$val):i32 = iconst 171
+    # unordered:      $(iconst17=$val):ptr = iconst 0
+    # unordered:      $(store0=$val):ctrl = store.8 $region0, $iconst17, $stackslot0
     # unordered:      $(region2=$val):ctrl, $(region3=$val):phisel = region $store0
-    # unordered:      $(call0=$val):ctrl, $(call1=$val):ptr = call @gc_new $region2, $iconst12, $iadd5
+    # unordered:      $(call0=$val):ctrl, $(call1=$val):ptr = call @gc_new $region2, $iconst16, $iconst15
     # unordered:      $(ptroff0=$val):ptr = ptroff $call1, $iconst2
-    # unordered:      $(store1=$val):ctrl = store.4 $call0, $sfill3, $ptroff0
+    # unordered:      $(store1=$val):ctrl = store.4 $call0, $iconst10, $ptroff0
     # unordered:      $(store2=$val):ctrl = store.8 $store1, $call1, $stackslot0
     # unordered:      $(load0=$val):ctrl, $(load1=$val):ptr = load.8 $store2, $stackslot0
-    # unordered:      $(call2=$val):ctrl, $(call3=$val):ptr = call @gc_new $load0, $iconst10, $iadd6
-    # unordered:      $(ptroff1=$val):ptr = ptroff $call3, $iconst2
-    # unordered:      $(store3=$val):ctrl = store.4 $call2, $sfill3, $ptroff1
-    # unordered:      $(load2=$val):ctrl, $(load3=$val):i64 = load.4 $store3, $ptroff1
-    # unordered:      $(icmp0=$val):i64 = icmp slt $sfill1, $load3
+    # unordered:      $(call2=$val):ctrl, $(call3=$val):ptr = call @gc_new $load0, $iconst12, $iconst11
+    # unordered:      $(ptroff1=$val):ptr = ptroff $call3, $iconst5
+    # unordered:      $(ptroff2=$val):ptr = ptroff $call3, $iconst2
+    # unordered:      $(store3=$val):ctrl = store.4 $call2, $iconst10, $ptroff2
+    # unordered:      $(load2=$val):ctrl, $(load3=$val):i64 = load.4 $store3, $ptroff2
+    # unordered:      $(icmp0=$val):i64 = icmp slt $iconst4, $load3
     # unordered:      $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $load2, $icmp0
     # unordered:      $(region4=$val):ctrl, $(region5=$val):phisel = region $brcond0
-    # unordered:      $(ptroff2=$val):ptr = ptroff $call3, $iadd1
-    # unordered:      $(store4=$val):ctrl = store.4 $region4, $iconst11, $ptroff2
-    # unordered:      $(ptroff3=$val):ptr = ptroff $load1, $iconst2
-    # unordered:      $(load4=$val):ctrl, $(load5=$val):i64 = load.4 $store4, $ptroff3
-    # unordered:      $(icmp1=$val):i64 = icmp slt $sfill2, $load5
+    # unordered:      $(store4=$val):ctrl = store.4 $region4, $iconst14, $ptroff1
+    # unordered:      $(ptroff3=$val):ptr = ptroff $load1, $iconst13
+    # unordered:      $(ptroff4=$val):ptr = ptroff $load1, $iconst2
+    # unordered:      $(load4=$val):ctrl, $(load5=$val):i64 = load.4 $store4, $ptroff4
+    # unordered:      $(icmp1=$val):i64 = icmp slt $iconst9, $load5
     # unordered:      $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $load4, $icmp1
     # unordered:      $(region6=$val):ctrl, $(region7=$val):phisel = region $brcond2
-    # unordered:      $(ptroff4=$val):ptr = ptroff $load1, $iadd4
-    # unordered:      $(store5=$val):ctrl = store.8 $region6, $call3, $ptroff4
+    # unordered:      $(store5=$val):ctrl = store.8 $region6, $call3, $ptroff3
     # unordered:      $(load6=$val):ctrl, $(load7=$val):ptr = load.8 $store5, $stackslot0
-    # unordered:      $(call4=$val):ctrl, $(call5=$val):ptr = call @gc_new $load6, $iconst10, $iadd6
-    # unordered:      $(ptroff5=$val):ptr = ptroff $call5, $iconst2
-    # unordered:      $(store6=$val):ctrl = store.4 $call4, $sfill3, $ptroff5
-    # unordered:      $(load8=$val):ctrl, $(load9=$val):i64 = load.4 $store6, $ptroff5
-    # unordered:      $(icmp2=$val):i64 = icmp slt $sfill2, $load9
+    # unordered:      $(call4=$val):ctrl, $(call5=$val):ptr = call @gc_new $load6, $iconst12, $iconst11
+    # unordered:      $(ptroff5=$val):ptr = ptroff $call5, $iconst5
+    # unordered:      $(ptroff6=$val):ptr = ptroff $call5, $iconst7
+    # unordered:      $(ptroff7=$val):ptr = ptroff $call5, $iconst2
+    # unordered:      $(store6=$val):ctrl = store.4 $call4, $iconst10, $ptroff7
+    # unordered:      $(load8=$val):ctrl, $(load9=$val):i64 = load.4 $store6, $ptroff7
+    # unordered:      $(icmp2=$val):i64 = icmp slt $iconst9, $load9
     # unordered:      $(brcond4=$val):ctrl, $(brcond5=$val):ctrl = brcond $load8, $icmp2
     # unordered:      $(region8=$val):ctrl, $(region9=$val):phisel = region $brcond4
-    # unordered:      $(ptroff6=$val):ptr = ptroff $call5, $iadd3
     # unordered:      $(store7=$val):ctrl = store.4 $region8, $iconst8, $ptroff6
-    # unordered:      $(load10=$val):ctrl, $(load11=$val):i64 = load.4 $store7, $ptroff5
-    # unordered:      $(icmp3=$val):i64 = icmp slt $sfill1, $load11
+    # unordered:      $(load10=$val):ctrl, $(load11=$val):i64 = load.4 $store7, $ptroff7
+    # unordered:      $(icmp3=$val):i64 = icmp slt $iconst4, $load11
     # unordered:      $(brcond6=$val):ctrl, $(brcond7=$val):ctrl = brcond $load10, $icmp3
     # unordered:      $(region10=$val):ctrl, $(region11=$val):phisel = region $brcond6
-    # unordered:      $(ptroff7=$val):ptr = ptroff $call5, $iadd1
-    # unordered:      $(store8=$val):ctrl = store.4 $region10, $iconst6, $ptroff7
-    # unordered:      $(ptroff8=$val):ptr = ptroff $load7, $iconst2
-    # unordered:      $(load12=$val):ctrl, $(load13=$val):i64 = load.4 $store8, $ptroff8
-    # unordered:      $(icmp4=$val):i64 = icmp slt $sfill1, $load13
+    # unordered:      $(store8=$val):ctrl = store.4 $region10, $iconst6, $ptroff5
+    # unordered:      $(ptroff8=$val):ptr = ptroff $load7, $iconst3
+    # unordered:      $(ptroff9=$val):ptr = ptroff $load7, $iconst2
+    # unordered:      $(load12=$val):ctrl, $(load13=$val):i64 = load.4 $store8, $ptroff9
+    # unordered:      $(icmp4=$val):i64 = icmp slt $iconst4, $load13
     # unordered:      $(brcond8=$val):ctrl, $(brcond9=$val):ctrl = brcond $load12, $icmp4
     # unordered:      $(region12=$val):ctrl, $(region13=$val):phisel = region $brcond8
-    # unordered:      $(ptroff9=$val):ptr = ptroff $load7, $iadd2
-    # unordered:      $(store9=$val):ctrl = store.8 $region12, $call5, $ptroff9
+    # unordered:      $(store9=$val):ctrl = store.8 $region12, $call5, $ptroff8
     # unordered:      $(load14=$val):ctrl, $(load15=$val):ptr = load.8 $store9, $stackslot0
-    # unordered:      $(ptroff10=$val):ptr = ptroff $load15, $iconst2
-    # unordered:      $(load16=$val):ctrl, $(load17=$val):i64 = load.4 $load14, $ptroff10
-    # unordered:      $(icmp5=$val):i64 = icmp slt $sfill1, $load17
+    # unordered:      $(ptroff10=$val):ptr = ptroff $load15, $iconst3
+    # unordered:      $(ptroff11=$val):ptr = ptroff $load15, $iconst2
+    # unordered:      $(load16=$val):ctrl, $(load17=$val):i64 = load.4 $load14, $ptroff11
+    # unordered:      $(icmp5=$val):i64 = icmp slt $iconst4, $load17
     # unordered:      $(brcond10=$val):ctrl, $(brcond11=$val):ctrl = brcond $load16, $icmp5
     # unordered:      $(region14=$val):ctrl, $(region15=$val):phisel = region $brcond10
-    # unordered:      $(ptroff11=$val):ptr = ptroff $load15, $iadd2
-    # unordered:      $(load18=$val):ctrl, $(load19=$val):ptr = load.8 $region14, $ptroff11
-    # unordered:      $(ptroff12=$val):ptr = ptroff $load19, $iconst2
-    # unordered:      $(load20=$val):ctrl, $(load21=$val):i64 = load.4 $load18, $ptroff12
+    # unordered:      $(load18=$val):ctrl, $(load19=$val):ptr = load.8 $region14, $ptroff10
+    # unordered:      $(ptroff12=$val):ptr = ptroff $load19, $iadd0
+    # unordered:      $(ptroff13=$val):ptr = ptroff $load19, $iconst2
+    # unordered:      $(load20=$val):ctrl, $(load21=$val):i64 = load.4 $load18, $ptroff13
     # unordered:      $(icmp6=$val):i64 = icmp slt $sfill0, $load21
     # unordered:      $(brcond12=$val):ctrl, $(brcond13=$val):ctrl = brcond $load20, $icmp6
     # unordered:      $(region16=$val):ctrl, $(region17=$val):phisel = region $brcond12
+    # unordered:      $(load22=$val):ctrl, $(load23=$val):i32 = load.4 $region16, $ptroff12
+    # unordered:      return $load22, $load23
     # unordered:      $(region18=$val):ctrl, $(region19=$val):phisel = region $brcond1, $brcond3, $brcond5, $brcond7, $brcond9, $brcond11, $brcond13
     # unordered:      $(call6=$val):ctrl = call @throw_index_out_of_range_exception $region18
     # unordered:      unreachable $call6
-    # unordered:      $(ptroff13=$val):ptr = ptroff $load19, $iadd0
-    # unordered:      $(load22=$val):ctrl, $(load23=$val):i32 = load.4 $region16, $ptroff13
-    # unordered:      return $load22, $load23
     # nextln:     }
 
     %0:ctrl, %1:i32 = entry

@@ -119,6 +119,7 @@ impl<'a> Index<usize> for Outputs<'a> {
     }
 }
 
+#[derive(Clone)]
 pub struct OutputIter<'a>(slice::Iter<'a, DepValue>);
 
 impl<'a> Iterator for OutputIter<'a> {
@@ -141,6 +142,7 @@ impl<'a> DoubleEndedIterator for OutputIter<'a> {
 
 impl<'a> ExactSizeIterator for OutputIter<'a> {}
 
+#[derive(Clone)]
 pub struct UseIter<'a> {
     graph: &'a ValGraph,
     cur_use: Option<Use>,

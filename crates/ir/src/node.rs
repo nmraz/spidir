@@ -212,6 +212,16 @@ impl NodeKind {
     pub fn is_terminator(&self) -> bool {
         matches!(self, Self::Return | Self::Unreachable | Self::BrCond)
     }
+
+    #[inline]
+    pub fn is_cacheable(&self) -> bool {
+        // Never hash-cons nodes that actually need to be distinct (such as stack slots).
+        !self.has_identity() &&
+        // Also avoid storing nodes that are control-dependent, since it will never be possible to
+        // combine them anyway. This is an optimization and is not strictly necessary for
+        // correctness.
+        !self.has_control_flow()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

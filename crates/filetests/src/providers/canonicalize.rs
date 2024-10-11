@@ -21,7 +21,7 @@ impl TestProvider for CanonicalizeProvider {
 
     fn output_for(&self, mut module: Module) -> Result<(String, Module)> {
         for func in module.functions.values_mut() {
-            canonicalize(&mut func.body);
+            canonicalize(&mut func.body, &mut func.node_cache);
         }
         Ok((module.to_string(), module))
     }

@@ -1,4 +1,5 @@
 # run: canonicalize
+
 extfunc @malloc:ptr(i64)
 
 func @gc_new:ptr(i32, i64) {
@@ -38,20 +39,12 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # unordered:      $(iconst4=$val):i64 = iconst 1
     # unordered:      $(stackslot0=$val):ptr = stackslot 8:8
     # unordered:      $(iconst5=$val):i64 = iconst 24
-
-    # HACK: The duplicated `iconst 20` and `iconst 24` confuse the file checks, so place this
-    # "barrier" to separate both the 20 and 24 instances from one another until we properly combine
-    # them.
-
-    # check:          $(iconst6=$val):i32 = iconst 3
-
-    # unordered:      $(iconst7=$val):i64 = iconst 20
+    # unordered:      $(iconst6=$val):i32 = iconst 3
     # unordered:      $(iconst8=$val):i32 = iconst 2
     # unordered:      $(iconst9=$val):i64 = iconst 0
     # unordered:      $(iconst10=$val):i64 = iconst 2
     # unordered:      $(iconst11=$val):i64 = iconst 28
     # unordered:      $(iconst12=$val):i32 = iconst 170
-    # unordered:      $(iconst13=$val):i64 = iconst 24
     # unordered:      $(iconst14=$val):i32 = iconst 1
     # unordered:      $(iconst15=$val):i64 = iconst 40
     # unordered:      $(iconst16=$val):i32 = iconst 171
@@ -72,7 +65,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # unordered:      $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $load2, $icmp0
     # unordered:      $(region4=$val):ctrl, $(region5=$val):phisel = region $brcond0
     # unordered:      $(store4=$val):ctrl = store.4 $region4, $iconst14, $ptroff1
-    # unordered:      $(ptroff3=$val):ptr = ptroff $load1, $iconst13
+    # unordered:      $(ptroff3=$val):ptr = ptroff $load1, $iconst5
     # unordered:      $(ptroff4=$val):ptr = ptroff $load1, $iconst2
     # unordered:      $(load4=$val):ctrl, $(load5=$val):i64 = load.4 $store4, $ptroff4
     # unordered:      $(icmp1=$val):i64 = icmp slt $iconst9, $load5
@@ -82,7 +75,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # unordered:      $(load6=$val):ctrl, $(load7=$val):ptr = load.8 $store5, $stackslot0
     # unordered:      $(call4=$val):ctrl, $(call5=$val):ptr = call @gc_new $load6, $iconst12, $iconst11
     # unordered:      $(ptroff5=$val):ptr = ptroff $call5, $iconst5
-    # unordered:      $(ptroff6=$val):ptr = ptroff $call5, $iconst7
+    # unordered:      $(ptroff6=$val):ptr = ptroff $call5, $iconst0
     # unordered:      $(ptroff7=$val):ptr = ptroff $call5, $iconst2
     # unordered:      $(store6=$val):ctrl = store.4 $call4, $iconst10, $ptroff7
     # unordered:      $(load8=$val):ctrl, $(load9=$val):i64 = load.4 $store6, $ptroff7

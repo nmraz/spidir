@@ -54,10 +54,11 @@ impl NodeCache {
 
     pub fn remove(&mut self, node: Node) {
         let old_hash = self.node_hashes[node];
-        debug_assert!(old_hash != HASH_NONE);
 
-        self.table
-            .remove_entry(expand_hash(old_hash), |&table_node| table_node == node);
+        if old_hash != HASH_NONE {
+            self.table
+                .remove_entry(expand_hash(old_hash), |&table_node| table_node == node);
+        }
     }
 
     pub fn entry(
@@ -363,5 +364,14 @@ mod tests {
 
         let iconst3 = CachingBuilder::new(&mut body, &mut cache).build_iconst(Type::I32, 5);
         assert_ne!(iconst3, iconst);
+    }
+
+    #[test]
+    fn remove_uncached() {
+        let mut cache = NodeCache::new();
+        let mut body = FunctionBody::new_invalid();
+
+        let iconst = SimpleBuilder(&mut body).build_iconst(Type::I32, 5);
+        cache.remove(body.graph.value_def(iconst).0);
     }
 }

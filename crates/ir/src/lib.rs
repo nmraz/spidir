@@ -10,6 +10,7 @@ pub mod function;
 pub mod loops;
 pub mod module;
 pub mod node;
+pub mod reduce;
 pub mod schedule;
 pub mod valgraph;
 pub mod valwalk;

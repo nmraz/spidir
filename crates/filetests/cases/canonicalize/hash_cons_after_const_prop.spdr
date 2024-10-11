@@ -1,0 +1,23 @@
+# run: canonicalize
+
+extfunc @g(i32, i32)
+
+func @f(i32) {
+    # check:      func @f(i32) {
+    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # unordered:      $(iconst0=$val):i32 = iconst 3
+    # unordered:      $(imul0=$val):i32 = imul $entry1, $iconst0
+    # unordered:      $(call0=$val):ctrl = call @g $entry0, $imul0, $imul0
+    # unordered:      return $call0
+    # nextln:     }
+
+    %ent:ctrl, %p:i32 = entry
+    %1:i32 = iconst 1
+    %2:i32 = iconst 2
+    %3:i32 = iconst 3
+    %add:i32 = iadd %1, %2
+    %mul1:i32 = imul %p, %3
+    %mul2:i32 = imul %p, %add
+    %ret:ctrl = call @g %ent, %mul1, %mul2
+    return %ret
+}

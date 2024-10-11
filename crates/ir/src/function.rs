@@ -4,6 +4,7 @@ use core::{fmt, iter};
 use cranelift_entity::{entity_impl, packed_option::ReservedValue, PrimaryMap};
 
 use crate::{
+    cache::NodeCache,
     node::{DepValueKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{cfg_preorder, CfgPreorder, LiveNodeInfo},
@@ -83,14 +84,20 @@ impl FunctionBody {
 pub struct FunctionData {
     pub metadata: FunctionMetadata,
     pub body: FunctionBody,
+    pub node_cache: NodeCache,
 }
 
 impl FunctionData {
     pub fn new(name: String, sig: Signature) -> Self {
         let body = FunctionBody::new(&sig.param_types);
+        Self::from_metadata_body(FunctionMetadata { name, sig }, body)
+    }
+
+    pub fn from_metadata_body(metadata: FunctionMetadata, body: FunctionBody) -> Self {
         Self {
-            metadata: FunctionMetadata { name, sig },
+            metadata,
             body,
+            node_cache: NodeCache::new(),
         }
     }
 }

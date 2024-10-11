@@ -107,13 +107,13 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                     )));
                 }
 
-                let function = module.functions.push(FunctionData {
-                    metadata: FunctionMetadata {
+                let function = module.functions.push(FunctionData::from_metadata_body(
+                    FunctionMetadata {
                         name: name.clone().into_owned(),
                         sig: parsed.sig,
                     },
-                    body: FunctionBody::new_invalid(),
-                });
+                    FunctionBody::new_invalid(),
+                ));
 
                 function_names.insert(name, FunctionRef::Internal(function));
                 pending_functions.push(PendingFunction {

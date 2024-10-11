@@ -15,20 +15,20 @@ fn check_verify_func_errors(
     entry: Node,
     expected_errors: &[FunctionVerifierError],
 ) {
-    let func = FunctionData {
-        metadata: FunctionMetadata {
+    let func = FunctionData::from_metadata_body(
+        FunctionMetadata {
             name: "func".to_owned(),
             sig: Signature {
                 ret_type: None,
                 param_types: vec![],
             },
         },
-        body: FunctionBody {
+        FunctionBody {
             graph,
             entry,
             call_ind_sigs: PrimaryMap::new(),
         },
-    };
+    );
     let mut module = Module::new();
     let func = module.functions.push(func);
     assert_eq!(

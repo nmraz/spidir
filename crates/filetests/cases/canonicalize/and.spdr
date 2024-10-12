@@ -1,0 +1,237 @@
+# run: canonicalize
+
+func @and32:i32(i32, i32) {
+    # check:   func @and32:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(and0=$val):i32 = and $entry1, $entry2
+    # dag:         return $entry0, $and0
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = and %a, %b
+    return %c, %r
+}
+
+func @and_fold32:i32() {
+    # check:   func @and_fold32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = and %a, %b
+    return %c, %r
+}
+
+func @andz32:i32(i32) {
+    # check:   func @andz32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 0
+    %r:i32 = and %a, %b
+    return %c, %r
+}
+
+func @zand32:i32(i32) {
+    # check:   func @zand32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 0
+    %r:i32 = and %a, %b
+    return %c, %r
+}
+
+func @ando32:i32(i32) {
+    # check:   func @ando32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 4294967295
+    %r:i32 = and %a, %b
+    return %c, %r
+}
+
+func @oand32:i32(i32) {
+    # check:   func @oand32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 4294967295
+    %r:i32 = and %a, %b
+    return %c, %r
+}
+
+func @andc32:i32(i32) {
+    # check:   func @andc32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(and0=$val):i32 = and $entry1, $iconst0
+    # dag:         return $entry0, $and0
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 5
+    %r:i32 = and %a, %b
+    return %c, %r
+}
+
+func @cand32:i32(i32) {
+    # check:   func @cand32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(and0=$val):i32 = and $entry1, $iconst0
+    # dag:         return $entry0, $and0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = and %a, %b
+    return %c, %r
+}
+
+func @and64:i64(i64, i64) {
+    # check:   func @and64:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(and0=$val):i64 = and $entry1, $entry2
+    # dag:         return $entry0, $and0
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = and %a, %b
+    return %c, %r
+}
+
+func @and_fold64:i64() {
+    # check:   func @and_fold64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = and %a, %b
+    return %c, %r
+}
+
+func @andz64:i64(i64) {
+    # check:   func @andz64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %r:i64 = and %a, %b
+    return %c, %r
+}
+
+func @zand64:i64(i64) {
+    # check:   func @zand64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 0
+    %r:i64 = and %a, %b
+    return %c, %r
+}
+
+func @ando64_32:i64(i64) {
+    # check:   func @ando64_32:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 4294967295
+    # dag:         $(and0=$val):i64 = and $entry1, $iconst0
+    # dag:         return $entry0, $and0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 4294967295
+    %r:i64 = and %a, %b
+    return %c, %r
+}
+
+func @oand64_32:i64(i64) {
+    # check:   func @oand64_32:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 4294967295
+    # dag:         $(and0=$val):i64 = and $entry1, $iconst0
+    # dag:         return $entry0, $and0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 4294967295
+    %r:i64 = and %a, %b
+    return %c, %r
+}
+
+func @ando64_64:i64(i64) {
+    # check:   func @ando64_64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744073709551615
+    %r:i64 = and %a, %b
+    return %c, %r
+}
+
+func @oand64_64:i64(i64) {
+    # check:   func @oand64_64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 18446744073709551615
+    %r:i64 = and %a, %b
+    return %c, %r
+}
+
+func @andc64:i64(i64) {
+    # check:   func @andc64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(and0=$val):i64 = and $entry1, $iconst0
+    # dag:         return $entry0, $and0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 5
+    %r:i64 = and %a, %b
+    return %c, %r
+}
+
+func @cand64:i64(i64) {
+    # check:   func @cand64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(and0=$val):i64 = and $entry1, $iconst0
+    # dag:         return $entry0, $and0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = and %a, %b
+    return %c, %r
+}

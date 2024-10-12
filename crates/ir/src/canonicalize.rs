@@ -1,3 +1,5 @@
+use core::ops::BitAnd;
+
 use crate::{
     builder::BuilderExt,
     cache::NodeCache,
@@ -56,6 +58,30 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
             match (match_iconst(graph, a), match_iconst(graph, b)) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_sub),
                 (_, Some(0)) => ctx.replace_value(output, a),
+                _ => {}
+            }
+        }
+        NodeKind::And => {
+            let [a, b] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
+            let ty = graph.value_kind(output).as_value().unwrap();
+
+            match (match_iconst(graph, a), match_iconst(graph, b)) {
+                (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, bitand),
+
+                (Some(0), _) | (_, Some(0)) => replace_with_iconst(ctx, output, 0),
+
+                (Some(0xffffffff), _) if ty == Type::I32 => ctx.replace_value(output, b),
+                (_, Some(0xffffffff)) if ty == Type::I32 => ctx.replace_value(output, a),
+
+                (Some(0xffffffffffffffff), _) => ctx.replace_value(output, b),
+                (_, Some(0xffffffffffffffff)) => ctx.replace_value(output, a),
+
+                (Some(_), None) => {
+                    let new_output = ctx.builder().build_and(b, a);
+                    ctx.replace_value(output, new_output);
+                }
+
                 _ => {}
             }
         }

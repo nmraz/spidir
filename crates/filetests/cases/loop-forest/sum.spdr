@@ -38,9 +38,9 @@ func @sum_to_n:i32(i32) {
 func @sum_to_n_with_stack:i32(i32) {
     # check: function `sum_to_n_with_stack`:
     # nextln: %0:ctrl, %1:i32 = entry                 # x
-    # nextln: %2:ctrl, %3:phisel = region %0          # x
     # nextln: %4:ptr = stackslot 4:4                  # x
     # nextln: %5:ptr = stackslot 4:4                  # x
+    # nextln: %2:ctrl, %3:phisel = region %0          # x
     # nextln: %6:ctrl = store.4 %2, %1, %5            # x
     # nextln: %7:i32 = iconst 1                       # x
     # nextln: %8:i32 = iconst 0                       # x

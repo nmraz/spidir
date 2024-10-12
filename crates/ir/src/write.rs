@@ -1,6 +1,6 @@
-use core::fmt;
+use core::{fmt, iter};
 
-use alloc::{borrow::Cow, format};
+use alloc::{borrow::Cow, format, vec::Vec};
 
 use crate::{
     function::{FunctionBody, FunctionData, FunctionMetadata, Signature},
@@ -149,7 +149,33 @@ pub fn write_annotated_body<W: fmt::Write + ?Sized>(
     body: &FunctionBody,
     indentation: u32,
 ) -> fmt::Result {
-    for node in body.compute_live_nodes().reverse_postorder(&body.graph) {
+    let mut nodes = body.compute_live_nodes().reverse_postorder(&body.graph);
+
+    // Split out all nodes with identity so we print them first, right after the entry. This both
+    // makes the graph more readable (stack slots and such end up near the beginning) and makes
+    // it easier to DAG-match in the filetests.
+    let mut nodes_with_identity = Vec::new();
+    nodes.retain(|&node| {
+        if body.graph.node_kind(node).has_identity() {
+            nodes_with_identity.push(node);
+            false
+        } else {
+            true
+        }
+    });
+
+    // Try to keep the special nodes at the beginning relatively stable.
+    nodes_with_identity.sort_unstable_by_key(|&node| node.as_u32());
+
+    // Build the final output order:
+    // 1. Entry node
+    // 2. Nodes with identity
+    // 3. Other nodes
+    let nodes = iter::once(nodes[0])
+        .chain(nodes_with_identity)
+        .chain(nodes[1..].iter().copied());
+
+    for node in nodes {
         write_indendation(w, indentation)?;
         annotator.write_node(w, module, body, node)?;
         writeln!(w)?;
@@ -574,8 +600,8 @@ mod tests {
             expect![[r#"
                 func @with_slots(i32, f64) {
                     %0:ctrl, %1:i32, %2:f64 = entry
-                    %4:ptr = stackslot 8:8
                     %3:ptr = stackslot 4:4
+                    %4:ptr = stackslot 8:8
                     %5:ctrl = store.4 %0, %1, %3
                     %6:ctrl = store.8 %5, %2, %4
                     return %6

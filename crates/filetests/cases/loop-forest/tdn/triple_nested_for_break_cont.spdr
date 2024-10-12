@@ -3,16 +3,16 @@
 func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)":i32(ptr, i32, i32, i32) {
     # check: function `System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)`:
     # nextln: %0:ctrl, %1:ptr, %2:i32, %3:i32, %4:i32 = entry         # x
-    # nextln: %5:ctrl, %6:phisel = region %0          # x
     # nextln: %7:ptr = stackslot 4:4                  # x
     # nextln: %8:ptr = stackslot 4:4                  # x
-    # nextln: %9:i32 = iconst 1                       # x
     # nextln: %10:ptr = stackslot 4:4                 # x
+    # nextln: %15:ptr = stackslot 4:4                 # x
+    # nextln: %5:ctrl, %6:phisel = region %0          # x
+    # nextln: %9:i32 = iconst 1                       # x
     # nextln: %11:i32 = iconst 0                      # x
     # nextln: %12:ctrl = store.4 %5, %11, %7          # x
     # nextln: %13:ctrl = store.4 %12, %11, %8         # x
     # nextln: %14:ctrl = store.4 %13, %11, %10        # x
-    # nextln: %15:ptr = stackslot 4:4                 # x
     # nextln: %16:ctrl = store.4 %14, %11, %15        # x
     # nextln: %17:ctrl, %18:phisel = region %16       # x
     # nextln: %19:ctrl = store.4 %17, %11, %7         # x

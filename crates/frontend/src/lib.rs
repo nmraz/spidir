@@ -555,9 +555,9 @@ mod tests {
             expect![[r#"
                 func @func(i32, f64) {
                     %0:ctrl, %1:i32, %2:f64 = entry
-                    %3:ctrl, %4:phisel = region %0
-                    %7:ptr = stackslot 8:8
                     %5:ptr = stackslot 4:4
+                    %7:ptr = stackslot 8:8
+                    %3:ctrl, %4:phisel = region %0
                     %6:ctrl = store.4 %3, %1, %5
                     %8:ctrl = store.8 %6, %2, %7
                     return %8

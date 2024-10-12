@@ -3,13 +3,13 @@
 extfunc @g(i32, i32)
 
 func @f(i32) {
-    # check:      func @f(i32) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # unordered:      $(iconst0=$val):i32 = iconst 3
-    # unordered:      $(imul0=$val):i32 = imul $entry1, $iconst0
-    # unordered:      $(call0=$val):ctrl = call @g $entry0, $imul0, $imul0
-    # unordered:      return $call0
-    # nextln:     }
+    # check:   func @f(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 3
+    # dag:         $(imul0=$val):i32 = imul $entry1, $iconst0
+    # dag:         $(call0=$val):ctrl = call @g $entry0, $imul0, $imul0
+    # dag:         return $call0
+    # nextln:  }
 
     %ent:ctrl, %p:i32 = entry
     %1:i32 = iconst 1

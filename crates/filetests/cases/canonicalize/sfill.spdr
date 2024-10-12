@@ -1,11 +1,11 @@
 # run: canonicalize
 
 func @sfill_8_32:i32(i32) {
-    # check:      func @sfill_8_32:i32(i32) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # unordered:      $(sfill0=$val):i32 = sfill 8 $entry1
-    # unordered:      return $entry0, $sfill0
-    # nextln:     }
+    # check:   func @sfill_8_32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(sfill0=$val):i32 = sfill 8 $entry1
+    # dag:         return $entry0, $sfill0
+    # nextln:  }
 
     %c:ctrl, %a:i32 = entry
     %r:i32 = sfill 8 %a
@@ -13,11 +13,11 @@ func @sfill_8_32:i32(i32) {
 }
 
 func @sfill_const_8_32:i32() {
-    # check:      func @sfill_const_8_32:i32() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i32 = iconst 5
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @sfill_const_8_32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i32 = iconst 5
@@ -26,11 +26,11 @@ func @sfill_const_8_32:i32() {
 }
 
 func @sfill_const_neg_8_32:i32() {
-    # check:      func @sfill_const_neg_8_32:i32() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i32 = iconst 4294967295
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @sfill_const_neg_8_32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 4294967295
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i32 = iconst 255
@@ -39,11 +39,11 @@ func @sfill_const_neg_8_32:i32() {
 }
 
 func @sfill_const_16_32:i32() {
-    # check:      func @sfill_const_16_32:i32() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i32 = iconst 255
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @sfill_const_16_32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 255
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i32 = iconst 255
@@ -52,11 +52,11 @@ func @sfill_const_16_32:i32() {
 }
 
 func @sfill_8_64:i64(i64) {
-    # check:      func @sfill_8_64:i64(i64) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
-    # unordered:      $(sfill0=$val):i64 = sfill 8 $entry1
-    # unordered:      return $entry0, $sfill0
-    # nextln:     }
+    # check:   func @sfill_8_64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(sfill0=$val):i64 = sfill 8 $entry1
+    # dag:         return $entry0, $sfill0
+    # nextln:  }
 
     %c:ctrl, %a:i64 = entry
     %r:i64 = sfill 8 %a
@@ -64,11 +64,11 @@ func @sfill_8_64:i64(i64) {
 }
 
 func @sfill_const_8_64:i64() {
-    # check:      func @sfill_const_8_64:i64() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i64 = iconst 5
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @sfill_const_8_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i64 = iconst 5
@@ -77,11 +77,11 @@ func @sfill_const_8_64:i64() {
 }
 
 func @sfill_const_neg_8_64:i64() {
-    # check:      func @sfill_const_neg_8_64:i64() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i64 = iconst 18446744073709551615
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @sfill_const_neg_8_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551615
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i64 = iconst 255
@@ -90,11 +90,11 @@ func @sfill_const_neg_8_64:i64() {
 }
 
 func @sfill_const_16_64:i64() {
-    # check:      func @sfill_const_16_64:i64() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i64 = iconst 255
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @sfill_const_16_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 255
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i64 = iconst 255
@@ -103,11 +103,11 @@ func @sfill_const_16_64:i64() {
 }
 
 func @sfill_const_32_64:i64() {
-    # check:      func @sfill_const_32_64:i64() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i64 = iconst 5
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @sfill_const_32_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i64 = iconst 5
@@ -116,11 +116,11 @@ func @sfill_const_32_64:i64() {
 }
 
 func @sfill_const_neg_32_64:i64() {
-    # check:      func @sfill_const_neg_32_64:i64() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i64 = iconst 18446744073709551609
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @sfill_const_neg_32_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551609
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i64 = iconst 4294967289

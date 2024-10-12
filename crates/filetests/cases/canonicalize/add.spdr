@@ -1,11 +1,11 @@
 # run: canonicalize
 
 func @add32:i32(i32, i32) {
-    # check:      func @add32:i32(i32, i32) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
-    # unordered:      $(iadd0=$val):i32 = iadd $entry1, $entry2
-    # unordered:      return $entry0, $iadd0
-    # nextln:     }
+    # check:   func @add32:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(iadd0=$val):i32 = iadd $entry1, $entry2
+    # dag:         return $entry0, $iadd0
+    # nextln:  }
 
     %c:ctrl, %a:i32, %b:i32 = entry
     %r:i32 = iadd %a, %b
@@ -13,11 +13,11 @@ func @add32:i32(i32, i32) {
 }
 
 func @add_fold32:i32() {
-    # check:      func @add_fold32:i32() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i32 = iconst 12
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @add_fold32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 12
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i32 = iconst 5
@@ -27,11 +27,11 @@ func @add_fold32:i32() {
 }
 
 func @add_fold_neg32:i32() {
-    # check:      func @add_fold_neg32:i32() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i32 = iconst 4294967294
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @add_fold_neg32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 4294967294
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i32 = iconst 5
@@ -41,11 +41,11 @@ func @add_fold_neg32:i32() {
 }
 
 func @add_fold_wrap32:i32() {
-    # check:      func @add_fold_wrap32:i32() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i32 = iconst 4294967282
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @add_fold_wrap32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 4294967282
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i32 = iconst 4294967289
@@ -55,10 +55,10 @@ func @add_fold_wrap32:i32() {
 }
 
 func @addz32:i32(i32) {
-    # check:      func @addz32:i32(i32) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # unordered:      return $entry0, $entry1
-    # nextln:     }
+    # check:   func @addz32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
 
     %c:ctrl, %a:i32 = entry
     %b:i32 = iconst 0
@@ -67,10 +67,10 @@ func @addz32:i32(i32) {
 }
 
 func @zadd32:i32(i32) {
-    # check:      func @zadd32:i32(i32) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # unordered:      return $entry0, $entry1
-    # nextln:     }
+    # check:   func @zadd32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
 
     %c:ctrl, %b:i32 = entry
     %a:i32 = iconst 0
@@ -79,12 +79,12 @@ func @zadd32:i32(i32) {
 }
 
 func @addc32:i32(i32) {
-    # check:      func @addc32:i32(i32) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # unordered:      $(iconst0=$val):i32 = iconst 5
-    # unordered:      $(iadd0=$val):i32 = iadd $entry1, $iconst0
-    # unordered:      return $entry0, $iadd0
-    # nextln:     }
+    # check:   func @addc32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(iadd0=$val):i32 = iadd $entry1, $iconst0
+    # dag:         return $entry0, $iadd0
+    # nextln:  }
 
     %c:ctrl, %a:i32 = entry
     %b:i32 = iconst 5
@@ -93,12 +93,12 @@ func @addc32:i32(i32) {
 }
 
 func @cadd32:i32(i32) {
-    # check:      func @cadd32:i32(i32) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # unordered:      $(iconst0=$val):i32 = iconst 5
-    # unordered:      $(iadd0=$val):i32 = iadd $entry1, $iconst0
-    # unordered:      return $entry0, $iadd0
-    # nextln:     }
+    # check:   func @cadd32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(iadd0=$val):i32 = iadd $entry1, $iconst0
+    # dag:         return $entry0, $iadd0
+    # nextln:  }
 
     %c:ctrl, %b:i32 = entry
     %a:i32 = iconst 5
@@ -107,11 +107,11 @@ func @cadd32:i32(i32) {
 }
 
 func @add64:i64(i64, i64) {
-    # check:      func @add64:i64(i64, i64) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
-    # unordered:      $(iadd0=$val):i64 = iadd $entry1, $entry2
-    # unordered:      return $entry0, $iadd0
-    # nextln:     }
+    # check:   func @add64:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(iadd0=$val):i64 = iadd $entry1, $entry2
+    # dag:         return $entry0, $iadd0
+    # nextln:  }
 
     %c:ctrl, %a:i64, %b:i64 = entry
     %r:i64 = iadd %a, %b
@@ -119,11 +119,11 @@ func @add64:i64(i64, i64) {
 }
 
 func @add_fold64:i64() {
-    # check:      func @add_fold64:i64() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i64 = iconst 12
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @add_fold64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 12
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i64 = iconst 5
@@ -133,11 +133,11 @@ func @add_fold64:i64() {
 }
 
 func @add_fold_neg64:i64() {
-    # check:      func @add_fold_neg64:i64() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i64 = iconst 18446744073709551614
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @add_fold_neg64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551614
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i64 = iconst 5
@@ -147,11 +147,11 @@ func @add_fold_neg64:i64() {
 }
 
 func @add_fold_wrap64:i64() {
-    # check:      func @add_fold_wrap64:i64() {
-    # nextln:         $(entry0=$val):ctrl = entry
-    # unordered:      $(iconst0=$val):i64 = iconst 18446744073709551602
-    # unordered:      return $entry0, $iconst0
-    # nextln:     }
+    # check:   func @add_fold_wrap64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551602
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
 
     %c:ctrl = entry
     %a:i64 = iconst 18446744073709551609
@@ -161,10 +161,10 @@ func @add_fold_wrap64:i64() {
 }
 
 func @addz64:i64(i64) {
-    # check:      func @addz64:i64(i64) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
-    # unordered:      return $entry0, $entry1
-    # nextln:     }
+    # check:   func @addz64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
 
     %c:ctrl, %a:i64 = entry
     %b:i64 = iconst 0
@@ -173,10 +173,10 @@ func @addz64:i64(i64) {
 }
 
 func @zadd64:i64(i64) {
-    # check:      func @zadd64:i64(i64) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
-    # unordered:      return $entry0, $entry1
-    # nextln:     }
+    # check:   func @zadd64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
 
     %c:ctrl, %b:i64 = entry
     %a:i64 = iconst 0
@@ -185,12 +185,12 @@ func @zadd64:i64(i64) {
 }
 
 func @addc64:i64(i64) {
-    # check:      func @addc64:i64(i64) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
-    # unordered:      $(iconst0=$val):i64 = iconst 5
-    # unordered:      $(iadd0=$val):i64 = iadd $entry1, $iconst0
-    # unordered:      return $entry0, $iadd0
-    # nextln:     }
+    # check:   func @addc64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(iadd0=$val):i64 = iadd $entry1, $iconst0
+    # dag:         return $entry0, $iadd0
+    # nextln:  }
 
     %c:ctrl, %a:i64 = entry
     %b:i64 = iconst 5
@@ -199,12 +199,12 @@ func @addc64:i64(i64) {
 }
 
 func @cadd64:i64(i64) {
-    # check:      func @cadd64:i64(i64) {
-    # nextln:         $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
-    # unordered:      $(iconst0=$val):i64 = iconst 5
-    # unordered:      $(iadd0=$val):i64 = iadd $entry1, $iconst0
-    # unordered:      return $entry0, $iadd0
-    # nextln:     }
+    # check:   func @cadd64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(iadd0=$val):i64 = iadd $entry1, $iconst0
+    # dag:         return $entry0, $iadd0
+    # nextln:  }
 
     %c:ctrl, %b:i64 = entry
     %a:i64 = iconst 5

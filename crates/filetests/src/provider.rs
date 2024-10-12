@@ -222,7 +222,7 @@ pub fn update_transformed_module_output(
 
         if let Some(new_func) = parse_module_func_start(output_line) {
             updater.advance_to_function(&new_func)?;
-            updater.directive(4, "check", &format!("     {output_line}"));
+            updater.directive(4, "check", &format!("  {output_line}"));
             in_func = true;
 
             // We want the entry node and all nodes with identity to be matched in order after the
@@ -235,15 +235,15 @@ pub fn update_transformed_module_output(
         }
 
         if output_line.trim() == "}" {
-            updater.directive(4, "nextln", &format!("    {output_line}"));
+            updater.directive(4, "nextln", &format!(" {output_line}"));
             updater.blank_line();
         } else if ordered_lines > 0 {
-            updater.directive(4, "nextln", &format!("    {output_line}"));
+            updater.directive(4, "nextln", &format!(" {output_line}"));
             ordered_lines -= 1;
         } else {
             // We don't actually care about the order in which nodes are printed, just that they are
             // all attached correctly. This should make tests more resilient to minor reshuffles.
-            updater.directive(4, "unordered", &format!(" {output_line}"));
+            updater.directive(4, "dag", &format!(r"    {output_line}"));
         }
     }
 

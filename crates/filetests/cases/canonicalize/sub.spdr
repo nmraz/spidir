@@ -94,6 +94,18 @@ func @csub32:i32(i32) {
     return %c, %r
 }
 
+func @sub_self32:i32(i32) {
+    # check:   func @sub_self32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %r:i32 = isub %a, %a
+    return %c, %r
+}
+
 func @sub64:i64(i64, i64) {
     # check:   func @sub64:i64(i64, i64) {
     # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
@@ -185,5 +197,17 @@ func @csub64:i64(i64) {
     %c:ctrl, %b:i64 = entry
     %a:i64 = iconst 5
     %r:i64 = isub %a, %b
+    return %c, %r
+}
+
+func @sub_self64:i64(i64) {
+    # check:   func @sub_self64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %r:i64 = isub %a, %a
     return %c, %r
 }

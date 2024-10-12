@@ -48,6 +48,11 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
             let [a, b] = graph.node_inputs_exact(node);
             let [output] = graph.node_outputs_exact(node);
 
+            if a == b {
+                replace_with_iconst(ctx, output, 0);
+                return;
+            }
+
             match (match_iconst(graph, a), match_iconst(graph, b)) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_sub),
                 (_, Some(0)) => ctx.replace_value(output, a),

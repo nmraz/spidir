@@ -1,4 +1,4 @@
-use core::{ops::Index, slice};
+use core::{array, ops::Index, slice};
 
 use cranelift_entity::{
     entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap,
@@ -302,6 +302,13 @@ impl ValGraph {
         }
     }
 
+    #[inline]
+    pub fn node_inputs_exact<const N: usize>(&self, node: Node) -> [DepValue; N] {
+        let inputs = self.node_inputs(node);
+        assert!(inputs.len() == N);
+        array::from_fn(|i| inputs[i])
+    }
+
     pub fn add_node_input(&mut self, node: Node, input: DepValue) {
         let input_index = self.nodes[node].inputs.len(&self.use_pool) as u32;
         let input_use = self.uses.push(UseData {
@@ -332,6 +339,13 @@ impl ValGraph {
     #[inline]
     pub fn node_outputs(&self, node: Node) -> Outputs<'_> {
         Outputs(self.nodes[node].outputs.as_slice(&self.value_pool))
+    }
+
+    #[inline]
+    pub fn node_outputs_exact<const N: usize>(&self, node: Node) -> [DepValue; N] {
+        let outputs = self.node_outputs(node);
+        assert!(outputs.len() == N);
+        array::from_fn(|i| outputs[i])
     }
 
     #[inline]

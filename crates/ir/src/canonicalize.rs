@@ -1,5 +1,3 @@
-use core::array;
-
 use crate::{
     builder::BuilderExt,
     cache::NodeCache,
@@ -31,8 +29,8 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
     let graph = ctx.graph();
     match graph.node_kind(node) {
         NodeKind::Iadd => {
-            let [a, b] = node_inputs_exact(graph, node);
-            let output = graph.node_outputs(node)[0];
+            let [a, b] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_add),
@@ -49,8 +47,8 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
             }
         }
         NodeKind::Isub => {
-            let [a, b] = node_inputs_exact(graph, node);
-            let output = graph.node_outputs(node)[0];
+            let [a, b] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_sub),
@@ -59,8 +57,8 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
             }
         }
         NodeKind::Imul => {
-            let [a, b] = node_inputs_exact(graph, node);
-            let output = graph.node_outputs(node)[0];
+            let [a, b] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
             let ty = graph.value_kind(output).as_value().unwrap();
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
@@ -82,24 +80,24 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
             }
         }
         NodeKind::Iext => {
-            let [input] = node_inputs_exact(graph, node);
-            let output = graph.node_outputs(node)[0];
+            let [input] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
             if let Some(value) = match_iconst(graph, input) {
                 let new_output = ctx.builder().build_iconst(Type::I64, value);
                 ctx.replace_value(output, new_output);
             }
         }
         NodeKind::Itrunc => {
-            let [input] = node_inputs_exact(graph, node);
-            let output = graph.node_outputs(node)[0];
+            let [input] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
             if let Some(value) = match_iconst(graph, input) {
                 let new_output = ctx.builder().build_iconst(Type::I32, value as u32 as u64);
                 ctx.replace_value(output, new_output);
             }
         }
         &NodeKind::Sfill(width) => {
-            let [input] = node_inputs_exact(graph, node);
-            let output = graph.node_outputs(node)[0];
+            let [input] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
             let ty = graph.value_kind(output).as_value().unwrap();
 
             if let Some(value) = match_iconst(graph, input) {
@@ -126,10 +124,4 @@ fn match_iconst(graph: &ValGraph, value: DepValue) -> Option<u64> {
     }
 
     None
-}
-
-fn node_inputs_exact<const N: usize>(graph: &ValGraph, node: Node) -> [DepValue; N] {
-    let inputs = graph.node_inputs(node);
-    assert!(inputs.len() == N);
-    array::from_fn(|i| inputs[i])
 }

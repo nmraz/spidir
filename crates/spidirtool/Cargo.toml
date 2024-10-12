@@ -11,6 +11,7 @@ codegen-test-tools.workspace = true
 fx-utils.workspace = true
 ir.workspace = true
 ir-graphviz.workspace = true
+opt.workspace = true
 parser = { workspace = true, features = ["std"] }
 
 clap.workspace = true

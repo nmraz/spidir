@@ -373,6 +373,7 @@ dependencies = [
  "ir-graphviz",
  "itertools",
  "log",
+ "opt",
  "parser",
  "rayon",
  "regex",
@@ -519,6 +520,16 @@ name = "once_cell"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
+
+[[package]]
+name = "opt"
+version = "0.1.0"
+dependencies = [
+ "fx-utils",
+ "ir",
+ "itertools",
+ "smallvec",
+]
 
 [[package]]
 name = "parser"
@@ -756,6 +767,7 @@ dependencies = [
  "ir-graphviz",
  "itertools",
  "log",
+ "opt",
  "parser",
  "tempfile",
 ]

@@ -4,13 +4,11 @@ extern crate alloc;
 
 pub mod builder;
 pub mod cache;
-pub mod canonicalize;
 pub mod domtree;
 pub mod function;
 pub mod loops;
 pub mod module;
 pub mod node;
-pub mod reduce;
 pub mod schedule;
 pub mod valgraph;
 pub mod valwalk;

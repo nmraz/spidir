@@ -1,7 +1,8 @@
 use anyhow::Result;
 use filecheck::Value;
 use fx_utils::FxHashMap;
-use ir::{canonicalize::canonicalize, module::Module};
+use ir::module::Module;
+use opt::canonicalize::canonicalize;
 
 use crate::{
     provider::{update_transformed_module_output, TestProvider, Updater},

@@ -1,13 +1,14 @@
 use core::ops::BitAnd;
 
-use crate::{
+use ir::{
     builder::BuilderExt,
     cache::NodeCache,
     function::FunctionBody,
     node::{NodeKind, Type},
-    reduce::{reduce_body, ReduceContext},
     valgraph::{DepValue, Node, ValGraph},
 };
+
+use crate::reduce::{reduce_body, ReduceContext};
 
 pub fn canonicalize(body: &mut FunctionBody, node_cache: &mut NodeCache) {
     reduce_body(body, node_cache, canonicalize_node);

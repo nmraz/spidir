@@ -13,6 +13,7 @@ fx-utils = { path = "crates/fx-utils" }
 graphwalk = { path = "crates/graphwalk" }
 ir = { path = "crates/ir" }
 ir-graphviz = { path = "crates/ir-graphviz" }
+opt = { path = "crates/opt" }
 parser = { path = "crates/parser" }
 
 anyhow = "1.0.71"

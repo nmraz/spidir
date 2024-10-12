@@ -13,6 +13,7 @@ ir-graphviz.workspace = true
 parser = { workspace = true, features = ["std"] }
 fx-utils.workspace = true
 graphwalk.workspace = true
+opt.workspace = true
 
 anyhow.workspace = true
 clap.workspace = true

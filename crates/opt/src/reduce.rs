@@ -1,10 +1,10 @@
 use alloc::collections::VecDeque;
 
-use fx_utils::FxHashSet;
 use itertools::izip;
 use smallvec::SmallVec;
 
-use crate::{
+use fx_utils::FxHashSet;
+use ir::{
     cache::{CachingBuilder, Entry, NodeCache},
     function::FunctionBody,
     valgraph::{DepValue, Node, ValGraph},
@@ -43,10 +43,6 @@ pub struct ReduceContext<'f> {
 }
 
 impl<'f> ReduceContext<'f> {
-    pub fn body(&self) -> &FunctionBody {
-        self.body
-    }
-
     pub fn graph(&self) -> &ValGraph {
         &self.body.graph
     }

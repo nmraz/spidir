@@ -1,0 +1,11 @@
+[package]
+name = "opt"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fx-utils.workspace = true
+ir.workspace = true
+
+itertools.workspace = true
+smallvec.workspace = true

@@ -1,0 +1,39 @@
+# run: canonicalize
+
+func @iota(ptr, i64) {
+    # check:   func @iota(ptr, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         $(iconst1=$val):i64 = iconst 0
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry2, $iconst1
+    # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $icmp0
+    # dag:         $(iconst2=$val):i64 = iconst 3
+    # dag:         $(shl0=$val):i64 = shl $(phi0=$val), $iconst2
+    # dag:         $(ptroff0=$val):ptr = ptroff $entry1, $shl0
+    # dag:         $(store0=$val):ctrl = store.8 $(region0=$val), $phi0, $ptroff0
+    # dag:         $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $store0, $(icmp1=$val)
+    # dag:         $(region1=$val):ctrl, $(region2=$val):phisel = region $brcond0, $brcond2
+    # dag:         return $region1
+    # dag:         $region0:ctrl, $(region3=$val):phisel = region $brcond1, $brcond3
+    # dag:         $phi0:i64 = phi $region3, $iconst1, $(iadd0=$val)
+    # dag:         $iadd0:i64 = iadd $phi0, $iconst0
+    # dag:         $icmp1:i32 = icmp eq $iadd0, $entry2
+    # nextln:  }
+
+    %entry_ctrl:ctrl, %arr:ptr, %n:i64 = entry
+    %zero:i64 = iconst 0
+    %zerocmp:i32 = icmp eq %n, %zero
+    %iszero:ctrl, %isnonzero:ctrl = brcond %entry_ctrl, %zerocmp
+    %loopbody:ctrl, %loopphi:phisel = region %isnonzero, %looplatch
+    %i:i64 = phi %loopphi, %zero, %inext
+    %three:i64 = iconst 3
+    %off:i64 = shl %i, %three
+    %ptr:ptr = ptroff %arr, %off
+    %poststore:ctrl = store.8 %loopbody, %i, %ptr
+    %one:i64 = iconst 1
+    %inext:i64 = iadd %i, %one
+    %donecmp:i32 = icmp eq %inext, %n
+    %loopdone:ctrl, %looplatch:ctrl = brcond %poststore, %donecmp
+    %exit:ctrl, %exitphi:phisel = region %iszero, %loopdone
+    return %exit
+}

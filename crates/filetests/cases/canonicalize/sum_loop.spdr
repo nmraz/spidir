@@ -1,0 +1,87 @@
+# run: canonicalize
+
+func @sum_to_n:i32(i32) {
+    # check:   func @sum_to_n:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         $(iconst1=$val):i32 = iconst 0
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry1, $iconst1
+    # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $icmp0
+    # dag:         $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond1, $(brcond2=$val)
+    # dag:         $(phi0=$val):i32 = phi $region1, $entry1, $(isub0=$val)
+    # dag:         $(iadd0=$val):i32 = iadd $(phi1=$val), $phi0
+    # dag:         $phi1:i32 = phi $region1, $iconst1, $iadd0
+    # dag:         $isub0:i32 = isub $phi0, $iconst0
+    # dag:         $(icmp1=$val):i32 = icmp eq $isub0, $iconst1
+    # dag:         $(brcond3=$val):ctrl, $brcond2:ctrl = brcond $region0, $icmp1
+    # dag:         $(region2=$val):ctrl, $(region3=$val):phisel = region $brcond0, $brcond3
+    # dag:         $(phi2=$val):i32 = phi $region3, $iconst1, $iadd0
+    # dag:         return $region2, $phi2
+    # nextln:  }
+
+    %0:ctrl, %1:i32 = entry
+    %10:i32 = iconst 1
+    %2:i32 = iconst 0
+    %3:i32 = icmp eq %1, %2
+    %4:ctrl, %5:ctrl = brcond %0, %3
+    %13:i32 = icmp eq %11, %2
+    %14:ctrl, %15:ctrl = brcond %6, %13
+    %16:ctrl, %17:phisel = region %4, %14
+    %6:ctrl, %7:phisel = region %5, %15
+    %8:i32 = phi %7, %1, %11
+    %11:i32 = isub %8, %10
+    %9:i32 = phi %7, %2, %12
+    %12:i32 = iadd %9, %8
+    %18:i32 = phi %17, %2, %12
+    return %16, %18
+}
+
+func @sum_to_n_with_stack:i32(i32) {
+    # check:   func @sum_to_n_with_stack:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # nextln:      $(stackslot0=$val):ptr = stackslot 4:4
+    # nextln:      $(stackslot1=$val):ptr = stackslot 4:4
+    # dag:         $(region0=$val):ctrl, $(region1=$val):phisel = region $entry0
+    # dag:         $(store0=$val):ctrl = store.4 $region0, $entry1, $stackslot1
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         $(iconst1=$val):i32 = iconst 0
+    # dag:         $(store1=$val):ctrl = store.4 $store0, $iconst1, $stackslot0
+    # dag:         $(region2=$val):ctrl, $(region3=$val):phisel = region $store1, $(store2=$val)
+    # dag:         $(load0=$val):ctrl, $(load1=$val):i32 = load.4 $region2, $stackslot1
+    # dag:         $(icmp0=$val):i32 = icmp eq $load1, $iconst1
+    # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $load0, $icmp0
+    # dag:         $(region4=$val):ctrl, $(region5=$val):phisel = region $brcond0
+    # dag:         $(load2=$val):ctrl, $(load3=$val):i32 = load.4 $region4, $stackslot0
+    # dag:         return $load2, $load3
+    # dag:         $(region6=$val):ctrl, $(region7=$val):phisel = region $brcond1
+    # dag:         $(load4=$val):ctrl, $(load5=$val):i32 = load.4 $region6, $stackslot1
+    # dag:         $(load6=$val):ctrl, $(load7=$val):i32 = load.4 $load4, $stackslot0
+    # dag:         $(iadd0=$val):i32 = iadd $load7, $load5
+    # dag:         $(isub0=$val):i32 = isub $load5, $iconst0
+    # dag:         $(store3=$val):ctrl = store.4 $load6, $isub0, $stackslot1
+    # dag:         $store2:ctrl = store.4 $store3, $iadd0, $stackslot0
+    # nextln:  }
+
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:phisel = region %0
+    %5:ptr = stackslot 4:4
+    %4:ptr = stackslot 4:4
+    %6:ctrl = store.4 %2, %1, %4
+    %24:i32 = iconst 1
+    %7:i32 = iconst 0
+    %8:ctrl = store.4 %6, %7, %5
+    %13:i32 = icmp eq %12, %7
+    %18:ctrl, %19:ctrl = brcond %11, %13
+    %14:ctrl, %15:phisel = region %18
+    %29:ctrl, %30:i32 = load.4 %14, %5
+    return %29, %30
+    %16:ctrl, %17:phisel = region %19
+    %20:ctrl, %21:i32 = load.4 %16, %4
+    %22:ctrl, %23:i32 = load.4 %20, %5
+    %25:i32 = isub %21, %24
+    %27:ctrl = store.4 %22, %25, %4
+    %26:i32 = iadd %23, %21
+    %28:ctrl = store.4 %27, %26, %5
+    %9:ctrl, %10:phisel = region %8, %28
+    %11:ctrl, %12:i32 = load.4 %9, %4
+}

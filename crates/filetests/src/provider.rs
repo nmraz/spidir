@@ -5,7 +5,7 @@ use filecheck::{Checker, CheckerBuilder, Value, VariableMap};
 use itertools::Itertools;
 
 use fx_utils::FxHashMap;
-use ir::{module::Module, verify::verify_module, write::quote_ident};
+use ir::{function::FunctionBody, module::Module, verify::verify_module, write::quote_ident};
 use parser::parse_module;
 
 use crate::utils::{
@@ -213,7 +213,7 @@ pub fn update_transformed_module_output(
     let output_str = generalize_module_value_names(module, module_str)?;
 
     let mut in_func = false;
-    let mut first_node = false;
+    let mut ordered_lines = 0;
 
     for output_line in output_str.lines() {
         if output_line.is_empty() {
@@ -224,7 +224,11 @@ pub fn update_transformed_module_output(
             updater.advance_to_function(&new_func)?;
             updater.directive(4, "check", &format!("     {output_line}"));
             in_func = true;
-            first_node = true;
+
+            // We want the entry node and all nodes with identity to be matched in order after the
+            // opening brace, to avoid the matching getting confused by different nodes with the
+            // same textual representation.
+            ordered_lines = count_nodes_with_identity(get_func_body(module, &new_func)) + 1;
             continue;
         } else if !in_func {
             continue;
@@ -233,10 +237,9 @@ pub fn update_transformed_module_output(
         if output_line.trim() == "}" {
             updater.directive(4, "nextln", &format!("    {output_line}"));
             updater.blank_line();
-        } else if first_node {
-            // Enforce ordering for the first node, since it is treated as the entry.
+        } else if ordered_lines > 0 {
             updater.directive(4, "nextln", &format!("    {output_line}"));
-            first_node = false;
+            ordered_lines -= 1;
         } else {
             // We don't actually care about the order in which nodes are printed, just that they are
             // all attached correctly. This should make tests more resilient to minor reshuffles.
@@ -245,6 +248,22 @@ pub fn update_transformed_module_output(
     }
 
     Ok(())
+}
+
+fn count_nodes_with_identity(body: &FunctionBody) -> usize {
+    body.compute_live_nodes()
+        .postorder(&body.graph)
+        .filter(|&node| body.graph.node_kind(node).has_identity())
+        .count()
+}
+
+fn get_func_body<'a>(module: &'a Module, name: &str) -> &'a FunctionBody {
+    &module
+        .functions
+        .values()
+        .find(|func| func.metadata.name == name)
+        .unwrap()
+        .body
 }
 
 fn verify_parsed_module(module: &Module) -> Result<()> {

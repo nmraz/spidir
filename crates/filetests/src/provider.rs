@@ -1,4 +1,4 @@
-use std::{fmt::Write, iter};
+use std::{borrow::Cow, fmt::Write, iter};
 
 use anyhow::{anyhow, bail, Context, Result};
 use filecheck::{Checker, CheckerBuilder, Value, VariableMap};
@@ -327,12 +327,11 @@ fn compute_update<P: TestProvider>(
 
 fn build_checker(input: &str) -> Result<Checker> {
     let mut builder = CheckerBuilder::new();
-    for (i, line) in input.lines().enumerate() {
+    for (line_no, line) in input.lines().enumerate() {
         if let Some(comment_start) = find_comment_start(line) {
             let comment = line[comment_start + 1..].trim();
-            builder
-                .directive(comment)
-                .with_context(|| format!("invalid filecheck directive on line {}", i + 1))?;
+            add_directive(&mut builder, comment)
+                .with_context(|| format!("invalid filecheck directive on line {}", line_no + 1))?;
         }
     }
     let checker = builder.finish();
@@ -361,7 +360,7 @@ fn get_non_directive_lines(input: &str) -> Vec<&str> {
         if let Some(comment_start) = find_comment_start(line) {
             let comment = line[comment_start + 1..].trim();
 
-            let was_directive = builder.directive(comment).unwrap_or(true);
+            let was_directive = add_directive(&mut builder, comment).unwrap_or(true);
 
             let pre_line = if was_directive {
                 line[..comment_start].trim()
@@ -387,6 +386,17 @@ fn get_non_directive_lines(input: &str) -> Vec<&str> {
     }
 
     other_lines
+}
+
+fn add_directive(builder: &mut CheckerBuilder, comment: &str) -> Result<bool> {
+    let mut comment = Cow::Borrowed(comment);
+
+    // Support "dag" as a shorthand for "unordered" that must end on a word boundary.
+    if let Some(dag_directive) = comment.strip_prefix("dag:") {
+        comment = Cow::Owned(format!(r"unordered:{dag_directive}$(=\b)"));
+    }
+
+    Ok(builder.directive(&comment)?)
 }
 
 #[cfg(test)]

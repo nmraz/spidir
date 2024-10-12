@@ -19,9 +19,7 @@ macro_rules! fold_constant {
         } else {
             $a.$func($b)
         };
-
-        let new_output = $ctx.builder().build_iconst(ty, combined);
-        $ctx.replace_value($output, new_output);
+        replace_with_iconst($ctx, $output, combined);
     }};
 }
 
@@ -59,14 +57,10 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
         NodeKind::Imul => {
             let [a, b] = graph.node_inputs_exact(node);
             let [output] = graph.node_outputs_exact(node);
-            let ty = graph.value_kind(output).as_value().unwrap();
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_mul),
-                (Some(0), _) | (_, Some(0)) => {
-                    let zero = ctx.builder().build_iconst(ty, 0);
-                    ctx.replace_value(output, zero);
-                }
+                (Some(0), _) | (_, Some(0)) => replace_with_iconst(ctx, output, 0),
 
                 (Some(1), _) => ctx.replace_value(output, b),
                 (_, Some(1)) => ctx.replace_value(output, a),
@@ -83,16 +77,14 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
             let [input] = graph.node_inputs_exact(node);
             let [output] = graph.node_outputs_exact(node);
             if let Some(value) = match_iconst(graph, input) {
-                let new_output = ctx.builder().build_iconst(Type::I64, value);
-                ctx.replace_value(output, new_output);
+                replace_with_iconst(ctx, output, value);
             }
         }
         NodeKind::Itrunc => {
             let [input] = graph.node_inputs_exact(node);
             let [output] = graph.node_outputs_exact(node);
             if let Some(value) = match_iconst(graph, input) {
-                let new_output = ctx.builder().build_iconst(Type::I32, value as u32 as u64);
-                ctx.replace_value(output, new_output);
+                replace_with_iconst(ctx, output, value as u32 as u64);
             }
         }
         &NodeKind::Sfill(width) => {
@@ -108,12 +100,17 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                     new_value = new_value as u32 as u64;
                 }
 
-                let new_output = ctx.builder().build_iconst(ty, new_value);
-                ctx.replace_value(output, new_output);
+                replace_with_iconst(ctx, output, new_value);
             }
         }
         _ => {}
     }
+}
+
+fn replace_with_iconst(ctx: &mut ReduceContext<'_>, value: DepValue, iconst: u64) {
+    let ty = ctx.graph().value_kind(value).as_value().unwrap();
+    let iconst = ctx.builder().build_iconst(ty, iconst);
+    ctx.replace_value(value, iconst);
 }
 
 fn match_iconst(graph: &ValGraph, value: DepValue) -> Option<u64> {

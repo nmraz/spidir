@@ -5,8 +5,10 @@ use smallvec::SmallVec;
 
 use fx_utils::FxHashSet;
 use ir::{
+    builder::Builder,
     cache::{CachingBuilder, Entry, NodeCache},
     function::FunctionBody,
+    node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
 };
 
@@ -47,8 +49,11 @@ impl<'f> ReduceContext<'f> {
         &self.body.graph
     }
 
-    pub fn builder(&mut self) -> CachingBuilder<'_> {
-        CachingBuilder::new(self.body, self.node_cache)
+    pub fn builder(&mut self) -> ReducerBuilder<'_> {
+        ReducerBuilder {
+            inner: CachingBuilder::new(self.body, self.node_cache),
+            worklist: &mut self.worklist,
+        }
     }
 
     pub fn replace_value(&mut self, old_value: DepValue, new_value: DepValue) {
@@ -95,6 +100,33 @@ impl<'f> ReduceContext<'f> {
         }
 
         node
+    }
+}
+
+pub struct ReducerBuilder<'a> {
+    inner: CachingBuilder<'a>,
+    worklist: &'a mut Worklist,
+}
+
+impl<'a> Builder for ReducerBuilder<'a> {
+    fn create_node(
+        &mut self,
+        kind: NodeKind,
+        inputs: impl IntoIterator<Item = DepValue>,
+        output_kinds: impl IntoIterator<Item = DepValueKind>,
+    ) -> Node {
+        let node = self.inner.create_node(kind, inputs, output_kinds);
+        // TODO: What if `node` has been reused?
+        self.worklist.enqueue(node);
+        node
+    }
+
+    fn body(&self) -> &FunctionBody {
+        self.inner.body()
+    }
+
+    fn body_mut(&mut self) -> &mut FunctionBody {
+        self.inner.body_mut()
     }
 }
 

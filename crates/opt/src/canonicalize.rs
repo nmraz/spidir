@@ -36,7 +36,6 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
             match (match_iconst(graph, a), match_iconst(graph, b)) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_add),
 
-                (Some(0), _) => ctx.replace_value(output, b),
                 (_, Some(0)) => ctx.replace_value(output, a),
 
                 (Some(_), None) => {
@@ -70,12 +69,8 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
             match (match_iconst(graph, a), match_iconst(graph, b)) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, bitand),
 
-                (Some(0), _) | (_, Some(0)) => replace_with_iconst(ctx, output, 0),
-
-                (Some(0xffffffff), _) if ty == Type::I32 => ctx.replace_value(output, b),
+                (_, Some(0)) => replace_with_iconst(ctx, output, 0),
                 (_, Some(0xffffffff)) if ty == Type::I32 => ctx.replace_value(output, a),
-
-                (Some(0xffffffffffffffff), _) => ctx.replace_value(output, b),
                 (_, Some(0xffffffffffffffff)) => ctx.replace_value(output, a),
 
                 (Some(_), None) => {
@@ -92,9 +87,8 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_mul),
-                (Some(0), _) | (_, Some(0)) => replace_with_iconst(ctx, output, 0),
 
-                (Some(1), _) => ctx.replace_value(output, b),
+                (_, Some(0)) => replace_with_iconst(ctx, output, 0),
                 (_, Some(1)) => ctx.replace_value(output, a),
 
                 (Some(_), None) => {

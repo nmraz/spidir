@@ -11,7 +11,7 @@ fx-utils.workspace = true
 graphwalk.workspace = true
 
 cranelift-entity.workspace = true
-hashbrown = { workspace = true, features = ["raw"] }
+hashbrown.workspace = true
 itertools.workspace = true
 log.workspace = true
 smallvec.workspace = true

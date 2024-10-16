@@ -2,7 +2,7 @@ use core::hash::{Hash, Hasher};
 
 use cranelift_entity::SecondaryMap;
 use fx_utils::FxHasher;
-use hashbrown::raw::RawTable;
+use hashbrown::HashTable;
 use smallvec::SmallVec;
 
 use crate::{
@@ -31,14 +31,14 @@ pub enum Entry<'a> {
 
 #[derive(Clone)]
 pub struct NodeCache {
-    table: RawTable<Node>,
+    table: HashTable<Node>,
     node_hashes: SecondaryMap<Node, u32>,
 }
 
 impl NodeCache {
     pub fn new() -> Self {
         Self {
-            table: RawTable::default(),
+            table: HashTable::default(),
             node_hashes: SecondaryMap::with_default(HASH_NONE),
         }
     }
@@ -57,7 +57,9 @@ impl NodeCache {
 
         if old_hash != HASH_NONE {
             self.table
-                .remove_entry(expand_hash(old_hash), |&table_node| table_node == node);
+                .find_entry(expand_hash(old_hash), |&table_node| table_node == node)
+                .unwrap()
+                .remove();
         }
     }
 
@@ -97,7 +99,7 @@ impl NodeCache {
     fn insert(&mut self, node: Node, hash: u32) {
         self.node_hashes[node] = hash;
         self.table
-            .insert(expand_hash(hash), node, |&existing_node| {
+            .insert_unique(expand_hash(hash), node, |&existing_node| {
                 expand_hash(self.node_hashes[existing_node])
             });
     }
@@ -112,7 +114,7 @@ impl NodeCache {
         let hash = hash_node(kind, inputs.clone(), output_kinds.clone());
         let found = self
             .table
-            .get(expand_hash(hash), |&node| {
+            .find(expand_hash(hash), |&node| {
                 existing_node_equal(graph, node, kind, inputs.clone(), output_kinds.clone())
             })
             .copied();

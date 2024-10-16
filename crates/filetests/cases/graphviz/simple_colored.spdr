@@ -5,12 +5,12 @@ extfunc @my_ext_func:i32(i64)
 func @my_func:i32(i64) {
     # check: function `my_func`:
     # nextln: digraph {
-    # nextln:     node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> i64}}", fillcolor="#ffd3e4", style="filled"]
-    # nextln:     node1 [shape=Mrecord, label="{{<i0> | <i1>} | call @my_ext_func | {<o0> ctrl | <o1> i32}}", fillcolor="#ffd3e4", style="filled"]
-    # nextln:     node2 [shape=Mrecord, label="{{<i0> | <i1>} | return}", fillcolor="#ffd3e4", style="filled"]
-    # nextln:     node0:o0 -> node1:i0 [color="#0000ff", penwidth="2"]
+    # nextln:     node0 [shape=Mrecord, label="{entry | {<o0> ctrl | <o1> i64}}", style="filled", fillcolor="#ffd3e4"]
+    # nextln:     node1 [shape=Mrecord, label="{{<i0> | <i1>} | call @my_ext_func | {<o0> ctrl | <o1> i32}}", style="filled", fillcolor="#ffd3e4"]
+    # nextln:     node2 [shape=Mrecord, label="{{<i0> | <i1>} | return}", style="filled", fillcolor="#ffd3e4"]
+    # nextln:     node0:o0 -> node1:i0 [penwidth="2", color="#0000ff"]
     # nextln:     node0:o1 -> node1:i1 [color="#d36805"]
-    # nextln:     node1:o0 -> node2:i0 [color="#0000ff", penwidth="2"]
+    # nextln:     node1:o0 -> node2:i0 [penwidth="2", color="#0000ff"]
     # nextln:     node1:o1 -> node2:i1 [color="#d36805"]
     # nextln: }
 

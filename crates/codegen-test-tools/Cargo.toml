@@ -13,4 +13,4 @@ anyhow.workspace = true
 capstone.workspace = true
 itertools.workspace = true
 
-libc = "0.2.158"
+libc = "0.2.159"

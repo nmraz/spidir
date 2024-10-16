@@ -17,11 +17,11 @@ func @diamond() {
     # nextln:     node3:o0 -> node5:i0
     # nextln:     node4:o0 -> node5:i1
     # nextln:     node5:o0 -> node6:i0
-    # nextln:     node0 -> node2 [color="#a1a1a1", penwidth="2", style="dashed"]
-    # nextln:     node2 -> node3 [color="#a1a1a1", penwidth="2", style="dashed"]
-    # nextln:     node2 -> node5 [color="#a1a1a1", penwidth="2", style="dashed"]
-    # nextln:     node5 -> node6 [color="#a1a1a1", penwidth="2", style="dashed"]
-    # nextln:     node2 -> node4 [color="#a1a1a1", penwidth="2", style="dashed"]
+    # nextln:     node0 -> node2 [penwidth="2", style="dashed", color="#a1a1a1"]
+    # nextln:     node2 -> node3 [penwidth="2", style="dashed", color="#a1a1a1"]
+    # nextln:     node2 -> node5 [penwidth="2", style="dashed", color="#a1a1a1"]
+    # nextln:     node5 -> node6 [penwidth="2", style="dashed", color="#a1a1a1"]
+    # nextln:     node2 -> node4 [penwidth="2", style="dashed", color="#a1a1a1"]
     # nextln: }
 
     %0:ctrl = entry

@@ -17,7 +17,7 @@ codegen.workspace = true
 log.workspace = true
 smallvec.workspace = true
 
-paste = "1.0.13"
+paste = "1.0.15"
 
 [features]
 # Unfortunately, this feature has to be subtractive because of the underlying `log` crate.

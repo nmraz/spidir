@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 dominators.workspace = true
+entity-set.workspace = true
 fx-utils.workspace = true
 graphwalk.workspace = true
 ir.workspace = true

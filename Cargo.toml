@@ -8,6 +8,7 @@ codegen = { path = "crates/codegen" }
 codegen-test-tools = { path = "crates/codegen-test-tools" }
 graphmock = { path = "crates/graphmock" }
 dominators = { path = "crates/dominators" }
+entity-set = { path = "crates/entity-set" }
 frontend = { path = "crates/frontend" }
 fx-utils = { path = "crates/fx-utils" }
 graphwalk = { path = "crates/graphwalk" }
@@ -19,6 +20,7 @@ parser = { path = "crates/parser" }
 anyhow = "1.0.89"
 clap = { version = "4.5.20", features = ["derive", "wrap_help"] }
 capstone = "0.12.0"
+cranelift-bitset = "0.112.2"
 cranelift-entity = "0.112.2"
 expect-test = "1.5.0"
 hashbrown = { version = "0.15.0", default-features = false }

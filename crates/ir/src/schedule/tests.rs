@@ -1,4 +1,4 @@
-use cranelift_entity::EntitySet;
+use entity_set::DenseEntitySet;
 use graphwalk::PostOrderContext;
 
 use crate::{
@@ -15,13 +15,12 @@ use super::{is_pinned_node, schedule_early, schedule_late, ScheduleContext};
 fn check_live_scheduled(
     graph: &ValGraph,
     live_node_info: &LiveNodeInfo,
-    scheduled: &EntitySet<Node>,
+    scheduled: &DenseEntitySet<Node>,
     kind: &str,
 ) {
     for node in live_node_info
         .live_nodes
-        .keys()
-        .filter(|&node| live_node_info.live_nodes.contains(node))
+        .iter()
         .filter(|&node| !is_pinned_node(graph, node))
     {
         assert!(scheduled.contains(node), "{node} not scheduled {kind}");
@@ -32,7 +31,7 @@ fn check_graph_scheduling(body: &FunctionBody) {
     let live_node_info = body.compute_live_nodes();
     let cfg_preorder: Vec<_> = body.cfg_preorder().collect();
     let ctx = ScheduleContext::new(&body.graph, &live_node_info, &cfg_preorder);
-    let mut scheduled = EntitySet::new();
+    let mut scheduled = DenseEntitySet::new();
 
     let mut scratch_postorder = PostOrderContext::new();
     schedule_early(&ctx, &mut scratch_postorder, |_ctx, node| {

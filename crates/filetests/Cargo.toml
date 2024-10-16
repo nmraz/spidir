@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 codegen.workspace = true
 codegen-test-tools.workspace = true
+entity-set.workspace = true
 ir.workspace = true
 ir-graphviz.workspace = true
 parser = { workspace = true, features = ["std"] }

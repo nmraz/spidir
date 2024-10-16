@@ -2,10 +2,11 @@
 
 extern crate alloc;
 
+use alloc::vec::Vec;
 use core::ops::ControlFlow;
 
-use alloc::vec::Vec;
-use cranelift_entity::{EntityRef, EntitySet};
+use cranelift_entity::EntityRef;
+use entity_set::DenseEntitySet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WalkPhase {
@@ -66,7 +67,7 @@ impl<N> VisitTracker<N> for NopTracker {
     fn mark_visited(&mut self, _node: N) {}
 }
 
-impl<N: EntityRef> VisitTracker<N> for EntitySet<N> {
+impl<N: EntityRef> VisitTracker<N> for DenseEntitySet<N> {
     fn is_visited(&self, node: N) -> bool {
         self.contains(node)
     }
@@ -155,7 +156,7 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PreOrder<G, V> {
 pub fn entity_preorder<G: GraphRef>(
     graph: G,
     roots: impl IntoIterator<Item = G::Node>,
-) -> PreOrder<G, EntitySet<G::Node>>
+) -> PreOrder<G, DenseEntitySet<G::Node>>
 where
     G::Node: EntityRef,
 {
@@ -275,7 +276,7 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PostOrder<G, V> {
 pub fn entity_postorder<G: GraphRef>(
     graph: G,
     roots: impl IntoIterator<Item = G::Node>,
-) -> PostOrder<G, EntitySet<G::Node>>
+) -> PostOrder<G, DenseEntitySet<G::Node>>
 where
     G::Node: EntityRef,
 {

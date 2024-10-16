@@ -1,10 +1,11 @@
 use std::fmt::Write;
 
-use cranelift_entity::{EntitySet, SecondaryMap};
+use cranelift_entity::SecondaryMap;
 use dominators::{
     domtree::{DomTree, DomTreeNode},
     loops::{Loop, LoopForest},
 };
+use entity_set::DenseEntitySet;
 use expect_test::expect;
 use graphmock::{graph, Graph, Node};
 use itertools::Itertools;
@@ -28,7 +29,7 @@ fn stringify_loops(g: &Graph) -> String {
 
     let mut loop_children: SecondaryMap<Loop, Vec<Loop>> = SecondaryMap::new();
     let mut outermost_loops = Vec::new();
-    let mut visited_loops = EntitySet::new();
+    let mut visited_loops = DenseEntitySet::new();
 
     for node in domtree.preorder() {
         if let Some(l) = lf.containing_loop(node) {

@@ -1,0 +1,8 @@
+[package]
+name = "entity-set"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cranelift-bitset.workspace = true
+cranelift-entity.workspace = true

@@ -1,6 +1,6 @@
 use core::{iter, ops::ControlFlow};
 
-use cranelift_entity::EntitySet;
+use entity_set::DenseEntitySet;
 use graphwalk::PostOrderContext;
 
 use crate::{
@@ -29,7 +29,7 @@ impl<'a> ScheduleContext<'a> {
     }
 
     #[inline]
-    pub fn live_nodes(&self) -> &EntitySet<Node> {
+    pub fn live_nodes(&self) -> &DenseEntitySet<Node> {
         &self.live_node_info.live_nodes
     }
 
@@ -54,7 +54,7 @@ pub fn schedule_early(
     scratch_postorder: &mut PostOrderContext<Node>,
     mut schedule: impl FnMut(&ScheduleContext<'_>, Node),
 ) {
-    let mut visited = EntitySet::new();
+    let mut visited = DenseEntitySet::new();
     let unpinned_data_preds = UnpinnedDataPreds::new(ctx.graph);
 
     for pinned in ctx.walk_pinned_nodes() {
@@ -71,7 +71,7 @@ pub fn schedule_late(
     scratch_postorder: &mut PostOrderContext<Node>,
     mut schedule: impl FnMut(&ScheduleContext<'_>, Node),
 ) {
-    let mut visited = EntitySet::new();
+    let mut visited = DenseEntitySet::new();
     let unpinned_data_succs = UnpinnedDataSuccs::new(ctx.graph, ctx.live_nodes());
 
     for pinned in ctx.walk_pinned_nodes() {
@@ -126,7 +126,7 @@ impl<'a> graphwalk::GraphRef for UnpinnedDataPreds<'a> {
 
 fn unpinned_dataflow_succs<'a>(
     graph: &'a ValGraph,
-    live_nodes: &'a EntitySet<Node>,
+    live_nodes: &'a DenseEntitySet<Node>,
     node: Node,
 ) -> impl Iterator<Item = (Node, u32)> + 'a {
     dataflow_succs(graph, live_nodes, node)
@@ -135,11 +135,11 @@ fn unpinned_dataflow_succs<'a>(
 
 struct UnpinnedDataSuccs<'a> {
     graph: &'a ValGraph,
-    live_nodes: &'a EntitySet<Node>,
+    live_nodes: &'a DenseEntitySet<Node>,
 }
 
 impl<'a> UnpinnedDataSuccs<'a> {
-    fn new(graph: &'a ValGraph, live_nodes: &'a EntitySet<Node>) -> Self {
+    fn new(graph: &'a ValGraph, live_nodes: &'a DenseEntitySet<Node>) -> Self {
         Self { graph, live_nodes }
     }
 }

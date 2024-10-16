@@ -1,7 +1,8 @@
 use core::cell::RefCell;
 
 use alloc::{collections::BTreeMap, vec, vec::Vec};
-use cranelift_entity::{EntitySet, PrimaryMap, SecondaryMap};
+use cranelift_entity::{PrimaryMap, SecondaryMap};
+use entity_set::DenseEntitySet;
 use fx_utils::FxHashMap;
 use itertools::Itertools;
 use log::{log_enabled, trace};
@@ -34,7 +35,7 @@ pub struct RegAllocContext<'a, M: MachineRegalloc> {
     pub phys_reg_reservations: Vec<Vec<PhysRegReservation>>,
     pub phys_reg_assignments: Vec<BTreeMap<RangeEndKey, LiveRange>>,
     pub worklist: FragmentQueue,
-    pub fragment_conflict_scratch: RefCell<EntitySet<LiveSetFragment>>,
+    pub fragment_conflict_scratch: RefCell<DenseEntitySet<LiveSetFragment>>,
 }
 
 impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {

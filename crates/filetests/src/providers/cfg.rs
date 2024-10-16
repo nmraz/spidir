@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use anyhow::Result;
 use codegen::cfg::compute_block_cfg;
-use cranelift_entity::EntitySet;
+use entity_set::DenseEntitySet;
 use ir::module::Module;
 use itertools::Itertools;
 
@@ -20,7 +20,7 @@ impl SimpleTestProvider for CfgProvider {
             let body = &func.body;
             let cfg_preorder: Vec<_> = body.cfg_preorder().collect();
             let (cfg, block_map) = compute_block_cfg(&body.graph, &cfg_preorder);
-            let mut seen_blocks = EntitySet::new();
+            let mut seen_blocks = DenseEntitySet::new();
             write_body_with_trailing_comments(&mut output, &module, func, |s, node| {
                 if let Some(block) = block_map.containing_block(node) {
                     write!(s, "{block}; ").unwrap();

@@ -4,9 +4,10 @@ use alloc::{collections::BinaryHeap, vec::Vec};
 
 use cranelift_entity::{
     packed_option::{PackedOption, ReservedValue},
-    EntityList, EntitySet, ListPool, SecondaryMap,
+    EntityList, ListPool, SecondaryMap,
 };
 use dominators::depth_map::DepthMap;
+use entity_set::DenseEntitySet;
 use fx_utils::{FxHashMap, FxHashSet};
 use graphwalk::{GraphRef, PostOrderContext};
 use ir::{
@@ -416,7 +417,7 @@ struct BlockScheduler<'a> {
     graph: &'a ValGraph,
     blocks_by_node: &'a BlocksByNode,
     scratch_postorder: &'a mut PostOrderContext<Node>,
-    scheduled: EntitySet<Node>,
+    scheduled: DenseEntitySet<Node>,
     block: Block,
     block_postorder: Vec<Node>,
     block_node_data: FxHashMap<Node, BlockNodeData>,
@@ -436,7 +437,7 @@ impl<'a> BlockScheduler<'a> {
             graph,
             blocks_by_node,
             scratch_postorder,
-            scheduled: EntitySet::new(),
+            scheduled: DenseEntitySet::new(),
             block: Block::reserved_value(),
             block_postorder: Vec::new(),
             block_node_data: FxHashMap::default(),

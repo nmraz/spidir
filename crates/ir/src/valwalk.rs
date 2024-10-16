@@ -2,13 +2,13 @@ use core::{iter, ops::ControlFlow};
 
 use alloc::{vec, vec::Vec};
 
-use cranelift_entity::EntitySet;
 use dominators::IntoCfg;
+use entity_set::DenseEntitySet;
 
 use crate::valgraph::{DepValue, Node, ValGraph};
 
-pub type PreOrder<G> = graphwalk::PreOrder<G, EntitySet<Node>>;
-pub type PostOrder<G> = graphwalk::PostOrder<G, EntitySet<Node>>;
+pub type PreOrder<G> = graphwalk::PreOrder<G, DenseEntitySet<Node>>;
+pub type PostOrder<G> = graphwalk::PostOrder<G, DenseEntitySet<Node>>;
 
 pub fn live_node_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
     // Consider all inputs as "live" so we don't cause cases where uses are traversed without their
@@ -70,7 +70,7 @@ pub fn raw_def_use_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = (
 
 pub fn def_use_succs<'a>(
     graph: &'a ValGraph,
-    live_nodes: &'a EntitySet<Node>,
+    live_nodes: &'a DenseEntitySet<Node>,
     node: Node,
 ) -> impl Iterator<Item = (Node, u32)> + 'a {
     raw_def_use_succs(graph, node).filter(move |&(succ, _use_idx)| live_nodes.contains(succ))
@@ -79,12 +79,12 @@ pub fn def_use_succs<'a>(
 #[derive(Clone, Copy)]
 pub struct DefUseSuccs<'a> {
     graph: &'a ValGraph,
-    live_nodes: &'a EntitySet<Node>,
+    live_nodes: &'a DenseEntitySet<Node>,
 }
 
 impl<'a> DefUseSuccs<'a> {
     #[inline]
-    pub fn new(graph: &'a ValGraph, live_nodes: &'a EntitySet<Node>) -> Self {
+    pub fn new(graph: &'a ValGraph, live_nodes: &'a DenseEntitySet<Node>) -> Self {
         Self { graph, live_nodes }
     }
 }
@@ -113,7 +113,7 @@ pub fn def_use_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node>
 #[derive(Debug, Clone)]
 pub struct LiveNodeInfo {
     pub roots: Vec<Node>,
-    pub live_nodes: EntitySet<Node>,
+    pub live_nodes: DenseEntitySet<Node>,
 }
 
 impl LiveNodeInfo {
@@ -170,7 +170,7 @@ pub fn raw_dataflow_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = 
 
 pub fn dataflow_succs<'a>(
     graph: &'a ValGraph,
-    live_nodes: &'a EntitySet<Node>,
+    live_nodes: &'a DenseEntitySet<Node>,
     node: Node,
 ) -> impl Iterator<Item = (Node, u32)> + 'a {
     raw_dataflow_succs(graph, node).filter(move |&(succ, _input_idx)| live_nodes.contains(succ))
@@ -279,10 +279,7 @@ mod tests {
 
         let live_node_set = &live_info.live_nodes;
         let expected_live_nodes: FxHashSet<_> = expected_live_nodes.iter().copied().collect();
-        let actual_live_nodes: FxHashSet<_> = live_node_set
-            .keys()
-            .filter(|&node| live_node_set.contains(node))
-            .collect();
+        let actual_live_nodes: FxHashSet<_> = live_node_set.iter().collect();
 
         assert_eq!(actual_live_nodes, expected_live_nodes);
     }

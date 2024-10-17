@@ -1,9 +1,9 @@
 use alloc::collections::VecDeque;
 
+use entity_set::DenseEntitySet;
 use itertools::izip;
 use smallvec::SmallVec;
 
-use fx_utils::FxHashSet;
 use ir::{
     builder::Builder,
     cache::{CachingBuilder, Entry, NodeCache},
@@ -22,7 +22,7 @@ pub fn reduce_body(
         node_cache,
         worklist: Worklist {
             queue: VecDeque::new(),
-            enqueued: FxHashSet::default(),
+            enqueued: DenseEntitySet::new(),
         },
     };
 
@@ -132,19 +132,20 @@ impl<'a> Builder for ReducerBuilder<'a> {
 
 struct Worklist {
     queue: VecDeque<Node>,
-    enqueued: FxHashSet<Node>,
+    enqueued: DenseEntitySet<Node>,
 }
 
 impl Worklist {
     fn enqueue(&mut self, node: Node) {
-        if !self.enqueued.contains(&node) {
+        if !self.enqueued.contains(node) {
+            self.enqueued.insert(node);
             self.queue.push_back(node);
         }
     }
 
     fn dequeue(&mut self) -> Option<Node> {
         let node = self.queue.pop_front()?;
-        self.enqueued.remove(&node);
+        self.enqueued.remove(node);
         Some(node)
     }
 }

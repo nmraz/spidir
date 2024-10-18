@@ -69,17 +69,14 @@ impl NodeCache {
         kind: &NodeKind,
         inputs: impl ExactSizeIterator<Item = DepValue> + Clone,
         output_kinds: impl ExactSizeIterator<Item = DepValueKind> + Clone,
-    ) -> Option<Entry<'_>> {
-        if !kind.is_cacheable() {
-            return None;
-        }
+    ) -> Entry<'_> {
+        debug_assert!(kind.is_cacheable());
 
         let (hash, found) = self.find_raw(graph, kind, inputs, output_kinds);
-        let entry = match found {
+        match found {
             Some(node) => Entry::Occupied(node),
             None => Entry::Vacant(VacantEntry { cache: self, hash }),
-        };
-        Some(entry)
+        }
     }
 
     fn insert(&mut self, node: Node, hash: u32) {
@@ -142,16 +139,12 @@ impl<'a> Builder for CachingBuilder<'a> {
         let inputs: SmallVec<[_; 4]> = inputs.into_iter().collect();
         let output_kinds: SmallVec<[_; 4]> = output_kinds.into_iter().collect();
 
-        match self
-            .cache
-            .entry(
-                graph,
-                &kind,
-                inputs.iter().copied(),
-                output_kinds.iter().copied(),
-            )
-            .unwrap()
-        {
+        match self.cache.entry(
+            graph,
+            &kind,
+            inputs.iter().copied(),
+            output_kinds.iter().copied(),
+        ) {
             Entry::Occupied(node) => node,
             Entry::Vacant(entry) => {
                 let node = graph.create_node(kind, inputs, output_kinds);

@@ -88,16 +88,21 @@ impl<'f> ReduceContext<'f> {
         if !self.node_cache.contains_node(node) {
             let graph = &mut self.body.graph;
 
+            let kind = graph.node_kind(node);
+            if !kind.is_cacheable() {
+                return node;
+            }
+
             match self.node_cache.entry(
                 graph,
-                graph.node_kind(node),
+                kind,
                 graph.node_inputs(node).into_iter(),
                 graph
                     .node_outputs(node)
                     .into_iter()
                     .map(|output| graph.value_kind(output)),
             ) {
-                Some(Entry::Occupied(existing_node)) => {
+                Entry::Occupied(existing_node) => {
                     // This node has become equivalent to another node: replace it.
 
                     let old_outputs: SmallVec<[_; 4]> =
@@ -111,10 +116,7 @@ impl<'f> ReduceContext<'f> {
 
                     return existing_node;
                 }
-                Some(Entry::Vacant(entry)) => entry.insert(node),
-                None => {
-                    // This node can't be cached.
-                }
+                Entry::Vacant(entry) => entry.insert(node),
             }
         }
 

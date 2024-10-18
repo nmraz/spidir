@@ -82,20 +82,6 @@ impl NodeCache {
         Some(entry)
     }
 
-    pub fn find(
-        &self,
-        graph: &ValGraph,
-        kind: &NodeKind,
-        inputs: impl ExactSizeIterator<Item = DepValue> + Clone,
-        output_kinds: impl ExactSizeIterator<Item = DepValueKind> + Clone,
-    ) -> Option<Node> {
-        if !kind.is_cacheable() {
-            return None;
-        }
-
-        self.find_raw(graph, kind, inputs, output_kinds).1
-    }
-
     fn insert(&mut self, node: Node, hash: u32) {
         self.node_hashes[node] = hash;
         self.table

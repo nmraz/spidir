@@ -10,4 +10,5 @@ fx-utils.workspace = true
 ir.workspace = true
 
 itertools.workspace = true
+log.workspace = true
 smallvec.workspace = true

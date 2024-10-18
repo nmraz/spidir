@@ -562,6 +562,7 @@ dependencies = [
  "fx-utils",
  "ir",
  "itertools",
+ "log",
  "smallvec",
 ]
 

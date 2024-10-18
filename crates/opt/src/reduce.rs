@@ -2,6 +2,7 @@ use alloc::collections::VecDeque;
 
 use entity_set::DenseEntitySet;
 use itertools::izip;
+use log::trace;
 use smallvec::SmallVec;
 
 use ir::{
@@ -27,6 +28,8 @@ pub fn reduce_body(
         reduced: DenseEntitySet::new(),
     };
 
+    trace!("starting reduction");
+
     for root in ctx.body.compute_live_nodes().reverse_postorder(ctx.graph()) {
         ctx.worklist.enqueue(root);
     }
@@ -39,11 +42,15 @@ pub fn reduce_body(
             continue;
         }
 
+        trace!("reduce: {node}");
+
         // Assume the node is now reduced. If `f` ends up replacing any of its outputs, it will be
         // marked as non-reduced once more.
         ctx.reduced.insert(node);
         f(&mut ctx, node);
     }
+
+    trace!("finished");
 }
 
 pub struct ReduceContext<'f> {
@@ -67,6 +74,8 @@ impl<'f> ReduceContext<'f> {
     }
 
     pub fn replace_value(&mut self, old_value: DepValue, new_value: DepValue) {
+        trace!("    replace: {old_value} -> {new_value}");
+
         // The node defining this value can no longer be considered reduced, as we have found a
         // better replacement for it.
         let def_node = self.body.graph.value_def(old_value).0;
@@ -105,6 +114,8 @@ impl<'f> ReduceContext<'f> {
                 Entry::Occupied(existing_node) => {
                     // This node has become equivalent to another node: replace it.
 
+                    trace!("hash: {node} -> {existing_node}");
+
                     let old_outputs: SmallVec<[_; 4]> =
                         graph.node_outputs(node).into_iter().collect();
                     let new_outputs: SmallVec<[_; 4]> =
@@ -138,6 +149,7 @@ impl<'a> Builder for ReducerBuilder<'a> {
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node {
         let node = self.inner.create_node(kind, inputs, output_kinds);
+        trace!("    create: {node}");
         // We may have reused an existing, reduced node here. No need to revisit in that case.
         if !self.reduced.contains(node) {
             self.worklist.enqueue(node);
@@ -162,6 +174,7 @@ struct Worklist {
 impl Worklist {
     fn enqueue(&mut self, node: Node) {
         if !self.enqueued.contains(node) {
+            trace!("    enqueue: {node}");
             self.enqueued.insert(node);
             self.queue.push_back(node);
         }

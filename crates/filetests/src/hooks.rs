@@ -1,7 +1,7 @@
 use std::{
     cell::RefCell,
     mem,
-    panic::{self, PanicInfo, UnwindSafe},
+    panic::{self, PanicHookInfo, UnwindSafe},
 };
 
 use log::Log;
@@ -75,7 +75,7 @@ fn take_panic_message() -> Option<String> {
     PANIC_MESSAGE.with(|message| message.borrow_mut().take())
 }
 
-fn panic_hook(info: &PanicInfo<'_>) {
+fn panic_hook(info: &PanicHookInfo<'_>) {
     let message = info.to_string();
     PANIC_MESSAGE.with(|stashed_message| *stashed_message.borrow_mut() = Some(message));
 }

@@ -129,6 +129,14 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 replace_with_iconst(ctx, output, new_value);
             }
         }
+        NodeKind::PtrOff => {
+            let [ptr, offset] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
+
+            if match_iconst(graph, offset) == Some(0) {
+                ctx.replace_value(output, ptr);
+            }
+        }
         _ => {}
     }
 }

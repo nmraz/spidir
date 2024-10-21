@@ -1,0 +1,25 @@
+# run: canonicalize
+
+func @offset_ptr:ptr(ptr, i64) {
+    # check:   func @offset_ptr:ptr(ptr, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):i64 = entry
+    # dag:         $(ptroff0=$val):ptr = ptroff $entry1, $entry2
+    # dag:         return $entry0, $ptroff0
+    # nextln:  }
+
+    %0:ctrl, %1:ptr, %2:i64 = entry
+    %3:ptr = ptroff %1, %2
+    return %0, %3
+}
+
+func @offset_ptr_z:ptr(ptr) {
+    # check:   func @offset_ptr_z:ptr(ptr) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %0:ctrl, %1:ptr = entry
+    %2:i64 = iconst 0
+    %3:ptr = ptroff %1, %2
+    return %0, %3
+}

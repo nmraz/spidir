@@ -127,6 +127,59 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 _ => {}
             }
         }
+        NodeKind::Shl => {
+            let [a, b] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
+
+            match (match_iconst(graph, a), match_iconst(graph, b)) {
+                (Some(a), Some(b)) => {
+                    // Shifting past the bit width produces an unspecified value anyway, so it's
+                    // easiest to just mask here.
+                    fold_constant!(ctx, output, a, b as u32, wrapping_shl);
+                }
+                (Some(0), _) => replace_with_iconst(ctx, output, 0),
+                (_, Some(0)) => ctx.replace_value(output, a),
+                _ => {}
+            }
+        }
+        NodeKind::Lshr => {
+            let [a, b] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
+
+            match (match_iconst(graph, a), match_iconst(graph, b)) {
+                (Some(a), Some(b)) => {
+                    // Shifting past the bit width produces an unspecified value anyway, so it's
+                    // easiest to just mask here.
+                    fold_constant!(ctx, output, a, b as u32, wrapping_shr);
+                }
+                (Some(0), _) => replace_with_iconst(ctx, output, 0),
+                (_, Some(0)) => ctx.replace_value(output, a),
+                _ => {}
+            }
+        }
+        NodeKind::Ashr => {
+            let [a, b] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
+
+            match (match_iconst(graph, a), match_iconst(graph, b)) {
+                (Some(a), Some(b)) => {
+                    let ty = graph.value_kind(output).as_value().unwrap();
+                    // Shifting past the bit width produces an unspecified value anyway, so it's
+                    // easiest to just mask here.
+
+                    // Note: make sure to shift signed values so we end up with an arithmetic shift.
+                    let shifted = if ty == Type::I32 {
+                        (a as i32).wrapping_shr(b as u32) as u32 as u64
+                    } else {
+                        (a as i64).wrapping_shr(b as u32) as u64
+                    };
+                    replace_with_iconst(ctx, output, shifted);
+                }
+                (Some(0), _) => replace_with_iconst(ctx, output, 0),
+                (_, Some(0)) => ctx.replace_value(output, a),
+                _ => {}
+            }
+        }
         NodeKind::Imul => {
             let [a, b] = graph.node_inputs_exact(node);
             let [output] = graph.node_outputs_exact(node);

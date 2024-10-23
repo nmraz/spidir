@@ -1,0 +1,229 @@
+# run: canonicalize
+
+func @shl32:i32(i32, i32) {
+    # check:   func @shl32:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(shl0=$val):i32 = shl $entry1, $entry2
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = shl %a, %b
+    return %c, %r
+}
+
+func @shl_fold32:i32() {
+    # check:   func @shl_fold32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 640
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = shl %a, %b
+    return %c, %r
+}
+
+func @shl_fold_wrap32:i32() {
+    # check:   func @shl_fold_wrap32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 10
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 33
+    %r:i32 = shl %a, %b
+    return %c, %r
+}
+
+func @shl_fold_neg32:i32() {
+    # check:   func @shl_fold_neg32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 4294966912
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 4294967290
+    %b:i32 = iconst 6
+    %r:i32 = shl %a, %b
+    return %c, %r
+}
+
+func @shlz32:i32(i32) {
+    # check:   func @shlz32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 0
+    %r:i32 = shl %a, %b
+    return %c, %r
+}
+
+func @zshl32:i32(i32) {
+    # check:   func @zshl32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 0
+    %r:i32 = shl %a, %b
+    return %c, %r
+}
+
+func @shlc32:i32(i32) {
+    # check:   func @shlc32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(shl0=$val):i32 = shl $entry1, $iconst0
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 5
+    %r:i32 = shl %a, %b
+    return %c, %r
+}
+
+func @cshl32:i32(i32) {
+    # check:   func @cshl32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(shl0=$val):i32 = shl $iconst0, $entry1
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = shl %a, %b
+    return %c, %r
+}
+
+func @shl64:i64(i64, i64) {
+    # check:   func @shl64:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(shl0=$val):i64 = shl $entry1, $entry2
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = shl %a, %b
+    return %c, %r
+}
+
+func @shl_fold64:i64() {
+    # check:   func @shl_fold64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 640
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = shl %a, %b
+    return %c, %r
+}
+
+func @shl_fold_wrap64:i64() {
+    # check:   func @shl_fold_wrap64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 10
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 65
+    %r:i64 = shl %a, %b
+    return %c, %r
+}
+
+func @shl_fold_neg32_64:i64() {
+    # check:   func @shl_fold_neg32_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 274877906560
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 4294967290
+    %b:i64 = iconst 6
+    %r:i64 = shl %a, %b
+    return %c, %r
+}
+
+func @shl_fold_neg64:i64() {
+    # check:   func @shl_fold_neg64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551232
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 18446744073709551610
+    %b:i64 = iconst 6
+    %r:i64 = shl %a, %b
+    return %c, %r
+}
+
+func @shlz64:i64(i64) {
+    # check:   func @shlz64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %r:i64 = shl %a, %b
+    return %c, %r
+}
+
+func @zshl64:i64(i64) {
+    # check:   func @zshl64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 0
+    %r:i64 = shl %a, %b
+    return %c, %r
+}
+
+func @shlc64:i64(i64) {
+    # check:   func @shlc64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(shl0=$val):i64 = shl $entry1, $iconst0
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 5
+    %r:i64 = shl %a, %b
+    return %c, %r
+}
+
+func @cshl64:i64(i64) {
+    # check:   func @cshl64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(shl0=$val):i64 = shl $iconst0, $entry1
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = shl %a, %b
+    return %c, %r
+}

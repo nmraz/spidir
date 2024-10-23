@@ -1,0 +1,229 @@
+# run: canonicalize
+
+func @lshr32:i32(i32, i32) {
+    # check:   func @lshr32:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(lshr0=$val):i32 = lshr $entry1, $entry2
+    # dag:         return $entry0, $lshr0
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshr_fold32:i32() {
+    # check:   func @lshr_fold32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshr_fold_wrap32:i32() {
+    # check:   func @lshr_fold_wrap32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 2
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 33
+    %r:i32 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshr_fold_neg32:i32() {
+    # check:   func @lshr_fold_neg32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 67108863
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 4294967290
+    %b:i32 = iconst 6
+    %r:i32 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshrz32:i32(i32) {
+    # check:   func @lshrz32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 0
+    %r:i32 = lshr %a, %b
+    return %c, %r
+}
+
+func @zlshr32:i32(i32) {
+    # check:   func @zlshr32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 0
+    %r:i32 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshrc32:i32(i32) {
+    # check:   func @lshrc32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(lshr0=$val):i32 = lshr $entry1, $iconst0
+    # dag:         return $entry0, $lshr0
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 5
+    %r:i32 = lshr %a, %b
+    return %c, %r
+}
+
+func @clshr32:i32(i32) {
+    # check:   func @clshr32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(lshr0=$val):i32 = lshr $iconst0, $entry1
+    # dag:         return $entry0, $lshr0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshr64:i64(i64, i64) {
+    # check:   func @lshr64:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(lshr0=$val):i64 = lshr $entry1, $entry2
+    # dag:         return $entry0, $lshr0
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshr_fold64:i64() {
+    # check:   func @lshr_fold64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshr_fold_wrap64:i64() {
+    # check:   func @lshr_fold_wrap64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 2
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 65
+    %r:i64 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshr_fold_neg32_64:i64() {
+    # check:   func @lshr_fold_neg32_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 67108863
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 4294967290
+    %b:i64 = iconst 6
+    %r:i64 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshr_fold_neg64:i64() {
+    # check:   func @lshr_fold_neg64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 288230376151711743
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 18446744073709551610
+    %b:i64 = iconst 6
+    %r:i64 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshrz64:i64(i64) {
+    # check:   func @lshrz64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %r:i64 = lshr %a, %b
+    return %c, %r
+}
+
+func @zlshr64:i64(i64) {
+    # check:   func @zlshr64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 0
+    %r:i64 = lshr %a, %b
+    return %c, %r
+}
+
+func @lshrc64:i64(i64) {
+    # check:   func @lshrc64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(lshr0=$val):i64 = lshr $entry1, $iconst0
+    # dag:         return $entry0, $lshr0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 5
+    %r:i64 = lshr %a, %b
+    return %c, %r
+}
+
+func @clshr64:i64(i64) {
+    # check:   func @clshr64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(lshr0=$val):i64 = lshr $iconst0, $entry1
+    # dag:         return $entry0, $lshr0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = lshr %a, %b
+    return %c, %r
+}

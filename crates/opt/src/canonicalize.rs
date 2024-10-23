@@ -1,4 +1,4 @@
-use core::ops::BitAnd;
+use core::ops::{BitAnd, BitOr, BitXor};
 
 use ir::{
     builder::BuilderExt,
@@ -75,6 +75,52 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
 
                 (Some(_), None) => {
                     let new_output = ctx.builder().build_and(b, a);
+                    ctx.replace_value(output, new_output);
+                }
+
+                _ => {}
+            }
+        }
+        NodeKind::Or => {
+            let [a, b] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
+            let ty = graph.value_kind(output).as_value().unwrap();
+
+            match (match_iconst(graph, a), match_iconst(graph, b)) {
+                (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, bitor),
+
+                (_, Some(0)) => ctx.replace_value(output, a),
+                (_, Some(0xffffffff)) if ty == Type::I32 => {
+                    replace_with_iconst(ctx, output, 0xffffffff)
+                }
+                (_, Some(0xffffffffffffffff)) => {
+                    replace_with_iconst(ctx, output, 0xffffffffffffffff)
+                }
+
+                (Some(_), None) => {
+                    let new_output = ctx.builder().build_or(b, a);
+                    ctx.replace_value(output, new_output);
+                }
+
+                _ => {}
+            }
+        }
+        NodeKind::Xor => {
+            let [a, b] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
+
+            if a == b {
+                replace_with_iconst(ctx, output, 0);
+                return;
+            }
+
+            match (match_iconst(graph, a), match_iconst(graph, b)) {
+                (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, bitxor),
+
+                (_, Some(0)) => ctx.replace_value(output, a),
+
+                (Some(_), None) => {
+                    let new_output = ctx.builder().build_xor(b, a);
                     ctx.replace_value(output, new_output);
                 }
 

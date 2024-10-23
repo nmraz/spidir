@@ -1,0 +1,237 @@
+# run: canonicalize
+
+func @or32:i32(i32, i32) {
+    # check:   func @or32:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(or0=$val):i32 = or $entry1, $entry2
+    # dag:         return $entry0, $or0
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = or %a, %b
+    return %c, %r
+}
+
+func @or_fold32:i32() {
+    # check:   func @or_fold32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 7
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = or %a, %b
+    return %c, %r
+}
+
+func @orz32:i32(i32) {
+    # check:   func @orz32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 0
+    %r:i32 = or %a, %b
+    return %c, %r
+}
+
+func @zor32:i32(i32) {
+    # check:   func @zor32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 0
+    %r:i32 = or %a, %b
+    return %c, %r
+}
+
+func @oro32:i32(i32) {
+    # check:   func @oro32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 4294967295
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 4294967295
+    %r:i32 = or %a, %b
+    return %c, %r
+}
+
+func @oor32:i32(i32) {
+    # check:   func @oor32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 4294967295
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 4294967295
+    %r:i32 = or %a, %b
+    return %c, %r
+}
+
+func @orc32:i32(i32) {
+    # check:   func @orc32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(or0=$val):i32 = or $entry1, $iconst0
+    # dag:         return $entry0, $or0
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 5
+    %r:i32 = or %a, %b
+    return %c, %r
+}
+
+func @cor32:i32(i32) {
+    # check:   func @cor32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(or0=$val):i32 = or $entry1, $iconst0
+    # dag:         return $entry0, $or0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = or %a, %b
+    return %c, %r
+}
+
+func @or64:i64(i64, i64) {
+    # check:   func @or64:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(or0=$val):i64 = or $entry1, $entry2
+    # dag:         return $entry0, $or0
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = or %a, %b
+    return %c, %r
+}
+
+func @or_fold64:i64() {
+    # check:   func @or_fold64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 7
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = or %a, %b
+    return %c, %r
+}
+
+func @orz64:i64(i64) {
+    # check:   func @orz64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %r:i64 = or %a, %b
+    return %c, %r
+}
+
+func @zor64:i64(i64) {
+    # check:   func @zor64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         return $entry0, $entry1
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 0
+    %r:i64 = or %a, %b
+    return %c, %r
+}
+
+func @oro64_32:i64(i64) {
+    # check:   func @oro64_32:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 4294967295
+    # dag:         $(or0=$val):i64 = or $entry1, $iconst0
+    # dag:         return $entry0, $or0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 4294967295
+    %r:i64 = or %a, %b
+    return %c, %r
+}
+
+func @oor64_32:i64(i64) {
+    # check:   func @oor64_32:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 4294967295
+    # dag:         $(or0=$val):i64 = or $entry1, $iconst0
+    # dag:         return $entry0, $or0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 4294967295
+    %r:i64 = or %a, %b
+    return %c, %r
+}
+
+func @oro64_64:i64(i64) {
+    # check:   func @oro64_64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551615
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744073709551615
+    %r:i64 = or %a, %b
+    return %c, %r
+}
+
+func @oor64_64:i64(i64) {
+    # check:   func @oor64_64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551615
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 18446744073709551615
+    %r:i64 = or %a, %b
+    return %c, %r
+}
+
+func @orc64:i64(i64) {
+    # check:   func @orc64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(or0=$val):i64 = or $entry1, $iconst0
+    # dag:         return $entry0, $or0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 5
+    %r:i64 = or %a, %b
+    return %c, %r
+}
+
+func @cor64:i64(i64) {
+    # check:   func @cor64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(or0=$val):i64 = or $entry1, $iconst0
+    # dag:         return $entry0, $or0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = or %a, %b
+    return %c, %r
+}

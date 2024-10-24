@@ -35,14 +35,8 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_add),
-
                 (_, Some(0)) => ctx.replace_value(output, a),
-
-                (Some(_), None) => {
-                    let new_output = ctx.builder().build_iadd(b, a);
-                    ctx.replace_value(output, new_output);
-                }
-
+                (Some(_), None) => commute_node_inputs(ctx, node, a, b),
                 _ => {}
             }
         }
@@ -73,10 +67,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 (_, Some(0xffffffff)) if ty == Type::I32 => ctx.replace_value(output, a),
                 (_, Some(0xffffffffffffffff)) => ctx.replace_value(output, a),
 
-                (Some(_), None) => {
-                    let new_output = ctx.builder().build_and(b, a);
-                    ctx.replace_value(output, new_output);
-                }
+                (Some(_), None) => commute_node_inputs(ctx, node, a, b),
 
                 _ => {}
             }
@@ -97,10 +88,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                     replace_with_iconst(ctx, output, 0xffffffffffffffff)
                 }
 
-                (Some(_), None) => {
-                    let new_output = ctx.builder().build_or(b, a);
-                    ctx.replace_value(output, new_output);
-                }
+                (Some(_), None) => commute_node_inputs(ctx, node, a, b),
 
                 _ => {}
             }
@@ -116,13 +104,9 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, bitxor),
-
                 (_, Some(0)) => ctx.replace_value(output, a),
 
-                (Some(_), None) => {
-                    let new_output = ctx.builder().build_xor(b, a);
-                    ctx.replace_value(output, new_output);
-                }
+                (Some(_), None) => commute_node_inputs(ctx, node, a, b),
 
                 _ => {}
             }
@@ -197,10 +181,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                     ctx.replace_value(output, new_output);
                 }
 
-                (Some(_), None) => {
-                    let new_output = ctx.builder().build_imul(b, a);
-                    ctx.replace_value(output, new_output);
-                }
+                (Some(_), None) => commute_node_inputs(ctx, node, a, b),
 
                 _ => {}
             }
@@ -289,6 +270,11 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
         }
         _ => {}
     }
+}
+
+fn commute_node_inputs(ctx: &mut ReduceContext<'_>, node: Node, a: DepValue, b: DepValue) {
+    ctx.set_node_input(node, 0, b);
+    ctx.set_node_input(node, 1, a);
 }
 
 fn replace_with_iconst(ctx: &mut ReduceContext<'_>, value: DepValue, iconst: u64) {

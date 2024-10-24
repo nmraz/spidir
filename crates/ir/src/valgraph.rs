@@ -336,6 +336,11 @@ impl ValGraph {
         self.unlink_use(input_use);
     }
 
+    pub fn set_node_input(&mut self, node: Node, index: u32, new_value: DepValue) {
+        let input_use = self.nodes[node].inputs.as_slice(&self.use_pool)[index as usize];
+        self.set_use_value(input_use, new_value);
+    }
+
     pub fn detach_node_inputs(&mut self, node: Node) {
         let input_uses: SmallVec<[Use; 4]> =
             self.nodes[node].inputs.as_slice(&self.use_pool).into();
@@ -836,5 +841,24 @@ mod tests {
         check_value_uses(&graph, a, []);
         check_value_uses(&graph, b, []);
         check_node_inputs(&graph, add, []);
+    }
+
+    #[test]
+    fn set_node_input() {
+        let mut graph = ValGraph::new();
+
+        let a = create_const32(&mut graph);
+        let b = create_const32(&mut graph);
+
+        let add = graph.create_node(NodeKind::Iadd, [a, b], []);
+
+        check_value_uses(&graph, a, [(add, 0)]);
+        check_value_uses(&graph, b, [(add, 1)]);
+        check_node_inputs(&graph, add, [a, b]);
+
+        graph.set_node_input(add, 0, b);
+        check_value_uses(&graph, a, []);
+        check_value_uses(&graph, b, [(add, 0), (add, 1)]);
+        check_node_inputs(&graph, add, [b, b]);
     }
 }

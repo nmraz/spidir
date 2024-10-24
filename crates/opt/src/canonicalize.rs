@@ -190,6 +190,13 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 (_, Some(0)) => replace_with_iconst(ctx, output, 0),
                 (_, Some(1)) => ctx.replace_value(output, a),
 
+                (_, Some(c)) if c.is_power_of_two() => {
+                    let shift = c.trailing_zeros();
+                    let shift = ctx.builder().build_iconst(Type::I32, shift as u64);
+                    let new_output = ctx.builder().build_shl(a, shift);
+                    ctx.replace_value(output, new_output);
+                }
+
                 (Some(_), None) => {
                     let new_output = ctx.builder().build_imul(b, a);
                     ctx.replace_value(output, new_output);

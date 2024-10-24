@@ -1,0 +1,85 @@
+# run: canonicalize
+
+func @mul2_32:i32(i32) {
+    # check:   func @mul2_32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         $(shl0=$val):i32 = shl $entry1, $iconst0
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 2
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @mul4_32:i32(i32) {
+    # check:   func @mul4_32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 2
+    # dag:         $(shl0=$val):i32 = shl $entry1, $iconst0
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 4
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @mul256_32:i32(i32) {
+    # check:   func @mul256_32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 8
+    # dag:         $(shl0=$val):i32 = shl $entry1, $iconst0
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 256
+    %r:i32 = imul %a, %b
+    return %c, %r
+}
+
+func @mul2_64:i64(i64) {
+    # check:   func @mul2_64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         $(shl0=$val):i64 = shl $entry1, $iconst0
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 2
+    %r:i64 = imul %a, %b
+    return %c, %r
+}
+
+func @mul4_64:i64(i64) {
+    # check:   func @mul4_64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 2
+    # dag:         $(shl0=$val):i64 = shl $entry1, $iconst0
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 4
+    %r:i64 = imul %a, %b
+    return %c, %r
+}
+
+func @mul256_64:i64(i64) {
+    # check:   func @mul256_64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 8
+    # dag:         $(shl0=$val):i64 = shl $entry1, $iconst0
+    # dag:         return $entry0, $shl0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 256
+    %r:i64 = imul %a, %b
+    return %c, %r
+}

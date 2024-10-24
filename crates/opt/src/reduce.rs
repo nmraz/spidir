@@ -93,6 +93,10 @@ impl<'f> ReduceContext<'f> {
         }
     }
 
+    pub fn kill_node(&mut self, node: Node) {
+        self.body.graph.detach_node_inputs(node);
+    }
+
     fn cache_node(&mut self, node: Node) -> Node {
         if !self.node_cache.contains_node(node) {
             let graph = &mut self.body.graph;

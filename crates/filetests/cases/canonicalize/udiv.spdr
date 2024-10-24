@@ -1,0 +1,141 @@
+# run: canonicalize
+
+func @udiv32:i32(i32, i32) {
+    # check:   func @udiv32:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(udiv0=$val):ctrl, $(udiv1=$val):i32 = udiv $entry0, $entry1, $entry2
+    # dag:         return $udiv0, $udiv1
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %c2:ctrl, %val:i32 = udiv %c, %a, %b
+    return %c2, %val
+}
+
+func @udiv_fold32:i32() {
+    # check:   func @udiv_fold32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 25
+    %b:i32 = iconst 5
+    %c2:ctrl, %val:i32 = udiv %c, %a, %b
+    return %c2, %val
+}
+
+func @udiv_foldz32:i32() {
+    # check:   func @udiv_foldz32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         $(iconst1=$val):i32 = iconst 25
+    # dag:         $(udiv0=$val):ctrl, $(udiv1=$val):i32 = udiv $entry0, $iconst1, $iconst0
+    # dag:         return $udiv0, $udiv1
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 25
+    %b:i32 = iconst 0
+    %c2:ctrl, %val:i32 = udiv %c, %a, %b
+    return %c2, %val
+}
+
+func @udiv_fold_neg32:i32() {
+    # check:   func @udiv_fold_neg32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 858993454
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 4294967271
+    %b:i32 = iconst 5
+    %c2:ctrl, %val:i32 = udiv %c, %a, %b
+    return %c2, %val
+}
+
+func @udiv_fold_wrap32:i32() {
+    # check:   func @udiv_fold_wrap32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 2147483648
+    %b:i32 = iconst 4294967295
+    %c2:ctrl, %val:i32 = udiv %c, %a, %b
+    return %c2, %val
+}
+
+func @udiv64:i64(i64, i64) {
+    # check:   func @udiv64:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(udiv0=$val):ctrl, $(udiv1=$val):i64 = udiv $entry0, $entry1, $entry2
+    # dag:         return $udiv0, $udiv1
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %c2:ctrl, %val:i64 = udiv %c, %a, %b
+    return %c2, %val
+}
+
+func @udiv_fold64:i64() {
+    # check:   func @udiv_fold64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 25
+    %b:i64 = iconst 5
+    %c2:ctrl, %val:i64 = udiv %c, %a, %b
+    return %c2, %val
+}
+
+func @udiv_foldz64:i64() {
+    # check:   func @udiv_foldz64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         $(iconst1=$val):i64 = iconst 25
+    # dag:         $(udiv0=$val):ctrl, $(udiv1=$val):i64 = udiv $entry0, $iconst1, $iconst0
+    # dag:         return $udiv0, $udiv1
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 25
+    %b:i64 = iconst 0
+    %c2:ctrl, %val:i64 = udiv %c, %a, %b
+    return %c2, %val
+}
+
+func @udiv_fold_neg64:i64() {
+    # check:   func @udiv_fold_neg64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 3689348814741910318
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 18446744073709551591
+    %b:i64 = iconst 5
+    %c2:ctrl, %val:i64 = udiv %c, %a, %b
+    return %c2, %val
+}
+
+func @udiv_fold_wrap64:i64() {
+    # check:   func @udiv_fold_wrap64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 9223372036854775808
+    %b:i64 = iconst 18446744073709551615
+    %c2:ctrl, %val:i64 = udiv %c, %a, %b
+    return %c2, %val
+}

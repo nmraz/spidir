@@ -20,23 +20,23 @@ pub fn reduce_body(
 ) {
     let mut ctx = ReduceContext {
         body,
-        node_cache,
-        worklist: Worklist {
+        state: ReduceState {
             queue: VecDeque::new(),
             enqueued: DenseEntitySet::new(),
+            node_cache,
+            reduced: DenseEntitySet::new(),
         },
-        reduced: DenseEntitySet::new(),
     };
 
     trace!("starting reduction");
 
     for root in ctx.body.compute_live_nodes().reverse_postorder(ctx.graph()) {
-        ctx.worklist.enqueue(root);
+        ctx.state.enqueue(root);
     }
 
-    while let Some(node) = ctx.worklist.dequeue() {
+    while let Some(node) = ctx.state.dequeue() {
         let node = ctx.cache_node(node);
-        if ctx.reduced.contains(node) {
+        if ctx.state.is_reduced(node) {
             // We may have hash-consed the node into a previously-reduced one. No need to re-reduce
             // it in that case.
             continue;
@@ -46,7 +46,7 @@ pub fn reduce_body(
 
         // Assume the node is now reduced. If `f` ends up replacing any of its outputs, it will be
         // marked as non-reduced once more.
-        ctx.reduced.insert(node);
+        ctx.state.mark_reduced(node);
         f(&mut ctx, node);
     }
 
@@ -55,9 +55,7 @@ pub fn reduce_body(
 
 pub struct ReduceContext<'f> {
     body: &'f mut FunctionBody,
-    node_cache: &'f mut NodeCache,
-    worklist: Worklist,
-    reduced: DenseEntitySet<Node>,
+    state: ReduceState<'f>,
 }
 
 impl<'f> ReduceContext<'f> {
@@ -65,52 +63,77 @@ impl<'f> ReduceContext<'f> {
         &self.body.graph
     }
 
-    pub fn builder(&mut self) -> ReducerBuilder<'_> {
+    pub fn builder(&mut self) -> ReducerBuilder<'f, '_> {
         ReducerBuilder {
-            inner: CachingBuilder::new(self.body, self.node_cache),
-            worklist: &mut self.worklist,
-            reduced: &self.reduced,
+            body: self.body,
+            state: &mut self.state,
         }
     }
 
     pub fn replace_value(&mut self, old_value: DepValue, new_value: DepValue) {
-        trace!("    replace: {old_value} -> {new_value}");
-
-        // The node defining this value can no longer be considered reduced, as we have found a
-        // better replacement for it.
-        let def_node = self.body.graph.value_def(old_value).0;
-        self.reduced.remove(def_node);
-
-        let mut cursor = self.body.graph.value_use_cursor(old_value);
-        while let Some((user, _)) = cursor.current() {
-            // Forget this user's current state now that we're changing it: we'll need to re-hash
-            // and re-reduce it when it is reached again.
-            self.node_cache.remove(user);
-            self.reduced.remove(user);
-            self.worklist.enqueue(user);
-
-            cursor.replace_current_with(new_value);
-        }
+        self.state
+            .replace_value(&mut self.body.graph, old_value, new_value);
     }
 
     pub fn set_node_input(&mut self, node: Node, index: u32, new_value: DepValue) {
         self.body.graph.set_node_input(node, index, new_value);
-
-        // Forget this user's current state now that we're changing it: we'll need to re-hash
-        // and re-reduce it when it is reached again.
-        self.node_cache.remove(node);
-        self.reduced.remove(node);
-        self.worklist.enqueue(node);
+        self.state.node_changed(node);
     }
 
     pub fn kill_node(&mut self, node: Node) {
         self.body.graph.detach_node_inputs(node);
+        self.state.invalidate_node(node);
     }
 
     fn cache_node(&mut self, node: Node) -> Node {
-        if !self.node_cache.contains_node(node) {
-            let graph = &mut self.body.graph;
+        self.state.cache_node(&mut self.body.graph, node)
+    }
+}
 
+pub struct ReducerBuilder<'f, 'c> {
+    body: &'c mut FunctionBody,
+    state: &'c mut ReduceState<'f>,
+}
+
+impl Builder for ReducerBuilder<'_, '_> {
+    fn create_node(
+        &mut self,
+        kind: NodeKind,
+        inputs: impl IntoIterator<Item = DepValue>,
+        output_kinds: impl IntoIterator<Item = DepValueKind>,
+    ) -> Node {
+        let node = CachingBuilder::new(self.body, self.state.node_cache).create_node(
+            kind,
+            inputs,
+            output_kinds,
+        );
+        trace!("    create: {node}");
+        // We may have reused an existing, reduced node here. No need to revisit in that case.
+        if !self.state.is_reduced(node) {
+            self.state.enqueue(node);
+        }
+        node
+    }
+
+    fn body(&self) -> &FunctionBody {
+        self.body
+    }
+
+    fn body_mut(&mut self) -> &mut FunctionBody {
+        self.body
+    }
+}
+
+struct ReduceState<'f> {
+    node_cache: &'f mut NodeCache,
+    queue: VecDeque<Node>,
+    enqueued: DenseEntitySet<Node>,
+    reduced: DenseEntitySet<Node>,
+}
+
+impl ReduceState<'_> {
+    fn cache_node(&mut self, graph: &mut ValGraph, node: Node) -> Node {
+        if !self.node_cache.contains_node(node) {
             let kind = graph.node_kind(node);
             if !kind.is_cacheable() {
                 return node;
@@ -136,7 +159,7 @@ impl<'f> ReduceContext<'f> {
                         graph.node_outputs(existing_node).into_iter().collect();
 
                     for (old_output, new_output) in izip!(old_outputs, new_outputs) {
-                        self.replace_value(old_output, new_output);
+                        self.replace_value(graph, old_output, new_output);
                     }
 
                     return existing_node;
@@ -147,45 +170,34 @@ impl<'f> ReduceContext<'f> {
 
         node
     }
-}
 
-pub struct ReducerBuilder<'a> {
-    inner: CachingBuilder<'a>,
-    worklist: &'a mut Worklist,
-    reduced: &'a DenseEntitySet<Node>,
-}
+    fn replace_value(&mut self, graph: &mut ValGraph, old_value: DepValue, new_value: DepValue) {
+        trace!("    replace: {old_value} -> {new_value}");
 
-impl<'a> Builder for ReducerBuilder<'a> {
-    fn create_node(
-        &mut self,
-        kind: NodeKind,
-        inputs: impl IntoIterator<Item = DepValue>,
-        output_kinds: impl IntoIterator<Item = DepValueKind>,
-    ) -> Node {
-        let node = self.inner.create_node(kind, inputs, output_kinds);
-        trace!("    create: {node}");
-        // We may have reused an existing, reduced node here. No need to revisit in that case.
-        if !self.reduced.contains(node) {
-            self.worklist.enqueue(node);
+        // The node defining this value can no longer be considered reduced, as we have found a
+        // better replacement for it.
+        let def_node = graph.value_def(old_value).0;
+        self.mark_unreduced(def_node);
+
+        let mut cursor = graph.value_use_cursor(old_value);
+        while let Some((user, _)) = cursor.current() {
+            self.node_changed(user);
+            cursor.replace_current_with(new_value);
         }
-        node
     }
 
-    fn body(&self) -> &FunctionBody {
-        self.inner.body()
+    fn node_changed(&mut self, node: Node) {
+        // Forget this node's current state now that it's been changed: we'll need to re-hash and
+        // re-reduce it when it is reached again.
+        self.invalidate_node(node);
+        self.enqueue(node);
     }
 
-    fn body_mut(&mut self) -> &mut FunctionBody {
-        self.inner.body_mut()
+    fn invalidate_node(&mut self, node: Node) {
+        self.node_cache.remove(node);
+        self.reduced.remove(node);
     }
-}
 
-struct Worklist {
-    queue: VecDeque<Node>,
-    enqueued: DenseEntitySet<Node>,
-}
-
-impl Worklist {
     fn enqueue(&mut self, node: Node) {
         if !self.enqueued.contains(node) {
             trace!("    enqueue: {node}");
@@ -198,5 +210,17 @@ impl Worklist {
         let node = self.queue.pop_front()?;
         self.enqueued.remove(node);
         Some(node)
+    }
+
+    fn is_reduced(&self, node: Node) -> bool {
+        self.reduced.contains(node)
+    }
+
+    fn mark_reduced(&mut self, node: Node) {
+        self.reduced.insert(node);
+    }
+
+    fn mark_unreduced(&mut self, node: Node) {
+        self.reduced.remove(node);
     }
 }

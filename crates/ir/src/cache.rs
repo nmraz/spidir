@@ -60,6 +60,7 @@ impl NodeCache {
                 .find_entry(expand_hash(old_hash), |&table_node| table_node == node)
                 .unwrap()
                 .remove();
+            self.node_hashes[node] = HASH_NONE;
         }
     }
 
@@ -341,6 +342,25 @@ mod tests {
         let iconst2 = CachingBuilder::new(&mut body, &mut cache).build_iconst(Type::I32, 5);
         assert_eq!(iconst2, iconst);
 
+        cache.remove(iconst_node);
+        assert!(!cache.contains_node(iconst_node));
+
+        let iconst3 = CachingBuilder::new(&mut body, &mut cache).build_iconst(Type::I32, 5);
+        assert_ne!(iconst3, iconst);
+    }
+
+    #[test]
+    fn remove_twice() {
+        let mut cache = NodeCache::new();
+        let mut body = FunctionBody::new_invalid();
+
+        let iconst = CachingBuilder::new(&mut body, &mut cache).build_iconst(Type::I32, 5);
+        let iconst_node = body.graph.value_def(iconst).0;
+
+        let iconst2 = CachingBuilder::new(&mut body, &mut cache).build_iconst(Type::I32, 5);
+        assert_eq!(iconst2, iconst);
+
+        cache.remove(iconst_node);
         cache.remove(iconst_node);
 
         let iconst3 = CachingBuilder::new(&mut body, &mut cache).build_iconst(Type::I32, 5);

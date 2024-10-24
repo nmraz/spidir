@@ -30,8 +30,7 @@ func @sdiv_foldz32:i32() {
     # check:   func @sdiv_foldz32:i32() {
     # nextln:      $(entry0=$val):ctrl = entry
     # dag:         $(iconst0=$val):i32 = iconst 0
-    # dag:         $(iconst1=$val):i32 = iconst 25
-    # dag:         $(sdiv0=$val):ctrl, $(sdiv1=$val):i32 = sdiv $entry0, $iconst1, $iconst0
+    # dag:         $(sdiv0=$val):ctrl, $(sdiv1=$val):i32 = sdiv $entry0, $iconst0, $iconst0
     # dag:         return $sdiv0, $sdiv1
     # nextln:  }
 
@@ -72,6 +71,35 @@ func @sdiv_fold_wrap32:i32() {
     return %c2, %val
 }
 
+func @sdivz32:i32(i32) {
+    # check:   func @sdivz32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         $(sdiv0=$val):ctrl, $(sdiv1=$val):i32 = sdiv $entry0, $iconst0, $iconst0
+    # dag:         return $sdiv0, $sdiv1
+    # nextln:  }
+
+    %c:ctrl, %a:i32 = entry
+    %b:i32 = iconst 0
+    %c2:ctrl, %val:i32 = sdiv %c, %a, %b
+    return %c2, %val
+}
+
+func @zsdivz32:i32() {
+    # check:   func @zsdivz32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         $(sdiv0=$val):ctrl, $(sdiv1=$val):i32 = sdiv $entry0, $iconst0, $iconst0
+    # dag:         return $sdiv0, $sdiv1
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 0
+    %b:i32 = iconst 0
+    %c2:ctrl, %val:i32 = sdiv %c, %a, %b
+    return %c2, %val
+}
+
 func @sdiv64:i64(i64, i64) {
     # check:   func @sdiv64:i64(i64, i64) {
     # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
@@ -102,8 +130,7 @@ func @sdiv_foldz64:i64() {
     # check:   func @sdiv_foldz64:i64() {
     # nextln:      $(entry0=$val):ctrl = entry
     # dag:         $(iconst0=$val):i64 = iconst 0
-    # dag:         $(iconst1=$val):i64 = iconst 25
-    # dag:         $(sdiv0=$val):ctrl, $(sdiv1=$val):i64 = sdiv $entry0, $iconst1, $iconst0
+    # dag:         $(sdiv0=$val):ctrl, $(sdiv1=$val):i64 = sdiv $entry0, $iconst0, $iconst0
     # dag:         return $sdiv0, $sdiv1
     # nextln:  }
 
@@ -140,6 +167,35 @@ func @sdiv_fold_wrap64:i64() {
     %c:ctrl = entry
     %a:i64 = iconst 9223372036854775808
     %b:i64 = iconst 18446744073709551615
+    %c2:ctrl, %val:i64 = sdiv %c, %a, %b
+    return %c2, %val
+}
+
+func @sdivz64:i64(i64) {
+    # check:   func @sdivz64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         $(sdiv0=$val):ctrl, $(sdiv1=$val):i64 = sdiv $entry0, $iconst0, $iconst0
+    # dag:         return $sdiv0, $sdiv1
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %c2:ctrl, %val:i64 = sdiv %c, %a, %b
+    return %c2, %val
+}
+
+func @zsdivz64:i64() {
+    # check:   func @zsdivz64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         $(sdiv0=$val):ctrl, $(sdiv1=$val):i64 = sdiv $entry0, $iconst0, $iconst0
+    # dag:         return $sdiv0, $sdiv1
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 0
+    %b:i64 = iconst 0
     %c2:ctrl, %val:i64 = sdiv %c, %a, %b
     return %c2, %val
 }

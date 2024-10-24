@@ -189,45 +189,61 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
         NodeKind::Sdiv => {
             let [ctrl_in, a, b] = graph.node_inputs_exact(node);
             let [ctrl_out, output] = graph.node_outputs_exact(node);
+            let ty = graph.value_kind(output).as_value().unwrap();
 
-            if let (Some(a), Some(b)) = (match_iconst(graph, a), match_iconst(graph, b)) {
-                let ty = graph.value_kind(output).as_value().unwrap();
-                let quotient = if ty == Type::I32 {
-                    (a as i32)
-                        .checked_div(b as i32)
-                        .map(|quotient| quotient as u32 as u64)
-                } else {
-                    (a as i64)
-                        .checked_div(b as i64)
-                        .map(|quotient| quotient as u64)
-                };
+            match (match_iconst(graph, a), match_iconst(graph, b)) {
+                (a, Some(0)) => {
+                    // Replace all divisions by 0 with 0/0.
+                    if a != Some(0) {
+                        let zero = ctx.builder().build_iconst(ty, 0);
+                        ctx.set_node_input(node, 1, zero);
+                    }
+                }
+                (Some(a), Some(b)) => {
+                    let quotient = if ty == Type::I32 {
+                        (a as i32)
+                            .checked_div(b as i32)
+                            .map(|quotient| quotient as u32 as u64)
+                    } else {
+                        (a as i64)
+                            .checked_div(b as i64)
+                            .map(|quotient| quotient as u64)
+                    };
 
-                if let Some(quotient) = quotient {
-                    replace_with_iconst(ctx, output, quotient);
-                    ctx.kill_node(node);
-                    ctx.replace_value(ctrl_out, ctrl_in);
-                };
+                    if let Some(quotient) = quotient {
+                        replace_with_iconst(ctx, output, quotient);
+                        ctx.kill_node(node);
+                        ctx.replace_value(ctrl_out, ctrl_in);
+                    };
+                }
+                _ => {}
             }
         }
         NodeKind::Udiv => {
             let [ctrl_in, a, b] = graph.node_inputs_exact(node);
             let [ctrl_out, output] = graph.node_outputs_exact(node);
+            let ty = graph.value_kind(output).as_value().unwrap();
 
-            if let (Some(a), Some(b)) = (match_iconst(graph, a), match_iconst(graph, b)) {
-                let ty = graph.value_kind(output).as_value().unwrap();
-                let quotient = if ty == Type::I32 {
-                    (a as u32)
-                        .checked_div(b as u32)
-                        .map(|quotient| quotient as u64)
-                } else {
-                    a.checked_div(b)
-                };
+            match (match_iconst(graph, a), match_iconst(graph, b)) {
+                (a, Some(0)) => {
+                    // Replace all divisions by 0 with 0/0.
+                    if a != Some(0) {
+                        let zero = ctx.builder().build_iconst(ty, 0);
+                        ctx.set_node_input(node, 1, zero);
+                    }
+                }
+                (Some(a), Some(b)) => {
+                    let quotient = if ty == Type::I32 {
+                        ((a as u32) / (b as u32)) as u64
+                    } else {
+                        a / (b)
+                    };
 
-                if let Some(quotient) = quotient {
                     replace_with_iconst(ctx, output, quotient);
                     ctx.kill_node(node);
                     ctx.replace_value(ctrl_out, ctrl_in);
-                };
+                }
+                _ => {}
             }
         }
         NodeKind::Iext => {

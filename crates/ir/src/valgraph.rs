@@ -336,6 +336,15 @@ impl ValGraph {
         self.unlink_use(input_use);
     }
 
+    pub fn detach_node_inputs(&mut self, node: Node) {
+        let input_uses: SmallVec<[Use; 4]> =
+            self.nodes[node].inputs.as_slice(&self.use_pool).into();
+        for &input_use in &input_uses {
+            self.unlink_use(input_use);
+        }
+        self.nodes[node].inputs.clear(&mut self.use_pool);
+    }
+
     #[inline]
     pub fn node_outputs(&self, node: Node) -> Outputs<'_> {
         Outputs(self.nodes[node].outputs.as_slice(&self.value_pool))
@@ -808,5 +817,24 @@ mod tests {
 
         assert!(graph.node_inputs(node).is_empty());
         assert!(graph.value_uses(incoming_ctrl).count() == 0);
+    }
+
+    #[test]
+    fn detach_node_inputs() {
+        let mut graph = ValGraph::new();
+
+        let a = create_const32(&mut graph);
+        let b = create_const32(&mut graph);
+
+        let add = graph.create_node(NodeKind::Iadd, [a, b], []);
+
+        check_value_uses(&graph, a, [(add, 0)]);
+        check_value_uses(&graph, b, [(add, 1)]);
+        check_node_inputs(&graph, add, [a, b]);
+
+        graph.detach_node_inputs(add);
+        check_value_uses(&graph, a, []);
+        check_value_uses(&graph, b, []);
+        check_node_inputs(&graph, add, []);
     }
 }

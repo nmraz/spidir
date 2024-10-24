@@ -93,6 +93,16 @@ impl<'f> ReduceContext<'f> {
         }
     }
 
+    pub fn set_node_input(&mut self, node: Node, index: u32, new_value: DepValue) {
+        self.body.graph.set_node_input(node, index, new_value);
+
+        // Forget this user's current state now that we're changing it: we'll need to re-hash
+        // and re-reduce it when it is reached again.
+        self.node_cache.remove(node);
+        self.reduced.remove(node);
+        self.worklist.enqueue(node);
+    }
+
     pub fn kill_node(&mut self, node: Node) {
         self.body.graph.detach_node_inputs(node);
     }

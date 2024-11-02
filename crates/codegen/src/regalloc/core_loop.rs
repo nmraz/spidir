@@ -107,7 +107,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 continue;
             }
 
-            probed_regs.add(preg);
+            probed_regs.insert(preg);
 
             trace!("  probe: {} (hint weight {hint_weight})", M::reg_name(preg));
             match self.probe_phys_reg(preg, fragment) {

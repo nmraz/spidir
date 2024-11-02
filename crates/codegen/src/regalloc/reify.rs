@@ -654,7 +654,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .usable_regs(class)
             .iter()
             .find(|&&reg| !used.contains(reg) && self.is_reg_free_at(reg, pos))?;
-        used.add(reg);
+        used.insert(reg);
         Some(reg)
     }
 
@@ -795,10 +795,10 @@ impl<'a, M: MachineRegalloc> AssignedRegScavenger<'a, M> {
         // live-outs and outgoing params, which might not be live at all at `pos`.
         for copy in copies {
             if let OperandAssignment::Reg(from) = copy.from {
-                self.used_tmp_regs.add(from);
+                self.used_tmp_regs.insert(from);
             }
             if let OperandAssignment::Reg(to) = copy.to {
-                self.used_tmp_regs.add(to);
+                self.used_tmp_regs.insert(to);
             }
         }
     }

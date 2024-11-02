@@ -111,14 +111,14 @@ impl Assignment {
 
             for def in self.instr_def_assignments(instr) {
                 if let &OperandAssignment::Reg(reg) = def {
-                    clobbers.add(reg);
+                    clobbers.insert(reg);
                 }
             }
         }
 
         for copy in &self.copies {
             if let &OperandAssignment::Reg(reg) = &copy.copy.to {
-                clobbers.add(reg);
+                clobbers.insert(reg);
             }
         }
 

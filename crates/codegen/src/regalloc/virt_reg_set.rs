@@ -21,7 +21,7 @@ impl VirtRegSet {
         }
     }
 
-    pub fn add(&mut self, reg: VirtReg) {
+    pub fn insert(&mut self, reg: VirtReg) {
         let (word, bit) = word_bit_offset(reg.as_u32());
         *self.map.entry(word).or_insert(0) |= 1 << bit;
     }
@@ -135,7 +135,7 @@ mod tests {
 
         // Put everything we got into the set.
         for &val in vals {
-            reg_set.add(VirtReg::from_bits(val));
+            reg_set.insert(VirtReg::from_bits(val));
         }
 
         reg_set

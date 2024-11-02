@@ -104,7 +104,7 @@ impl PhysRegSet {
         (self.0 & (1 << reg.0)) != 0
     }
 
-    pub fn add(&mut self, reg: PhysReg) {
+    pub fn insert(&mut self, reg: PhysReg) {
         assert!(reg.0 < PHYS_REG_COUNT);
         self.0 |= 1 << reg.0;
     }
@@ -126,7 +126,7 @@ impl FromIterator<PhysReg> for PhysRegSet {
 impl Extend<PhysReg> for PhysRegSet {
     fn extend<I: IntoIterator<Item = PhysReg>>(&mut self, iter: I) {
         for reg in iter {
-            self.add(reg);
+            self.insert(reg);
         }
     }
 }

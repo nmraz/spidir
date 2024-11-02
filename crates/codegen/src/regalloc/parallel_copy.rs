@@ -301,7 +301,7 @@ mod tests {
             let reg = (0..self.reg_count)
                 .map(PhysReg::new)
                 .find(|&reg| !self.used_regs.contains(reg))?;
-            self.used_regs.add(reg);
+            self.used_regs.insert(reg);
             Some(reg)
         }
 
@@ -341,10 +341,10 @@ mod tests {
 
         for copy in &parallel_copies {
             if let OperandAssignment::Reg(from) = copy.from {
-                scavenger.used_regs.add(from);
+                scavenger.used_regs.insert(from);
             }
             if let OperandAssignment::Reg(to) = copy.to {
-                scavenger.used_regs.add(to);
+                scavenger.used_regs.insert(to);
             }
         }
 

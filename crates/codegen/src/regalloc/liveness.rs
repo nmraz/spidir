@@ -546,25 +546,25 @@ fn compute_block_liveness<M: MachineRegalloc>(
 
         for &outgoing_vreg in lir.outgoing_block_params(block) {
             trace!("    use {}", outgoing_vreg);
-            raw_uses.add(outgoing_vreg);
+            raw_uses.insert(outgoing_vreg);
         }
 
         for instr in lir.block_instrs(block) {
             // We can process defs/uses in bulk here because everything is in SSA.
             for use_op in lir.instr_uses(instr) {
                 trace!("    use {}", use_op.reg());
-                raw_uses.add(use_op.reg());
+                raw_uses.insert(use_op.reg());
             }
 
             for def_op in lir.instr_defs(instr) {
                 trace!("    def {}", def_op.reg());
-                raw_defs.add(def_op.reg());
+                raw_defs.insert(def_op.reg());
             }
         }
 
         for &incoming_vreg in lir.block_params(block) {
             trace!("    def {}", incoming_vreg);
-            raw_defs.add(incoming_vreg);
+            raw_defs.insert(incoming_vreg);
         }
     }
 

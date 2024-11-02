@@ -4,6 +4,7 @@ use core::{
     marker::PhantomData,
     ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Range},
 };
+use cranelift_bitset::ScalarBitSet;
 use fx_utils::FxHashMap;
 
 use cranelift_entity::{
@@ -78,40 +79,38 @@ impl ReservedValue for PhysReg {
 }
 
 #[derive(Clone, Copy)]
-pub struct PhysRegSet(u128);
+pub struct PhysRegSet(ScalarBitSet<u128>);
 
 impl PhysRegSet {
     pub const fn empty() -> Self {
-        Self(0)
+        Self(ScalarBitSet(0))
     }
 
     pub fn len(&self) -> usize {
-        self.0.count_ones() as usize
+        self.0.len() as usize
     }
 
     pub fn is_empty(&self) -> bool {
-        self.0 == 0
+        self.0.is_empty()
     }
 
     pub fn iter(&self) -> impl DoubleEndedIterator<Item = PhysReg> + '_ {
-        (0..PHYS_REG_COUNT)
-            .map(PhysReg)
-            .filter(move |&reg| self.contains(reg))
+        self.0.iter().map(PhysReg)
     }
 
     pub fn contains(&self, reg: PhysReg) -> bool {
         assert!(reg.0 < PHYS_REG_COUNT);
-        (self.0 & (1 << reg.0)) != 0
+        self.0.contains(reg.as_u8())
     }
 
     pub fn insert(&mut self, reg: PhysReg) {
         assert!(reg.0 < PHYS_REG_COUNT);
-        self.0 |= 1 << reg.0;
+        self.0.insert(reg.as_u8());
     }
 
     pub fn remove(&mut self, reg: PhysReg) {
         assert!(reg.0 < PHYS_REG_COUNT);
-        self.0 &= !(1 << reg.0);
+        self.0.remove(reg.as_u8());
     }
 }
 
@@ -135,13 +134,13 @@ impl<'a> BitOr<&'a PhysRegSet> for &'a PhysRegSet {
     type Output = PhysRegSet;
 
     fn bitor(self, rhs: &'a PhysRegSet) -> PhysRegSet {
-        PhysRegSet(self.0 | rhs.0)
+        PhysRegSet(ScalarBitSet(self.0 .0 | rhs.0 .0))
     }
 }
 
 impl<'a> BitOrAssign<&'a PhysRegSet> for PhysRegSet {
     fn bitor_assign(&mut self, rhs: &'a PhysRegSet) {
-        self.0 |= rhs.0;
+        self.0 .0 |= rhs.0 .0;
     }
 }
 
@@ -149,13 +148,13 @@ impl<'a> BitAnd<&'a PhysRegSet> for &'a PhysRegSet {
     type Output = PhysRegSet;
 
     fn bitand(self, rhs: &'a PhysRegSet) -> PhysRegSet {
-        PhysRegSet(self.0 & rhs.0)
+        PhysRegSet(ScalarBitSet(self.0 .0 & rhs.0 .0))
     }
 }
 
 impl<'a> BitAndAssign<&'a PhysRegSet> for PhysRegSet {
     fn bitand_assign(&mut self, rhs: &'a PhysRegSet) {
-        self.0 &= rhs.0;
+        self.0 .0 &= rhs.0 .0;
     }
 }
 

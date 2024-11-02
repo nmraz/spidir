@@ -1,3 +1,4 @@
+use cranelift_bitset::ScalarBitSet;
 use hashbrown::hash_map::{Entry, Iter as HashMapIter};
 
 use fx_utils::FxHashMap;
@@ -6,11 +7,12 @@ use crate::lir::VirtReg;
 
 use super::utils::ChangeStatus;
 
-type MapWord = u64;
+type Word = u64;
+type WordSet = ScalarBitSet<Word>;
 
 #[derive(Default, Clone)]
 pub struct VirtRegSet {
-    map: FxHashMap<u32, MapWord>,
+    map: FxHashMap<u32, WordSet>,
 }
 
 impl VirtRegSet {
@@ -23,24 +25,24 @@ impl VirtRegSet {
 
     pub fn insert(&mut self, reg: VirtReg) {
         let (word, bit) = word_bit_offset(reg.as_u32());
-        *self.map.entry(word).or_insert(0) |= 1 << bit;
+        self.map.entry(word).or_default().insert(bit);
     }
 
     pub fn contains(&self, reg: VirtReg) -> bool {
         let (word, bit) = word_bit_offset(reg.as_u32());
         self.map
             .get(&word)
-            .map_or(false, |&word_bits| ((word_bits >> bit) & 1) != 0)
+            .is_some_and(|word_set| word_set.contains(bit))
     }
 
     pub fn union(&mut self, other: &VirtRegSet) -> ChangeStatus {
         let mut status = ChangeStatus::Unchanged;
 
-        for (&other_word, &other_word_bits) in &other.map {
-            let word_bits = self.map.entry(other_word).or_insert(0);
-            let old_word_bits = *word_bits;
-            *word_bits |= other_word_bits;
-            if *word_bits != old_word_bits {
+        for (&other_word, &other_word_set) in &other.map {
+            let word_set = self.map.entry(other_word).or_default();
+            let old_word_set = *word_set;
+            word_set.0 |= other_word_set.0;
+            if *word_set != old_word_set {
                 status = ChangeStatus::Changed;
             }
         }
@@ -51,19 +53,19 @@ impl VirtRegSet {
     pub fn subtract(&mut self, other: &VirtRegSet) -> ChangeStatus {
         let mut status = ChangeStatus::Unchanged;
 
-        for (&other_word, &other_word_bits) in &other.map {
+        for (&other_word, &other_word_set) in &other.map {
             if let Entry::Occupied(mut entry) = self.map.entry(other_word) {
-                let mut word_bits = *entry.get();
-                let old_word_bits = word_bits;
-                word_bits &= !other_word_bits;
-                if word_bits != old_word_bits {
+                let mut word_set = *entry.get();
+                let old_word_set = word_set;
+                word_set.0 &= !other_word_set.0;
+                if word_set != old_word_set {
                     status = ChangeStatus::Changed;
                 }
 
-                if word_bits == 0 {
+                if word_set.is_empty() {
                     entry.remove();
                 } else {
-                    *entry.get_mut() = word_bits;
+                    *entry.get_mut() = word_set;
                 }
             }
         }
@@ -82,8 +84,8 @@ impl<'a> IntoIterator for &'a VirtRegSet {
 }
 
 pub struct VirtRegSetIter<'a> {
-    map_iter: HashMapIter<'a, u32, MapWord>,
-    cur_entry: Option<(u32, MapWord)>,
+    map_iter: HashMapIter<'a, u32, WordSet>,
+    cur_entry: Option<(u32, WordSet)>,
 }
 
 impl<'a> Iterator for VirtRegSetIter<'a> {
@@ -91,36 +93,31 @@ impl<'a> Iterator for VirtRegSetIter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let num = loop {
-            let (word_num, word_bits) = match &mut self.cur_entry {
+            let (word_num, word_set) = match &mut self.cur_entry {
                 Some(entry) => entry,
                 None => {
                     self.cur_entry = self
                         .map_iter
                         .next()
-                        .map(|(&word_num, &word_bits)| (word_num, word_bits));
+                        .map(|(&word_num, &word_set)| (word_num, word_set));
                     self.cur_entry.as_mut()?
                 }
             };
 
-            if *word_bits == 0 {
+            let Some(inner_bit) = word_set.pop_min() else {
                 self.cur_entry = None;
                 continue;
-            }
+            };
 
-            let inner_bit = (*word_bits).trailing_zeros();
-
-            // Clear lowest set bit.
-            *word_bits &= *word_bits - 1;
-
-            break *word_num * MapWord::BITS + inner_bit;
+            break *word_num * Word::BITS + inner_bit as u32;
         };
 
         Some(VirtReg::from_bits(num))
     }
 }
 
-fn word_bit_offset(num: u32) -> (u32, u32) {
-    ((num / MapWord::BITS), num % MapWord::BITS)
+fn word_bit_offset(num: u32) -> (u32, u8) {
+    ((num / Word::BITS), (num % Word::BITS) as u8)
 }
 
 #[cfg(test)]

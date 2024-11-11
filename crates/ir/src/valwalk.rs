@@ -77,6 +77,30 @@ pub fn def_use_succs<'a>(
 }
 
 #[derive(Clone, Copy)]
+pub struct RawDefUseSuccs<'a> {
+    graph: &'a ValGraph,
+}
+
+impl<'a> RawDefUseSuccs<'a> {
+    #[inline]
+    pub fn new(graph: &'a ValGraph) -> Self {
+        Self { graph }
+    }
+}
+
+impl<'a> graphwalk::GraphRef for RawDefUseSuccs<'a> {
+    type Node = Node;
+
+    fn successors(
+        &self,
+        node: Node,
+        mut f: impl FnMut(Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        raw_def_use_succs(self.graph, node).try_for_each(|(succ, _input_idx)| f(succ))
+    }
+}
+
+#[derive(Clone, Copy)]
 pub struct DefUseSuccs<'a> {
     graph: &'a ValGraph,
     live_nodes: &'a DenseEntitySet<Node>,

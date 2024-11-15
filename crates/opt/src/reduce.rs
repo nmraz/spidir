@@ -1,6 +1,7 @@
 use alloc::{collections::VecDeque, vec::Vec};
 
-use entity_set::DenseEntitySet;
+use bitflags::bitflags;
+use cranelift_entity::SecondaryMap;
 use itertools::izip;
 use log::trace;
 use smallvec::SmallVec;
@@ -23,9 +24,8 @@ pub fn reduce_body(
         body,
         state: ReduceState {
             queue: VecDeque::new(),
-            enqueued: DenseEntitySet::new(),
             node_cache,
-            reduced: DenseEntitySet::new(),
+            node_flags: SecondaryMap::new(),
         },
     };
 
@@ -51,7 +51,9 @@ pub fn reduce_body(
     }
 
     while let Some(node) = ctx.state.dequeue() {
-        if is_node_dead(&ctx.body.graph, node) {
+        // A previous value update may have killed one of this node's outputs. Check if that has
+        // made the node completely dead and deal with it now.
+        if ctx.state.test_and_clear_output_killed(node) && is_node_dead(&ctx.body.graph, node) {
             trace!("dead: {node}");
             // No need to keep processing at this point, just remove the node completely. Once
             // again, we want to make sure that the use counts of any incoming values are correct.
@@ -151,11 +153,19 @@ impl Builder for ReducerBuilder<'_, '_> {
     }
 }
 
+bitflags! {
+    #[derive(Clone, Copy, Default)]
+    struct NodeFlags: u8 {
+        const ENQUEUED = 0b01;
+        const OUTPUT_KILLED = 0b10;
+        const REDUCED = 0b100;
+    }
+}
+
 struct ReduceState<'f> {
     node_cache: &'f mut NodeCache,
     queue: VecDeque<Node>,
-    enqueued: DenseEntitySet<Node>,
-    reduced: DenseEntitySet<Node>,
+    node_flags: SecondaryMap<Node, NodeFlags>,
 }
 
 impl ReduceState<'_> {
@@ -234,6 +244,9 @@ impl ReduceState<'_> {
     fn enqueue_killed_value_def(&mut self, graph: &ValGraph, value: DepValue) {
         let def_node = graph.value_def(value).0;
         if !graph.node_kind(def_node).has_side_effects() {
+            // Removing this value might have completely killed its defining node - remember to
+            // check back up on it later.
+            self.node_flags[def_node].insert(NodeFlags::OUTPUT_KILLED);
             self.enqueue(def_node);
         }
     }
@@ -247,33 +260,39 @@ impl ReduceState<'_> {
 
     fn invalidate_node(&mut self, node: Node) {
         self.node_cache.remove(node);
-        self.reduced.remove(node);
+        self.mark_unreduced(node);
     }
 
     fn enqueue(&mut self, node: Node) {
-        if !self.enqueued.contains(node) {
+        if !self.node_flags[node].contains(NodeFlags::ENQUEUED) {
             trace!("    enqueue: {node}");
-            self.enqueued.insert(node);
+            self.node_flags[node].insert(NodeFlags::ENQUEUED);
             self.queue.push_back(node);
         }
     }
 
     fn dequeue(&mut self) -> Option<Node> {
         let node = self.queue.pop_front()?;
-        self.enqueued.remove(node);
+        self.node_flags[node].remove(NodeFlags::ENQUEUED);
         Some(node)
     }
 
+    fn test_and_clear_output_killed(&mut self, node: Node) -> bool {
+        let ret = self.node_flags[node].contains(NodeFlags::OUTPUT_KILLED);
+        self.node_flags[node].remove(NodeFlags::OUTPUT_KILLED);
+        ret
+    }
+
     fn is_reduced(&self, node: Node) -> bool {
-        self.reduced.contains(node)
+        self.node_flags[node].contains(NodeFlags::REDUCED)
     }
 
     fn mark_reduced(&mut self, node: Node) {
-        self.reduced.insert(node);
+        self.node_flags[node].insert(NodeFlags::REDUCED);
     }
 
     fn mark_unreduced(&mut self, node: Node) {
-        self.reduced.remove(node);
+        self.node_flags[node].remove(NodeFlags::REDUCED);
     }
 }
 

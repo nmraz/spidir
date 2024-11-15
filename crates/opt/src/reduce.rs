@@ -1,4 +1,4 @@
-use alloc::collections::VecDeque;
+use alloc::{collections::VecDeque, vec::Vec};
 
 use entity_set::DenseEntitySet;
 use itertools::izip;
@@ -11,6 +11,7 @@ use ir::{
     function::FunctionBody,
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
+    valwalk::{PostOrder, RawDefUseSuccs},
 };
 
 pub fn reduce_body(
@@ -30,11 +31,34 @@ pub fn reduce_body(
 
     trace!("starting reduction");
 
-    for root in ctx.body.compute_live_nodes().reverse_postorder(ctx.graph()) {
-        ctx.state.enqueue(root);
+    let live_node_info = ctx.body.compute_live_nodes();
+
+    // Use a "raw" postorder here so we can cull any dead nodes as we walk instead of just skipping
+    // them. This is important for maintaining correct use counts.
+    let node_postorder: Vec<_> = PostOrder::new(
+        RawDefUseSuccs::new(ctx.graph()),
+        live_node_info.roots.iter().copied(),
+    )
+    .collect();
+
+    for &node in node_postorder.iter().rev() {
+        if live_node_info.live_nodes.contains(node) {
+            ctx.state.enqueue(node);
+        } else {
+            // Make sure none of `node`'s inputs show up as live uses if they really aren't used.
+            ctx.kill_node(node);
+        }
     }
 
     while let Some(node) = ctx.state.dequeue() {
+        if is_node_dead(&ctx.body.graph, node) {
+            trace!("dead: {node}");
+            // No need to keep processing at this point, just remove the node completely. Once
+            // again, we want to make sure that the use counts of any incoming values are correct.
+            ctx.kill_node(node);
+            continue;
+        }
+
         let node = ctx.cache_node(node);
         if ctx.state.is_reduced(node) {
             // We may have hash-consed the node into a previously-reduced one. No need to re-reduce
@@ -73,16 +97,19 @@ impl<'f> ReduceContext<'f> {
     pub fn replace_value(&mut self, old_value: DepValue, new_value: DepValue) {
         self.state
             .replace_value(&mut self.body.graph, old_value, new_value);
+        self.state
+            .enqueue_killed_value_def(&self.body.graph, old_value);
     }
 
     pub fn set_node_input(&mut self, node: Node, index: u32, new_value: DepValue) {
+        let old_input = self.graph().node_inputs(node)[index as usize];
+        self.state.value_detached(&self.body.graph, old_input);
         self.body.graph.set_node_input(node, index, new_value);
         self.state.node_changed(node);
     }
 
     pub fn kill_node(&mut self, node: Node) {
-        self.body.graph.detach_node_inputs(node);
-        self.state.invalidate_node(node);
+        self.state.kill_node(&mut self.body.graph, node);
     }
 
     fn cache_node(&mut self, node: Node) -> Node {
@@ -153,6 +180,9 @@ impl ReduceState<'_> {
 
                     trace!("hash: {node} -> {existing_node}");
 
+                    // Kill the node now that we're redirecting all its uses.
+                    self.kill_node(graph, node);
+
                     let old_outputs: SmallVec<[_; 4]> =
                         graph.node_outputs(node).into_iter().collect();
                     let new_outputs: SmallVec<[_; 4]> =
@@ -183,6 +213,28 @@ impl ReduceState<'_> {
         while let Some((user, _)) = cursor.current() {
             self.node_changed(user);
             cursor.replace_current_with(new_value);
+        }
+    }
+
+    fn kill_node(&mut self, graph: &mut ValGraph, node: Node) {
+        trace!("    kill: {node}");
+        for input in graph.node_inputs(node) {
+            self.value_detached(graph, input);
+        }
+        graph.detach_node_inputs(node);
+        self.invalidate_node(node);
+    }
+
+    fn value_detached(&mut self, graph: &ValGraph, value: DepValue) {
+        if graph.value_uses(value).next().is_none() {
+            self.enqueue_killed_value_def(graph, value);
+        }
+    }
+
+    fn enqueue_killed_value_def(&mut self, graph: &ValGraph, value: DepValue) {
+        let def_node = graph.value_def(value).0;
+        if !graph.node_kind(def_node).has_side_effects() {
+            self.enqueue(def_node);
         }
     }
 
@@ -223,4 +275,15 @@ impl ReduceState<'_> {
     fn mark_unreduced(&mut self, node: Node) {
         self.reduced.remove(node);
     }
+}
+
+fn is_node_dead(graph: &ValGraph, node: Node) -> bool {
+    if graph.node_kind(node).has_side_effects() {
+        return false;
+    }
+
+    graph
+        .node_outputs(node)
+        .into_iter()
+        .all(|output| graph.value_uses(output).next().is_none())
 }

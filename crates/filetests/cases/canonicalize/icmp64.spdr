@@ -1,0 +1,479 @@
+# run: canonicalize
+
+func @icmp_eq:i64(i64, i64) {
+    # check:   func @icmp_eq:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(icmp0=$val):i64 = icmp eq $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = icmp eq %a, %b
+    return %c, %r
+}
+
+func @icmp_ne:i64(i64, i64) {
+    # check:   func @icmp_ne:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(icmp0=$val):i64 = icmp ne $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = icmp ne %a, %b
+    return %c, %r
+}
+
+func @icmp_slt:i64(i64, i64) {
+    # check:   func @icmp_slt:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(icmp0=$val):i64 = icmp slt $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_sle:i64(i64, i64) {
+    # check:   func @icmp_sle:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(icmp0=$val):i64 = icmp sle $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_ult:i64(i64, i64) {
+    # check:   func @icmp_ult:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(icmp0=$val):i64 = icmp ult $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ule:i64(i64, i64) {
+    # check:   func @icmp_ule:i64(i64, i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64, $(entry2=$val):i64 = entry
+    # dag:         $(icmp0=$val):i64 = icmp ule $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64, %b:i64 = entry
+    %r:i64 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_eq_fold_false:i64() {
+    # check:   func @icmp_eq_fold_false:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = icmp eq %a, %b
+    return %c, %r
+}
+
+func @icmp_eq_fold_true:i64() {
+    # check:   func @icmp_eq_fold_true:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 5
+    %r:i64 = icmp eq %a, %b
+    return %c, %r
+}
+
+func @icmp_ne_fold_false:i64() {
+    # check:   func @icmp_ne_fold_false:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 5
+    %r:i64 = icmp ne %a, %b
+    return %c, %r
+}
+
+func @icmp_ne_fold_true:i64() {
+    # check:   func @icmp_ne_fold_true:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = icmp ne %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_fold_false:i64() {
+    # check:   func @icmp_slt_fold_false:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 7
+    %b:i64 = iconst 5
+    %r:i64 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_fold_false_eq:i64() {
+    # check:   func @icmp_slt_fold_false_eq:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 5
+    %r:i64 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_fold_false_neg32:i64() {
+    # check:   func @icmp_slt_fold_false_neg32:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 4294967295
+    %b:i64 = iconst 7
+    %r:i64 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_fold_true:i64() {
+    # check:   func @icmp_slt_fold_true:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_fold_true_neg:i64() {
+    # check:   func @icmp_slt_fold_true_neg:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 18446744073709551615
+    %b:i64 = iconst 7
+    %r:i64 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_fold_false:i64() {
+    # check:   func @icmp_sle_fold_false:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 7
+    %b:i64 = iconst 5
+    %r:i64 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_fold_true:i64() {
+    # check:   func @icmp_sle_fold_true:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_fold_true_eq:i64() {
+    # check:   func @icmp_sle_fold_true_eq:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 5
+    %r:i64 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_fold_true_neg:i64() {
+    # check:   func @icmp_sle_fold_true_neg:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 18446744073709551615
+    %b:i64 = iconst 7
+    %r:i64 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_fold_false:i64() {
+    # check:   func @icmp_ult_fold_false:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 7
+    %b:i64 = iconst 5
+    %r:i64 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_fold_false_neg:i64() {
+    # check:   func @icmp_ult_fold_false_neg:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 18446744073709551615
+    %b:i64 = iconst 7
+    %r:i64 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_fold_false_eq:i64() {
+    # check:   func @icmp_ult_fold_false_eq:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 5
+    %r:i64 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_fold_true:i64() {
+    # check:   func @icmp_ult_fold_true:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_fold_true_neg:i64() {
+    # check:   func @icmp_ult_fold_true_neg:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 7
+    %b:i64 = iconst 18446744073709551615
+    %r:i64 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_fold_false:i64() {
+    # check:   func @icmp_ule_fold_false:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 7
+    %b:i64 = iconst 5
+    %r:i64 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_fold_false_neg:i64() {
+    # check:   func @icmp_ule_fold_false_neg:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 18446744073709551615
+    %b:i64 = iconst 7
+    %r:i64 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_fold_true:i64() {
+    # check:   func @icmp_ule_fold_true:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 7
+    %r:i64 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_fold_true_eq:i64() {
+    # check:   func @icmp_ule_fold_true_eq:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 5
+    %b:i64 = iconst 5
+    %r:i64 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_fold_true_neg:i64() {
+    # check:   func @icmp_ule_fold_true_neg:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i64 = iconst 7
+    %b:i64 = iconst 18446744073709551615
+    %r:i64 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_eq_commute:i64(i64) {
+    # check:   func @icmp_eq_commute:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(icmp0=$val):i64 = icmp eq $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = icmp eq %a, %b
+    return %c, %r
+}
+
+func @icmp_ne_commute:i64(i64) {
+    # check:   func @icmp_ne_commute:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(icmp0=$val):i64 = icmp ne $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = icmp ne %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_no_commute:i64(i64) {
+    # check:   func @icmp_slt_no_commute:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(icmp0=$val):i64 = icmp slt $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_no_commute:i64(i64) {
+    # check:   func @icmp_sle_no_commute:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(icmp0=$val):i64 = icmp sle $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_no_commute:i64(i64) {
+    # check:   func @icmp_ult_no_commute:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(icmp0=$val):i64 = icmp ult $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_no_commute:i64(i64) {
+    # check:   func @icmp_ule_no_commute:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 5
+    # dag:         $(icmp0=$val):i64 = icmp ule $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 5
+    %r:i64 = icmp ule %a, %b
+    return %c, %r
+}

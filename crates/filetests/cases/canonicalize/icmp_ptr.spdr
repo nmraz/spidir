@@ -1,0 +1,73 @@
+# run: canonicalize
+
+func @icmp_eq:i32(ptr, ptr) {
+    # check:   func @icmp_eq:i32(ptr, ptr) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):ptr = entry
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:ptr, %b:ptr = entry
+    %r:i32 = icmp eq %a, %b
+    return %c, %r
+}
+
+func @icmp_ne:i32(ptr, ptr) {
+    # check:   func @icmp_ne:i32(ptr, ptr) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):ptr = entry
+    # dag:         $(icmp0=$val):i32 = icmp ne $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:ptr, %b:ptr = entry
+    %r:i32 = icmp ne %a, %b
+    return %c, %r
+}
+
+func @icmp_slt:i32(ptr, ptr) {
+    # check:   func @icmp_slt:i32(ptr, ptr) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):ptr = entry
+    # dag:         $(icmp0=$val):i32 = icmp slt $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:ptr, %b:ptr = entry
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_sle:i32(ptr, ptr) {
+    # check:   func @icmp_sle:i32(ptr, ptr) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):ptr = entry
+    # dag:         $(icmp0=$val):i32 = icmp sle $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:ptr, %b:ptr = entry
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_ult:i32(ptr, ptr) {
+    # check:   func @icmp_ult:i32(ptr, ptr) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):ptr = entry
+    # dag:         $(icmp0=$val):i32 = icmp ult $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:ptr, %b:ptr = entry
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ule:i32(ptr, ptr) {
+    # check:   func @icmp_ule:i32(ptr, ptr) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):ptr = entry
+    # dag:         $(icmp0=$val):i32 = icmp ule $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:ptr, %b:ptr = entry
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}

@@ -4,7 +4,7 @@ use ir::{
     builder::BuilderExt,
     cache::NodeCache,
     function::FunctionBody,
-    node::{NodeKind, Type},
+    node::{IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
@@ -258,6 +258,39 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
             let [output] = graph.node_outputs_exact(node);
             if let Some(value) = match_iconst(graph, input) {
                 replace_with_iconst(ctx, output, value as u32 as u64);
+            }
+        }
+        &NodeKind::Icmp(kind) => {
+            let [a, b] = graph.node_inputs_exact(node);
+            let input_ty = graph.value_kind(a).as_value().unwrap();
+            let [output] = graph.node_outputs_exact(node);
+
+            match (match_iconst(graph, a), match_iconst(graph, b)) {
+                (Some(a), Some(b)) => {
+                    let res = match kind {
+                        IcmpKind::Eq => a == b,
+                        IcmpKind::Ne => a != b,
+                        IcmpKind::Slt => {
+                            if input_ty == Type::I32 {
+                                (a as i32) < (b as i32)
+                            } else {
+                                (a as i64) < (b as i64)
+                            }
+                        }
+                        IcmpKind::Sle => {
+                            if input_ty == Type::I32 {
+                                (a as i32) <= (b as i32)
+                            } else {
+                                (a as i64) <= (b as i64)
+                            }
+                        }
+                        IcmpKind::Ult => a < b,
+                        IcmpKind::Ule => a <= b,
+                    };
+                    replace_with_iconst(ctx, output, res as u64);
+                }
+                (Some(_), None) if kind.is_commutative() => commute_node_inputs(ctx, node, a, b),
+                _ => {}
             }
         }
         &NodeKind::Sfill(width) => {

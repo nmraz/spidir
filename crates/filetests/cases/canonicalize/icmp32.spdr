@@ -1,0 +1,465 @@
+# run: canonicalize
+
+func @icmp_eq:i32(i32, i32) {
+    # check:   func @icmp_eq:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = icmp eq %a, %b
+    return %c, %r
+}
+
+func @icmp_ne:i32(i32, i32) {
+    # check:   func @icmp_ne:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(icmp0=$val):i32 = icmp ne $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = icmp ne %a, %b
+    return %c, %r
+}
+
+func @icmp_slt:i32(i32, i32) {
+    # check:   func @icmp_slt:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(icmp0=$val):i32 = icmp slt $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_sle:i32(i32, i32) {
+    # check:   func @icmp_sle:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(icmp0=$val):i32 = icmp sle $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_ult:i32(i32, i32) {
+    # check:   func @icmp_ult:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(icmp0=$val):i32 = icmp ult $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ule:i32(i32, i32) {
+    # check:   func @icmp_ule:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(icmp0=$val):i32 = icmp ule $entry1, $entry2
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i32, %b:i32 = entry
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_eq_fold_false:i32() {
+    # check:   func @icmp_eq_fold_false:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = icmp eq %a, %b
+    return %c, %r
+}
+
+func @icmp_eq_fold_true:i32() {
+    # check:   func @icmp_eq_fold_true:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 5
+    %r:i32 = icmp eq %a, %b
+    return %c, %r
+}
+
+func @icmp_ne_fold_false:i32() {
+    # check:   func @icmp_ne_fold_false:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 5
+    %r:i32 = icmp ne %a, %b
+    return %c, %r
+}
+
+func @icmp_ne_fold_true:i32() {
+    # check:   func @icmp_ne_fold_true:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = icmp ne %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_fold_false:i32() {
+    # check:   func @icmp_slt_fold_false:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 7
+    %b:i32 = iconst 5
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_fold_false_eq:i32() {
+    # check:   func @icmp_slt_fold_false_eq:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 5
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_fold_true:i32() {
+    # check:   func @icmp_slt_fold_true:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_fold_true_neg:i32() {
+    # check:   func @icmp_slt_fold_true_neg:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 4294967295
+    %b:i32 = iconst 7
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_fold_false:i32() {
+    # check:   func @icmp_sle_fold_false:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 7
+    %b:i32 = iconst 5
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_fold_true:i32() {
+    # check:   func @icmp_sle_fold_true:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_fold_true_eq:i32() {
+    # check:   func @icmp_sle_fold_true_eq:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 5
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_fold_true_neg:i32() {
+    # check:   func @icmp_sle_fold_true_neg:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 4294967295
+    %b:i32 = iconst 7
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_fold_false:i32() {
+    # check:   func @icmp_ult_fold_false:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 7
+    %b:i32 = iconst 5
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_fold_false_neg:i32() {
+    # check:   func @icmp_ult_fold_false_neg:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 4294967295
+    %b:i32 = iconst 7
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_fold_false_eq:i32() {
+    # check:   func @icmp_ult_fold_false_eq:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 5
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_fold_true:i32() {
+    # check:   func @icmp_ult_fold_true:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_fold_true_neg:i32() {
+    # check:   func @icmp_ult_fold_true_neg:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 7
+    %b:i32 = iconst 4294967295
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_fold_false:i32() {
+    # check:   func @icmp_ule_fold_false:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 7
+    %b:i32 = iconst 5
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_fold_false_neg:i32() {
+    # check:   func @icmp_ule_fold_false_neg:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 4294967295
+    %b:i32 = iconst 7
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_fold_true:i32() {
+    # check:   func @icmp_ule_fold_true:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 7
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_fold_true_eq:i32() {
+    # check:   func @icmp_ule_fold_true_eq:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 5
+    %b:i32 = iconst 5
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_fold_true_neg:i32() {
+    # check:   func @icmp_ule_fold_true_neg:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %a:i32 = iconst 7
+    %b:i32 = iconst 4294967295
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_eq_commute:i32(i32) {
+    # check:   func @icmp_eq_commute:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = icmp eq %a, %b
+    return %c, %r
+}
+
+func @icmp_ne_commute:i32(i32) {
+    # check:   func @icmp_ne_commute:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(icmp0=$val):i32 = icmp ne $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = icmp ne %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_no_commute:i32(i32) {
+    # check:   func @icmp_slt_no_commute:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(icmp0=$val):i32 = icmp slt $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_no_commute:i32(i32) {
+    # check:   func @icmp_sle_no_commute:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(icmp0=$val):i32 = icmp sle $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_no_commute:i32(i32) {
+    # check:   func @icmp_ult_no_commute:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(icmp0=$val):i32 = icmp ult $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_no_commute:i32(i32) {
+    # check:   func @icmp_ule_no_commute:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 5
+    # dag:         $(icmp0=$val):i32 = icmp ule $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i32 = entry
+    %a:i32 = iconst 5
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}

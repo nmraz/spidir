@@ -80,6 +80,11 @@ impl IcmpKind {
             IcmpKind::Ule => "ule",
         }
     }
+
+    #[inline]
+    pub fn is_commutative(self) -> bool {
+        matches!(self, Self::Eq | Self::Ne)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

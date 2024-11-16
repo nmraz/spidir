@@ -260,39 +260,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 replace_with_iconst(ctx, output, value as u32 as u64);
             }
         }
-        &NodeKind::Icmp(kind) => {
-            let [a, b] = graph.node_inputs_exact(node);
-            let input_ty = graph.value_kind(a).as_value().unwrap();
-            let [output] = graph.node_outputs_exact(node);
-
-            match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (Some(a), Some(b)) => {
-                    let res = match kind {
-                        IcmpKind::Eq => a == b,
-                        IcmpKind::Ne => a != b,
-                        IcmpKind::Slt => {
-                            if input_ty == Type::I32 {
-                                (a as i32) < (b as i32)
-                            } else {
-                                (a as i64) < (b as i64)
-                            }
-                        }
-                        IcmpKind::Sle => {
-                            if input_ty == Type::I32 {
-                                (a as i32) <= (b as i32)
-                            } else {
-                                (a as i64) <= (b as i64)
-                            }
-                        }
-                        IcmpKind::Ult => a < b,
-                        IcmpKind::Ule => a <= b,
-                    };
-                    replace_with_iconst(ctx, output, res as u64);
-                }
-                (Some(_), None) if kind.is_commutative() => commute_node_inputs(ctx, node, a, b),
-                _ => {}
-            }
-        }
+        &NodeKind::Icmp(kind) => canonicalize_icmp(ctx, node, kind),
         &NodeKind::Sfill(width) => {
             let [input] = graph.node_inputs_exact(node);
             let [output] = graph.node_outputs_exact(node);
@@ -317,6 +285,42 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 ctx.replace_value(output, ptr);
             }
         }
+        _ => {}
+    }
+}
+
+fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
+    macro_rules! i32_or_i64 {
+        ($ty:expr, $a:expr, $b:expr, $op:tt) => {
+            if $ty == Type::I32 {
+                ($a as i32) $op ($b as i32)
+            } else {
+                ($a as i64) $op ($b as i64)
+            }
+        };
+    }
+
+    let graph = ctx.graph();
+
+    let [a, b] = graph.node_inputs_exact(node);
+    let input_ty = graph.value_kind(a).as_value().unwrap();
+    let [output] = graph.node_outputs_exact(node);
+
+    match (match_iconst(graph, a), match_iconst(graph, b)) {
+        (Some(a), Some(b)) => {
+            let res = match kind {
+                IcmpKind::Eq => a == b,
+                IcmpKind::Ne => a != b,
+                IcmpKind::Slt => i32_or_i64!(input_ty, a, b, <),
+                IcmpKind::Sle => i32_or_i64!(input_ty, a, b, <=),
+                // Note: these compares always behave the same for 32-bit and 64-bit values because
+                // 32-bit `iconst` nodes are not allowed to have their high bits set.
+                IcmpKind::Ult => a < b,
+                IcmpKind::Ule => a <= b,
+            };
+            replace_with_iconst(ctx, output, res as u64);
+        }
+        (Some(_), None) if kind.is_commutative() => commute_node_inputs(ctx, node, a, b),
         _ => {}
     }
 }

@@ -1,9 +1,5 @@
 # run: isel-regalloc
 
-# NOTE: Allocation still isn't ideal here ($rcx and $rdx are clobbered by stack loads) because the
-# stack parameters end up with higher spill weights than the register-based ones and thus cannot be
-# evicted. This should get better once the allocator is aware of rematerialization.
-
 func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
     # check: function `many_params`:
     # nextln: clobbers: rax, rdi, r10

@@ -349,18 +349,34 @@ fn select_imul(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
 fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: IcmpKind) -> CondCode {
     let [op1, op2] = ctx.node_inputs_exact(node);
 
-    if match_iconst(ctx, op1) == Some(0) {
-        emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
-        return cond_code_for_icmp_zr(kind);
-    }
+    let ty = ctx.value_type(op1);
 
-    if match_iconst(ctx, op2) == Some(0) {
-        emit_alu_rr_discarded(ctx, op1, op1, AluOp::Test);
-        return cond_code_for_icmp_rz(kind);
+    match (match_iconst(ctx, op1), kind, match_iconst(ctx, op2)) {
+        (Some(0), _, _) => {
+            emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
+            cond_code_for_icmp_zr(kind)
+        }
+        (Some(0xffffffffffffffff), IcmpKind::Slt, _) if ty == Type::I64 => {
+            emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
+            cond_code_for_icmp_zr(IcmpKind::Sle)
+        }
+        (Some(0xffffffff), IcmpKind::Slt, _) if ty == Type::I32 => {
+            emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
+            cond_code_for_icmp_zr(IcmpKind::Sle)
+        }
+        (_, _, Some(0)) => {
+            emit_alu_rr_discarded(ctx, op1, op1, AluOp::Test);
+            cond_code_for_icmp_rz(kind)
+        }
+        (_, IcmpKind::Slt, Some(1)) => {
+            emit_alu_rr_discarded(ctx, op1, op1, AluOp::Test);
+            cond_code_for_icmp_rz(IcmpKind::Sle)
+        }
+        _ => {
+            emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
+            cond_code_for_icmp(kind)
+        }
     }
-
-    emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
-    cond_code_for_icmp(kind)
 }
 
 fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {

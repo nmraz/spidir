@@ -75,18 +75,17 @@ func @select_sltz:i32(i32, i32, i32) {
 func @select_slez:i32(i32, i32, i32) {
     # check: function `select_slez`:
     # nextln:       block0[%3:gpr($$rdi), %2:gpr($$rsi), %1:gpr($$rdx)]:
-    # nextln: 0000:      %4:gpr(any)[late] = MovRmS32(1)
-    # nextln: 0001:      AluRRm(S32, Cmp) %3(reg)[early], %4(any)[early]
-    # nextln: 0002:      Jumpcc(L, block1, block3)
+    # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0001:      Jumpcc(Le, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
-    # nextln: 0003:      Jump(block2)
+    # nextln: 0002:      Jump(block2)
     # nextln:       => block2[%2:gpr]
     # nextln:       block3:
-    # nextln: 0004:      Jump(block2)
+    # nextln: 0003:      Jump(block2)
     # nextln:       => block2[%1:gpr]
     # nextln:       block2[%0:gpr]:
-    # nextln: 0005:      Ret %0($$rax)[early]
+    # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
     %11:i32 = iconst 1
@@ -219,19 +218,18 @@ func @select_zslt:i32(i32, i32, i32) {
 
 func @select_zsle:i32(i32, i32, i32) {
     # check: function `select_zsle`:
-    # nextln:       block0[%4:gpr($$rdi), %2:gpr($$rsi), %1:gpr($$rdx)]:
-    # nextln: 0000:      %3:gpr(reg)[late] = MovRU32(4294967295)
-    # nextln: 0001:      AluRRm(S32, Cmp) %3(reg)[early], %4(any)[early]
-    # nextln: 0002:      Jumpcc(L, block1, block3)
+    # nextln:       block0[%3:gpr($$rdi), %2:gpr($$rsi), %1:gpr($$rdx)]:
+    # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0001:      Jumpcc(Ns, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
-    # nextln: 0003:      Jump(block2)
+    # nextln: 0002:      Jump(block2)
     # nextln:       => block2[%2:gpr]
     # nextln:       block3:
-    # nextln: 0004:      Jump(block2)
+    # nextln: 0003:      Jump(block2)
     # nextln:       => block2[%1:gpr]
     # nextln:       block2[%0:gpr]:
-    # nextln: 0005:      Ret %0($$rax)[early]
+    # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
     %11:i32 = iconst 4294967295

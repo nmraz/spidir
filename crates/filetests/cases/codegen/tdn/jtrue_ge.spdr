@@ -47,8 +47,8 @@ func @"System.Int32 Tests.CodeGenBringUpTests::JTrueGeInt1(System.Int32)":i32(i3
     # nextln: 000097: e9 ec 00 00 00                  jmp 0x188
     # nextln: 00009c: b8 01 00 00 00                  mov eax, 1
     # nextln: 0000a1: 33 f6                           xor esi, esi
-    # nextln: 0000a3: 3b f8                           cmp edi, eax
-    # nextln: 0000a5: 40 0f 9c c6                     setl sil
+    # nextln: 0000a3: 85 ff                           test edi, edi
+    # nextln: 0000a5: 40 0f 9e c6                     setle sil
     # nextln: 0000a9: 45 33 c0                        xor r8d, r8d
     # nextln: 0000ac: 85 f6                           test esi, esi
     # nextln: 0000ae: 41 0f 94 c0                     sete r8b

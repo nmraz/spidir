@@ -38,17 +38,16 @@ impl Type {
     }
 
     #[inline]
-    pub fn byte_size(self) -> Option<usize> {
+    pub fn byte_size(self) -> usize {
         match self {
-            Type::I32 => Some(4),
-            Type::I64 | Type::F64 => Some(8),
-            _ => None,
+            Type::I32 => 4,
+            Type::I64 | Type::F64 | Type::Ptr => 8,
         }
     }
 
     #[inline]
-    pub fn bit_width(self) -> Option<usize> {
-        self.byte_size().map(|s| s * 8)
+    pub fn bit_width(self) -> usize {
+        self.byte_size() * 8
     }
 }
 

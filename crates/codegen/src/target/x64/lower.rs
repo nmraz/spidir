@@ -148,7 +148,7 @@ impl MachineLower for X64Machine {
                     (Type::I64, 16) => emit_movsx_rr(ctx, input, output, ExtWidth::Ext16_64),
                     (Type::I64, 32) => emit_movsx_rr(ctx, input, output, ExtWidth::Ext32_64),
                     _ => {
-                        let full_width = ty.bit_width().unwrap() as u8;
+                        let full_width = ty.bit_width() as u8;
                         let shift_width = full_width - width;
                         let input = ctx.get_value_vreg(input);
                         let output = ctx.get_value_vreg(output);
@@ -356,11 +356,11 @@ fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: Icmp
             emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
             cond_code_for_icmp_zr(kind)
         }
-        (Some(0xffffffffffffffff), IcmpKind::Slt, _) if ty == Type::I64 => {
+        (Some(0xffffffffffffffff), IcmpKind::Slt, _) if ty.bit_width() == 64 => {
             emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
             cond_code_for_icmp_zr(IcmpKind::Sle)
         }
-        (Some(0xffffffff), IcmpKind::Slt, _) if ty == Type::I32 => {
+        (Some(0xffffffff), IcmpKind::Slt, _) if ty.bit_width() == 32 => {
             emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
             cond_code_for_icmp_zr(IcmpKind::Sle)
         }

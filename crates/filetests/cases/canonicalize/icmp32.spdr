@@ -422,11 +422,11 @@ func @icmp_slt_no_commute:i32(i32) {
     return %c, %r
 }
 
-func @icmp_sle_no_commute:i32(i32) {
-    # check:   func @icmp_sle_no_commute:i32(i32) {
+func @icmp_sle_strengthen:i32(i32) {
+    # check:   func @icmp_sle_strengthen:i32(i32) {
     # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # dag:         $(iconst0=$val):i32 = iconst 5
-    # dag:         $(icmp0=$val):i32 = icmp sle $iconst0, $entry1
+    # dag:         $(iconst0=$val):i32 = iconst 4
+    # dag:         $(icmp0=$val):i32 = icmp slt $iconst0, $entry1
     # dag:         return $entry0, $icmp0
     # nextln:  }
 
@@ -450,11 +450,11 @@ func @icmp_ult_no_commute:i32(i32) {
     return %c, %r
 }
 
-func @icmp_ule_no_commute:i32(i32) {
-    # check:   func @icmp_ule_no_commute:i32(i32) {
+func @icmp_ule_strengthen:i32(i32) {
+    # check:   func @icmp_ule_strengthen:i32(i32) {
     # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # dag:         $(iconst0=$val):i32 = iconst 5
-    # dag:         $(icmp0=$val):i32 = icmp ule $iconst0, $entry1
+    # dag:         $(iconst0=$val):i32 = iconst 4
+    # dag:         $(icmp0=$val):i32 = icmp ult $iconst0, $entry1
     # dag:         return $entry0, $icmp0
     # nextln:  }
 

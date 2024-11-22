@@ -1,0 +1,442 @@
+# run: canonicalize
+
+func @icmp_slt_smin_val:i32(i64) {
+    # check:   func @icmp_slt_smin_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775808
+    # dag:         $(icmp0=$val):i32 = icmp ne $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 9223372036854775808
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_smax_val:i32(i64) {
+    # check:   func @icmp_slt_smax_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 9223372036854775807
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_umin_val:i32(i64) {
+    # check:   func @icmp_slt_umin_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         $(icmp0=$val):i32 = icmp slt $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 0
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_umax_val:i32(i64) {
+    # check:   func @icmp_slt_umax_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551615
+    # dag:         $(icmp0=$val):i32 = icmp slt $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 18446744073709551615
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+
+func @icmp_sle_smin_val:i32(i64) {
+    # check:   func @icmp_sle_smin_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 9223372036854775808
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_smax_val:i32(i64) {
+    # check:   func @icmp_sle_smax_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775806
+    # dag:         $(icmp0=$val):i32 = icmp slt $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 9223372036854775807
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_umin_val:i32(i64) {
+    # check:   func @icmp_sle_umin_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551615
+    # dag:         $(icmp0=$val):i32 = icmp slt $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 0
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_umax_val:i32(i64) {
+    # check:   func @icmp_sle_umax_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551614
+    # dag:         $(icmp0=$val):i32 = icmp slt $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 18446744073709551615
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_umin_val:i32(i64) {
+    # check:   func @icmp_ult_umin_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         $(icmp0=$val):i32 = icmp ne $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 0
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_umax_val:i32(i64) {
+    # check:   func @icmp_ult_umax_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 18446744073709551615
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_smin_val:i32(i64) {
+    # check:   func @icmp_ult_smin_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775808
+    # dag:         $(icmp0=$val):i32 = icmp ult $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 9223372036854775808
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_smax_val:i32(i64) {
+    # check:   func @icmp_ult_smax_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775807
+    # dag:         $(icmp0=$val):i32 = icmp ult $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 9223372036854775807
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_umin_val:i32(i64) {
+    # check:   func @icmp_ule_umin_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 0
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_umax_val:i32(i64) {
+    # check:   func @icmp_ule_umax_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551614
+    # dag:         $(icmp0=$val):i32 = icmp ult $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 18446744073709551615
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_smin_val:i32(i64) {
+    # check:   func @icmp_ule_smin_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775807
+    # dag:         $(icmp0=$val):i32 = icmp ult $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 9223372036854775808
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_smax_val:i32(i64) {
+    # check:   func @icmp_ule_smax_val:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775806
+    # dag:         $(icmp0=$val):i32 = icmp ult $iconst0, $entry1
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %b:i64 = entry
+    %a:i64 = iconst 9223372036854775807
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_val_smin:i32(i64) {
+    # check:   func @icmp_slt_val_smin:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 9223372036854775808
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_val_smax:i32(i64) {
+    # check:   func @icmp_slt_val_smax:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775807
+    # dag:         $(icmp0=$val):i32 = icmp ne $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 9223372036854775807
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_val_umin:i32(i64) {
+    # check:   func @icmp_slt_val_umin:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         $(icmp0=$val):i32 = icmp slt $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_slt_val_umax:i32(i64) {
+    # check:   func @icmp_slt_val_umax:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551615
+    # dag:         $(icmp0=$val):i32 = icmp slt $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744073709551615
+    %r:i32 = icmp slt %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_val_smin:i32(i64) {
+    # check:   func @icmp_sle_val_smin:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775809
+    # dag:         $(icmp0=$val):i32 = icmp slt $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 9223372036854775808
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_val_smax:i32(i64) {
+    # check:   func @icmp_sle_val_smax:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 9223372036854775807
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_val_umin:i32(i64) {
+    # check:   func @icmp_sle_val_umin:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         $(icmp0=$val):i32 = icmp slt $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_sle_val_umax:i32(i64) {
+    # check:   func @icmp_sle_val_umax:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         $(icmp0=$val):i32 = icmp slt $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744073709551615
+    %r:i32 = icmp sle %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_val_umin:i32(i64) {
+    # check:   func @icmp_ult_val_umin:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_val_umax:i32(i64) {
+    # check:   func @icmp_ult_val_umax:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 18446744073709551615
+    # dag:         $(icmp0=$val):i32 = icmp ne $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744073709551615
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_val_smin:i32(i64) {
+    # check:   func @icmp_ult_val_smin:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775808
+    # dag:         $(icmp0=$val):i32 = icmp ult $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 9223372036854775808
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ult_val_smax:i32(i64) {
+    # check:   func @icmp_ult_val_smax:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775807
+    # dag:         $(icmp0=$val):i32 = icmp ult $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 9223372036854775807
+    %r:i32 = icmp ult %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_val_umin:i32(i64) {
+    # check:   func @icmp_ule_val_umin:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 1
+    # dag:         $(icmp0=$val):i32 = icmp ult $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 0
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_val_umax:i32(i64) {
+    # check:   func @icmp_ule_val_umax:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 18446744073709551615
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_val_smin:i32(i64) {
+    # check:   func @icmp_ule_val_smin:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775809
+    # dag:         $(icmp0=$val):i32 = icmp ult $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 9223372036854775808
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}
+
+func @icmp_ule_val_smax:i32(i64) {
+    # check:   func @icmp_ule_val_smax:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(iconst0=$val):i64 = iconst 9223372036854775808
+    # dag:         $(icmp0=$val):i32 = icmp ult $entry1, $iconst0
+    # dag:         return $entry0, $icmp0
+    # nextln:  }
+
+    %c:ctrl, %a:i64 = entry
+    %b:i64 = iconst 9223372036854775807
+    %r:i32 = icmp ule %a, %b
+    return %c, %r
+}

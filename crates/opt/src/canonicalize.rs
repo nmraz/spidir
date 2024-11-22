@@ -290,12 +290,22 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
 }
 
 fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
-    macro_rules! i32_or_i64 {
+    macro_rules! cmp_signed {
         ($ty:expr, $a:expr, $b:expr, $op:tt) => {
             if $ty == Type::I32 {
                 ($a as i32) $op ($b as i32)
             } else {
                 ($a as i64) $op ($b as i64)
+            }
+        };
+    }
+
+    macro_rules! checked_op_signed {
+        ($ty:expr, $a:expr, $b:expr, $op:ident) => {
+            if $ty == Type::I32 {
+                ($a as i32).$op($b as i32).map(|res| res as u32 as u64)
+            } else {
+                ($a as i64).$op($b as i64).map(|res| res as u64)
             }
         };
     }
@@ -311,8 +321,8 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
             let res = match kind {
                 IcmpKind::Eq => a == b,
                 IcmpKind::Ne => a != b,
-                IcmpKind::Slt => i32_or_i64!(input_ty, a, b, <),
-                IcmpKind::Sle => i32_or_i64!(input_ty, a, b, <=),
+                IcmpKind::Slt => cmp_signed!(input_ty, a, b, <),
+                IcmpKind::Sle => cmp_signed!(input_ty, a, b, <=),
                 // Note: these compares always behave the same for 32-bit and 64-bit values because
                 // 32-bit `iconst` nodes are not allowed to have their high bits set.
                 IcmpKind::Ult => a < b,
@@ -320,9 +330,102 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
             };
             replace_with_iconst(ctx, output, res as u64);
         }
+
         (Some(_), None) if kind.is_commutative() => commute_node_inputs(ctx, node, a, b),
+
+        (Some(a_val), None) => match kind {
+            // Convert weak comparisons to strong comparisons/constants.
+            IcmpKind::Sle => match checked_op_signed!(input_ty, a_val, 1, checked_sub) {
+                Some(new_a_val) => {
+                    let new_a = ctx.builder().build_iconst(input_ty, new_a_val);
+                    replace_with_icmp(ctx, output, IcmpKind::Slt, new_a, b);
+                }
+                None => replace_with_iconst(ctx, output, 1),
+            },
+            IcmpKind::Ule => match a_val.checked_sub(1) {
+                Some(new_a_val) => {
+                    let new_a = ctx.builder().build_iconst(input_ty, new_a_val);
+                    replace_with_icmp(ctx, output, IcmpKind::Ult, new_a, b);
+                }
+                None => replace_with_iconst(ctx, output, 1),
+            },
+
+            // Simplify strong comparisons near boundaries.
+            IcmpKind::Slt => {
+                if a_val == signed_min_for_ty(input_ty) {
+                    // Move the constant to the right now to avoid extra work later.
+                    replace_with_icmp(ctx, output, IcmpKind::Ne, b, a);
+                } else if a_val == signed_max_for_ty(input_ty) {
+                    replace_with_iconst(ctx, output, 0);
+                }
+            }
+            IcmpKind::Ult => {
+                if a_val == 0 {
+                    // Move the constant to the right now to avoid extra work later.
+                    replace_with_icmp(ctx, output, IcmpKind::Ne, b, a);
+                } else if a_val == unsigned_max_for_ty(input_ty) {
+                    replace_with_iconst(ctx, output, 0);
+                }
+            }
+
+            _ => {}
+        },
+
+        (None, Some(b_val)) => match kind {
+            // Convert weak comparisons to strong comparisons/constants.
+            IcmpKind::Sle => match checked_op_signed!(input_ty, b_val, 1, checked_add) {
+                Some(new_b_val) => {
+                    let new_b = ctx.builder().build_iconst(input_ty, new_b_val);
+                    replace_with_icmp(ctx, output, IcmpKind::Slt, a, new_b);
+                }
+                None => replace_with_iconst(ctx, output, 1),
+            },
+            IcmpKind::Ule => match b_val.checked_add(1) {
+                Some(new_b_val) => {
+                    let new_b = ctx.builder().build_iconst(input_ty, new_b_val);
+                    replace_with_icmp(ctx, output, IcmpKind::Ult, a, new_b);
+                }
+                None => replace_with_iconst(ctx, output, 1),
+            },
+
+            // Simplify strong comparisons near boundaries.
+            IcmpKind::Slt => {
+                if b_val == signed_max_for_ty(input_ty) {
+                    replace_with_icmp(ctx, output, IcmpKind::Ne, a, b);
+                } else if b_val == signed_min_for_ty(input_ty) {
+                    replace_with_iconst(ctx, output, 0);
+                }
+            }
+            IcmpKind::Ult => {
+                if b_val == unsigned_max_for_ty(input_ty) {
+                    replace_with_icmp(ctx, output, IcmpKind::Ne, a, b);
+                } else if b_val == 0 {
+                    replace_with_iconst(ctx, output, 0);
+                }
+            }
+
+            _ => {}
+        },
         _ => {}
     }
+}
+
+fn replace_with_icmp(
+    ctx: &mut ReduceContext<'_>,
+    output: DepValue,
+    kind: IcmpKind,
+    a: DepValue,
+    b: DepValue,
+) {
+    let output_ty = ctx.graph().value_kind(output).as_value().unwrap();
+    let new_output = ctx.builder().build_icmp(kind, output_ty, a, b);
+    ctx.replace_value(output, new_output);
+}
+
+fn replace_with_iconst(ctx: &mut ReduceContext<'_>, value: DepValue, iconst: u64) {
+    let ty = ctx.graph().value_kind(value).as_value().unwrap();
+    let iconst = ctx.builder().build_iconst(ty, iconst);
+    ctx.replace_value(value, iconst);
 }
 
 fn commute_node_inputs(ctx: &mut ReduceContext<'_>, node: Node, a: DepValue, b: DepValue) {
@@ -330,10 +433,28 @@ fn commute_node_inputs(ctx: &mut ReduceContext<'_>, node: Node, a: DepValue, b: 
     ctx.set_node_input(node, 1, a);
 }
 
-fn replace_with_iconst(ctx: &mut ReduceContext<'_>, value: DepValue, iconst: u64) {
-    let ty = ctx.graph().value_kind(value).as_value().unwrap();
-    let iconst = ctx.builder().build_iconst(ty, iconst);
-    ctx.replace_value(value, iconst);
+fn signed_min_for_ty(ty: Type) -> u64 {
+    if ty == Type::I32 {
+        i32::MIN as u32 as u64
+    } else {
+        i64::MIN as u64
+    }
+}
+
+fn signed_max_for_ty(ty: Type) -> u64 {
+    if ty == Type::I32 {
+        i32::MAX as u32 as u64
+    } else {
+        i64::MAX as u64
+    }
+}
+
+fn unsigned_max_for_ty(ty: Type) -> u64 {
+    if ty == Type::I32 {
+        u32::MAX as u64
+    } else {
+        u64::MAX
+    }
 }
 
 fn match_iconst(graph: &ValGraph, value: DepValue) -> Option<u64> {

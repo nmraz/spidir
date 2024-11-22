@@ -1840,7 +1840,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # dag:         $(region724=$val):ctrl, $(region725=$val):phisel = region $store249, $store250
     # dag:         $(phi97=$val):i32 = phi $region719, $phi95, $phi95
     # dag:         $(phi98=$val):i32 = phi $region725, $phi97, $phi97
-    # dag:         $(icmp35=$val):i32 = icmp ult $iconst3, $phi98
+    # dag:         $(icmp35=$val):i32 = icmp ne $phi98, $iconst3
     # dag:         $(brcond266=$val):ctrl, $(brcond267=$val):ctrl = brcond $region724, $icmp35
     # dag:         $(region726=$val):ctrl, $(region727=$val):phisel = region $brcond266
     # dag:         $(load854=$val):ctrl, $(load855=$val):i32 = load.4 $region726, $stackslot1
@@ -3714,7 +3714,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # dag:         $(region1608=$val):ctrl, $(region1609=$val):phisel = region $store377, $store378
     # dag:         $(phi505=$val):i32 = phi $region1603, $phi503, $phi503
     # dag:         $(phi506=$val):i32 = phi $region1609, $phi505, $phi505
-    # dag:         $(icmp69=$val):i32 = icmp ult $iconst3, $phi506
+    # dag:         $(icmp69=$val):i32 = icmp ne $phi506, $iconst3
     # dag:         $(brcond582=$val):ctrl, $(brcond583=$val):ctrl = brcond $region1608, $icmp69
     # dag:         $(region1610=$val):ctrl, $(region1611=$val):phisel = region $brcond582
     # dag:         $(load1494=$val):ctrl, $(load1495=$val):i32 = load.4 $region1610, $stackslot1

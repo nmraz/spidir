@@ -334,7 +334,7 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
         (Some(_), None) if kind.is_commutative() => commute_node_inputs(ctx, node, a, b),
 
         (Some(a_val), None) => match kind {
-            // Convert weak comparisons to strong comparisons/constants.
+            // Convert weak inequalities to strong inequalities/constants.
             IcmpKind::Sle => match checked_op_signed!(input_ty, a_val, 1, checked_sub) {
                 Some(new_a_val) => {
                     let new_a = ctx.builder().build_iconst(input_ty, new_a_val);
@@ -350,29 +350,31 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
                 None => replace_with_iconst(ctx, output, 1),
             },
 
-            // Simplify strong comparisons near boundaries.
-            IcmpKind::Slt => {
-                if a_val == signed_min_for_ty(input_ty) {
-                    // Move the constant to the right now to avoid extra work later.
-                    replace_with_icmp(ctx, output, IcmpKind::Ne, b, a);
-                } else if a_val == signed_max_for_ty(input_ty) {
-                    replace_with_iconst(ctx, output, 0);
-                }
-            }
-            IcmpKind::Ult => {
-                if a_val == 0 {
-                    // Move the constant to the right now to avoid extra work later.
-                    replace_with_icmp(ctx, output, IcmpKind::Ne, b, a);
-                } else if a_val == unsigned_max_for_ty(input_ty) {
-                    replace_with_iconst(ctx, output, 0);
-                }
-            }
+            // Simplify strong inequalities near boundaries.
+            IcmpKind::Slt => simplify_icmp_gt_const_boundary(
+                ctx,
+                output,
+                a,
+                b,
+                a_val,
+                signed_min_for_ty(input_ty),
+                signed_max_for_ty(input_ty),
+            ),
+            IcmpKind::Ult => simplify_icmp_gt_const_boundary(
+                ctx,
+                output,
+                a,
+                b,
+                a_val,
+                0,
+                unsigned_max_for_ty(input_ty),
+            ),
 
             _ => {}
         },
 
         (None, Some(b_val)) => match kind {
-            // Convert weak comparisons to strong comparisons/constants.
+            // Convert weak inequalities to strong inequalities/constants.
             IcmpKind::Sle => match checked_op_signed!(input_ty, b_val, 1, checked_add) {
                 Some(new_b_val) => {
                     let new_b = ctx.builder().build_iconst(input_ty, new_b_val);
@@ -388,25 +390,71 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
                 None => replace_with_iconst(ctx, output, 1),
             },
 
-            // Simplify strong comparisons near boundaries.
-            IcmpKind::Slt => {
-                if b_val == signed_max_for_ty(input_ty) {
-                    replace_with_icmp(ctx, output, IcmpKind::Ne, a, b);
-                } else if b_val == signed_min_for_ty(input_ty) {
-                    replace_with_iconst(ctx, output, 0);
-                }
-            }
-            IcmpKind::Ult => {
-                if b_val == unsigned_max_for_ty(input_ty) {
-                    replace_with_icmp(ctx, output, IcmpKind::Ne, a, b);
-                } else if b_val == 0 {
-                    replace_with_iconst(ctx, output, 0);
-                }
-            }
+            // Simplify strong inequalities near boundaries.
+            IcmpKind::Slt => simplify_icmp_lt_const_boundary(
+                ctx,
+                output,
+                a,
+                b,
+                b_val,
+                signed_min_for_ty(input_ty),
+                signed_max_for_ty(input_ty),
+            ),
+            IcmpKind::Ult => simplify_icmp_lt_const_boundary(
+                ctx,
+                output,
+                a,
+                b,
+                b_val,
+                0,
+                unsigned_max_for_ty(input_ty),
+            ),
 
             _ => {}
         },
         _ => {}
+    }
+}
+
+fn simplify_icmp_gt_const_boundary(
+    ctx: &mut ReduceContext<'_>,
+    output: DepValue,
+    a: DepValue,
+    b: DepValue,
+    a_val: u64,
+    min: u64,
+    max: u64,
+) {
+    if a_val == min {
+        // Move the constant to the right now to avoid extra work later.
+        replace_with_icmp(ctx, output, IcmpKind::Ne, b, a);
+    } else if a_val == max - 1 {
+        let ty = ctx.graph().value_kind(a).as_value().unwrap();
+        let new_a = ctx.builder().build_iconst(ty, max);
+        // Move the constant to the right now to avoid extra work later.
+        replace_with_icmp(ctx, output, IcmpKind::Eq, b, new_a);
+    } else if a_val == max {
+        replace_with_iconst(ctx, output, 0);
+    }
+}
+
+fn simplify_icmp_lt_const_boundary(
+    ctx: &mut ReduceContext<'_>,
+    output: DepValue,
+    a: DepValue,
+    b: DepValue,
+    b_val: u64,
+    min: u64,
+    max: u64,
+) {
+    if b_val == max {
+        replace_with_icmp(ctx, output, IcmpKind::Ne, a, b);
+    } else if b_val == min + 1 {
+        let ty = ctx.graph().value_kind(a).as_value().unwrap();
+        let new_b = ctx.builder().build_iconst(ty, min);
+        replace_with_icmp(ctx, output, IcmpKind::Eq, a, new_b);
+    } else if b_val == min {
+        replace_with_iconst(ctx, output, 0);
     }
 }
 

@@ -72,8 +72,8 @@ func @icmp_sle_smin_val:i32(i32) {
 func @icmp_sle_smax_val:i32(i32) {
     # check:   func @icmp_sle_smax_val:i32(i32) {
     # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # dag:         $(iconst0=$val):i32 = iconst 2147483646
-    # dag:         $(icmp0=$val):i32 = icmp slt $iconst0, $entry1
+    # dag:         $(iconst0=$val):i32 = iconst 2147483647
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry1, $iconst0
     # dag:         return $entry0, $icmp0
     # nextln:  }
 
@@ -182,8 +182,8 @@ func @icmp_ule_umin_val:i32(i32) {
 func @icmp_ule_umax_val:i32(i32) {
     # check:   func @icmp_ule_umax_val:i32(i32) {
     # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # dag:         $(iconst0=$val):i32 = iconst 4294967294
-    # dag:         $(icmp0=$val):i32 = icmp ult $iconst0, $entry1
+    # dag:         $(iconst0=$val):i32 = iconst 4294967295
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry1, $iconst0
     # dag:         return $entry0, $icmp0
     # nextln:  }
 
@@ -279,8 +279,8 @@ func @icmp_slt_val_umax:i32(i32) {
 func @icmp_sle_val_smin:i32(i32) {
     # check:   func @icmp_sle_val_smin:i32(i32) {
     # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # dag:         $(iconst0=$val):i32 = iconst 2147483649
-    # dag:         $(icmp0=$val):i32 = icmp slt $entry1, $iconst0
+    # dag:         $(iconst0=$val):i32 = iconst 2147483648
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry1, $iconst0
     # dag:         return $entry0, $icmp0
     # nextln:  }
 
@@ -389,8 +389,8 @@ func @icmp_ult_val_smax:i32(i32) {
 func @icmp_ule_val_umin:i32(i32) {
     # check:   func @icmp_ule_val_umin:i32(i32) {
     # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # dag:         $(iconst0=$val):i32 = iconst 1
-    # dag:         $(icmp0=$val):i32 = icmp ult $entry1, $iconst0
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry1, $iconst0
     # dag:         return $entry0, $icmp0
     # nextln:  }
 

@@ -1,3 +1,6 @@
+/// @file x64.h
+/// Machine code generation support for x64 processors.
+
 #ifndef SPIDIR_X64_H
 #define SPIDIR_X64_H
 

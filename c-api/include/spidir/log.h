@@ -1,4 +1,4 @@
-/// @file platform.h
+/// @file log.h
 /// APIs for capturing internal spidir logging. These APIs will still exist, but
 /// will silently do nothing, if logging has been disabled at compile-time.
 

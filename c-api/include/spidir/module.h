@@ -1,4 +1,4 @@
-/// @file spidir.h
+/// @file module.h
 /// Spidir module/function definitions and APIs.
 
 #ifndef SPIDIR_SPIDIR_H
@@ -11,7 +11,7 @@
 /// A sentinel representing the absence of a `spidir_value_t`.
 /// Unless otherwise specified, functions accepting a value will panic if they
 /// are passed this value.
-#define SPIDIR_VALUE_INVALID ((spidir_value_t){UINT32_MAX})
+#define SPIDIR_VALUE_INVALID ((spidir_value_t) {UINT32_MAX})
 
 /// An opaque type representing a spidir module.
 ///

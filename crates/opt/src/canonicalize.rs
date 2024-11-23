@@ -47,8 +47,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                     ctx.replace_value(output, input);
                 }
 
-                ctx.replace_value(out_ctrl, in_ctrl);
-                ctx.kill_node(node);
+                ctx.replace_value_and_kill(out_ctrl, in_ctrl);
             }
         }
         NodeKind::Iadd => {
@@ -234,8 +233,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
 
                     if let Some(quotient) = quotient {
                         replace_with_iconst(ctx, output, quotient);
-                        ctx.kill_node(node);
-                        ctx.replace_value(ctrl_out, ctrl_in);
+                        ctx.replace_value_and_kill(ctrl_out, ctrl_in);
                     };
                 }
                 _ => {}
@@ -262,8 +260,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                     };
 
                     replace_with_iconst(ctx, output, quotient);
-                    ctx.kill_node(node);
-                    ctx.replace_value(ctrl_out, ctrl_in);
+                    ctx.replace_value_and_kill(ctrl_out, ctrl_in);
                 }
                 _ => {}
             }

@@ -114,6 +114,12 @@ impl<'f> ReduceContext<'f> {
         self.state.kill_node(&mut self.body.graph, node);
     }
 
+    pub fn replace_value_and_kill(&mut self, old_value: DepValue, new_value: DepValue) {
+        let node = self.graph().value_def(old_value).0;
+        self.kill_node(node);
+        self.replace_value(old_value, new_value);
+    }
+
     fn cache_node(&mut self, node: Node) -> Node {
         self.state.cache_node(&mut self.body.graph, node)
     }

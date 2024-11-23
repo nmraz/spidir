@@ -403,9 +403,8 @@ func @icmp_ule_val_umin:i32(i32) {
 func @icmp_ule_val_umax:i32(i32) {
     # check:   func @icmp_ule_val_umax:i32(i32) {
     # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
-    # dag:         $(iconst0=$val):i32 = iconst 4294967296
-    # dag:         $(icmp0=$val):i32 = icmp ult $entry1, $iconst0
-    # dag:         return $entry0, $icmp0
+    # dag:         $(iconst0=$val):i32 = iconst 1
+    # dag:         return $entry0, $iconst0
     # nextln:  }
 
     %c:ctrl, %a:i32 = entry

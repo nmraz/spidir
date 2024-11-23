@@ -329,6 +329,16 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
         };
     }
 
+    macro_rules! checked_op_unsigned {
+        ($ty:expr, $a:expr, $b:expr, $op:ident) => {
+            if $ty == Type::I32 {
+                ($a as u32).$op($b as u32).map(|res| res as u64)
+            } else {
+                ($a).$op($b).map(|res| res)
+            }
+        };
+    }
+
     let graph = ctx.graph();
 
     let [a, b] = graph.node_inputs_exact(node);
@@ -361,7 +371,7 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
                 }
                 None => replace_with_iconst(ctx, output, 1),
             },
-            IcmpKind::Ule => match a_val.checked_sub(1) {
+            IcmpKind::Ule => match checked_op_unsigned!(input_ty, a_val, 1, checked_sub) {
                 Some(new_a_val) => {
                     let new_a = ctx.builder().build_iconst(input_ty, new_a_val);
                     replace_with_icmp(ctx, output, IcmpKind::Ult, new_a, b);
@@ -401,7 +411,7 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
                 }
                 None => replace_with_iconst(ctx, output, 1),
             },
-            IcmpKind::Ule => match b_val.checked_add(1) {
+            IcmpKind::Ule => match checked_op_unsigned!(input_ty, b_val, 1, checked_add) {
                 Some(new_b_val) => {
                     let new_b = ctx.builder().build_iconst(input_ty, new_b_val);
                     replace_with_icmp(ctx, output, IcmpKind::Ult, a, new_b);

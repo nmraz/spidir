@@ -1,0 +1,21 @@
+# run: canonicalize
+
+extfunc @g()
+
+func @phi_no_inputs:i32(i32) {
+    # check:   func @phi_no_inputs:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(region0=$val):ctrl, $(region1=$val):phisel = region
+    # dag:         $(region2=$val):ctrl, $(region3=$val):phisel = region $entry0, $region0
+    # dag:         $(phi0=$val):i32 = phi $region1
+    # dag:         $(phi1=$val):i32 = phi $region3, $entry1, $phi0
+    # dag:         return $region2, $phi1
+    # nextln:  }
+
+    %c1:ctrl, %1:i32 = entry
+    %c2:ctrl, %p2:phisel = region
+    %2:i32 = phi %p2
+    %c3:ctrl, %p3:phisel = region %c1, %c2
+    %3:i32 = phi %p3, %1, %2
+    return %c3, %3
+}

@@ -1,0 +1,20 @@
+# run: canonicalize
+
+extfunc @g()
+
+func @phi_same_inputs:i32(i32, i32) {
+    # check:   func @phi_same_inputs:i32(i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32, $(entry2=$val):i32 = entry
+    # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $entry1
+    # dag:         $(call0=$val):ctrl = call @g $brcond0
+    # dag:         $(region0=$val):ctrl, $(region1=$val):phisel = region $call0, $brcond1
+    # dag:         return $region0, $entry2
+    # nextln:  }
+
+    %c:ctrl, %1:i32, %2:i32 = entry
+    %c1:ctrl, %c2:ctrl = brcond %c, %1
+    %c3:ctrl = call @g %c1
+    %c4:ctrl, %p:phisel = region %c3, %c2
+    %v:i32 = phi %p, %2, %2
+    return %c4, %v
+}

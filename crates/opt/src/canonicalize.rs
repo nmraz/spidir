@@ -1,5 +1,8 @@
 use core::ops::{BitAnd, BitOr, BitXor};
 
+use itertools::Itertools;
+use smallvec::SmallVec;
+
 use ir::{
     builder::BuilderExt,
     cache::NodeCache,
@@ -7,7 +10,6 @@ use ir::{
     node::{IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
-use smallvec::SmallVec;
 
 use crate::reduce::{reduce_body, ReduceContext};
 
@@ -48,6 +50,16 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 }
 
                 ctx.replace_value_and_kill(out_ctrl, in_ctrl);
+            }
+        }
+        NodeKind::Phi => {
+            // The first input is the selector, the rest are incoming values.
+            let mut incoming = graph.node_inputs(node).into_iter().skip(1);
+
+            if let Ok(input) = incoming.all_equal_value() {
+                // All inputs to this phi are actually the same value, so it can be removed.
+                let [output] = graph.node_outputs_exact(node);
+                ctx.replace_value(output, input);
             }
         }
         NodeKind::Iadd => {

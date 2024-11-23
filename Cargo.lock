@@ -89,6 +89,7 @@ dependencies = [
  "frontend",
  "ir",
  "log",
+ "opt",
  "paste",
  "smallvec",
 ]

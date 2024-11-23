@@ -6,6 +6,7 @@ mod builder;
 mod codegen;
 mod log;
 mod module;
+mod opt;
 mod types;
 mod x64;
 

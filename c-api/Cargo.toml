@@ -14,6 +14,7 @@ crate-type = ["staticlib"]
 frontend.workspace = true
 ir.workspace = true
 codegen.workspace = true
+opt.workspace = true
 
 log.workspace = true
 smallvec.workspace = true

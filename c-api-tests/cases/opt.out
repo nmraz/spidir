@@ -1,0 +1,10 @@
+
+func @arith_stuff:i32() {
+    %0:ctrl = entry
+    %32:i64 = iconst 1
+    %25:ptr = inttoptr %32
+    %26:i64 = ptrtoint %25
+    %27:i32 = itrunc %26
+    %28:i32 = sfill 16 %27
+    return %0, %28
+}

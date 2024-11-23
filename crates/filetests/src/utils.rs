@@ -1,17 +1,24 @@
-use core::fmt::{self, Write};
+use std::{
+    borrow::Cow,
+    cmp,
+    fmt::{self, Write},
+    sync::OnceLock,
+};
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use fx_utils::FxHashMap;
 use hashbrown::hash_map::Entry;
+use itertools::Itertools;
+use regex::{Captures, Regex};
+
 use ir::{
     function::{FunctionBody, FunctionData},
     module::Module,
     valgraph::{DepValue, Node},
+    verify::verify_module,
     write::{write_annotated_body, write_annotated_node, write_node_kind, AnnotateGraph},
 };
 use parser::unqoute_ident;
-use regex::{Captures, Regex};
-use std::{borrow::Cow, cmp, sync::OnceLock};
 
 use crate::regexes::VAL_REGEX;
 
@@ -20,6 +27,16 @@ macro_rules! regex {
         static REGEX: OnceLock<Regex> = OnceLock::new();
         REGEX.get_or_init(|| Regex::new($val).unwrap())
     }};
+}
+
+pub fn verify_module_with_err(module: &Module, err: &str) -> Result<()> {
+    verify_module(module).map_err(|errs| {
+        let message = errs
+            .iter()
+            .map(|err| err.display_with_context(module))
+            .format("\n");
+        anyhow!("{err}:\n{message}")
+    })
 }
 
 pub fn write_body_with_trailing_comments(

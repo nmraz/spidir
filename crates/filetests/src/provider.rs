@@ -2,15 +2,14 @@ use std::{borrow::Cow, fmt::Write, iter};
 
 use anyhow::{anyhow, bail, Context, Result};
 use filecheck::{Checker, CheckerBuilder, Value, VariableMap};
-use itertools::Itertools;
 
 use fx_utils::FxHashMap;
-use ir::{function::FunctionBody, module::Module, verify::verify_module, write::quote_ident};
+use ir::{function::FunctionBody, module::Module, write::quote_ident};
 use parser::parse_module;
 
 use crate::utils::{
     find_comment_start, generalize_module_value_names, parse_module_func_start,
-    parse_output_func_heading, parse_run_line,
+    parse_output_func_heading, parse_run_line, verify_module_with_err,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -87,7 +86,7 @@ impl<P: TestProvider> DynTestProvider for P {
     fn run(&self, input: &str, update_mode: UpdateMode) -> Result<TestOutcome<String>> {
         let module = parse_module(input).context("failed to parse module")?;
         if self.expects_valid_module() {
-            verify_parsed_module(&module)?;
+            verify_module_with_err(&module, "parsed module invalid")?;
         }
         let (output, aux) = self.output_for(module)?;
 
@@ -264,16 +263,6 @@ fn get_func_body<'a>(module: &'a Module, name: &str) -> &'a FunctionBody {
         .find(|func| func.metadata.name == name)
         .unwrap()
         .body
-}
-
-fn verify_parsed_module(module: &Module) -> Result<()> {
-    verify_module(module).map_err(|errs| {
-        let message = errs
-            .iter()
-            .map(|err| err.display_with_context(module))
-            .format("\n");
-        anyhow!("{}", message)
-    })
 }
 
 struct HashMapEnv<'a>(FxHashMap<String, Value<'a>>);

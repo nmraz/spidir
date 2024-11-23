@@ -7,6 +7,7 @@ use ir::{
     node::{IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
+use smallvec::SmallVec;
 
 use crate::reduce::{reduce_body, ReduceContext};
 
@@ -29,6 +30,27 @@ macro_rules! fold_constant {
 fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
     let graph = ctx.graph();
     match graph.node_kind(node) {
+        NodeKind::Region => {
+            let inputs = graph.node_inputs(node);
+
+            // If we have a single-input region, remove it and any phi nodes attached to it.
+            if inputs.len() == 1 {
+                let in_ctrl = inputs[0];
+                let [out_ctrl, out_phisel] = graph.node_outputs_exact(node);
+                let phis: SmallVec<[_; 4]> =
+                    graph.value_uses(out_phisel).map(|(node, _)| node).collect();
+
+                for phi in phis {
+                    let graph = ctx.graph();
+                    let [_, input] = graph.node_inputs_exact(phi);
+                    let [output] = graph.node_outputs_exact(phi);
+                    ctx.replace_value(output, input);
+                }
+
+                ctx.replace_value(out_ctrl, in_ctrl);
+                ctx.kill_node(node);
+            }
+        }
         NodeKind::Iadd => {
             let [a, b] = graph.node_inputs_exact(node);
             let [output] = graph.node_outputs_exact(node);

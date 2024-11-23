@@ -28,7 +28,6 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # check:   func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i32) {
     # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
     # nextln:      $(stackslot0=$val):ptr = stackslot 8:8
-    # dag:         $(region0=$val):ctrl, $(region1=$val):phisel = region $entry0
     # dag:         $(iext0=$val):i64 = iext $entry1
     # dag:         $(sfill0=$val):i64 = sfill 32 $iext0
     # dag:         $(iconst0=$val):i64 = iconst 20
@@ -48,9 +47,8 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # dag:         $(iconst12=$val):i64 = iconst 40
     # dag:         $(iconst13=$val):i32 = iconst 171
     # dag:         $(iconst14=$val):ptr = iconst 0
-    # dag:         $(store0=$val):ctrl = store.8 $region0, $iconst14, $stackslot0
-    # dag:         $(region2=$val):ctrl, $(region3=$val):phisel = region $store0
-    # dag:         $(call0=$val):ctrl, $(call1=$val):ptr = call @gc_new $region2, $iconst13, $iconst12
+    # dag:         $(store0=$val):ctrl = store.8 $entry0, $iconst14, $stackslot0
+    # dag:         $(call0=$val):ctrl, $(call1=$val):ptr = call @gc_new $store0, $iconst13, $iconst12
     # dag:         $(ptroff0=$val):ptr = ptroff $call1, $iconst2
     # dag:         $(store1=$val):ctrl = store.4 $call0, $iconst8, $ptroff0
     # dag:         $(store2=$val):ctrl = store.8 $store1, $call1, $stackslot0
@@ -62,15 +60,13 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # dag:         $(load2=$val):ctrl, $(load3=$val):i64 = load.4 $store3, $ptroff2
     # dag:         $(icmp0=$val):i64 = icmp slt $iconst4, $load3
     # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $load2, $icmp0
-    # dag:         $(region4=$val):ctrl, $(region5=$val):phisel = region $brcond0
-    # dag:         $(store4=$val):ctrl = store.4 $region4, $iconst11, $ptroff1
+    # dag:         $(store4=$val):ctrl = store.4 $brcond0, $iconst11, $ptroff1
     # dag:         $(ptroff3=$val):ptr = ptroff $load1, $iconst5
     # dag:         $(ptroff4=$val):ptr = ptroff $load1, $iconst2
     # dag:         $(load4=$val):ctrl, $(load5=$val):i64 = load.4 $store4, $ptroff4
     # dag:         $(icmp1=$val):i64 = icmp slt $iconst7, $load5
     # dag:         $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $load4, $icmp1
-    # dag:         $(region6=$val):ctrl, $(region7=$val):phisel = region $brcond2
-    # dag:         $(store5=$val):ctrl = store.8 $region6, $call3, $ptroff3
+    # dag:         $(store5=$val):ctrl = store.8 $brcond2, $call3, $ptroff3
     # dag:         $(load6=$val):ctrl, $(load7=$val):ptr = load.8 $store5, $stackslot0
     # dag:         $(call4=$val):ctrl, $(call5=$val):ptr = call @gc_new $load6, $iconst10, $iconst9
     # dag:         $(ptroff5=$val):ptr = ptroff $call5, $iconst5
@@ -80,38 +76,33 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # dag:         $(load8=$val):ctrl, $(load9=$val):i64 = load.4 $store6, $ptroff7
     # dag:         $(icmp2=$val):i64 = icmp slt $iconst7, $load9
     # dag:         $(brcond4=$val):ctrl, $(brcond5=$val):ctrl = brcond $load8, $icmp2
-    # dag:         $(region8=$val):ctrl, $(region9=$val):phisel = region $brcond4
-    # dag:         $(store7=$val):ctrl = store.4 $region8, $iconst1, $ptroff6
+    # dag:         $(store7=$val):ctrl = store.4 $brcond4, $iconst1, $ptroff6
     # dag:         $(load10=$val):ctrl, $(load11=$val):i64 = load.4 $store7, $ptroff7
     # dag:         $(icmp3=$val):i64 = icmp slt $iconst4, $load11
     # dag:         $(brcond6=$val):ctrl, $(brcond7=$val):ctrl = brcond $load10, $icmp3
-    # dag:         $(region10=$val):ctrl, $(region11=$val):phisel = region $brcond6
-    # dag:         $(store8=$val):ctrl = store.4 $region10, $iconst6, $ptroff5
+    # dag:         $(store8=$val):ctrl = store.4 $brcond6, $iconst6, $ptroff5
     # dag:         $(ptroff8=$val):ptr = ptroff $load7, $iconst3
     # dag:         $(ptroff9=$val):ptr = ptroff $load7, $iconst2
     # dag:         $(load12=$val):ctrl, $(load13=$val):i64 = load.4 $store8, $ptroff9
     # dag:         $(icmp4=$val):i64 = icmp slt $iconst4, $load13
     # dag:         $(brcond8=$val):ctrl, $(brcond9=$val):ctrl = brcond $load12, $icmp4
-    # dag:         $(region12=$val):ctrl, $(region13=$val):phisel = region $brcond8
-    # dag:         $(store9=$val):ctrl = store.8 $region12, $call5, $ptroff8
+    # dag:         $(store9=$val):ctrl = store.8 $brcond8, $call5, $ptroff8
     # dag:         $(load14=$val):ctrl, $(load15=$val):ptr = load.8 $store9, $stackslot0
     # dag:         $(ptroff10=$val):ptr = ptroff $load15, $iconst3
     # dag:         $(ptroff11=$val):ptr = ptroff $load15, $iconst2
     # dag:         $(load16=$val):ctrl, $(load17=$val):i64 = load.4 $load14, $ptroff11
     # dag:         $(icmp5=$val):i64 = icmp slt $iconst4, $load17
     # dag:         $(brcond10=$val):ctrl, $(brcond11=$val):ctrl = brcond $load16, $icmp5
-    # dag:         $(region14=$val):ctrl, $(region15=$val):phisel = region $brcond10
-    # dag:         $(load18=$val):ctrl, $(load19=$val):ptr = load.8 $region14, $ptroff10
+    # dag:         $(load18=$val):ctrl, $(load19=$val):ptr = load.8 $brcond10, $ptroff10
     # dag:         $(ptroff12=$val):ptr = ptroff $load19, $iadd0
     # dag:         $(ptroff13=$val):ptr = ptroff $load19, $iconst2
     # dag:         $(load20=$val):ctrl, $(load21=$val):i64 = load.4 $load18, $ptroff13
     # dag:         $(icmp6=$val):i64 = icmp slt $sfill0, $load21
     # dag:         $(brcond12=$val):ctrl, $(brcond13=$val):ctrl = brcond $load20, $icmp6
-    # dag:         $(region16=$val):ctrl, $(region17=$val):phisel = region $brcond12
-    # dag:         $(load22=$val):ctrl, $(load23=$val):i32 = load.4 $region16, $ptroff12
+    # dag:         $(load22=$val):ctrl, $(load23=$val):i32 = load.4 $brcond12, $ptroff12
     # dag:         return $load22, $load23
-    # dag:         $(region18=$val):ctrl, $(region19=$val):phisel = region $brcond1, $brcond3, $brcond5, $brcond7, $brcond9, $brcond11, $brcond13
-    # dag:         $(call6=$val):ctrl = call @throw_index_out_of_range_exception $region18
+    # dag:         $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond1, $brcond3, $brcond5, $brcond7, $brcond9, $brcond11, $brcond13
+    # dag:         $(call6=$val):ctrl = call @throw_index_out_of_range_exception $region0
     # dag:         unreachable $call6
     # nextln:  }
 

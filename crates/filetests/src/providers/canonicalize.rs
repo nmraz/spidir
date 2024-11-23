@@ -1,5 +1,6 @@
 use anyhow::Result;
 use filecheck::Value;
+
 use fx_utils::FxHashMap;
 use ir::module::Module;
 use opt::canonicalize::canonicalize;
@@ -7,6 +8,7 @@ use opt::canonicalize::canonicalize;
 use crate::{
     provider::{update_transformed_module_output, TestProvider, Updater},
     regexes::VAL_REGEX,
+    utils::verify_module_with_err,
 };
 
 pub struct CanonicalizeProvider;
@@ -24,6 +26,7 @@ impl TestProvider for CanonicalizeProvider {
         for func in module.functions.values_mut() {
             canonicalize(&mut func.body, &mut func.node_cache);
         }
+        verify_module_with_err(&module, "transformed module invalid")?;
         Ok((module.to_string(), module))
     }
 

@@ -75,7 +75,7 @@ pub fn disasm_code(
     Ok(())
 }
 
-pub(crate) fn reloc_name(reloc: RelocKind) -> String {
+fn reloc_name(reloc: RelocKind) -> String {
     match reloc {
         RELOC_PC32 => "RELOC_PC32".to_owned(),
         RELOC_ABS64 => "RELOC_ABS64".to_owned(),

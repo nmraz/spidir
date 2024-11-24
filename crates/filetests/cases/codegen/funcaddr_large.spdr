@@ -1,0 +1,41 @@
+# run: codegen[large-abs]
+
+extfunc @extfunc(ptr, i32)
+
+func @infunc(ptr, i32) {
+    # check: function `infunc`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 5d                              pop rbp
+    # nextln: 000005: c3                              ret
+
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    return %3
+}
+
+func @get_extfunc:ptr() {
+    # check: function `get_extfunc`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @extfunc + 0
+    # nextln: 00000e: 5d                              pop rbp
+    # nextln: 00000f: c3                              ret
+
+    %0:ctrl = entry
+    %1:ptr = funcaddr @extfunc
+    return %0, %1
+}
+
+func @get_infunc:ptr() {
+    # check: function `get_infunc`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @infunc + 0
+    # nextln: 00000e: 5d                              pop rbp
+    # nextln: 00000f: c3                              ret
+
+    %0:ctrl = entry
+    %1:ptr = funcaddr @infunc
+    return %0, %1
+}

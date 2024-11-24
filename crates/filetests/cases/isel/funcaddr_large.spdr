@@ -1,0 +1,38 @@
+# run: isel[large-abs]
+
+extfunc @extfunc(ptr, i32)
+
+func @infunc(ptr, i32) {
+    # check: function `infunc`:
+    # nextln:       block0[]:
+    # nextln: 0000:      Jump(block1)
+    # nextln:       => block1
+    # nextln:       block1:
+    # nextln: 0001:      Ret
+
+    %0:ctrl, %1:ptr, %2:i32 = entry
+    %3:ctrl, %4:phisel = region %0
+    return %3
+}
+
+func @get_extfunc:ptr() {
+    # check: function `get_extfunc`:
+    # nextln:       block0[]:
+    # nextln: 0000:      %0:gpr(reg)[late] = FuncAddrAbs(External(extfunc0))
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %0:ctrl = entry
+    %1:ptr = funcaddr @extfunc
+    return %0, %1
+}
+
+func @get_infunc:ptr() {
+    # check: function `get_infunc`:
+    # nextln:       block0[]:
+    # nextln: 0000:      %0:gpr(reg)[late] = FuncAddrAbs(Internal(func0))
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %0:ctrl = entry
+    %1:ptr = funcaddr @infunc
+    return %0, %1
+}

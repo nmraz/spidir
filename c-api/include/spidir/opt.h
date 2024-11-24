@@ -11,6 +11,6 @@
 /// This may involve both intra-procedural and inter-procedural transformations.
 ///
 /// @param[in] module The module to optimize.
-void spidir_opt_optimize_module(spidir_module_handle_t module);
+void spidir_opt_run(spidir_module_handle_t module);
 
 #endif

@@ -55,7 +55,7 @@ int main(void) {
         module, "arith_stuff", SPIDIR_TYPE_I32, 0, NULL);
     spidir_module_build_function(module, func, builder_callback, NULL);
 
-    spidir_opt_optimize_module(module);
+    spidir_opt_run(module);
 
     dump_module_to_stdout(module);
 

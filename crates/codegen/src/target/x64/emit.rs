@@ -67,22 +67,22 @@ impl X64EmitState {
         }
     }
 
-    fn stack_slot_addr(&self, slot: StackSlot) -> BaseIndexOff {
+    fn stack_slot_addr(&self, slot: StackSlot) -> AddrMode {
         self.stack_addr(self.frame_layout.stack_slot_offsets[slot])
     }
 
-    fn spill_slot_addr(&self, spill: SpillSlot) -> BaseIndexOff {
+    fn spill_slot_addr(&self, spill: SpillSlot) -> AddrMode {
         self.stack_addr(self.frame_layout.spill_slot_offsets[spill])
     }
 
-    fn stack_addr(&self, frame_offset: u32) -> BaseIndexOff {
+    fn stack_addr(&self, frame_offset: u32) -> AddrMode {
         let offset: i32 = frame_offset.try_into().unwrap();
         let offset = offset + self.sp_frame_offset;
 
-        BaseIndexOff {
+        AddrMode::BaseIndexOff {
             base: Some(REG_RSP),
             index: None,
-            disp: offset,
+            offset,
         }
     }
 }
@@ -224,20 +224,20 @@ impl MachineEmit for X64Machine {
                 buffer,
                 FullOperandSize::S64,
                 defs[0].as_reg().unwrap(),
-                RegMem::Mem(BaseIndexOff {
+                RegMem::Mem(AddrMode::BaseIndexOff {
                     base: Some(REG_RBP),
                     index: None,
-                    disp: offset,
+                    offset,
                 }),
             ),
             &X64Instr::MovRM(full_op_size) => emit_movzx_r_rm(
                 buffer,
                 full_op_size,
                 defs[0].as_reg().unwrap(),
-                RegMem::Mem(BaseIndexOff {
+                RegMem::Mem(AddrMode::BaseIndexOff {
                     base: Some(uses[0].as_reg().unwrap()),
                     index: None,
-                    disp: 0,
+                    offset: 0,
                 }),
             ),
             &X64Instr::MovRStack(slot, full_op_size) => emit_movzx_r_rm(
@@ -249,10 +249,10 @@ impl MachineEmit for X64Machine {
             &X64Instr::MovMR(full_op_size) => emit_mov_rm_r(
                 buffer,
                 full_op_size,
-                RegMem::Mem(BaseIndexOff {
+                RegMem::Mem(AddrMode::BaseIndexOff {
                     base: Some(uses[0].as_reg().unwrap()),
                     index: None,
-                    disp: 0,
+                    offset: 0,
                 }),
                 uses[1].as_reg().unwrap(),
             ),
@@ -338,10 +338,10 @@ fn emit_epilogue(buffer: &mut CodeBuffer<X64Fixup>, state: &X64EmitState) {
             emit_lea_or_mov(
                 buffer,
                 REG_RSP,
-                BaseIndexOff {
+                AddrMode::BaseIndexOff {
                     base: Some(REG_RBP),
                     index: None,
-                    disp: -saved_reg_size,
+                    offset: -saved_reg_size,
                 },
             );
         }
@@ -481,18 +481,18 @@ fn emit_movzx_r_rm(
     });
 }
 
-fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: BaseIndexOff) {
+fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: AddrMode) {
     match addr {
-        BaseIndexOff {
+        AddrMode::BaseIndexOff {
             base: Some(base),
             index: None,
-            disp: 0,
+            offset: 0,
         } => emit_mov_r_r(buffer, dest, base),
         _ => emit_lea(buffer, dest, addr),
     }
 }
 
-fn emit_lea(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: BaseIndexOff) {
+fn emit_lea(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: AddrMode) {
     let (rex, modrm_sib) = encode_mem_parts(addr, |rex: &mut RexPrefix| {
         rex.encode_operand_size(OperandSize::S64);
         rex.encode_modrm_reg(dest)
@@ -833,14 +833,18 @@ fn emit_shift_rm_i(
 #[derive(Clone, Copy)]
 enum RegMem {
     Reg(PhysReg),
-    Mem(BaseIndexOff),
+    Mem(AddrMode),
 }
 
 #[derive(Clone, Copy)]
-struct BaseIndexOff {
-    base: Option<PhysReg>,
-    index: Option<(IndexScale, PhysReg)>,
-    disp: i32,
+enum AddrMode {
+    BaseIndexOff {
+        base: Option<PhysReg>,
+        index: Option<(IndexScale, PhysReg)>,
+        offset: i32,
+    },
+    #[allow(dead_code)]
+    RipOff { offset: i32 },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -956,14 +960,30 @@ fn encode_reg_mem_parts(
 }
 
 fn encode_mem_parts(
-    addr: BaseIndexOff,
+    addr: AddrMode,
+    get_reg: impl FnOnce(&mut RexPrefix) -> u8,
+) -> (RexPrefix, ModRmSib) {
+    match addr {
+        AddrMode::BaseIndexOff {
+            base,
+            index,
+            offset: disp,
+        } => encode_base_index_off_mem_parts(base, index, disp, get_reg),
+        AddrMode::RipOff { offset } => encode_rip_off_mem_parts(offset, get_reg),
+    }
+}
+
+fn encode_base_index_off_mem_parts(
+    base: Option<PhysReg>,
+    index: Option<(IndexScale, PhysReg)>,
+    offset: i32,
     get_reg: impl FnOnce(&mut RexPrefix) -> u8,
 ) -> (RexPrefix, ModRmSib) {
     let mut rex = RexPrefix::new();
     let reg = get_reg(&mut rex);
 
     // These values can have special meanings when placed in the R/M slot.
-    let (base_bp, base_sp) = match addr.base {
+    let (base_bp, base_sp) = match base {
         Some(base) => {
             let base_rm = encode_reg(base) & 0b111;
             (
@@ -974,24 +994,22 @@ fn encode_mem_parts(
         None => (false, false),
     };
 
-    let mode = if addr.disp == 0 && !base_bp {
+    let mode = if offset == 0 && !base_bp {
         MemMode::NoDisp
-    } else if addr.base.is_none() {
+    } else if base.is_none() {
         MemMode::Disp32Special
-    } else if is_sint::<8>(addr.disp as u64) {
+    } else if is_sint::<8>(offset as u64) {
         MemMode::Disp8
     } else {
         MemMode::Disp32
     };
 
-    let need_sib = addr.base.is_none() || base_sp || addr.index.is_some();
+    let need_sib = base.is_none() || base_sp || index.is_some();
 
     if need_sib {
-        let base = addr
-            .base
-            .map_or(SIB_BASE_NONE, |base| rex.encode_modrm_base(base));
+        let base = base.map_or(SIB_BASE_NONE, |base| rex.encode_modrm_base(base));
         let rm = RM_SIB;
-        let (scale, index) = match addr.index {
+        let (scale, index) = match index {
             Some((scale, index)) => {
                 let scale = match scale {
                     IndexScale::One => 0,
@@ -1012,24 +1030,43 @@ fn encode_mem_parts(
             ModRmSib {
                 modrm: encode_modrm_mem(mode, reg, rm),
                 sib: Some(sib),
-                disp: addr.disp,
+                disp: offset,
                 mem_mode: mode,
             },
         )
     } else {
         // Note: we always need an SIB when no base is specified.
-        let base = rex.encode_modrm_base(addr.base.unwrap());
+        let base = rex.encode_modrm_base(base.unwrap());
 
         (
             rex,
             ModRmSib {
                 modrm: encode_modrm_mem(mode, reg, base),
                 sib: None,
-                disp: addr.disp,
+                disp: offset,
                 mem_mode: mode,
             },
         )
     }
+}
+
+fn encode_rip_off_mem_parts(
+    offset: i32,
+    get_reg: impl FnOnce(&mut RexPrefix) -> u8,
+) -> (RexPrefix, ModRmSib) {
+    let mut rex = RexPrefix::new();
+    let reg = get_reg(&mut rex);
+    let mem_mode = MemMode::Disp32Special;
+
+    (
+        rex,
+        ModRmSib {
+            modrm: encode_modrm_mem(mem_mode, reg, RM_NONE),
+            sib: None,
+            disp: offset,
+            mem_mode,
+        },
+    )
 }
 
 fn encode_modrm_r(reg: u8, rm: u8) -> u8 {
@@ -1105,6 +1142,7 @@ fn encode_shift_op(op: ShiftOp) -> u8 {
 
 // RM encodings for memory addressing modes
 const RM_SIB: u8 = 0b100;
+const RM_NONE: u8 = 0b101;
 
 // SIB encodings for lack of base/index registers.
 const SIB_BASE_NONE: u8 = 0b101;

@@ -165,6 +165,7 @@ bitflags! {
         const ENQUEUED = 0b01;
         const OUTPUT_KILLED = 0b10;
         const REDUCED = 0b100;
+        const DEAD = 0b1000;
     }
 }
 
@@ -239,6 +240,7 @@ impl ReduceState<'_> {
         }
         graph.detach_node_inputs(node);
         self.invalidate_node(node);
+        self.node_flags[node].insert(NodeFlags::DEAD);
     }
 
     fn value_detached(&mut self, graph: &ValGraph, value: DepValue) {
@@ -270,7 +272,9 @@ impl ReduceState<'_> {
     }
 
     fn enqueue(&mut self, node: Node) {
-        if !self.node_flags[node].contains(NodeFlags::ENQUEUED) {
+        // Avoid re-enqueueing nodes that are already waiting in the queue, and don't bother at all
+        // with things that are already dead.
+        if !self.node_flags[node].intersects(NodeFlags::ENQUEUED | NodeFlags::DEAD) {
             trace!("    enqueue: {node}");
             self.node_flags[node].insert(NodeFlags::ENQUEUED);
             self.queue.push_back(node);
@@ -278,9 +282,15 @@ impl ReduceState<'_> {
     }
 
     fn dequeue(&mut self) -> Option<Node> {
-        let node = self.queue.pop_front()?;
-        self.node_flags[node].remove(NodeFlags::ENQUEUED);
-        Some(node)
+        loop {
+            let node = self.queue.pop_front()?;
+            self.node_flags[node].remove(NodeFlags::ENQUEUED);
+
+            // A node in the queue may have been killed while it was waiting - skip it.
+            if !self.node_flags[node].contains(NodeFlags::DEAD) {
+                return Some(node);
+            }
+        }
     }
 
     fn test_and_clear_output_killed(&mut self, node: Node) -> bool {

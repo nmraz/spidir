@@ -280,6 +280,9 @@ impl MachineEmit for X64Machine {
                 emit_push(buffer, uses[0].as_reg().unwrap());
                 state.sp_frame_offset += 8;
             }
+            &X64Instr::FuncAddrRel(target) => {
+                emit_lea_rip_reloc(buffer, defs[0].as_reg().unwrap(), target);
+            }
             &X64Instr::FuncAddrAbs(target) => {
                 emit_movabs_r_i_reloc(buffer, defs[0].as_reg().unwrap(), target);
             }
@@ -488,21 +491,24 @@ fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: AddrM
             index: None,
             offset: 0,
         } => emit_mov_r_r(buffer, dest, base),
-        _ => emit_lea(buffer, dest, addr),
+        _ => buffer.instr(|sink| emit_lea_instr(sink, dest, addr)),
     }
 }
 
-fn emit_lea(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: AddrMode) {
+fn emit_lea_rip_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
+    buffer.instr_with_reloc(target, -4, 3, RELOC_PC32, |sink| {
+        emit_lea_instr(sink, dest, AddrMode::RipOff { offset: 0 })
+    });
+}
+
+fn emit_lea_instr(sink: &mut InstrSink<'_>, dest: PhysReg, addr: AddrMode) {
     let (rex, modrm_sib) = encode_mem_parts(addr, |rex: &mut RexPrefix| {
         rex.encode_operand_size(OperandSize::S64);
         rex.encode_modrm_reg(dest)
     });
-
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[0x8d]);
-        modrm_sib.emit(sink);
-    });
+    rex.emit(sink);
+    sink.emit(&[0x8d]);
+    modrm_sib.emit(sink);
 }
 
 fn emit_mov_rm_r(

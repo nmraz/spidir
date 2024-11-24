@@ -162,6 +162,7 @@ pub enum X64Instr {
     MovRM(FullOperandSize),
     MovMR(FullOperandSize),
     Ret,
+    FuncAddrRel(FunctionRef),
     FuncAddrAbs(FunctionRef),
     CallRel(FunctionRef),
     CallRm,

@@ -225,7 +225,7 @@ impl MachineLower for X64Machine {
                     ctx.emit_instr(X64Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
                 }
             },
-            NodeKind::FuncAddr(func) => emit_funcaddr(self, ctx, node, func)?,
+            NodeKind::FuncAddr(func) => emit_funcaddr(self, ctx, node, func),
             NodeKind::Call(func) => emit_call(self, ctx, node, func),
             NodeKind::CallInd(_) => {
                 let mut vals = ctx.node_inputs(node);
@@ -437,19 +437,24 @@ fn emit_funcaddr(
     ctx: &mut IselContext<'_, '_, X64Machine>,
     node: Node,
     func: FunctionRef,
-) -> Result<(), MachineIselError> {
+) {
     let [output] = ctx.node_outputs_exact(node);
     let output = ctx.get_value_vreg(output);
 
     match machine.code_model_for_function(func) {
-        CodeModel::SmallPic => Err(MachineIselError),
+        CodeModel::SmallPic => {
+            ctx.emit_instr(
+                X64Instr::FuncAddrRel(func),
+                &[DefOperand::any_reg(output)],
+                &[],
+            );
+        }
         CodeModel::LargeAbs => {
             ctx.emit_instr(
                 X64Instr::FuncAddrAbs(func),
                 &[DefOperand::any_reg(output)],
                 &[],
             );
-            Ok(())
         }
     }
 }

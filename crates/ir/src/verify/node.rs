@@ -50,6 +50,7 @@ pub fn verify_node_kind(
         NodeKind::Store(size) => verify_store(graph, node, *size, errors),
         NodeKind::StackSlot { align, .. } => verify_stack_slot(graph, node, *align, errors),
         NodeKind::BrCond => verify_brcond(graph, node, errors),
+        NodeKind::FuncAddr(_) => verify_funcaddr(graph, node, errors),
         NodeKind::Call(func) => verify_call(module, graph, node, *func, errors),
         NodeKind::CallInd(sig) => verify_call_ind(&func.body, node, *sig, errors),
     }
@@ -436,6 +437,13 @@ fn verify_call(
             errors,
         );
     }
+}
+
+fn verify_funcaddr(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 0, errors) else {
+        return;
+    };
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::Ptr)], errors);
 }
 
 fn verify_call_ind(

@@ -283,6 +283,10 @@ pub fn write_node_kind(
         NodeKind::Store(size) => write!(w, "store.{}", size.as_str())?,
         NodeKind::StackSlot { size, align } => write!(w, "stackslot {size}:{align}")?,
         NodeKind::BrCond => w.write_str("brcond")?,
+        NodeKind::FuncAddr(func) => {
+            w.write_str("funcaddr ")?;
+            write_func_ref(w, module, *func)?;
+        }
         NodeKind::Call(func) => {
             w.write_str("call ")?;
             write_func_ref(w, module, *func)?;
@@ -455,6 +459,10 @@ mod tests {
             (NodeKind::Store(MemSize::S8), "store.8"),
             (NodeKind::StackSlot { size: 8, align: 4 }, "stackslot 8:4"),
             (NodeKind::BrCond, "brcond"),
+            (
+                NodeKind::FuncAddr(FunctionRef::Internal(func)),
+                "funcaddr @my_func",
+            ),
             (NodeKind::Call(FunctionRef::Internal(func)), "call @my_func"),
             (
                 NodeKind::Call(FunctionRef::External(extfunc)),

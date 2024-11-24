@@ -319,19 +319,10 @@ fn extract_special_node_kind(
             let align = parse_from_str(&inner.next().unwrap(), "invalid stack slot align")?;
             NodeKind::StackSlot { size, align }
         }
-        Rule::call_nodekind => {
-            let name_span = inner.next().unwrap().as_span();
-            let name = name_from_span(&name_span);
-            let funcref = *function_names.get(&name).ok_or_else(|| {
-                Box::new(Error::new_from_span(
-                    ErrorVariant::CustomError {
-                        message: "undefined function".to_owned(),
-                    },
-                    name_span,
-                ))
-            })?;
-            NodeKind::Call(funcref)
+        Rule::funcaddr_nodekind => {
+            extract_funcref_node(&mut inner, function_names, NodeKind::FuncAddr)?
         }
+        Rule::call_nodekind => extract_funcref_node(&mut inner, function_names, NodeKind::Call)?,
         Rule::callind_nodekind => {
             let sig_pair = inner.next().unwrap();
             let sig = extract_callind_signature(sig_pair);
@@ -342,6 +333,24 @@ fn extract_special_node_kind(
     };
 
     Ok(kind)
+}
+
+fn extract_funcref_node(
+    inner: &mut Pairs<'_, Rule>,
+    function_names: &FunctionNames<'_>,
+    ctor: impl FnOnce(FunctionRef) -> NodeKind,
+) -> Result<NodeKind, Box<Error<Rule>>> {
+    let name_span = inner.next().unwrap().as_span();
+    let name = name_from_span(&name_span);
+    let funcref = *function_names.get(&name).ok_or_else(|| {
+        Box::new(Error::new_from_span(
+            ErrorVariant::CustomError {
+                message: "undefined function".to_owned(),
+            },
+            name_span,
+        ))
+    })?;
+    Ok(ctor(funcref))
 }
 
 fn extract_icmpkind(icmpkind_pair: Pair<'_, Rule>) -> IcmpKind {
@@ -902,6 +911,71 @@ mod tests {
                     %1:i32 = iconst 5
                     %2:ctrl, %3:i32 = call @f %0, %1
                     return %2, %3
+                }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn parse_extern_funcaddr() {
+        let module = parse_module(
+            "
+            extfunc @f:i32(i32)
+
+            func @get_f:ptr() {
+                %0:ctrl = entry
+                %1:ptr = funcaddr @f
+                return %0, %1
+            }",
+        )
+        .unwrap();
+        check_module(
+            &module,
+            expect![[r#"
+                extfunc @f:i32(i32)
+
+                func @get_f:ptr() {
+                    %0:ctrl = entry
+                    %1:ptr = funcaddr @f
+                    return %0, %1
+                }
+            "#]],
+        );
+    }
+
+    #[test]
+    fn parse_intern_funcaddr() {
+        let module = parse_module(
+            "
+            func @f:i32(i32) {
+                %0:ctrl, %1:i32 = entry
+                %2:i32 = iconst 1
+                %3:i32 = iadd %1, %2
+                return %0, %3
+            }
+
+            func @get_f:ptr() {
+                %0:ctrl = entry
+                %1:ptr = funcaddr @f
+                return %0, %1
+            }",
+        )
+        .unwrap();
+        check_module(
+            &module,
+            expect![[r#"
+
+                func @f:i32(i32) {
+                    %0:ctrl, %1:i32 = entry
+                    %2:i32 = iconst 1
+                    %3:i32 = iadd %1, %2
+                    return %0, %3
+                }
+
+                func @get_f:ptr() {
+                    %0:ctrl = entry
+                    %1:ptr = funcaddr @f
+                    return %0, %1
                 }
             "#]],
         );

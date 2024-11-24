@@ -1,0 +1,11 @@
+# run: verify-ok
+
+# check: $()
+
+extfunc @f()
+
+func @get_f:ptr() {
+    %0:ctrl = entry
+    %1:ptr = funcaddr @f
+    return %0, %1
+}

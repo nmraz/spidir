@@ -37,6 +37,7 @@ icmp_nodekind      =  { "icmp" ~ icmpkind }
 load_nodekind      = ${ "load." ~ memsize }
 store_nodekind     = ${ "store." ~ memsize }
 stackslot_nodekind =  { "stackslot" ~ integer ~ ":" ~ integer }
+funcaddr_nodekind  =  { "funcaddr" ~ funcname }
 call_nodekind      =  { "call" ~ funcname }
 callind_nodekind   =  { "callind" ~ callind_signature }
 nodekind           =  {
@@ -71,6 +72,7 @@ nodekind           =  {
   | store_nodekind
   | stackslot_nodekind
   | "brcond"
+  | funcaddr_nodekind
   | call_nodekind
   | callind_nodekind
 }

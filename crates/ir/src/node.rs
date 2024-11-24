@@ -174,6 +174,7 @@ pub enum NodeKind {
     Store(MemSize),
     StackSlot { size: u32, align: u32 },
     BrCond,
+    FuncAddr(FunctionRef),
     Call(FunctionRef),
     CallInd(SignatureRef),
 }

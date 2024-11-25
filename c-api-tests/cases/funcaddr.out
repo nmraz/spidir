@@ -1,0 +1,8 @@
+extfunc @f()
+
+func @get_f:ptr() {
+    %0:ctrl = entry
+    %1:ctrl, %2:phisel = region %0
+    %3:ptr = funcaddr @f
+    return %1, %3
+}

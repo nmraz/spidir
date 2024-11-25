@@ -124,6 +124,10 @@ pub trait BuilderExt: Builder {
         }
     }
 
+    fn build_funcaddr(&mut self, func: FunctionRef) -> DepValue {
+        build_single_output_pure(self, NodeKind::FuncAddr(func), [], Type::Ptr)
+    }
+
     fn build_call(
         &mut self,
         ret_ty: Option<Type>,

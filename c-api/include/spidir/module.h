@@ -328,6 +328,15 @@ void spidir_builder_set_entry_block(spidir_builder_handle_t builder,
 spidir_value_t spidir_builder_build_param_ref(spidir_builder_handle_t builder,
                                               uint32_t index);
 
+/// Creates an SSA value containing the address of the requested function.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] func    The function whose address should be taken.
+/// @return An SSA value containing the address of `func` for use with
+///         the `callind` instruction. This value will be a pointer.
+spidir_value_t spidir_builder_build_funcaddr(spidir_builder_handle_t builder,
+                                             spidir_function_t func);
+
 /// Builds an instruction calling the function `func` at the current insertion
 /// point.
 ///

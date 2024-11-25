@@ -71,6 +71,17 @@ unsafe extern "C" fn spidir_builder_build_param_ref(
 }
 
 #[no_mangle]
+unsafe extern "C" fn spidir_builder_build_funcaddr(
+    builder: *mut FunctionBuilder<'_>,
+    func: ApiFunction,
+) -> ApiValue {
+    unsafe {
+        let builder = &mut *builder;
+        value_to_api(builder.build_funcaddr(funcref_from_api(func)))
+    }
+}
+
+#[no_mangle]
 unsafe extern "C" fn spidir_builder_build_call(
     builder: *mut FunctionBuilder<'_>,
     func: ApiFunction,

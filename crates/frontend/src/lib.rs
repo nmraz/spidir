@@ -99,6 +99,10 @@ impl<'a> FunctionBuilder<'a> {
         self.graph().node_outputs(self.body().entry)[index as usize + 1]
     }
 
+    pub fn build_funcaddr(&mut self, func: FunctionRef) -> DepValue {
+        self.builder().build_funcaddr(func)
+    }
+
     pub fn build_call(&mut self, func: FunctionRef, args: &[DepValue]) -> Option<DepValue> {
         let ret_ty = self.module.resolve_funcref(func).sig.ret_type;
         let ctrl = self.cur_block_ctrl();

@@ -849,8 +849,9 @@ enum AddrMode {
         index: Option<(IndexScale, PhysReg)>,
         offset: i32,
     },
-    #[allow(dead_code)]
-    RipOff { offset: i32 },
+    RipOff {
+        offset: i32,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

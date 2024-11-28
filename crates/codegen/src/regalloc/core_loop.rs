@@ -217,6 +217,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     .drain_filter(|instr| instr.needs_reg()),
             );
 
+            let hints = self
+                .live_range_hints
+                .remove(&range.live_range)
+                .unwrap_or_default();
+            let mut hints = &hints[..];
+
             // Note: we assume the instructions are all in sorted order here so that the
             // `last_instr` checks inside make sense.
             for instr in &reg_instrs {
@@ -264,13 +270,14 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
                 // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but
                 // we don't care within the core loop.
-                self.push_vreg_fragment_live_range(
+                let new_live_range = self.push_vreg_fragment_live_range(
                     vreg,
                     new_fragment,
                     new_prog_range,
                     smallvec![*instr],
                     true,
                 );
+                self.set_range_hints_for_instr(new_live_range, instr.instr(), &mut hints);
 
                 last_instr = Some(instr.instr());
             }
@@ -615,6 +622,32 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 live_range,
             });
         live_range
+    }
+
+    fn set_range_hints_for_instr(
+        &mut self,
+        live_range: LiveRange,
+        instr: Instr,
+        hints: &mut &[AnnotatedPhysRegHint],
+    ) {
+        // We expect the hints to almost always be empty, so leave in one very predictable branch
+        // before the more complex logic.
+        if hints.is_empty() {
+            return;
+        }
+
+        while hints.first().is_some_and(|hint| hint.instr < instr) {
+            *hints = &hints[1..];
+        }
+
+        let instr_hint_len = hints
+            .iter()
+            .position(|hint| hint.instr != instr)
+            .unwrap_or(hints.len());
+        let (instr_hints, remaining_hints) = hints.split_at(instr_hint_len);
+        *hints = remaining_hints;
+
+        self.live_range_hints.insert(live_range, instr_hints.into());
     }
 
     fn can_split_fragment_before(&self, fragment: LiveSetFragment, point: ProgramPoint) -> bool {

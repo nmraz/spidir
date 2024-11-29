@@ -19,6 +19,7 @@ mod display;
 mod live_set;
 mod liveness;
 mod parallel_copy;
+mod redundant_copy;
 mod reify;
 mod types;
 mod utils;

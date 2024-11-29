@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 use crate::{
     cfg::{Block, CfgContext},
     lir::{
-        DefOperandConstraint, Instr, Lir, MemLayout, PhysReg, PhysRegSet, RegClass,
+        DefOperandConstraint, Instr, InstrRange, Lir, MemLayout, PhysReg, PhysRegSet, RegClass,
         UseOperandConstraint, VirtReg,
     },
     machine::{MachineCore, MachineRegalloc},
@@ -20,6 +20,7 @@ use super::{
     conflict::{iter_btree_ranges, iter_slice_ranges, RangeKeyIter},
     context::RegAllocContext,
     parallel_copy::{self, RegScavenger},
+    redundant_copy::{RedundantCopyTracker, RedundantCopyVerdict},
     types::{
         BlockExitGhostCopy, InstrSlot, LiveRange, ParallelCopies, ParallelCopy, ParallelCopyPhase,
         ProgramPoint, TaggedAssignmentCopy,
@@ -101,15 +102,32 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) {
         let mut resolved = Vec::new();
         let mut scavenger = AssignedRegScavenger::new(self, assignment);
+        let mut redundant_copy_tracker = RedundantCopyTracker::new();
+
+        let mut last_instr = self.lir.all_instrs().start;
 
         while let Some((pos, class, chunk)) = next_copy_chunk(&mut parallel_copies) {
+            let instr = pos.instr();
+
             scavenger.reset(class, pos, chunk);
+            advance_redundant_copy_tracker(
+                self.lir,
+                scavenger.assignment,
+                last_instr,
+                instr,
+                &mut redundant_copy_tracker,
+            );
+
             parallel_copy::resolve(chunk, &mut scavenger, |copy| {
-                resolved.push(TaggedAssignmentCopy {
-                    instr: pos.instr(),
-                    copy: *copy,
-                })
+                if redundant_copy_tracker.process_copy(copy) == RedundantCopyVerdict::Necessary {
+                    resolved.push(TaggedAssignmentCopy {
+                        instr: pos.instr(),
+                        copy: *copy,
+                    })
+                }
             });
+
+            last_instr = instr;
         }
 
         assignment.copies = resolved;
@@ -832,13 +850,6 @@ impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
     }
 }
 
-fn is_block_header<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, instr: Instr) -> bool {
-    instr
-        == lir
-            .block_instrs(cfg_ctx.block_order[lir.instr_block_index(instr)])
-            .start
-}
-
 fn next_copy_chunk<'a>(
     parallel_copies: &mut &'a [ParallelCopy],
 ) -> Option<(ProgramPoint, RegClass, &'a [ParallelCopy])> {
@@ -858,6 +869,29 @@ fn next_copy_chunk<'a>(
     ))
 }
 
+fn advance_redundant_copy_tracker<M: MachineCore>(
+    lir: &Lir<M>,
+    assignment: &Assignment,
+    from_instr: Instr,
+    to_instr: Instr,
+    tracker: &mut RedundantCopyTracker,
+) {
+    let block_idx = lir.instr_block_index(from_instr);
+    for instr in InstrRange::new(from_instr, to_instr) {
+        if lir.instr_block_index(instr) != block_idx {
+            tracker.reset();
+            break;
+        }
+
+        for &def in assignment.instr_def_assignments(instr) {
+            tracker.assignment_clobbered(def);
+        }
+        for clobber in lir.instr_clobbers(instr).iter() {
+            tracker.assignment_clobbered(OperandAssignment::Reg(clobber));
+        }
+    }
+}
+
 fn parallel_copy_key(copy: &ParallelCopy) -> u64 {
     let instr = (copy.instr.as_u32() as u64) << 16;
     let class = (copy.class.as_u8() as u64) << 8;
@@ -869,4 +903,11 @@ fn has_containing_range(mut iter: impl RangeKeyIter, pos: ProgramPoint) -> bool 
     iter.skip_to_endpoint_above(pos);
     iter.current()
         .is_some_and(|(cur_range, _)| pos >= cur_range.start)
+}
+
+fn is_block_header<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, instr: Instr) -> bool {
+    instr
+        == lir
+            .block_instrs(cfg_ctx.block_order[lir.instr_block_index(instr)])
+            .start
 }

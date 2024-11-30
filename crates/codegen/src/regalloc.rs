@@ -207,3 +207,6 @@ pub fn run<M: MachineRegalloc>(
 
     Ok(ctx.reify())
 }
+
+#[cfg(test)]
+mod tests;

@@ -29,7 +29,7 @@ pub struct IselContext<'ctx, 's, M: MachineLower> {
     builder: InstrBuilder<'ctx, 's, M>,
 }
 
-impl<'ctx, 's, M: MachineLower> IselContext<'ctx, 's, M> {
+impl<'ctx, M: MachineLower> IselContext<'ctx, '_, M> {
     pub fn module(&self) -> &'ctx Module {
         self.state.module
     }
@@ -157,7 +157,7 @@ pub struct DisplayIselError<'a> {
     error: IselError,
 }
 
-impl<'a> fmt::Display for DisplayIselError<'a> {
+impl fmt::Display for DisplayIselError<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,

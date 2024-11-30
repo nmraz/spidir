@@ -346,7 +346,7 @@ struct GraphBuilderWrapper<'a> {
     func: Function,
 }
 
-impl<'a> Builder for GraphBuilderWrapper<'a> {
+impl Builder for GraphBuilderWrapper<'_> {
     fn create_node(
         &mut self,
         kind: NodeKind,

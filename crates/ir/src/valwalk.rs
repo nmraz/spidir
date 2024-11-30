@@ -43,7 +43,7 @@ impl<'a> LiveNodeSuccs<'a> {
     }
 }
 
-impl<'a> graphwalk::GraphRef for LiveNodeSuccs<'a> {
+impl graphwalk::GraphRef for LiveNodeSuccs<'_> {
     type Node = Node;
 
     fn successors(&self, node: Node, f: impl FnMut(Node) -> ControlFlow<()>) -> ControlFlow<()> {
@@ -88,7 +88,7 @@ impl<'a> RawDefUseSuccs<'a> {
     }
 }
 
-impl<'a> graphwalk::GraphRef for RawDefUseSuccs<'a> {
+impl graphwalk::GraphRef for RawDefUseSuccs<'_> {
     type Node = Node;
 
     fn successors(
@@ -113,7 +113,7 @@ impl<'a> DefUseSuccs<'a> {
     }
 }
 
-impl<'a> graphwalk::GraphRef for DefUseSuccs<'a> {
+impl graphwalk::GraphRef for DefUseSuccs<'_> {
     type Node = Node;
 
     fn successors(

@@ -59,7 +59,7 @@ pub struct DisplayCodegenError<'a> {
     error: &'a CodegenError,
 }
 
-impl<'a> fmt::Display for DisplayCodegenError<'a> {
+impl fmt::Display for DisplayCodegenError<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "codegen for `{}` failed: ", self.func.metadata.name)?;
         match self.error {

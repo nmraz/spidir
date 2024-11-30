@@ -50,7 +50,7 @@ pub trait Builder {
 
 pub struct SimpleBuilder<'a>(pub &'a mut FunctionBody);
 
-impl<'a> Builder for SimpleBuilder<'a> {
+impl Builder for SimpleBuilder<'_> {
     fn create_node(
         &mut self,
         kind: NodeKind,

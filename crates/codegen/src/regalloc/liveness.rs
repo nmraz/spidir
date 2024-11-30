@@ -22,7 +22,7 @@ use super::{
     RegAllocContext,
 };
 
-impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
+impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn push_vreg_live_range(
         &mut self,
         vreg: VirtReg,

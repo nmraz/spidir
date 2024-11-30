@@ -68,8 +68,8 @@ pub trait AnnotateModule<W: fmt::Write + ?Sized>: AnnotateGraph<W> {
 
 struct DefaultAnnotator;
 
-impl<'a> AnnotateGraph<dyn fmt::Write + 'a> for DefaultAnnotator {}
-impl<'a> AnnotateModule<dyn fmt::Write + 'a> for DefaultAnnotator {}
+impl AnnotateGraph<dyn fmt::Write + '_> for DefaultAnnotator {}
+impl AnnotateModule<dyn fmt::Write + '_> for DefaultAnnotator {}
 
 pub fn display_node<'a>(
     module: &'a Module,
@@ -85,7 +85,7 @@ struct DisplayNode<'a> {
     node: Node,
 }
 
-impl<'a> fmt::Display for DisplayNode<'a> {
+impl fmt::Display for DisplayNode<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write_node(f, self.module, self.body, self.node)
     }

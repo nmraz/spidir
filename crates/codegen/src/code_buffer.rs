@@ -38,7 +38,7 @@ pub struct InstrSink<'a> {
     bytes: &'a mut Vec<u8>,
 }
 
-impl<'a> InstrSink<'a> {
+impl InstrSink<'_> {
     pub fn emit(&mut self, bytes: &[u8]) {
         self.bytes.extend_from_slice(bytes);
     }

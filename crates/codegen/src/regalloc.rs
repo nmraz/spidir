@@ -147,7 +147,7 @@ pub struct AssignmentCopyTracker<'a> {
     copy_idx: u32,
 }
 
-impl<'a> AssignmentCopyTracker<'a> {
+impl AssignmentCopyTracker<'_> {
     pub fn next_copy_for(&mut self, instr: Instr) -> Option<(u32, AssignmentCopy)> {
         self.copies
             .get(self.copy_idx as usize)
@@ -171,7 +171,7 @@ pub struct AssignmentInstrIter<'a> {
     copies: AssignmentCopyTracker<'a>,
 }
 
-impl<'a> Iterator for AssignmentInstrIter<'a> {
+impl Iterator for AssignmentInstrIter<'_> {
     type Item = InstrOrCopy;
 
     fn next(&mut self) -> Option<InstrOrCopy> {

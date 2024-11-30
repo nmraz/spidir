@@ -221,7 +221,7 @@ pub struct DisplayErrorWithContext<'a> {
     error: &'a ModuleVerifierError,
 }
 
-impl<'a> fmt::Display for DisplayErrorWithContext<'a> {
+impl fmt::Display for DisplayErrorWithContext<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some((function, node)) = self.error.node(self.module) {
             write!(

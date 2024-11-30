@@ -88,7 +88,7 @@ pub struct VirtRegSetIter<'a> {
     cur_entry: Option<(u32, WordSet)>,
 }
 
-impl<'a> Iterator for VirtRegSetIter<'a> {
+impl Iterator for VirtRegSetIter<'_> {
     type Item = VirtReg;
 
     fn next(&mut self) -> Option<Self::Item> {

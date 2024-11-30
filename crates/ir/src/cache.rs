@@ -17,7 +17,7 @@ pub struct VacantEntry<'a> {
     hash: u32,
 }
 
-impl<'a> VacantEntry<'a> {
+impl VacantEntry<'_> {
     pub fn insert(self, node: Node) {
         debug_assert!(self.cache.node_hashes[node] == HASH_NONE);
         self.cache.insert(node, self.hash);
@@ -124,7 +124,7 @@ impl<'a> CachingBuilder<'a> {
     }
 }
 
-impl<'a> Builder for CachingBuilder<'a> {
+impl Builder for CachingBuilder<'_> {
     fn create_node(
         &mut self,
         kind: NodeKind,

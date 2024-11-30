@@ -290,7 +290,7 @@ impl DefOperand {
         self.pos
     }
 
-    pub fn display<'a, M: MachineCore>(&'a self, lir: &'a Lir<M>) -> DisplayDefOperand<'_, M> {
+    pub fn display<'a, M: MachineCore>(&'a self, lir: &'a Lir<M>) -> DisplayDefOperand<'a, M> {
         DisplayDefOperand {
             lir,
             operand: self,
@@ -758,7 +758,7 @@ impl<M: MachineCore> Builder<'_, M> {
         defs: &'a [DefOperand],
         uses: &'a [UseOperand],
         clobbers: PhysRegSet,
-    ) -> DisplayInstrData<'_, M> {
+    ) -> DisplayInstrData<'a, M> {
         DisplayInstrData {
             lir: &self.lir,
             instr,

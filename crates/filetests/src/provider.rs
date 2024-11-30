@@ -266,7 +266,7 @@ fn get_func_body<'a>(module: &'a Module, name: &str) -> &'a FunctionBody {
 }
 
 struct HashMapEnv<'a>(FxHashMap<String, Value<'a>>);
-impl<'a> VariableMap for HashMapEnv<'a> {
+impl VariableMap for HashMapEnv<'_> {
     fn lookup(&self, varname: &str) -> Option<Value> {
         self.0.get(varname).cloned()
     }

@@ -25,7 +25,7 @@ pub struct Inputs<'a> {
     use_list: &'a [Use],
 }
 
-impl<'a> Inputs<'a> {
+impl Inputs<'_> {
     pub fn len(&self) -> usize {
         self.use_list.len()
     }
@@ -51,7 +51,7 @@ impl<'a> IntoIterator for Inputs<'a> {
     }
 }
 
-impl<'a> Index<usize> for Inputs<'a> {
+impl Index<usize> for Inputs<'_> {
     type Output = DepValue;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -65,7 +65,7 @@ pub struct InputIter<'a> {
     iter: slice::Iter<'a, Use>,
 }
 
-impl<'a> Iterator for InputIter<'a> {
+impl Iterator for InputIter<'_> {
     type Item = DepValue;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -77,18 +77,18 @@ impl<'a> Iterator for InputIter<'a> {
     }
 }
 
-impl<'a> DoubleEndedIterator for InputIter<'a> {
+impl DoubleEndedIterator for InputIter<'_> {
     fn next_back(&mut self) -> Option<Self::Item> {
         Some(self.graph.uses[*self.iter.next_back()?].value)
     }
 }
 
-impl<'a> ExactSizeIterator for InputIter<'a> {}
+impl ExactSizeIterator for InputIter<'_> {}
 
 #[derive(Clone, Copy)]
 pub struct Outputs<'a>(&'a [DepValue]);
 
-impl<'a> Outputs<'a> {
+impl Outputs<'_> {
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -111,7 +111,7 @@ impl<'a> IntoIterator for Outputs<'a> {
     }
 }
 
-impl<'a> Index<usize> for Outputs<'a> {
+impl Index<usize> for Outputs<'_> {
     type Output = DepValue;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -122,7 +122,7 @@ impl<'a> Index<usize> for Outputs<'a> {
 #[derive(Clone)]
 pub struct OutputIter<'a>(slice::Iter<'a, DepValue>);
 
-impl<'a> Iterator for OutputIter<'a> {
+impl Iterator for OutputIter<'_> {
     type Item = DepValue;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -134,13 +134,13 @@ impl<'a> Iterator for OutputIter<'a> {
     }
 }
 
-impl<'a> DoubleEndedIterator for OutputIter<'a> {
+impl DoubleEndedIterator for OutputIter<'_> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back().copied()
     }
 }
 
-impl<'a> ExactSizeIterator for OutputIter<'a> {}
+impl ExactSizeIterator for OutputIter<'_> {}
 
 #[derive(Clone)]
 pub struct UseIter<'a> {
@@ -148,7 +148,7 @@ pub struct UseIter<'a> {
     cur_use: Option<Use>,
 }
 
-impl<'a> Iterator for UseIter<'a> {
+impl Iterator for UseIter<'_> {
     type Item = (Node, u32);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -163,7 +163,7 @@ pub struct UseCursor<'a> {
     current: Option<Use>,
 }
 
-impl<'a> UseCursor<'a> {
+impl UseCursor<'_> {
     pub fn graph(&self) -> &ValGraph {
         self.graph
     }

@@ -69,7 +69,7 @@ pub struct DisplayVerifierError<'a, M: MachineCore> {
     assignment: &'a Assignment,
 }
 
-impl<'a, M: MachineCore> fmt::Display for DisplayVerifierError<'a, M> {
+impl<M: MachineCore> fmt::Display for DisplayVerifierError<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self.error {
             VerifierError::BadUseCount(instr) => write!(

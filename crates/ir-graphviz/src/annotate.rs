@@ -140,7 +140,7 @@ impl<'a> ErrorAnnotator<'a> {
     }
 }
 
-impl<'a> Annotate for ErrorAnnotator<'a> {
+impl Annotate for ErrorAnnotator<'_> {
     fn annotate_node(&mut self, graph: &ValGraph, node: Node, attrs: &mut DotAttributes) {
         if let Some(errors) = self.node_errors.get(&node) {
             error_attrs(errors, graph, attrs);
@@ -185,7 +185,7 @@ impl<'a> DomTreeAnnotator<'a> {
     }
 }
 
-impl<'a> Annotate for DomTreeAnnotator<'a> {
+impl Annotate for DomTreeAnnotator<'_> {
     fn structural_edges(&mut self, _graph: &ValGraph, _entry: Node) -> Vec<StructuralEdge> {
         self.domtree
             .preorder()
@@ -222,7 +222,7 @@ impl<'a> LoopAnnotator<'a> {
     }
 }
 
-impl<'a> Annotate for LoopAnnotator<'a> {
+impl Annotate for LoopAnnotator<'_> {
     fn annotate_node(&mut self, graph: &ValGraph, node: Node, attrs: &mut DotAttributes) {
         let Some(domtre_node) = self.domtree.get_tree_node(node) else {
             return;

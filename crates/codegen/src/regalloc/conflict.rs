@@ -16,7 +16,7 @@ pub struct BTreeRangeIter<'a, V> {
     iter: Peekable<btree_map::Range<'a, RangeEndKey, V>>,
 }
 
-impl<'a, V: Copy> RangeKeyIter for BTreeRangeIter<'a, V> {
+impl<V: Copy> RangeKeyIter for BTreeRangeIter<'_, V> {
     type Value = V;
 
     fn current(&mut self) -> Option<(ProgramRange, &Self::Value)> {
@@ -47,7 +47,7 @@ pub struct SliceRangeIter<'a, R, F> {
     iter: slice::Iter<'a, R>,
 }
 
-impl<'a, R, F, V: Copy> RangeKeyIter for SliceRangeIter<'a, R, F>
+impl<R, F, V: Copy> RangeKeyIter for SliceRangeIter<'_, R, F>
 where
     F: FnMut(&R) -> (ProgramRange, &V),
 {

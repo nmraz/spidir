@@ -80,7 +80,7 @@ impl<F: FnMut(&mut String, Node)> AnnotateGraph<String> for CommentAnnotator<F> 
 }
 
 fn round_up(num: usize, divisor: usize) -> usize {
-    ((num + divisor - 1) / divisor) * divisor
+    num.div_ceil(divisor) * divisor
 }
 
 pub fn parse_output_func_heading(output_line: &str) -> Option<&str> {

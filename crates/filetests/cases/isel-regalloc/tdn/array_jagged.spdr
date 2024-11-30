@@ -114,13 +114,9 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:           $$rdi = $$spill2
     # nextln:           $$rsi = $$spill4
     # nextln: 0022:     $$r15 = MovRStack(!0, S64)
-    # nextln:           $$spill4 = $$rsi
     # nextln:           $$rbx = $$r9
-    # nextln:           $$spill3 = $$r8
     # nextln:           $$spill6 = $$rcx
-    # nextln:           $$spill1 = $$rdx
     # nextln:           $$spill0 = $$rax
-    # nextln:           $$spill2 = $$rdi
     # nextln:           $$rsi = $$spill8
     # nextln:           $$rdi = $$rbx
     # nextln: 0023:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
@@ -157,7 +153,6 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:           $$spill9 = $$rsi
     # nextln:           $$rsi = $$r8
     # nextln:           $$r8 = $$spill9
-    # nextln:           $$spill1 = $$r13
     # nextln: 0036:     $$r13 = MovsxRRm(Ext32_64) $$rdx
     # nextln:           $$rdx = $$spill1
     # nextln: 0037:     AluRRm(S64, Cmp) $$r13, $$r11
@@ -190,7 +185,6 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:           $$spill6 = $$rax
     # nextln:           $$spill0 = $$rdx
     # nextln:           $$spill5 = $$r9
-    # nextln:           $$spill1 = $$r8
     # nextln:           $$rsi = $$spill8
     # nextln: 0044:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
     # nextln:           $$rdx = $$spill2

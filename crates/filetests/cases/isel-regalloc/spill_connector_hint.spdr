@@ -70,7 +70,6 @@ func @spill_connector_hint() {
     # nextln:           $$spill12 = $$rbx
     # nextln:           $$rbx = $$rax
     # nextln: 0008:     $$rax = CallRel(External(extfunc0))
-    # nextln:           $$spill15 = $$r12
     # nextln:           $$r12 = $$rax
     # nextln: 0009:     $$rax = CallRel(External(extfunc0))
     # nextln:           $$spill11 = $$r13
@@ -85,11 +84,9 @@ func @spill_connector_hint() {
     # nextln:           $$spill7 = $$rbx
     # nextln:           $$rbx = $$spill15
     # nextln: 0011:     $$rax = CallRel(External(extfunc0))
-    # nextln:           $$spill15 = $$rbx
     # nextln:           $$rbx = $$r14
     # nextln:           $$r14 = $$rax
     # nextln: 0012:     $$rax = CallRel(External(extfunc0))
-    # nextln:           $$spill13 = $$rbx
     # nextln:           $$rbx = $$rax
     # nextln: 0013:     $$rax = CallRel(External(extfunc0))
     # nextln:           $$spill9 = $$r15
@@ -103,7 +100,6 @@ func @spill_connector_hint() {
     # nextln:           $$spill3 = $$rbx
     # nextln:           $$rbx = $$spill14
     # nextln: 0014:     $$rax = CallRel(External(extfunc0))
-    # nextln:           $$spill10 = $$r14
     # nextln:           $$r14 = $$rax
     # nextln: 0015:     $$rax = CallRel(External(extfunc0))
     # nextln:           $$spill2 = $$r12
@@ -183,7 +179,6 @@ func @spill_connector_hint() {
     # nextln:           $$rdi = $$r13
     # nextln: 0036:     CallRel(External(extfunc1)) $$rdi, $$rsi
     # nextln:           $$r13 = $$spill2
-    # nextln:           $$spill6 = $$r14
     # nextln:           $$r14 = $$spill7
     # nextln:           $$rsi = $$r12
     # nextln:           $$rdi = $$r12
@@ -197,7 +192,6 @@ func @spill_connector_hint() {
     # nextln:           $$rsi = $$r15
     # nextln: 0039:     CallRel(External(extfunc1)) $$rdi, $$rsi
     # nextln:           $$r15 = $$spill5
-    # nextln:           $$spill3 = $$r12
     # nextln:           $$r12 = $$spill4
     # nextln:           $$rsi = $$r14
     # nextln:           $$rdi = $$r14

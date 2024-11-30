@@ -57,7 +57,6 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln:           $$r15 = $$rsi
     # nextln:           $$spill0 = $$rdx
     # nextln:           $$spill1 = $$r8
-    # nextln:           $$rsi = $$r15
     # nextln: 0024:     $$rax = CallRm $$r10, $$rdi, $$rsi
     # nextln:           $$rdi = $$spill7
     # nextln:           $$rcx = $$spill5
@@ -67,12 +66,7 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln:           $$r15 = $$rax
     # nextln:           $$rax = $$spill6
     # nextln: 0025:     $$rsi = FuncAddrAbs(External(extfunc1))
-    # nextln:           $$spill7 = $$rdi
-    # nextln:           $$spill6 = $$rax
-    # nextln:           $$spill5 = $$rcx
     # nextln:           $$spill3 = $$r9
-    # nextln:           $$spill0 = $$r8
-    # nextln:           $$spill1 = $$rdx
     # nextln:           $$rdi = $$r15
     # nextln: 0026:     CallRm $$rsi, $$rdi
     # nextln: 0027:     MovStackR(!3, S64) $$r15
@@ -83,11 +77,6 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln:           $$r9 = $$spill0
     # nextln:           $$rcx = $$spill1
     # nextln: 0028:     $$r8 = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$spill0 = $$r9
-    # nextln:           $$spill6 = $$rax
-    # nextln:           $$spill1 = $$rcx
-    # nextln:           $$spill5 = $$rsi
-    # nextln:           $$spill3 = $$rdi
     # nextln:           $$r15 = $$rdx
     # nextln:           $$rdi = $$r14
     # nextln:           $$rsi = $$r13

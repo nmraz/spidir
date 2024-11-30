@@ -70,32 +70,30 @@ func @caller:i32(ptr, i32) {
     # nextln: 00000a: 49 89 f5                        mov r13, rsi
     # nextln: 00000d: 49 89 fc                        mov r12, rdi
     # nextln: 000010: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @extfunc + 0
-    # nextln: 00001a: 4c 89 ee                        mov rsi, r13
-    # nextln: 00001d: 4c 89 e7                        mov rdi, r12
-    # nextln: 000020: ff d0                           call rax
-    # nextln: 000022: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @extfunc2 + 0
-    # nextln: 00002c: 4c 89 ee                        mov rsi, r13
-    # nextln: 00002f: 4c 89 e7                        mov rdi, r12
-    # nextln: 000032: ff d0                           call rax
-    # nextln: 000034: 48 89 c3                        mov rbx, rax
-    # nextln: 000037: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @infunc + 0
-    # nextln: 000041: 4c 89 ee                        mov rsi, r13
-    # nextln: 000044: 4c 89 e7                        mov rdi, r12
-    # nextln: 000047: ff d0                           call rax
-    # nextln: 000049: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @infunc2 + 0
-    # nextln: 000053: 4c 89 ee                        mov rsi, r13
-    # nextln: 000056: 4c 89 e7                        mov rdi, r12
-    # nextln: 000059: ff d0                           call rax
-    # nextln: 00005b: 03 d8                           add ebx, eax
-    # nextln: 00005d: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @no_params + 0
-    # nextln: 000067: ff d0                           call rax
-    # nextln: 000069: 48 89 d8                        mov rax, rbx
-    # nextln: 00006c: 48 83 c4 08                     add rsp, 8
-    # nextln: 000070: 5b                              pop rbx
-    # nextln: 000071: 41 5c                           pop r12
-    # nextln: 000073: 41 5d                           pop r13
-    # nextln: 000075: 5d                              pop rbp
-    # nextln: 000076: c3                              ret
+    # nextln: 00001a: ff d0                           call rax
+    # nextln: 00001c: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @extfunc2 + 0
+    # nextln: 000026: 4c 89 ee                        mov rsi, r13
+    # nextln: 000029: 4c 89 e7                        mov rdi, r12
+    # nextln: 00002c: ff d0                           call rax
+    # nextln: 00002e: 48 89 c3                        mov rbx, rax
+    # nextln: 000031: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @infunc + 0
+    # nextln: 00003b: 4c 89 ee                        mov rsi, r13
+    # nextln: 00003e: 4c 89 e7                        mov rdi, r12
+    # nextln: 000041: ff d0                           call rax
+    # nextln: 000043: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @infunc2 + 0
+    # nextln: 00004d: 4c 89 ee                        mov rsi, r13
+    # nextln: 000050: 4c 89 e7                        mov rdi, r12
+    # nextln: 000053: ff d0                           call rax
+    # nextln: 000055: 03 d8                           add ebx, eax
+    # nextln: 000057: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @no_params + 0
+    # nextln: 000061: ff d0                           call rax
+    # nextln: 000063: 48 89 d8                        mov rax, rbx
+    # nextln: 000066: 48 83 c4 08                     add rsp, 8
+    # nextln: 00006a: 5b                              pop rbx
+    # nextln: 00006b: 41 5c                           pop r12
+    # nextln: 00006d: 41 5d                           pop r13
+    # nextln: 00006f: 5d                              pop rbp
+    # nextln: 000070: c3                              ret
 
     %3:ctrl, %1:ptr, %2:i32 = entry
     %5:ctrl = call @extfunc %3, %1, %2

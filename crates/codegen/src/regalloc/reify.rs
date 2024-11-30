@@ -876,13 +876,12 @@ fn advance_redundant_copy_tracker<M: MachineCore>(
     to_instr: Instr,
     tracker: &mut RedundantCopyTracker,
 ) {
-    let block_idx = lir.instr_block_index(from_instr);
-    for instr in InstrRange::new(from_instr, to_instr) {
-        if lir.instr_block_index(instr) != block_idx {
-            tracker.reset();
-            break;
-        }
+    if lir.instr_block_index(from_instr) != lir.instr_block_index(to_instr) {
+        tracker.reset();
+        return;
+    }
 
+    for instr in InstrRange::new(from_instr, to_instr) {
         for &def in assignment.instr_def_assignments(instr) {
             tracker.assignment_clobbered(def);
         }

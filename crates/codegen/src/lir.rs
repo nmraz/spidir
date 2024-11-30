@@ -25,6 +25,9 @@ use display::{
 
 pub mod display;
 
+#[cfg(test)]
+pub(crate) mod test_utils;
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RegClass(u8);
 

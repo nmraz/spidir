@@ -198,14 +198,12 @@ pub fn run<M: MachineRegalloc>(
     machine: &M,
 ) -> Result<Assignment, RegallocError> {
     let mut ctx = RegAllocContext::new(lir, cfg_ctx, machine);
+
     ctx.compute_liveness();
     ctx.build_live_sets();
     ctx.assign_all_fragments()?;
 
-    let assignment = ctx.reify();
-
-    // Dump things as they were *after* reification, since that can change some things as well.
     ctx.dump();
 
-    Ok(assignment)
+    Ok(ctx.reify())
 }

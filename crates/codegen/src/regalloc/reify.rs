@@ -79,7 +79,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         // Now, extract everything else we need (operand assignments, copies) out of the live range
         // assignments.
-        self.sort_vreg_ranges();
         self.reify_allocated_operands(&mut assignment, &mut copies);
         self.collect_func_live_in_copies(&mut copies);
         self.collect_cross_fragment_copies(&mut assignment, &mut copies);
@@ -594,20 +593,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     }
                 }
             }
-        }
-    }
-
-    fn sort_vreg_ranges(&mut self) {
-        for ranges in self.vreg_ranges.values_mut() {
-            ranges.sort_unstable_by_key(|&range| {
-                let range_data = &self.live_ranges[range];
-                let fragment_data = &self.live_set_fragments[range_data.fragment];
-
-                // Allow ranges to overlap (for spill connectors), but make sure reload connectors
-                // starting with a spill always come after spills starting at the same point.
-                ((range_data.prog_range.start.index() as u64) << 1)
-                    | (fragment_data.assignment.is_some() as u64)
-            });
         }
     }
 

@@ -73,7 +73,25 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             self.try_assign(fragment)?;
         }
 
+        // Splitting and spilling may have created new, unsorted vreg ranges, so make sure to sort
+        // them back before someone notices.
+        self.sort_vreg_ranges();
+
         Ok(())
+    }
+
+    fn sort_vreg_ranges(&mut self) {
+        for ranges in self.vreg_ranges.values_mut() {
+            ranges.sort_unstable_by_key(|&range| {
+                let range_data = &self.live_ranges[range];
+                let fragment_data = &self.live_set_fragments[range_data.fragment];
+
+                // Allow ranges to overlap (for spill connectors), but make sure reload connectors
+                // starting with a spill always come after spills starting at the same point.
+                ((range_data.prog_range.start.index() as u64) << 1)
+                    | (fragment_data.assignment.is_some() as u64)
+            });
+        }
     }
 
     fn try_assign(&mut self, fragment: LiveSetFragment) -> Result<(), RegallocError> {

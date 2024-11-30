@@ -12,9 +12,9 @@ use crate::{
 
 use self::{context::RegAllocContext, types::InstrAssignmentData};
 
+mod assign;
 mod conflict;
 mod context;
-mod core_loop;
 mod display;
 mod live_set;
 mod liveness;
@@ -200,7 +200,7 @@ pub fn run<M: MachineRegalloc>(
     let mut ctx = RegAllocContext::new(lir, cfg_ctx, machine);
     ctx.compute_liveness();
     ctx.build_live_sets();
-    ctx.run_core_loop()?;
+    ctx.assign_all_fragments()?;
 
     let assignment = ctx.reify();
 

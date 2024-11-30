@@ -73,14 +73,14 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         self.assign_spill_slots(&mut assignment);
 
-        // Assign all fixed operands first, since dead fixed outputs will not even have associated
-        // live ranges.
-        self.assign_fixed_operands(&mut assignment);
+        // Set all fixed operands first, since dead fixed outputs will not even have associated live
+        // ranges.
+        self.reify_fixed_operands(&mut assignment);
 
         // Now, extract everything else we need (operand assignments, copies) out of the live range
         // assignments.
         self.sort_vreg_ranges();
-        self.assign_allocated_operands(&mut assignment, &mut copies);
+        self.reify_allocated_operands(&mut assignment, &mut copies);
         self.collect_func_live_in_copies(&mut copies);
         self.collect_cross_fragment_copies(&mut assignment, &mut copies);
 
@@ -499,7 +499,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .sort_unstable_by_key(|ghost_copy| ghost_copy.block.as_u32());
     }
 
-    fn assign_allocated_operands(&self, assignment: &mut Assignment, copies: &mut ParallelCopies) {
+    fn reify_allocated_operands(&self, assignment: &mut Assignment, copies: &mut ParallelCopies) {
         // First pass: sort each register's live ranges and resolve all instruction def operands to
         // the correct physical registers.
         for (vreg, vreg_ranges) in self.vreg_ranges.iter() {
@@ -609,7 +609,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
-    fn assign_fixed_operands(&self, assignment: &mut Assignment) {
+    fn reify_fixed_operands(&self, assignment: &mut Assignment) {
         for instr in self.lir.all_instrs() {
             for (i, use_op) in self.lir.instr_uses(instr).iter().enumerate() {
                 if let UseOperandConstraint::Fixed(preg) = use_op.constraint() {

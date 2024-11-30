@@ -51,7 +51,7 @@ enum ProbeConflict {
 }
 
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
-    pub fn run_core_loop(&mut self) -> Result<(), RegallocError> {
+    pub fn assign_all_fragments(&mut self) -> Result<(), RegallocError> {
         // Process fragments in order of decreasing size, to try to fill in the larger ranges before
         // moving on to smaller ones. Because of weight-based eviction, we can still end up
         // revisiting a larger fragment later.
@@ -70,13 +70,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 queued_fragment.prio,
                 self.live_set_fragments[fragment].spill_weight,
             );
-            self.try_allocate(fragment)?;
+            self.try_assign(fragment)?;
         }
 
         Ok(())
     }
 
-    fn try_allocate(&mut self, fragment: LiveSetFragment) -> Result<(), RegallocError> {
+    fn try_assign(&mut self, fragment: LiveSetFragment) -> Result<(), RegallocError> {
         let live_set = self.live_set_fragments[fragment].live_set;
         let class = self.live_sets[live_set].class;
 
@@ -269,7 +269,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 );
 
                 // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but
-                // we don't care within the core loop.
+                // we don't care within the assignment loop.
                 let new_live_range = self.push_vreg_fragment_live_range(
                     vreg,
                     new_fragment,
@@ -414,7 +414,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         // Create a new live range for the lower part at the end of the `old_fragment`.
         // Note: `vreg_ranges` will no longer be sorted by range order once we do this, but we
-        // don't care within the core loop.
+        // don't care within the assignment loop.
         let new_live_range =
             self.push_vreg_fragment_live_range(vreg, old_fragment, low_range, instrs, false);
 

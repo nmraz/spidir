@@ -1,10 +1,10 @@
 use expect_test::{expect, Expect};
 
 use crate::{
-    cfg::{Block, BlockCfg, CfgContext},
+    cfg::{BlockCfg, CfgContext},
     lir::{
         test_utils::{push_instr, DummyInstr, DummyMachine, RC_GPR, REG_R0, REG_R1, REG_R2},
-        Builder as LirBuilder, Lir, MemLayout, OperandPos, PhysReg, RegClass, UseOperandConstraint,
+        Builder as LirBuilder, MemLayout, OperandPos, PhysReg, RegClass, UseOperandConstraint,
     },
     machine::MachineRegalloc,
 };
@@ -29,13 +29,23 @@ impl MachineRegalloc for DummyMachine {
     }
 }
 
-fn check_regalloc(lir: &Lir<DummyMachine>, cfg: BlockCfg, block_order: &[Block], expected: Expect) {
-    let cfg_ctx = CfgContext::compute(cfg, block_order[0]);
-    let assignment = super::run(lir, &cfg_ctx, &DummyMachine).expect("regalloc failed");
-    if let Err(err) = super::verify(lir, &cfg_ctx, &assignment) {
-        panic!("invalid allocation: {}", err.display(lir, &assignment));
+fn check_regalloc_block(build: impl FnOnce(&mut LirBuilder<'_, DummyMachine>), expected: Expect) {
+    let mut cfg = BlockCfg::new();
+    let entry = cfg.create_block();
+
+    let cfg_ctx = CfgContext::compute(cfg, entry);
+
+    let mut builder = LirBuilder::new(&cfg_ctx.block_order);
+    builder.advance_block();
+    build(&mut builder);
+    builder.advance_block();
+    let lir = builder.finish();
+
+    let assignment = super::run(&lir, &cfg_ctx, &DummyMachine).expect("regalloc failed");
+    if let Err(err) = super::verify(&lir, &cfg_ctx, &assignment) {
+        panic!("invalid allocation: {}", err.display(&lir, &assignment));
     }
-    expected.assert_eq(&assignment.display(block_order, lir).to_string());
+    expected.assert_eq(&assignment.display(&cfg_ctx.block_order, &lir).to_string());
 }
 
 // The full x64 isel/regalloc pipeline is too finnicky to reliably create copy cycles that need
@@ -43,35 +53,23 @@ fn check_regalloc(lir: &Lir<DummyMachine>, cfg: BlockCfg, block_order: &[Block],
 
 #[test]
 fn copy_cycle_all_regs() {
-    let mut cfg = BlockCfg::new();
-    let block = cfg.create_block();
-    let block_order = [block];
+    check_regalloc_block(
+        |builder| {
+            // Call something with all available registers permuted.
+            let [a2, a3, a1] = push_instr(
+                builder,
+                DummyInstr::Call,
+                [],
+                [
+                    (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
+                    (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
+                    (UseOperandConstraint::Fixed(REG_R2), OperandPos::Early),
+                ],
+            );
 
-    let mut builder = LirBuilder::new(&block_order);
-    builder.advance_block();
-
-    // Call something with all available registers permuted.
-    let [a2, a3, a1] = push_instr(
-        &mut builder,
-        DummyInstr::Call,
-        [],
-        [
-            (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
-            (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
-            (UseOperandConstraint::Fixed(REG_R2), OperandPos::Early),
-        ],
-    );
-
-    builder.set_incoming_block_params([a1, a2, a3]);
-    builder.set_live_in_regs(vec![REG_R0, REG_R1, REG_R2]);
-
-    builder.advance_block();
-
-    let lir = builder.finish();
-    check_regalloc(
-        &lir,
-        cfg,
-        &block_order,
+            builder.set_incoming_block_params([a1, a2, a3]);
+            builder.set_live_in_regs(vec![REG_R0, REG_R1, REG_R2]);
+        },
         expect![[r#"
                   block0:
                       $spill0 = $r2
@@ -85,51 +83,39 @@ fn copy_cycle_all_regs() {
 
 #[test]
 fn copy_cycle_all_regs_twice() {
-    let mut cfg = BlockCfg::new();
-    let block = cfg.create_block();
-    let block_order = [block];
+    check_regalloc_block(
+        |builder| {
+            // Use our parameters in the same registers we get on entry.
+            let [a1, a2, a3] = push_instr(
+                builder,
+                DummyInstr::Call,
+                [],
+                [
+                    (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
+                    (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
+                    (UseOperandConstraint::Fixed(REG_R2), OperandPos::Early),
+                ],
+            );
 
-    let mut builder = LirBuilder::new(&block_order);
-    builder.advance_block();
+            // Use our parameters completely permuted.
+            let [a2p, a3p, a1p] = push_instr(
+                builder,
+                DummyInstr::Call,
+                [],
+                [
+                    (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
+                    (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
+                    (UseOperandConstraint::Fixed(REG_R2), OperandPos::Early),
+                ],
+            );
 
-    // Use our parameters in the same registers we get on entry.
-    let [a1, a2, a3] = push_instr(
-        &mut builder,
-        DummyInstr::Call,
-        [],
-        [
-            (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
-            (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
-            (UseOperandConstraint::Fixed(REG_R2), OperandPos::Early),
-        ],
-    );
+            builder.copy_vreg(a1p, a1);
+            builder.copy_vreg(a2p, a2);
+            builder.copy_vreg(a3p, a3);
 
-    // Use our parameters completely permuted.
-    let [a2p, a3p, a1p] = push_instr(
-        &mut builder,
-        DummyInstr::Call,
-        [],
-        [
-            (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
-            (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
-            (UseOperandConstraint::Fixed(REG_R2), OperandPos::Early),
-        ],
-    );
-
-    builder.copy_vreg(a1p, a1);
-    builder.copy_vreg(a2p, a2);
-    builder.copy_vreg(a3p, a3);
-
-    builder.set_incoming_block_params([a1, a2, a3]);
-    builder.set_live_in_regs(vec![REG_R0, REG_R1, REG_R2]);
-
-    builder.advance_block();
-
-    let lir = builder.finish();
-    check_regalloc(
-        &lir,
-        cfg,
-        &block_order,
+            builder.set_incoming_block_params([a1, a2, a3]);
+            builder.set_live_in_regs(vec![REG_R0, REG_R1, REG_R2]);
+        },
         expect![[r#"
                   block0:
                       $spill0 = $r2
@@ -148,42 +134,30 @@ fn copy_cycle_all_regs_twice() {
 
 #[test]
 fn copy_cycle_no_free_reg() {
-    let mut cfg = BlockCfg::new();
-    let block = cfg.create_block();
-    let block_order = [block];
+    check_regalloc_block(
+        |builder| {
+            // Keep r2 live across our call.
+            let [a3] = push_instr(
+                builder,
+                DummyInstr::Ret,
+                [],
+                [(UseOperandConstraint::Fixed(REG_R2), OperandPos::Early)],
+            );
 
-    let mut builder = LirBuilder::new(&block_order);
-    builder.advance_block();
+            // Call something with all available registers permuted.
+            let [a2, a1] = push_instr(
+                builder,
+                DummyInstr::Call,
+                [],
+                [
+                    (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
+                    (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
+                ],
+            );
 
-    // Keep r2 live across our call.
-    let [a3] = push_instr(
-        &mut builder,
-        DummyInstr::Ret,
-        [],
-        [(UseOperandConstraint::Fixed(REG_R2), OperandPos::Early)],
-    );
-
-    // Call something with all available registers permuted.
-    let [a2, a1] = push_instr(
-        &mut builder,
-        DummyInstr::Call,
-        [],
-        [
-            (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
-            (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
-        ],
-    );
-
-    builder.set_incoming_block_params([a1, a2, a3]);
-    builder.set_live_in_regs(vec![REG_R0, REG_R1, REG_R2]);
-
-    builder.advance_block();
-
-    let lir = builder.finish();
-    check_regalloc(
-        &lir,
-        cfg,
-        &block_order,
+            builder.set_incoming_block_params([a1, a2, a3]);
+            builder.set_live_in_regs(vec![REG_R0, REG_R1, REG_R2]);
+        },
         expect![[r#"
                   block0:
                       $spill0 = $r1

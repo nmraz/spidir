@@ -256,35 +256,14 @@ mod tests {
 
     use crate::{
         lir::{Instr, PhysReg, PhysRegSet, RegClass},
-        regalloc::{types::ParallelCopyPhase, SpillSlot},
+        regalloc::{
+            test_utils::{operand_to_string, parse_operand},
+            types::ParallelCopyPhase,
+            SpillSlot,
+        },
     };
 
     use super::*;
-
-    fn parse_operand(s: &str) -> OperandAssignment {
-        match s.as_bytes()[0] {
-            b'r' => {
-                let num: u8 = s[1..].parse().unwrap();
-                OperandAssignment::Reg(PhysReg::new(num))
-            }
-            b's' => {
-                let num: u32 = s[1..].parse().unwrap();
-                OperandAssignment::Spill(SpillSlot::from_u32(num))
-            }
-            _ => panic!("invalid operand"),
-        }
-    }
-
-    fn operand_to_string(operand: OperandAssignment) -> String {
-        match operand {
-            OperandAssignment::Reg(r) => {
-                format!("r{}", r.as_u8())
-            }
-            OperandAssignment::Spill(s) => {
-                format!("s{}", s.as_u32())
-            }
-        }
-    }
 
     struct DummyRegScavenger {
         reg_count: u8,

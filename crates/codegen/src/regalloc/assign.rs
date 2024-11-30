@@ -189,21 +189,29 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         if let Some((no_conflict_reg, hint_weight)) = no_conflict_reg {
             self.assign_fragment_to_phys_reg(fragment, no_conflict_reg, hint_weight);
-        } else if let Some((preg, hint_weight, soft_conflicts)) = lightest_soft_conflict {
+            return Ok(());
+        }
+
+        if let Some((preg, hint_weight, soft_conflicts)) = lightest_soft_conflict {
             for conflicting_fragment in soft_conflicts {
                 self.evict_and_requeue_fragment(conflicting_fragment);
             }
             self.assign_fragment_to_phys_reg(fragment, preg, hint_weight);
-        } else if let Some(boundary) = earliest_hard_conflict_boundary {
-            self.split_fragment_for_conflict(fragment, boundary);
-        } else if !self.is_fragment_atomic(fragment) {
-            self.spill_fragment(fragment);
-        } else {
-            let instr = self.fragment_hull(fragment).start.instr();
-            return Err(RegallocError::OutOfRegisters(instr));
+            return Ok(());
         }
 
-        Ok(())
+        if let Some(boundary) = earliest_hard_conflict_boundary {
+            self.split_fragment_for_conflict(fragment, boundary);
+            return Ok(());
+        }
+
+        if !self.is_fragment_atomic(fragment) {
+            self.spill_fragment(fragment);
+            return Ok(());
+        }
+
+        let instr = self.fragment_hull(fragment).start.instr();
+        Err(RegallocError::OutOfRegisters(instr))
     }
 
     fn spill_fragment(&mut self, fragment: LiveSetFragment) {

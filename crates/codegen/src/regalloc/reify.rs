@@ -84,9 +84,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.collect_func_live_in_copies(&mut copies);
         self.collect_cross_fragment_copies(&mut assignment, &mut copies);
 
-        copies.sort_unstable_by_key(parallel_copy_key);
-
-        self.resolve_parallel_copies(&mut assignment, &copies);
+        self.resolve_parallel_copies(&mut assignment, copies);
 
         if cfg!(debug_assertions) {
             assignment.verify_all_assigned();
@@ -98,8 +96,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn resolve_parallel_copies(
         &self,
         assignment: &mut Assignment,
-        mut parallel_copies: &[ParallelCopy],
+        mut parallel_copies: ParallelCopies,
     ) {
+        // Group copies by instruction/phase so we can walk them easily.
+        parallel_copies.sort_unstable_by_key(parallel_copy_key);
+        let mut parallel_copies = &parallel_copies[..];
+
         let mut resolved = Vec::new();
         let mut scavenger = AssignedRegScavenger::new(self, assignment);
         let mut redundant_copy_tracker = RedundantCopyTracker::new();

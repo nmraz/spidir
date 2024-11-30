@@ -201,8 +201,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
 
         if let Some(boundary) = earliest_hard_conflict_boundary {
-            self.split_fragment_for_conflict(fragment, boundary);
-            return Ok(());
+            // To avoid pointlessly chopping everything up into tiny pieces, only split fragments
+            // that actually contain instructions using their values; ones that just carry the value
+            // elsewhere can be spilled.
+            if !self.fragment_has_instrs(fragment) {
+                self.split_fragment_for_conflict(fragment, boundary);
+                return Ok(());
+            }
         }
 
         if !self.is_fragment_atomic(fragment) {
@@ -674,6 +679,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         *hints = remaining_hints;
 
         self.live_range_hints.insert(live_range, instr_hints.into());
+    }
+
+    fn fragment_has_instrs(&self, fragment: LiveSetFragment) -> bool {
+        self.live_set_fragments[fragment]
+            .ranges
+            .iter()
+            .any(|range| !self.live_ranges[range.live_range].instrs.is_empty())
     }
 
     fn can_split_fragment_before(&self, fragment: LiveSetFragment, point: ProgramPoint) -> bool {

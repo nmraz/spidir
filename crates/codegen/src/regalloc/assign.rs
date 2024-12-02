@@ -391,6 +391,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             self.split_fragment_boundary_range_before(fragment, new_fragment, instr);
         }
 
+        self.live_set_fragments[new_fragment].prev_split_neighbor = fragment.into();
+        self.live_set_fragments[new_fragment].next_split_neighbor =
+            self.live_set_fragments[fragment].next_split_neighbor;
+        self.live_set_fragments[fragment].next_split_neighbor = new_fragment.into();
+
         self.compute_live_fragment_properties(fragment);
         self.compute_live_fragment_properties(new_fragment);
 

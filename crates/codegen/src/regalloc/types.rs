@@ -356,6 +356,8 @@ pub type PhysRegHints = SmallVec<[PhysRegHint; 2]>;
 
 pub struct LiveSetFragmentData {
     pub live_set: LiveSet,
+    pub prev_split_neighbor: PackedOption<LiveSetFragment>,
+    pub next_split_neighbor: PackedOption<LiveSetFragment>,
     pub ranges: TaggedRangeList,
     pub hints: PhysRegHints,
     pub assignment: PackedOption<PhysReg>,

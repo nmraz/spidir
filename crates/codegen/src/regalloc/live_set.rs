@@ -138,6 +138,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) -> LiveSetFragment {
         self.live_set_fragments.push(LiveSetFragmentData {
             live_set,
+            prev_split_neighbor: None.into(),
+            next_split_neighbor: None.into(),
             ranges,
             hints: smallvec![],
             assignment: None.into(),

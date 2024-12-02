@@ -6,7 +6,7 @@ extfunc @sink_large(i32, i32, i32, i32, i32, i32)
 func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # check: function `call_permute_args_high_pressure`:
     # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15
-    # nextln: frame: size 64, align 8
+    # nextln: frame: size 56, align 8
     # nextln:     spill0: 0
     # nextln:     spill1: 8
     # nextln:     spill2: 16
@@ -14,49 +14,27 @@ func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # nextln:     spill4: 32
     # nextln:     spill5: 40
     # nextln:     spill6: 48
-    # nextln:     spill7: 56
     # nextln:       block0:
     # nextln:           $$rax = $$r9
     # nextln: 0000:     $$r9 = MovRRbp { offset: 16 }
-    # nextln:           $$r10 = $$rdi
-    # nextln:           $$rdi = $$r8
-    # nextln:           $$r8 = $$r10
-    # nextln:           $$r10 = $$rcx
-    # nextln:           $$rcx = $$rsi
-    # nextln:           $$rsi = $$rdx
-    # nextln:           $$rdx = $$r10
     # nextln: 0001:     $$r14 = MovRM(S32) $$r9
-    # nextln:           $$r10 = $$rdi
-    # nextln:           $$rdi = $$rdx
-    # nextln:           $$rdx = $$r10
-    # nextln:           $$r10 = $$rax
-    # nextln:           $$rax = $$r8
-    # nextln:           $$r8 = $$rsi
-    # nextln:           $$rsi = $$rcx
+    # nextln:           $$r10 = $$r8
+    # nextln:           $$r8 = $$rdx
+    # nextln:           $$rdx = $$rax
+    # nextln:           $$rax = $$rdi
+    # nextln:           $$rdi = $$rcx
     # nextln:           $$rcx = $$r10
     # nextln: 0002:     $$r13 = MovRM(S32) $$r9
-    # nextln:           $$r10 = $$rdx
-    # nextln:           $$rdx = $$rcx
     # nextln:           $$rcx = $$rsi
+    # nextln:           $$rsi = $$r10
+    # nextln: 0003:     $$r15 = MovRM(S32) $$r9
+    # nextln:           $$rbx = $$rdx
     # nextln:           $$rsi = $$rdi
-    # nextln:           $$rdi = $$r8
-    # nextln: 0003:     $$r8 = MovRM(S32) $$r9
-    # nextln:           $$r11 = $$r10
-    # nextln:           $$r10 = $$rdi
-    # nextln:           $$rdi = $$rsi
-    # nextln:           $$rsi = $$r11
-    # nextln:           $$r11 = $$rdx
-    # nextln:           $$rdx = $$rcx
-    # nextln:           $$rcx = $$r11
-    # nextln: 0004:     $$r11 = MovRM(S32) $$r9
-    # nextln:           $$rbx = $$rcx
-    # nextln:           $$spill7 = $$rsi
-    # nextln:           $$rsi = $$rdi
-    # nextln:           $$rdi = $$spill7
-    # nextln:           $$r12 = $$r10
-    # nextln:           $$spill5 = $$r11
-    # nextln:           $$r15 = $$r8
-    # nextln:           $$r8 = $$rdx
+    # nextln:           $$rdi = $$r10
+    # nextln: 0004:     $$rdx = MovRM(S32) $$r9
+    # nextln:           $$r12 = $$r8
+    # nextln:           $$r8 = $$rcx
+    # nextln:           $$spill5 = $$rdx
     # nextln:           $$rdx = $$rax
     # nextln: 0005:     $$rcx = MovRM(S32) $$r9
     # nextln: 0006:     $$r10 = MovRM(S32) $$r9
@@ -65,11 +43,11 @@ func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # nextln: 0009:     $$r9 = MovRM(S32) $$r9
     # nextln:           $$spill6 = $$r15
     # nextln: 0010:     $$r15 = FuncAddrAbs(External(extfunc1))
-    # nextln:           $$spill3 = $$r10
-    # nextln:           $$spill2 = $$r11
-    # nextln:           $$spill1 = $$rax
     # nextln:           $$spill0 = $$r9
     # nextln:           $$spill4 = $$rcx
+    # nextln:           $$spill3 = $$r10
+    # nextln:           $$spill1 = $$rax
+    # nextln:           $$spill2 = $$r11
     # nextln:           $$r9 = $$rdx
     # nextln:           $$rcx = $$rdi
     # nextln:           $$rdx = $$rsi

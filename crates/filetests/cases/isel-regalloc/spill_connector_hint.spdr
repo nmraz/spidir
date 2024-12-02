@@ -41,9 +41,9 @@ func @spill_connector_hint() {
     # nextln:           $$r12 = $$rbx
     # nextln:           $$rbx = $$rax
     # nextln: 0002:     $$rax = CallRel(External(extfunc0))
+    # nextln:           $$spill15 = $$r12
     # nextln:           $$spill14 = $$rbx
     # nextln:           $$rbx = $$rax
-    # nextln:           $$spill15 = $$r12
     # nextln: 0003:     $$rax = CallRel(External(extfunc0))
     # nextln:           $$spill13 = $$rbx
     # nextln:           $$rbx = $$rax
@@ -72,32 +72,33 @@ func @spill_connector_hint() {
     # nextln:           $$rbx = $$rax
     # nextln: 0013:     $$rax = CallRel(External(extfunc0))
     # nextln:           $$spill9 = $$r15
-    # nextln:           $$r15 = $$spill13
+    # nextln:           $$r15 = $$spill14
     # nextln:           $$spill6 = $$r12
-    # nextln:           $$r12 = $$rax
-    # nextln:           $$spill5 = $$r13
     # nextln:           $$spill4 = $$r14
-    # nextln:           $$spill3 = $$rbx
-    # nextln:           $$rbx = $$spill14
+    # nextln:           $$r14 = $$r13
     # nextln:           $$r13 = $$spill15
+    # nextln:           $$spill3 = $$rbx
+    # nextln:           $$rbx = $$rax
     # nextln: 0014:     $$rax = CallRel(External(extfunc0))
-    # nextln:           $$r14 = $$rax
-    # nextln: 0015:     $$rax = CallRel(External(extfunc0))
-    # nextln:           $$spill2 = $$r12
     # nextln:           $$r12 = $$rax
-    # nextln:           $$spill1 = $$r14
-    # nextln:           $$r14 = $$spill12
+    # nextln: 0015:     $$rax = CallRel(External(extfunc0))
+    # nextln:           $$spill5 = $$r14
+    # nextln:           $$spill2 = $$rbx
+    # nextln:           $$rbx = $$spill13
+    # nextln:           $$spill1 = $$r12
+    # nextln:           $$r12 = $$spill12
+    # nextln:           $$r14 = $$rax
     # nextln:           $$rsi = $$r13
     # nextln:           $$rdi = $$r13
     # nextln: 0016:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$rsi = $$rbx
-    # nextln:           $$rdi = $$rbx
-    # nextln: 0017:     CallRel(External(extfunc1)) $$rdi, $$rsi
     # nextln:           $$rsi = $$r15
     # nextln:           $$rdi = $$r15
+    # nextln: 0017:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$rsi = $$rbx
+    # nextln:           $$rdi = $$rbx
     # nextln: 0018:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$rsi = $$r14
-    # nextln:           $$rdi = $$r14
+    # nextln:           $$rsi = $$r12
+    # nextln:           $$rdi = $$r12
     # nextln: 0019:     CallRel(External(extfunc1)) $$rdi, $$rsi
     # nextln:           $$rdi = $$spill11
     # nextln:           $$rsi = $$rdi
@@ -132,76 +133,71 @@ func @spill_connector_hint() {
     # nextln:           $$rdi = $$spill1
     # nextln:           $$rsi = $$rdi
     # nextln: 0030:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$rsi = $$r12
-    # nextln:           $$rdi = $$r12
-    # nextln: 0031:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$rsi = $$r13
-    # nextln:           $$rdi = $$r13
-    # nextln: 0032:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$rax = $$r15
-    # nextln:           $$r15 = $$r14
-    # nextln:           $$r14 = $$rax
-    # nextln:           $$r13 = $$spill11
-    # nextln:           $$rsi = $$rbx
-    # nextln:           $$rdi = $$rbx
-    # nextln: 0033:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$rbx = $$spill9
-    # nextln:           $$spill0 = $$r12
-    # nextln:           $$r12 = $$spill10
     # nextln:           $$rsi = $$r14
     # nextln:           $$rdi = $$r14
-    # nextln: 0034:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$r14 = $$spill1
+    # nextln: 0031:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$rdi = $$r13
+    # nextln:           $$rsi = $$r13
+    # nextln: 0032:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$r13 = $$spill11
     # nextln:           $$rsi = $$r15
     # nextln:           $$rdi = $$r15
+    # nextln: 0033:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$r15 = $$spill9
+    # nextln:           $$spill0 = $$r14
+    # nextln:           $$r14 = $$spill10
+    # nextln:           $$rsi = $$rbx
+    # nextln:           $$rdi = $$rbx
+    # nextln: 0034:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$rbx = $$spill8
+    # nextln:           $$rsi = $$r12
+    # nextln:           $$rdi = $$r12
     # nextln: 0035:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$r12 = $$rbx
     # nextln:           $$rsi = $$r13
     # nextln:           $$rdi = $$r13
     # nextln: 0036:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$r15 = $$spill8
-    # nextln:           $$r14 = $$spill7
-    # nextln:           $$r13 = $$spill6
-    # nextln:           $$rsi = $$r12
-    # nextln:           $$rdi = $$r12
-    # nextln: 0037:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$r12 = $$spill5
-    # nextln:           $$rsi = $$rbx
-    # nextln:           $$rdi = $$rbx
-    # nextln: 0038:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$rbx = $$r13
-    # nextln:           $$rsi = $$r15
-    # nextln:           $$rdi = $$r15
-    # nextln: 0039:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$r15 = $$r12
-    # nextln:           $$r12 = $$spill4
-    # nextln:           $$r13 = $$spill3
+    # nextln:           $$r13 = $$spill7
+    # nextln:           $$rbx = $$spill5
     # nextln:           $$rsi = $$r14
     # nextln:           $$rdi = $$r14
+    # nextln: 0037:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$r14 = $$spill6
+    # nextln:           $$rdi = $$r15
+    # nextln:           $$rsi = $$r15
+    # nextln: 0038:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$rsi = $$r12
+    # nextln:           $$rdi = $$r12
+    # nextln: 0039:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$r15 = $$spill4
+    # nextln:           $$r12 = $$spill3
+    # nextln:           $$rsi = $$r13
+    # nextln:           $$rdi = $$r13
     # nextln: 0040:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$r14 = $$spill2
+    # nextln:           $$r13 = $$spill2
+    # nextln:           $$rsi = $$r14
+    # nextln:           $$rdi = $$r14
+    # nextln: 0041:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$r14 = $$r13
+    # nextln:           $$r13 = $$spill1
     # nextln:           $$rsi = $$rbx
     # nextln:           $$rdi = $$rbx
-    # nextln: 0041:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln: 0042:     CallRel(External(extfunc1)) $$rdi, $$rsi
     # nextln:           $$rbx = $$spill0
     # nextln:           $$rsi = $$r15
     # nextln:           $$rdi = $$r15
-    # nextln: 0042:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$r15 = $$rbx
-    # nextln:           $$rbx = $$spill1
+    # nextln: 0043:     CallRel(External(extfunc1)) $$rdi, $$rsi
     # nextln:           $$rdi = $$r12
     # nextln:           $$rsi = $$r12
-    # nextln: 0043:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln: 0044:     CallRel(External(extfunc1)) $$rdi, $$rsi
+    # nextln:           $$rsi = $$r14
+    # nextln:           $$rdi = $$r14
+    # nextln: 0045:     CallRel(External(extfunc1)) $$rdi, $$rsi
     # nextln:           $$rsi = $$r13
     # nextln:           $$rdi = $$r13
-    # nextln: 0044:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$rdi = $$r14
-    # nextln:           $$rsi = $$r14
-    # nextln: 0045:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$rdi = $$rbx
-    # nextln:           $$rsi = $$rbx
     # nextln: 0046:     CallRel(External(extfunc1)) $$rdi, $$rsi
-    # nextln:           $$rsi = $$r15
-    # nextln:           $$rdi = $$r15
+    # nextln:           $$rsi = $$rbx
+    # nextln:           $$rdi = $$rbx
     # nextln: 0047:     CallRel(External(extfunc1)) $$rdi, $$rsi
     # nextln: 0048:     Ret
 

@@ -21,6 +21,7 @@ use super::{
         LiveRange, LiveRangeInstrs, LiveSetFragment, PhysRegHint, ProgramRange, QueuedFragment,
         RangeEndKey,
     },
+    utils::{get_instr_weight, sort_reg_hints},
     RegallocError,
 };
 
@@ -98,18 +99,17 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let live_set = self.live_set_fragments[fragment].live_set;
         let class = self.live_sets[live_set].class;
 
+        let mut hints = SmallVec::new();
+        self.collect_fragment_hints(fragment, &mut hints);
+
         // Start with hinted registers in order of decreasing weight, then move on to the default
         // allocation order requested by the machine backend.
-        let probe_order = self.live_set_fragments[fragment]
-            .hints
-            .iter()
-            .copied()
-            .chain(
-                self.machine
-                    .usable_regs(class)
-                    .iter()
-                    .map(|&preg| PhysRegHint { preg, weight: 0.0 }),
-            );
+        let probe_order = hints.iter().copied().chain(
+            self.machine
+                .usable_regs(class)
+                .iter()
+                .map(|&preg| PhysRegHint { preg, weight: 0.0 }),
+        );
 
         let mut no_conflict_reg = None;
         let mut lightest_soft_conflict = None;
@@ -217,6 +217,52 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let instr = self.fragment_hull(fragment).start.instr();
         Err(RegallocError::OutOfRegisters(instr))
+    }
+
+    fn collect_fragment_hints(
+        &self,
+        fragment: LiveSetFragment,
+        hints: &mut SmallVec<[PhysRegHint; 8]>,
+    ) {
+        hints.extend_from_slice(&self.live_set_fragments[fragment].hints);
+
+        let prev_fragment = self.live_set_fragments[fragment].prev_split_neighbor;
+        let next_fragment = self.live_set_fragments[fragment].next_split_neighbor;
+
+        // Avoid all the extra shuffling/sorting work when we don't need it, as we know the original
+        // hints are sorted.
+        if prev_fragment.is_none() && next_fragment.is_none() {
+            return;
+        }
+
+        let hull = self.fragment_hull(fragment);
+
+        if let Some(prev_fragment) = prev_fragment.expand() {
+            if let Some(prev_assignment) =
+                self.live_set_fragments[prev_fragment].assignment.expand()
+            {
+                let weight = get_instr_weight(self.lir, self.cfg_ctx, hull.start.instr());
+                hints.push(PhysRegHint {
+                    preg: prev_assignment,
+                    weight,
+                });
+            }
+        }
+
+        if let Some(next_fragment) = next_fragment.expand() {
+            if let Some(next_assignment) =
+                self.live_set_fragments[next_fragment].assignment.expand()
+            {
+                let weight = get_instr_weight(self.lir, self.cfg_ctx, hull.end.instr());
+                hints.push(PhysRegHint {
+                    preg: next_assignment,
+                    weight,
+                });
+            }
+        }
+
+        let hint_count = sort_reg_hints(hints);
+        hints.truncate(hint_count);
     }
 
     fn spill_fragment(&mut self, fragment: LiveSetFragment) {

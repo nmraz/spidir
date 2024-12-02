@@ -9,8 +9,8 @@ use crate::{
     lir::{Instr, PhysReg, PhysRegSet, VirtReg},
     machine::MachineRegalloc,
     regalloc::types::{
-        AnnotatedPhysRegHint, InstrSlot, LiveRangeInstr, LiveRangeOpPos, ProgramPoint,
-        TaggedLiveRange, FRAGMENT_PRIO_HINTED,
+        AnnotatedPhysRegHint, InstrSlot, LiveRangeInstr, LiveRangeOpPos, LiveSetFragmentFlags,
+        ProgramPoint, TaggedLiveRange, FRAGMENT_PRIO_HINTED,
     },
 };
 
@@ -64,7 +64,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             self.enqueue_fragment(fragment);
         }
 
-        while let Some(queued_fragment) = self.worklist.pop() {
+        while let Some(queued_fragment) = self.dequeue_fragment() {
             let fragment = queued_fragment.fragment;
             trace!(
                 "process: {fragment}, prio {}, weight {}",
@@ -364,6 +364,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             self.compute_live_fragment_properties(new_fragment);
             self.enqueue_fragment(new_fragment);
         }
+
+        // Remember we've spilled this fragment so we don't try to touch it again in the future.
+        self.live_set_fragments[fragment]
+            .flags
+            .insert(LiveSetFragmentFlags::SPILLED);
 
         let set_spill_hull = &mut self.live_sets[live_set].spill_hull;
         match set_spill_hull {
@@ -668,6 +673,19 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.enqueue_fragment(fragment);
     }
 
+    fn dequeue_fragment(&mut self) -> Option<QueuedFragment> {
+        loop {
+            let queued_fragment = self.worklist.pop()?;
+
+            // We may have spilled this fragment while it was waiting in the queue; just skip it.
+            if self.is_fragment_spilled(queued_fragment.fragment) {
+                continue;
+            }
+
+            return Some(queued_fragment);
+        }
+    }
+
     fn enqueue_fragment(&mut self, fragment: LiveSetFragment) {
         let fragment_data = &self.live_set_fragments[fragment];
 
@@ -743,8 +761,16 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.fragment_hull(fragment).can_split_before(point)
     }
 
+    fn is_fragment_spilled(&self, fragment: LiveSetFragment) -> bool {
+        self.live_set_fragments[fragment]
+            .flags
+            .contains(LiveSetFragmentFlags::SPILLED)
+    }
+
     fn is_fragment_atomic(&self, fragment: LiveSetFragment) -> bool {
-        self.live_set_fragments[fragment].is_atomic
+        self.live_set_fragments[fragment]
+            .flags
+            .contains(LiveSetFragmentFlags::ATOMIC)
     }
 
     fn fragment_hull(&self, fragment: LiveSetFragment) -> ProgramRange {

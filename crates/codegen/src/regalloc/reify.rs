@@ -14,6 +14,7 @@ use crate::{
         UseOperandConstraint, VirtReg,
     },
     machine::{MachineCore, MachineRegalloc},
+    regalloc::types::LiveSetFragmentFlags,
 };
 
 use super::{
@@ -628,6 +629,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         match fragment_data.assignment.expand() {
             Some(preg) => OperandAssignment::Reg(preg),
             None => {
+                debug_assert!(fragment_data.flags.contains(LiveSetFragmentFlags::SPILLED));
+
                 let live_set_data = &self.live_sets[fragment_data.live_set];
 
                 if cfg!(debug_assertions) {

@@ -17,8 +17,8 @@ use super::{
     conflict::{iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{
-        LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, ProgramRange, TaggedLiveRange,
-        TaggedRangeList,
+        LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, LiveSetFragmentFlags,
+        ProgramRange, TaggedLiveRange, TaggedRangeList,
     },
     utils::{get_instr_weight, sort_reg_hints},
 };
@@ -146,7 +146,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             assignment_hint_weight: 0.0,
             size: 0,
             spill_weight: 0.0,
-            is_atomic: false,
+            flags: LiveSetFragmentFlags::empty(),
         })
     }
 
@@ -179,9 +179,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         fragment_data.hints.truncate(hint_count);
 
         fragment_data.size = size;
-        fragment_data.is_atomic = some_instr_needs_reg && covers_single_instr(fragment_data.hull());
+        let is_atomic = some_instr_needs_reg && covers_single_instr(fragment_data.hull());
 
-        fragment_data.spill_weight = if fragment_data.is_atomic {
+        fragment_data
+            .flags
+            .set(LiveSetFragmentFlags::ATOMIC, is_atomic);
+
+        fragment_data.spill_weight = if is_atomic {
             ATOMIC_FRAGMENT_WEIGHT
         } else {
             (total_weight / (size as f32)).min(MAX_NONATOMIC_FRAGMENT_WEIGHT)

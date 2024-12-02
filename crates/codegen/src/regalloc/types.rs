@@ -354,6 +354,14 @@ pub struct AnnotatedPhysRegHint {
 
 pub type PhysRegHints = SmallVec<[PhysRegHint; 2]>;
 
+bitflags! {
+    #[derive(Clone, Copy)]
+    pub struct LiveSetFragmentFlags: u8 {
+        const ATOMIC = 0b01;
+        const SPILLED = 0b10;
+    }
+}
+
 pub struct LiveSetFragmentData {
     pub live_set: LiveSet,
     pub prev_split_neighbor: PackedOption<LiveSetFragment>,
@@ -364,7 +372,7 @@ pub struct LiveSetFragmentData {
     pub assignment_hint_weight: f32,
     pub size: u32,
     pub spill_weight: f32,
-    pub is_atomic: bool,
+    pub flags: LiveSetFragmentFlags,
 }
 
 impl LiveSetFragmentData {

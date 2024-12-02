@@ -194,7 +194,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         if let Some((preg, hint_weight, soft_conflicts)) = lightest_soft_conflict {
             for conflicting_fragment in soft_conflicts {
-                self.evict_and_requeue_fragment(conflicting_fragment);
+                self.evict_fragment(conflicting_fragment);
+                self.enqueue_fragment(conflicting_fragment);
             }
             self.assign_fragment_to_phys_reg(fragment, preg, hint_weight);
             return Ok(());
@@ -211,7 +212,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
 
         if !self.is_fragment_atomic(fragment) {
-            self.spill_fragment(fragment);
+            self.spill_fragment_and_neighbors(fragment);
             return Ok(());
         }
 
@@ -263,6 +264,42 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let hint_count = sort_reg_hints(hints);
         hints.truncate(hint_count);
+    }
+
+    fn spill_fragment_and_neighbors(&mut self, fragment: LiveSetFragment) {
+        self.spill_fragment(fragment);
+
+        // Spill any neighbors (in both directions) that don't have any use instructions. Note that
+        // neighbors containing just a def should be spilled as well, as we'll need to copy into the
+        // spill anyway at some point.
+
+        let mut cursor = fragment;
+        while let Some(prev) = self.live_set_fragments[cursor].prev_split_neighbor.expand() {
+            if self.fragment_has_uses(prev) {
+                break;
+            }
+
+            if !self.is_fragment_spilled(prev) {
+                self.evict_fragment(prev);
+                self.spill_fragment(prev);
+            }
+
+            cursor = prev;
+        }
+
+        let mut cursor = fragment;
+        while let Some(next) = self.live_set_fragments[cursor].next_split_neighbor.expand() {
+            if self.fragment_has_uses(next) {
+                break;
+            }
+
+            if !self.is_fragment_spilled(next) {
+                self.evict_fragment(next);
+                self.spill_fragment(next);
+            }
+
+            cursor = next;
+        }
     }
 
     fn spill_fragment(&mut self, fragment: LiveSetFragment) {
@@ -660,9 +697,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
-    fn evict_and_requeue_fragment(&mut self, fragment: LiveSetFragment) {
+    fn evict_fragment(&mut self, fragment: LiveSetFragment) {
         let data = &mut self.live_set_fragments[fragment];
-        let preg = data.assignment.take().unwrap();
+        let Some(preg) = data.assignment.take() else {
+            return;
+        };
+
         trace!("  evict: {fragment} from {}", M::reg_name(preg));
         let preg_assignments = &mut self.phys_reg_assignments[preg.as_u8() as usize];
         for range in &data.ranges {
@@ -670,7 +710,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 .remove(&RangeEndKey(range.prog_range))
                 .unwrap();
         }
-        self.enqueue_fragment(fragment);
     }
 
     fn dequeue_fragment(&mut self) -> Option<QueuedFragment> {
@@ -751,10 +790,21 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     fn fragment_has_instrs(&self, fragment: LiveSetFragment) -> bool {
+        self.fragment_instrs(fragment).next().is_some()
+    }
+
+    fn fragment_has_uses(&self, fragment: LiveSetFragment) -> bool {
+        self.fragment_instrs(fragment).any(|instr| !instr.is_def())
+    }
+
+    fn fragment_instrs(
+        &self,
+        fragment: LiveSetFragment,
+    ) -> impl Iterator<Item = LiveRangeInstr> + '_ {
         self.live_set_fragments[fragment]
             .ranges
             .iter()
-            .any(|range| !self.live_ranges[range.live_range].instrs.is_empty())
+            .flat_map(|range| self.live_ranges[range.live_range].instrs.iter().copied())
     }
 
     fn can_split_fragment_before(&self, fragment: LiveSetFragment, point: ProgramPoint) -> bool {

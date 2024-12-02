@@ -17,10 +17,10 @@ use super::{
     conflict::{iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{
-        LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, PhysRegHint, PhysRegHints,
-        ProgramRange, TaggedLiveRange, TaggedRangeList,
+        LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, ProgramRange, TaggedLiveRange,
+        TaggedRangeList,
     },
-    utils::{coalesce_slice, get_instr_weight},
+    utils::{get_instr_weight, sort_reg_hints},
 };
 
 type VirtRegFragmentMap = SecondaryMap<VirtReg, PackedOption<LiveSetFragment>>;
@@ -175,7 +175,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             }
         }
 
-        sort_reg_hints(&mut fragment_data.hints);
+        let hint_count = sort_reg_hints(&mut fragment_data.hints);
+        fragment_data.hints.truncate(hint_count);
 
         fragment_data.size = size;
         fragment_data.is_atomic = some_instr_needs_reg && covers_single_instr(fragment_data.hull());
@@ -237,25 +238,4 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
 fn covers_single_instr(range: ProgramRange) -> bool {
     range.start.instr() == range.end.prev().instr()
-}
-
-fn sort_reg_hints(hints: &mut PhysRegHints) {
-    // First: group the hints by physical register.
-    hints.sort_unstable_by_key(|hint| hint.preg.as_u8());
-
-    // Coalesce adjacent hints for the same register, recording total weight for each.
-    let new_len = coalesce_slice(hints, |prev_hint, cur_hint| {
-        if prev_hint.preg == cur_hint.preg {
-            Some(PhysRegHint {
-                preg: prev_hint.preg,
-                weight: prev_hint.weight + cur_hint.weight,
-            })
-        } else {
-            None
-        }
-    });
-    hints.truncate(new_len);
-
-    // Now, sort the hints in order of decreasing weight.
-    hints.sort_unstable_by(|lhs, rhs| lhs.weight.partial_cmp(&rhs.weight).unwrap().reverse());
 }

@@ -204,7 +204,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             // To avoid pointlessly chopping everything up into tiny pieces, only split fragments
             // that actually contain instructions using their values; ones that just carry the value
             // elsewhere can be spilled.
-            if !self.fragment_has_instrs(fragment) {
+            if self.fragment_has_instrs(fragment) {
                 self.split_fragment_for_conflict(fragment, boundary);
                 return Ok(());
             }

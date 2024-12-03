@@ -1,5 +1,3 @@
-use itertools::Itertools;
-
 use crate::{
     cfg::CfgContext,
     lir::{Instr, Lir},
@@ -55,15 +53,6 @@ pub fn sort_reg_hints(hints: &mut [PhysRegHint]) -> usize {
     new_len
 }
 
-pub fn is_sorted_by_key<T, K: Ord + Clone>(slice: &[T], f: impl FnMut(&T) -> K) -> bool {
-    for (a, b) in slice.iter().map(f).tuple_windows() {
-        if a > b {
-            return false;
-        }
-    }
-    true
-}
-
 fn coalesce_slice<T: Copy>(
     slice: &mut [T],
     mut coalesce: impl FnMut(&T, &T) -> Option<T>,
@@ -94,8 +83,6 @@ fn coalesce_slice<T: Copy>(
 
 #[cfg(test)]
 mod tests {
-    use crate::regalloc::utils::is_sorted_by_key;
-
     use super::coalesce_slice;
 
     fn check_coalesce_histogram_slice(slice: &mut [(i32, i32)], expected: &[(i32, i32)]) {
@@ -139,13 +126,5 @@ mod tests {
             ],
             &[(1, 85), (2, 120), (7, 80), (9, 36), (23, 70), (5, 183)],
         );
-    }
-
-    #[test]
-    fn int_is_sorted() {
-        assert!(is_sorted_by_key(&[1], |&n| n));
-        assert!(is_sorted_by_key(&[1, 2, 3, 20, 31], |&n| n));
-        assert!(is_sorted_by_key(&[1, 2, 2, 3, 3, 20, 31], |&n| n));
-        assert!(!is_sorted_by_key(&[1, 2, 20, 3, 31], |&n| n));
     }
 }

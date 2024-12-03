@@ -8,7 +8,6 @@ use crate::{
     cfg::{Block, CfgContext},
     lir::{DefOperandConstraint, Instr, Lir, OperandPos, PhysReg, UseOperandConstraint, VirtReg},
     machine::MachineRegalloc,
-    regalloc::utils::is_sorted_by_key,
 };
 
 use super::{
@@ -116,27 +115,23 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         for live_ranges in self.vreg_ranges.values_mut() {
             live_ranges.reverse();
 
-            debug_assert!(is_sorted_by_key(live_ranges, |&live_range| self
-                .live_ranges[live_range]
-                .prog_range
-                .start));
+            debug_assert!(live_ranges
+                .is_sorted_by_key(|&live_range| self.live_ranges[live_range].prog_range.start));
         }
 
         // Do the same thing for all physical register reservations...
         for preg in 0..M::phys_reg_count() {
             self.phys_reg_reservations[preg as usize].reverse();
 
-            debug_assert!(is_sorted_by_key(
-                &self.phys_reg_reservations[preg as usize],
-                |reservation| reservation.prog_range.start
-            ));
+            debug_assert!(&self.phys_reg_reservations[preg as usize]
+                .is_sorted_by_key(|reservation| reservation.prog_range.start));
         }
 
         // ...and for instruction lists within each live range.
         for live_range in self.live_ranges.values_mut() {
             live_range.instrs.reverse();
 
-            debug_assert!(is_sorted_by_key(&live_range.instrs, |live_range_instr| {
+            debug_assert!(live_range.instrs.is_sorted_by_key(|live_range_instr| {
                 // Require uses to appear before defs.
                 (live_range_instr.instr().as_u32() << 1) | (live_range_instr.is_def() as u32)
             }));
@@ -160,7 +155,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // Make sure live range hints are sorted by instruction.
         for hints in self.live_range_hints.values_mut() {
             hints.reverse();
-            debug_assert!(is_sorted_by_key(hints, |hint| hint.instr));
+            debug_assert!(hints.is_sorted_by_key(|hint| hint.instr));
         }
     }
 

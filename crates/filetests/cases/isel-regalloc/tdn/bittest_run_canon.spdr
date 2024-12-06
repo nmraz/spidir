@@ -44,12 +44,11 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:       block0:
     # nextln: 0000:     $$rax = StackAddr(!0)
     # nextln:           $$spill14 = $$rax
-    # nextln: 0001:     $$rcx = MovRmS32(7)
-    # nextln: 0002:     $$rdx = StackAddr(!1)
+    # nextln: 0001:     $$rbx = MovRmS32(7)
+    # nextln: 0002:     $$rcx = StackAddr(!1)
     # nextln: 0003:     $$rax = MovRmS32(1)
-    # nextln:           $$rbx = $$rcx
     # nextln: 0004:     $$r15 = MovRmS32(8)
-    # nextln:           $$r13 = $$rdx
+    # nextln:           $$r13 = $$rcx
     # nextln: 0005:     $$r12 = MovRZ
     # nextln: 0006:     $$rcx = StackAddr(!2)
     # nextln:           $$spill13 = $$rcx
@@ -153,8 +152,8 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0082:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0083:     $$r14 = AluRRm(S32, And) $$r14, $$rax
     # nextln: 0084:     $$rax = FuncAddrAbs(External(extfunc8))
-    # nextln:           $$rsi = $$r15
     # nextln:           $$rdi = $$rbx
+    # nextln:           $$rsi = $$r15
     # nextln: 0085:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0086:     $$r14 = AluRRm(S32, And) $$r14, $$rax
     # nextln: 0087:     $$rax = FuncAddrAbs(External(extfunc8))
@@ -255,8 +254,8 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0155:     $$r14 = AluRRm(S32, And) $$r14, $$rcx
     # nextln: 0156:     $$rax = FuncAddrAbs(External(extfunc4))
     # nextln:           $$r15 = $$spill4
-    # nextln:           $$rsi = $$r15
     # nextln:           $$rdi = $$r13
+    # nextln:           $$rsi = $$r15
     # nextln: 0157:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0158:     $$r14 = AluRRm(S32, And) $$r14, $$rax
     # nextln: 0159:     $$rax = FuncAddrAbs(External(extfunc4))
@@ -379,13 +378,13 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0252:     $$r14 = AluRRm(S32, And) $$r14, $$rcx
     # nextln: 0253:     $$rax = FuncAddrAbs(External(extfunc2))
     # nextln:           $$r13 = $$spill2
-    # nextln:           $$rdi = $$r13
     # nextln:           $$rsi = $$r12
+    # nextln:           $$rdi = $$r13
     # nextln: 0254:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0255:     $$r14 = AluRRm(S32, And) $$r14, $$rax
     # nextln: 0256:     $$rax = FuncAddrAbs(External(extfunc2))
-    # nextln:           $$rdi = $$r13
     # nextln:           $$rsi = $$r15
+    # nextln:           $$rdi = $$r13
     # nextln: 0257:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$r15 = $$rax
     # nextln: 0258:     $$rax = FuncAddrAbs(External(extfunc2))

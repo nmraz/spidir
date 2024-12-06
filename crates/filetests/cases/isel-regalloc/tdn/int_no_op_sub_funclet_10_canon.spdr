@@ -181,60 +181,59 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0114:     Jumpcc(Ne, block22, block24)
     # nextln:       block22:
     # nextln:           $$spill1 = $$r14
+    # nextln:           $$r12 = $$rax
     # nextln: 0115:     Jump(block23)
     # nextln:       block24:
     # nextln: 0116:     $$rcx = MovRM(S32) $$rax
+    # nextln:           $$r12 = $$rax
     # nextln:           $$spill1 = $$rcx
     # nextln: 0117:     Jump(block23)
     # nextln:       block23:
-    # nextln: 0118:     $$rcx = MovRStack(!0, S8)
-    # nextln: 0119:     AluRRm(S32, Test) $$rcx, $$rcx
+    # nextln: 0118:     $$rax = MovRStack(!0, S8)
+    # nextln: 0119:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0120:     Jumpcc(Ne, block25, block27)
     # nextln:       block25:
     # nextln:           $$spill2 = $$r14
     # nextln: 0121:     Jump(block26)
     # nextln:       block27:
-    # nextln: 0122:     $$rcx = MovRStack(!3, S64)
-    # nextln: 0123:     $$rcx = AluRmI(S64, Add, 32) $$rcx
-    # nextln: 0124:     $$rcx = MovRM(S32) $$rcx
-    # nextln:           $$spill2 = $$rcx
+    # nextln: 0122:     $$rax = MovRStack(!3, S64)
+    # nextln: 0123:     $$rax = AluRmI(S64, Add, 32) $$rax
+    # nextln: 0124:     $$rax = MovRM(S32) $$rax
+    # nextln:           $$spill2 = $$rax
     # nextln: 0125:     Jump(block26)
     # nextln:       block26:
-    # nextln: 0126:     $$rcx = MovRStack(!0, S8)
-    # nextln: 0127:     AluRRm(S32, Test) $$rcx, $$rcx
+    # nextln: 0126:     $$rax = MovRStack(!0, S8)
+    # nextln: 0127:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0128:     Jumpcc(Ne, block28, block30)
     # nextln:       block28:
-    # nextln:           $$r12 = $$rax
-    # nextln:           $$rax = $$r14
+    # nextln:           $$spill3 = $$r14
     # nextln: 0129:     Jump(block29)
     # nextln:       block30:
-    # nextln: 0130:     $$rcx = FuncAddrAbs(External(extfunc3))
-    # nextln:           $$r12 = $$rax
-    # nextln: 0131:     $$rax = CallRm $$rcx
+    # nextln: 0130:     $$rax = FuncAddrAbs(External(extfunc3))
+    # nextln: 0131:     $$rax = CallRm $$rax
+    # nextln:           $$spill3 = $$rax
     # nextln: 0132:     Jump(block29)
     # nextln:       block29:
-    # nextln: 0133:     $$rcx = MovRStack(!0, S8)
-    # nextln: 0134:     AluRRm(S32, Test) $$rcx, $$rcx
+    # nextln: 0133:     $$rax = MovRStack(!0, S8)
+    # nextln: 0134:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0135:     Jumpcc(Ne, block31, block33)
     # nextln:       block31:
     # nextln:           $$spill4 = $$r14
-    # nextln:           $$spill3 = $$rax
     # nextln: 0136:     Jump(block32)
     # nextln:       block33:
-    # nextln: 0137:     $$rcx = MovRStack(!2, S64)
-    # nextln:           $$rdx = $$rcx
-    # nextln: 0138:     $$rdx = AluRmI(S64, Add, 32) $$rdx
-    # nextln: 0139:     $$rsi = MovRStack(!4, S32)
-    # nextln: 0140:     $$rdi = MovRM(S32) $$rdx
-    # nextln: 0141:     $$rdx = MovsxRRm(Ext32_64) $$rsi
-    # nextln: 0142:     AluRRm(S64, Cmp) $$rdx, $$rdi
+    # nextln: 0137:     $$rax = MovRStack(!2, S64)
+    # nextln:           $$rcx = $$rax
+    # nextln: 0138:     $$rcx = AluRmI(S64, Add, 32) $$rcx
+    # nextln: 0139:     $$rdi = MovRStack(!4, S32)
+    # nextln: 0140:     $$rdx = MovRM(S32) $$rcx
+    # nextln: 0141:     $$rcx = MovsxRRm(Ext32_64) $$rdi
+    # nextln: 0142:     AluRRm(S64, Cmp) $$rcx, $$rdx
     # nextln: 0143:     Jumpcc(L, block34, block35)
     # nextln:       block34:
-    # nextln: 0144:     $$rdx = ShiftRmI(S64, Shl, 2) $$rdx
-    # nextln: 0145:     $$rdx = AluRmI(S64, Add, 40) $$rdx
-    # nextln: 0146:     $$rcx = AluRRm(S64, Add) $$rcx, $$rdx
-    # nextln:           $$spill3 = $$rax
-    # nextln: 0147:     $$rax = MovRM(S32) $$rcx
+    # nextln: 0144:     $$rcx = ShiftRmI(S64, Shl, 2) $$rcx
+    # nextln: 0145:     $$rcx = AluRmI(S64, Add, 40) $$rcx
+    # nextln: 0146:     $$rax = AluRRm(S64, Add) $$rax, $$rcx
+    # nextln: 0147:     $$rax = MovRM(S32) $$rax
     # nextln:           $$spill4 = $$rax
     # nextln: 0148:     Jump(block32)
     # nextln:       block32:

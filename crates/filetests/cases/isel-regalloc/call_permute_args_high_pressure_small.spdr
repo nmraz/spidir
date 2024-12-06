@@ -18,9 +18,8 @@ func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # nextln:           $$rdi = $$rsi
     # nextln: 0000:     $$rsi = MovRRbp { offset: 16 }
     # nextln: 0001:     $$r15 = MovRM(S32) $$rsi
-    # nextln: 0002:     $$r10 = MovRM(S32) $$rsi
+    # nextln: 0002:     $$rbx = MovRM(S32) $$rsi
     # nextln: 0003:     $$r12 = MovRM(S32) $$rsi
-    # nextln:           $$rbx = $$r10
     # nextln: 0004:     $$r13 = MovRM(S32) $$rsi
     # nextln: 0005:     $$r14 = MovRM(S32) $$rsi
     # nextln: 0006:     $$r10 = MovRM(S32) $$rsi

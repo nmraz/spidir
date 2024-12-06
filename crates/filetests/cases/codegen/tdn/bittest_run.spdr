@@ -22,366 +22,377 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 00000c: 53                              push rbx
     # nextln: 00000d: 48 81 ec b8 00 00 00            sub rsp, 0xb8
     # nextln: 000014: 33 c0                           xor eax, eax
-    # nextln: 000016: 48 8d 8c 24 9e 00 00 00         lea rcx, [rsp + 0x9e]
-    # nextln: 00001e: 48 8d 94 24 98 00 00 00         lea rdx, [rsp + 0x98]
-    # nextln: 000026: 48 89 54 24 50                  mov qword ptr [rsp + 0x50], rdx
-    # nextln: 00002b: 33 db                           xor ebx, ebx
-    # nextln: 00002d: 48 89 e2                        mov rdx, rsp
-    # nextln: 000030: 48 89 54 24 18                  mov qword ptr [rsp + 0x18], rdx
-    # nextln: 000035: 48 8d 54 24 08                  lea rdx, [rsp + 8]
-    # nextln: 00003a: 48 89 54 24 20                  mov qword ptr [rsp + 0x20], rdx
-    # nextln: 00003f: 48 8d 94 24 90 00 00 00         lea rdx, [rsp + 0x90]
-    # nextln: 000047: 48 89 54 24 38                  mov qword ptr [rsp + 0x38], rdx
-    # nextln: 00004c: 48 8d 94 24 9a 00 00 00         lea rdx, [rsp + 0x9a]
-    # nextln: 000054: 48 89 54 24 58                  mov qword ptr [rsp + 0x58], rdx
-    # nextln: 000059: 48 8d 94 24 94 00 00 00         lea rdx, [rsp + 0x94]
-    # nextln: 000061: 48 89 54 24 40                  mov qword ptr [rsp + 0x40], rdx
-    # nextln: 000066: 48 8d 94 24 9c 00 00 00         lea rdx, [rsp + 0x9c]
-    # nextln: 00006e: 48 89 54 24 68                  mov qword ptr [rsp + 0x68], rdx
-    # nextln: 000073: 48 8d 94 24 9f 00 00 00         lea rdx, [rsp + 0x9f]
-    # nextln: 00007b: 48 89 94 24 80 00 00 00         mov qword ptr [rsp + 0x80], rdx
-    # nextln: 000083: 88 9c 24 9f 00 00 00            mov byte ptr [rsp + 0x9f], bl
-    # nextln: 00008a: 88 9c 24 9e 00 00 00            mov byte ptr [rsp + 0x9e], bl
-    # nextln: 000091: 48 8d 94 24 a0 00 00 00         lea rdx, [rsp + 0xa0]
-    # nextln: 000099: 48 89 54 24 78                  mov qword ptr [rsp + 0x78], rdx
-    # nextln: 00009e: 88 9c 24 a0 00 00 00            mov byte ptr [rsp + 0xa0], bl
-    # nextln: 0000a5: 66 89 9c 24 9c 00 00 00         mov word ptr [rsp + 0x9c], bx
-    # nextln: 0000ad: 66 89 9c 24 9a 00 00 00         mov word ptr [rsp + 0x9a], bx
-    # nextln: 0000b5: 66 89 9c 24 98 00 00 00         mov word ptr [rsp + 0x98], bx
-    # nextln: 0000bd: 89 9c 24 94 00 00 00            mov dword ptr [rsp + 0x94], ebx
-    # nextln: 0000c4: 89 9c 24 90 00 00 00            mov dword ptr [rsp + 0x90], ebx
-    # nextln: 0000cb: 48 89 44 24 08                  mov qword ptr [rsp + 8], rax
-    # nextln: 0000d0: 48 89 04 24                     mov qword ptr [rsp], rax
-    # nextln: 0000d4: 41 bd 07 00 00 00               mov r13d, 7
-    # nextln: 0000da: 49 89 cc                        mov r12, rcx
-    # nextln: 0000dd: 41 be 08 00 00 00               mov r14d, 8
-    # nextln: 0000e3: b9 01 00 00 00                  mov ecx, 1
-    # nextln: 0000e8: 48 c7 44 24 30 20 00 00 00      mov qword ptr [rsp + 0x30], 0x20
-    # nextln: 0000f1: 48 c7 44 24 70 0f 00 00 00      mov qword ptr [rsp + 0x70], 0xf
-    # nextln: 0000fa: 48 c7 44 24 60 10 00 00 00      mov qword ptr [rsp + 0x60], 0x10
-    # nextln: 000103: 48 c7 44 24 48 03 00 00 00      mov qword ptr [rsp + 0x48], 3
-    # nextln: 00010c: 48 c7 44 24 28 40 00 00 00      mov qword ptr [rsp + 0x28], 0x40
-    # nextln: 000115: ba 02 00 00 00                  mov edx, 2
-    # nextln: 00011a: 48 63 f9                        movsxd rdi, ecx
-    # nextln: 00011d: 48 63 f2                        movsxd rsi, edx
-    # nextln: 000120: 41 b8 80 ff ff ff               mov r8d, 0xffffff80
-    # nextln: 000126: 44 88 84 24 9f 00 00 00         mov byte ptr [rsp + 0x9f], r8b
-    # nextln: 00012e: 41 b8 00 80 ff ff               mov r8d, 0xffff8000
-    # nextln: 000134: 88 8c 24 9e 00 00 00            mov byte ptr [rsp + 0x9e], cl
-    # nextln: 00013b: 88 94 24 a0 00 00 00            mov byte ptr [rsp + 0xa0], dl
-    # nextln: 000142: 66 44 89 84 24 9c 00 00 00      mov word ptr [rsp + 0x9c], r8w
-    # nextln: 00014b: 66 89 8c 24 9a 00 00 00         mov word ptr [rsp + 0x9a], cx
-    # nextln: 000153: 66 89 94 24 98 00 00 00         mov word ptr [rsp + 0x98], dx
-    # nextln: 00015b: 89 8c 24 94 00 00 00            mov dword ptr [rsp + 0x94], ecx
-    # nextln: 000162: 89 94 24 90 00 00 00            mov dword ptr [rsp + 0x90], edx
-    # nextln: 000169: 48 89 7c 24 08                  mov qword ptr [rsp + 8], rdi
-    # nextln: 00016e: 48 89 34 24                     mov qword ptr [rsp], rsi
-    # nextln: 000172: 0f b6 94 24 9f 00 00 00         movzx edx, byte ptr [rsp + 0x9f]
-    # nextln: 00017a: 0f be fa                        movsx edi, dl
-    # nextln: 00017d: 48 ba 00 00 00 00 00 00 00 00   movabs rdx, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
-    # nextln: 000187: 49 89 cf                        mov r15, rcx
-    # nextln: 00018a: 4c 89 ee                        mov rsi, r13
-    # nextln: 00018d: ff d2                           call rdx
-    # nextln: 00018f: 4c 89 ac 24 88 00 00 00         mov qword ptr [rsp + 0x88], r13
-    # nextln: 000197: 4c 89 f9                        mov rcx, r15
-    # nextln: 00019a: 44 23 f8                        and r15d, eax
-    # nextln: 00019d: 0f b6 84 24 9f 00 00 00         movzx eax, byte ptr [rsp + 0x9f]
-    # nextln: 0001a5: 0f be f8                        movsx edi, al
-    # nextln: 0001a8: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
-    # nextln: 0001b2: 4c 8b ac 24 80 00 00 00         mov r13, qword ptr [rsp + 0x80]
-    # nextln: 0001ba: 48 89 4c 24 10                  mov qword ptr [rsp + 0x10], rcx
-    # nextln: 0001bf: 4c 89 f6                        mov rsi, r14
-    # nextln: 0001c2: ff d0                           call rax
-    # nextln: 0001c4: 44 23 f8                        and r15d, eax
-    # nextln: 0001c7: 0f b6 84 24 9e 00 00 00         movzx eax, byte ptr [rsp + 0x9e]
-    # nextln: 0001cf: 0f be f8                        movsx edi, al
-    # nextln: 0001d2: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
-    # nextln: 0001dc: 48 89 de                        mov rsi, rbx
-    # nextln: 0001df: ff d0                           call rax
-    # nextln: 0001e1: 44 23 f8                        and r15d, eax
-    # nextln: 0001e4: 0f b6 84 24 9e 00 00 00         movzx eax, byte ptr [rsp + 0x9e]
-    # nextln: 0001ec: 0f be f8                        movsx edi, al
-    # nextln: 0001ef: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
-    # nextln: 0001f9: 4c 89 f6                        mov rsi, r14
-    # nextln: 0001fc: ff d0                           call rax
-    # nextln: 0001fe: 33 c9                           xor ecx, ecx
-    # nextln: 000200: 85 c0                           test eax, eax
-    # nextln: 000202: 0f 94 c1                        sete cl
-    # nextln: 000205: 44 23 f9                        and r15d, ecx
-    # nextln: 000208: 0f b6 84 24 9e 00 00 00         movzx eax, byte ptr [rsp + 0x9e]
-    # nextln: 000210: 0f be f8                        movsx edi, al
-    # nextln: 000213: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
-    # nextln: 00021d: 48 8b 74 24 30                  mov rsi, qword ptr [rsp + 0x30]
-    # nextln: 000222: ff d0                           call rax
-    # nextln: 000224: 44 23 f8                        and r15d, eax
-    # nextln: 000227: 0f b6 84 24 a0 00 00 00         movzx eax, byte ptr [rsp + 0xa0]
-    # nextln: 00022f: 0f be f8                        movsx edi, al
-    # nextln: 000232: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
-    # nextln: 00023c: 48 89 de                        mov rsi, rbx
-    # nextln: 00023f: ff d0                           call rax
-    # nextln: 000241: 33 c9                           xor ecx, ecx
-    # nextln: 000243: 85 c0                           test eax, eax
-    # nextln: 000245: 0f 94 c1                        sete cl
-    # nextln: 000248: 44 23 f9                        and r15d, ecx
-    # nextln: 00024b: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
-    # nextln: 000255: 48 8b b4 24 88 00 00 00         mov rsi, qword ptr [rsp + 0x88]
-    # nextln: 00025d: 4c 89 ef                        mov rdi, r13
-    # nextln: 000260: ff d0                           call rax
-    # nextln: 000262: 44 23 f8                        and r15d, eax
-    # nextln: 000265: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
-    # nextln: 00026f: 4c 89 ef                        mov rdi, r13
-    # nextln: 000272: 4c 89 f6                        mov rsi, r14
-    # nextln: 000275: ff d0                           call rax
-    # nextln: 000277: 44 23 f8                        and r15d, eax
-    # nextln: 00027a: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
-    # nextln: 000284: 4c 89 e7                        mov rdi, r12
-    # nextln: 000287: 48 89 de                        mov rsi, rbx
-    # nextln: 00028a: ff d0                           call rax
-    # nextln: 00028c: 44 23 f8                        and r15d, eax
-    # nextln: 00028f: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
-    # nextln: 000299: 4c 89 e7                        mov rdi, r12
-    # nextln: 00029c: 4c 89 f6                        mov rsi, r14
-    # nextln: 00029f: ff d0                           call rax
-    # nextln: 0002a1: 33 c9                           xor ecx, ecx
-    # nextln: 0002a3: 85 c0                           test eax, eax
-    # nextln: 0002a5: 0f 94 c1                        sete cl
-    # nextln: 0002a8: 44 23 f9                        and r15d, ecx
-    # nextln: 0002ab: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
-    # nextln: 0002b5: 4c 8b 6c 24 30                  mov r13, qword ptr [rsp + 0x30]
-    # nextln: 0002ba: 4c 89 ee                        mov rsi, r13
-    # nextln: 0002bd: 4c 89 e7                        mov rdi, r12
-    # nextln: 0002c0: ff d0                           call rax
-    # nextln: 0002c2: 44 23 f8                        and r15d, eax
-    # nextln: 0002c5: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
-    # nextln: 0002cf: 48 8b 7c 24 78                  mov rdi, qword ptr [rsp + 0x78]
-    # nextln: 0002d4: 48 89 de                        mov rsi, rbx
-    # nextln: 0002d7: ff d0                           call rax
-    # nextln: 0002d9: 33 c9                           xor ecx, ecx
-    # nextln: 0002db: 85 c0                           test eax, eax
-    # nextln: 0002dd: 0f 94 c1                        sete cl
-    # nextln: 0002e0: 44 23 f9                        and r15d, ecx
-    # nextln: 0002e3: 0f b7 84 24 9c 00 00 00         movzx eax, word ptr [rsp + 0x9c]
-    # nextln: 0002eb: 0f bf f8                        movsx edi, ax
-    # nextln: 0002ee: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
-    # nextln: 0002f8: 4c 8b 74 24 70                  mov r14, qword ptr [rsp + 0x70]
-    # nextln: 0002fd: 4c 89 f6                        mov rsi, r14
-    # nextln: 000300: ff d0                           call rax
-    # nextln: 000302: 44 23 f8                        and r15d, eax
-    # nextln: 000305: 0f b7 84 24 9c 00 00 00         movzx eax, word ptr [rsp + 0x9c]
-    # nextln: 00030d: 0f bf f8                        movsx edi, ax
-    # nextln: 000310: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
-    # nextln: 00031a: 4c 8b 64 24 60                  mov r12, qword ptr [rsp + 0x60]
-    # nextln: 00031f: 4c 89 e6                        mov rsi, r12
-    # nextln: 000322: ff d0                           call rax
-    # nextln: 000324: 44 23 f8                        and r15d, eax
-    # nextln: 000327: 0f b7 84 24 9a 00 00 00         movzx eax, word ptr [rsp + 0x9a]
-    # nextln: 00032f: 0f bf f8                        movsx edi, ax
-    # nextln: 000332: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
-    # nextln: 00033c: 48 89 de                        mov rsi, rbx
-    # nextln: 00033f: ff d0                           call rax
-    # nextln: 000341: 44 23 f8                        and r15d, eax
-    # nextln: 000344: 0f b7 84 24 9a 00 00 00         movzx eax, word ptr [rsp + 0x9a]
-    # nextln: 00034c: 0f bf f8                        movsx edi, ax
-    # nextln: 00034f: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
-    # nextln: 000359: 4c 89 e6                        mov rsi, r12
-    # nextln: 00035c: ff d0                           call rax
-    # nextln: 00035e: 33 c9                           xor ecx, ecx
-    # nextln: 000360: 85 c0                           test eax, eax
-    # nextln: 000362: 0f 94 c1                        sete cl
-    # nextln: 000365: 44 23 f9                        and r15d, ecx
-    # nextln: 000368: 0f b7 84 24 9a 00 00 00         movzx eax, word ptr [rsp + 0x9a]
-    # nextln: 000370: 0f bf f8                        movsx edi, ax
-    # nextln: 000373: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
-    # nextln: 00037d: 4c 89 ee                        mov rsi, r13
-    # nextln: 000380: ff d0                           call rax
-    # nextln: 000382: 44 23 f8                        and r15d, eax
-    # nextln: 000385: 0f b7 84 24 98 00 00 00         movzx eax, word ptr [rsp + 0x98]
-    # nextln: 00038d: 0f bf f8                        movsx edi, ax
-    # nextln: 000390: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
-    # nextln: 00039a: 48 89 de                        mov rsi, rbx
-    # nextln: 00039d: ff d0                           call rax
-    # nextln: 00039f: 33 c9                           xor ecx, ecx
-    # nextln: 0003a1: 85 c0                           test eax, eax
-    # nextln: 0003a3: 0f 94 c1                        sete cl
-    # nextln: 0003a6: 44 23 f9                        and r15d, ecx
-    # nextln: 0003a9: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
-    # nextln: 0003b3: 4c 89 f6                        mov rsi, r14
-    # nextln: 0003b6: 48 8b 7c 24 68                  mov rdi, qword ptr [rsp + 0x68]
-    # nextln: 0003bb: ff d0                           call rax
-    # nextln: 0003bd: 44 23 f8                        and r15d, eax
-    # nextln: 0003c0: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
-    # nextln: 0003ca: 48 8b 7c 24 68                  mov rdi, qword ptr [rsp + 0x68]
-    # nextln: 0003cf: 4c 89 e6                        mov rsi, r12
-    # nextln: 0003d2: ff d0                           call rax
-    # nextln: 0003d4: 44 23 f8                        and r15d, eax
-    # nextln: 0003d7: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
-    # nextln: 0003e1: 4c 8b 74 24 58                  mov r14, qword ptr [rsp + 0x58]
-    # nextln: 0003e6: 4c 89 f7                        mov rdi, r14
-    # nextln: 0003e9: 48 89 de                        mov rsi, rbx
-    # nextln: 0003ec: ff d0                           call rax
-    # nextln: 0003ee: 44 23 f8                        and r15d, eax
-    # nextln: 0003f1: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
-    # nextln: 0003fb: 4c 89 f7                        mov rdi, r14
-    # nextln: 0003fe: 4c 89 e6                        mov rsi, r12
-    # nextln: 000401: ff d0                           call rax
-    # nextln: 000403: 33 c9                           xor ecx, ecx
-    # nextln: 000405: 85 c0                           test eax, eax
-    # nextln: 000407: 0f 94 c1                        sete cl
-    # nextln: 00040a: 44 23 f9                        and r15d, ecx
-    # nextln: 00040d: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
-    # nextln: 000417: 4c 89 ee                        mov rsi, r13
-    # nextln: 00041a: 4c 89 f7                        mov rdi, r14
-    # nextln: 00041d: ff d0                           call rax
-    # nextln: 00041f: 44 23 f8                        and r15d, eax
-    # nextln: 000422: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
-    # nextln: 00042c: 48 8b 7c 24 50                  mov rdi, qword ptr [rsp + 0x50]
-    # nextln: 000431: 48 89 de                        mov rsi, rbx
-    # nextln: 000434: ff d0                           call rax
-    # nextln: 000436: 33 c9                           xor ecx, ecx
-    # nextln: 000438: 85 c0                           test eax, eax
-    # nextln: 00043a: 0f 94 c1                        sete cl
-    # nextln: 00043d: 44 23 f9                        and r15d, ecx
-    # nextln: 000440: 8b bc 24 94 00 00 00            mov edi, dword ptr [rsp + 0x94]
+    # nextln: 000016: 48 8d 8c 24 a6 00 00 00         lea rcx, [rsp + 0xa6]
+    # nextln: 00001e: 48 8d 94 24 a0 00 00 00         lea rdx, [rsp + 0xa0]
+    # nextln: 000026: 48 89 54 24 58                  mov qword ptr [rsp + 0x58], rdx
+    # nextln: 00002b: 45 33 c9                        xor r9d, r9d
+    # nextln: 00002e: 48 89 e2                        mov rdx, rsp
+    # nextln: 000031: 48 89 54 24 20                  mov qword ptr [rsp + 0x20], rdx
+    # nextln: 000036: 48 8d 54 24 08                  lea rdx, [rsp + 8]
+    # nextln: 00003b: 48 89 54 24 28                  mov qword ptr [rsp + 0x28], rdx
+    # nextln: 000040: 48 8d 94 24 98 00 00 00         lea rdx, [rsp + 0x98]
+    # nextln: 000048: 48 89 54 24 40                  mov qword ptr [rsp + 0x40], rdx
+    # nextln: 00004d: 48 8d 94 24 a2 00 00 00         lea rdx, [rsp + 0xa2]
+    # nextln: 000055: 48 89 54 24 60                  mov qword ptr [rsp + 0x60], rdx
+    # nextln: 00005a: 48 8d 94 24 9c 00 00 00         lea rdx, [rsp + 0x9c]
+    # nextln: 000062: 48 89 54 24 48                  mov qword ptr [rsp + 0x48], rdx
+    # nextln: 000067: 48 8d 94 24 a4 00 00 00         lea rdx, [rsp + 0xa4]
+    # nextln: 00006f: 48 89 54 24 70                  mov qword ptr [rsp + 0x70], rdx
+    # nextln: 000074: 48 8d 94 24 a7 00 00 00         lea rdx, [rsp + 0xa7]
+    # nextln: 00007c: 48 89 94 24 88 00 00 00         mov qword ptr [rsp + 0x88], rdx
+    # nextln: 000084: 44 88 8c 24 a7 00 00 00         mov byte ptr [rsp + 0xa7], r9b
+    # nextln: 00008c: 44 88 8c 24 a6 00 00 00         mov byte ptr [rsp + 0xa6], r9b
+    # nextln: 000094: 48 8d 94 24 a8 00 00 00         lea rdx, [rsp + 0xa8]
+    # nextln: 00009c: 48 89 94 24 80 00 00 00         mov qword ptr [rsp + 0x80], rdx
+    # nextln: 0000a4: 44 88 8c 24 a8 00 00 00         mov byte ptr [rsp + 0xa8], r9b
+    # nextln: 0000ac: 66 44 89 8c 24 a4 00 00 00      mov word ptr [rsp + 0xa4], r9w
+    # nextln: 0000b5: 66 44 89 8c 24 a2 00 00 00      mov word ptr [rsp + 0xa2], r9w
+    # nextln: 0000be: 66 44 89 8c 24 a0 00 00 00      mov word ptr [rsp + 0xa0], r9w
+    # nextln: 0000c7: 44 89 8c 24 9c 00 00 00         mov dword ptr [rsp + 0x9c], r9d
+    # nextln: 0000cf: 44 89 8c 24 98 00 00 00         mov dword ptr [rsp + 0x98], r9d
+    # nextln: 0000d7: 4c 89 4c 24 10                  mov qword ptr [rsp + 0x10], r9
+    # nextln: 0000dc: 48 89 44 24 08                  mov qword ptr [rsp + 8], rax
+    # nextln: 0000e1: 48 89 04 24                     mov qword ptr [rsp], rax
+    # nextln: 0000e5: 41 bd 07 00 00 00               mov r13d, 7
+    # nextln: 0000eb: 49 89 cc                        mov r12, rcx
+    # nextln: 0000ee: 41 be 08 00 00 00               mov r14d, 8
+    # nextln: 0000f4: b9 01 00 00 00                  mov ecx, 1
+    # nextln: 0000f9: 48 c7 44 24 38 20 00 00 00      mov qword ptr [rsp + 0x38], 0x20
+    # nextln: 000102: 48 c7 44 24 78 0f 00 00 00      mov qword ptr [rsp + 0x78], 0xf
+    # nextln: 00010b: 48 c7 44 24 68 10 00 00 00      mov qword ptr [rsp + 0x68], 0x10
+    # nextln: 000114: 48 c7 44 24 50 03 00 00 00      mov qword ptr [rsp + 0x50], 3
+    # nextln: 00011d: 48 c7 44 24 30 40 00 00 00      mov qword ptr [rsp + 0x30], 0x40
+    # nextln: 000126: be 02 00 00 00                  mov esi, 2
+    # nextln: 00012b: 48 63 f9                        movsxd rdi, ecx
+    # nextln: 00012e: 48 63 d6                        movsxd rdx, esi
+    # nextln: 000131: b8 80 ff ff ff                  mov eax, 0xffffff80
+    # nextln: 000136: 88 84 24 a7 00 00 00            mov byte ptr [rsp + 0xa7], al
+    # nextln: 00013d: 41 b8 00 80 ff ff               mov r8d, 0xffff8000
+    # nextln: 000143: 88 8c 24 a6 00 00 00            mov byte ptr [rsp + 0xa6], cl
+    # nextln: 00014a: 40 88 b4 24 a8 00 00 00         mov byte ptr [rsp + 0xa8], sil
+    # nextln: 000152: 66 44 89 84 24 a4 00 00 00      mov word ptr [rsp + 0xa4], r8w
+    # nextln: 00015b: 66 89 8c 24 a2 00 00 00         mov word ptr [rsp + 0xa2], cx
+    # nextln: 000163: 66 89 b4 24 a0 00 00 00         mov word ptr [rsp + 0xa0], si
+    # nextln: 00016b: 89 8c 24 9c 00 00 00            mov dword ptr [rsp + 0x9c], ecx
+    # nextln: 000172: 89 b4 24 98 00 00 00            mov dword ptr [rsp + 0x98], esi
+    # nextln: 000179: 48 89 7c 24 08                  mov qword ptr [rsp + 8], rdi
+    # nextln: 00017e: 48 89 14 24                     mov qword ptr [rsp], rdx
+    # nextln: 000182: 0f b6 94 24 a7 00 00 00         movzx edx, byte ptr [rsp + 0xa7]
+    # nextln: 00018a: 0f be fa                        movsx edi, dl
+    # nextln: 00018d: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
+    # nextln: 000197: 49 89 cf                        mov r15, rcx
+    # nextln: 00019a: 4c 89 ee                        mov rsi, r13
+    # nextln: 00019d: ff d0                           call rax
+    # nextln: 00019f: 4c 89 ac 24 90 00 00 00         mov qword ptr [rsp + 0x90], r13
+    # nextln: 0001a7: 4c 89 fb                        mov rbx, r15
+    # nextln: 0001aa: 23 d8                           and ebx, eax
+    # nextln: 0001ac: 4c 89 7c 24 18                  mov qword ptr [rsp + 0x18], r15
+    # nextln: 0001b1: 0f b6 84 24 a7 00 00 00         movzx eax, byte ptr [rsp + 0xa7]
+    # nextln: 0001b9: 0f be f8                        movsx edi, al
+    # nextln: 0001bc: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
+    # nextln: 0001c6: 4c 8b ac 24 88 00 00 00         mov r13, qword ptr [rsp + 0x88]
+    # nextln: 0001ce: 4c 89 f6                        mov rsi, r14
+    # nextln: 0001d1: ff d0                           call rax
+    # nextln: 0001d3: 23 d8                           and ebx, eax
+    # nextln: 0001d5: 0f b6 84 24 a6 00 00 00         movzx eax, byte ptr [rsp + 0xa6]
+    # nextln: 0001dd: 0f be f8                        movsx edi, al
+    # nextln: 0001e0: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
+    # nextln: 0001ea: 4c 8b 7c 24 10                  mov r15, qword ptr [rsp + 0x10]
+    # nextln: 0001ef: 4c 89 fe                        mov rsi, r15
+    # nextln: 0001f2: ff d0                           call rax
+    # nextln: 0001f4: 23 d8                           and ebx, eax
+    # nextln: 0001f6: 0f b6 84 24 a6 00 00 00         movzx eax, byte ptr [rsp + 0xa6]
+    # nextln: 0001fe: 0f be f8                        movsx edi, al
+    # nextln: 000201: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
+    # nextln: 00020b: 4c 89 f6                        mov rsi, r14
+    # nextln: 00020e: ff d0                           call rax
+    # nextln: 000210: 33 c9                           xor ecx, ecx
+    # nextln: 000212: 85 c0                           test eax, eax
+    # nextln: 000214: 0f 94 c1                        sete cl
+    # nextln: 000217: 23 d9                           and ebx, ecx
+    # nextln: 000219: 0f b6 84 24 a6 00 00 00         movzx eax, byte ptr [rsp + 0xa6]
+    # nextln: 000221: 0f be f8                        movsx edi, al
+    # nextln: 000224: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
+    # nextln: 00022e: 48 8b 74 24 38                  mov rsi, qword ptr [rsp + 0x38]
+    # nextln: 000233: ff d0                           call rax
+    # nextln: 000235: 23 d8                           and ebx, eax
+    # nextln: 000237: 0f b6 84 24 a8 00 00 00         movzx eax, byte ptr [rsp + 0xa8]
+    # nextln: 00023f: 0f be f8                        movsx edi, al
+    # nextln: 000242: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_reg_reg(System.SByte, System.Int32)" + 0
+    # nextln: 00024c: 4c 89 fe                        mov rsi, r15
+    # nextln: 00024f: ff d0                           call rax
+    # nextln: 000251: 33 c9                           xor ecx, ecx
+    # nextln: 000253: 85 c0                           test eax, eax
+    # nextln: 000255: 0f 94 c1                        sete cl
+    # nextln: 000258: 23 d9                           and ebx, ecx
+    # nextln: 00025a: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
+    # nextln: 000264: 48 8b b4 24 90 00 00 00         mov rsi, qword ptr [rsp + 0x90]
+    # nextln: 00026c: 4c 89 ef                        mov rdi, r13
+    # nextln: 00026f: ff d0                           call rax
+    # nextln: 000271: 23 d8                           and ebx, eax
+    # nextln: 000273: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
+    # nextln: 00027d: 4c 89 ef                        mov rdi, r13
+    # nextln: 000280: 4c 89 f6                        mov rsi, r14
+    # nextln: 000283: ff d0                           call rax
+    # nextln: 000285: 23 d8                           and ebx, eax
+    # nextln: 000287: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
+    # nextln: 000291: 4c 89 fe                        mov rsi, r15
+    # nextln: 000294: 4c 89 e7                        mov rdi, r12
+    # nextln: 000297: ff d0                           call rax
+    # nextln: 000299: 23 d8                           and ebx, eax
+    # nextln: 00029b: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
+    # nextln: 0002a5: 4c 89 f6                        mov rsi, r14
+    # nextln: 0002a8: 4c 89 e7                        mov rdi, r12
+    # nextln: 0002ab: ff d0                           call rax
+    # nextln: 0002ad: 33 c9                           xor ecx, ecx
+    # nextln: 0002af: 85 c0                           test eax, eax
+    # nextln: 0002b1: 0f 94 c1                        sete cl
+    # nextln: 0002b4: 23 d9                           and ebx, ecx
+    # nextln: 0002b6: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
+    # nextln: 0002c0: 4c 8b 6c 24 38                  mov r13, qword ptr [rsp + 0x38]
+    # nextln: 0002c5: 4c 89 e7                        mov rdi, r12
+    # nextln: 0002c8: 4c 89 ee                        mov rsi, r13
+    # nextln: 0002cb: ff d0                           call rax
+    # nextln: 0002cd: 23 d8                           and ebx, eax
+    # nextln: 0002cf: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I1_BT_mem_reg(System.SByte&, System.Int32)" + 0
+    # nextln: 0002d9: 48 8b bc 24 80 00 00 00         mov rdi, qword ptr [rsp + 0x80]
+    # nextln: 0002e1: 4c 89 fe                        mov rsi, r15
+    # nextln: 0002e4: ff d0                           call rax
+    # nextln: 0002e6: 33 c9                           xor ecx, ecx
+    # nextln: 0002e8: 85 c0                           test eax, eax
+    # nextln: 0002ea: 0f 94 c1                        sete cl
+    # nextln: 0002ed: 23 d9                           and ebx, ecx
+    # nextln: 0002ef: 0f b7 84 24 a4 00 00 00         movzx eax, word ptr [rsp + 0xa4]
+    # nextln: 0002f7: 0f bf f8                        movsx edi, ax
+    # nextln: 0002fa: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
+    # nextln: 000304: 4c 8b 74 24 78                  mov r14, qword ptr [rsp + 0x78]
+    # nextln: 000309: 4c 89 f6                        mov rsi, r14
+    # nextln: 00030c: ff d0                           call rax
+    # nextln: 00030e: 23 d8                           and ebx, eax
+    # nextln: 000310: 0f b7 84 24 a4 00 00 00         movzx eax, word ptr [rsp + 0xa4]
+    # nextln: 000318: 0f bf f8                        movsx edi, ax
+    # nextln: 00031b: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
+    # nextln: 000325: 4c 8b 64 24 68                  mov r12, qword ptr [rsp + 0x68]
+    # nextln: 00032a: 4c 89 e6                        mov rsi, r12
+    # nextln: 00032d: ff d0                           call rax
+    # nextln: 00032f: 23 d8                           and ebx, eax
+    # nextln: 000331: 0f b7 84 24 a2 00 00 00         movzx eax, word ptr [rsp + 0xa2]
+    # nextln: 000339: 0f bf f8                        movsx edi, ax
+    # nextln: 00033c: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
+    # nextln: 000346: 4c 89 fe                        mov rsi, r15
+    # nextln: 000349: ff d0                           call rax
+    # nextln: 00034b: 23 d8                           and ebx, eax
+    # nextln: 00034d: 0f b7 84 24 a2 00 00 00         movzx eax, word ptr [rsp + 0xa2]
+    # nextln: 000355: 0f bf f8                        movsx edi, ax
+    # nextln: 000358: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
+    # nextln: 000362: 4c 89 e6                        mov rsi, r12
+    # nextln: 000365: ff d0                           call rax
+    # nextln: 000367: 33 c9                           xor ecx, ecx
+    # nextln: 000369: 85 c0                           test eax, eax
+    # nextln: 00036b: 0f 94 c1                        sete cl
+    # nextln: 00036e: 23 d9                           and ebx, ecx
+    # nextln: 000370: 0f b7 84 24 a2 00 00 00         movzx eax, word ptr [rsp + 0xa2]
+    # nextln: 000378: 0f bf f8                        movsx edi, ax
+    # nextln: 00037b: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
+    # nextln: 000385: 4c 89 ee                        mov rsi, r13
+    # nextln: 000388: ff d0                           call rax
+    # nextln: 00038a: 23 d8                           and ebx, eax
+    # nextln: 00038c: 0f b7 84 24 a0 00 00 00         movzx eax, word ptr [rsp + 0xa0]
+    # nextln: 000394: 0f bf f8                        movsx edi, ax
+    # nextln: 000397: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_reg_reg(System.Int16, System.Int32)" + 0
+    # nextln: 0003a1: 4c 89 fe                        mov rsi, r15
+    # nextln: 0003a4: ff d0                           call rax
+    # nextln: 0003a6: 33 c9                           xor ecx, ecx
+    # nextln: 0003a8: 85 c0                           test eax, eax
+    # nextln: 0003aa: 0f 94 c1                        sete cl
+    # nextln: 0003ad: 23 d9                           and ebx, ecx
+    # nextln: 0003af: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
+    # nextln: 0003b9: 4c 89 f6                        mov rsi, r14
+    # nextln: 0003bc: 48 8b 7c 24 70                  mov rdi, qword ptr [rsp + 0x70]
+    # nextln: 0003c1: ff d0                           call rax
+    # nextln: 0003c3: 23 d8                           and ebx, eax
+    # nextln: 0003c5: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
+    # nextln: 0003cf: 48 8b 7c 24 70                  mov rdi, qword ptr [rsp + 0x70]
+    # nextln: 0003d4: 4c 89 e6                        mov rsi, r12
+    # nextln: 0003d7: ff d0                           call rax
+    # nextln: 0003d9: 23 d8                           and ebx, eax
+    # nextln: 0003db: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
+    # nextln: 0003e5: 4c 8b 74 24 60                  mov r14, qword ptr [rsp + 0x60]
+    # nextln: 0003ea: 4c 89 f7                        mov rdi, r14
+    # nextln: 0003ed: 4c 89 fe                        mov rsi, r15
+    # nextln: 0003f0: ff d0                           call rax
+    # nextln: 0003f2: 23 d8                           and ebx, eax
+    # nextln: 0003f4: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
+    # nextln: 0003fe: 4c 89 f7                        mov rdi, r14
+    # nextln: 000401: 4c 89 e6                        mov rsi, r12
+    # nextln: 000404: ff d0                           call rax
+    # nextln: 000406: 33 c9                           xor ecx, ecx
+    # nextln: 000408: 85 c0                           test eax, eax
+    # nextln: 00040a: 0f 94 c1                        sete cl
+    # nextln: 00040d: 23 d9                           and ebx, ecx
+    # nextln: 00040f: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
+    # nextln: 000419: 4c 89 f7                        mov rdi, r14
+    # nextln: 00041c: 4c 89 ee                        mov rsi, r13
+    # nextln: 00041f: ff d0                           call rax
+    # nextln: 000421: 23 d8                           and ebx, eax
+    # nextln: 000423: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I2_BT_mem_reg(System.Int16&, System.Int32)" + 0
+    # nextln: 00042d: 48 8b 7c 24 58                  mov rdi, qword ptr [rsp + 0x58]
+    # nextln: 000432: 4c 89 fe                        mov rsi, r15
+    # nextln: 000435: ff d0                           call rax
+    # nextln: 000437: 33 c9                           xor ecx, ecx
+    # nextln: 000439: 85 c0                           test eax, eax
+    # nextln: 00043b: 0f 94 c1                        sete cl
+    # nextln: 00043e: 23 d9                           and ebx, ecx
+    # nextln: 000440: 8b bc 24 9c 00 00 00            mov edi, dword ptr [rsp + 0x9c]
     # nextln: 000447: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" + 0
-    # nextln: 000451: 48 89 de                        mov rsi, rbx
+    # nextln: 000451: 4c 89 fe                        mov rsi, r15
     # nextln: 000454: ff d0                           call rax
-    # nextln: 000456: 44 23 f8                        and r15d, eax
-    # nextln: 000459: 8b bc 24 94 00 00 00            mov edi, dword ptr [rsp + 0x94]
-    # nextln: 000460: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" + 0
-    # nextln: 00046a: 4c 89 ee                        mov rsi, r13
-    # nextln: 00046d: ff d0                           call rax
-    # nextln: 00046f: 44 23 f8                        and r15d, eax
-    # nextln: 000472: 8b bc 24 90 00 00 00            mov edi, dword ptr [rsp + 0x90]
-    # nextln: 000479: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" + 0
-    # nextln: 000483: 48 89 de                        mov rsi, rbx
-    # nextln: 000486: ff d0                           call rax
-    # nextln: 000488: 33 c9                           xor ecx, ecx
-    # nextln: 00048a: 85 c0                           test eax, eax
-    # nextln: 00048c: 0f 94 c1                        sete cl
-    # nextln: 00048f: 44 23 f9                        and r15d, ecx
-    # nextln: 000492: 8b bc 24 94 00 00 00            mov edi, dword ptr [rsp + 0x94]
-    # nextln: 000499: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" + 0
-    # nextln: 0004a3: 48 89 de                        mov rsi, rbx
-    # nextln: 0004a6: ff d0                           call rax
-    # nextln: 0004a8: 33 c9                           xor ecx, ecx
-    # nextln: 0004aa: 85 c0                           test eax, eax
-    # nextln: 0004ac: 0f 94 c1                        sete cl
-    # nextln: 0004af: 44 23 f9                        and r15d, ecx
-    # nextln: 0004b2: 8b bc 24 94 00 00 00            mov edi, dword ptr [rsp + 0x94]
-    # nextln: 0004b9: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" + 0
-    # nextln: 0004c3: 4c 89 ee                        mov rsi, r13
-    # nextln: 0004c6: ff d0                           call rax
-    # nextln: 0004c8: 33 c9                           xor ecx, ecx
-    # nextln: 0004ca: 85 c0                           test eax, eax
-    # nextln: 0004cc: 0f 94 c1                        sete cl
-    # nextln: 0004cf: 44 23 f9                        and r15d, ecx
-    # nextln: 0004d2: 8b bc 24 90 00 00 00            mov edi, dword ptr [rsp + 0x90]
-    # nextln: 0004d9: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" + 0
-    # nextln: 0004e3: 48 89 de                        mov rsi, rbx
-    # nextln: 0004e6: ff d0                           call rax
-    # nextln: 0004e8: 44 23 f8                        and r15d, eax
-    # nextln: 0004eb: 8b bc 24 94 00 00 00            mov edi, dword ptr [rsp + 0x94]
-    # nextln: 0004f2: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" + 0
-    # nextln: 0004fc: 48 89 de                        mov rsi, rbx
-    # nextln: 0004ff: ff d0                           call rax
-    # nextln: 000501: 33 c9                           xor ecx, ecx
-    # nextln: 000503: 85 c0                           test eax, eax
-    # nextln: 000505: 0f 94 c1                        sete cl
-    # nextln: 000508: 44 23 f9                        and r15d, ecx
-    # nextln: 00050b: 8b bc 24 94 00 00 00            mov edi, dword ptr [rsp + 0x94]
-    # nextln: 000512: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" + 0
-    # nextln: 00051c: 4c 89 ee                        mov rsi, r13
-    # nextln: 00051f: ff d0                           call rax
-    # nextln: 000521: 33 c9                           xor ecx, ecx
-    # nextln: 000523: 85 c0                           test eax, eax
-    # nextln: 000525: 0f 94 c1                        sete cl
-    # nextln: 000528: 44 23 f9                        and r15d, ecx
-    # nextln: 00052b: 8b bc 24 90 00 00 00            mov edi, dword ptr [rsp + 0x90]
-    # nextln: 000532: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" + 0
-    # nextln: 00053c: 48 89 de                        mov rsi, rbx
-    # nextln: 00053f: ff d0                           call rax
-    # nextln: 000541: 33 c9                           xor ecx, ecx
-    # nextln: 000543: 48 8b 54 24 48                  mov rdx, qword ptr [rsp + 0x48]
-    # nextln: 000548: 3b c2                           cmp eax, edx
-    # nextln: 00054a: 0f 94 c1                        sete cl
-    # nextln: 00054d: 44 23 f9                        and r15d, ecx
-    # nextln: 000550: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" + 0
-    # nextln: 00055a: 4c 8b 64 24 40                  mov r12, qword ptr [rsp + 0x40]
-    # nextln: 00055f: 4c 89 e7                        mov rdi, r12
-    # nextln: 000562: 48 89 de                        mov rsi, rbx
-    # nextln: 000565: ff d0                           call rax
-    # nextln: 000567: 44 23 f8                        and r15d, eax
-    # nextln: 00056a: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" + 0
-    # nextln: 000574: 4c 89 e7                        mov rdi, r12
-    # nextln: 000577: 4c 89 ee                        mov rsi, r13
-    # nextln: 00057a: ff d0                           call rax
-    # nextln: 00057c: 44 23 f8                        and r15d, eax
-    # nextln: 00057f: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" + 0
-    # nextln: 000589: 48 8b 7c 24 38                  mov rdi, qword ptr [rsp + 0x38]
-    # nextln: 00058e: 48 89 de                        mov rsi, rbx
-    # nextln: 000591: ff d0                           call rax
-    # nextln: 000593: 33 c9                           xor ecx, ecx
-    # nextln: 000595: 85 c0                           test eax, eax
-    # nextln: 000597: 0f 94 c1                        sete cl
-    # nextln: 00059a: 44 23 f9                        and r15d, ecx
-    # nextln: 00059d: 48 8b 7c 24 08                  mov rdi, qword ptr [rsp + 8]
-    # nextln: 0005a2: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + 0
-    # nextln: 0005ac: 48 89 de                        mov rsi, rbx
-    # nextln: 0005af: ff d0                           call rax
-    # nextln: 0005b1: 44 23 f8                        and r15d, eax
-    # nextln: 0005b4: 48 8b 7c 24 08                  mov rdi, qword ptr [rsp + 8]
-    # nextln: 0005b9: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + 0
-    # nextln: 0005c3: 4c 89 ee                        mov rsi, r13
-    # nextln: 0005c6: ff d0                           call rax
-    # nextln: 0005c8: 33 c9                           xor ecx, ecx
-    # nextln: 0005ca: 85 c0                           test eax, eax
-    # nextln: 0005cc: 0f 94 c1                        sete cl
-    # nextln: 0005cf: 44 23 f9                        and r15d, ecx
-    # nextln: 0005d2: 48 8b 7c 24 08                  mov rdi, qword ptr [rsp + 8]
-    # nextln: 0005d7: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + 0
-    # nextln: 0005e1: 4c 8b 64 24 28                  mov r12, qword ptr [rsp + 0x28]
-    # nextln: 0005e6: 4c 89 e6                        mov rsi, r12
-    # nextln: 0005e9: ff d0                           call rax
-    # nextln: 0005eb: 44 23 f8                        and r15d, eax
-    # nextln: 0005ee: 48 8b 3c 24                     mov rdi, qword ptr [rsp]
-    # nextln: 0005f2: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + 0
-    # nextln: 0005fc: 48 89 de                        mov rsi, rbx
-    # nextln: 0005ff: ff d0                           call rax
-    # nextln: 000601: 33 c9                           xor ecx, ecx
-    # nextln: 000603: 85 c0                           test eax, eax
-    # nextln: 000605: 0f 94 c1                        sete cl
-    # nextln: 000608: 44 23 f9                        and r15d, ecx
-    # nextln: 00060b: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
-    # nextln: 000615: 4c 8b 74 24 20                  mov r14, qword ptr [rsp + 0x20]
-    # nextln: 00061a: 4c 89 f7                        mov rdi, r14
-    # nextln: 00061d: 48 89 de                        mov rsi, rbx
-    # nextln: 000620: ff d0                           call rax
-    # nextln: 000622: 44 23 f8                        and r15d, eax
-    # nextln: 000625: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
-    # nextln: 00062f: 4c 89 ee                        mov rsi, r13
-    # nextln: 000632: 4c 89 f7                        mov rdi, r14
-    # nextln: 000635: ff d0                           call rax
-    # nextln: 000637: 49 89 c5                        mov r13, rax
-    # nextln: 00063a: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
-    # nextln: 000644: 4c 89 e6                        mov rsi, r12
-    # nextln: 000647: 4c 89 f7                        mov rdi, r14
-    # nextln: 00064a: ff d0                           call rax
-    # nextln: 00064c: 33 c9                           xor ecx, ecx
-    # nextln: 00064e: 45 85 ed                        test r13d, r13d
-    # nextln: 000651: 0f 94 c1                        sete cl
-    # nextln: 000654: 44 23 f9                        and r15d, ecx
-    # nextln: 000657: 44 23 f8                        and r15d, eax
-    # nextln: 00065a: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
-    # nextln: 000664: 48 8b 7c 24 18                  mov rdi, qword ptr [rsp + 0x18]
-    # nextln: 000669: 48 89 de                        mov rsi, rbx
-    # nextln: 00066c: ff d0                           call rax
-    # nextln: 00066e: 33 c9                           xor ecx, ecx
-    # nextln: 000670: 85 c0                           test eax, eax
-    # nextln: 000672: 0f 94 c1                        sete cl
-    # nextln: 000675: 44 23 f9                        and r15d, ecx
-    # nextln: 000678: 45 85 ff                        test r15d, r15d
-    # nextln: 00067b: 0f 84 17 00 00 00               je 0x698
-    # nextln: 000681: 48 8b 44 24 10                  mov rax, qword ptr [rsp + 0x10]
+    # nextln: 000456: 23 d8                           and ebx, eax
+    # nextln: 000458: 8b bc 24 9c 00 00 00            mov edi, dword ptr [rsp + 0x9c]
+    # nextln: 00045f: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" + 0
+    # nextln: 000469: 4c 89 ee                        mov rsi, r13
+    # nextln: 00046c: ff d0                           call rax
+    # nextln: 00046e: 23 d8                           and ebx, eax
+    # nextln: 000470: 8b bc 24 98 00 00 00            mov edi, dword ptr [rsp + 0x98]
+    # nextln: 000477: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg(System.Int32, System.Int32)" + 0
+    # nextln: 000481: 4c 89 fe                        mov rsi, r15
+    # nextln: 000484: ff d0                           call rax
+    # nextln: 000486: 33 c9                           xor ecx, ecx
+    # nextln: 000488: 85 c0                           test eax, eax
+    # nextln: 00048a: 0f 94 c1                        sete cl
+    # nextln: 00048d: 23 d9                           and ebx, ecx
+    # nextln: 00048f: 8b bc 24 9c 00 00 00            mov edi, dword ptr [rsp + 0x9c]
+    # nextln: 000496: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" + 0
+    # nextln: 0004a0: 4c 89 fe                        mov rsi, r15
+    # nextln: 0004a3: ff d0                           call rax
+    # nextln: 0004a5: 33 c9                           xor ecx, ecx
+    # nextln: 0004a7: 85 c0                           test eax, eax
+    # nextln: 0004a9: 0f 94 c1                        sete cl
+    # nextln: 0004ac: 23 d9                           and ebx, ecx
+    # nextln: 0004ae: 8b bc 24 9c 00 00 00            mov edi, dword ptr [rsp + 0x9c]
+    # nextln: 0004b5: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" + 0
+    # nextln: 0004bf: 4c 89 ee                        mov rsi, r13
+    # nextln: 0004c2: ff d0                           call rax
+    # nextln: 0004c4: 33 c9                           xor ecx, ecx
+    # nextln: 0004c6: 85 c0                           test eax, eax
+    # nextln: 0004c8: 0f 94 c1                        sete cl
+    # nextln: 0004cb: 23 d9                           and ebx, ecx
+    # nextln: 0004cd: 8b bc 24 98 00 00 00            mov edi, dword ptr [rsp + 0x98]
+    # nextln: 0004d4: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_reg_reg_EQ(System.Int32, System.Int32)" + 0
+    # nextln: 0004de: 4c 89 fe                        mov rsi, r15
+    # nextln: 0004e1: ff d0                           call rax
+    # nextln: 0004e3: 23 d8                           and ebx, eax
+    # nextln: 0004e5: 8b bc 24 9c 00 00 00            mov edi, dword ptr [rsp + 0x9c]
+    # nextln: 0004ec: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" + 0
+    # nextln: 0004f6: 4c 89 fe                        mov rsi, r15
+    # nextln: 0004f9: ff d0                           call rax
+    # nextln: 0004fb: 33 c9                           xor ecx, ecx
+    # nextln: 0004fd: 85 c0                           test eax, eax
+    # nextln: 0004ff: 0f 94 c1                        sete cl
+    # nextln: 000502: 23 d9                           and ebx, ecx
+    # nextln: 000504: 8b bc 24 9c 00 00 00            mov edi, dword ptr [rsp + 0x9c]
+    # nextln: 00050b: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" + 0
+    # nextln: 000515: 4c 89 ee                        mov rsi, r13
+    # nextln: 000518: ff d0                           call rax
+    # nextln: 00051a: 33 c9                           xor ecx, ecx
+    # nextln: 00051c: 85 c0                           test eax, eax
+    # nextln: 00051e: 0f 94 c1                        sete cl
+    # nextln: 000521: 23 d9                           and ebx, ecx
+    # nextln: 000523: 8b bc 24 98 00 00 00            mov edi, dword ptr [rsp + 0x98]
+    # nextln: 00052a: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Int32 Tests.BitTest::I4_BT_reg_reg_JCC(System.Int32, System.Int32)" + 0
+    # nextln: 000534: 4c 89 fe                        mov rsi, r15
+    # nextln: 000537: ff d0                           call rax
+    # nextln: 000539: 33 c9                           xor ecx, ecx
+    # nextln: 00053b: 48 8b 54 24 50                  mov rdx, qword ptr [rsp + 0x50]
+    # nextln: 000540: 3b c2                           cmp eax, edx
+    # nextln: 000542: 0f 94 c1                        sete cl
+    # nextln: 000545: 23 d9                           and ebx, ecx
+    # nextln: 000547: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" + 0
+    # nextln: 000551: 4c 8b 64 24 48                  mov r12, qword ptr [rsp + 0x48]
+    # nextln: 000556: 4c 89 e7                        mov rdi, r12
+    # nextln: 000559: 4c 89 fe                        mov rsi, r15
+    # nextln: 00055c: ff d0                           call rax
+    # nextln: 00055e: 23 d8                           and ebx, eax
+    # nextln: 000560: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" + 0
+    # nextln: 00056a: 4c 89 e7                        mov rdi, r12
+    # nextln: 00056d: 4c 89 ee                        mov rsi, r13
+    # nextln: 000570: ff d0                           call rax
+    # nextln: 000572: 23 d8                           and ebx, eax
+    # nextln: 000574: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I4_BT_mem_reg(System.Int32&, System.Int32)" + 0
+    # nextln: 00057e: 48 8b 7c 24 40                  mov rdi, qword ptr [rsp + 0x40]
+    # nextln: 000583: 4c 89 fe                        mov rsi, r15
+    # nextln: 000586: ff d0                           call rax
+    # nextln: 000588: 33 c9                           xor ecx, ecx
+    # nextln: 00058a: 85 c0                           test eax, eax
+    # nextln: 00058c: 0f 94 c1                        sete cl
+    # nextln: 00058f: 23 d9                           and ebx, ecx
+    # nextln: 000591: 48 8b 7c 24 08                  mov rdi, qword ptr [rsp + 8]
+    # nextln: 000596: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + 0
+    # nextln: 0005a0: 4c 89 fe                        mov rsi, r15
+    # nextln: 0005a3: ff d0                           call rax
+    # nextln: 0005a5: 23 d8                           and ebx, eax
+    # nextln: 0005a7: 48 8b 7c 24 08                  mov rdi, qword ptr [rsp + 8]
+    # nextln: 0005ac: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + 0
+    # nextln: 0005b6: 4c 89 ee                        mov rsi, r13
+    # nextln: 0005b9: ff d0                           call rax
+    # nextln: 0005bb: 33 c9                           xor ecx, ecx
+    # nextln: 0005bd: 85 c0                           test eax, eax
+    # nextln: 0005bf: 0f 94 c1                        sete cl
+    # nextln: 0005c2: 23 d9                           and ebx, ecx
+    # nextln: 0005c4: 48 8b 7c 24 08                  mov rdi, qword ptr [rsp + 8]
+    # nextln: 0005c9: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + 0
+    # nextln: 0005d3: 4c 8b 64 24 30                  mov r12, qword ptr [rsp + 0x30]
+    # nextln: 0005d8: 4c 89 e6                        mov rsi, r12
+    # nextln: 0005db: ff d0                           call rax
+    # nextln: 0005dd: 23 d8                           and ebx, eax
+    # nextln: 0005df: 48 8b 3c 24                     mov rdi, qword ptr [rsp]
+    # nextln: 0005e3: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32)" + 0
+    # nextln: 0005ed: 4c 89 fe                        mov rsi, r15
+    # nextln: 0005f0: ff d0                           call rax
+    # nextln: 0005f2: 33 c9                           xor ecx, ecx
+    # nextln: 0005f4: 85 c0                           test eax, eax
+    # nextln: 0005f6: 0f 94 c1                        sete cl
+    # nextln: 0005f9: 23 d9                           and ebx, ecx
+    # nextln: 0005fb: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
+    # nextln: 000605: 4c 8b 74 24 28                  mov r14, qword ptr [rsp + 0x28]
+    # nextln: 00060a: 4c 89 f7                        mov rdi, r14
+    # nextln: 00060d: 4c 89 fe                        mov rsi, r15
+    # nextln: 000610: ff d0                           call rax
+    # nextln: 000612: 23 d8                           and ebx, eax
+    # nextln: 000614: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
+    # nextln: 00061e: 4c 89 ee                        mov rsi, r13
+    # nextln: 000621: 4c 89 f7                        mov rdi, r14
+    # nextln: 000624: ff d0                           call rax
+    # nextln: 000626: 49 89 c5                        mov r13, rax
+    # nextln: 000629: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
+    # nextln: 000633: 4c 89 f7                        mov rdi, r14
+    # nextln: 000636: 4c 89 e6                        mov rsi, r12
+    # nextln: 000639: ff d0                           call rax
+    # nextln: 00063b: 33 c9                           xor ecx, ecx
+    # nextln: 00063d: 45 85 ed                        test r13d, r13d
+    # nextln: 000640: 0f 94 c1                        sete cl
+    # nextln: 000643: 23 d9                           and ebx, ecx
+    # nextln: 000645: 23 d8                           and ebx, eax
+    # nextln: 000647: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
+    # nextln: 000651: 48 8b 7c 24 20                  mov rdi, qword ptr [rsp + 0x20]
+    # nextln: 000656: 4c 89 fe                        mov rsi, r15
+    # nextln: 000659: ff d0                           call rax
+    # nextln: 00065b: 33 c9                           xor ecx, ecx
+    # nextln: 00065d: 85 c0                           test eax, eax
+    # nextln: 00065f: 0f 94 c1                        sete cl
+    # nextln: 000662: 23 d9                           and ebx, ecx
+    # nextln: 000664: 85 db                           test ebx, ebx
+    # nextln: 000666: 0f 84 17 00 00 00               je 0x683
+    # nextln: 00066c: 48 8b 44 24 18                  mov rax, qword ptr [rsp + 0x18]
+    # nextln: 000671: 48 81 c4 b8 00 00 00            add rsp, 0xb8
+    # nextln: 000678: 5b                              pop rbx
+    # nextln: 000679: 41 5c                           pop r12
+    # nextln: 00067b: 41 5d                           pop r13
+    # nextln: 00067d: 41 5e                           pop r14
+    # nextln: 00067f: 41 5f                           pop r15
+    # nextln: 000681: 5d                              pop rbp
+    # nextln: 000682: c3                              ret
+    # nextln: 000683: 4c 89 f8                        mov rax, r15
     # nextln: 000686: 48 81 c4 b8 00 00 00            add rsp, 0xb8
     # nextln: 00068d: 5b                              pop rbx
     # nextln: 00068e: 41 5c                           pop r12
@@ -390,15 +401,6 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 000694: 41 5f                           pop r15
     # nextln: 000696: 5d                              pop rbp
     # nextln: 000697: c3                              ret
-    # nextln: 000698: 48 89 d8                        mov rax, rbx
-    # nextln: 00069b: 48 81 c4 b8 00 00 00            add rsp, 0xb8
-    # nextln: 0006a2: 5b                              pop rbx
-    # nextln: 0006a3: 41 5c                           pop r12
-    # nextln: 0006a5: 41 5d                           pop r13
-    # nextln: 0006a7: 41 5e                           pop r14
-    # nextln: 0006a9: 41 5f                           pop r15
-    # nextln: 0006ab: 5d                              pop rbp
-    # nextln: 0006ac: c3                              ret
 
     %0:ctrl = entry
     %1:ctrl, %2:phisel = region %0

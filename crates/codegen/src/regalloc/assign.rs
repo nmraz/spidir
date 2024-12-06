@@ -199,11 +199,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
 
         if let Some(boundary) = earliest_hard_conflict_boundary {
-            // To avoid pointlessly chopping everything up into tiny pieces, only split fragments
-            // that actually contain instructions using their values; ones that just carry the value
-            // elsewhere can be spilled.
-            if self.fragment_has_instrs(fragment) {
-                self.split_fragment_for_conflict(fragment, boundary);
+            if self.try_split_fragment_for_conflict(fragment, boundary) {
                 return Ok(());
             }
         }
@@ -416,42 +412,58 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
-    fn split_fragment_for_conflict(
+    fn try_split_fragment_for_conflict(
         &mut self,
         fragment: LiveSetFragment,
         boundary: ConflictBoundary,
-    ) {
-        trace!("  split {fragment} for conflict {boundary:?}");
-        let instr = self.split_point_for_conflict(fragment, boundary);
+    ) -> bool {
+        trace!("  try split: {fragment} for conflict {boundary:?}");
+
+        // To avoid pointlessly chopping everything up into tiny pieces, only split fragments that
+        // actually contain instructions using their values; ones that just carry the value
+        // elsewhere can be spilled.
+        if !self.fragment_has_instrs(fragment) {
+            return false;
+        }
+
+        let Some(instr) = self.split_point_for_conflict(fragment, boundary) else {
+            return false;
+        };
+
         self.split_fragment_before(fragment, instr);
+        true
     }
 
     fn split_point_for_conflict(
         &mut self,
         fragment: LiveSetFragment,
         boundary: ConflictBoundary,
-    ) -> Instr {
+    ) -> Option<Instr> {
         match boundary {
             ConflictBoundary::StartsAt(instr) => {
                 let last_instr_below = self
                     .fragment_instrs(fragment)
-                    .map(|frag_instr| frag_instr.instr())
+                    // We always split *before* the selected instruction, but we want to split *after*
+                    // the last use here.
+                    .map(|frag_instr| frag_instr.instr().next())
                     .take_while(|&frag_instr| frag_instr < instr)
-                    .filter(|&frag_instr| self.can_split_fragment_before(fragment, frag_instr))
                     .last();
 
-                // We always split *before* the selected instruction, but we want to split *after*
-                // the last use here.
-                last_instr_below.map(Instr::next).unwrap_or(instr)
+                let instr = last_instr_below.unwrap_or(instr);
+
+                self.can_split_fragment_before(fragment, instr)
+                    .then_some(instr)
             }
             ConflictBoundary::EndsAt(instr) => {
                 let first_instr_above = self
                     .fragment_instrs(fragment)
                     .map(|frag_instr| frag_instr.instr())
-                    .filter(|&frag_instr| frag_instr > instr)
-                    .find(|&frag_instr| self.can_split_fragment_before(fragment, frag_instr));
+                    .find(|&frag_instr| frag_instr > instr);
 
-                first_instr_above.unwrap_or(instr)
+                let instr = first_instr_above.unwrap_or(instr);
+
+                self.can_split_fragment_before(fragment, instr)
+                    .then_some(instr)
             }
         }
     }

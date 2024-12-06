@@ -4,8 +4,6 @@ use crate::{
     machine::MachineRegalloc,
 };
 
-use super::types::PhysRegHint;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChangeStatus {
     Unchanged,
@@ -34,30 +32,7 @@ pub fn get_block_weight(cfg_ctx: &CfgContext, block: Block) -> f32 {
     1000f32 * ((loop_depth + 1) as f32)
 }
 
-pub fn sort_reg_hints(hints: &mut [PhysRegHint]) -> usize {
-    // First: group the hints by physical register.
-    hints.sort_unstable_by_key(|hint| hint.preg.as_u8());
-
-    // Coalesce adjacent hints for the same register, recording total weight for each.
-    let new_len = coalesce_slice(hints, |prev_hint, cur_hint| {
-        if prev_hint.preg == cur_hint.preg {
-            Some(PhysRegHint {
-                preg: prev_hint.preg,
-                weight: prev_hint.weight + cur_hint.weight,
-            })
-        } else {
-            None
-        }
-    });
-
-    // Now, sort the hints in order of decreasing weight.
-    hints[..new_len]
-        .sort_unstable_by(|lhs, rhs| lhs.weight.partial_cmp(&rhs.weight).unwrap().reverse());
-
-    new_len
-}
-
-fn coalesce_slice<T: Copy>(
+pub fn coalesce_slice<T: Copy>(
     slice: &mut [T],
     mut coalesce: impl FnMut(&T, &T) -> Option<T>,
 ) -> usize {

@@ -18,10 +18,9 @@ use super::{
     conflict::{iter_btree_ranges, iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{
-        LiveRange, LiveRangeInstrs, LiveSetFragment, PhysRegHint, ProgramRange, QueuedFragment,
-        RangeEndKey,
+        LiveRange, LiveRangeInstrs, LiveSetFragment, ProgramRange, QueuedFragment, RangeEndKey,
     },
-    utils::{get_block_weight, get_instr_weight, sort_reg_hints},
+    utils::{coalesce_slice, get_block_weight, get_instr_weight},
     RegallocError,
 };
 
@@ -50,6 +49,15 @@ enum ProbeConflict {
         boundary: Option<ConflictBoundary>,
     },
 }
+
+#[derive(Clone, Copy)]
+struct ProbeHint {
+    preg: PhysReg,
+    hint_weight: f32,
+    sort_weight: f32,
+}
+
+type ProbeHints = SmallVec<[ProbeHint; 8]>;
 
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn assign_all_fragments(&mut self) -> Result<(), RegallocError> {
@@ -99,17 +107,20 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let live_set = self.live_set_fragments[fragment].live_set;
         let class = self.live_sets[live_set].class;
 
-        let mut hints = SmallVec::new();
-        self.collect_fragment_hints(fragment, &mut hints);
+        let mut hints = ProbeHints::new();
+        self.collect_probe_hints(fragment, &mut hints);
 
         // Start with hinted registers in order of decreasing weight, then move on to the default
         // allocation order requested by the machine backend.
-        let probe_order = hints.iter().copied().chain(
-            self.machine
-                .usable_regs(class)
-                .iter()
-                .map(|&preg| PhysRegHint { preg, weight: 0.0 }),
-        );
+        let probe_order = hints
+            .iter()
+            .map(|hint| (hint.preg, hint.hint_weight))
+            .chain(
+                self.machine
+                    .usable_regs(class)
+                    .iter()
+                    .map(|&preg| (preg, 0.0)),
+            );
 
         let mut no_conflict_reg = None;
         let mut lightest_soft_conflict = None;
@@ -117,10 +128,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let mut earliest_hard_conflict_boundary: Option<ConflictBoundary> = None;
 
         let mut probed_regs = PhysRegSet::empty();
-        for hint in probe_order {
-            let preg = hint.preg;
-            let hint_weight = hint.weight;
-
+        for (preg, hint_weight) in probe_order {
             if probed_regs.contains(preg) {
                 continue;
             }
@@ -213,21 +221,30 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         Err(RegallocError::OutOfRegisters(instr))
     }
 
-    fn collect_fragment_hints(
-        &self,
-        fragment: LiveSetFragment,
-        hints: &mut SmallVec<[PhysRegHint; 8]>,
-    ) {
-        hints.extend_from_slice(&self.live_set_fragments[fragment].hints);
+    fn collect_probe_hints(&self, fragment: LiveSetFragment, hints: &mut ProbeHints) {
+        hints.extend(
+            self.live_set_fragments[fragment]
+                .hints
+                .iter()
+                .map(|hint| ProbeHint {
+                    preg: hint.preg,
+                    hint_weight: hint.weight,
+                    sort_weight: hint.weight,
+                }),
+        );
 
         let prev_fragment = self.live_set_fragments[fragment].prev_split_neighbor;
         let next_fragment = self.live_set_fragments[fragment].next_split_neighbor;
 
         // Avoid all the extra shuffling/sorting work when we don't need it, as we know the original
-        // hints are sorted.
+        // hints are sorted by weight.
         if prev_fragment.is_none() && next_fragment.is_none() {
             return;
         }
+
+        // Collect hints from neighboring fragments if they have already been assigned. Note that
+        // we never mark these as having "proper" hint weights for allocation tracking, as the
+        // neighbors themselves might be evicted later.
 
         let hull = self.fragment_hull(fragment);
 
@@ -236,9 +253,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 self.live_set_fragments[prev_fragment].assignment.expand()
             {
                 let weight = get_instr_weight(self.lir, self.cfg_ctx, hull.start.instr());
-                hints.push(PhysRegHint {
+                hints.push(ProbeHint {
                     preg: prev_assignment,
-                    weight,
+                    hint_weight: 0.0,
+                    sort_weight: weight,
                 });
             }
         }
@@ -248,15 +266,15 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 self.live_set_fragments[next_fragment].assignment.expand()
             {
                 let weight = get_instr_weight(self.lir, self.cfg_ctx, hull.end.instr());
-                hints.push(PhysRegHint {
+                hints.push(ProbeHint {
                     preg: next_assignment,
-                    weight,
+                    hint_weight: 0.0,
+                    sort_weight: weight,
                 });
             }
         }
 
-        let hint_count = sort_reg_hints(hints);
-        hints.truncate(hint_count);
+        sort_probe_hints(hints);
     }
 
     fn spill_fragment_and_neighbors(&mut self, fragment: LiveSetFragment) {
@@ -951,4 +969,32 @@ fn conflict_boundary(
     } else {
         None
     }
+}
+
+fn sort_probe_hints(hints: &mut ProbeHints) {
+    // First: group the hints by physical register.
+    hints.sort_unstable_by_key(|hint| hint.preg.as_u8());
+
+    // Coalesce adjacent hints for the same register, recording total weight for each.
+    let new_len = coalesce_slice(hints, |prev_hint, cur_hint| {
+        if prev_hint.preg == cur_hint.preg {
+            Some(ProbeHint {
+                preg: prev_hint.preg,
+                hint_weight: prev_hint.hint_weight + cur_hint.hint_weight,
+                sort_weight: prev_hint.sort_weight + cur_hint.sort_weight,
+            })
+        } else {
+            None
+        }
+    });
+
+    hints.truncate(new_len);
+
+    // Now, sort the hints in order of decreasing weight.
+    hints.sort_unstable_by(|lhs, rhs| {
+        lhs.sort_weight
+            .partial_cmp(&rhs.sort_weight)
+            .unwrap()
+            .reverse()
+    });
 }

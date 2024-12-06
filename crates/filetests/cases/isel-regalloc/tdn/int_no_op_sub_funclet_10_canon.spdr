@@ -184,9 +184,9 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln:           $$r12 = $$rax
     # nextln: 0115:     Jump(block23)
     # nextln:       block24:
-    # nextln: 0116:     $$rcx = MovRM(S32) $$rax
     # nextln:           $$r12 = $$rax
-    # nextln:           $$spill1 = $$rcx
+    # nextln: 0116:     $$rax = MovRM(S32) $$r12
+    # nextln:           $$spill1 = $$rax
     # nextln: 0117:     Jump(block23)
     # nextln:       block23:
     # nextln: 0118:     $$rax = MovRStack(!0, S8)

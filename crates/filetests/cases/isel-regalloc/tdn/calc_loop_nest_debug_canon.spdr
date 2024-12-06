@@ -3,72 +3,67 @@
 func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # check: function `System.Int32 Tests.Program::Test(System.Int32)`:
     # nextln: clobbers: rax, rbx, rcx, rdx, rsi, r8, r9, r10, r11, r12, r13, r14, r15
-    # nextln: frame: size 138, align 8
-    # nextln:     !0: 128
-    # nextln:     !1: 40
-    # nextln:     !2: 44
-    # nextln:     !3: 48
-    # nextln:     !4: 52
-    # nextln:     !5: 56
-    # nextln:     !6: 60
-    # nextln:     !7: 64
-    # nextln:     !8: 68
-    # nextln:     !9: 72
-    # nextln:     !10: 76
-    # nextln:     !11: 80
-    # nextln:     !12: 84
-    # nextln:     !13: 88
-    # nextln:     !14: 92
-    # nextln:     !15: 96
-    # nextln:     !16: 133
-    # nextln:     !17: 100
-    # nextln:     !18: 104
-    # nextln:     !19: 108
-    # nextln:     !20: 137
-    # nextln:     !21: 112
-    # nextln:     !22: 134
-    # nextln:     !23: 116
-    # nextln:     !24: 120
-    # nextln:     !25: 124
-    # nextln:     !26: 135
-    # nextln:     !27: 136
-    # nextln:     !28: 132
+    # nextln: frame: size 130, align 8
+    # nextln:     !0: 120
+    # nextln:     !1: 32
+    # nextln:     !2: 36
+    # nextln:     !3: 40
+    # nextln:     !4: 44
+    # nextln:     !5: 48
+    # nextln:     !6: 52
+    # nextln:     !7: 56
+    # nextln:     !8: 60
+    # nextln:     !9: 64
+    # nextln:     !10: 68
+    # nextln:     !11: 72
+    # nextln:     !12: 76
+    # nextln:     !13: 80
+    # nextln:     !14: 84
+    # nextln:     !15: 88
+    # nextln:     !16: 126
+    # nextln:     !17: 92
+    # nextln:     !18: 96
+    # nextln:     !19: 100
+    # nextln:     !20: 125
+    # nextln:     !21: 104
+    # nextln:     !22: 127
+    # nextln:     !23: 108
+    # nextln:     !24: 112
+    # nextln:     !25: 116
+    # nextln:     !26: 128
+    # nextln:     !27: 129
+    # nextln:     !28: 124
     # nextln:     spill0: 0
     # nextln:     spill1: 8
     # nextln:     spill2: 16
     # nextln:     spill3: 24
-    # nextln:     spill4: 32
     # nextln:       block0:
-    # nextln: 0000:     $$rax = MovRmS32(7)
-    # nextln: 0001:     $$rcx = MovRmS32(9)
-    # nextln:           $$spill4 = $$rcx
-    # nextln: 0002:     $$rcx = MovRmS32(13)
-    # nextln:           $$spill3 = $$rcx
-    # nextln: 0003:     $$rcx = MovRmS32(4)
-    # nextln:           $$spill2 = $$rcx
+    # nextln: 0000:     $$rbx = MovRmS32(7)
+    # nextln: 0001:     $$rax = MovRmS32(9)
+    # nextln:           $$spill3 = $$rax
+    # nextln: 0002:     $$rax = MovRmS32(13)
+    # nextln:           $$spill2 = $$rax
+    # nextln: 0003:     $$rax = MovRmS32(4)
+    # nextln:           $$spill1 = $$rax
     # nextln: 0004:     $$r15 = MovRmS32(1)
-    # nextln: 0005:     $$rcx = MovRmS32(6)
-    # nextln:           $$spill0 = $$rcx
+    # nextln: 0005:     $$rax = MovRmS32(6)
+    # nextln:           $$spill0 = $$rax
     # nextln: 0006:     $$r8 = MovRZ
-    # nextln: 0007:     $$rcx = MovRmS32(5)
-    # nextln:           $$spill1 = $$rcx
+    # nextln: 0007:     $$rax = MovRmS32(5)
     # nextln: 0008:     $$r12 = MovRmS32(12)
     # nextln: 0009:     $$rcx = MovRmS32(3)
-    # nextln: 0010:     $$rdx = MovRmS32(2)
+    # nextln:           $$rdx = $$rcx
+    # nextln:           $$rcx = $$rax
+    # nextln:           $$rax = $$rdx
+    # nextln: 0010:     $$r10 = MovRmS32(2)
     # nextln: 0011:     $$r13 = MovRmS32(15)
-    # nextln:           $$rsi = $$rax
     # nextln:           $$rax = $$rcx
     # nextln:           $$rcx = $$rdx
-    # nextln:           $$rdx = $$rsi
     # nextln: 0012:     $$r14 = MovRmS32(14)
-    # nextln:           $$rsi = $$rcx
-    # nextln:           $$rcx = $$rdx
-    # nextln:           $$rdx = $$rax
+    # nextln:           $$r11 = $$rax
     # nextln: 0013:     $$rax = MovRmS32(8)
-    # nextln:           $$r9 = $$rcx
-    # nextln:           $$rcx = $$rdx
-    # nextln: 0014:     $$rbx = MovRmS32(10)
-    # nextln: 0015:     $$rdx = MovRmS32(11)
+    # nextln: 0014:     $$rsi = MovRmS32(10)
+    # nextln: 0015:     $$r9 = MovRmS32(11)
     # nextln: 0016:     MovStackR(!18, S32) $$r8
     # nextln: 0017:     MovStackR(!1, S32) $$r8
     # nextln: 0018:     MovStackR(!0, S32) $$r8
@@ -99,30 +94,32 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0043:     MovStackR(!28, S8) $$r8
     # nextln: 0044:     MovStackR(!2, S32) $$r8
     # nextln: 0045:     MovStackR(!18, S32) $$r15
-    # nextln:           $$r15 = $$r9
-    # nextln:           $$r11 = $$rsi
-    # nextln: 0046:     MovStackR(!1, S32) $$r11
-    # nextln:           $$r10 = $$rcx
-    # nextln: 0047:     MovStackR(!0, S32) $$r10
-    # nextln:           $$rcx = $$spill2
-    # nextln: 0048:     MovStackR(!15, S32) $$rcx
-    # nextln:           $$r9 = $$spill1
-    # nextln: 0049:     MovStackR(!14, S32) $$r9
-    # nextln:           $$rsi = $$spill0
-    # nextln: 0050:     MovStackR(!13, S32) $$rsi
-    # nextln: 0051:     MovStackR(!12, S32) $$r15
+    # nextln: 0046:     MovStackR(!1, S32) $$r10
+    # nextln: 0047:     MovStackR(!0, S32) $$rdx
+    # nextln:           $$r15 = $$spill1
+    # nextln: 0048:     MovStackR(!15, S32) $$r15
+    # nextln:           $$rcx = $$r11
+    # nextln: 0049:     MovStackR(!14, S32) $$rcx
+    # nextln:           $$r11 = $$spill0
+    # nextln: 0050:     MovStackR(!13, S32) $$r11
+    # nextln: 0051:     MovStackR(!12, S32) $$rbx
     # nextln: 0052:     MovStackR(!11, S32) $$rax
-    # nextln:           $$rax = $$spill4
-    # nextln: 0053:     MovStackR(!10, S32) $$rax
-    # nextln: 0054:     MovStackR(!9, S32) $$rbx
-    # nextln: 0055:     MovStackR(!8, S32) $$rdx
-    # nextln: 0056:     MovStackR(!7, S32) $$r12
     # nextln:           $$rax = $$spill3
+    # nextln: 0053:     MovStackR(!10, S32) $$rax
+    # nextln: 0054:     MovStackR(!9, S32) $$rsi
+    # nextln: 0055:     MovStackR(!8, S32) $$r9
+    # nextln: 0056:     MovStackR(!7, S32) $$r12
+    # nextln:           $$rax = $$spill2
     # nextln: 0057:     MovStackR(!6, S32) $$rax
     # nextln: 0058:     MovStackR(!5, S32) $$r14
     # nextln: 0059:     MovStackR(!4, S32) $$r13
     # nextln: 0060:     MovStackR(!3, S32) $$r8
     # nextln: 0061:     MovStackR(!17, S32) $$r8
+    # nextln:           $$r9 = $$rcx
+    # nextln:           $$rcx = $$r15
+    # nextln:           $$rsi = $$r11
+    # nextln:           $$r11 = $$r10
+    # nextln:           $$r10 = $$rdx
     # nextln: 0062:     Jump(block1)
     # nextln:       block1:
     # nextln: 0063:     $$rdx = MovRStack(!17, S32)

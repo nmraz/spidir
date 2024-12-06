@@ -113,11 +113,11 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0065:     AluRRm(S64, Cmp) $$rdi, $$rdx
     # nextln: 0066:     Jumpcc(L, block7, block8)
     # nextln:       block7:
-    # nextln:           $$rsi = $$r14
-    # nextln: 0067:     $$rsi = ImulRRm(S64) $$rsi, $$rdi
-    # nextln:           $$rdx = $$rbx
-    # nextln: 0068:     $$rdx = AluRRm(S64, Add) $$rdx, $$rsi
-    # nextln: 0069:     $$rcx = AluRRm(S64, Add) $$rcx, $$rdx
+    # nextln:           $$rdx = $$r14
+    # nextln: 0067:     $$rdx = ImulRRm(S64) $$rdx, $$rdi
+    # nextln:           $$rdi = $$rbx
+    # nextln: 0068:     $$rdi = AluRRm(S64, Add) $$rdi, $$rdx
+    # nextln: 0069:     $$rcx = AluRRm(S64, Add) $$rcx, $$rdi
     # nextln: 0070:     MovMR(S8) $$rcx, $$rax
     # nextln: 0071:     $$rdi = MovRI64(105690555220976)
     # nextln: 0072:     $$rsi = MovRI64(105690555221008)
@@ -1210,10 +1210,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0920:     $$rax = MovRStack(!1, S64)
     # nextln:           $$rcx = $$rax
     # nextln: 0921:     $$rcx = AluRmI(S64, Add, 32) $$rcx
-    # nextln: 0922:     $$rdi = MovRStack(!3, S32)
-    # nextln: 0923:     $$rdx = MovRM(S32) $$rcx
-    # nextln: 0924:     $$rcx = MovsxRRm(Ext32_64) $$rdi
-    # nextln: 0925:     AluRRm(S64, Cmp) $$rcx, $$rdx
+    # nextln: 0922:     $$rdx = MovRStack(!3, S32)
+    # nextln: 0923:     $$rdi = MovRM(S32) $$rcx
+    # nextln: 0924:     $$rcx = MovsxRRm(Ext32_64) $$rdx
+    # nextln: 0925:     AluRRm(S64, Cmp) $$rcx, $$rdi
     # nextln: 0926:     Jumpcc(L, block202, block203)
     # nextln:       block202:
     # nextln:           $$rdx = $$r14
@@ -2457,11 +2457,9 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 1855:     AluRRm(S32, Test) $$r15, $$r15
     # nextln: 1856:     Jumpcc(Ne, block451, block452)
     # nextln:       block451:
-    # nextln:           $$r8 = $$rax
-    # nextln:           $$rcx = $$r8
+    # nextln:           $$rcx = $$rax
     # nextln: 1857:     Jump(block455)
     # nextln:       block452:
-    # nextln:           $$r8 = $$rax
     # nextln: 1858:     $$rcx = MovRStack(!1, S64)
     # nextln:           $$rdx = $$rcx
     # nextln: 1859:     $$rdx = AluRmI(S64, Add, 32) $$rdx
@@ -2498,8 +2496,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 1882:     $$rcx = MovRStack(!6, S8)
     # nextln: 1883:     Jump(block461)
     # nextln:       block460:
-    # nextln:           $$rax = $$spill0
-    # nextln:           $$rcx = $$rax
+    # nextln:           $$rcx = $$spill0
     # nextln: 1884:     Jump(block461)
     # nextln:       block461:
     # nextln: 1885:     AluRRm(S32, Test) $$rcx, $$rcx
@@ -2519,11 +2516,11 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 1896:     Jumpcc(Ne, block465, block466)
     # nextln:       block465:
     # nextln: 1897:     $$rcx = MovRStack(!6, S8)
-    # nextln:           $$spill1 = $$r8
+    # nextln:           $$spill1 = $$rax
     # nextln: 1898:     Jump(block467)
     # nextln:       block466:
-    # nextln:           $$rcx = $$r8
-    # nextln:           $$spill1 = $$r8
+    # nextln:           $$rcx = $$rax
+    # nextln:           $$spill1 = $$rax
     # nextln: 1899:     Jump(block467)
     # nextln:       block467:
     # nextln: 1900:     AluRRm(S32, Test) $$rcx, $$rcx
@@ -2732,8 +2729,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2046:     $$rcx = MovRM(S8) $$rax
     # nextln: 2047:     Jump(block519)
     # nextln:       block518:
-    # nextln:           $$r8 = $$spill1
-    # nextln:           $$rcx = $$r8
+    # nextln:           $$rcx = $$spill1
     # nextln: 2048:     Jump(block519)
     # nextln:       block519:
     # nextln: 2049:     AluRRm(S32, Test) $$rcx, $$rcx
@@ -3291,10 +3287,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2451:     $$rax = MovRStack(!5, S64)
     # nextln:           $$rcx = $$rax
     # nextln: 2452:     $$rcx = AluRmI(S64, Add, 32) $$rcx
-    # nextln: 2453:     $$rdx = MovRStack(!3, S32)
-    # nextln: 2454:     $$rdi = MovRM(S32) $$rcx
-    # nextln: 2455:     $$rcx = MovsxRRm(Ext32_64) $$rdx
-    # nextln: 2456:     AluRRm(S64, Cmp) $$rcx, $$rdi
+    # nextln: 2453:     $$rdi = MovRStack(!3, S32)
+    # nextln: 2454:     $$rdx = MovRM(S32) $$rcx
+    # nextln: 2455:     $$rcx = MovsxRRm(Ext32_64) $$rdi
+    # nextln: 2456:     AluRRm(S64, Cmp) $$rcx, $$rdx
     # nextln: 2457:     Jumpcc(L, block653, block654)
     # nextln:       block653:
     # nextln:           $$rdx = $$r14
@@ -3626,10 +3622,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2692:     $$rax = MovRStack(!5, S64)
     # nextln:           $$rcx = $$rax
     # nextln: 2693:     $$rcx = AluRmI(S64, Add, 32) $$rcx
-    # nextln: 2694:     $$rdi = MovRStack(!3, S32)
-    # nextln: 2695:     $$rdx = MovRM(S32) $$rcx
-    # nextln: 2696:     $$rcx = MovsxRRm(Ext32_64) $$rdi
-    # nextln: 2697:     AluRRm(S64, Cmp) $$rcx, $$rdx
+    # nextln: 2694:     $$rdx = MovRStack(!3, S32)
+    # nextln: 2695:     $$rdi = MovRM(S32) $$rcx
+    # nextln: 2696:     $$rcx = MovsxRRm(Ext32_64) $$rdx
+    # nextln: 2697:     AluRRm(S64, Cmp) $$rcx, $$rdi
     # nextln: 2698:     Jumpcc(L, block705, block706)
     # nextln:       block705:
     # nextln:           $$rdx = $$r14
@@ -3713,10 +3709,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2755:     $$rax = MovRStack(!1, S64)
     # nextln:           $$rcx = $$rax
     # nextln: 2756:     $$rcx = AluRmI(S64, Add, 32) $$rcx
-    # nextln: 2757:     $$rdi = MovRStack(!3, S32)
-    # nextln: 2758:     $$rdx = MovRM(S32) $$rcx
-    # nextln: 2759:     $$rcx = MovsxRRm(Ext32_64) $$rdi
-    # nextln: 2760:     AluRRm(S64, Cmp) $$rcx, $$rdx
+    # nextln: 2757:     $$rdx = MovRStack(!3, S32)
+    # nextln: 2758:     $$rdi = MovRM(S32) $$rcx
+    # nextln: 2759:     $$rcx = MovsxRRm(Ext32_64) $$rdx
+    # nextln: 2760:     AluRRm(S64, Cmp) $$rcx, $$rdi
     # nextln: 2761:     Jumpcc(L, block1227, block1228)
     # nextln:       block1227:
     # nextln:           $$rdx = $$r14
@@ -3753,10 +3749,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2783:     $$rax = MovRStack(!1, S64)
     # nextln:           $$rcx = $$rax
     # nextln: 2784:     $$rcx = AluRmI(S64, Add, 32) $$rcx
-    # nextln: 2785:     $$rdi = MovRStack(!3, S32)
-    # nextln: 2786:     $$rdx = MovRM(S32) $$rcx
-    # nextln: 2787:     $$rcx = MovsxRRm(Ext32_64) $$rdi
-    # nextln: 2788:     AluRRm(S64, Cmp) $$rcx, $$rdx
+    # nextln: 2785:     $$rdx = MovRStack(!3, S32)
+    # nextln: 2786:     $$rdi = MovRM(S32) $$rcx
+    # nextln: 2787:     $$rcx = MovsxRRm(Ext32_64) $$rdx
+    # nextln: 2788:     AluRRm(S64, Cmp) $$rcx, $$rdi
     # nextln: 2789:     Jumpcc(L, block1225, block1226)
     # nextln:       block1225:
     # nextln:           $$rdx = $$r14
@@ -4679,10 +4675,12 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:       block921:
     # nextln:           $$rax = $$r15
     # nextln: 3431:     $$rcx = MovRM(S8) $$rax
+    # nextln:           $$r15 = $$spill0
     # nextln: 3432:     Jump(block923)
     # nextln:       block922:
-    # nextln:           $$rcx = $$spill0
     # nextln:           $$rax = $$r15
+    # nextln:           $$r15 = $$spill0
+    # nextln:           $$rcx = $$r15
     # nextln: 3433:     Jump(block923)
     # nextln:       block923:
     # nextln: 3434:     AluRRm(S32, Test) $$rcx, $$rcx
@@ -4791,11 +4789,12 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3509:     AluRRm(S32, Test) $$r12, $$r12
     # nextln: 3510:     Jumpcc(Ne, block951, block952)
     # nextln:       block951:
-    # nextln:           $$r15 = $$rax
-    # nextln: 3511:     $$rax = MovRM(S8) $$r15
+    # nextln:           $$rcx = $$rax
+    # nextln: 3511:     $$rax = MovRM(S8) $$rcx
+    # nextln:           $$spill3 = $$rcx
     # nextln: 3512:     Jump(block953)
     # nextln:       block952:
-    # nextln:           $$r15 = $$rax
+    # nextln:           $$spill3 = $$rax
     # nextln: 3513:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln: 3514:     $$rax = CallRm $$rax
     # nextln: 3515:     Jump(block953)
@@ -4816,160 +4815,165 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 3526:     AluRRm(S32, Test) $$r12, $$r12
     # nextln: 3527:     Jumpcc(Ne, block957, block958)
     # nextln:       block957:
-    # nextln: 3528:     $$rax = MovRM(S8) $$r15
+    # nextln:           $$rax = $$spill3
+    # nextln: 3528:     $$rcx = MovRM(S8) $$rax
     # nextln: 3529:     Jump(block961)
     # nextln:       block958:
-    # nextln: 3530:     $$rax = MovRStack(!5, S64)
-    # nextln:           $$rcx = $$rax
-    # nextln: 3531:     $$rcx = AluRmI(S64, Add, 32) $$rcx
-    # nextln: 3532:     $$rdx = MovRStack(!3, S32)
-    # nextln: 3533:     $$rdi = MovRM(S32) $$rcx
-    # nextln: 3534:     $$rcx = MovsxRRm(Ext32_64) $$rdx
-    # nextln: 3535:     AluRRm(S64, Cmp) $$rcx, $$rdi
+    # nextln:           $$rax = $$spill3
+    # nextln: 3530:     $$rcx = MovRStack(!5, S64)
+    # nextln:           $$rdx = $$rcx
+    # nextln: 3531:     $$rdx = AluRmI(S64, Add, 32) $$rdx
+    # nextln: 3532:     $$rdi = MovRStack(!3, S32)
+    # nextln: 3533:     $$rsi = MovRM(S32) $$rdx
+    # nextln: 3534:     $$rdx = MovsxRRm(Ext32_64) $$rdi
+    # nextln: 3535:     AluRRm(S64, Cmp) $$rdx, $$rsi
     # nextln: 3536:     Jumpcc(L, block959, block960)
     # nextln:       block959:
-    # nextln:           $$rdx = $$r14
-    # nextln: 3537:     $$rdx = ImulRRm(S64) $$rdx, $$rcx
-    # nextln:           $$rcx = $$rbx
-    # nextln: 3538:     $$rcx = AluRRm(S64, Add) $$rcx, $$rdx
-    # nextln: 3539:     $$rax = AluRRm(S64, Add) $$rax, $$rcx
-    # nextln: 3540:     $$rax = MovRM(S8) $$rax
+    # nextln:           $$rdi = $$r14
+    # nextln: 3537:     $$rdi = ImulRRm(S64) $$rdi, $$rdx
+    # nextln:           $$rdx = $$rbx
+    # nextln: 3538:     $$rdx = AluRRm(S64, Add) $$rdx, $$rdi
+    # nextln: 3539:     $$rcx = AluRRm(S64, Add) $$rcx, $$rdx
+    # nextln: 3540:     $$rcx = MovRM(S8) $$rcx
     # nextln: 3541:     Jump(block961)
     # nextln:       block961:
-    # nextln: 3542:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 3542:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 3543:     Jumpcc(Ne, block962, block963)
     # nextln:       block962:
-    # nextln: 3544:     $$rax = MovRStack(!4, S32)
-    # nextln: 3545:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 3546:     MovStackR(!4, S32) $$rax
+    # nextln: 3544:     $$rcx = MovRStack(!4, S32)
+    # nextln: 3545:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 3546:     MovStackR(!4, S32) $$rcx
     # nextln: 3547:     Jump(block964)
     # nextln:       block963:
-    # nextln: 3548:     $$rax = MovRStack(!2, S32)
-    # nextln: 3549:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 3550:     MovStackR(!2, S32) $$rax
+    # nextln: 3548:     $$rcx = MovRStack(!2, S32)
+    # nextln: 3549:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 3550:     MovStackR(!2, S32) $$rcx
     # nextln: 3551:     Jump(block964)
     # nextln:       block964:
     # nextln: 3552:     AluRRm(S32, Test) $$r12, $$r12
     # nextln: 3553:     Jumpcc(Ne, block965, block966)
     # nextln:       block965:
-    # nextln: 3554:     $$rax = MovRM(S8) $$r15
+    # nextln: 3554:     $$rcx = MovRM(S8) $$rax
     # nextln: 3555:     Jump(block969)
     # nextln:       block966:
-    # nextln: 3556:     $$rax = MovRStack(!1, S64)
-    # nextln:           $$rcx = $$rax
-    # nextln: 3557:     $$rcx = AluRmI(S64, Add, 32) $$rcx
-    # nextln: 3558:     $$rdx = MovRStack(!3, S32)
-    # nextln: 3559:     $$rdi = MovRM(S32) $$rcx
-    # nextln: 3560:     $$rcx = MovsxRRm(Ext32_64) $$rdx
-    # nextln: 3561:     AluRRm(S64, Cmp) $$rcx, $$rdi
+    # nextln: 3556:     $$rcx = MovRStack(!1, S64)
+    # nextln:           $$rdx = $$rcx
+    # nextln: 3557:     $$rdx = AluRmI(S64, Add, 32) $$rdx
+    # nextln: 3558:     $$rdi = MovRStack(!3, S32)
+    # nextln: 3559:     $$rsi = MovRM(S32) $$rdx
+    # nextln: 3560:     $$rdx = MovsxRRm(Ext32_64) $$rdi
+    # nextln: 3561:     AluRRm(S64, Cmp) $$rdx, $$rsi
     # nextln: 3562:     Jumpcc(L, block967, block968)
     # nextln:       block967:
-    # nextln:           $$rdx = $$r14
-    # nextln: 3563:     $$rdx = ImulRRm(S64) $$rdx, $$rcx
-    # nextln:           $$rcx = $$rbx
-    # nextln: 3564:     $$rcx = AluRRm(S64, Add) $$rcx, $$rdx
-    # nextln: 3565:     $$rax = AluRRm(S64, Add) $$rax, $$rcx
-    # nextln: 3566:     $$rax = MovRM(S8) $$rax
+    # nextln:           $$rdi = $$r14
+    # nextln: 3563:     $$rdi = ImulRRm(S64) $$rdi, $$rdx
+    # nextln:           $$rdx = $$rbx
+    # nextln: 3564:     $$rdx = AluRRm(S64, Add) $$rdx, $$rdi
+    # nextln: 3565:     $$rcx = AluRRm(S64, Add) $$rcx, $$rdx
+    # nextln: 3566:     $$rcx = MovRM(S8) $$rcx
     # nextln: 3567:     Jump(block969)
     # nextln:       block969:
-    # nextln: 3568:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 3568:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 3569:     Jumpcc(Ne, block970, block971)
     # nextln:       block970:
-    # nextln: 3570:     $$rax = MovRStack(!4, S32)
-    # nextln: 3571:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 3572:     MovStackR(!4, S32) $$rax
+    # nextln: 3570:     $$rcx = MovRStack(!4, S32)
+    # nextln: 3571:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 3572:     MovStackR(!4, S32) $$rcx
     # nextln: 3573:     Jump(block972)
     # nextln:       block971:
-    # nextln: 3574:     $$rax = MovRStack(!2, S32)
-    # nextln: 3575:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 3576:     MovStackR(!2, S32) $$rax
+    # nextln: 3574:     $$rcx = MovRStack(!2, S32)
+    # nextln: 3575:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 3576:     MovStackR(!2, S32) $$rcx
     # nextln: 3577:     Jump(block972)
     # nextln:       block972:
     # nextln: 3578:     AluRRm(S32, Test) $$r12, $$r12
     # nextln: 3579:     Jumpcc(Ne, block973, block974)
     # nextln:       block973:
-    # nextln: 3580:     $$rax = MovRStack(!0, S64)
-    # nextln: 3581:     $$rax = AluRmI(S64, Add, 32) $$rax
-    # nextln: 3582:     $$rax = MovRM(S8) $$rax
+    # nextln: 3580:     $$rcx = MovRStack(!0, S64)
+    # nextln: 3581:     $$rcx = AluRmI(S64, Add, 32) $$rcx
+    # nextln: 3582:     $$rcx = MovRM(S8) $$rcx
+    # nextln:           $$spill0 = $$r15
     # nextln: 3583:     Jump(block975)
     # nextln:       block974:
-    # nextln:           $$rcx = $$spill0
-    # nextln:           $$rax = $$rcx
+    # nextln:           $$rcx = $$r15
+    # nextln:           $$spill0 = $$r15
     # nextln: 3584:     Jump(block975)
     # nextln:       block975:
-    # nextln: 3585:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 3585:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 3586:     Jumpcc(Ne, block976, block977)
     # nextln:       block976:
-    # nextln: 3587:     $$rax = MovRStack(!4, S32)
-    # nextln: 3588:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 3589:     MovStackR(!4, S32) $$rax
+    # nextln: 3587:     $$rcx = MovRStack(!4, S32)
+    # nextln: 3588:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 3589:     MovStackR(!4, S32) $$rcx
     # nextln: 3590:     Jump(block978)
     # nextln:       block977:
-    # nextln: 3591:     $$rax = MovRStack(!2, S32)
-    # nextln: 3592:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 3593:     MovStackR(!2, S32) $$rax
+    # nextln: 3591:     $$rcx = MovRStack(!2, S32)
+    # nextln: 3592:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 3593:     MovStackR(!2, S32) $$rcx
     # nextln: 3594:     Jump(block978)
     # nextln:       block978:
     # nextln: 3595:     AluRRm(S32, Test) $$r12, $$r12
     # nextln: 3596:     Jumpcc(Ne, block979, block980)
     # nextln:       block979:
-    # nextln: 3597:     $$rax = MovRStack(!0, S64)
-    # nextln: 3598:     $$rax = AluRmI(S64, Add, 32) $$rax
-    # nextln: 3599:     $$rax = MovRM(S8) $$rax
+    # nextln: 3597:     $$rcx = MovRStack(!0, S64)
+    # nextln: 3598:     $$rcx = AluRmI(S64, Add, 32) $$rcx
+    # nextln: 3599:     $$rcx = MovRM(S8) $$rcx
     # nextln: 3600:     Jump(block981)
     # nextln:       block980:
-    # nextln:           $$rax = $$r13
+    # nextln:           $$rcx = $$r13
     # nextln: 3601:     Jump(block981)
     # nextln:       block981:
-    # nextln: 3602:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 3602:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 3603:     Jumpcc(Ne, block982, block983)
     # nextln:       block982:
-    # nextln: 3604:     $$rax = MovRStack(!4, S32)
-    # nextln: 3605:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 3606:     MovStackR(!4, S32) $$rax
+    # nextln: 3604:     $$rcx = MovRStack(!4, S32)
+    # nextln: 3605:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 3606:     MovStackR(!4, S32) $$rcx
     # nextln: 3607:     Jump(block984)
     # nextln:       block983:
-    # nextln: 3608:     $$rax = MovRStack(!2, S32)
-    # nextln: 3609:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 3610:     MovStackR(!2, S32) $$rax
+    # nextln: 3608:     $$rcx = MovRStack(!2, S32)
+    # nextln: 3609:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 3610:     MovStackR(!2, S32) $$rcx
     # nextln: 3611:     Jump(block984)
     # nextln:       block984:
     # nextln: 3612:     AluRRm(S32, Test) $$r12, $$r12
     # nextln: 3613:     Jumpcc(Ne, block985, block986)
     # nextln:       block985:
-    # nextln: 3614:     $$rax = MovRStack(!0, S64)
-    # nextln: 3615:     $$rax = AluRmI(S64, Add, 32) $$rax
-    # nextln: 3616:     $$rax = MovRM(S8) $$rax
+    # nextln: 3614:     $$rcx = MovRStack(!0, S64)
+    # nextln: 3615:     $$rcx = AluRmI(S64, Add, 32) $$rcx
+    # nextln: 3616:     $$rcx = MovRM(S8) $$rcx
     # nextln: 3617:     Jump(block987)
     # nextln:       block986:
-    # nextln: 3618:     $$rax = MovRStack(!6, S8)
+    # nextln: 3618:     $$rcx = MovRStack(!6, S8)
     # nextln: 3619:     Jump(block987)
     # nextln:       block987:
-    # nextln: 3620:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 3620:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 3621:     Jumpcc(Ne, block988, block989)
     # nextln:       block988:
-    # nextln: 3622:     $$rax = MovRStack(!4, S32)
-    # nextln: 3623:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 3624:     MovStackR(!4, S32) $$rax
+    # nextln: 3622:     $$rcx = MovRStack(!4, S32)
+    # nextln: 3623:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 3624:     MovStackR(!4, S32) $$rcx
     # nextln: 3625:     Jump(block990)
     # nextln:       block989:
-    # nextln: 3626:     $$rax = MovRStack(!2, S32)
-    # nextln: 3627:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 3628:     MovStackR(!2, S32) $$rax
+    # nextln: 3626:     $$rcx = MovRStack(!2, S32)
+    # nextln: 3627:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 3628:     MovStackR(!2, S32) $$rcx
     # nextln: 3629:     Jump(block990)
     # nextln:       block990:
     # nextln: 3630:     AluRRm(S32, Test) $$r12, $$r12
     # nextln: 3631:     Jumpcc(Ne, block991, block992)
     # nextln:       block991:
-    # nextln: 3632:     $$rax = MovRStack(!0, S64)
-    # nextln: 3633:     $$rax = AluRmI(S64, Add, 32) $$rax
-    # nextln: 3634:     $$rax = MovRM(S8) $$rax
+    # nextln: 3632:     $$rcx = MovRStack(!0, S64)
+    # nextln: 3633:     $$rcx = AluRmI(S64, Add, 32) $$rcx
+    # nextln: 3634:     $$rcx = MovRM(S8) $$rcx
+    # nextln:           $$r15 = $$rax
     # nextln: 3635:     Jump(block993)
     # nextln:       block992:
-    # nextln: 3636:     $$rax = MovRM(S8) $$r15
+    # nextln:           $$r15 = $$rax
+    # nextln: 3636:     $$rcx = MovRM(S8) $$r15
     # nextln: 3637:     Jump(block993)
     # nextln:       block993:
-    # nextln: 3638:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 3638:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 3639:     Jumpcc(Ne, block994, block995)
     # nextln:       block994:
     # nextln: 3640:     $$rax = MovRStack(!4, S32)

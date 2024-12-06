@@ -262,13 +262,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn spill_fragment_and_neighbors(&mut self, fragment: LiveSetFragment) {
         self.spill_fragment(fragment);
 
-        // Spill any neighbors (in both directions) that don't have any use instructions. Note that
-        // neighbors containing just a def should be spilled as well, as we'll need to copy into the
-        // spill anyway at some point.
+        // Spill any neighbors (in both directions) that don't have any attached instructions.
 
         let mut cursor = fragment;
         while let Some(prev) = self.live_set_fragments[cursor].prev_split_neighbor.expand() {
-            if self.fragment_has_uses(prev) {
+            if self.fragment_has_instrs(prev) {
                 break;
             }
 
@@ -282,7 +280,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let mut cursor = fragment;
         while let Some(next) = self.live_set_fragments[cursor].next_split_neighbor.expand() {
-            if self.fragment_has_uses(next) {
+            if self.fragment_has_instrs(next) {
                 break;
             }
 
@@ -831,10 +829,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
     fn fragment_has_instrs(&self, fragment: LiveSetFragment) -> bool {
         self.fragment_instrs(fragment).next().is_some()
-    }
-
-    fn fragment_has_uses(&self, fragment: LiveSetFragment) -> bool {
-        self.fragment_instrs(fragment).any(|instr| !instr.is_def())
     }
 
     fn fragment_instrs(

@@ -296,6 +296,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn spill_fragment(&mut self, fragment: LiveSetFragment) {
         trace!("  spill: {fragment}");
 
+        debug_assert!(!self.is_fragment_atomic(fragment));
+
         let live_set = self.live_set_fragments[fragment].live_set;
         let fragment_hull = self.fragment_hull(fragment);
 

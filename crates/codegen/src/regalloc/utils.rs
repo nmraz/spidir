@@ -1,5 +1,5 @@
 use crate::{
-    cfg::CfgContext,
+    cfg::{Block, CfgContext},
     lir::{Instr, Lir},
     machine::MachineRegalloc,
 };
@@ -24,6 +24,10 @@ pub fn get_instr_weight<M: MachineRegalloc>(
     instr: Instr,
 ) -> f32 {
     let block = cfg_ctx.block_order[lir.instr_block_index(instr)];
+    get_block_weight(cfg_ctx, block)
+}
+
+pub fn get_block_weight(cfg_ctx: &CfgContext, block: Block) -> f32 {
     let loop_depth = cfg_ctx
         .depth_map
         .loop_depth(cfg_ctx.domtree.get_tree_node(block).unwrap());

@@ -1,4 +1,4 @@
-use core::mem;
+use core::{cmp::Ordering, f32, mem};
 
 use hashbrown::hash_map::Entry;
 use itertools::Itertools;
@@ -21,7 +21,7 @@ use super::{
         LiveRange, LiveRangeInstrs, LiveSetFragment, PhysRegHint, ProgramRange, QueuedFragment,
         RangeEndKey,
     },
-    utils::{get_instr_weight, sort_reg_hints},
+    utils::{get_block_weight, get_instr_weight, sort_reg_hints},
     RegallocError,
 };
 
@@ -426,16 +426,83 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             return false;
         }
 
-        let Some(instr) = self.split_point_for_conflict(fragment, boundary) else {
-            return false;
+        if let Some(global_split) = self.global_split_point(fragment) {
+            trace!("    found global split: {global_split}");
+            self.split_fragment_before(fragment, global_split);
+            return true;
+        }
+
+        if let Some(conflict_split) = self.split_point_for_conflict(fragment, boundary) {
+            trace!("    found conflict split: {conflict_split}");
+            self.split_fragment_before(fragment, conflict_split);
+            return true;
         };
 
-        self.split_fragment_before(fragment, instr);
-        true
+        false
+    }
+
+    fn global_split_point(&self, fragment: LiveSetFragment) -> Option<Instr> {
+        if !self.is_fragment_global(fragment) {
+            return None;
+        }
+
+        let hull = self.fragment_hull(fragment);
+        let start = hull.start.instr();
+        let end = hull.end.instr();
+
+        let mut block_idx = self.lir.instr_block_index(start);
+        let mut last_block = self.cfg_ctx.block_order[block_idx];
+        let mut last_weight = get_block_weight(self.cfg_ctx, last_block);
+
+        let mut min_weight = f32::INFINITY;
+        let mut split_point = None;
+
+        // Note: the increment in the first iteration of the loop is always safe because this
+        // fragment spans at least two blocks.
+        loop {
+            block_idx += 1;
+
+            let block = self.cfg_ctx.block_order[block_idx];
+            let block_start = self.lir.block_instrs(block).start;
+
+            if block_start >= end {
+                break;
+            }
+
+            let weight = get_block_weight(self.cfg_ctx, block);
+            match last_weight.partial_cmp(&weight).unwrap() {
+                Ordering::Less if last_weight < min_weight => {
+                    // We've found a transition from a low-weight block to a higher-weight block,
+                    // with the low weight having reached a new minimum across our walk. Split just
+                    // before the end of the low-weight block to circumvent the high-weight one.
+                    let last_terminator = self.lir.block_terminator(last_block);
+                    if hull.can_split_before(ProgramPoint::before(last_terminator)) {
+                        split_point = Some(last_terminator);
+                        min_weight = last_weight;
+                    }
+                }
+                Ordering::Greater if weight < min_weight => {
+                    // We've found a transition from a high-weight block to a lower-weight block,
+                    // with the low weight having reached a new minimum across our walk. Split just
+                    // before the start of the low-weight block, noting that any copies inserted
+                    // later will never be placed in a more deeply-nested loop.
+                    if hull.can_split_before(ProgramPoint::before(block_start)) {
+                        split_point = Some(block_start);
+                        min_weight = weight;
+                    }
+                }
+                _ => {}
+            }
+
+            last_block = block;
+            last_weight = weight;
+        }
+
+        split_point
     }
 
     fn split_point_for_conflict(
-        &mut self,
+        &self,
         fragment: LiveSetFragment,
         boundary: ConflictBoundary,
     ) -> Option<Instr> {
@@ -846,6 +913,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn can_split_fragment_before(&self, fragment: LiveSetFragment, instr: Instr) -> bool {
         self.fragment_hull(fragment)
             .can_split_before(ProgramPoint::before(instr))
+    }
+
+    fn is_fragment_global(&self, fragment: LiveSetFragment) -> bool {
+        let hull = self.fragment_hull(fragment);
+        self.lir.instr_block_index(hull.start.instr())
+            != self.lir.instr_block_index(hull.end.instr())
     }
 
     fn is_fragment_spilled(&self, fragment: LiveSetFragment) -> bool {

@@ -1,0 +1,212 @@
+# run: codegen
+
+extfunc @malloc:ptr(i64)
+
+func @gc_new:ptr(i32, i64) {
+    # check: function `gc_new`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f7                        mov rdi, rsi
+    # nextln: 000007: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @malloc + 0
+    # nextln: 000011: ff d0                           call rax
+    # nextln: 000013: 5d                              pop rbp
+    # nextln: 000014: c3                              ret
+
+    %0:ctrl, %1:i32, %2:i64 = entry
+    %3:ctrl, %4:ptr = call @malloc %0, %2
+    return %3, %4
+}
+
+func @throw_index_out_of_range_exception() {
+    # check: function `throw_index_out_of_range_exception`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 5d                              pop rbp
+    # nextln: 000005: c3                              ret
+
+    %0:ctrl = entry
+    return %0
+}
+
+func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i32) {
+    # check: function `System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 41 57                           push r15
+    # nextln: 000006: 41 56                           push r14
+    # nextln: 000008: 41 55                           push r13
+    # nextln: 00000a: 41 54                           push r12
+    # nextln: 00000c: 53                              push rbx
+    # nextln: 00000d: 48 83 ec 18                     sub rsp, 0x18
+    # nextln: 000011: 48 89 7c 24 08                  mov qword ptr [rsp + 8], rdi
+    # nextln: 000016: 41 bc aa 00 00 00               mov r12d, 0xaa
+    # nextln: 00001c: 41 bd 1c 00 00 00               mov r13d, 0x1c
+    # nextln: 000022: be 28 00 00 00                  mov esi, 0x28
+    # nextln: 000027: bf ab 00 00 00                  mov edi, 0xab
+    # nextln: 00002c: 41 bf 02 00 00 00               mov r15d, 2
+    # nextln: 000032: 41 be 01 00 00 00               mov r14d, 1
+    # nextln: 000038: 33 c0                           xor eax, eax
+    # nextln: 00003a: 48 89 04 24                     mov qword ptr [rsp], rax
+    # nextln: 00003e: e8 00 00 00 00                  call 0x43  # RELOC_PC32 -> @gc_new + -4
+    # nextln: 000043: 48 89 c1                        mov rcx, rax
+    # nextln: 000046: 48 83 c1 10                     add rcx, 0x10
+    # nextln: 00004a: 44 89 39                        mov dword ptr [rcx], r15d
+    # nextln: 00004d: 48 89 04 24                     mov qword ptr [rsp], rax
+    # nextln: 000051: 48 8b 1c 24                     mov rbx, qword ptr [rsp]
+    # nextln: 000055: 4c 89 ee                        mov rsi, r13
+    # nextln: 000058: 4c 89 e7                        mov rdi, r12
+    # nextln: 00005b: e8 00 00 00 00                  call 0x60  # RELOC_PC32 -> @gc_new + -4
+    # nextln: 000060: 48 89 c1                        mov rcx, rax
+    # nextln: 000063: 48 83 c1 10                     add rcx, 0x10
+    # nextln: 000067: 44 89 39                        mov dword ptr [rcx], r15d
+    # nextln: 00006a: 8b 09                           mov ecx, dword ptr [rcx]
+    # nextln: 00006c: 4c 3b f1                        cmp r14, rcx
+    # nextln: 00006f: 0f 8d de 00 00 00               jge 0x153
+    # nextln: 000075: 48 89 d9                        mov rcx, rbx
+    # nextln: 000078: 48 83 c1 10                     add rcx, 0x10
+    # nextln: 00007c: 48 89 c2                        mov rdx, rax
+    # nextln: 00007f: 48 83 c2 18                     add rdx, 0x18
+    # nextln: 000083: bf 01 00 00 00                  mov edi, 1
+    # nextln: 000088: 89 3a                           mov dword ptr [rdx], edi
+    # nextln: 00008a: 8b 09                           mov ecx, dword ptr [rcx]
+    # nextln: 00008c: 48 85 c9                        test rcx, rcx
+    # nextln: 00008f: 0f 8e be 00 00 00               jle 0x153
+    # nextln: 000095: 48 83 c3 18                     add rbx, 0x18
+    # nextln: 000099: 48 89 03                        mov qword ptr [rbx], rax
+    # nextln: 00009c: 48 8b 1c 24                     mov rbx, qword ptr [rsp]
+    # nextln: 0000a0: 4c 89 ee                        mov rsi, r13
+    # nextln: 0000a3: 4c 89 e7                        mov rdi, r12
+    # nextln: 0000a6: e8 00 00 00 00                  call 0xab  # RELOC_PC32 -> @gc_new + -4
+    # nextln: 0000ab: 48 89 c1                        mov rcx, rax
+    # nextln: 0000ae: 48 83 c1 10                     add rcx, 0x10
+    # nextln: 0000b2: 44 89 39                        mov dword ptr [rcx], r15d
+    # nextln: 0000b5: 8b 11                           mov edx, dword ptr [rcx]
+    # nextln: 0000b7: 48 85 d2                        test rdx, rdx
+    # nextln: 0000ba: 0f 8e 93 00 00 00               jle 0x153
+    # nextln: 0000c0: 48 89 c2                        mov rdx, rax
+    # nextln: 0000c3: 48 83 c2 14                     add rdx, 0x14
+    # nextln: 0000c7: bf 02 00 00 00                  mov edi, 2
+    # nextln: 0000cc: 89 3a                           mov dword ptr [rdx], edi
+    # nextln: 0000ce: 8b 09                           mov ecx, dword ptr [rcx]
+    # nextln: 0000d0: 4c 3b f1                        cmp r14, rcx
+    # nextln: 0000d3: 0f 8d 7a 00 00 00               jge 0x153
+    # nextln: 0000d9: 48 89 d9                        mov rcx, rbx
+    # nextln: 0000dc: 48 83 c1 10                     add rcx, 0x10
+    # nextln: 0000e0: 48 89 c2                        mov rdx, rax
+    # nextln: 0000e3: 48 83 c2 18                     add rdx, 0x18
+    # nextln: 0000e7: bf 03 00 00 00                  mov edi, 3
+    # nextln: 0000ec: 89 3a                           mov dword ptr [rdx], edi
+    # nextln: 0000ee: 8b 09                           mov ecx, dword ptr [rcx]
+    # nextln: 0000f0: 4c 3b f1                        cmp r14, rcx
+    # nextln: 0000f3: 0f 8d 5a 00 00 00               jge 0x153
+    # nextln: 0000f9: 48 83 c3 20                     add rbx, 0x20
+    # nextln: 0000fd: 48 89 03                        mov qword ptr [rbx], rax
+    # nextln: 000100: 48 8b 04 24                     mov rax, qword ptr [rsp]
+    # nextln: 000104: 48 89 c1                        mov rcx, rax
+    # nextln: 000107: 48 83 c1 10                     add rcx, 0x10
+    # nextln: 00010b: 8b 09                           mov ecx, dword ptr [rcx]
+    # nextln: 00010d: 4c 3b f1                        cmp r14, rcx
+    # nextln: 000110: 0f 8d 3d 00 00 00               jge 0x153
+    # nextln: 000116: 48 83 c0 20                     add rax, 0x20
+    # nextln: 00011a: 48 8b 00                        mov rax, qword ptr [rax]
+    # nextln: 00011d: 48 89 c1                        mov rcx, rax
+    # nextln: 000120: 48 83 c1 10                     add rcx, 0x10
+    # nextln: 000124: 8b 11                           mov edx, dword ptr [rcx]
+    # nextln: 000126: 48 8b 4c 24 08                  mov rcx, qword ptr [rsp + 8]
+    # nextln: 00012b: 48 63 c9                        movsxd rcx, ecx
+    # nextln: 00012e: 48 3b ca                        cmp rcx, rdx
+    # nextln: 000131: 0f 8d 1c 00 00 00               jge 0x153
+    # nextln: 000137: 48 c1 e1 02                     shl rcx, 2
+    # nextln: 00013b: 48 83 c1 14                     add rcx, 0x14
+    # nextln: 00013f: 48 03 c1                        add rax, rcx
+    # nextln: 000142: 8b 00                           mov eax, dword ptr [rax]
+    # nextln: 000144: 48 83 c4 18                     add rsp, 0x18
+    # nextln: 000148: 5b                              pop rbx
+    # nextln: 000149: 41 5c                           pop r12
+    # nextln: 00014b: 41 5d                           pop r13
+    # nextln: 00014d: 41 5e                           pop r14
+    # nextln: 00014f: 41 5f                           pop r15
+    # nextln: 000151: 5d                              pop rbp
+    # nextln: 000152: c3                              ret
+    # nextln: 000153: e8 00 00 00 00                  call 0x158  # RELOC_PC32 -> @throw_index_out_of_range_exception + -4
+    # nextln: 000158: 0f 0b                           ud2
+
+    %0:ctrl, %1:i32 = entry
+    %20:ptr = stackslot 8:8
+    %4:i64 = iext %1
+    %5:i64 = sfill 32 %4
+    %8:i64 = iconst 20
+    %29:i32 = iconst 2
+    %140:i64 = shl %5, %29
+    %9:i64 = iadd %140, %8
+    %10:i64 = iconst 16
+    %135:i64 = iconst 32
+    %133:i64 = iconst 1
+    %134:i64 = iconst 24
+    %21:i32 = iconst 3
+    %136:i64 = iconst 0
+    %137:i64 = iconst 2
+    %138:i64 = iconst 28
+    %36:i32 = iconst 170
+    %11:i32 = iconst 1
+    %139:i64 = iconst 40
+    %37:i32 = iconst 171
+    %38:ptr = iconst 0
+    %39:ctrl = store.8 %0, %38, %20
+    %42:ctrl, %43:ptr = call @gc_new %39, %37, %139
+    %44:ptr = ptroff %43, %10
+    %45:ctrl = store.4 %42, %137, %44
+    %46:ctrl = store.8 %45, %43, %20
+    %47:ctrl, %48:ptr = load.8 %46, %20
+    %49:ctrl, %50:ptr = call @gc_new %47, %36, %138
+    %60:ptr = ptroff %50, %134
+    %51:ptr = ptroff %50, %10
+    %52:ctrl = store.4 %49, %137, %51
+    %53:ctrl, %54:i64 = load.4 %52, %51
+    %55:i64 = icmp slt %133, %54
+    %56:ctrl, %57:ctrl = brcond %53, %55
+    %61:ctrl = store.4 %56, %11, %60
+    %70:ptr = ptroff %48, %134
+    %62:ptr = ptroff %48, %10
+    %63:ctrl, %64:i64 = load.4 %61, %62
+    %65:i64 = icmp slt %136, %64
+    %66:ctrl, %67:ctrl = brcond %63, %65
+    %71:ctrl = store.8 %66, %50, %70
+    %72:ctrl, %73:ptr = load.8 %71, %20
+    %74:ctrl, %75:ptr = call @gc_new %72, %36, %138
+    %94:ptr = ptroff %75, %134
+    %85:ptr = ptroff %75, %8
+    %76:ptr = ptroff %75, %10
+    %77:ctrl = store.4 %74, %137, %76
+    %78:ctrl, %79:i64 = load.4 %77, %76
+    %80:i64 = icmp slt %136, %79
+    %81:ctrl, %82:ctrl = brcond %78, %80
+    %86:ctrl = store.4 %81, %29, %85
+    %87:ctrl, %88:i64 = load.4 %86, %76
+    %89:i64 = icmp slt %133, %88
+    %90:ctrl, %91:ctrl = brcond %87, %89
+    %95:ctrl = store.4 %90, %21, %94
+    %104:ptr = ptroff %73, %135
+    %96:ptr = ptroff %73, %10
+    %97:ctrl, %98:i64 = load.4 %95, %96
+    %99:i64 = icmp slt %133, %98
+    %100:ctrl, %101:ctrl = brcond %97, %99
+    %105:ctrl = store.8 %100, %75, %104
+    %106:ctrl, %107:ptr = load.8 %105, %20
+    %116:ptr = ptroff %107, %135
+    %108:ptr = ptroff %107, %10
+    %109:ctrl, %110:i64 = load.4 %106, %108
+    %111:i64 = icmp slt %133, %110
+    %112:ctrl, %113:ctrl = brcond %109, %111
+    %117:ctrl, %118:ptr = load.8 %112, %116
+    %130:ptr = ptroff %118, %9
+    %119:ptr = ptroff %118, %10
+    %120:ctrl, %121:i64 = load.4 %117, %119
+    %122:i64 = icmp slt %5, %121
+    %123:ctrl, %124:ctrl = brcond %120, %122
+    %131:ctrl, %132:i32 = load.4 %123, %130
+    return %131, %132
+    %127:ctrl, %128:phisel = region %57, %67, %82, %91, %101, %113, %124
+    %129:ctrl = call @throw_index_out_of_range_exception %127
+    unreachable %129
+}

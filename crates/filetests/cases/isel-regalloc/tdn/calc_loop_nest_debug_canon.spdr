@@ -1,0 +1,702 @@
+# run: isel-regalloc
+
+func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
+    # check: function `System.Int32 Tests.Program::Test(System.Int32)`:
+    # nextln: clobbers: rax, rbx, rcx, rdx, rsi, r8, r9, r10, r11, r12, r13, r14, r15
+    # nextln: frame: size 130, align 8
+    # nextln:     !0: 120
+    # nextln:     !1: 32
+    # nextln:     !2: 36
+    # nextln:     !3: 40
+    # nextln:     !4: 44
+    # nextln:     !5: 48
+    # nextln:     !6: 52
+    # nextln:     !7: 56
+    # nextln:     !8: 60
+    # nextln:     !9: 64
+    # nextln:     !10: 68
+    # nextln:     !11: 72
+    # nextln:     !12: 76
+    # nextln:     !13: 80
+    # nextln:     !14: 84
+    # nextln:     !15: 88
+    # nextln:     !16: 126
+    # nextln:     !17: 92
+    # nextln:     !18: 96
+    # nextln:     !19: 100
+    # nextln:     !20: 125
+    # nextln:     !21: 104
+    # nextln:     !22: 127
+    # nextln:     !23: 108
+    # nextln:     !24: 112
+    # nextln:     !25: 116
+    # nextln:     !26: 128
+    # nextln:     !27: 129
+    # nextln:     !28: 124
+    # nextln:     spill0: 0
+    # nextln:     spill1: 8
+    # nextln:     spill2: 16
+    # nextln:     spill3: 24
+    # nextln:       block0:
+    # nextln: 0000:     $$r10 = MovRmS32(7)
+    # nextln: 0001:     $$rdx = MovRmS32(9)
+    # nextln: 0002:     $$rax = MovRmS32(13)
+    # nextln: 0003:     $$rcx = MovRmS32(4)
+    # nextln: 0004:     $$r15 = MovRmS32(1)
+    # nextln: 0005:     $$rsi = MovRmS32(6)
+    # nextln:           $$spill0 = $$rsi
+    # nextln: 0006:     $$r8 = MovRZ
+    # nextln: 0007:     $$rsi = MovRmS32(5)
+    # nextln:           $$spill1 = $$rsi
+    # nextln: 0008:     $$r12 = MovRmS32(12)
+    # nextln: 0009:     $$rsi = MovRmS32(3)
+    # nextln: 0010:     $$r9 = MovRmS32(2)
+    # nextln:           $$spill3 = $$r9
+    # nextln: 0011:     $$r13 = MovRmS32(15)
+    # nextln: 0012:     $$r14 = MovRmS32(14)
+    # nextln:           $$rbx = $$rsi
+    # nextln: 0013:     $$r11 = MovRmS32(8)
+    # nextln: 0014:     $$rsi = MovRmS32(10)
+    # nextln: 0015:     $$r9 = MovRmS32(11)
+    # nextln: 0016:     MovStackR(!18, S32) $$r8
+    # nextln: 0017:     MovStackR(!1, S32) $$r8
+    # nextln: 0018:     MovStackR(!0, S32) $$r8
+    # nextln: 0019:     MovStackR(!15, S32) $$r8
+    # nextln: 0020:     MovStackR(!14, S32) $$r8
+    # nextln: 0021:     MovStackR(!13, S32) $$r8
+    # nextln: 0022:     MovStackR(!12, S32) $$r8
+    # nextln: 0023:     MovStackR(!11, S32) $$r8
+    # nextln: 0024:     MovStackR(!10, S32) $$r8
+    # nextln: 0025:     MovStackR(!9, S32) $$r8
+    # nextln: 0026:     MovStackR(!8, S32) $$r8
+    # nextln: 0027:     MovStackR(!7, S32) $$r8
+    # nextln: 0028:     MovStackR(!6, S32) $$r8
+    # nextln: 0029:     MovStackR(!5, S32) $$r8
+    # nextln: 0030:     MovStackR(!4, S32) $$r8
+    # nextln: 0031:     MovStackR(!3, S32) $$r8
+    # nextln: 0032:     MovStackR(!17, S32) $$r8
+    # nextln: 0033:     MovStackR(!23, S32) $$r8
+    # nextln: 0034:     MovStackR(!24, S32) $$r8
+    # nextln: 0035:     MovStackR(!25, S32) $$r8
+    # nextln: 0036:     MovStackR(!26, S8) $$r8
+    # nextln: 0037:     MovStackR(!16, S8) $$r8
+    # nextln: 0038:     MovStackR(!27, S8) $$r8
+    # nextln: 0039:     MovStackR(!21, S32) $$r8
+    # nextln: 0040:     MovStackR(!22, S8) $$r8
+    # nextln: 0041:     MovStackR(!19, S32) $$r8
+    # nextln: 0042:     MovStackR(!20, S8) $$r8
+    # nextln: 0043:     MovStackR(!28, S8) $$r8
+    # nextln: 0044:     MovStackR(!2, S32) $$r8
+    # nextln: 0045:     MovStackR(!18, S32) $$r15
+    # nextln:           $$r15 = $$spill3
+    # nextln: 0046:     MovStackR(!1, S32) $$r15
+    # nextln: 0047:     MovStackR(!0, S32) $$rbx
+    # nextln:           $$spill2 = $$rbx
+    # nextln: 0048:     MovStackR(!15, S32) $$rcx
+    # nextln:           $$rbx = $$spill1
+    # nextln: 0049:     MovStackR(!14, S32) $$rbx
+    # nextln:           $$rbx = $$spill0
+    # nextln: 0050:     MovStackR(!13, S32) $$rbx
+    # nextln: 0051:     MovStackR(!12, S32) $$r10
+    # nextln: 0052:     MovStackR(!11, S32) $$r11
+    # nextln: 0053:     MovStackR(!10, S32) $$rdx
+    # nextln: 0054:     MovStackR(!9, S32) $$rsi
+    # nextln: 0055:     MovStackR(!8, S32) $$r9
+    # nextln: 0056:     MovStackR(!7, S32) $$r12
+    # nextln: 0057:     MovStackR(!6, S32) $$rax
+    # nextln: 0058:     MovStackR(!5, S32) $$r14
+    # nextln: 0059:     MovStackR(!4, S32) $$r13
+    # nextln: 0060:     MovStackR(!3, S32) $$r8
+    # nextln: 0061:     MovStackR(!17, S32) $$r8
+    # nextln: 0062:     Jump(block1)
+    # nextln:       block1:
+    # nextln: 0063:     $$rdx = MovRStack(!17, S32)
+    # nextln: 0064:     $$rax = MovRZ
+    # nextln: 0065:     AluRRm(S32, Cmp) $$rdx, $$rdi
+    # nextln: 0066:     $$rax = Setcc(L) $$rax
+    # nextln: 0067:     MovStackR(!28, S8) $$rax
+    # nextln: 0068:     $$rax = MovRStack(!28, S8)
+    # nextln: 0069:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0070:     Jumpcc(Ne, block2, block3)
+    # nextln:       block2:
+    # nextln: 0071:     MovStackR(!23, S32) $$r8
+    # nextln: 0072:     Jump(block4)
+    # nextln:       block4:
+    # nextln: 0073:     $$rsi = MovRStack(!23, S32)
+    # nextln:           $$rax = $$rdi
+    # nextln: 0074:     $$rdx = ConvertWord(S32) $$rax
+    # nextln:           $$r9 = $$r15
+    # nextln: 0075:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$r9
+    # nextln: 0076:     $$rdx = MovRZ
+    # nextln: 0077:     AluRRm(S32, Cmp) $$rsi, $$rax
+    # nextln: 0078:     $$rdx = Setcc(L) $$rdx
+    # nextln: 0079:     MovStackR(!27, S8) $$rdx
+    # nextln: 0080:     $$rax = MovRStack(!27, S8)
+    # nextln: 0081:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0082:     Jumpcc(Ne, block5, block6)
+    # nextln:       block5:
+    # nextln: 0083:     $$rax = MovRStack(!3, S32)
+    # nextln: 0084:     $$rdx = MovRStack(!18, S32)
+    # nextln: 0085:     $$rsi = MovRStack(!1, S32)
+    # nextln: 0086:     $$rdx = AluRRm(S32, Add) $$rdx, $$rsi
+    # nextln: 0087:     $$rsi = MovRStack(!0, S32)
+    # nextln: 0088:     $$rdx = AluRRm(S32, Add) $$rdx, $$rsi
+    # nextln: 0089:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0090:     MovStackR(!3, S32) $$rax
+    # nextln: 0091:     $$rax = MovRStack(!18, S32)
+    # nextln: 0092:     $$rdx = MovRStack(!17, S32)
+    # nextln: 0093:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0094:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0095:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0096:     MovStackR(!18, S32) $$rdx
+    # nextln: 0097:     $$rax = MovRStack(!1, S32)
+    # nextln: 0098:     $$rdx = MovRStack(!23, S32)
+    # nextln: 0099:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0100:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0101:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0102:     MovStackR(!1, S32) $$rdx
+    # nextln: 0103:     $$rax = MovRStack(!0, S32)
+    # nextln: 0104:     $$rdx = MovRStack(!18, S32)
+    # nextln: 0105:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0106:     $$rdx = MovRStack(!1, S32)
+    # nextln: 0107:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0108:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0109:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0110:     MovStackR(!0, S32) $$rdx
+    # nextln: 0111:     MovStackR(!24, S32) $$r8
+    # nextln: 0112:     Jump(block13)
+    # nextln:       block13:
+    # nextln: 0113:     $$rsi = MovRStack(!24, S32)
+    # nextln:           $$rax = $$rdi
+    # nextln: 0114:     $$rdx = ConvertWord(S32) $$rax
+    # nextln:           $$r10 = $$spill2
+    # nextln: 0115:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$r10
+    # nextln: 0116:     $$rdx = MovRZ
+    # nextln: 0117:     AluRRm(S32, Cmp) $$rsi, $$rax
+    # nextln: 0118:     $$rdx = Setcc(L) $$rdx
+    # nextln: 0119:     MovStackR(!16, S8) $$rdx
+    # nextln: 0120:     $$rax = MovRStack(!16, S8)
+    # nextln: 0121:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0122:     Jumpcc(Ne, block14, block15)
+    # nextln:       block14:
+    # nextln: 0123:     $$rax = MovRStack(!15, S32)
+    # nextln: 0124:     $$rdx = MovRStack(!24, S32)
+    # nextln: 0125:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0126:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0127:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0128:     MovStackR(!15, S32) $$rdx
+    # nextln: 0129:     $$rax = MovRStack(!14, S32)
+    # nextln: 0130:     $$rdx = MovRStack(!15, S32)
+    # nextln: 0131:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0132:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0133:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0134:     MovStackR(!14, S32) $$rdx
+    # nextln: 0135:     $$rax = MovRStack(!3, S32)
+    # nextln: 0136:     $$rdx = MovRStack(!15, S32)
+    # nextln: 0137:     $$rsi = MovRStack(!14, S32)
+    # nextln: 0138:     $$rdx = AluRRm(S32, Add) $$rdx, $$rsi
+    # nextln: 0139:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0140:     MovStackR(!3, S32) $$rax
+    # nextln: 0141:     MovStackR(!25, S32) $$r8
+    # nextln: 0142:     Jump(block16)
+    # nextln:       block16:
+    # nextln: 0143:     $$rsi = MovRStack(!25, S32)
+    # nextln:           $$rax = $$rdi
+    # nextln: 0144:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0145:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rcx
+    # nextln: 0146:     $$rdx = MovRZ
+    # nextln: 0147:     AluRRm(S32, Cmp) $$rsi, $$rax
+    # nextln: 0148:     $$rdx = Setcc(L) $$rdx
+    # nextln: 0149:     MovStackR(!26, S8) $$rdx
+    # nextln: 0150:     $$rax = MovRStack(!26, S8)
+    # nextln: 0151:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0152:     Jumpcc(Ne, block17, block18)
+    # nextln:       block17:
+    # nextln: 0153:     $$rax = MovRStack(!13, S32)
+    # nextln: 0154:     $$rdx = MovRStack(!12, S32)
+    # nextln: 0155:     $$rsi = MovRStack(!11, S32)
+    # nextln: 0156:     $$rdx = AluRRm(S32, Add) $$rdx, $$rsi
+    # nextln: 0157:     $$rsi = MovRStack(!25, S32)
+    # nextln: 0158:     $$rdx = AluRRm(S32, Add) $$rdx, $$rsi
+    # nextln: 0159:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0160:     MovStackR(!13, S32) $$rax
+    # nextln: 0161:     $$rax = MovRStack(!12, S32)
+    # nextln: 0162:     $$rdx = MovRStack(!13, S32)
+    # nextln: 0163:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0164:     $$rdx = MovRStack(!25, S32)
+    # nextln: 0165:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0166:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0167:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0168:     MovStackR(!12, S32) $$rdx
+    # nextln: 0169:     $$rax = MovRStack(!11, S32)
+    # nextln: 0170:     $$rdx = MovRStack(!12, S32)
+    # nextln: 0171:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0172:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0173:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0174:     MovStackR(!11, S32) $$rdx
+    # nextln: 0175:     $$rax = MovRStack(!3, S32)
+    # nextln: 0176:     $$rdx = MovRStack(!13, S32)
+    # nextln: 0177:     $$rsi = MovRStack(!12, S32)
+    # nextln: 0178:     $$rdx = AluRRm(S32, Add) $$rdx, $$rsi
+    # nextln: 0179:     $$rsi = MovRStack(!11, S32)
+    # nextln: 0180:     $$rdx = AluRRm(S32, Add) $$rdx, $$rsi
+    # nextln: 0181:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0182:     MovStackR(!3, S32) $$rax
+    # nextln: 0183:     $$rax = MovRStack(!25, S32)
+    # nextln: 0184:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0185:     MovStackR(!25, S32) $$rax
+    # nextln: 0186:     Jump(block16)
+    # nextln:       block18:
+    # nextln: 0187:     $$rax = MovRStack(!24, S32)
+    # nextln: 0188:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0189:     MovStackR(!24, S32) $$rax
+    # nextln:           $$spill2 = $$r10
+    # nextln: 0190:     Jump(block13)
+    # nextln:       block15:
+    # nextln: 0191:     $$rax = MovRStack(!23, S32)
+    # nextln: 0192:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0193:     MovStackR(!23, S32) $$rax
+    # nextln:           $$r15 = $$r9
+    # nextln:           $$spill2 = $$r10
+    # nextln: 0194:     Jump(block4)
+    # nextln:       block6:
+    # nextln:           $$r10 = $$spill2
+    # nextln: 0195:     MovStackR(!21, S32) $$r8
+    # nextln: 0196:     Jump(block7)
+    # nextln:       block7:
+    # nextln: 0197:     $$r11 = MovRStack(!21, S32)
+    # nextln:           $$rax = $$rdi
+    # nextln: 0198:     $$rdx = ConvertWord(S32) $$rax
+    # nextln:           $$rsi = $$spill1
+    # nextln: 0199:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rsi
+    # nextln: 0200:     $$rdx = MovRZ
+    # nextln: 0201:     AluRRm(S32, Cmp) $$r11, $$rax
+    # nextln: 0202:     $$rdx = Setcc(L) $$rdx
+    # nextln: 0203:     MovStackR(!22, S8) $$rdx
+    # nextln: 0204:     $$rax = MovRStack(!22, S8)
+    # nextln: 0205:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0206:     Jumpcc(Ne, block8, block9)
+    # nextln:       block8:
+    # nextln: 0207:     $$rax = MovRStack(!10, S32)
+    # nextln: 0208:     $$rdx = MovRStack(!21, S32)
+    # nextln: 0209:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0210:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0211:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0212:     MovStackR(!10, S32) $$rdx
+    # nextln: 0213:     $$rax = MovRStack(!9, S32)
+    # nextln: 0214:     $$rdx = MovRStack(!10, S32)
+    # nextln: 0215:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0216:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0217:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0218:     MovStackR(!9, S32) $$rdx
+    # nextln: 0219:     $$rax = MovRStack(!3, S32)
+    # nextln: 0220:     $$rdx = MovRStack(!10, S32)
+    # nextln: 0221:     $$r11 = MovRStack(!9, S32)
+    # nextln: 0222:     $$rdx = AluRRm(S32, Add) $$rdx, $$r11
+    # nextln: 0223:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0224:     MovStackR(!3, S32) $$rax
+    # nextln: 0225:     $$rax = MovRStack(!21, S32)
+    # nextln: 0226:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0227:     MovStackR(!21, S32) $$rax
+    # nextln:           $$spill1 = $$rsi
+    # nextln: 0228:     Jump(block7)
+    # nextln:       block9:
+    # nextln: 0229:     MovStackR(!19, S32) $$r8
+    # nextln: 0230:     Jump(block10)
+    # nextln:       block10:
+    # nextln: 0231:     $$r12 = MovRStack(!19, S32)
+    # nextln:           $$rax = $$rdi
+    # nextln: 0232:     $$rdx = ConvertWord(S32) $$rax
+    # nextln:           $$r11 = $$rbx
+    # nextln: 0233:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$r11
+    # nextln: 0234:     $$rdx = MovRZ
+    # nextln: 0235:     AluRRm(S32, Cmp) $$r12, $$rax
+    # nextln: 0236:     $$rdx = Setcc(L) $$rdx
+    # nextln: 0237:     MovStackR(!20, S8) $$rdx
+    # nextln: 0238:     $$rax = MovRStack(!20, S8)
+    # nextln: 0239:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0240:     Jumpcc(Ne, block11, block12)
+    # nextln:       block11:
+    # nextln: 0241:     $$rax = MovRStack(!8, S32)
+    # nextln: 0242:     $$rdx = MovRStack(!19, S32)
+    # nextln: 0243:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0244:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0245:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0246:     MovStackR(!8, S32) $$rdx
+    # nextln: 0247:     $$rax = MovRStack(!7, S32)
+    # nextln: 0248:     $$rdx = MovRStack(!8, S32)
+    # nextln: 0249:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0250:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0251:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0252:     MovStackR(!7, S32) $$rdx
+    # nextln: 0253:     $$rax = MovRStack(!6, S32)
+    # nextln: 0254:     $$rdx = MovRStack(!7, S32)
+    # nextln: 0255:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0256:     $$rdx = MovRStack(!19, S32)
+    # nextln: 0257:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0258:     $$rdx = ConvertWord(S32) $$rax
+    # nextln: 0259:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
+    # nextln: 0260:     MovStackR(!6, S32) $$rdx
+    # nextln: 0261:     $$rax = MovRStack(!3, S32)
+    # nextln: 0262:     $$rdx = MovRStack(!8, S32)
+    # nextln: 0263:     $$rbx = MovRStack(!7, S32)
+    # nextln: 0264:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
+    # nextln: 0265:     $$rbx = MovRStack(!6, S32)
+    # nextln: 0266:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
+    # nextln: 0267:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0268:     MovStackR(!3, S32) $$rax
+    # nextln: 0269:     $$rax = MovRStack(!19, S32)
+    # nextln: 0270:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0271:     MovStackR(!19, S32) $$rax
+    # nextln:           $$rbx = $$r11
+    # nextln: 0272:     Jump(block10)
+    # nextln:       block12:
+    # nextln: 0273:     $$rax = MovRStack(!17, S32)
+    # nextln: 0274:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0275:     MovStackR(!17, S32) $$rax
+    # nextln:           $$r15 = $$r9
+    # nextln:           $$spill2 = $$r10
+    # nextln:           $$spill1 = $$rsi
+    # nextln:           $$rbx = $$r11
+    # nextln: 0276:     Jump(block1)
+    # nextln:       block3:
+    # nextln: 0277:     $$rax = MovRStack(!3, S32)
+    # nextln: 0278:     $$rcx = MovRStack(!18, S32)
+    # nextln: 0279:     $$rdx = MovRStack(!1, S32)
+    # nextln: 0280:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0281:     $$rdx = MovRStack(!0, S32)
+    # nextln: 0282:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0283:     $$rdx = MovRStack(!15, S32)
+    # nextln: 0284:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0285:     $$rdx = MovRStack(!14, S32)
+    # nextln: 0286:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0287:     $$rdx = MovRStack(!13, S32)
+    # nextln: 0288:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0289:     $$rdx = MovRStack(!12, S32)
+    # nextln: 0290:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0291:     $$rdx = MovRStack(!11, S32)
+    # nextln: 0292:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0293:     $$rdx = MovRStack(!10, S32)
+    # nextln: 0294:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0295:     $$rdx = MovRStack(!9, S32)
+    # nextln: 0296:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0297:     $$rdx = MovRStack(!8, S32)
+    # nextln: 0298:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0299:     $$rdx = MovRStack(!7, S32)
+    # nextln: 0300:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0301:     $$rdx = MovRStack(!6, S32)
+    # nextln: 0302:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0303:     $$rdx = MovRStack(!5, S32)
+    # nextln: 0304:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0305:     $$rdx = MovRStack(!4, S32)
+    # nextln: 0306:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0307:     $$rax = AluRRm(S32, Add) $$rax, $$rcx
+    # nextln: 0308:     MovStackR(!3, S32) $$rax
+    # nextln: 0309:     $$rax = MovRStack(!3, S32)
+    # nextln: 0310:     MovStackR(!2, S32) $$rax
+    # nextln: 0311:     $$rax = MovRStack(!2, S32)
+    # nextln: 0312:     Ret $$rax
+
+    %0:ctrl, %1:i32 = entry
+    %2:ptr = stackslot 4:4
+    %3:ptr = stackslot 4:4
+    %4:ptr = stackslot 4:4
+    %5:ptr = stackslot 4:4
+    %6:ptr = stackslot 4:4
+    %7:ptr = stackslot 4:4
+    %8:ptr = stackslot 4:4
+    %9:ptr = stackslot 4:4
+    %10:ptr = stackslot 4:4
+    %11:ptr = stackslot 4:4
+    %12:ptr = stackslot 4:4
+    %13:ptr = stackslot 4:4
+    %14:ptr = stackslot 4:4
+    %15:ptr = stackslot 4:4
+    %16:ptr = stackslot 4:4
+    %17:ptr = stackslot 4:4
+    %18:ptr = stackslot 4:4
+    %19:ptr = stackslot 4:4
+    %20:ptr = stackslot 4:4
+    %21:ptr = stackslot 4:4
+    %22:ptr = stackslot 1:1
+    %23:ptr = stackslot 1:1
+    %24:ptr = stackslot 1:1
+    %25:ptr = stackslot 4:4
+    %26:ptr = stackslot 1:1
+    %27:ptr = stackslot 4:4
+    %28:ptr = stackslot 1:1
+    %29:ptr = stackslot 1:1
+    %30:ptr = stackslot 4:4
+    %33:i32 = iconst 1
+    %34:i32 = iconst 6
+    %35:i32 = iconst 0
+    %36:ctrl = store.4 %0, %35, %2
+    %37:ctrl = store.4 %36, %35, %3
+    %38:ctrl = store.4 %37, %35, %4
+    %39:ctrl = store.4 %38, %35, %5
+    %40:ctrl = store.4 %39, %35, %6
+    %41:ctrl = store.4 %40, %35, %7
+    %42:ctrl = store.4 %41, %35, %8
+    %43:ctrl = store.4 %42, %35, %9
+    %44:ctrl = store.4 %43, %35, %10
+    %45:ctrl = store.4 %44, %35, %11
+    %46:ctrl = store.4 %45, %35, %12
+    %47:ctrl = store.4 %46, %35, %13
+    %48:ctrl = store.4 %47, %35, %14
+    %49:ctrl = store.4 %48, %35, %15
+    %50:ctrl = store.4 %49, %35, %16
+    %51:ctrl = store.4 %50, %35, %17
+    %52:ctrl = store.4 %51, %35, %18
+    %53:i32 = iconst 5
+    %54:ctrl = store.4 %52, %35, %19
+    %55:ctrl = store.4 %54, %35, %20
+    %56:ctrl = store.4 %55, %35, %21
+    %57:ctrl = store.1 %56, %35, %22
+    %58:i32 = iconst 4
+    %59:ctrl = store.1 %57, %35, %23
+    %60:i32 = iconst 3
+    %61:ctrl = store.1 %59, %35, %24
+    %62:ctrl = store.4 %61, %35, %25
+    %63:ctrl = store.1 %62, %35, %26
+    %64:ctrl = store.4 %63, %35, %27
+    %65:ctrl = store.1 %64, %35, %28
+    %66:i32 = iconst 2
+    %67:ctrl = store.1 %65, %35, %29
+    %68:ctrl = store.4 %67, %35, %30
+    %69:ctrl = store.4 %68, %33, %2
+    %70:ctrl = store.4 %69, %66, %3
+    %71:ctrl = store.4 %70, %60, %4
+    %72:ctrl = store.4 %71, %58, %5
+    %73:ctrl = store.4 %72, %53, %6
+    %74:ctrl = store.4 %73, %34, %7
+    %75:i32 = iconst 15
+    %76:i32 = iconst 14
+    %77:i32 = iconst 13
+    %78:i32 = iconst 12
+    %79:i32 = iconst 11
+    %80:i32 = iconst 10
+    %81:i32 = iconst 9
+    %82:i32 = iconst 8
+    %83:i32 = iconst 7
+    %84:ctrl = store.4 %74, %83, %8
+    %85:ctrl = store.4 %84, %82, %9
+    %86:ctrl = store.4 %85, %81, %10
+    %87:ctrl = store.4 %86, %80, %11
+    %88:ctrl = store.4 %87, %79, %12
+    %89:ctrl = store.4 %88, %78, %13
+    %90:ctrl = store.4 %89, %77, %14
+    %91:ctrl = store.4 %90, %76, %15
+    %92:ctrl = store.4 %91, %75, %16
+    %93:ctrl = store.4 %92, %35, %17
+    %94:ctrl = store.4 %93, %35, %18
+    %95:ctrl, %96:phisel = region %94, %386
+    %97:ctrl, %98:i32 = load.4 %95, %18
+    %99:i32 = icmp slt %98, %1
+    %100:ctrl = store.1 %97, %99, %29
+    %101:ctrl, %102:i32 = load.1 %100, %29
+    %103:ctrl, %104:ctrl = brcond %101, %102
+    %107:ctrl = store.4 %103, %35, %19
+    %108:ctrl, %109:phisel = region %107, %274
+    %110:ctrl, %111:i32 = load.4 %108, %19
+    %112:ctrl, %113:i32 = sdiv %110, %1, %66
+    %114:i32 = icmp slt %111, %113
+    %115:ctrl = store.1 %112, %114, %24
+    %116:ctrl, %117:i32 = load.1 %115, %24
+    %118:ctrl, %119:ctrl = brcond %116, %117
+    %122:ctrl, %123:i32 = load.4 %118, %17
+    %124:ctrl, %125:i32 = load.4 %122, %2
+    %126:ctrl, %127:i32 = load.4 %124, %3
+    %128:ctrl, %129:i32 = load.4 %126, %4
+    %130:i32 = iadd %125, %127
+    %131:i32 = iadd %130, %129
+    %132:i32 = iadd %123, %131
+    %133:ctrl = store.4 %128, %132, %17
+    %134:ctrl, %135:i32 = load.4 %133, %2
+    %136:ctrl, %137:i32 = load.4 %134, %18
+    %138:i32 = iadd %135, %137
+    %139:ctrl, %140:i32 = srem %136, %138, %1
+    %141:ctrl = store.4 %139, %140, %2
+    %142:ctrl, %143:i32 = load.4 %141, %3
+    %144:ctrl, %145:i32 = load.4 %142, %19
+    %146:i32 = iadd %143, %145
+    %147:ctrl, %148:i32 = srem %144, %146, %1
+    %149:ctrl = store.4 %147, %148, %3
+    %150:ctrl, %151:i32 = load.4 %149, %4
+    %152:ctrl, %153:i32 = load.4 %150, %2
+    %154:ctrl, %155:i32 = load.4 %152, %3
+    %156:i32 = iadd %151, %153
+    %157:i32 = iadd %156, %155
+    %158:ctrl, %159:i32 = srem %154, %157, %1
+    %160:ctrl = store.4 %158, %159, %4
+    %161:ctrl = store.4 %160, %35, %20
+    %162:ctrl, %163:phisel = region %161, %268
+    %164:ctrl, %165:i32 = load.4 %162, %20
+    %166:ctrl, %167:i32 = sdiv %164, %1, %60
+    %168:i32 = icmp slt %165, %167
+    %169:ctrl = store.1 %166, %168, %23
+    %170:ctrl, %171:i32 = load.1 %169, %23
+    %172:ctrl, %173:ctrl = brcond %170, %171
+    %176:ctrl, %177:i32 = load.4 %172, %5
+    %178:ctrl, %179:i32 = load.4 %176, %20
+    %180:i32 = iadd %177, %179
+    %181:ctrl, %182:i32 = srem %178, %180, %1
+    %183:ctrl = store.4 %181, %182, %5
+    %184:ctrl, %185:i32 = load.4 %183, %6
+    %186:ctrl, %187:i32 = load.4 %184, %5
+    %188:i32 = iadd %185, %187
+    %189:ctrl, %190:i32 = srem %186, %188, %1
+    %191:ctrl = store.4 %189, %190, %6
+    %192:ctrl, %193:i32 = load.4 %191, %17
+    %194:ctrl, %195:i32 = load.4 %192, %5
+    %196:ctrl, %197:i32 = load.4 %194, %6
+    %198:i32 = iadd %195, %197
+    %199:i32 = iadd %193, %198
+    %200:ctrl = store.4 %196, %199, %17
+    %201:ctrl = store.4 %200, %35, %21
+    %202:ctrl, %203:phisel = region %201, %262
+    %204:ctrl, %205:i32 = load.4 %202, %21
+    %206:ctrl, %207:i32 = sdiv %204, %1, %58
+    %208:i32 = icmp slt %205, %207
+    %209:ctrl = store.1 %206, %208, %22
+    %210:ctrl, %211:i32 = load.1 %209, %22
+    %212:ctrl, %213:ctrl = brcond %210, %211
+    %216:ctrl, %217:i32 = load.4 %212, %7
+    %218:ctrl, %219:i32 = load.4 %216, %8
+    %220:ctrl, %221:i32 = load.4 %218, %9
+    %222:ctrl, %223:i32 = load.4 %220, %21
+    %224:i32 = iadd %219, %221
+    %225:i32 = iadd %224, %223
+    %226:i32 = iadd %217, %225
+    %227:ctrl = store.4 %222, %226, %7
+    %228:ctrl, %229:i32 = load.4 %227, %8
+    %230:ctrl, %231:i32 = load.4 %228, %7
+    %232:ctrl, %233:i32 = load.4 %230, %21
+    %234:i32 = iadd %229, %231
+    %235:i32 = iadd %234, %233
+    %236:ctrl, %237:i32 = srem %232, %235, %1
+    %238:ctrl = store.4 %236, %237, %8
+    %239:ctrl, %240:i32 = load.4 %238, %9
+    %241:ctrl, %242:i32 = load.4 %239, %8
+    %243:i32 = iadd %240, %242
+    %244:ctrl, %245:i32 = srem %241, %243, %1
+    %246:ctrl = store.4 %244, %245, %9
+    %247:ctrl, %248:i32 = load.4 %246, %17
+    %249:ctrl, %250:i32 = load.4 %247, %7
+    %251:ctrl, %252:i32 = load.4 %249, %8
+    %253:ctrl, %254:i32 = load.4 %251, %9
+    %255:i32 = iadd %250, %252
+    %256:i32 = iadd %255, %254
+    %257:i32 = iadd %248, %256
+    %258:ctrl = store.4 %253, %257, %17
+    %259:ctrl, %260:i32 = load.4 %258, %21
+    %261:i32 = iadd %260, %33
+    %262:ctrl = store.4 %259, %261, %21
+    %265:ctrl, %266:i32 = load.4 %213, %20
+    %267:i32 = iadd %266, %33
+    %268:ctrl = store.4 %265, %267, %20
+    %271:ctrl, %272:i32 = load.4 %173, %19
+    %273:i32 = iadd %272, %33
+    %274:ctrl = store.4 %271, %273, %19
+    %277:ctrl = store.4 %119, %35, %25
+    %278:ctrl, %279:phisel = region %277, %320
+    %280:ctrl, %281:i32 = load.4 %278, %25
+    %282:ctrl, %283:i32 = sdiv %280, %1, %53
+    %284:i32 = icmp slt %281, %283
+    %285:ctrl = store.1 %282, %284, %26
+    %286:ctrl, %287:i32 = load.1 %285, %26
+    %288:ctrl, %289:ctrl = brcond %286, %287
+    %292:ctrl, %293:i32 = load.4 %288, %10
+    %294:ctrl, %295:i32 = load.4 %292, %25
+    %296:i32 = iadd %293, %295
+    %297:ctrl, %298:i32 = srem %294, %296, %1
+    %299:ctrl = store.4 %297, %298, %10
+    %300:ctrl, %301:i32 = load.4 %299, %11
+    %302:ctrl, %303:i32 = load.4 %300, %10
+    %304:i32 = iadd %301, %303
+    %305:ctrl, %306:i32 = srem %302, %304, %1
+    %307:ctrl = store.4 %305, %306, %11
+    %308:ctrl, %309:i32 = load.4 %307, %17
+    %310:ctrl, %311:i32 = load.4 %308, %10
+    %312:ctrl, %313:i32 = load.4 %310, %11
+    %314:i32 = iadd %311, %313
+    %315:i32 = iadd %309, %314
+    %316:ctrl = store.4 %312, %315, %17
+    %317:ctrl, %318:i32 = load.4 %316, %25
+    %319:i32 = iadd %318, %33
+    %320:ctrl = store.4 %317, %319, %25
+    %323:ctrl = store.4 %289, %35, %27
+    %324:ctrl, %325:phisel = region %323, %380
+    %326:ctrl, %327:i32 = load.4 %324, %27
+    %328:ctrl, %329:i32 = sdiv %326, %1, %34
+    %330:i32 = icmp slt %327, %329
+    %331:ctrl = store.1 %328, %330, %28
+    %332:ctrl, %333:i32 = load.1 %331, %28
+    %334:ctrl, %335:ctrl = brcond %332, %333
+    %338:ctrl, %339:i32 = load.4 %334, %12
+    %340:ctrl, %341:i32 = load.4 %338, %27
+    %342:i32 = iadd %339, %341
+    %343:ctrl, %344:i32 = srem %340, %342, %1
+    %345:ctrl = store.4 %343, %344, %12
+    %346:ctrl, %347:i32 = load.4 %345, %13
+    %348:ctrl, %349:i32 = load.4 %346, %12
+    %350:i32 = iadd %347, %349
+    %351:ctrl, %352:i32 = srem %348, %350, %1
+    %353:ctrl = store.4 %351, %352, %13
+    %354:ctrl, %355:i32 = load.4 %353, %14
+    %356:ctrl, %357:i32 = load.4 %354, %13
+    %358:ctrl, %359:i32 = load.4 %356, %27
+    %360:i32 = iadd %355, %357
+    %361:i32 = iadd %360, %359
+    %362:ctrl, %363:i32 = srem %358, %361, %1
+    %364:ctrl = store.4 %362, %363, %14
+    %365:ctrl, %366:i32 = load.4 %364, %17
+    %367:ctrl, %368:i32 = load.4 %365, %12
+    %369:ctrl, %370:i32 = load.4 %367, %13
+    %371:ctrl, %372:i32 = load.4 %369, %14
+    %373:i32 = iadd %368, %370
+    %374:i32 = iadd %373, %372
+    %375:i32 = iadd %366, %374
+    %376:ctrl = store.4 %371, %375, %17
+    %377:ctrl, %378:i32 = load.4 %376, %27
+    %379:i32 = iadd %378, %33
+    %380:ctrl = store.4 %377, %379, %27
+    %383:ctrl, %384:i32 = load.4 %335, %18
+    %385:i32 = iadd %384, %33
+    %386:ctrl = store.4 %383, %385, %18
+    %389:ctrl, %390:i32 = load.4 %104, %17
+    %391:ctrl, %392:i32 = load.4 %389, %2
+    %393:ctrl, %394:i32 = load.4 %391, %3
+    %395:ctrl, %396:i32 = load.4 %393, %4
+    %397:ctrl, %398:i32 = load.4 %395, %5
+    %399:ctrl, %400:i32 = load.4 %397, %6
+    %401:ctrl, %402:i32 = load.4 %399, %7
+    %403:ctrl, %404:i32 = load.4 %401, %8
+    %405:ctrl, %406:i32 = load.4 %403, %9
+    %407:ctrl, %408:i32 = load.4 %405, %10
+    %409:ctrl, %410:i32 = load.4 %407, %11
+    %411:ctrl, %412:i32 = load.4 %409, %12
+    %413:ctrl, %414:i32 = load.4 %411, %13
+    %415:ctrl, %416:i32 = load.4 %413, %14
+    %417:ctrl, %418:i32 = load.4 %415, %15
+    %419:ctrl, %420:i32 = load.4 %417, %16
+    %421:i32 = iadd %392, %394
+    %422:i32 = iadd %421, %396
+    %423:i32 = iadd %422, %398
+    %424:i32 = iadd %423, %400
+    %425:i32 = iadd %424, %402
+    %426:i32 = iadd %425, %404
+    %427:i32 = iadd %426, %406
+    %428:i32 = iadd %427, %408
+    %429:i32 = iadd %428, %410
+    %430:i32 = iadd %429, %412
+    %431:i32 = iadd %430, %414
+    %432:i32 = iadd %431, %416
+    %433:i32 = iadd %432, %418
+    %434:i32 = iadd %433, %420
+    %435:i32 = iadd %390, %434
+    %436:ctrl = store.4 %419, %435, %17
+    %437:ctrl, %438:i32 = load.4 %436, %17
+    %439:ctrl = store.4 %437, %438, %30
+    %442:ctrl, %443:i32 = load.4 %439, %30
+    return %442, %443
+}

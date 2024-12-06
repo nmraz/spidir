@@ -1,0 +1,657 @@
+# run: codegen
+
+func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
+    # check: function `System.Int32 Tests.Program::Test(System.Int32)`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 41 57                           push r15
+    # nextln: 000006: 41 56                           push r14
+    # nextln: 000008: 41 55                           push r13
+    # nextln: 00000a: 41 54                           push r12
+    # nextln: 00000c: 53                              push rbx
+    # nextln: 00000d: 48 81 ec 98 00 00 00            sub rsp, 0x98
+    # nextln: 000014: 41 ba 07 00 00 00               mov r10d, 7
+    # nextln: 00001a: ba 09 00 00 00                  mov edx, 9
+    # nextln: 00001f: b8 0d 00 00 00                  mov eax, 0xd
+    # nextln: 000024: b9 04 00 00 00                  mov ecx, 4
+    # nextln: 000029: 41 bf 01 00 00 00               mov r15d, 1
+    # nextln: 00002f: be 06 00 00 00                  mov esi, 6
+    # nextln: 000034: 48 89 34 24                     mov qword ptr [rsp], rsi
+    # nextln: 000038: 45 33 c0                        xor r8d, r8d
+    # nextln: 00003b: be 05 00 00 00                  mov esi, 5
+    # nextln: 000040: 48 89 74 24 08                  mov qword ptr [rsp + 8], rsi
+    # nextln: 000045: 41 bc 0c 00 00 00               mov r12d, 0xc
+    # nextln: 00004b: be 03 00 00 00                  mov esi, 3
+    # nextln: 000050: 41 b9 02 00 00 00               mov r9d, 2
+    # nextln: 000056: 4c 89 4c 24 18                  mov qword ptr [rsp + 0x18], r9
+    # nextln: 00005b: 41 bd 0f 00 00 00               mov r13d, 0xf
+    # nextln: 000061: 41 be 0e 00 00 00               mov r14d, 0xe
+    # nextln: 000067: 48 89 f3                        mov rbx, rsi
+    # nextln: 00006a: 41 bb 08 00 00 00               mov r11d, 8
+    # nextln: 000070: be 0a 00 00 00                  mov esi, 0xa
+    # nextln: 000075: 41 b9 0b 00 00 00               mov r9d, 0xb
+    # nextln: 00007b: 44 89 44 24 60                  mov dword ptr [rsp + 0x60], r8d
+    # nextln: 000080: 44 89 44 24 20                  mov dword ptr [rsp + 0x20], r8d
+    # nextln: 000085: 44 89 44 24 78                  mov dword ptr [rsp + 0x78], r8d
+    # nextln: 00008a: 44 89 44 24 58                  mov dword ptr [rsp + 0x58], r8d
+    # nextln: 00008f: 44 89 44 24 54                  mov dword ptr [rsp + 0x54], r8d
+    # nextln: 000094: 44 89 44 24 50                  mov dword ptr [rsp + 0x50], r8d
+    # nextln: 000099: 44 89 44 24 4c                  mov dword ptr [rsp + 0x4c], r8d
+    # nextln: 00009e: 44 89 44 24 48                  mov dword ptr [rsp + 0x48], r8d
+    # nextln: 0000a3: 44 89 44 24 44                  mov dword ptr [rsp + 0x44], r8d
+    # nextln: 0000a8: 44 89 44 24 40                  mov dword ptr [rsp + 0x40], r8d
+    # nextln: 0000ad: 44 89 44 24 3c                  mov dword ptr [rsp + 0x3c], r8d
+    # nextln: 0000b2: 44 89 44 24 38                  mov dword ptr [rsp + 0x38], r8d
+    # nextln: 0000b7: 44 89 44 24 34                  mov dword ptr [rsp + 0x34], r8d
+    # nextln: 0000bc: 44 89 44 24 30                  mov dword ptr [rsp + 0x30], r8d
+    # nextln: 0000c1: 44 89 44 24 2c                  mov dword ptr [rsp + 0x2c], r8d
+    # nextln: 0000c6: 44 89 44 24 28                  mov dword ptr [rsp + 0x28], r8d
+    # nextln: 0000cb: 44 89 44 24 5c                  mov dword ptr [rsp + 0x5c], r8d
+    # nextln: 0000d0: 44 89 44 24 6c                  mov dword ptr [rsp + 0x6c], r8d
+    # nextln: 0000d5: 44 89 44 24 70                  mov dword ptr [rsp + 0x70], r8d
+    # nextln: 0000da: 44 89 44 24 74                  mov dword ptr [rsp + 0x74], r8d
+    # nextln: 0000df: 44 88 84 24 80 00 00 00         mov byte ptr [rsp + 0x80], r8b
+    # nextln: 0000e7: 44 88 44 24 7e                  mov byte ptr [rsp + 0x7e], r8b
+    # nextln: 0000ec: 44 88 84 24 81 00 00 00         mov byte ptr [rsp + 0x81], r8b
+    # nextln: 0000f4: 44 89 44 24 68                  mov dword ptr [rsp + 0x68], r8d
+    # nextln: 0000f9: 44 88 44 24 7f                  mov byte ptr [rsp + 0x7f], r8b
+    # nextln: 0000fe: 44 89 44 24 64                  mov dword ptr [rsp + 0x64], r8d
+    # nextln: 000103: 44 88 44 24 7d                  mov byte ptr [rsp + 0x7d], r8b
+    # nextln: 000108: 44 88 44 24 7c                  mov byte ptr [rsp + 0x7c], r8b
+    # nextln: 00010d: 44 89 44 24 24                  mov dword ptr [rsp + 0x24], r8d
+    # nextln: 000112: 44 89 7c 24 60                  mov dword ptr [rsp + 0x60], r15d
+    # nextln: 000117: 4c 8b 7c 24 18                  mov r15, qword ptr [rsp + 0x18]
+    # nextln: 00011c: 44 89 7c 24 20                  mov dword ptr [rsp + 0x20], r15d
+    # nextln: 000121: 89 5c 24 78                     mov dword ptr [rsp + 0x78], ebx
+    # nextln: 000125: 48 89 5c 24 10                  mov qword ptr [rsp + 0x10], rbx
+    # nextln: 00012a: 89 4c 24 58                     mov dword ptr [rsp + 0x58], ecx
+    # nextln: 00012e: 48 8b 5c 24 08                  mov rbx, qword ptr [rsp + 8]
+    # nextln: 000133: 89 5c 24 54                     mov dword ptr [rsp + 0x54], ebx
+    # nextln: 000137: 48 8b 1c 24                     mov rbx, qword ptr [rsp]
+    # nextln: 00013b: 89 5c 24 50                     mov dword ptr [rsp + 0x50], ebx
+    # nextln: 00013f: 44 89 54 24 4c                  mov dword ptr [rsp + 0x4c], r10d
+    # nextln: 000144: 44 89 5c 24 48                  mov dword ptr [rsp + 0x48], r11d
+    # nextln: 000149: 89 54 24 44                     mov dword ptr [rsp + 0x44], edx
+    # nextln: 00014d: 89 74 24 40                     mov dword ptr [rsp + 0x40], esi
+    # nextln: 000151: 44 89 4c 24 3c                  mov dword ptr [rsp + 0x3c], r9d
+    # nextln: 000156: 44 89 64 24 38                  mov dword ptr [rsp + 0x38], r12d
+    # nextln: 00015b: 89 44 24 34                     mov dword ptr [rsp + 0x34], eax
+    # nextln: 00015f: 44 89 74 24 30                  mov dword ptr [rsp + 0x30], r14d
+    # nextln: 000164: 44 89 6c 24 2c                  mov dword ptr [rsp + 0x2c], r13d
+    # nextln: 000169: 44 89 44 24 28                  mov dword ptr [rsp + 0x28], r8d
+    # nextln: 00016e: 44 89 44 24 5c                  mov dword ptr [rsp + 0x5c], r8d
+    # nextln: 000173: 8b 54 24 5c                     mov edx, dword ptr [rsp + 0x5c]
+    # nextln: 000177: 33 c0                           xor eax, eax
+    # nextln: 000179: 3b d7                           cmp edx, edi
+    # nextln: 00017b: 0f 9c c0                        setl al
+    # nextln: 00017e: 88 44 24 7c                     mov byte ptr [rsp + 0x7c], al
+    # nextln: 000182: 0f b6 44 24 7c                  movzx eax, byte ptr [rsp + 0x7c]
+    # nextln: 000187: 85 c0                           test eax, eax
+    # nextln: 000189: 0f 84 e0 02 00 00               je 0x46f
+    # nextln: 00018f: 44 89 44 24 6c                  mov dword ptr [rsp + 0x6c], r8d
+    # nextln: 000194: 8b 74 24 6c                     mov esi, dword ptr [rsp + 0x6c]
+    # nextln: 000198: 48 89 f8                        mov rax, rdi
+    # nextln: 00019b: 99                              cdq
+    # nextln: 00019c: 4d 89 f9                        mov r9, r15
+    # nextln: 00019f: 41 f7 f9                        idiv r9d
+    # nextln: 0001a2: 33 d2                           xor edx, edx
+    # nextln: 0001a4: 3b f0                           cmp esi, eax
+    # nextln: 0001a6: 0f 9c c2                        setl dl
+    # nextln: 0001a9: 88 94 24 81 00 00 00            mov byte ptr [rsp + 0x81], dl
+    # nextln: 0001b0: 0f b6 84 24 81 00 00 00         movzx eax, byte ptr [rsp + 0x81]
+    # nextln: 0001b8: 85 c0                           test eax, eax
+    # nextln: 0001ba: 0f 84 7c 01 00 00               je 0x33c
+    # nextln: 0001c0: 8b 44 24 28                     mov eax, dword ptr [rsp + 0x28]
+    # nextln: 0001c4: 8b 54 24 60                     mov edx, dword ptr [rsp + 0x60]
+    # nextln: 0001c8: 8b 74 24 20                     mov esi, dword ptr [rsp + 0x20]
+    # nextln: 0001cc: 03 d6                           add edx, esi
+    # nextln: 0001ce: 8b 74 24 78                     mov esi, dword ptr [rsp + 0x78]
+    # nextln: 0001d2: 03 d6                           add edx, esi
+    # nextln: 0001d4: 03 c2                           add eax, edx
+    # nextln: 0001d6: 89 44 24 28                     mov dword ptr [rsp + 0x28], eax
+    # nextln: 0001da: 8b 44 24 60                     mov eax, dword ptr [rsp + 0x60]
+    # nextln: 0001de: 8b 54 24 5c                     mov edx, dword ptr [rsp + 0x5c]
+    # nextln: 0001e2: 03 c2                           add eax, edx
+    # nextln: 0001e4: 99                              cdq
+    # nextln: 0001e5: f7 ff                           idiv edi
+    # nextln: 0001e7: 89 54 24 60                     mov dword ptr [rsp + 0x60], edx
+    # nextln: 0001eb: 8b 44 24 20                     mov eax, dword ptr [rsp + 0x20]
+    # nextln: 0001ef: 8b 54 24 6c                     mov edx, dword ptr [rsp + 0x6c]
+    # nextln: 0001f3: 03 c2                           add eax, edx
+    # nextln: 0001f5: 99                              cdq
+    # nextln: 0001f6: f7 ff                           idiv edi
+    # nextln: 0001f8: 89 54 24 20                     mov dword ptr [rsp + 0x20], edx
+    # nextln: 0001fc: 8b 44 24 78                     mov eax, dword ptr [rsp + 0x78]
+    # nextln: 000200: 8b 54 24 60                     mov edx, dword ptr [rsp + 0x60]
+    # nextln: 000204: 03 c2                           add eax, edx
+    # nextln: 000206: 8b 54 24 20                     mov edx, dword ptr [rsp + 0x20]
+    # nextln: 00020a: 03 c2                           add eax, edx
+    # nextln: 00020c: 99                              cdq
+    # nextln: 00020d: f7 ff                           idiv edi
+    # nextln: 00020f: 89 54 24 78                     mov dword ptr [rsp + 0x78], edx
+    # nextln: 000213: 44 89 44 24 70                  mov dword ptr [rsp + 0x70], r8d
+    # nextln: 000218: 8b 74 24 70                     mov esi, dword ptr [rsp + 0x70]
+    # nextln: 00021c: 48 89 f8                        mov rax, rdi
+    # nextln: 00021f: 99                              cdq
+    # nextln: 000220: 4c 8b 54 24 10                  mov r10, qword ptr [rsp + 0x10]
+    # nextln: 000225: 41 f7 fa                        idiv r10d
+    # nextln: 000228: 33 d2                           xor edx, edx
+    # nextln: 00022a: 3b f0                           cmp esi, eax
+    # nextln: 00022c: 0f 9c c2                        setl dl
+    # nextln: 00022f: 88 54 24 7e                     mov byte ptr [rsp + 0x7e], dl
+    # nextln: 000233: 0f b6 44 24 7e                  movzx eax, byte ptr [rsp + 0x7e]
+    # nextln: 000238: 85 c0                           test eax, eax
+    # nextln: 00023a: 0f 84 e4 00 00 00               je 0x324
+    # nextln: 000240: 8b 44 24 58                     mov eax, dword ptr [rsp + 0x58]
+    # nextln: 000244: 8b 54 24 70                     mov edx, dword ptr [rsp + 0x70]
+    # nextln: 000248: 03 c2                           add eax, edx
+    # nextln: 00024a: 99                              cdq
+    # nextln: 00024b: f7 ff                           idiv edi
+    # nextln: 00024d: 89 54 24 58                     mov dword ptr [rsp + 0x58], edx
+    # nextln: 000251: 8b 44 24 54                     mov eax, dword ptr [rsp + 0x54]
+    # nextln: 000255: 8b 54 24 58                     mov edx, dword ptr [rsp + 0x58]
+    # nextln: 000259: 03 c2                           add eax, edx
+    # nextln: 00025b: 99                              cdq
+    # nextln: 00025c: f7 ff                           idiv edi
+    # nextln: 00025e: 89 54 24 54                     mov dword ptr [rsp + 0x54], edx
+    # nextln: 000262: 8b 44 24 28                     mov eax, dword ptr [rsp + 0x28]
+    # nextln: 000266: 8b 54 24 58                     mov edx, dword ptr [rsp + 0x58]
+    # nextln: 00026a: 8b 74 24 54                     mov esi, dword ptr [rsp + 0x54]
+    # nextln: 00026e: 03 d6                           add edx, esi
+    # nextln: 000270: 03 c2                           add eax, edx
+    # nextln: 000272: 89 44 24 28                     mov dword ptr [rsp + 0x28], eax
+    # nextln: 000276: 44 89 44 24 74                  mov dword ptr [rsp + 0x74], r8d
+    # nextln: 00027b: 8b 74 24 74                     mov esi, dword ptr [rsp + 0x74]
+    # nextln: 00027f: 48 89 f8                        mov rax, rdi
+    # nextln: 000282: 99                              cdq
+    # nextln: 000283: f7 f9                           idiv ecx
+    # nextln: 000285: 33 d2                           xor edx, edx
+    # nextln: 000287: 3b f0                           cmp esi, eax
+    # nextln: 000289: 0f 9c c2                        setl dl
+    # nextln: 00028c: 88 94 24 80 00 00 00            mov byte ptr [rsp + 0x80], dl
+    # nextln: 000293: 0f b6 84 24 80 00 00 00         movzx eax, byte ptr [rsp + 0x80]
+    # nextln: 00029b: 85 c0                           test eax, eax
+    # nextln: 00029d: 0f 84 6c 00 00 00               je 0x30f
+    # nextln: 0002a3: 8b 44 24 50                     mov eax, dword ptr [rsp + 0x50]
+    # nextln: 0002a7: 8b 54 24 4c                     mov edx, dword ptr [rsp + 0x4c]
+    # nextln: 0002ab: 8b 74 24 48                     mov esi, dword ptr [rsp + 0x48]
+    # nextln: 0002af: 03 d6                           add edx, esi
+    # nextln: 0002b1: 8b 74 24 74                     mov esi, dword ptr [rsp + 0x74]
+    # nextln: 0002b5: 03 d6                           add edx, esi
+    # nextln: 0002b7: 03 c2                           add eax, edx
+    # nextln: 0002b9: 89 44 24 50                     mov dword ptr [rsp + 0x50], eax
+    # nextln: 0002bd: 8b 44 24 4c                     mov eax, dword ptr [rsp + 0x4c]
+    # nextln: 0002c1: 8b 54 24 50                     mov edx, dword ptr [rsp + 0x50]
+    # nextln: 0002c5: 03 c2                           add eax, edx
+    # nextln: 0002c7: 8b 54 24 74                     mov edx, dword ptr [rsp + 0x74]
+    # nextln: 0002cb: 03 c2                           add eax, edx
+    # nextln: 0002cd: 99                              cdq
+    # nextln: 0002ce: f7 ff                           idiv edi
+    # nextln: 0002d0: 89 54 24 4c                     mov dword ptr [rsp + 0x4c], edx
+    # nextln: 0002d4: 8b 44 24 48                     mov eax, dword ptr [rsp + 0x48]
+    # nextln: 0002d8: 8b 54 24 4c                     mov edx, dword ptr [rsp + 0x4c]
+    # nextln: 0002dc: 03 c2                           add eax, edx
+    # nextln: 0002de: 99                              cdq
+    # nextln: 0002df: f7 ff                           idiv edi
+    # nextln: 0002e1: 89 54 24 48                     mov dword ptr [rsp + 0x48], edx
+    # nextln: 0002e5: 8b 44 24 28                     mov eax, dword ptr [rsp + 0x28]
+    # nextln: 0002e9: 8b 54 24 50                     mov edx, dword ptr [rsp + 0x50]
+    # nextln: 0002ed: 8b 74 24 4c                     mov esi, dword ptr [rsp + 0x4c]
+    # nextln: 0002f1: 03 d6                           add edx, esi
+    # nextln: 0002f3: 8b 74 24 48                     mov esi, dword ptr [rsp + 0x48]
+    # nextln: 0002f7: 03 d6                           add edx, esi
+    # nextln: 0002f9: 03 c2                           add eax, edx
+    # nextln: 0002fb: 89 44 24 28                     mov dword ptr [rsp + 0x28], eax
+    # nextln: 0002ff: 8b 44 24 74                     mov eax, dword ptr [rsp + 0x74]
+    # nextln: 000303: 83 c0 01                        add eax, 1
+    # nextln: 000306: 89 44 24 74                     mov dword ptr [rsp + 0x74], eax
+    # nextln: 00030a: e9 6c ff ff ff                  jmp 0x27b
+    # nextln: 00030f: 8b 44 24 70                     mov eax, dword ptr [rsp + 0x70]
+    # nextln: 000313: 83 c0 01                        add eax, 1
+    # nextln: 000316: 89 44 24 70                     mov dword ptr [rsp + 0x70], eax
+    # nextln: 00031a: 4c 89 54 24 10                  mov qword ptr [rsp + 0x10], r10
+    # nextln: 00031f: e9 f4 fe ff ff                  jmp 0x218
+    # nextln: 000324: 8b 44 24 6c                     mov eax, dword ptr [rsp + 0x6c]
+    # nextln: 000328: 83 c0 01                        add eax, 1
+    # nextln: 00032b: 89 44 24 6c                     mov dword ptr [rsp + 0x6c], eax
+    # nextln: 00032f: 4d 89 cf                        mov r15, r9
+    # nextln: 000332: 4c 89 54 24 10                  mov qword ptr [rsp + 0x10], r10
+    # nextln: 000337: e9 58 fe ff ff                  jmp 0x194
+    # nextln: 00033c: 4c 8b 54 24 10                  mov r10, qword ptr [rsp + 0x10]
+    # nextln: 000341: 44 89 44 24 68                  mov dword ptr [rsp + 0x68], r8d
+    # nextln: 000346: 44 8b 5c 24 68                  mov r11d, dword ptr [rsp + 0x68]
+    # nextln: 00034b: 48 89 f8                        mov rax, rdi
+    # nextln: 00034e: 99                              cdq
+    # nextln: 00034f: 48 8b 74 24 08                  mov rsi, qword ptr [rsp + 8]
+    # nextln: 000354: f7 fe                           idiv esi
+    # nextln: 000356: 33 d2                           xor edx, edx
+    # nextln: 000358: 44 3b d8                        cmp r11d, eax
+    # nextln: 00035b: 0f 9c c2                        setl dl
+    # nextln: 00035e: 88 54 24 7f                     mov byte ptr [rsp + 0x7f], dl
+    # nextln: 000362: 0f b6 44 24 7f                  movzx eax, byte ptr [rsp + 0x7f]
+    # nextln: 000367: 85 c0                           test eax, eax
+    # nextln: 000369: 0f 84 4d 00 00 00               je 0x3bc
+    # nextln: 00036f: 8b 44 24 44                     mov eax, dword ptr [rsp + 0x44]
+    # nextln: 000373: 8b 54 24 68                     mov edx, dword ptr [rsp + 0x68]
+    # nextln: 000377: 03 c2                           add eax, edx
+    # nextln: 000379: 99                              cdq
+    # nextln: 00037a: f7 ff                           idiv edi
+    # nextln: 00037c: 89 54 24 44                     mov dword ptr [rsp + 0x44], edx
+    # nextln: 000380: 8b 44 24 40                     mov eax, dword ptr [rsp + 0x40]
+    # nextln: 000384: 8b 54 24 44                     mov edx, dword ptr [rsp + 0x44]
+    # nextln: 000388: 03 c2                           add eax, edx
+    # nextln: 00038a: 99                              cdq
+    # nextln: 00038b: f7 ff                           idiv edi
+    # nextln: 00038d: 89 54 24 40                     mov dword ptr [rsp + 0x40], edx
+    # nextln: 000391: 8b 44 24 28                     mov eax, dword ptr [rsp + 0x28]
+    # nextln: 000395: 8b 54 24 44                     mov edx, dword ptr [rsp + 0x44]
+    # nextln: 000399: 44 8b 5c 24 40                  mov r11d, dword ptr [rsp + 0x40]
+    # nextln: 00039e: 41 03 d3                        add edx, r11d
+    # nextln: 0003a1: 03 c2                           add eax, edx
+    # nextln: 0003a3: 89 44 24 28                     mov dword ptr [rsp + 0x28], eax
+    # nextln: 0003a7: 8b 44 24 68                     mov eax, dword ptr [rsp + 0x68]
+    # nextln: 0003ab: 83 c0 01                        add eax, 1
+    # nextln: 0003ae: 89 44 24 68                     mov dword ptr [rsp + 0x68], eax
+    # nextln: 0003b2: 48 89 74 24 08                  mov qword ptr [rsp + 8], rsi
+    # nextln: 0003b7: e9 8a ff ff ff                  jmp 0x346
+    # nextln: 0003bc: 44 89 44 24 64                  mov dword ptr [rsp + 0x64], r8d
+    # nextln: 0003c1: 44 8b 64 24 64                  mov r12d, dword ptr [rsp + 0x64]
+    # nextln: 0003c6: 48 89 f8                        mov rax, rdi
+    # nextln: 0003c9: 99                              cdq
+    # nextln: 0003ca: 49 89 db                        mov r11, rbx
+    # nextln: 0003cd: 41 f7 fb                        idiv r11d
+    # nextln: 0003d0: 33 d2                           xor edx, edx
+    # nextln: 0003d2: 44 3b e0                        cmp r12d, eax
+    # nextln: 0003d5: 0f 9c c2                        setl dl
+    # nextln: 0003d8: 88 54 24 7d                     mov byte ptr [rsp + 0x7d], dl
+    # nextln: 0003dc: 0f b6 44 24 7d                  movzx eax, byte ptr [rsp + 0x7d]
+    # nextln: 0003e1: 85 c0                           test eax, eax
+    # nextln: 0003e3: 0f 84 66 00 00 00               je 0x44f
+    # nextln: 0003e9: 8b 44 24 3c                     mov eax, dword ptr [rsp + 0x3c]
+    # nextln: 0003ed: 8b 54 24 64                     mov edx, dword ptr [rsp + 0x64]
+    # nextln: 0003f1: 03 c2                           add eax, edx
+    # nextln: 0003f3: 99                              cdq
+    # nextln: 0003f4: f7 ff                           idiv edi
+    # nextln: 0003f6: 89 54 24 3c                     mov dword ptr [rsp + 0x3c], edx
+    # nextln: 0003fa: 8b 44 24 38                     mov eax, dword ptr [rsp + 0x38]
+    # nextln: 0003fe: 8b 54 24 3c                     mov edx, dword ptr [rsp + 0x3c]
+    # nextln: 000402: 03 c2                           add eax, edx
+    # nextln: 000404: 99                              cdq
+    # nextln: 000405: f7 ff                           idiv edi
+    # nextln: 000407: 89 54 24 38                     mov dword ptr [rsp + 0x38], edx
+    # nextln: 00040b: 8b 44 24 34                     mov eax, dword ptr [rsp + 0x34]
+    # nextln: 00040f: 8b 54 24 38                     mov edx, dword ptr [rsp + 0x38]
+    # nextln: 000413: 03 c2                           add eax, edx
+    # nextln: 000415: 8b 54 24 64                     mov edx, dword ptr [rsp + 0x64]
+    # nextln: 000419: 03 c2                           add eax, edx
+    # nextln: 00041b: 99                              cdq
+    # nextln: 00041c: f7 ff                           idiv edi
+    # nextln: 00041e: 89 54 24 34                     mov dword ptr [rsp + 0x34], edx
+    # nextln: 000422: 8b 44 24 28                     mov eax, dword ptr [rsp + 0x28]
+    # nextln: 000426: 8b 54 24 3c                     mov edx, dword ptr [rsp + 0x3c]
+    # nextln: 00042a: 8b 5c 24 38                     mov ebx, dword ptr [rsp + 0x38]
+    # nextln: 00042e: 03 d3                           add edx, ebx
+    # nextln: 000430: 8b 5c 24 34                     mov ebx, dword ptr [rsp + 0x34]
+    # nextln: 000434: 03 d3                           add edx, ebx
+    # nextln: 000436: 03 c2                           add eax, edx
+    # nextln: 000438: 89 44 24 28                     mov dword ptr [rsp + 0x28], eax
+    # nextln: 00043c: 8b 44 24 64                     mov eax, dword ptr [rsp + 0x64]
+    # nextln: 000440: 83 c0 01                        add eax, 1
+    # nextln: 000443: 89 44 24 64                     mov dword ptr [rsp + 0x64], eax
+    # nextln: 000447: 4c 89 db                        mov rbx, r11
+    # nextln: 00044a: e9 72 ff ff ff                  jmp 0x3c1
+    # nextln: 00044f: 8b 44 24 5c                     mov eax, dword ptr [rsp + 0x5c]
+    # nextln: 000453: 83 c0 01                        add eax, 1
+    # nextln: 000456: 89 44 24 5c                     mov dword ptr [rsp + 0x5c], eax
+    # nextln: 00045a: 4d 89 cf                        mov r15, r9
+    # nextln: 00045d: 4c 89 54 24 10                  mov qword ptr [rsp + 0x10], r10
+    # nextln: 000462: 48 89 74 24 08                  mov qword ptr [rsp + 8], rsi
+    # nextln: 000467: 4c 89 db                        mov rbx, r11
+    # nextln: 00046a: e9 04 fd ff ff                  jmp 0x173
+    # nextln: 00046f: 8b 44 24 28                     mov eax, dword ptr [rsp + 0x28]
+    # nextln: 000473: 8b 4c 24 60                     mov ecx, dword ptr [rsp + 0x60]
+    # nextln: 000477: 8b 54 24 20                     mov edx, dword ptr [rsp + 0x20]
+    # nextln: 00047b: 03 ca                           add ecx, edx
+    # nextln: 00047d: 8b 54 24 78                     mov edx, dword ptr [rsp + 0x78]
+    # nextln: 000481: 03 ca                           add ecx, edx
+    # nextln: 000483: 8b 54 24 58                     mov edx, dword ptr [rsp + 0x58]
+    # nextln: 000487: 03 ca                           add ecx, edx
+    # nextln: 000489: 8b 54 24 54                     mov edx, dword ptr [rsp + 0x54]
+    # nextln: 00048d: 03 ca                           add ecx, edx
+    # nextln: 00048f: 8b 54 24 50                     mov edx, dword ptr [rsp + 0x50]
+    # nextln: 000493: 03 ca                           add ecx, edx
+    # nextln: 000495: 8b 54 24 4c                     mov edx, dword ptr [rsp + 0x4c]
+    # nextln: 000499: 03 ca                           add ecx, edx
+    # nextln: 00049b: 8b 54 24 48                     mov edx, dword ptr [rsp + 0x48]
+    # nextln: 00049f: 03 ca                           add ecx, edx
+    # nextln: 0004a1: 8b 54 24 44                     mov edx, dword ptr [rsp + 0x44]
+    # nextln: 0004a5: 03 ca                           add ecx, edx
+    # nextln: 0004a7: 8b 54 24 40                     mov edx, dword ptr [rsp + 0x40]
+    # nextln: 0004ab: 03 ca                           add ecx, edx
+    # nextln: 0004ad: 8b 54 24 3c                     mov edx, dword ptr [rsp + 0x3c]
+    # nextln: 0004b1: 03 ca                           add ecx, edx
+    # nextln: 0004b3: 8b 54 24 38                     mov edx, dword ptr [rsp + 0x38]
+    # nextln: 0004b7: 03 ca                           add ecx, edx
+    # nextln: 0004b9: 8b 54 24 34                     mov edx, dword ptr [rsp + 0x34]
+    # nextln: 0004bd: 03 ca                           add ecx, edx
+    # nextln: 0004bf: 8b 54 24 30                     mov edx, dword ptr [rsp + 0x30]
+    # nextln: 0004c3: 03 ca                           add ecx, edx
+    # nextln: 0004c5: 8b 54 24 2c                     mov edx, dword ptr [rsp + 0x2c]
+    # nextln: 0004c9: 03 ca                           add ecx, edx
+    # nextln: 0004cb: 03 c1                           add eax, ecx
+    # nextln: 0004cd: 89 44 24 28                     mov dword ptr [rsp + 0x28], eax
+    # nextln: 0004d1: 8b 44 24 28                     mov eax, dword ptr [rsp + 0x28]
+    # nextln: 0004d5: 89 44 24 24                     mov dword ptr [rsp + 0x24], eax
+    # nextln: 0004d9: 8b 44 24 24                     mov eax, dword ptr [rsp + 0x24]
+    # nextln: 0004dd: 48 81 c4 98 00 00 00            add rsp, 0x98
+    # nextln: 0004e4: 5b                              pop rbx
+    # nextln: 0004e5: 41 5c                           pop r12
+    # nextln: 0004e7: 41 5d                           pop r13
+    # nextln: 0004e9: 41 5e                           pop r14
+    # nextln: 0004eb: 41 5f                           pop r15
+    # nextln: 0004ed: 5d                              pop rbp
+    # nextln: 0004ee: c3                              ret
+
+    %0:ctrl, %1:i32 = entry
+    %2:ptr = stackslot 4:4
+    %3:ptr = stackslot 4:4
+    %4:ptr = stackslot 4:4
+    %5:ptr = stackslot 4:4
+    %6:ptr = stackslot 4:4
+    %7:ptr = stackslot 4:4
+    %8:ptr = stackslot 4:4
+    %9:ptr = stackslot 4:4
+    %10:ptr = stackslot 4:4
+    %11:ptr = stackslot 4:4
+    %12:ptr = stackslot 4:4
+    %13:ptr = stackslot 4:4
+    %14:ptr = stackslot 4:4
+    %15:ptr = stackslot 4:4
+    %16:ptr = stackslot 4:4
+    %17:ptr = stackslot 4:4
+    %18:ptr = stackslot 4:4
+    %19:ptr = stackslot 4:4
+    %20:ptr = stackslot 4:4
+    %21:ptr = stackslot 4:4
+    %22:ptr = stackslot 1:1
+    %23:ptr = stackslot 1:1
+    %24:ptr = stackslot 1:1
+    %25:ptr = stackslot 4:4
+    %26:ptr = stackslot 1:1
+    %27:ptr = stackslot 4:4
+    %28:ptr = stackslot 1:1
+    %29:ptr = stackslot 1:1
+    %30:ptr = stackslot 4:4
+    %33:i32 = iconst 1
+    %34:i32 = iconst 6
+    %35:i32 = iconst 0
+    %36:ctrl = store.4 %0, %35, %2
+    %37:ctrl = store.4 %36, %35, %3
+    %38:ctrl = store.4 %37, %35, %4
+    %39:ctrl = store.4 %38, %35, %5
+    %40:ctrl = store.4 %39, %35, %6
+    %41:ctrl = store.4 %40, %35, %7
+    %42:ctrl = store.4 %41, %35, %8
+    %43:ctrl = store.4 %42, %35, %9
+    %44:ctrl = store.4 %43, %35, %10
+    %45:ctrl = store.4 %44, %35, %11
+    %46:ctrl = store.4 %45, %35, %12
+    %47:ctrl = store.4 %46, %35, %13
+    %48:ctrl = store.4 %47, %35, %14
+    %49:ctrl = store.4 %48, %35, %15
+    %50:ctrl = store.4 %49, %35, %16
+    %51:ctrl = store.4 %50, %35, %17
+    %52:ctrl = store.4 %51, %35, %18
+    %53:i32 = iconst 5
+    %54:ctrl = store.4 %52, %35, %19
+    %55:ctrl = store.4 %54, %35, %20
+    %56:ctrl = store.4 %55, %35, %21
+    %57:ctrl = store.1 %56, %35, %22
+    %58:i32 = iconst 4
+    %59:ctrl = store.1 %57, %35, %23
+    %60:i32 = iconst 3
+    %61:ctrl = store.1 %59, %35, %24
+    %62:ctrl = store.4 %61, %35, %25
+    %63:ctrl = store.1 %62, %35, %26
+    %64:ctrl = store.4 %63, %35, %27
+    %65:ctrl = store.1 %64, %35, %28
+    %66:i32 = iconst 2
+    %67:ctrl = store.1 %65, %35, %29
+    %68:ctrl = store.4 %67, %35, %30
+    %69:ctrl = store.4 %68, %33, %2
+    %70:ctrl = store.4 %69, %66, %3
+    %71:ctrl = store.4 %70, %60, %4
+    %72:ctrl = store.4 %71, %58, %5
+    %73:ctrl = store.4 %72, %53, %6
+    %74:ctrl = store.4 %73, %34, %7
+    %75:i32 = iconst 15
+    %76:i32 = iconst 14
+    %77:i32 = iconst 13
+    %78:i32 = iconst 12
+    %79:i32 = iconst 11
+    %80:i32 = iconst 10
+    %81:i32 = iconst 9
+    %82:i32 = iconst 8
+    %83:i32 = iconst 7
+    %84:ctrl = store.4 %74, %83, %8
+    %85:ctrl = store.4 %84, %82, %9
+    %86:ctrl = store.4 %85, %81, %10
+    %87:ctrl = store.4 %86, %80, %11
+    %88:ctrl = store.4 %87, %79, %12
+    %89:ctrl = store.4 %88, %78, %13
+    %90:ctrl = store.4 %89, %77, %14
+    %91:ctrl = store.4 %90, %76, %15
+    %92:ctrl = store.4 %91, %75, %16
+    %93:ctrl = store.4 %92, %35, %17
+    %94:ctrl = store.4 %93, %35, %18
+    %95:ctrl, %96:phisel = region %94, %386
+    %97:ctrl, %98:i32 = load.4 %95, %18
+    %99:i32 = icmp slt %98, %1
+    %100:ctrl = store.1 %97, %99, %29
+    %101:ctrl, %102:i32 = load.1 %100, %29
+    %103:ctrl, %104:ctrl = brcond %101, %102
+    %107:ctrl = store.4 %103, %35, %19
+    %108:ctrl, %109:phisel = region %107, %274
+    %110:ctrl, %111:i32 = load.4 %108, %19
+    %112:ctrl, %113:i32 = sdiv %110, %1, %66
+    %114:i32 = icmp slt %111, %113
+    %115:ctrl = store.1 %112, %114, %24
+    %116:ctrl, %117:i32 = load.1 %115, %24
+    %118:ctrl, %119:ctrl = brcond %116, %117
+    %122:ctrl, %123:i32 = load.4 %118, %17
+    %124:ctrl, %125:i32 = load.4 %122, %2
+    %126:ctrl, %127:i32 = load.4 %124, %3
+    %128:ctrl, %129:i32 = load.4 %126, %4
+    %130:i32 = iadd %125, %127
+    %131:i32 = iadd %130, %129
+    %132:i32 = iadd %123, %131
+    %133:ctrl = store.4 %128, %132, %17
+    %134:ctrl, %135:i32 = load.4 %133, %2
+    %136:ctrl, %137:i32 = load.4 %134, %18
+    %138:i32 = iadd %135, %137
+    %139:ctrl, %140:i32 = srem %136, %138, %1
+    %141:ctrl = store.4 %139, %140, %2
+    %142:ctrl, %143:i32 = load.4 %141, %3
+    %144:ctrl, %145:i32 = load.4 %142, %19
+    %146:i32 = iadd %143, %145
+    %147:ctrl, %148:i32 = srem %144, %146, %1
+    %149:ctrl = store.4 %147, %148, %3
+    %150:ctrl, %151:i32 = load.4 %149, %4
+    %152:ctrl, %153:i32 = load.4 %150, %2
+    %154:ctrl, %155:i32 = load.4 %152, %3
+    %156:i32 = iadd %151, %153
+    %157:i32 = iadd %156, %155
+    %158:ctrl, %159:i32 = srem %154, %157, %1
+    %160:ctrl = store.4 %158, %159, %4
+    %161:ctrl = store.4 %160, %35, %20
+    %162:ctrl, %163:phisel = region %161, %268
+    %164:ctrl, %165:i32 = load.4 %162, %20
+    %166:ctrl, %167:i32 = sdiv %164, %1, %60
+    %168:i32 = icmp slt %165, %167
+    %169:ctrl = store.1 %166, %168, %23
+    %170:ctrl, %171:i32 = load.1 %169, %23
+    %172:ctrl, %173:ctrl = brcond %170, %171
+    %176:ctrl, %177:i32 = load.4 %172, %5
+    %178:ctrl, %179:i32 = load.4 %176, %20
+    %180:i32 = iadd %177, %179
+    %181:ctrl, %182:i32 = srem %178, %180, %1
+    %183:ctrl = store.4 %181, %182, %5
+    %184:ctrl, %185:i32 = load.4 %183, %6
+    %186:ctrl, %187:i32 = load.4 %184, %5
+    %188:i32 = iadd %185, %187
+    %189:ctrl, %190:i32 = srem %186, %188, %1
+    %191:ctrl = store.4 %189, %190, %6
+    %192:ctrl, %193:i32 = load.4 %191, %17
+    %194:ctrl, %195:i32 = load.4 %192, %5
+    %196:ctrl, %197:i32 = load.4 %194, %6
+    %198:i32 = iadd %195, %197
+    %199:i32 = iadd %193, %198
+    %200:ctrl = store.4 %196, %199, %17
+    %201:ctrl = store.4 %200, %35, %21
+    %202:ctrl, %203:phisel = region %201, %262
+    %204:ctrl, %205:i32 = load.4 %202, %21
+    %206:ctrl, %207:i32 = sdiv %204, %1, %58
+    %208:i32 = icmp slt %205, %207
+    %209:ctrl = store.1 %206, %208, %22
+    %210:ctrl, %211:i32 = load.1 %209, %22
+    %212:ctrl, %213:ctrl = brcond %210, %211
+    %216:ctrl, %217:i32 = load.4 %212, %7
+    %218:ctrl, %219:i32 = load.4 %216, %8
+    %220:ctrl, %221:i32 = load.4 %218, %9
+    %222:ctrl, %223:i32 = load.4 %220, %21
+    %224:i32 = iadd %219, %221
+    %225:i32 = iadd %224, %223
+    %226:i32 = iadd %217, %225
+    %227:ctrl = store.4 %222, %226, %7
+    %228:ctrl, %229:i32 = load.4 %227, %8
+    %230:ctrl, %231:i32 = load.4 %228, %7
+    %232:ctrl, %233:i32 = load.4 %230, %21
+    %234:i32 = iadd %229, %231
+    %235:i32 = iadd %234, %233
+    %236:ctrl, %237:i32 = srem %232, %235, %1
+    %238:ctrl = store.4 %236, %237, %8
+    %239:ctrl, %240:i32 = load.4 %238, %9
+    %241:ctrl, %242:i32 = load.4 %239, %8
+    %243:i32 = iadd %240, %242
+    %244:ctrl, %245:i32 = srem %241, %243, %1
+    %246:ctrl = store.4 %244, %245, %9
+    %247:ctrl, %248:i32 = load.4 %246, %17
+    %249:ctrl, %250:i32 = load.4 %247, %7
+    %251:ctrl, %252:i32 = load.4 %249, %8
+    %253:ctrl, %254:i32 = load.4 %251, %9
+    %255:i32 = iadd %250, %252
+    %256:i32 = iadd %255, %254
+    %257:i32 = iadd %248, %256
+    %258:ctrl = store.4 %253, %257, %17
+    %259:ctrl, %260:i32 = load.4 %258, %21
+    %261:i32 = iadd %260, %33
+    %262:ctrl = store.4 %259, %261, %21
+    %265:ctrl, %266:i32 = load.4 %213, %20
+    %267:i32 = iadd %266, %33
+    %268:ctrl = store.4 %265, %267, %20
+    %271:ctrl, %272:i32 = load.4 %173, %19
+    %273:i32 = iadd %272, %33
+    %274:ctrl = store.4 %271, %273, %19
+    %277:ctrl = store.4 %119, %35, %25
+    %278:ctrl, %279:phisel = region %277, %320
+    %280:ctrl, %281:i32 = load.4 %278, %25
+    %282:ctrl, %283:i32 = sdiv %280, %1, %53
+    %284:i32 = icmp slt %281, %283
+    %285:ctrl = store.1 %282, %284, %26
+    %286:ctrl, %287:i32 = load.1 %285, %26
+    %288:ctrl, %289:ctrl = brcond %286, %287
+    %292:ctrl, %293:i32 = load.4 %288, %10
+    %294:ctrl, %295:i32 = load.4 %292, %25
+    %296:i32 = iadd %293, %295
+    %297:ctrl, %298:i32 = srem %294, %296, %1
+    %299:ctrl = store.4 %297, %298, %10
+    %300:ctrl, %301:i32 = load.4 %299, %11
+    %302:ctrl, %303:i32 = load.4 %300, %10
+    %304:i32 = iadd %301, %303
+    %305:ctrl, %306:i32 = srem %302, %304, %1
+    %307:ctrl = store.4 %305, %306, %11
+    %308:ctrl, %309:i32 = load.4 %307, %17
+    %310:ctrl, %311:i32 = load.4 %308, %10
+    %312:ctrl, %313:i32 = load.4 %310, %11
+    %314:i32 = iadd %311, %313
+    %315:i32 = iadd %309, %314
+    %316:ctrl = store.4 %312, %315, %17
+    %317:ctrl, %318:i32 = load.4 %316, %25
+    %319:i32 = iadd %318, %33
+    %320:ctrl = store.4 %317, %319, %25
+    %323:ctrl = store.4 %289, %35, %27
+    %324:ctrl, %325:phisel = region %323, %380
+    %326:ctrl, %327:i32 = load.4 %324, %27
+    %328:ctrl, %329:i32 = sdiv %326, %1, %34
+    %330:i32 = icmp slt %327, %329
+    %331:ctrl = store.1 %328, %330, %28
+    %332:ctrl, %333:i32 = load.1 %331, %28
+    %334:ctrl, %335:ctrl = brcond %332, %333
+    %338:ctrl, %339:i32 = load.4 %334, %12
+    %340:ctrl, %341:i32 = load.4 %338, %27
+    %342:i32 = iadd %339, %341
+    %343:ctrl, %344:i32 = srem %340, %342, %1
+    %345:ctrl = store.4 %343, %344, %12
+    %346:ctrl, %347:i32 = load.4 %345, %13
+    %348:ctrl, %349:i32 = load.4 %346, %12
+    %350:i32 = iadd %347, %349
+    %351:ctrl, %352:i32 = srem %348, %350, %1
+    %353:ctrl = store.4 %351, %352, %13
+    %354:ctrl, %355:i32 = load.4 %353, %14
+    %356:ctrl, %357:i32 = load.4 %354, %13
+    %358:ctrl, %359:i32 = load.4 %356, %27
+    %360:i32 = iadd %355, %357
+    %361:i32 = iadd %360, %359
+    %362:ctrl, %363:i32 = srem %358, %361, %1
+    %364:ctrl = store.4 %362, %363, %14
+    %365:ctrl, %366:i32 = load.4 %364, %17
+    %367:ctrl, %368:i32 = load.4 %365, %12
+    %369:ctrl, %370:i32 = load.4 %367, %13
+    %371:ctrl, %372:i32 = load.4 %369, %14
+    %373:i32 = iadd %368, %370
+    %374:i32 = iadd %373, %372
+    %375:i32 = iadd %366, %374
+    %376:ctrl = store.4 %371, %375, %17
+    %377:ctrl, %378:i32 = load.4 %376, %27
+    %379:i32 = iadd %378, %33
+    %380:ctrl = store.4 %377, %379, %27
+    %383:ctrl, %384:i32 = load.4 %335, %18
+    %385:i32 = iadd %384, %33
+    %386:ctrl = store.4 %383, %385, %18
+    %389:ctrl, %390:i32 = load.4 %104, %17
+    %391:ctrl, %392:i32 = load.4 %389, %2
+    %393:ctrl, %394:i32 = load.4 %391, %3
+    %395:ctrl, %396:i32 = load.4 %393, %4
+    %397:ctrl, %398:i32 = load.4 %395, %5
+    %399:ctrl, %400:i32 = load.4 %397, %6
+    %401:ctrl, %402:i32 = load.4 %399, %7
+    %403:ctrl, %404:i32 = load.4 %401, %8
+    %405:ctrl, %406:i32 = load.4 %403, %9
+    %407:ctrl, %408:i32 = load.4 %405, %10
+    %409:ctrl, %410:i32 = load.4 %407, %11
+    %411:ctrl, %412:i32 = load.4 %409, %12
+    %413:ctrl, %414:i32 = load.4 %411, %13
+    %415:ctrl, %416:i32 = load.4 %413, %14
+    %417:ctrl, %418:i32 = load.4 %415, %15
+    %419:ctrl, %420:i32 = load.4 %417, %16
+    %421:i32 = iadd %392, %394
+    %422:i32 = iadd %421, %396
+    %423:i32 = iadd %422, %398
+    %424:i32 = iadd %423, %400
+    %425:i32 = iadd %424, %402
+    %426:i32 = iadd %425, %404
+    %427:i32 = iadd %426, %406
+    %428:i32 = iadd %427, %408
+    %429:i32 = iadd %428, %410
+    %430:i32 = iadd %429, %412
+    %431:i32 = iadd %430, %414
+    %432:i32 = iadd %431, %416
+    %433:i32 = iadd %432, %418
+    %434:i32 = iadd %433, %420
+    %435:i32 = iadd %390, %434
+    %436:ctrl = store.4 %419, %435, %17
+    %437:ctrl, %438:i32 = load.4 %436, %17
+    %439:ctrl = store.4 %437, %438, %30
+    %442:ctrl, %443:i32 = load.4 %439, %30
+    return %442, %443
+}

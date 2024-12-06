@@ -38,33 +38,29 @@ func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # nextln: 0012:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rdi = $$r14
     # nextln: 0013:     CallRm $$rax, $$rdi
-    # nextln:           $$r14 = $$spill3
     # nextln: 0014:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rdi = $$r13
     # nextln: 0015:     CallRm $$rax, $$rdi
-    # nextln:           $$r13 = $$spill2
     # nextln: 0016:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rdi = $$r12
     # nextln: 0017:     CallRm $$rax, $$rdi
-    # nextln:           $$r12 = $$spill1
     # nextln: 0018:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rdi = $$rbx
     # nextln: 0019:     CallRm $$rax, $$rdi
-    # nextln:           $$rbx = $$spill0
     # nextln: 0020:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rdi = $$r15
     # nextln: 0021:     CallRm $$rax, $$rdi
     # nextln: 0022:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$r14
+    # nextln:           $$rdi = $$spill3
     # nextln: 0023:     CallRm $$rax, $$rdi
     # nextln: 0024:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$r13
+    # nextln:           $$rdi = $$spill2
     # nextln: 0025:     CallRm $$rax, $$rdi
     # nextln: 0026:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$r12
+    # nextln:           $$rdi = $$spill1
     # nextln: 0027:     CallRm $$rax, $$rdi
     # nextln: 0028:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$rbx
+    # nextln:           $$rdi = $$spill0
     # nextln: 0029:     CallRm $$rax, $$rdi
     # nextln: 0030:     Ret
 

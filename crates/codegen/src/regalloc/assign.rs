@@ -424,16 +424,51 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         fragment: LiveSetFragment,
         boundary: ConflictBoundary,
     ) {
-        // TODO: Search for a better split point by looking away from the boundary.
-        let instr = boundary.instr();
+        trace!("  split {fragment} for conflict {boundary:?}");
+        let instr = self.split_point_for_conflict(fragment, boundary);
+        self.split_fragment_before(fragment, instr);
+    }
+
+    fn split_point_for_conflict(
+        &mut self,
+        fragment: LiveSetFragment,
+        boundary: ConflictBoundary,
+    ) -> Instr {
+        match boundary {
+            ConflictBoundary::StartsAt(instr) => {
+                let last_instr_below = self
+                    .fragment_instrs(fragment)
+                    .map(|frag_instr| frag_instr.instr())
+                    .take_while(|&frag_instr| frag_instr < instr)
+                    .filter(|&frag_instr| {
+                        self.can_split_fragment_before(fragment, ProgramPoint::before(frag_instr))
+                    })
+                    .last();
+
+                // We always split *before* the selected instruction, but we want to split *after*
+                // the last use here.
+                last_instr_below.map(Instr::next).unwrap_or(instr)
+            }
+            ConflictBoundary::EndsAt(instr) => {
+                let first_instr_above = self
+                    .fragment_instrs(fragment)
+                    .map(|frag_instr| frag_instr.instr())
+                    .filter(|&frag_instr| frag_instr > instr)
+                    .find(|&frag_instr| {
+                        self.can_split_fragment_before(fragment, ProgramPoint::before(frag_instr))
+                    });
+
+                first_instr_above.unwrap_or(instr)
+            }
+        }
+    }
+
+    fn split_fragment_before(&mut self, fragment: LiveSetFragment, instr: Instr) {
         trace!(
             "  split: {fragment} (hull {:?}) at {instr}",
             self.fragment_hull(fragment)
         );
-        self.split_fragment_before(fragment, instr);
-    }
 
-    fn split_fragment_before(&mut self, fragment: LiveSetFragment, instr: Instr) {
         let pos = ProgramPoint::before(instr);
 
         debug_assert!(self.can_split_fragment_before(fragment, pos));

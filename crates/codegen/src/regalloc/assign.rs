@@ -166,10 +166,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     // This boundary is interesting for splitting if it can non-degenerately split
                     // the fragment in two.
                     let split_boundary = boundary.filter(|boundary| {
-                        self.can_split_fragment_before(
-                            fragment,
-                            ProgramPoint::before(boundary.instr()),
-                        )
+                        self.can_split_fragment_before(fragment, boundary.instr())
                     });
                     if let Some(split_boundary) = split_boundary {
                         match earliest_hard_conflict_boundary {
@@ -440,9 +437,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     .fragment_instrs(fragment)
                     .map(|frag_instr| frag_instr.instr())
                     .take_while(|&frag_instr| frag_instr < instr)
-                    .filter(|&frag_instr| {
-                        self.can_split_fragment_before(fragment, ProgramPoint::before(frag_instr))
-                    })
+                    .filter(|&frag_instr| self.can_split_fragment_before(fragment, frag_instr))
                     .last();
 
                 // We always split *before* the selected instruction, but we want to split *after*
@@ -454,9 +449,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     .fragment_instrs(fragment)
                     .map(|frag_instr| frag_instr.instr())
                     .filter(|&frag_instr| frag_instr > instr)
-                    .find(|&frag_instr| {
-                        self.can_split_fragment_before(fragment, ProgramPoint::before(frag_instr))
-                    });
+                    .find(|&frag_instr| self.can_split_fragment_before(fragment, frag_instr));
 
                 first_instr_above.unwrap_or(instr)
             }
@@ -469,9 +462,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             self.fragment_hull(fragment)
         );
 
-        let pos = ProgramPoint::before(instr);
+        debug_assert!(self.can_split_fragment_before(fragment, instr));
 
-        debug_assert!(self.can_split_fragment_before(fragment, pos));
+        let pos = ProgramPoint::before(instr);
 
         let (split_idx, split_boundary_range) = match self.live_set_fragments[fragment]
             .ranges
@@ -842,8 +835,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .flat_map(|range| self.live_ranges[range.live_range].instrs.iter().copied())
     }
 
-    fn can_split_fragment_before(&self, fragment: LiveSetFragment, point: ProgramPoint) -> bool {
-        self.fragment_hull(fragment).can_split_before(point)
+    fn can_split_fragment_before(&self, fragment: LiveSetFragment, instr: Instr) -> bool {
+        self.fragment_hull(fragment)
+            .can_split_before(ProgramPoint::before(instr))
     }
 
     fn is_fragment_spilled(&self, fragment: LiveSetFragment) -> bool {

@@ -593,6 +593,15 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         fragment: LiveSetFragment,
         boundary: ConflictBoundary,
     ) -> Option<Instr> {
+        if self.is_fragment_split(fragment) && self.fragment_only_instr(fragment).is_some() {
+            // We don't want to repeatedly split single-instruction fragments on conflict
+            // boundaries, as they can get us into pointless eviction/splitting/shuffling fights
+            // under high register pressure. It's better to just give up early and spill in this
+            // case; it frequently even reduces total spill count because there aren't a bunch of
+            // small pieces to move around.
+            return None;
+        }
+
         match boundary {
             ConflictBoundary::StartsAt(instr) => {
                 let last_instr_below = self
@@ -1009,6 +1018,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn can_split_fragment_before(&self, fragment: LiveSetFragment, instr: Instr) -> bool {
         self.fragment_hull(fragment)
             .can_split_before(ProgramPoint::before(instr))
+    }
+
+    fn is_fragment_split(&self, fragment: LiveSetFragment) -> bool {
+        let fragment = &self.live_set_fragments[fragment];
+        fragment.prev_split_neighbor.is_some() || fragment.next_split_neighbor.is_some()
     }
 
     fn is_fragment_global(&self, fragment: LiveSetFragment) -> bool {

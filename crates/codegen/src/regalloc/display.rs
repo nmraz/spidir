@@ -1,6 +1,5 @@
 use core::{
     fmt::{self, Display},
-    iter,
     marker::PhantomData,
 };
 
@@ -15,7 +14,7 @@ use crate::{
     machine::MachineCore,
 };
 
-use super::{Assignment, InstrOrCopy, OperandAssignment};
+use super::{types::AssignmentCopySource, Assignment, InstrOrCopy, OperandAssignment};
 
 pub struct DisplayOperandAssignment<M: MachineCore> {
     pub(super) assignment: OperandAssignment,
@@ -27,6 +26,20 @@ impl<M: MachineCore> fmt::Display for DisplayOperandAssignment<M> {
         match self.assignment {
             OperandAssignment::Reg(reg) => write!(f, "${}", M::reg_name(reg)),
             OperandAssignment::Spill(spill) => write!(f, "${spill}"),
+        }
+    }
+}
+
+pub struct DisplayAssignmentCopySource<'a, M: MachineCore> {
+    pub(super) lir: &'a Lir<M>,
+    pub(super) source: AssignmentCopySource,
+}
+
+impl<M: MachineCore> fmt::Display for DisplayAssignmentCopySource<'_, M> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.source {
+            AssignmentCopySource::Operand(assignment) => write!(f, "{}", assignment.display::<M>()),
+            AssignmentCopySource::Remat(instr) => write!(f, "{:?}", self.lir.instr_data(instr)),
         }
     }
 }
@@ -61,9 +74,12 @@ impl<M: MachineCore> fmt::Display for DisplayAssignment<'_, M> {
                     }
                     InstrOrCopy::Copy(copy) => {
                         write!(f, "{}    ", display_instr_gutter_padding())?;
-                        write_op::<M>(f, copy.to)?;
-                        write!(f, " = ")?;
-                        write_op::<M>(f, copy.from)?;
+                        write!(
+                            f,
+                            "{} = {}",
+                            copy.to.display::<M>(),
+                            copy.from.display(self.lir)
+                        )?;
                     }
                 }
                 writeln!(f)?;
@@ -77,8 +93,4 @@ fn format_op_assignments<M: MachineCore>(
     op_assignments: impl Iterator<Item = OperandAssignment>,
 ) -> impl Display {
     op_assignments.format_with(", ", |op, f| f(&op.display::<M>()))
-}
-
-fn write_op<M: MachineCore>(f: &mut fmt::Formatter<'_>, op: OperandAssignment) -> fmt::Result {
-    write!(f, "{}", format_op_assignments::<M>(iter::once(op)))
 }

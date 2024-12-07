@@ -23,8 +23,8 @@ use super::{
     parallel_copy::{self, RegScavenger},
     redundant_copy::{RedundantCopyTracker, RedundantCopyVerdict},
     types::{
-        BlockExitGhostCopy, InstrSlot, LiveRange, ParallelCopies, ParallelCopy, ParallelCopyPhase,
-        ProgramPoint, TaggedAssignmentCopy,
+        AssignmentCopySource, BlockExitGhostCopy, InstrSlot, LiveRange, ParallelCopies,
+        ParallelCopy, ParallelCopyPhase, ProgramPoint, TaggedAssignmentCopy,
     },
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot, SpillSlotData,
 };
@@ -61,7 +61,7 @@ fn record_parallel_copy(
             instr,
             phase,
             class,
-            from,
+            from: AssignmentCopySource::Operand(from),
             to,
         });
     }
@@ -444,7 +444,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     instr,
                     phase,
                     class: self.lir.vreg_class(vreg),
-                    from: pred_assignment,
+                    from: AssignmentCopySource::Operand(pred_assignment),
                     to: assignment,
                 });
             }
@@ -802,7 +802,7 @@ impl<'a, M: MachineRegalloc> AssignedRegScavenger<'a, M> {
         // before `pos`. Destinations need to be marked as used for correct behavior with block
         // live-outs and outgoing params, which might not be live at all at `pos`.
         for copy in copies {
-            if let OperandAssignment::Reg(from) = copy.from {
+            if let AssignmentCopySource::Operand(OperandAssignment::Reg(from)) = copy.from {
                 self.used_tmp_regs.insert(from);
             }
             if let OperandAssignment::Reg(to) = copy.to {

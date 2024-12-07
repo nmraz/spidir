@@ -7,11 +7,11 @@ use smallvec::SmallVec;
 
 use crate::{
     cfg::Block,
-    lir::{Instr, MemLayout, OperandPos, PhysReg, RegClass, VirtReg},
+    lir::{Instr, Lir, MemLayout, OperandPos, PhysReg, RegClass, VirtReg},
     machine::MachineCore,
 };
 
-use super::display::DisplayOperandAssignment;
+use super::display::{DisplayAssignmentCopySource, DisplayOperandAssignment};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SpillSlot(u32);
@@ -486,6 +486,30 @@ impl OperandAssignment {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub enum AssignmentCopySource {
+    Operand(OperandAssignment),
+    Remat(Instr),
+}
+
+impl AssignmentCopySource {
+    pub fn is_spill(self) -> bool {
+        matches!(self, Self::Operand(OperandAssignment::Spill(..)))
+    }
+
+    pub fn is_reg(&self) -> bool {
+        matches!(self, Self::Operand(OperandAssignment::Reg(..)))
+    }
+
+    pub fn is_remat(&self) -> bool {
+        matches!(self, Self::Remat(..))
+    }
+
+    pub fn display<M: MachineCore>(self, lir: &Lir<M>) -> DisplayAssignmentCopySource<'_, M> {
+        DisplayAssignmentCopySource { lir, source: self }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct SpillSlotData {
     pub layout: MemLayout,
@@ -504,7 +528,7 @@ pub struct ParallelCopy {
     pub instr: Instr,
     pub phase: ParallelCopyPhase,
     pub class: RegClass,
-    pub from: OperandAssignment,
+    pub from: AssignmentCopySource,
     pub to: OperandAssignment,
 }
 
@@ -512,7 +536,7 @@ pub type ParallelCopies = Vec<ParallelCopy>;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct AssignmentCopy {
-    pub from: OperandAssignment,
+    pub from: AssignmentCopySource,
     pub to: OperandAssignment,
 }
 

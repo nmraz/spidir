@@ -1,7 +1,7 @@
 use fx_utils::FxHashMap;
 use smallvec::SmallVec;
 
-use super::{AssignmentCopy, OperandAssignment};
+use super::{types::AssignmentCopySource, AssignmentCopy, OperandAssignment};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RedundantCopyVerdict {
@@ -11,8 +11,8 @@ pub enum RedundantCopyVerdict {
 
 #[derive(Default)]
 pub struct RedundantCopyTracker {
-    copy_sources: FxHashMap<OperandAssignment, OperandAssignment>,
-    copy_targets: FxHashMap<OperandAssignment, SmallVec<[OperandAssignment; 4]>>,
+    copy_sources: FxHashMap<OperandAssignment, AssignmentCopySource>,
+    copy_targets: FxHashMap<AssignmentCopySource, SmallVec<[OperandAssignment; 4]>>,
 }
 
 impl RedundantCopyTracker {
@@ -26,7 +26,10 @@ impl RedundantCopyTracker {
     }
 
     pub fn process_copy(&mut self, copy: &AssignmentCopy) -> RedundantCopyVerdict {
-        let from = self.assignment_source(copy.from);
+        let from = match copy.from {
+            AssignmentCopySource::Operand(from) => self.assignment_source(from),
+            from => from,
+        };
         let to = self.assignment_source(copy.to);
 
         if from == to {
@@ -45,18 +48,21 @@ impl RedundantCopyTracker {
     }
 
     fn remove_copies_from(&mut self, assignment: OperandAssignment) {
-        if let Some(targets) = self.copy_targets.remove(&assignment) {
+        if let Some(targets) = self
+            .copy_targets
+            .remove(&AssignmentCopySource::Operand(assignment))
+        {
             for target in targets {
                 self.copy_sources.remove(&target);
             }
         }
     }
 
-    fn assignment_source(&self, assignment: OperandAssignment) -> OperandAssignment {
+    fn assignment_source(&self, assignment: OperandAssignment) -> AssignmentCopySource {
         self.copy_sources
             .get(&assignment)
             .copied()
-            .unwrap_or(assignment)
+            .unwrap_or(AssignmentCopySource::Operand(assignment))
     }
 }
 
@@ -66,7 +72,7 @@ mod tests {
 
     use expect_test::{expect, Expect};
 
-    use crate::regalloc::test_utils::parse_operand;
+    use crate::regalloc::test_utils::{parse_copy_source, parse_operand};
 
     use super::*;
 
@@ -95,7 +101,7 @@ mod tests {
             } else {
                 let mut parts = line.split('=');
                 let to = parse_operand(parts.next().unwrap().trim());
-                let from = parse_operand(parts.next().unwrap().trim());
+                let from = parse_copy_source(parts.next().unwrap().trim());
 
                 if tracker.process_copy(&AssignmentCopy { from, to })
                     == RedundantCopyVerdict::Necessary

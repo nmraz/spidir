@@ -13,6 +13,7 @@ use crate::{
         DefOperand, DefOperandConstraint, Instr, Lir, UseOperand, UseOperandConstraint, VirtReg,
     },
     machine::MachineCore,
+    regalloc::types::AssignmentCopySource,
 };
 
 use super::{Assignment, AssignmentCopy, OperandAssignment};
@@ -128,7 +129,7 @@ impl<M: MachineCore> fmt::Display for DisplayVerifierError<'_, M> {
                     f,
                     "copy `{} = {}` before {} has garbage source",
                     copy.copy.to.display::<M>(),
-                    copy.copy.from.display::<M>(),
+                    copy.copy.from.display(self.lir),
                     copy.instr
                 )
             }
@@ -231,7 +232,7 @@ fn verify_block_instrs<M: MachineCore>(
 
     for instr in block_instrs {
         while let Some((copy_idx, copy)) = copies.next_copy_for(instr) {
-            verify_copy(copy_idx, &copy, reg_state)?;
+            verify_copy(lir, copy_idx, &copy, reg_state)?;
         }
         verify_instr(lir, assignment, instr, reg_state)?;
     }
@@ -239,18 +240,24 @@ fn verify_block_instrs<M: MachineCore>(
     Ok(())
 }
 
-fn verify_copy(
+fn verify_copy<M: MachineCore>(
+    lir: &Lir<M>,
     copy_idx: u32,
     copy: &AssignmentCopy,
     reg_state: &mut KnownRegState,
 ) -> Result<(), VerifierError> {
+    // TODO: Should remat into a stack slot should be disallowed?
     if copy.from.is_spill() && copy.to.is_spill() {
         return Err(VerifierError::SpillToSpillCopy { copy_idx });
     }
 
-    let from_vreg = *reg_state
-        .get(&copy.from)
-        .ok_or(VerifierError::UndefCopySource { copy_idx })?;
+    let from_vreg = match copy.from {
+        AssignmentCopySource::Operand(from) => *reg_state
+            .get(&from)
+            .ok_or(VerifierError::UndefCopySource { copy_idx })?,
+        // TODO: Validate instruction shape.
+        AssignmentCopySource::Remat(instr) => lir.instr_defs(instr)[0].reg(),
+    };
 
     reg_state.insert(copy.to, from_vreg);
 

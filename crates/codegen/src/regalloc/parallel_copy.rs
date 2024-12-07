@@ -1,9 +1,9 @@
 use smallvec::{smallvec, SmallVec};
 
-use crate::lir::PhysReg;
+use crate::lir::{Instr, PhysReg};
 
 use super::{
-    types::{AssignmentCopy, ParallelCopy},
+    types::{AssignmentCopy, AssignmentCopySource, ParallelCopy},
     OperandAssignment, SpillSlot,
 };
 
@@ -21,30 +21,42 @@ pub fn resolve(
     let mut operands = SmallVec::<[OperandAssignment; 16]>::new();
 
     for copy in parallel_copies {
-        operands.push(copy.from);
+        if let AssignmentCopySource::Operand(from) = copy.from {
+            operands.push(from);
+        }
         operands.push(copy.to);
     }
 
     operands.sort_unstable_by_key(operand_assignment_sort_key);
     operands.dedup();
 
-    let mut copy_sources: SmallVec<[Option<u32>; 8]> = smallvec![None; operands.len()];
+    let mut copy_sources: SmallVec<[Option<TrackedCopySource>; 8]> =
+        smallvec![None; operands.len()];
 
     for copy in parallel_copies {
-        let from = find_operand(&operands, copy.from);
         let to = find_operand(&operands, copy.to);
-        debug_assert!(
-            copy_sources[to].is_none(),
-            "multiple parallel copies into same destination"
-        );
+        match copy.from {
+            AssignmentCopySource::Operand(from) => {
+                let from = find_operand(&operands, from);
+                debug_assert!(
+                    copy_sources[to].is_none(),
+                    "multiple parallel copies into same destination"
+                );
 
-        copy_sources[to] = Some(from as u32);
+                copy_sources[to] = Some(TrackedCopySource::Operand(from as u32));
+            }
+            AssignmentCopySource::Remat(instr) => {
+                copy_sources[to] = Some(TrackedCopySource::Remat(instr));
+            }
+        }
     }
 
     let mut ctx = ResolvedCopyContext::new(scavenger);
 
     let mut stack = SmallVec::<[usize; 8]>::new();
     let mut visit_states: SmallVec<[_; 8]> = smallvec![VisitState::Unvisited; operands.len()];
+
+    // Perform a post-order DFS of the assignment graph and collect copies to perform.
     for copy in parallel_copies {
         debug_assert!(stack.is_empty());
 
@@ -67,7 +79,15 @@ pub fn resolve(
                     visit_states[operand] = VisitState::Visiting;
 
                     if let Some(src) = copy_sources[operand] {
-                        stack.push(src as usize);
+                        match src {
+                            TrackedCopySource::Operand(src) => stack.push(src as usize),
+                            TrackedCopySource::Remat(instr) => {
+                                // Remats always terminate the current chain as they can never be
+                                // copied out of a different assignment.
+                                ctx.emit(AssignmentCopySource::Remat(instr), operands[operand]);
+                                break;
+                            }
+                        }
                     } else {
                         // No more copies, terminate our current chain.
                         break;
@@ -89,7 +109,7 @@ pub fn resolve(
 
                     // Insert the final copy out of the temporary here (resolved assignments are in
                     // reverse order).
-                    ctx.emit(tmp_op, operands[prev]);
+                    ctx.emit(AssignmentCopySource::Operand(tmp_op), operands[prev]);
 
                     break;
                 }
@@ -110,7 +130,7 @@ pub fn resolve(
             if let Some(src) = last_copy_src {
                 let from = operands[src];
                 let to = operands[operand];
-                ctx.emit(from, to);
+                ctx.emit(AssignmentCopySource::Operand(from), to);
             }
 
             match copy_cycle_break {
@@ -118,7 +138,7 @@ pub fn resolve(
                     // We've found the start of a broken parallel copy cycle - make sure the
                     // original value of `operand` is saved before it is overwritten by the copy
                     // inserted above.
-                    ctx.emit(operands[operand], tmp_op);
+                    ctx.emit(AssignmentCopySource::Operand(operands[operand]), tmp_op);
                 }
                 _ => {}
             }
@@ -138,6 +158,12 @@ enum VisitState {
     Unvisited,
     Visiting,
     Visited,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum TrackedCopySource {
+    Operand(u32),
+    Remat(Instr),
 }
 
 fn find_operand(operands: &[OperandAssignment], op: OperandAssignment) -> usize {
@@ -188,12 +214,12 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         }
     }
 
-    fn emit(&mut self, from: OperandAssignment, to: OperandAssignment) {
+    fn emit(&mut self, from: AssignmentCopySource, to: OperandAssignment) {
         if from.is_reg() || to.is_reg() {
             // Copies involving at least one register can be performed directly.
             self.emit_raw(from, to);
         } else {
-            // Stack-to-stack copies need to go through a temporary register.
+            // Stack-to-stack copies remat-to-stack (TODO?) need to go through a temporary register.
 
             let (tmp_reg, emergency_spill) =
                 match get_tmp_reg(&mut self.stack_copy_reg, self.scavenger) {
@@ -205,7 +231,9 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
 
                         // Restore the original value of `tmp_reg` from the emergency spill.
                         self.emit_raw(
-                            OperandAssignment::Spill(emergency_spill),
+                            AssignmentCopySource::Operand(OperandAssignment::Spill(
+                                emergency_spill,
+                            )),
                             OperandAssignment::Reg(tmp_reg),
                         );
 
@@ -213,21 +241,24 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
                     }
                 };
 
-            self.emit_raw(OperandAssignment::Reg(tmp_reg), to);
+            self.emit_raw(
+                AssignmentCopySource::Operand(OperandAssignment::Reg(tmp_reg)),
+                to,
+            );
             self.emit_raw(from, OperandAssignment::Reg(tmp_reg));
 
             if let Some(emergency_spill) = emergency_spill {
                 // If we're using an emergency spill, back up the original value of `tmp_reg` before
                 // using it.
                 self.emit_raw(
-                    OperandAssignment::Reg(tmp_reg),
+                    AssignmentCopySource::Operand(OperandAssignment::Reg(tmp_reg)),
                     OperandAssignment::Spill(emergency_spill),
                 );
             }
         }
     }
 
-    fn emit_raw(&mut self, from: OperandAssignment, to: OperandAssignment) {
+    fn emit_raw(&mut self, from: AssignmentCopySource, to: OperandAssignment) {
         self.copies.push(AssignmentCopy { from, to });
     }
 }
@@ -257,7 +288,9 @@ mod tests {
     use crate::{
         lir::{Instr, PhysReg, PhysRegSet, RegClass},
         regalloc::{
-            test_utils::{operand_to_string, parse_operand},
+            test_utils::{
+                copy_source_to_string, operand_to_string, parse_copy_source, parse_operand,
+            },
             types::ParallelCopyPhase,
             SpillSlot,
         },
@@ -307,7 +340,7 @@ mod tests {
                 instr: Instr::new(0),
                 class: RegClass::new(0),
                 phase: ParallelCopyPhase::Before,
-                from: parse_operand(from.trim()),
+                from: parse_copy_source(from.trim()),
                 to: parse_operand(to.trim()),
             });
         }
@@ -319,7 +352,7 @@ mod tests {
         };
 
         for copy in &parallel_copies {
-            if let OperandAssignment::Reg(from) = copy.from {
+            if let AssignmentCopySource::Operand(OperandAssignment::Reg(from)) = copy.from {
                 scavenger.used_regs.insert(from);
             }
             if let OperandAssignment::Reg(to) = copy.to {
@@ -338,7 +371,7 @@ mod tests {
                 output,
                 "{} = {}",
                 operand_to_string(copy.to),
-                operand_to_string(copy.from)
+                copy_source_to_string(copy.from),
             )
             .unwrap();
         }

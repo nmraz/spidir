@@ -219,7 +219,7 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
             // Copies involving at least one register can be performed directly.
             self.emit_raw(from, to);
         } else {
-            // Stack-to-stack copies remat-to-stack (TODO?) need to go through a temporary register.
+            // Stack-to-stack copies and remat-to-stack need to go through a temporary register.
 
             let (tmp_reg, emergency_spill) =
                 match get_tmp_reg(&mut self.stack_copy_reg, self.scavenger) {
@@ -396,6 +396,18 @@ mod tests {
     }
 
     #[test]
+    fn simple_remat() {
+        check_resolution(
+            "
+            r0 = i7
+            ",
+            expect![[r#"
+                r0 = i7
+            "#]],
+        );
+    }
+
+    #[test]
     fn disjoint_copies() {
         check_resolution(
             "
@@ -408,6 +420,24 @@ mod tests {
                 r6 = r7
                 r4 = r5
                 r2 = r3
+                r0 = r1
+            "#]],
+        )
+    }
+
+    #[test]
+    fn disjoint_copies_with_remat() {
+        check_resolution(
+            "
+            r0 = r1
+            r2 = i9
+            r4 = r5
+            r6 = r7
+            ",
+            expect![[r#"
+                r6 = r7
+                r4 = r5
+                r2 = i9
                 r0 = r1
             "#]],
         )
@@ -445,6 +475,42 @@ mod tests {
                 r1 = r2
                 r2 = r3
                 r3 = r4
+            "#]],
+        )
+    }
+
+    #[test]
+    fn overlapping_copy_chain_with_remat() {
+        check_resolution(
+            "
+            r0 = r1
+            r1 = r2
+            r2 = r3
+            r3 = i0
+            ",
+            expect![[r#"
+                r0 = r1
+                r1 = r2
+                r2 = r3
+                r3 = i0
+            "#]],
+        )
+    }
+
+    #[test]
+    fn overlapping_copy_chain_with_remat_rev() {
+        check_resolution(
+            "
+            r3 = i0
+            r2 = r3
+            r1 = r2
+            r0 = r1
+            ",
+            expect![[r#"
+                r0 = r1
+                r1 = r2
+                r2 = r3
+                r3 = i0
             "#]],
         )
     }
@@ -493,6 +559,32 @@ mod tests {
                 r2 = r3
                 r3 = r6
                 r6 = r8
+            "#]],
+        )
+    }
+
+    #[test]
+    fn copy_chain_merge_with_remat() {
+        check_resolution(
+            "
+            r0 = r1
+            r1 = r2
+            r6 = i8
+            r4 = r5
+            r2 = r3
+            r3 = r6
+            r7 = r6
+            r5 = r3
+            ",
+            expect![[r#"
+                r7 = r6
+                r4 = r5
+                r5 = r3
+                r0 = r1
+                r1 = r2
+                r2 = r3
+                r3 = r6
+                r6 = i8
             "#]],
         )
     }
@@ -644,6 +736,19 @@ mod tests {
             ",
             expect![[r#"
                 r0 = s0
+                s1 = r0
+            "#]],
+        )
+    }
+
+    #[test]
+    fn remat_to_stack() {
+        check_resolution(
+            "
+            s1 = i0
+            ",
+            expect![[r#"
+                r0 = i0
                 s1 = r0
             "#]],
         )

@@ -40,8 +40,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$spill1 = $$rax
     # nextln: 0014:     $$rax = MovRmS32(3)
     # nextln: 0015:     $$r14 = MovsxRRm(Ext32_64) $$rax
-    # nextln: 0016:     $$rax = MovRmS32(1)
-    # nextln:           $$spill2 = $$rax
+    # nextln: 0016:     $$spill2 = MovRmS32(1)
     # nextln: 0017:     $$rbx = ImulRRmI(S64, 1) $$r14
     # nextln: 0018:     $$rbx = AluRmI(S64, Add, 48) $$rbx
     # nextln: 0019:     $$r12 = MovRI64(106721347401152)

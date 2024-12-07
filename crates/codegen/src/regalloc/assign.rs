@@ -280,11 +280,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn spill_fragment_and_neighbors(&mut self, fragment: LiveSetFragment) {
         self.spill_fragment(fragment);
 
-        // Spill any neighbors (in both directions) that don't have any attached instructions.
+        // Spill any neighbors (in both directions) that don't have any attached instructions, or
+        // have only attached instructions that are worth spilling anyway.
 
         let mut cursor = fragment;
         while let Some(prev) = self.live_set_fragments[cursor].prev_split_neighbor.expand() {
-            if self.fragment_has_instrs(prev) {
+            if !self.should_spill_prev_neighbor(prev) {
                 break;
             }
 
@@ -298,7 +299,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let mut cursor = fragment;
         while let Some(next) = self.live_set_fragments[cursor].next_split_neighbor.expand() {
-            if self.fragment_has_instrs(next) {
+            if !self.should_spill_next_neighbor(next) {
                 break;
             }
 
@@ -309,6 +310,74 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             cursor = next;
         }
+    }
+
+    fn should_spill_prev_neighbor(&self, prev_neighbor: LiveSetFragment) -> bool {
+        if !self.fragment_has_instrs(prev_neighbor) {
+            // Empty neighbors are always worth spilling.
+            return true;
+        }
+
+        if self.is_fragment_atomic(prev_neighbor) {
+            // We're going to be touching fragments that have attached instructions now, so make
+            // sure we never try to spill an atomic one by accident.
+            return false;
+        }
+
+        // Spill neighbors that contain only a single def instruction, as long as we won't need to
+        // copy into yet another neighbor and that instruction won't be executed more frequently
+        // than our current split point.
+
+        if self.live_set_fragments[prev_neighbor]
+            .prev_split_neighbor
+            .is_some()
+        {
+            return false;
+        }
+
+        if let Some(instr) = self.fragment_only_instr(prev_neighbor) {
+            if instr.is_def() {
+                let end = self.fragment_hull(prev_neighbor).end.instr();
+                return get_instr_weight(self.lir, self.cfg_ctx, instr.instr())
+                    <= get_instr_weight(self.lir, self.cfg_ctx, end);
+            }
+        }
+
+        false
+    }
+
+    fn should_spill_next_neighbor(&self, next_neighbor: LiveSetFragment) -> bool {
+        if !self.fragment_has_instrs(next_neighbor) {
+            // Empty neighbors are always worth spilling.
+            return true;
+        }
+
+        if self.is_fragment_atomic(next_neighbor) {
+            // We're going to be touching fragments that have attached instructions now, so make
+            // sure we never try to spill an atomic one by accident.
+            return false;
+        }
+
+        // Spill neighbors that contain only a single use instruction, as long as we won't need to
+        // copy into yet another neighbor and that instruction won't be executed more frequently
+        // than our current split point.
+
+        if self.live_set_fragments[next_neighbor]
+            .next_split_neighbor
+            .is_some()
+        {
+            return false;
+        }
+
+        if let Some(instr) = self.fragment_only_instr(next_neighbor) {
+            if !instr.is_def() {
+                let start = self.fragment_hull(next_neighbor).start.instr();
+                return get_instr_weight(self.lir, self.cfg_ctx, instr.instr())
+                    <= get_instr_weight(self.lir, self.cfg_ctx, start);
+            }
+        }
+
+        false
     }
 
     fn spill_fragment(&mut self, fragment: LiveSetFragment) {
@@ -912,6 +981,15 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         *hints = remaining_hints;
 
         self.live_range_hints.insert(live_range, instr_hints.into());
+    }
+
+    fn fragment_only_instr(&self, fragment: LiveSetFragment) -> Option<LiveRangeInstr> {
+        let mut instrs = self.fragment_instrs(fragment);
+        let instr = instrs.next()?;
+        if instrs.next().is_some() {
+            return None;
+        }
+        Some(instr)
     }
 
     fn fragment_has_instrs(&self, fragment: LiveSetFragment) -> bool {

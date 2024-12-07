@@ -39,15 +39,11 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln:     spill3: 24
     # nextln:       block0:
     # nextln: 0000:     $$rbx = MovRmS32(7)
-    # nextln: 0001:     $$rax = MovRmS32(9)
-    # nextln:           $$spill3 = $$rax
-    # nextln: 0002:     $$rax = MovRmS32(13)
-    # nextln:           $$spill2 = $$rax
-    # nextln: 0003:     $$rax = MovRmS32(4)
-    # nextln:           $$spill1 = $$rax
+    # nextln: 0001:     $$spill3 = MovRmS32(9)
+    # nextln: 0002:     $$spill2 = MovRmS32(13)
+    # nextln: 0003:     $$spill1 = MovRmS32(4)
     # nextln: 0004:     $$r15 = MovRmS32(1)
-    # nextln: 0005:     $$rax = MovRmS32(6)
-    # nextln:           $$spill0 = $$rax
+    # nextln: 0005:     $$spill0 = MovRmS32(6)
     # nextln: 0006:     $$r8 = MovRZ
     # nextln: 0007:     $$rax = MovRmS32(5)
     # nextln: 0008:     $$r12 = MovRmS32(12)

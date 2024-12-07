@@ -180,8 +180,8 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0113:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0114:     Jumpcc(Ne, block22, block24)
     # nextln:       block22:
-    # nextln:           $$spill1 = $$r14
     # nextln:           $$r12 = $$rax
+    # nextln:           $$spill1 = $$r14
     # nextln: 0115:     Jump(block23)
     # nextln:       block24:
     # nextln:           $$r12 = $$rax
@@ -415,24 +415,15 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0269:     Jump(block80)
     # nextln:       block80:
     # nextln: 0270:     $$rbx = AluRmI(S32, Add, -5) $$rbx
-    # nextln:           $$r8 = $$spill0
-    # nextln: 0271:     $$rbx = AluRRm(S32, Add) $$rbx, $$r8
-    # nextln:           $$r8 = $$spill1
-    # nextln: 0272:     $$rbx = AluRRm(S32, Add) $$rbx, $$r8
-    # nextln:           $$r8 = $$spill2
-    # nextln: 0273:     $$rbx = AluRRm(S32, Add) $$rbx, $$r8
-    # nextln:           $$r8 = $$spill3
-    # nextln: 0274:     $$rbx = AluRRm(S32, Add) $$rbx, $$r8
-    # nextln:           $$r8 = $$spill4
-    # nextln: 0275:     $$rbx = AluRRm(S32, Add) $$rbx, $$r8
-    # nextln:           $$r8 = $$spill5
-    # nextln: 0276:     $$rbx = AluRRm(S32, Add) $$rbx, $$r8
-    # nextln:           $$r8 = $$spill6
-    # nextln: 0277:     $$rbx = AluRRm(S32, Add) $$rbx, $$r8
-    # nextln:           $$r8 = $$spill7
-    # nextln: 0278:     $$rbx = AluRRm(S32, Add) $$rbx, $$r8
-    # nextln:           $$r8 = $$spill8
-    # nextln: 0279:     $$rbx = AluRRm(S32, Add) $$rbx, $$r8
+    # nextln: 0271:     $$rbx = AluRRm(S32, Add) $$rbx, $$spill0
+    # nextln: 0272:     $$rbx = AluRRm(S32, Add) $$rbx, $$spill1
+    # nextln: 0273:     $$rbx = AluRRm(S32, Add) $$rbx, $$spill2
+    # nextln: 0274:     $$rbx = AluRRm(S32, Add) $$rbx, $$spill3
+    # nextln: 0275:     $$rbx = AluRRm(S32, Add) $$rbx, $$spill4
+    # nextln: 0276:     $$rbx = AluRRm(S32, Add) $$rbx, $$spill5
+    # nextln: 0277:     $$rbx = AluRRm(S32, Add) $$rbx, $$spill6
+    # nextln: 0278:     $$rbx = AluRRm(S32, Add) $$rbx, $$spill7
+    # nextln: 0279:     $$rbx = AluRRm(S32, Add) $$rbx, $$spill8
     # nextln: 0280:     $$rbx = AluRRm(S32, Add) $$rbx, $$r15
     # nextln: 0281:     $$rbx = AluRRm(S32, Add) $$rbx, $$r13
     # nextln: 0282:     $$rbx = AluRRm(S32, Add) $$rbx, $$rax

@@ -115,8 +115,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:           $$rcx = $$rax
     # nextln: 0057:     $$rcx = AluRmI(S64, Add, 16) $$rcx
     # nextln: 0058:     $$rdx = MovRM(S32) $$rcx
-    # nextln:           $$rcx = $$spill0
-    # nextln: 0059:     $$rcx = MovsxRRm(Ext32_64) $$rcx
+    # nextln: 0059:     $$rcx = MovsxRRm(Ext32_64) $$spill0
     # nextln: 0060:     AluRRm(S64, Cmp) $$rcx, $$rdx
     # nextln: 0061:     Jumpcc(L, block14, block15)
     # nextln:       block14:

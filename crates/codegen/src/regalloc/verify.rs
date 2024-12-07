@@ -35,10 +35,13 @@ pub enum VerifierError {
         op: u32,
         found_vreg: Option<VirtReg>,
     },
-    SpillToSpillCopy {
+    IllegalSpillCopy {
         copy_idx: u32,
     },
     UndefCopySource {
+        copy_idx: u32,
+    },
+    BadRematOperands {
         copy_idx: u32,
     },
     BadGhostCopyBlock {
@@ -119,9 +122,13 @@ impl<M: MachineCore> fmt::Display for DisplayVerifierError<'_, M> {
                     "expected {instr} use {op} to be of {expected_vreg}, found {found_vreg}"
                 )
             }
-            VerifierError::SpillToSpillCopy { copy_idx } => {
+            VerifierError::IllegalSpillCopy { copy_idx } => {
                 let copy = &self.assignment.copies[copy_idx as usize];
-                write!(f, "copy before {} copies between spill slots", copy.instr)
+                write!(
+                    f,
+                    "copy before {} copies from non-register into spill",
+                    copy.instr
+                )
             }
             VerifierError::UndefCopySource { copy_idx } => {
                 let copy = &self.assignment.copies[copy_idx as usize];
@@ -131,6 +138,19 @@ impl<M: MachineCore> fmt::Display for DisplayVerifierError<'_, M> {
                     copy.copy.to.display::<M>(),
                     copy.copy.from.display(self.lir),
                     copy.instr
+                )
+            }
+            VerifierError::BadRematOperands { copy_idx } => {
+                let copy = &self.assignment.copies[copy_idx as usize];
+                let remat_instr = match copy.copy.from {
+                    AssignmentCopySource::Remat(instr) => instr,
+                    _ => unreachable!(),
+                };
+
+                write!(
+                    f,
+                    "instruction {} rematerialized before {} has unsupported operands",
+                    remat_instr, copy.instr
                 )
             }
             VerifierError::BadGhostCopyBlock { block } => {
@@ -246,17 +266,29 @@ fn verify_copy<M: MachineCore>(
     copy: &AssignmentCopy,
     reg_state: &mut KnownRegState,
 ) -> Result<(), VerifierError> {
-    // TODO: Should remat into a stack slot should be disallowed?
-    if copy.from.is_spill() && copy.to.is_spill() {
-        return Err(VerifierError::SpillToSpillCopy { copy_idx });
+    if !copy.from.is_reg() && copy.to.is_spill() {
+        return Err(VerifierError::IllegalSpillCopy { copy_idx });
     }
 
     let from_vreg = match copy.from {
         AssignmentCopySource::Operand(from) => *reg_state
             .get(&from)
             .ok_or(VerifierError::UndefCopySource { copy_idx })?,
-        // TODO: Validate instruction shape.
-        AssignmentCopySource::Remat(instr) => lir.instr_defs(instr)[0].reg(),
+        AssignmentCopySource::Remat(instr) => {
+            if !lir.instr_uses(instr).is_empty() {
+                return Err(VerifierError::BadRematOperands { copy_idx });
+            }
+
+            let [def] = lir.instr_defs(instr) else {
+                return Err(VerifierError::BadRematOperands { copy_idx });
+            };
+
+            if def.constraint() != DefOperandConstraint::AnyReg {
+                return Err(VerifierError::BadRematOperands { copy_idx });
+            }
+
+            def.reg()
+        }
     };
 
     reg_state.insert(copy.to, from_vreg);

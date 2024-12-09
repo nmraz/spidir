@@ -297,12 +297,19 @@ fn decode_weight(encoded_weight: u16) -> f32 {
 
 pub type LiveRangeInstrs = SmallVec<[LiveRangeInstr; 4]>;
 
+bitflags! {
+    #[derive(Clone, Copy)]
+    pub struct LiveRangeFlags: u8 {
+        const SPILL_CONNECTOR = 0b01;
+    }
+}
+
 pub struct LiveRangeData {
     pub prog_range: ProgramRange,
     pub vreg: VirtReg,
     pub fragment: LiveSetFragment,
     pub instrs: LiveRangeInstrs,
-    pub is_spill_connector: bool,
+    pub flags: LiveRangeFlags,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

@@ -13,9 +13,9 @@ use crate::{
 
 use super::{
     types::{
-        AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeInstr, LiveRangeInstrs,
-        LiveRangeOpPos, LiveSetFragment, PhysRegHint, PhysRegReservation, ProgramPoint,
-        ProgramRange,
+        AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeFlags, LiveRangeInstr,
+        LiveRangeInstrs, LiveRangeOpPos, LiveSetFragment, PhysRegHint, PhysRegReservation,
+        ProgramPoint, ProgramRange,
     },
     utils::get_weight_at_instr,
     virt_reg_set::VirtRegSet,
@@ -31,12 +31,15 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         instrs: LiveRangeInstrs,
         is_spill_connector: bool,
     ) -> LiveRange {
+        let mut flags = LiveRangeFlags::empty();
+        flags.set(LiveRangeFlags::SPILL_CONNECTOR, is_spill_connector);
+
         let live_range = self.live_ranges.push(LiveRangeData {
             prog_range,
             vreg,
             fragment,
             instrs,
-            is_spill_connector,
+            flags,
         });
         self.vreg_ranges[vreg].push(live_range);
         live_range

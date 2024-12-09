@@ -15,7 +15,7 @@ use crate::{
         UseOperandConstraint, VirtReg,
     },
     machine::{MachineCore, MachineRegalloc},
-    regalloc::types::LiveSetFragmentFlags,
+    regalloc::types::{LiveRangeFlags, LiveSetFragmentFlags},
 };
 
 use super::{
@@ -201,7 +201,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             trace!("    {prog_range:?}");
 
-            if !range_data.is_spill_connector {
+            if !range_data.flags.contains(LiveRangeFlags::SPILL_CONNECTOR) {
                 // Ordinary (canonical), non-remat ranges: stitch together live ranges with touching
                 // endpoints.
 
@@ -326,7 +326,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             };
 
             // Spill connectors can never carry a value into/out of a block, so skip them.
-            if self.live_ranges[range].is_spill_connector {
+            if self.live_ranges[range]
+                .flags
+                .contains(LiveRangeFlags::SPILL_CONNECTOR)
+            {
                 continue;
             }
 

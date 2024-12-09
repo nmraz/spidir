@@ -50,6 +50,11 @@ pub trait MachineRegalloc: MachineCore {
     fn phys_reg_count() -> u32;
     fn usable_regs(&self, class: RegClass) -> &[PhysReg];
     fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout;
+
+    fn can_remat(&self, instr: &Self::Instr) -> bool {
+        let _ = instr;
+        false
+    }
 }
 
 pub trait MachineEmit: MachineCore + Sized {

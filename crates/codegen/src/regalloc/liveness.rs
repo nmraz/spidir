@@ -42,6 +42,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     pub fn compute_liveness(&mut self) {
+        self.collect_remattable_vregs();
+
         let (live_ins, live_outs) = compute_block_liveness(self.lir, self.cfg_ctx);
 
         // Stash these for cross-block copy insertion later.
@@ -156,6 +158,42 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         for hints in self.live_range_hints.values_mut() {
             hints.reverse();
             debug_assert!(hints.is_sorted_by_key(|hint| hint.instr));
+        }
+    }
+
+    fn collect_remattable_vregs(&mut self) {
+        for instr in self.lir.all_instrs() {
+            // We can currently only remat instructions of the form
+            //
+            // %v:xxx(any|reg) = Instr
+            //
+            // as we don't want to track complex constraints or edit other live ranges during remat.
+
+            if !self.lir.instr_uses(instr).is_empty() {
+                continue;
+            }
+
+            let [def] = self.lir.instr_defs(instr) else {
+                continue;
+            };
+
+            if !matches!(
+                def.constraint(),
+                DefOperandConstraint::Any | DefOperandConstraint::AnyReg
+            ) {
+                continue;
+            }
+
+            if !self.machine.can_remat(self.lir.instr_data(instr)) {
+                continue;
+            }
+
+            let vreg = def.reg();
+            debug_assert!(
+                self.remattable_vreg_defs[vreg].is_none(),
+                "vreg defined more than once"
+            );
+            self.remattable_vreg_defs[vreg] = instr.into();
         }
     }
 

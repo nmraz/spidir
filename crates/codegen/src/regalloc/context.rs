@@ -1,7 +1,7 @@
 use core::cell::RefCell;
 
 use alloc::{collections::BTreeMap, vec, vec::Vec};
-use cranelift_entity::{PrimaryMap, SecondaryMap};
+use cranelift_entity::{packed_option::PackedOption, PrimaryMap, SecondaryMap};
 use entity_set::DenseEntitySet;
 use fx_utils::FxHashMap;
 use itertools::Itertools;
@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 
 use crate::{
     cfg::{Block, CfgContext},
-    lir::{Lir, PhysReg, VirtReg},
+    lir::{Instr, Lir, PhysReg, VirtReg},
     machine::MachineRegalloc,
 };
 
@@ -27,6 +27,7 @@ pub struct RegAllocContext<'a, M: MachineRegalloc> {
     pub cfg_ctx: &'a CfgContext,
     pub machine: &'a M,
     pub block_live_ins: SecondaryMap<Block, VirtRegSet>,
+    pub remattable_vreg_defs: SecondaryMap<VirtReg, PackedOption<Instr>>,
     pub vreg_ranges: SecondaryMap<VirtReg, SmallVec<[LiveRange; 4]>>,
     pub live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
     pub live_range_hints: FxHashMap<LiveRange, SmallVec<[AnnotatedPhysRegHint; 2]>>,
@@ -46,6 +47,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             cfg_ctx,
             machine,
             block_live_ins: SecondaryMap::new(),
+            remattable_vreg_defs: SecondaryMap::default(),
             vreg_ranges: SecondaryMap::new(),
             live_ranges: PrimaryMap::new(),
             live_range_hints: FxHashMap::default(),

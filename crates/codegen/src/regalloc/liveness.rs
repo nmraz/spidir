@@ -16,7 +16,7 @@ use super::{
         LiveRangeOpPos, LiveSetFragment, PhysRegHint, PhysRegReservation, ProgramPoint,
         ProgramRange,
     },
-    utils::get_instr_weight,
+    utils::get_weight_at_instr,
     virt_reg_set::VirtRegSet,
     RegAllocContext,
 };
@@ -390,7 +390,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         hints.push(AnnotatedPhysRegHint {
             hint: PhysRegHint {
                 preg,
-                weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
+                weight: get_weight_at_instr(self.lir, self.cfg_ctx, instr),
             },
             instr,
         })
@@ -410,7 +410,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .instrs
             .push(LiveRangeInstr::new(
                 instr,
-                get_instr_weight(self.lir, self.cfg_ctx, instr),
+                get_weight_at_instr(self.lir, self.cfg_ctx, instr),
                 true,
                 needs_reg,
                 op_pos,
@@ -482,7 +482,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         range_instrs.push(LiveRangeInstr::new(
             instr,
-            get_instr_weight(self.lir, self.cfg_ctx, instr),
+            get_weight_at_instr(self.lir, self.cfg_ctx, instr),
             false,
             needs_reg,
             Some(op_pos),

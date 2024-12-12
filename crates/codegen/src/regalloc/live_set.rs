@@ -20,7 +20,7 @@ use super::{
         LiveSet, LiveSetData, LiveSetFragment, LiveSetFragmentData, LiveSetFragmentFlags,
         PhysRegHint, PhysRegHints, ProgramRange, TaggedLiveRange, TaggedRangeList,
     },
-    utils::{coalesce_slice, get_instr_weight},
+    utils::{coalesce_slice, get_weight_at_instr},
 };
 
 type VirtRegFragmentMap = SecondaryMap<VirtReg, PackedOption<LiveSetFragment>>;
@@ -67,7 +67,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         candidates.push(CopyCandidate {
                             src: use_op.reg(),
                             dest: def.reg(),
-                            weight: get_instr_weight(self.lir, self.cfg_ctx, instr),
+                            weight: get_weight_at_instr(self.lir, self.cfg_ctx, instr),
                         });
                     }
                 }
@@ -88,7 +88,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     candidates.push(CopyCandidate {
                         src: outgoing,
                         dest: incoming,
-                        weight: get_instr_weight(self.lir, self.cfg_ctx, terminator),
+                        weight: get_weight_at_instr(self.lir, self.cfg_ctx, terminator),
                     });
                 }
             }

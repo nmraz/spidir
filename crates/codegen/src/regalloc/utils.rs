@@ -16,7 +16,7 @@ impl ChangeStatus {
     }
 }
 
-pub fn get_instr_weight<M: MachineRegalloc>(
+pub fn get_weight_at_instr<M: MachineRegalloc>(
     lir: &Lir<M>,
     cfg_ctx: &CfgContext,
     instr: Instr,

@@ -20,7 +20,7 @@ use super::{
     types::{
         LiveRange, LiveRangeInstrs, LiveSetFragment, ProgramRange, QueuedFragment, RangeEndKey,
     },
-    utils::{coalesce_slice, get_block_weight, get_instr_weight},
+    utils::{coalesce_slice, get_block_weight, get_weight_at_instr},
     RegallocError,
 };
 
@@ -252,7 +252,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             if let Some(prev_assignment) =
                 self.live_set_fragments[prev_fragment].assignment.expand()
             {
-                let weight = get_instr_weight(self.lir, self.cfg_ctx, hull.start.instr());
+                let weight = get_weight_at_instr(self.lir, self.cfg_ctx, hull.start.instr());
                 hints.push(ProbeHint {
                     preg: prev_assignment,
                     hint_weight: 0.0,
@@ -265,7 +265,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             if let Some(next_assignment) =
                 self.live_set_fragments[next_fragment].assignment.expand()
             {
-                let weight = get_instr_weight(self.lir, self.cfg_ctx, hull.end.instr());
+                let weight = get_weight_at_instr(self.lir, self.cfg_ctx, hull.end.instr());
                 hints.push(ProbeHint {
                     preg: next_assignment,
                     hint_weight: 0.0,
@@ -338,8 +338,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         if let Some(instr) = self.fragment_only_instr(prev_neighbor) {
             if instr.is_def() {
                 let end = self.fragment_hull(prev_neighbor).end.instr();
-                return get_instr_weight(self.lir, self.cfg_ctx, instr.instr())
-                    <= get_instr_weight(self.lir, self.cfg_ctx, end);
+                return get_weight_at_instr(self.lir, self.cfg_ctx, instr.instr())
+                    <= get_weight_at_instr(self.lir, self.cfg_ctx, end);
             }
         }
 
@@ -372,8 +372,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         if let Some(instr) = self.fragment_only_instr(next_neighbor) {
             if !instr.is_def() {
                 let start = self.fragment_hull(next_neighbor).start.instr();
-                return get_instr_weight(self.lir, self.cfg_ctx, instr.instr())
-                    <= get_instr_weight(self.lir, self.cfg_ctx, start);
+                return get_weight_at_instr(self.lir, self.cfg_ctx, instr.instr())
+                    <= get_weight_at_instr(self.lir, self.cfg_ctx, start);
             }
         }
 

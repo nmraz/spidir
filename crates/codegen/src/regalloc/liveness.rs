@@ -406,15 +406,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         dead_use_point: ProgramPoint,
     ) -> Option<LiveRange> {
         let live_range = self.record_def(vreg, def_point, dead_use_point)?;
+        let can_remat = self.remattable_vreg_defs[vreg].is_some();
+        let weight = self.get_range_instr_weight(instr, can_remat);
         self.live_ranges[live_range]
             .instrs
-            .push(LiveRangeInstr::new(
-                instr,
-                get_weight_at_instr(self.lir, self.cfg_ctx, instr),
-                true,
-                needs_reg,
-                op_pos,
-            ));
+            .push(LiveRangeInstr::new(instr, weight, true, needs_reg, op_pos));
         Some(live_range)
     }
 
@@ -455,16 +451,19 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         block: Block,
     ) -> LiveRange {
         let instr = use_point.instr();
-        let op_pos = LiveRangeOpPos::for_instr_slot(use_point.slot());
-        let live_range = self.open_use_range(vreg, use_point, block);
-        let range_instrs = &mut self.live_ranges[live_range].instrs;
+        let can_remat = self.remattable_vreg_defs[vreg].is_some();
+        let weight = self.get_range_instr_weight(instr, can_remat);
 
         // Make sure instructions always consume rematerializable values in registers because we
         // never actually place them in a spill slot: "spilling" a single-instruction live range
         // would fail to make any progress and produce an identically-shaped range.
-        if self.remattable_vreg_defs[vreg].is_some() {
+        if can_remat {
             needs_reg = true;
         }
+
+        let op_pos = LiveRangeOpPos::for_instr_slot(use_point.slot());
+        let live_range = self.open_use_range(vreg, use_point, block);
+        let range_instrs = &mut self.live_ranges[live_range].instrs;
 
         if let Some(last_instr) = range_instrs.last_mut() {
             if last_instr.instr() == instr {
@@ -490,7 +489,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         range_instrs.push(LiveRangeInstr::new(
             instr,
-            get_weight_at_instr(self.lir, self.cfg_ctx, instr),
+            weight,
             false,
             needs_reg,
             Some(op_pos),
@@ -558,6 +557,14 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             smallvec![],
             false,
         )
+    }
+
+    fn get_range_instr_weight(&self, instr: Instr, can_remat: bool) -> f32 {
+        let mut weight = get_weight_at_instr(self.lir, self.cfg_ctx, instr);
+        if can_remat {
+            weight *= 0.5;
+        }
+        weight
     }
 }
 

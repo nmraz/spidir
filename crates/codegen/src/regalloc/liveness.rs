@@ -451,13 +451,21 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         &mut self,
         vreg: VirtReg,
         use_point: ProgramPoint,
-        needs_reg: bool,
+        mut needs_reg: bool,
         block: Block,
     ) -> LiveRange {
         let instr = use_point.instr();
         let op_pos = LiveRangeOpPos::for_instr_slot(use_point.slot());
         let live_range = self.open_use_range(vreg, use_point, block);
         let range_instrs = &mut self.live_ranges[live_range].instrs;
+
+        // Make sure instructions always consume rematerializable values in registers because we
+        // never actually place them in a spill slot: "spilling" a single-instruction live range
+        // would fail to make any progress and produce an identically-shaped range.
+        if self.remattable_vreg_defs[vreg].is_some() {
+            needs_reg = true;
+        }
+
         if let Some(last_instr) = range_instrs.last_mut() {
             if last_instr.instr() == instr {
                 // This should be completely impossible because instructions can't use vregs they

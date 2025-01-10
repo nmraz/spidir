@@ -387,6 +387,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let live_set = self.live_set_fragments[fragment].live_set;
         let fragment_hull = self.fragment_hull(fragment);
+        let can_remat = self.live_set_fragments[fragment]
+            .flags
+            .contains(LiveSetFragmentFlags::CAN_REMAT);
 
         let mut ranges = mem::take(&mut self.live_set_fragments[fragment].ranges);
 
@@ -410,6 +413,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     .instrs
                     .drain_filter(|instr| instr.needs_reg()),
             );
+
+            if can_remat {
+                // Sanity check: if this whole fragment is supposed to be rematerializable, we
+                // shouldn't have anything that expects to be rewritten to a spill access at this
+                // point.
+                debug_assert!(self.live_ranges[range.live_range].instrs.is_empty());
+            }
 
             let hints = self
                 .live_range_hints
@@ -487,14 +497,18 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .flags
             .insert(LiveSetFragmentFlags::SPILLED);
 
-        let set_spill_hull = &mut self.live_sets[live_set].spill_hull;
-        match set_spill_hull {
-            Some(existing_hull) => {
-                existing_hull.start = existing_hull.start.min(fragment_hull.start);
-                existing_hull.end = existing_hull.end.max(fragment_hull.end);
-            }
-            None => {
-                *set_spill_hull = Some(fragment_hull);
+        // If this whole fragment can be rematerialized, don't needlessly expand the spill hull to
+        // cover it.
+        if !can_remat {
+            let set_spill_hull = &mut self.live_sets[live_set].spill_hull;
+            match set_spill_hull {
+                Some(existing_hull) => {
+                    existing_hull.start = existing_hull.start.min(fragment_hull.start);
+                    existing_hull.end = existing_hull.end.max(fragment_hull.end);
+                }
+                None => {
+                    *set_spill_hull = Some(fragment_hull);
+                }
             }
         }
     }

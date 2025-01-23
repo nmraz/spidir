@@ -14,7 +14,7 @@ use crate::{
     machine::MachineCore,
 };
 
-use super::{types::AssignmentCopySource, Assignment, InstrOrCopy, OperandAssignment};
+use super::{types::CopySourceAssignment, Assignment, InstrOrCopy, OperandAssignment};
 
 pub struct DisplayOperandAssignment<M: MachineCore> {
     pub(super) assignment: OperandAssignment,
@@ -32,14 +32,14 @@ impl<M: MachineCore> fmt::Display for DisplayOperandAssignment<M> {
 
 pub struct DisplayAssignmentCopySource<'a, M: MachineCore> {
     pub(super) lir: &'a Lir<M>,
-    pub(super) source: AssignmentCopySource,
+    pub(super) source: CopySourceAssignment,
 }
 
 impl<M: MachineCore> fmt::Display for DisplayAssignmentCopySource<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.source {
-            AssignmentCopySource::Operand(assignment) => write!(f, "{}", assignment.display::<M>()),
-            AssignmentCopySource::Remat(instr) => write!(f, "{:?}", self.lir.instr_data(instr)),
+            CopySourceAssignment::Operand(assignment) => write!(f, "{}", assignment.display::<M>()),
+            CopySourceAssignment::Remat(instr) => write!(f, "{:?}", self.lir.instr_data(instr)),
         }
     }
 }

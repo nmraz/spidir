@@ -13,7 +13,7 @@ use crate::{
         DefOperand, DefOperandConstraint, Instr, Lir, UseOperand, UseOperandConstraint, VirtReg,
     },
     machine::MachineCore,
-    regalloc::types::AssignmentCopySource,
+    regalloc::types::CopySourceAssignment,
 };
 
 use super::{Assignment, AssignmentCopy, OperandAssignment};
@@ -143,7 +143,7 @@ impl<M: MachineCore> fmt::Display for DisplayVerifierError<'_, M> {
             VerifierError::BadRematOperands { copy_idx } => {
                 let copy = &self.assignment.copies[copy_idx as usize];
                 let remat_instr = match copy.copy.from {
-                    AssignmentCopySource::Remat(instr) => instr,
+                    CopySourceAssignment::Remat(instr) => instr,
                     _ => unreachable!(),
                 };
 
@@ -271,10 +271,10 @@ fn verify_copy<M: MachineCore>(
     }
 
     let from_vreg = match copy.from {
-        AssignmentCopySource::Operand(from) => *reg_state
+        CopySourceAssignment::Operand(from) => *reg_state
             .get(&from)
             .ok_or(VerifierError::UndefCopySource { copy_idx })?,
-        AssignmentCopySource::Remat(instr) => {
+        CopySourceAssignment::Remat(instr) => {
             if !lir.instr_uses(instr).is_empty() {
                 return Err(VerifierError::BadRematOperands { copy_idx });
             }

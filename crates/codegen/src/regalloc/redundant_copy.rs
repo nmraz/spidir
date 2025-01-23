@@ -1,7 +1,7 @@
 use fx_utils::FxHashMap;
 use smallvec::SmallVec;
 
-use super::{types::AssignmentCopySource, AssignmentCopy, OperandAssignment};
+use super::{types::CopySourceAssignment, AssignmentCopy, OperandAssignment};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RedundantCopyVerdict {
@@ -11,8 +11,8 @@ pub enum RedundantCopyVerdict {
 
 #[derive(Default)]
 pub struct RedundantCopyTracker {
-    copy_sources: FxHashMap<OperandAssignment, AssignmentCopySource>,
-    copy_targets: FxHashMap<AssignmentCopySource, SmallVec<[OperandAssignment; 4]>>,
+    copy_sources: FxHashMap<OperandAssignment, CopySourceAssignment>,
+    copy_targets: FxHashMap<CopySourceAssignment, SmallVec<[OperandAssignment; 4]>>,
 }
 
 impl RedundantCopyTracker {
@@ -27,7 +27,7 @@ impl RedundantCopyTracker {
 
     pub fn process_copy(&mut self, copy: &AssignmentCopy) -> RedundantCopyVerdict {
         let from = match copy.from {
-            AssignmentCopySource::Operand(from) => self.assignment_source(from),
+            CopySourceAssignment::Operand(from) => self.assignment_source(from),
             from => from,
         };
         let to = self.assignment_source(copy.to);
@@ -50,7 +50,7 @@ impl RedundantCopyTracker {
     fn remove_copies_from(&mut self, assignment: OperandAssignment) {
         if let Some(targets) = self
             .copy_targets
-            .remove(&AssignmentCopySource::Operand(assignment))
+            .remove(&CopySourceAssignment::Operand(assignment))
         {
             for target in targets {
                 self.copy_sources.remove(&target);
@@ -58,11 +58,11 @@ impl RedundantCopyTracker {
         }
     }
 
-    fn assignment_source(&self, assignment: OperandAssignment) -> AssignmentCopySource {
+    fn assignment_source(&self, assignment: OperandAssignment) -> CopySourceAssignment {
         self.copy_sources
             .get(&assignment)
             .copied()
-            .unwrap_or(AssignmentCopySource::Operand(assignment))
+            .unwrap_or(CopySourceAssignment::Operand(assignment))
     }
 }
 

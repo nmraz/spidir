@@ -3,7 +3,7 @@ use smallvec::{smallvec, SmallVec};
 use crate::lir::{Instr, PhysReg};
 
 use super::{
-    types::{AssignmentCopy, AssignmentCopySource, ParallelCopy},
+    types::{AssignmentCopy, CopySourceAssignment, ParallelCopy},
     OperandAssignment, SpillSlot,
 };
 
@@ -21,7 +21,7 @@ pub fn resolve(
     let mut operands = SmallVec::<[OperandAssignment; 16]>::new();
 
     for copy in parallel_copies {
-        if let AssignmentCopySource::Operand(from) = copy.from {
+        if let CopySourceAssignment::Operand(from) = copy.from {
             operands.push(from);
         }
         operands.push(copy.to);
@@ -36,7 +36,7 @@ pub fn resolve(
     for copy in parallel_copies {
         let to = find_operand(&operands, copy.to);
         match copy.from {
-            AssignmentCopySource::Operand(from) => {
+            CopySourceAssignment::Operand(from) => {
                 let from = find_operand(&operands, from);
                 debug_assert!(
                     copy_sources[to].is_none(),
@@ -45,7 +45,7 @@ pub fn resolve(
 
                 copy_sources[to] = Some(TrackedCopySource::Operand(from as u32));
             }
-            AssignmentCopySource::Remat(instr) => {
+            CopySourceAssignment::Remat(instr) => {
                 copy_sources[to] = Some(TrackedCopySource::Remat(instr));
             }
         }
@@ -84,7 +84,7 @@ pub fn resolve(
                             TrackedCopySource::Remat(instr) => {
                                 // Remats always terminate the current chain as they can never be
                                 // copied out of a different assignment.
-                                ctx.emit(AssignmentCopySource::Remat(instr), operands[operand]);
+                                ctx.emit(CopySourceAssignment::Remat(instr), operands[operand]);
                                 break;
                             }
                         }
@@ -109,7 +109,7 @@ pub fn resolve(
 
                     // Insert the final copy out of the temporary here (resolved assignments are in
                     // reverse order).
-                    ctx.emit(AssignmentCopySource::Operand(tmp_op), operands[prev]);
+                    ctx.emit(CopySourceAssignment::Operand(tmp_op), operands[prev]);
 
                     break;
                 }
@@ -130,7 +130,7 @@ pub fn resolve(
             if let Some(src) = last_copy_src {
                 let from = operands[src];
                 let to = operands[operand];
-                ctx.emit(AssignmentCopySource::Operand(from), to);
+                ctx.emit(CopySourceAssignment::Operand(from), to);
             }
 
             match copy_cycle_break {
@@ -138,7 +138,7 @@ pub fn resolve(
                     // We've found the start of a broken parallel copy cycle - make sure the
                     // original value of `operand` is saved before it is overwritten by the copy
                     // inserted above.
-                    ctx.emit(AssignmentCopySource::Operand(operands[operand]), tmp_op);
+                    ctx.emit(CopySourceAssignment::Operand(operands[operand]), tmp_op);
                 }
                 _ => {}
             }
@@ -214,7 +214,7 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         }
     }
 
-    fn emit(&mut self, from: AssignmentCopySource, to: OperandAssignment) {
+    fn emit(&mut self, from: CopySourceAssignment, to: OperandAssignment) {
         if from.is_reg() || to.is_reg() {
             // Copies involving at least one register can be performed directly.
             self.emit_raw(from, to);
@@ -231,7 +231,7 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
 
                         // Restore the original value of `tmp_reg` from the emergency spill.
                         self.emit_raw(
-                            AssignmentCopySource::Operand(OperandAssignment::Spill(
+                            CopySourceAssignment::Operand(OperandAssignment::Spill(
                                 emergency_spill,
                             )),
                             OperandAssignment::Reg(tmp_reg),
@@ -242,7 +242,7 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
                 };
 
             self.emit_raw(
-                AssignmentCopySource::Operand(OperandAssignment::Reg(tmp_reg)),
+                CopySourceAssignment::Operand(OperandAssignment::Reg(tmp_reg)),
                 to,
             );
             self.emit_raw(from, OperandAssignment::Reg(tmp_reg));
@@ -251,14 +251,14 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
                 // If we're using an emergency spill, back up the original value of `tmp_reg` before
                 // using it.
                 self.emit_raw(
-                    AssignmentCopySource::Operand(OperandAssignment::Reg(tmp_reg)),
+                    CopySourceAssignment::Operand(OperandAssignment::Reg(tmp_reg)),
                     OperandAssignment::Spill(emergency_spill),
                 );
             }
         }
     }
 
-    fn emit_raw(&mut self, from: AssignmentCopySource, to: OperandAssignment) {
+    fn emit_raw(&mut self, from: CopySourceAssignment, to: OperandAssignment) {
         self.copies.push(AssignmentCopy { from, to });
     }
 }
@@ -352,7 +352,7 @@ mod tests {
         };
 
         for copy in &parallel_copies {
-            if let AssignmentCopySource::Operand(OperandAssignment::Reg(from)) = copy.from {
+            if let CopySourceAssignment::Operand(OperandAssignment::Reg(from)) = copy.from {
                 scavenger.used_regs.insert(from);
             }
             if let OperandAssignment::Reg(to) = copy.to {

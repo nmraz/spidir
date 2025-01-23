@@ -23,7 +23,7 @@ use super::{
     parallel_copy::{self, RegScavenger},
     redundant_copy::{RedundantCopyTracker, RedundantCopyVerdict},
     types::{
-        AssignmentCopySource, BlockExitGhostCopy, InstrSlot, LiveRange, ParallelCopies,
+        BlockExitGhostCopy, CopySourceAssignment, InstrSlot, LiveRange, ParallelCopies,
         ParallelCopy, ParallelCopyPhase, ProgramPoint, TaggedAssignmentCopy,
     },
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot, SpillSlotData,
@@ -38,7 +38,7 @@ struct BlockParamEdgeKey {
     to_vreg: VirtReg,
 }
 
-type BlockParamOutMap = FxHashMap<BlockParamEdgeKey, (VirtReg, AssignmentCopySource)>;
+type BlockParamOutMap = FxHashMap<BlockParamEdgeKey, (VirtReg, CopySourceAssignment)>;
 
 struct BlockParamIn {
     block: Block,
@@ -53,10 +53,10 @@ fn record_parallel_copy(
     instr: Instr,
     phase: ParallelCopyPhase,
     class: RegClass,
-    from: AssignmentCopySource,
+    from: CopySourceAssignment,
     to: OperandAssignment,
 ) {
-    if from != AssignmentCopySource::Operand(to) {
+    if from != CopySourceAssignment::Operand(to) {
         copies.push(ParallelCopy {
             instr,
             phase,
@@ -153,7 +153,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 Instr::new(0),
                 ParallelCopyPhase::Before,
                 self.lir.vreg_class(block_param),
-                AssignmentCopySource::Operand(OperandAssignment::Reg(preg)),
+                CopySourceAssignment::Operand(OperandAssignment::Reg(preg)),
                 assignment,
             );
         }
@@ -193,8 +193,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) {
         trace!("collecting intra-block copies: {vreg}");
 
-        let mut cur_spill: Option<(LiveRange, AssignmentCopySource)> = None;
-        let mut last_canonical_range: Option<(LiveRange, AssignmentCopySource)> = None;
+        let mut cur_spill: Option<(LiveRange, CopySourceAssignment)> = None;
+        let mut last_canonical_range: Option<(LiveRange, CopySourceAssignment)> = None;
 
         for &range in ranges {
             let range_assignment = self.get_range_assignment(range);
@@ -280,7 +280,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             instr.next(),
                             ParallelCopyPhase::Before,
                             class,
-                            AssignmentCopySource::Operand(range_assignment),
+                            CopySourceAssignment::Operand(range_assignment),
                             OperandAssignment::Spill(spill),
                         );
                     }
@@ -432,7 +432,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     panic!("vreg {vreg} not live-out across edge {pred} -> {block}");
                 };
 
-                if pred_assignment == AssignmentCopySource::Operand(assignment) {
+                if pred_assignment == CopySourceAssignment::Operand(assignment) {
                     // Nothing to copy here, don't bother trying to figure out where.
                     continue;
                 }
@@ -553,7 +553,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             instr.next(),
                             ParallelCopyPhase::Before,
                             self.lir.vreg_class(vreg),
-                            AssignmentCopySource::Operand(OperandAssignment::Reg(preg)),
+                            CopySourceAssignment::Operand(OperandAssignment::Reg(preg)),
                             range_assignment,
                         );
                     } else {
@@ -596,7 +596,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     instr,
                                     ParallelCopyPhase::PreCopy,
                                     self.lir.vreg_class(vreg),
-                                    AssignmentCopySource::Operand(range_assignment),
+                                    CopySourceAssignment::Operand(range_assignment),
                                     OperandAssignment::Reg(preg),
                                 );
                             }
@@ -609,7 +609,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     instr,
                                     ParallelCopyPhase::PreCopy,
                                     self.lir.vreg_class(vreg),
-                                    AssignmentCopySource::Operand(range_assignment),
+                                    CopySourceAssignment::Operand(range_assignment),
                                     def_assignment,
                                 );
                                 assignment.assign_instr_use(instr, i, def_assignment);
@@ -657,10 +657,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .expect("expected range assignment to be an operand")
     }
 
-    fn get_range_assignment(&self, range: LiveRange) -> AssignmentCopySource {
+    fn get_range_assignment(&self, range: LiveRange) -> CopySourceAssignment {
         let fragment_data = &self.live_set_fragments[self.live_ranges[range].fragment];
         match fragment_data.assignment.expand() {
-            Some(preg) => AssignmentCopySource::Operand(OperandAssignment::Reg(preg)),
+            Some(preg) => CopySourceAssignment::Operand(OperandAssignment::Reg(preg)),
             None => {
                 debug_assert!(fragment_data.flags.contains(LiveSetFragmentFlags::SPILLED));
 
@@ -670,7 +670,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 {
                     let vreg = self.live_ranges[range].vreg;
                     let def_instr = self.remattable_vreg_defs[vreg].unwrap();
-                    return AssignmentCopySource::Remat(def_instr);
+                    return CopySourceAssignment::Remat(def_instr);
                 }
 
                 let live_set_data = &self.live_sets[fragment_data.live_set];
@@ -688,7 +688,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     );
                 }
 
-                AssignmentCopySource::Operand(OperandAssignment::Spill(
+                CopySourceAssignment::Operand(OperandAssignment::Spill(
                     self.live_sets[fragment_data.live_set].spill_slot.unwrap(),
                 ))
             }
@@ -846,7 +846,7 @@ impl<'a, M: MachineRegalloc> AssignedRegScavenger<'a, M> {
         // before `pos`. Destinations need to be marked as used for correct behavior with block
         // live-outs and outgoing params, which might not be live at all at `pos`.
         for copy in copies {
-            if let AssignmentCopySource::Operand(OperandAssignment::Reg(from)) = copy.from {
+            if let CopySourceAssignment::Operand(OperandAssignment::Reg(from)) = copy.from {
                 self.used_tmp_regs.insert(from);
             }
             if let OperandAssignment::Reg(to) = copy.to {

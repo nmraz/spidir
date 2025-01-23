@@ -1,6 +1,6 @@
 use crate::lir::{Instr, PhysReg};
 
-use super::{types::AssignmentCopySource, OperandAssignment, SpillSlot};
+use super::{types::CopySourceAssignment, OperandAssignment, SpillSlot};
 
 pub fn parse_operand(s: &str) -> OperandAssignment {
     match s.as_bytes()[0] {
@@ -16,13 +16,13 @@ pub fn parse_operand(s: &str) -> OperandAssignment {
     }
 }
 
-pub fn parse_copy_source(s: &str) -> AssignmentCopySource {
+pub fn parse_copy_source(s: &str) -> CopySourceAssignment {
     match s.as_bytes()[0] {
         b'i' => {
             let num: u32 = s[1..].parse().unwrap();
-            AssignmentCopySource::Remat(Instr::from_u32(num))
+            CopySourceAssignment::Remat(Instr::from_u32(num))
         }
-        _ => AssignmentCopySource::Operand(parse_operand(s)),
+        _ => CopySourceAssignment::Operand(parse_operand(s)),
     }
 }
 
@@ -37,9 +37,9 @@ pub fn operand_to_string(operand: OperandAssignment) -> String {
     }
 }
 
-pub fn copy_source_to_string(source: AssignmentCopySource) -> String {
+pub fn copy_source_to_string(source: CopySourceAssignment) -> String {
     match source {
-        AssignmentCopySource::Operand(operand) => operand_to_string(operand),
-        AssignmentCopySource::Remat(instr) => instr.to_string(),
+        CopySourceAssignment::Operand(operand) => operand_to_string(operand),
+        CopySourceAssignment::Remat(instr) => instr.to_string(),
     }
 }

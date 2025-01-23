@@ -488,12 +488,12 @@ impl OperandAssignment {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub enum AssignmentCopySource {
+pub enum CopySourceAssignment {
     Operand(OperandAssignment),
     Remat(Instr),
 }
 
-impl AssignmentCopySource {
+impl CopySourceAssignment {
     pub fn is_spill(self) -> bool {
         self.as_spill().is_some()
     }
@@ -550,7 +550,7 @@ pub struct ParallelCopy {
     pub instr: Instr,
     pub phase: ParallelCopyPhase,
     pub class: RegClass,
-    pub from: AssignmentCopySource,
+    pub from: CopySourceAssignment,
     pub to: OperandAssignment,
 }
 
@@ -558,7 +558,7 @@ pub type ParallelCopies = Vec<ParallelCopy>;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct AssignmentCopy {
-    pub from: AssignmentCopySource,
+    pub from: CopySourceAssignment,
     pub to: OperandAssignment,
 }
 

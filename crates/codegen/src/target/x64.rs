@@ -259,6 +259,10 @@ impl MachineRegalloc for X64Machine {
             _ => panic!("unknown register class"),
         }
     }
+
+    fn can_remat(&self, instr: &X64Instr) -> bool {
+        matches!(instr, X64Instr::MovRU32(..) | X64Instr::MovRI64(..))
+    }
 }
 
 const RC_GPR: RegClass = RegClass::new(0);

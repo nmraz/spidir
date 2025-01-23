@@ -495,15 +495,36 @@ pub enum AssignmentCopySource {
 
 impl AssignmentCopySource {
     pub fn is_spill(self) -> bool {
-        matches!(self, Self::Operand(OperandAssignment::Spill(..)))
+        self.as_spill().is_some()
     }
 
     pub fn is_reg(&self) -> bool {
-        matches!(self, Self::Operand(OperandAssignment::Reg(..)))
+        self.as_reg().is_some()
     }
 
     pub fn is_remat(&self) -> bool {
         matches!(self, Self::Remat(..))
+    }
+
+    pub fn as_operand(&self) -> Option<OperandAssignment> {
+        match self {
+            &Self::Operand(operand) => Some(operand),
+            _ => None,
+        }
+    }
+
+    pub fn as_spill(&self) -> Option<SpillSlot> {
+        match self {
+            &Self::Operand(OperandAssignment::Spill(spill)) => Some(spill),
+            _ => None,
+        }
+    }
+
+    pub fn as_reg(&self) -> Option<PhysReg> {
+        match self {
+            &Self::Operand(OperandAssignment::Reg(reg)) => Some(reg),
+            _ => None,
+        }
     }
 
     pub fn display<M: MachineCore>(self, lir: &Lir<M>) -> DisplayAssignmentCopySource<'_, M> {

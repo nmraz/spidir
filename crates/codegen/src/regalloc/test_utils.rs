@@ -22,7 +22,7 @@ pub fn parse_copy_source(s: &str) -> CopySourceAssignment {
             let num: u32 = s[1..].parse().unwrap();
             CopySourceAssignment::Remat(Instr::from_u32(num))
         }
-        _ => CopySourceAssignment::Operand(parse_operand(s)),
+        _ => parse_operand(s).into(),
     }
 }
 

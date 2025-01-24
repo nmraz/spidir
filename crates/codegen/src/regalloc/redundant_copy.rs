@@ -62,7 +62,7 @@ impl RedundantCopyTracker {
         self.copy_sources
             .get(&assignment)
             .copied()
-            .unwrap_or(CopySourceAssignment::Operand(assignment))
+            .unwrap_or(assignment.into())
     }
 }
 

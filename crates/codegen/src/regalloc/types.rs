@@ -532,6 +532,12 @@ impl CopySourceAssignment {
     }
 }
 
+impl From<OperandAssignment> for CopySourceAssignment {
+    fn from(operand: OperandAssignment) -> Self {
+        Self::Operand(operand)
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct SpillSlotData {
     pub layout: MemLayout,

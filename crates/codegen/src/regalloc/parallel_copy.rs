@@ -109,7 +109,7 @@ pub fn resolve(
 
                     // Insert the final copy out of the temporary here (resolved assignments are in
                     // reverse order).
-                    ctx.emit(CopySourceAssignment::Operand(tmp_op), operands[prev]);
+                    ctx.emit(tmp_op.into(), operands[prev]);
 
                     break;
                 }
@@ -130,7 +130,7 @@ pub fn resolve(
             if let Some(src) = last_copy_src {
                 let from = operands[src];
                 let to = operands[operand];
-                ctx.emit(CopySourceAssignment::Operand(from), to);
+                ctx.emit(from.into(), to);
             }
 
             match copy_cycle_break {
@@ -138,7 +138,7 @@ pub fn resolve(
                     // We've found the start of a broken parallel copy cycle - make sure the
                     // original value of `operand` is saved before it is overwritten by the copy
                     // inserted above.
-                    ctx.emit(CopySourceAssignment::Operand(operands[operand]), tmp_op);
+                    ctx.emit(operands[operand].into(), tmp_op);
                 }
                 _ => {}
             }
@@ -231,9 +231,9 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
 
                         // Restore the original value of `tmp_reg` from the emergency spill.
                         self.emit_raw(
-                            CopySourceAssignment::Operand(OperandAssignment::Spill(
+                            OperandAssignment::Spill(
                                 emergency_spill,
-                            )),
+                            ).into(),
                             OperandAssignment::Reg(tmp_reg),
                         );
 
@@ -242,7 +242,7 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
                 };
 
             self.emit_raw(
-                CopySourceAssignment::Operand(OperandAssignment::Reg(tmp_reg)),
+                OperandAssignment::Reg(tmp_reg).into(),
                 to,
             );
             self.emit_raw(from, OperandAssignment::Reg(tmp_reg));
@@ -251,7 +251,7 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
                 // If we're using an emergency spill, back up the original value of `tmp_reg` before
                 // using it.
                 self.emit_raw(
-                    CopySourceAssignment::Operand(OperandAssignment::Reg(tmp_reg)),
+                    OperandAssignment::Reg(tmp_reg).into(),
                     OperandAssignment::Spill(emergency_spill),
                 );
             }

@@ -56,7 +56,7 @@ fn record_parallel_copy(
     from: CopySourceAssignment,
     to: OperandAssignment,
 ) {
-    if from != CopySourceAssignment::Operand(to) {
+    if from != to.into() {
         copies.push(ParallelCopy {
             instr,
             phase,
@@ -153,7 +153,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 Instr::new(0),
                 ParallelCopyPhase::Before,
                 self.lir.vreg_class(block_param),
-                CopySourceAssignment::Operand(OperandAssignment::Reg(preg)),
+                OperandAssignment::Reg(preg).into(),
                 assignment,
             );
         }
@@ -280,7 +280,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             instr.next(),
                             ParallelCopyPhase::Before,
                             class,
-                            CopySourceAssignment::Operand(range_assignment),
+                            range_assignment.into(),
                             OperandAssignment::Spill(spill),
                         );
                     }
@@ -432,7 +432,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     panic!("vreg {vreg} not live-out across edge {pred} -> {block}");
                 };
 
-                if pred_assignment == CopySourceAssignment::Operand(assignment) {
+                if pred_assignment == assignment.into() {
                     // Nothing to copy here, don't bother trying to figure out where.
                     continue;
                 }
@@ -553,7 +553,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             instr.next(),
                             ParallelCopyPhase::Before,
                             self.lir.vreg_class(vreg),
-                            CopySourceAssignment::Operand(OperandAssignment::Reg(preg)),
+                            OperandAssignment::Reg(preg).into(),
                             range_assignment,
                         );
                     } else {
@@ -596,7 +596,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     instr,
                                     ParallelCopyPhase::PreCopy,
                                     self.lir.vreg_class(vreg),
-                                    CopySourceAssignment::Operand(range_assignment),
+                                    range_assignment.into(),
                                     OperandAssignment::Reg(preg),
                                 );
                             }
@@ -609,7 +609,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     instr,
                                     ParallelCopyPhase::PreCopy,
                                     self.lir.vreg_class(vreg),
-                                    CopySourceAssignment::Operand(range_assignment),
+                                    range_assignment.into(),
                                     def_assignment,
                                 );
                                 assignment.assign_instr_use(instr, i, def_assignment);
@@ -660,7 +660,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn get_range_assignment(&self, range: LiveRange) -> CopySourceAssignment {
         let fragment_data = &self.live_set_fragments[self.live_ranges[range].fragment];
         match fragment_data.assignment.expand() {
-            Some(preg) => CopySourceAssignment::Operand(OperandAssignment::Reg(preg)),
+            Some(preg) => OperandAssignment::Reg(preg).into(),
             None => {
                 debug_assert!(fragment_data.flags.contains(LiveSetFragmentFlags::SPILLED));
 
@@ -688,9 +688,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     );
                 }
 
-                CopySourceAssignment::Operand(OperandAssignment::Spill(
+                OperandAssignment::Spill(
                     self.live_sets[fragment_data.live_set].spill_slot.unwrap(),
-                ))
+                ).into()
             }
         }
     }

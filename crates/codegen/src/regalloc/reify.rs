@@ -146,7 +146,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             let Some(&first_range) = self.vreg_ranges[block_param].first() else {
                 continue;
             };
-            let assignment = self.get_range_assignment_operand(first_range);
+            let assignment = self.get_range_operand_assignment(first_range);
 
             record_parallel_copy(
                 copies,
@@ -526,7 +526,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     continue;
                 }
 
-                let range_assignment = self.get_range_assignment_operand(range);
+                let range_assignment = self.get_range_operand_assignment(range);
 
                 // Assign defs based on range data.
                 for &range_instr in instrs {
@@ -572,7 +572,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     continue;
                 }
 
-                let range_assignment = self.get_range_assignment_operand(range);
+                let range_assignment = self.get_range_operand_assignment(range);
 
                 for &range_instr in instrs {
                     if range_instr.is_def() {
@@ -651,7 +651,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
-    fn get_range_assignment_operand(&self, range: LiveRange) -> OperandAssignment {
+    fn get_range_operand_assignment(&self, range: LiveRange) -> OperandAssignment {
         self.get_range_assignment(range)
             .as_operand()
             .expect("expected range assignment to be an operand")
@@ -688,9 +688,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     );
                 }
 
-                OperandAssignment::Spill(
-                    self.live_sets[fragment_data.live_set].spill_slot.unwrap(),
-                ).into()
+                OperandAssignment::Spill(self.live_sets[fragment_data.live_set].spill_slot.unwrap())
+                    .into()
             }
         }
     }

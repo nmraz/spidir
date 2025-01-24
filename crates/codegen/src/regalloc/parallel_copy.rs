@@ -231,9 +231,7 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
 
                         // Restore the original value of `tmp_reg` from the emergency spill.
                         self.emit_raw(
-                            OperandAssignment::Spill(
-                                emergency_spill,
-                            ).into(),
+                            OperandAssignment::Spill(emergency_spill).into(),
                             OperandAssignment::Reg(tmp_reg),
                         );
 
@@ -241,10 +239,7 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
                     }
                 };
 
-            self.emit_raw(
-                OperandAssignment::Reg(tmp_reg).into(),
-                to,
-            );
+            self.emit_raw(OperandAssignment::Reg(tmp_reg).into(), to);
             self.emit_raw(from, OperandAssignment::Reg(tmp_reg));
 
             if let Some(emergency_spill) = emergency_spill {

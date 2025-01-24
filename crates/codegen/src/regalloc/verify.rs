@@ -283,7 +283,10 @@ fn verify_copy<M: MachineCore>(
                 return Err(VerifierError::BadRematOperands { copy_idx });
             };
 
-            if def.constraint() != DefOperandConstraint::AnyReg {
+            if !matches!(
+                def.constraint(),
+                DefOperandConstraint::Any | DefOperandConstraint::AnyReg
+            ) {
                 return Err(VerifierError::BadRematOperands { copy_idx });
             }
 

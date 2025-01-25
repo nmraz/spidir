@@ -3,6 +3,7 @@ use core::{cmp, iter};
 use alloc::vec::Vec;
 
 use cranelift_entity::{packed_option::ReservedValue, EntityRef, PrimaryMap, SecondaryMap};
+use entity_set::DenseEntitySet;
 use fx_utils::FxHashMap;
 use log::trace;
 use smallvec::SmallVec;
@@ -740,6 +741,7 @@ impl Assignment {
             // but should usually be compensated for by the fact that many instructions have more
             // than one operand.
             operand_assignment_pool: Vec::with_capacity(instr_count),
+            killed_remat_defs: DenseEntitySet::new(),
         };
 
         for instr in lir.all_instrs() {
@@ -766,6 +768,10 @@ impl Assignment {
 
     fn verify_all_assigned(&self) {
         for instr in self.instr_assignments.keys() {
+            if self.killed_remat_defs.contains(instr) {
+                continue;
+            }
+
             for (i, def_op) in self.instr_def_assignments(instr).iter().enumerate() {
                 assert!(
                     def_op != &OperandAssignment::Reg(PhysReg::reserved_value()),

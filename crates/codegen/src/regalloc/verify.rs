@@ -254,7 +254,10 @@ fn verify_block_instrs<M: MachineCore>(
         while let Some((copy_idx, copy)) = edits.next_copy_for(instr) {
             verify_copy(lir, copy_idx, &copy, reg_state)?;
         }
-        verify_instr(lir, assignment, instr, reg_state)?;
+
+        if !edits.is_killed_remat_def(instr) {
+            verify_instr(lir, assignment, instr, reg_state)?;
+        }
     }
 
     Ok(())

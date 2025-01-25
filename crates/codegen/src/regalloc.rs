@@ -3,6 +3,7 @@ use core::{fmt, ops::Range};
 use alloc::vec::Vec;
 
 use cranelift_entity::{PrimaryMap, SecondaryMap};
+use entity_set::DenseEntitySet;
 
 use crate::{
     cfg::{Block, CfgContext},
@@ -58,6 +59,7 @@ pub struct Assignment {
     pub block_exit_ghost_copies: Vec<BlockExitGhostCopy>,
     instr_assignments: SecondaryMap<Instr, InstrAssignmentData>,
     operand_assignment_pool: Vec<OperandAssignment>,
+    killed_remat_defs: DenseEntitySet<Instr>,
 }
 
 impl Assignment {
@@ -82,6 +84,7 @@ impl Assignment {
             .try_into()
             .unwrap();
         AssignmentEditTracker {
+            killed_remat_defs: &self.killed_remat_defs,
             copies: &self.copies,
             copy_idx,
         }
@@ -111,6 +114,10 @@ impl Assignment {
         let mut clobbers = PhysRegSet::empty();
 
         for instr in lir.all_instrs() {
+            if self.killed_remat_defs.contains(instr) {
+                continue;
+            }
+
             clobbers |= &lir.instr_clobbers(instr);
 
             for def in self.instr_def_assignments(instr) {
@@ -143,11 +150,16 @@ impl Assignment {
 }
 
 pub struct AssignmentEditTracker<'a> {
+    killed_remat_defs: &'a DenseEntitySet<Instr>,
     copies: &'a [TaggedAssignmentCopy],
     copy_idx: u32,
 }
 
 impl AssignmentEditTracker<'_> {
+    pub fn is_killed_remat_def(&self, instr: Instr) -> bool {
+        self.killed_remat_defs.contains(instr)
+    }
+
     pub fn next_copy_for(&mut self, instr: Instr) -> Option<(u32, AssignmentCopy)> {
         self.copies
             .get(self.copy_idx as usize)
@@ -175,20 +187,27 @@ impl Iterator for AssignmentInstrIter<'_> {
     type Item = InstrOrCopy;
 
     fn next(&mut self) -> Option<InstrOrCopy> {
-        let instr = self.instr;
+        let mut instr = self.instr;
 
-        if instr >= self.instr_end {
-            return None;
-        }
+        let (next_instr, retval) = loop {
+            if instr >= self.instr_end {
+                break (instr, None);
+            }
 
-        if let Some((_, copy)) = self.edits.next_copy_for(instr) {
-            // This copy pertains to the current instruction, so return it before the instruction
-            // itself.
-            return Some(InstrOrCopy::Copy(copy));
-        }
+            match self.edits.next_copy_for(instr) {
+                Some((_, copy)) => break (instr, Some(InstrOrCopy::Copy(copy))),
+                None => {
+                    if !self.edits.is_killed_remat_def(instr) {
+                        break (instr.next(), Some(InstrOrCopy::Instr(instr)));
+                    }
+                }
+            };
 
-        self.instr = instr.next();
-        Some(InstrOrCopy::Instr(instr))
+            instr = instr.next();
+        };
+
+        self.instr = next_instr;
+        retval
     }
 }
 

@@ -75,13 +75,13 @@ impl Assignment {
         &self.operand_assignment_pool[base..base + len]
     }
 
-    pub fn copy_tracker_from(&self, instr: Instr) -> AssignmentCopyTracker<'_> {
+    pub fn edit_tracker_from(&self, instr: Instr) -> AssignmentEditTracker<'_> {
         let copy_idx = self
             .copies
             .partition_point(|copy| copy.instr < instr)
             .try_into()
             .unwrap();
-        AssignmentCopyTracker {
+        AssignmentEditTracker {
             copies: &self.copies,
             copy_idx,
         }
@@ -91,7 +91,7 @@ impl Assignment {
         AssignmentInstrIter {
             instr: range.start,
             instr_end: range.end,
-            copies: self.copy_tracker_from(range.start),
+            edits: self.edit_tracker_from(range.start),
         }
     }
 
@@ -142,12 +142,12 @@ impl Assignment {
     }
 }
 
-pub struct AssignmentCopyTracker<'a> {
+pub struct AssignmentEditTracker<'a> {
     copies: &'a [TaggedAssignmentCopy],
     copy_idx: u32,
 }
 
-impl AssignmentCopyTracker<'_> {
+impl AssignmentEditTracker<'_> {
     pub fn next_copy_for(&mut self, instr: Instr) -> Option<(u32, AssignmentCopy)> {
         self.copies
             .get(self.copy_idx as usize)
@@ -168,7 +168,7 @@ pub enum InstrOrCopy {
 pub struct AssignmentInstrIter<'a> {
     instr: Instr,
     instr_end: Instr,
-    copies: AssignmentCopyTracker<'a>,
+    edits: AssignmentEditTracker<'a>,
 }
 
 impl Iterator for AssignmentInstrIter<'_> {
@@ -181,7 +181,7 @@ impl Iterator for AssignmentInstrIter<'_> {
             return None;
         }
 
-        if let Some((_, copy)) = self.copies.next_copy_for(instr) {
+        if let Some((_, copy)) = self.edits.next_copy_for(instr) {
             // This copy pertains to the current instruction, so return it before the instruction
             // itself.
             return Some(InstrOrCopy::Copy(copy));

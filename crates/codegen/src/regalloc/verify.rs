@@ -248,10 +248,10 @@ fn verify_block_instrs<M: MachineCore>(
     reg_state: &mut KnownRegState,
 ) -> Result<(), VerifierError> {
     let block_instrs = lir.block_instrs(block);
-    let mut copies = assignment.copy_tracker_from(block_instrs.start);
+    let mut edits = assignment.edit_tracker_from(block_instrs.start);
 
     for instr in block_instrs {
-        while let Some((copy_idx, copy)) = copies.next_copy_for(instr) {
+        while let Some((copy_idx, copy)) = edits.next_copy_for(instr) {
             verify_copy(lir, copy_idx, &copy, reg_state)?;
         }
         verify_instr(lir, assignment, instr, reg_state)?;

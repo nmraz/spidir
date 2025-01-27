@@ -275,18 +275,18 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 let class = self.lir.vreg_class(vreg);
 
                 if range_instr.is_def() {
-                    // Copying _into_ the spill range only makes sense when it is actually a spill.
-                    if let Some(spill) = source.as_spill() {
-                        trace!("        spill ({spill}): {}", instr.next());
-                        record_parallel_copy(
-                            copies,
-                            instr.next(),
-                            ParallelCopyPhase::Before,
-                            class,
-                            range_assignment.into(),
-                            OperandAssignment::Spill(spill),
-                        );
-                    }
+                    // We should never have any spill connectors for rematerializable defs: those
+                    // instructions should be killed entirely during spilling.
+                    let spill = source.as_spill().unwrap();
+                    trace!("    spill ({spill}): {}", instr.next());
+                    record_parallel_copy(
+                        copies,
+                        instr.next(),
+                        ParallelCopyPhase::Before,
+                        class,
+                        range_assignment.into(),
+                        OperandAssignment::Spill(spill),
+                    );
                 } else {
                     trace!("        reload ({}): {instr}", source.display(self.lir));
                     record_parallel_copy(

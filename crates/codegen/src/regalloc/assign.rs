@@ -407,18 +407,39 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 }
             }
 
-            reg_instrs.clear();
-            reg_instrs.extend(
-                self.live_ranges[range.live_range]
-                    .instrs
-                    .drain_filter(|instr| instr.needs_reg()),
-            );
+            let instrs = &mut self.live_ranges[range.live_range].instrs;
 
+            reg_instrs.clear();
             if can_remat {
-                // Sanity check: if this whole fragment is supposed to be rematerializable, we
-                // shouldn't have anything that expects to be rewritten to a spill access at this
-                // point.
-                debug_assert!(self.live_ranges[range.live_range].instrs.is_empty());
+                // We're rematerializing, so push all uses into registers in preparation and kill
+                // any definitions; we won't need them anymore.
+
+                reg_instrs.extend(
+                    instrs
+                        .drain_filter(|instr| !instr.is_def())
+                        .map(|mut instr| {
+                            // We need these new connector ranges in registers because we don't want
+                            // them to ever be "spilled" again; that would just attempt another
+                            // remat and end up creating the same ranges.
+                            instr.set_needs_reg(true);
+                            instr
+                        }),
+                );
+
+                // There should really only be one definition left at this point because everything
+                // is in SSA, but we don't actually care. Note, however, that we can only kill the
+                // definition if it belongs to the fragment being spilled; if we're spilling a
+                // different fragment that has been split off, we don't know whether the original
+                // fragment will be spilled as well.
+                for def in instrs.drain(..) {
+                    debug_assert!(def.instr() == self.remattable_vreg_defs[vreg].unwrap());
+                    trace!("    kill: {}", def.instr());
+                    self.killed_remat_defs.insert(def.instr());
+                }
+            } else {
+                // We're not rematerializing: split off all register uses, leaving anything that can
+                // be rewritten as a stack access attached to the original spill range.
+                reg_instrs.extend(instrs.drain_filter(|instr| instr.needs_reg()));
             }
 
             let hints = self

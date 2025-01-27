@@ -1,4 +1,4 @@
-use core::{cmp, iter};
+use core::{cmp, iter, mem};
 
 use alloc::vec::Vec;
 
@@ -86,6 +86,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.collect_cross_fragment_copies(&mut assignment, &mut copies);
 
         self.resolve_parallel_copies(&mut assignment, copies);
+
+        assignment.killed_remat_defs = mem::take(&mut self.killed_remat_defs);
 
         if cfg!(debug_assertions) {
             assignment.verify_all_assigned();

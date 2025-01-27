@@ -57,9 +57,9 @@ pub struct Assignment {
     pub spill_slots: PrimaryMap<SpillSlot, SpillSlotData>,
     pub copies: Vec<TaggedAssignmentCopy>,
     pub block_exit_ghost_copies: Vec<BlockExitGhostCopy>,
+    pub killed_remat_defs: DenseEntitySet<Instr>,
     instr_assignments: SecondaryMap<Instr, InstrAssignmentData>,
     operand_assignment_pool: Vec<OperandAssignment>,
-    killed_remat_defs: DenseEntitySet<Instr>,
 }
 
 impl Assignment {

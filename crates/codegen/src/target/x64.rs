@@ -261,7 +261,13 @@ impl MachineRegalloc for X64Machine {
     }
 
     fn can_remat(&self, instr: &X64Instr) -> bool {
-        matches!(instr, X64Instr::MovRU32(..) | X64Instr::MovRI64(..))
+        matches!(
+            instr,
+            X64Instr::MovRmS32(..)
+                | X64Instr::MovRU32(..)
+                | X64Instr::MovRI64(..)
+                | X64Instr::StackAddr(..)
+        )
     }
 }
 

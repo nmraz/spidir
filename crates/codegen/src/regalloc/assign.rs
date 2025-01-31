@@ -970,25 +970,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.worklist.push(QueuedFragment { fragment, prio });
     }
 
-    fn push_vreg_fragment_live_range(
-        &mut self,
-        vreg: VirtReg,
-        fragment: LiveSetFragment,
-        prog_range: ProgramRange,
-        instrs: LiveRangeInstrs,
-        is_spill_connector: bool,
-    ) -> LiveRange {
-        let live_range =
-            self.push_vreg_live_range(vreg, fragment, prog_range, instrs, is_spill_connector);
-        self.live_set_fragments[fragment]
-            .ranges
-            .push(TaggedLiveRange {
-                prog_range,
-                live_range,
-            });
-        live_range
-    }
-
     fn set_range_hints_for_instr(
         &mut self,
         live_range: LiveRange,
@@ -1013,61 +994,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         *hints = remaining_hints;
 
         self.live_range_hints.insert(live_range, instr_hints.into());
-    }
-
-    fn fragment_only_instr(&self, fragment: LiveSetFragment) -> Option<LiveRangeInstr> {
-        let mut instrs = self.fragment_instrs(fragment);
-        let instr = instrs.next()?;
-        if instrs.next().is_some() {
-            return None;
-        }
-        Some(instr)
-    }
-
-    fn fragment_has_instrs(&self, fragment: LiveSetFragment) -> bool {
-        self.fragment_instrs(fragment).next().is_some()
-    }
-
-    fn fragment_instrs(
-        &self,
-        fragment: LiveSetFragment,
-    ) -> impl Iterator<Item = LiveRangeInstr> + '_ {
-        self.live_set_fragments[fragment]
-            .ranges
-            .iter()
-            .flat_map(|range| self.live_ranges[range.live_range].instrs.iter().copied())
-    }
-
-    fn can_split_fragment_before(&self, fragment: LiveSetFragment, instr: Instr) -> bool {
-        self.fragment_hull(fragment)
-            .can_split_before(ProgramPoint::before(instr))
-    }
-
-    fn is_fragment_split(&self, fragment: LiveSetFragment) -> bool {
-        let fragment = &self.live_set_fragments[fragment];
-        fragment.prev_split_neighbor.is_some() || fragment.next_split_neighbor.is_some()
-    }
-
-    fn is_fragment_global(&self, fragment: LiveSetFragment) -> bool {
-        let hull = self.fragment_hull(fragment);
-        self.lir.instr_block_index(hull.start.instr())
-            != self.lir.instr_block_index(hull.end.instr())
-    }
-
-    fn is_fragment_spilled(&self, fragment: LiveSetFragment) -> bool {
-        self.live_set_fragments[fragment]
-            .flags
-            .contains(LiveSetFragmentFlags::SPILLED)
-    }
-
-    fn is_fragment_atomic(&self, fragment: LiveSetFragment) -> bool {
-        self.live_set_fragments[fragment]
-            .flags
-            .contains(LiveSetFragmentFlags::ATOMIC)
-    }
-
-    fn fragment_hull(&self, fragment: LiveSetFragment) -> ProgramRange {
-        self.live_set_fragments[fragment].hull()
     }
 
     fn expand_spill_hull(&mut self, live_set: LiveSet, range: ProgramRange) {

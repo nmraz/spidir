@@ -17,6 +17,7 @@ mod assign;
 mod conflict;
 mod context;
 mod display;
+mod fragment;
 mod live_set;
 mod liveness;
 mod parallel_copy;

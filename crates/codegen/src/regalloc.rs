@@ -23,6 +23,8 @@ mod liveness;
 mod parallel_copy;
 mod redundant_copy;
 mod reify;
+mod spill;
+mod split;
 mod types;
 mod utils;
 mod verify;

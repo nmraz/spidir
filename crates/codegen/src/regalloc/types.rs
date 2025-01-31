@@ -418,6 +418,21 @@ impl Ord for QueuedFragment {
 
 pub type FragmentQueue = BinaryHeap<QueuedFragment>;
 
+#[derive(Debug, Clone, Copy)]
+pub enum ConflictBoundary {
+    StartsAt(Instr),
+    EndsAt(Instr),
+}
+
+impl ConflictBoundary {
+    pub fn instr(self) -> Instr {
+        match self {
+            ConflictBoundary::StartsAt(instr) => instr,
+            ConflictBoundary::EndsAt(instr) => instr,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ParallelCopyPhase {
     /// Corresponds to the `Before` instruction slot:

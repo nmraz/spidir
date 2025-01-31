@@ -151,39 +151,17 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     pub fn compute_live_fragment_properties(&mut self, fragment: LiveSetFragment) {
-        enum RematAbility {
-            Uninit,
-            Yes(VirtReg),
-            No,
-        }
-
         let mut size = 0;
         let mut total_weight = 0.0;
         let mut some_instr_needs_reg = false;
-        let mut remat_ability = RematAbility::Uninit;
 
         let fragment_data = &mut self.live_set_fragments[fragment];
         fragment_data.hints.clear();
 
         for range in &fragment_data.ranges {
             let range_data = &mut self.live_ranges[range.live_range];
-            let vreg = range_data.vreg;
             range_data.fragment = fragment;
             size += range.prog_range.len();
-
-            // The fragment can only be rematerialized when all its ranges come from the same vreg,
-            // and that vreg can itself be rematerialized.
-            let can_remat = match remat_ability {
-                RematAbility::Uninit if self.remattable_vreg_defs[vreg].is_some() => true,
-                RematAbility::Yes(existing_vreg) if existing_vreg == vreg => true,
-                _ => false,
-            };
-
-            remat_ability = if can_remat {
-                RematAbility::Yes(vreg)
-            } else {
-                RematAbility::No
-            };
 
             for instr in &range_data.instrs {
                 total_weight += instr.weight();
@@ -205,11 +183,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         fragment_data
             .flags
             .set(LiveSetFragmentFlags::ATOMIC, is_atomic);
-
-        fragment_data.flags.set(
-            LiveSetFragmentFlags::CAN_REMAT,
-            matches!(remat_ability, RematAbility::Yes(_)),
-        );
 
         fragment_data.spill_weight = if is_atomic {
             ATOMIC_FRAGMENT_WEIGHT

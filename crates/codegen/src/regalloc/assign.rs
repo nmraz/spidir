@@ -387,10 +387,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         debug_assert!(!self.is_fragment_atomic(fragment));
 
         let live_set = self.live_set_fragments[fragment].live_set;
-        let fragment_hull = self.fragment_hull(fragment);
-        let can_remat = self.live_set_fragments[fragment]
-            .flags
-            .contains(LiveSetFragmentFlags::CAN_REMAT);
 
         let mut ranges = mem::take(&mut self.live_set_fragments[fragment].ranges);
 
@@ -400,6 +396,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let mut last_instr = None;
         for range in ranges.drain(..) {
             let vreg = self.live_ranges[range.live_range].vreg;
+            let can_remat = self.remattable_vreg_defs[vreg].is_some();
 
             if log_enabled!(log::Level::Trace) {
                 trace!("    range {:?}:", range.prog_range);
@@ -507,6 +504,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
                 last_instr = Some(instr.instr());
             }
+
+            // If this range actually needs to live on the stack, make sure to record that fact.
+            if !can_remat {
+                self.expand_spill_hull(live_set, range.prog_range);
+            }
         }
 
         for &new_fragment in &new_fragments {
@@ -518,12 +520,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.live_set_fragments[fragment]
             .flags
             .insert(LiveSetFragmentFlags::SPILLED);
-
-        // If this whole fragment can be rematerialized, don't needlessly expand the spill hull to
-        // cover it.
-        if !can_remat {
-            self.expand_spill_hull(live_set, fragment_hull);
-        }
     }
 
     fn try_split_fragment_for_conflict(

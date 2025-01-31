@@ -83,7 +83,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // assignments.
         self.reify_allocated_operands(&mut assignment, &mut copies);
         self.collect_func_live_in_copies(&mut copies);
-        self.collect_cross_fragment_copies(&mut assignment, &mut copies);
+        self.collect_cross_range_copies(&mut assignment, &mut copies);
 
         self.resolve_parallel_copies(&mut assignment, copies);
 
@@ -162,11 +162,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
-    fn collect_cross_fragment_copies(
-        &self,
-        assignment: &mut Assignment,
-        copies: &mut ParallelCopies,
-    ) {
+    fn collect_cross_range_copies(&self, assignment: &mut Assignment, copies: &mut ParallelCopies) {
         let mut block_param_ins = BlockParamIns::new();
         let mut block_param_outs = BlockParamOutMap::default();
 

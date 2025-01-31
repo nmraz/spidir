@@ -120,7 +120,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             return None;
         }
 
-        match boundary {
+        let instr = match boundary {
             ConflictBoundary::StartsAt(instr) => {
                 let last_instr_below = self
                     .fragment_instrs(fragment)
@@ -130,10 +130,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     .take_while(|&frag_instr| frag_instr < instr)
                     .last();
 
-                let instr = last_instr_below.unwrap_or(instr);
-
-                self.can_split_fragment_before(fragment, instr)
-                    .then_some(instr)
+                last_instr_below.unwrap_or(instr)
             }
             ConflictBoundary::EndsAt(instr) => {
                 let first_instr_above = self
@@ -141,12 +138,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     .map(|frag_instr| frag_instr.instr())
                     .find(|&frag_instr| frag_instr > instr);
 
-                let instr = first_instr_above.unwrap_or(instr);
-
-                self.can_split_fragment_before(fragment, instr)
-                    .then_some(instr)
+                first_instr_above.unwrap_or(instr)
             }
-        }
+        };
+
+        self.can_split_fragment_before(fragment, instr)
+            .then_some(instr)
     }
 
     fn split_fragment_before(&mut self, fragment: LiveSetFragment, instr: Instr) {

@@ -192,7 +192,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) {
         trace!("collecting intra-block copies: {vreg}");
 
-        let mut cur_spill: Option<(LiveRange, CopySourceAssignment)> = None;
         let mut last_canonical_range: Option<(LiveRange, CopySourceAssignment)> = None;
 
         for &range in ranges {
@@ -238,9 +237,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 }
 
                 last_canonical_range = Some((range, range_assignment));
-                if range_assignment.is_spill() || range_assignment.is_remat() {
-                    cur_spill = Some((range, range_assignment));
-                }
             } else {
                 // Spill connectors: insert a spill/reload or remat.
 
@@ -249,7 +245,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     .expect("spill/reload connector cannot be a remat");
 
                 let (spill_range, source) =
-                    cur_spill.expect("spill/reload connector without current spill");
+                    last_canonical_range.expect("spill/reload connector without surrounding spill");
+
+                debug_assert!(!source.is_reg(), "spill/reload to/from register");
 
                 let spill_range_data = &self.live_ranges[spill_range];
                 let spill_prog_range = spill_range_data.prog_range;

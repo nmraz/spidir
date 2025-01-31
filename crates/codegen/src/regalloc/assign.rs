@@ -18,7 +18,8 @@ use super::{
     conflict::{iter_btree_ranges, iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{
-        LiveRange, LiveRangeInstrs, LiveSetFragment, ProgramRange, QueuedFragment, RangeEndKey,
+        LiveRange, LiveRangeInstrs, LiveSet, LiveSetFragment, ProgramRange, QueuedFragment,
+        RangeEndKey,
     },
     utils::{coalesce_slice, get_block_weight, get_weight_at_instr},
     RegallocError,
@@ -521,16 +522,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // If this whole fragment can be rematerialized, don't needlessly expand the spill hull to
         // cover it.
         if !can_remat {
-            let set_spill_hull = &mut self.live_sets[live_set].spill_hull;
-            match set_spill_hull {
-                Some(existing_hull) => {
-                    existing_hull.start = existing_hull.start.min(fragment_hull.start);
-                    existing_hull.end = existing_hull.end.max(fragment_hull.end);
-                }
-                None => {
-                    *set_spill_hull = Some(fragment_hull);
-                }
-            }
+            self.expand_spill_hull(live_set, fragment_hull);
         }
     }
 
@@ -1080,6 +1072,19 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
     fn fragment_hull(&self, fragment: LiveSetFragment) -> ProgramRange {
         self.live_set_fragments[fragment].hull()
+    }
+
+    fn expand_spill_hull(&mut self, live_set: LiveSet, range: ProgramRange) {
+        let set_spill_hull = &mut self.live_sets[live_set].spill_hull;
+        match set_spill_hull {
+            Some(existing_hull) => {
+                existing_hull.start = existing_hull.start.min(range.start);
+                existing_hull.end = existing_hull.end.max(range.end);
+            }
+            None => {
+                *set_spill_hull = Some(range);
+            }
+        }
     }
 }
 

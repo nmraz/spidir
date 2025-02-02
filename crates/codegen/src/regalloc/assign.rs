@@ -13,7 +13,10 @@ use crate::{
 use super::{
     conflict::{iter_btree_ranges, iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
-    types::{ConflictBoundary, LiveSetFragment, ProgramRange, QueuedFragment, RangeEndKey},
+    types::{
+        ConflictBoundary, LiveSetFragment, LiveSetFragmentFlags, ProgramRange, QueuedFragment,
+        RangeEndKey,
+    },
     utils::{coalesce_slice, get_weight_at_instr},
     RegallocError,
 };
@@ -117,6 +120,17 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     fn try_assign(&mut self, fragment: LiveSetFragment) -> Result<(), RegallocError> {
+        if self.live_set_fragments[fragment]
+            .flags
+            .contains(LiveSetFragmentFlags::REMAT_NO_USES)
+        {
+            // Don't even bother if a rematerializable range contains no uses - splitting should
+            // already have carved out the interesting portions of the original live set, so just
+            // let the value be rematerialized there.
+            self.spill_fragment_and_neighbors(fragment);
+            return Ok(());
+        }
+
         let live_set = self.live_set_fragments[fragment].live_set;
         let class = self.live_sets[live_set].class;
 

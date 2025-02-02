@@ -359,6 +359,7 @@ bitflags! {
     pub struct LiveSetFragmentFlags: u8 {
         const ATOMIC = 0b01;
         const SPILLED = 0b10;
+        const REMAT_NO_USES = 0b100;
     }
 }
 

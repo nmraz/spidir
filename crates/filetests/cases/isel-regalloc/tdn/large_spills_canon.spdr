@@ -22,7 +22,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0002:     $$rsi = MovRmS32(35)
     # nextln: 0003:     $$rdi = MovRI64(106721347409152)
     # nextln: 0004:     $$r15 = MovRmS32(3)
-    # nextln: 0005:     $$rax = MovRmS32(1)
+    # nextln:           $$rax = MovRmS32(1)
     # nextln: 0006:     $$r14 = MovRZ
     # nextln: 0007:     $$rcx = MovRZ
     # nextln: 0008:     MovStackR(!1, S32) $$r14

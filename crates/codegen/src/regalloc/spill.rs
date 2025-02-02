@@ -125,6 +125,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         trace!("  spill: {fragment}");
 
         debug_assert!(!self.is_fragment_atomic(fragment));
+        debug_assert!(!self.is_fragment_spilled(fragment));
 
         let live_set = self.live_set_fragments[fragment].live_set;
 

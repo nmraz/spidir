@@ -48,7 +48,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let fragment_data = &self.live_set_fragments[fragment];
 
         let mut prio = fragment_data.size;
-        if !fragment_data.hints.is_empty() {
+        if !fragment_data.phys_hints.is_empty() {
             // Always try to allocate hinted fragments first, regardless of size. This won't hurt
             // packing ability too much, since hinted fragments are usually attached to physical
             // reservations anyway, so the corresponding register will already be unavailable in
@@ -273,7 +273,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn collect_probe_hints(&self, fragment: LiveSetFragment, probe_order: &mut ProbeOrder) {
         probe_order.extend(
             self.live_set_fragments[fragment]
-                .hints
+                .phys_hints
                 .iter()
                 .map(|hint| ProbeHint {
                     preg: hint.preg,

@@ -378,7 +378,7 @@ pub struct LiveSetFragmentData {
     pub prev_split_neighbor: PackedOption<LiveSetFragment>,
     pub next_split_neighbor: PackedOption<LiveSetFragment>,
     pub ranges: TaggedRangeList,
-    pub hints: PhysRegHints,
+    pub phys_hints: PhysRegHints,
     pub assignment: PackedOption<PhysReg>,
     pub assignment_hint_weight: f32,
     pub size: u32,

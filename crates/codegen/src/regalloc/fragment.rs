@@ -36,7 +36,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             prev_split_neighbor: None.into(),
             next_split_neighbor: None.into(),
             ranges,
-            hints: smallvec![],
+            phys_hints: smallvec![],
             assignment: None.into(),
             assignment_hint_weight: 0.0,
             size: 0,
@@ -63,7 +63,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let mut has_uses = false;
 
         let fragment_data = &mut self.live_set_fragments[fragment];
-        fragment_data.hints.clear();
+        fragment_data.phys_hints.clear();
 
         for range in &fragment_data.ranges {
             let range_data = &mut self.live_ranges[range.live_range];
@@ -90,12 +90,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             if let Some(range_hints) = self.live_range_hints.get(&range.live_range) {
                 fragment_data
-                    .hints
+                    .phys_hints
                     .extend(range_hints.iter().map(|annotated_hint| annotated_hint.hint));
             }
         }
 
-        sort_reg_hints(&mut fragment_data.hints);
+        sort_reg_hints(&mut fragment_data.phys_hints);
 
         fragment_data.size = size;
 

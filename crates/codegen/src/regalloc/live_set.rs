@@ -1,5 +1,6 @@
 use alloc::vec::Vec;
 use core::mem;
+use hashbrown::hash_map::Entry;
 
 use cranelift_entity::{
     packed_option::{PackedOption, ReservedValue},
@@ -8,20 +9,24 @@ use cranelift_entity::{
 use log::trace;
 
 use crate::{
-    lir::{UseOperandConstraint, VirtReg},
+    lir::{Instr, UseOperandConstraint, VirtReg},
     machine::MachineRegalloc,
 };
 
 use super::{
     conflict::{iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
-    types::{LiveSet, LiveSetData, LiveSetFragment, TaggedLiveRange},
+    types::{
+        FragmentCopyHintData, LiveSet, LiveSetData, LiveSetFragment, TaggedFragmentCopyHint,
+        TaggedLiveRange,
+    },
     utils::get_weight_at_instr,
 };
 
 type VirtRegFragmentMap = SecondaryMap<VirtReg, PackedOption<LiveSetFragment>>;
 
 struct CopyCandidate {
+    instr: Instr,
     src: VirtReg,
     dest: VirtReg,
     weight: f32,
@@ -52,6 +57,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     if let UseOperandConstraint::TiedToDef(i) = use_op.constraint() {
                         let def = self.lir.instr_defs(instr)[i as usize];
                         candidates.push(CopyCandidate {
+                            instr,
                             src: use_op.reg(),
                             dest: def.reg(),
                             weight: get_weight_at_instr(self.lir, self.cfg_ctx, instr),
@@ -73,6 +79,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     // terminator for weight purposes.
                     let terminator = self.lir.block_terminator(block);
                     candidates.push(CopyCandidate {
+                        instr: terminator,
                         src: outgoing,
                         dest: incoming,
                         weight: get_weight_at_instr(self.lir, self.cfg_ctx, terminator),
@@ -97,7 +104,18 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 candidate.dest,
                 candidate.weight
             );
-            self.try_coalesce(&mut fragments_by_vreg, candidate.dest, candidate.src);
+            self.try_coalesce(
+                &mut fragments_by_vreg,
+                candidate.instr,
+                candidate.dest,
+                candidate.src,
+            );
+        }
+
+        // Make sure uncoalesced copy hints are sorted by instruction, as the rest of the code
+        // depends on this.
+        for hints in self.uncoalesced_fragment_copy_hints.values_mut() {
+            hints.sort_unstable_by_key(|hint| hint.instr);
         }
 
         // Fill in per-fragment data now that we actually know what the fragments are.
@@ -121,6 +139,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     fn try_coalesce(
         &mut self,
         fragments_by_vreg: &mut VirtRegFragmentMap,
+        instr: Instr,
         dest: VirtReg,
         src: VirtReg,
     ) {
@@ -136,6 +155,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             &self.live_set_fragments[dest_fragment].ranges,
             &self.live_set_fragments[src_fragment].ranges,
         ) {
+            // We couldn't coalesce these fragments now, but we might be able to later because of
+            // splitting. Record a copy hint so we remember to do so.
+            self.hint_fragment_copy(instr, src_fragment, dest_fragment);
             return;
         }
 
@@ -155,8 +177,40 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .ranges
             .sort_unstable_by_key(|range| range.prog_range.start);
 
+        // Move in any uncoalesced copy hints from the source.
+        if let Some(src_copy_hints) = self.uncoalesced_fragment_copy_hints.remove(&src_fragment) {
+            for tagged_hint in &src_copy_hints {
+                self.fragment_copy_hints[tagged_hint.hint]
+                    .replace_fragment(src_fragment, dest_fragment);
+            }
+
+            match self.uncoalesced_fragment_copy_hints.entry(dest_fragment) {
+                Entry::Vacant(vacant_entry) => {
+                    vacant_entry.insert(src_copy_hints);
+                }
+                Entry::Occupied(mut occupied_entry) => {
+                    occupied_entry.get_mut().extend_from_slice(&src_copy_hints);
+                }
+            }
+        }
+
         // The source vreg now belongs to the newly-coalesced fragment.
         fragments_by_vreg[src] = dest_fragment.into();
+    }
+
+    fn hint_fragment_copy(&mut self, instr: Instr, a: LiveSetFragment, b: LiveSetFragment) {
+        let hint = self
+            .fragment_copy_hints
+            .push(FragmentCopyHintData::new(a, b));
+
+        self.uncoalesced_fragment_copy_hints
+            .entry(a)
+            .or_default()
+            .push(TaggedFragmentCopyHint { hint, instr });
+        self.uncoalesced_fragment_copy_hints
+            .entry(b)
+            .or_default()
+            .push(TaggedFragmentCopyHint { hint, instr });
     }
 
     fn live_sets_interfere(&self, a: &[TaggedLiveRange], b: &[TaggedLiveRange]) -> bool {

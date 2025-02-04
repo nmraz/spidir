@@ -113,87 +113,85 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0068:     $$rdx = AluRRm(S64, Add) $$rdx, $$rsi
     # nextln: 0069:     $$rcx = AluRRm(S64, Add) $$rcx, $$rdx
     # nextln: 0070:     MovMR(S8) $$rcx, $$rax
-    # nextln: 0071:     $$rdx = MovRI64(105690555220976)
-    # nextln: 0072:     $$rdi = MovRI64(105690555221008)
-    # nextln:           $$rcx = MovRmS32(1)
+    # nextln: 0071:     $$rcx = MovRI64(105690555220976)
+    # nextln: 0072:     $$rdx = MovRI64(105690555221008)
+    # nextln:           $$r13 = MovRmS32(1)
     # nextln: 0073:     $$rax = MovRI64(105690555220944)
-    # nextln: 0074:     MovMR(S8) $$rax, $$rcx
+    # nextln: 0074:     MovMR(S8) $$rax, $$r13
     # nextln:           $$r15 = $$spill0
-    # nextln: 0075:     MovMR(S8) $$rdx, $$r15
-    # nextln: 0076:     MovMR(S8) $$rdi, $$rcx
-    # nextln: 0077:     $$rdx = MovRStack(!0, S64)
-    # nextln: 0078:     $$rdx = AluRmI(S64, Add, 32) $$rdx
-    # nextln: 0079:     MovMR(S8) $$rdx, $$rcx
-    # nextln: 0080:     $$rdx = MovRStack(!0, S64)
-    # nextln: 0081:     $$rdx = AluRmI(S64, Add, 33) $$rdx
-    # nextln: 0082:     MovMR(S8) $$rdx, $$r15
-    # nextln: 0083:     $$rdx = MovRStack(!0, S64)
-    # nextln: 0084:     $$rdx = AluRmI(S64, Add, 34) $$rdx
-    # nextln: 0085:     MovMR(S8) $$rdx, $$rcx
-    # nextln: 0086:     $$rdx = MovRStack(!4, S32)
-    # nextln: 0087:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0088:     MovStackR(!4, S32) $$rdx
-    # nextln: 0089:     $$rdx = MovRStack(!4, S32)
-    # nextln: 0090:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0091:     MovStackR(!4, S32) $$rdx
-    # nextln: 0092:     $$rdx = MovRStack(!4, S32)
-    # nextln: 0093:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0094:     MovStackR(!4, S32) $$rdx
-    # nextln: 0095:     $$rdx = MovRStack(!4, S32)
-    # nextln: 0096:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0097:     MovStackR(!4, S32) $$rdx
-    # nextln: 0098:     $$rdx = MovRStack(!4, S32)
-    # nextln: 0099:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0100:     MovStackR(!4, S32) $$rdx
-    # nextln: 0101:     $$rdx = MovRStack(!4, S32)
-    # nextln: 0102:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0103:     MovStackR(!4, S32) $$rdx
-    # nextln: 0104:     $$rdx = MovRStack(!4, S32)
-    # nextln: 0105:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0106:     MovStackR(!4, S32) $$rdx
-    # nextln: 0107:     $$rdx = MovRStack(!4, S32)
-    # nextln: 0108:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0109:     MovStackR(!4, S32) $$rdx
-    # nextln: 0110:     $$rdx = MovRStack(!2, S32)
-    # nextln: 0111:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0112:     MovStackR(!2, S32) $$rdx
-    # nextln: 0113:     $$rdx = MovRStack(!2, S32)
-    # nextln: 0114:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0115:     MovStackR(!2, S32) $$rdx
-    # nextln: 0116:     $$rdx = MovRStack(!2, S32)
-    # nextln: 0117:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0118:     MovStackR(!2, S32) $$rdx
-    # nextln: 0119:     $$rdx = MovRStack(!2, S32)
-    # nextln: 0120:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0121:     MovStackR(!2, S32) $$rdx
-    # nextln: 0122:     $$rdx = MovRStack(!2, S32)
-    # nextln: 0123:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0124:     MovStackR(!2, S32) $$rdx
-    # nextln: 0125:     $$rdx = MovRStack(!2, S32)
-    # nextln: 0126:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0127:     MovStackR(!2, S32) $$rdx
-    # nextln: 0128:     $$rdx = MovRStack(!2, S32)
-    # nextln: 0129:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0130:     MovStackR(!2, S32) $$rdx
-    # nextln: 0131:     $$rdx = MovRStack(!2, S32)
-    # nextln: 0132:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0133:     MovStackR(!2, S32) $$rdx
-    # nextln: 0134:     $$rdx = MovRStack(!6, S8)
-    # nextln: 0135:     AluRRm(S32, Test) $$rdx, $$rdx
+    # nextln: 0075:     MovMR(S8) $$rcx, $$r15
+    # nextln: 0076:     MovMR(S8) $$rdx, $$r13
+    # nextln: 0077:     $$rcx = MovRStack(!0, S64)
+    # nextln: 0078:     $$rcx = AluRmI(S64, Add, 32) $$rcx
+    # nextln: 0079:     MovMR(S8) $$rcx, $$r13
+    # nextln: 0080:     $$rcx = MovRStack(!0, S64)
+    # nextln: 0081:     $$rcx = AluRmI(S64, Add, 33) $$rcx
+    # nextln: 0082:     MovMR(S8) $$rcx, $$r15
+    # nextln: 0083:     $$rcx = MovRStack(!0, S64)
+    # nextln: 0084:     $$rcx = AluRmI(S64, Add, 34) $$rcx
+    # nextln: 0085:     MovMR(S8) $$rcx, $$r13
+    # nextln: 0086:     $$rcx = MovRStack(!4, S32)
+    # nextln: 0087:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0088:     MovStackR(!4, S32) $$rcx
+    # nextln: 0089:     $$rcx = MovRStack(!4, S32)
+    # nextln: 0090:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0091:     MovStackR(!4, S32) $$rcx
+    # nextln: 0092:     $$rcx = MovRStack(!4, S32)
+    # nextln: 0093:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0094:     MovStackR(!4, S32) $$rcx
+    # nextln: 0095:     $$rcx = MovRStack(!4, S32)
+    # nextln: 0096:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0097:     MovStackR(!4, S32) $$rcx
+    # nextln: 0098:     $$rcx = MovRStack(!4, S32)
+    # nextln: 0099:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0100:     MovStackR(!4, S32) $$rcx
+    # nextln: 0101:     $$rcx = MovRStack(!4, S32)
+    # nextln: 0102:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0103:     MovStackR(!4, S32) $$rcx
+    # nextln: 0104:     $$rcx = MovRStack(!4, S32)
+    # nextln: 0105:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0106:     MovStackR(!4, S32) $$rcx
+    # nextln: 0107:     $$rcx = MovRStack(!4, S32)
+    # nextln: 0108:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0109:     MovStackR(!4, S32) $$rcx
+    # nextln: 0110:     $$rcx = MovRStack(!2, S32)
+    # nextln: 0111:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0112:     MovStackR(!2, S32) $$rcx
+    # nextln: 0113:     $$rcx = MovRStack(!2, S32)
+    # nextln: 0114:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0115:     MovStackR(!2, S32) $$rcx
+    # nextln: 0116:     $$rcx = MovRStack(!2, S32)
+    # nextln: 0117:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0118:     MovStackR(!2, S32) $$rcx
+    # nextln: 0119:     $$rcx = MovRStack(!2, S32)
+    # nextln: 0120:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0121:     MovStackR(!2, S32) $$rcx
+    # nextln: 0122:     $$rcx = MovRStack(!2, S32)
+    # nextln: 0123:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0124:     MovStackR(!2, S32) $$rcx
+    # nextln: 0125:     $$rcx = MovRStack(!2, S32)
+    # nextln: 0126:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0127:     MovStackR(!2, S32) $$rcx
+    # nextln: 0128:     $$rcx = MovRStack(!2, S32)
+    # nextln: 0129:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0130:     MovStackR(!2, S32) $$rcx
+    # nextln: 0131:     $$rcx = MovRStack(!2, S32)
+    # nextln: 0132:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0133:     MovStackR(!2, S32) $$rcx
+    # nextln: 0134:     $$rcx = MovRStack(!6, S8)
+    # nextln: 0135:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0136:     Jumpcc(Ne, block9, block10)
     # nextln:       block9:
-    # nextln: 0137:     $$rdx = MovRStack(!4, S32)
-    # nextln: 0138:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0139:     MovStackR(!4, S32) $$rdx
+    # nextln: 0137:     $$rcx = MovRStack(!4, S32)
+    # nextln: 0138:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0139:     MovStackR(!4, S32) $$rcx
     # nextln:           $$r12 = $$r15
-    # nextln:           $$r13 = $$rcx
     # nextln: 0140:     Jump(block11)
     # nextln:       block10:
-    # nextln: 0141:     $$rdx = MovRStack(!2, S32)
-    # nextln: 0142:     $$rdx = AluRmI(S32, Add, 1) $$rdx
-    # nextln: 0143:     MovStackR(!2, S32) $$rdx
+    # nextln: 0141:     $$rcx = MovRStack(!2, S32)
+    # nextln: 0142:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0143:     MovStackR(!2, S32) $$rcx
     # nextln:           $$r12 = $$r15
-    # nextln:           $$r13 = $$rcx
     # nextln: 0144:     Jump(block11)
     # nextln:       block11:
     # nextln: 0145:     $$rcx = MovRStack(!6, S8)

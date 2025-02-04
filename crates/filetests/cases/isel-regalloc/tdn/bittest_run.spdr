@@ -64,8 +64,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0049:     $$rax = FuncAddrAbs(External(extfunc5))
     # nextln:           $$rsi = MovRmS32(7)
     # nextln: 0050:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln:           $$rcx = MovRmS32(1)
-    # nextln:           $$r13 = $$rcx
+    # nextln:           $$r13 = MovRmS32(1)
     # nextln: 0051:     $$r13 = AluRRm(S32, And) $$r13, $$rax
     # nextln: 0052:     $$rax = MovRStack(!8, S8)
     # nextln: 0053:     $$rdi = MovsxRRm(Ext8_32) $$rax

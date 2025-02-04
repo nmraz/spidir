@@ -141,23 +141,34 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let live_set = self.live_set_fragments[fragment].live_set;
         let class = self.live_sets[live_set].class;
 
+        // Probe order: start with hinted registers in order of decreasing weight, then move on to
+        // the default allocation order requested by the machine backend. The backend's allocation
+        // order can be tacked on without re-coalescing/re-sorting the probe order because all
+        // registers aren't treated as hinted.
+
         probe_order.clear();
         self.collect_probe_hints(fragment, probe_order);
 
-        // Start with hinted registers in order of decreasing weight, then move on to the default
-        // allocation order requested by the machine backend. The backend's allocation order can
-        // be tacked on without re-coalescing/re-sorting the probe order because all registers
-        // aren't treated as hinted.
-        probe_order.extend(
-            self.machine
-                .usable_regs(class)
-                .iter()
-                .map(|&preg| ProbeHint {
-                    preg,
-                    hint_weight: 0.0,
-                    sort_weight: 0.0,
-                }),
-        );
+        let completely_remattable = self.live_set_fragments[fragment]
+            .flags
+            .contains(LiveSetFragmentFlags::COMPLETELY_REMATTABLE);
+        let is_hinted = !probe_order.is_empty();
+
+        // When our fragment is completely rematerializable and has register hints, treat them as
+        // mandatory: violations here will lead to copies later, but we would be better served by
+        // rematerializing into the appropriate register instead.
+        if !(completely_remattable && is_hinted) {
+            probe_order.extend(
+                self.machine
+                    .usable_regs(class)
+                    .iter()
+                    .map(|&preg| ProbeHint {
+                        preg,
+                        hint_weight: 0.0,
+                        sort_weight: 0.0,
+                    }),
+            );
+        }
 
         let mut no_conflict_reg = None;
         let mut lightest_soft_conflict = None;

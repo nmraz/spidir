@@ -360,7 +360,6 @@ bitflags! {
         const ATOMIC = 0b0001;
         const SPILLED = 0b0010;
         const COMPLETELY_REMATTABLE = 0b0100;
-        const REMAT_NO_USES = 0b1000;
     }
 }
 

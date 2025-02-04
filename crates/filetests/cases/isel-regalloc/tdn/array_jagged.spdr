@@ -47,7 +47,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0005:     $$rbx = MovsxRRm(Ext32_64) $$rax
     # nextln: 0007:     $$rcx = ImulRRmI(S64, 4) $$rbx
     # nextln: 0009:     $$rax = ImulRRmI(S64, 8) $$rbx
-    # nextln:           $$rdx = MovRmS32(20)
+    # nextln: 0010:     $$rdx = MovRmS32(20)
     # nextln:           $$rdi = $$rdx
     # nextln: 0011:     $$rdi = AluRRm(S64, Add) $$rdi, $$rcx
     # nextln:           $$rcx = $$rdi
@@ -93,13 +93,13 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0037:     AluRRm(S64, Cmp) $$r12, $$rdx
     # nextln: 0038:     Jumpcc(L, block6, block7)
     # nextln:       block6:
-    # nextln:           $$rdx = $$rcx
-    # nextln: 0039:     $$rdx = ImulRRm(S64) $$rdx, $$r12
-    # nextln:           $$rcx = MovRmS32(24)
-    # nextln: 0040:     $$rcx = AluRRm(S64, Add) $$rcx, $$rdx
-    # nextln: 0041:     $$r14 = AluRRm(S64, Add) $$r14, $$rcx
+    # nextln:           $$rdi = $$rcx
+    # nextln: 0039:     $$rdi = ImulRRm(S64) $$rdi, $$r12
+    # nextln:           $$rdx = MovRmS32(24)
+    # nextln: 0040:     $$rdx = AluRRm(S64, Add) $$rdx, $$rdi
+    # nextln: 0041:     $$r14 = AluRRm(S64, Add) $$r14, $$rdx
     # nextln: 0042:     MovMR(S64) $$r14, $$rax
-    # nextln:           $$r14 = MovRmS32(8)
+    # nextln:           $$r14 = $$rcx
     # nextln: 0043:     $$r15 = MovRStack(!0, S64)
     # nextln:           $$rdi = MovRmS32(170)
     # nextln: 0044:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi

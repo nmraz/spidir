@@ -119,10 +119,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             all_ranges_remat,
         );
 
-        fragment_data
-            .flags
-            .set(LiveSetFragmentFlags::REMAT_NO_USES, remat_no_uses);
-
         fragment_data.spill_weight = if is_atomic {
             ATOMIC_FRAGMENT_WEIGHT
         } else {

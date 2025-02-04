@@ -181,7 +181,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn is_fragment_global(&self, fragment: LiveSetFragment) -> bool {
         let hull = self.fragment_hull(fragment);
         self.lir.instr_block_index(hull.start.instr())
-            != self.lir.instr_block_index(hull.end.instr())
+            != self.lir.instr_block_index(hull.end.instr().prev())
     }
 
     pub fn is_fragment_spilled(&self, fragment: LiveSetFragment) -> bool {

@@ -62,10 +62,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let mut min_weight = f32::INFINITY;
         let mut split_point = None;
 
-        // Note: the increment in the first iteration of the loop is always safe because this
-        // fragment spans at least two blocks.
         loop {
             block_idx += 1;
+
+            // If this fragment overlaps with the last block, make sure we don't run right off it.
+            if block_idx >= self.cfg_ctx.block_order.len() {
+                break;
+            }
 
             let block = self.cfg_ctx.block_order[block_idx];
             let block_start = self.lir.block_instrs(block).start;

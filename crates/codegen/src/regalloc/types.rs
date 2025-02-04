@@ -357,9 +357,10 @@ pub type PhysRegHints = SmallVec<[PhysRegHint; 2]>;
 bitflags! {
     #[derive(Clone, Copy)]
     pub struct LiveSetFragmentFlags: u8 {
-        const ATOMIC = 0b01;
-        const SPILLED = 0b10;
-        const REMAT_NO_USES = 0b100;
+        const ATOMIC = 0b0001;
+        const SPILLED = 0b0010;
+        const COMPLETELY_REMATTABLE = 0b0100;
+        const REMAT_NO_USES = 0b1000;
     }
 }
 

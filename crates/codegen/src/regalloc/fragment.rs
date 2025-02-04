@@ -45,7 +45,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     pub fn compute_live_fragment_properties(&mut self, fragment: LiveSetFragment) {
-        enum RematNoUseState {
+        enum RematState {
             Uninit,
             Yes(VirtReg),
             No,
@@ -55,8 +55,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let mut total_weight = 0.0;
         let mut some_instr_needs_reg = false;
 
-        // Track whether this fragment is completely rematerializable and contains no uses.
-        let mut remat_no_use_state = RematNoUseState::Uninit;
+        // Track whether this fragment is completely rematerializable.
+        let mut remat_state = RematState::Uninit;
+
+        // Track whether this fragment contains any uses.
+        let mut has_uses = false;
 
         let fragment_data = &mut self.live_set_fragments[fragment];
         fragment_data.hints.clear();
@@ -69,24 +72,22 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             // The fragment can only be rematerialized when all its ranges come from the same vreg,
             // and that vreg can itself be rematerialized.
-            let can_remat = match remat_no_use_state {
-                RematNoUseState::Uninit if self.remattable_vreg_defs[vreg].is_some() => true,
-                RematNoUseState::Yes(existing_vreg) if existing_vreg == vreg => true,
+            let can_remat = match remat_state {
+                RematState::Uninit if self.remattable_vreg_defs[vreg].is_some() => true,
+                RematState::Yes(existing_vreg) if existing_vreg == vreg => true,
                 _ => false,
             };
 
-            remat_no_use_state = if can_remat {
-                RematNoUseState::Yes(vreg)
+            remat_state = if can_remat {
+                RematState::Yes(vreg)
             } else {
-                RematNoUseState::No
+                RematState::No
             };
 
             for instr in &range_data.instrs {
                 total_weight += instr.weight();
                 some_instr_needs_reg |= instr.needs_reg();
-                if !instr.is_def() {
-                    remat_no_use_state = RematNoUseState::No;
-                }
+                has_uses |= !instr.is_def();
             }
 
             if let Some(range_hints) = self.live_range_hints.get(&range.live_range) {
@@ -100,7 +101,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         fragment_data.size = size;
 
-        let remat_no_uses = matches!(remat_no_use_state, RematNoUseState::Yes(..));
+        let all_ranges_remat = matches!(remat_state, RematState::Yes(..));
+        let remat_no_uses = all_ranges_remat && !has_uses;
 
         // Single-instruction fragments requiring a register _cannot_ be spilled (we don't have a
         // way to chop them smaller), unless they only cover a rematerializable definition, in which
@@ -111,6 +113,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         fragment_data
             .flags
             .set(LiveSetFragmentFlags::ATOMIC, is_atomic);
+
+        fragment_data.flags.set(
+            LiveSetFragmentFlags::COMPLETELY_REMATTABLE,
+            all_ranges_remat,
+        );
 
         fragment_data
             .flags

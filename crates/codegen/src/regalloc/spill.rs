@@ -269,24 +269,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         instr: Instr,
         hints: &mut &[AnnotatedPhysRegHint],
     ) {
-        // We expect the hints to almost always be empty, so leave in one very predictable branch
-        // before the more complex logic.
-        if hints.is_empty() {
-            return;
-        }
-
-        while hints.first().is_some_and(|hint| hint.instr < instr) {
-            *hints = &hints[1..];
-        }
-
-        let instr_hint_len = hints
-            .iter()
-            .position(|hint| hint.instr != instr)
-            .unwrap_or(hints.len());
-        let (instr_hints, remaining_hints) = hints.split_at(instr_hint_len);
-        *hints = remaining_hints;
-
-        self.live_range_hints.insert(live_range, instr_hints.into());
+        if let Some(instr_hints) = take_hints_for_instr(hints, instr, |hint| hint.instr) {
+            self.live_range_hints.insert(live_range, instr_hints.into());
+        };
     }
 
     fn expand_spill_hull(&mut self, live_set: LiveSet, range: ProgramRange) {
@@ -300,5 +285,37 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 *set_spill_hull = Some(range);
             }
         }
+    }
+}
+
+fn take_hints_for_instr<'h, H>(
+    hints: &mut &'h [H],
+    instr: Instr,
+    get_hint_instr: impl Fn(&H) -> Instr,
+) -> Option<&'h [H]> {
+    // We expect the hints to almost always be empty, so leave in one very predictable branch
+    // before the more complex logic.
+    if hints.is_empty() {
+        return None;
+    }
+
+    while hints
+        .first()
+        .is_some_and(|hint| get_hint_instr(hint) < instr)
+    {
+        *hints = &hints[1..];
+    }
+
+    let instr_hint_len = hints
+        .iter()
+        .position(|hint| get_hint_instr(hint) != instr)
+        .unwrap_or(hints.len());
+    let (instr_hints, remaining_hints) = hints.split_at(instr_hint_len);
+    *hints = remaining_hints;
+
+    if !instr_hints.is_empty() {
+        Some(instr_hints)
+    } else {
+        None
     }
 }

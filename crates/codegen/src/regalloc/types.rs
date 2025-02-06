@@ -2,7 +2,10 @@ use core::{cmp::Ordering, fmt, marker::PhantomData};
 
 use alloc::{collections::BinaryHeap, vec::Vec};
 use bitflags::bitflags;
-use cranelift_entity::{entity_impl, packed_option::PackedOption};
+use cranelift_entity::{
+    entity_impl,
+    packed_option::{PackedOption, ReservedValue},
+};
 use smallvec::SmallVec;
 
 use crate::{
@@ -465,8 +468,47 @@ impl ParallelCopyPhase {
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum RematCost {
-    CheapAsCopy,
-    CheapAsLoad,
+    CheapAsCopy = 0,
+    CheapAsLoad = 1,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct InstrWithRematCost {
+    packed: u32,
+}
+
+impl InstrWithRematCost {
+    pub fn new(instr: Instr, cost: RematCost) -> Self {
+        let instr = instr.as_u32();
+        let cost = cost as u32;
+        assert!(instr <= u32::MAX >> 1);
+        Self {
+            packed: instr << 1 | cost,
+        }
+    }
+
+    pub fn instr(self) -> Instr {
+        Instr::from_u32(self.packed >> 1)
+    }
+
+    #[allow(unused)]
+    pub fn cost(self) -> RematCost {
+        match self.packed & 1 {
+            0 => RematCost::CheapAsCopy,
+            1 => RematCost::CheapAsLoad,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl ReservedValue for InstrWithRematCost {
+    fn reserved_value() -> Self {
+        Self { packed: u32::MAX }
+    }
+
+    fn is_reserved_value(&self) -> bool {
+        self.packed == u32::MAX
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

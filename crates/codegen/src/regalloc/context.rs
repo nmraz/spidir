@@ -16,8 +16,8 @@ use crate::{
 
 use super::{
     types::{
-        AnnotatedPhysRegHint, FragmentQueue, LiveRange, LiveRangeData, LiveSet, LiveSetData,
-        LiveSetFragment, LiveSetFragmentData, PhysRegReservation, RangeEndKey,
+        AnnotatedPhysRegHint, FragmentQueue, InstrWithRematCost, LiveRange, LiveRangeData, LiveSet,
+        LiveSetData, LiveSetFragment, LiveSetFragmentData, PhysRegReservation, RangeEndKey,
     },
     virt_reg_set::VirtRegSet,
 };
@@ -27,7 +27,7 @@ pub struct RegAllocContext<'a, M: MachineRegalloc> {
     pub cfg_ctx: &'a CfgContext,
     pub machine: &'a M,
     pub block_live_ins: SecondaryMap<Block, VirtRegSet>,
-    pub remattable_vreg_defs: SecondaryMap<VirtReg, PackedOption<Instr>>,
+    pub remattable_vreg_defs: SecondaryMap<VirtReg, PackedOption<InstrWithRematCost>>,
     pub killed_remat_defs: DenseEntitySet<Instr>,
     pub vreg_ranges: SecondaryMap<VirtReg, SmallVec<[LiveRange; 4]>>,
     pub live_ranges: PrimaryMap<LiveRange, LiveRangeData>,

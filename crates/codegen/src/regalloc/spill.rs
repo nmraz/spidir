@@ -171,7 +171,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 // different fragment that has been split off, we don't know whether the original
                 // fragment will be spilled as well.
                 for def in instrs.drain(..) {
-                    debug_assert!(def.instr() == self.remattable_vreg_defs[vreg].unwrap());
+                    debug_assert!(def.instr() == self.remattable_vreg_defs[vreg].unwrap().instr());
                     trace!("    kill: {}", def.instr());
                     self.killed_remat_defs.insert(def.instr());
                 }

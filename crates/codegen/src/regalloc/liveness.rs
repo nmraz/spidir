@@ -8,6 +8,7 @@ use crate::{
     cfg::{Block, CfgContext},
     lir::{DefOperandConstraint, Instr, Lir, OperandPos, PhysReg, UseOperandConstraint, VirtReg},
     machine::MachineRegalloc,
+    regalloc::types::InstrWithRematCost,
 };
 
 use super::{
@@ -184,20 +185,16 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 continue;
             }
 
-            if self
-                .machine
-                .remat_cost(self.lir.instr_data(instr))
-                .is_none()
-            {
+            let Some(remat_cost) = self.machine.remat_cost(self.lir.instr_data(instr)) else {
                 continue;
-            }
+            };
 
             let vreg = def.reg();
             debug_assert!(
                 self.remattable_vreg_defs[vreg].is_none(),
                 "vreg defined more than once"
             );
-            self.remattable_vreg_defs[vreg] = instr.into();
+            self.remattable_vreg_defs[vreg] = InstrWithRematCost::new(instr, remat_cost).into();
         }
     }
 

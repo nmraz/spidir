@@ -662,8 +662,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 debug_assert!(fragment_data.flags.contains(LiveSetFragmentFlags::SPILLED));
 
                 let vreg = self.live_ranges[range].vreg;
-                if let Some(def_instr) = self.remattable_vreg_defs[vreg].expand() {
-                    return CopySourceAssignment::Remat(def_instr);
+                if let Some(remat_def) = self.remattable_vreg_defs[vreg].expand() {
+                    return CopySourceAssignment::Remat(remat_def.instr());
                 }
 
                 let live_set_data = &self.live_sets[fragment_data.live_set];

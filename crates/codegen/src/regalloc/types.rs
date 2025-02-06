@@ -391,8 +391,6 @@ pub struct PhysRegReservation {
     pub copied_live_range: PackedOption<LiveRange>,
 }
 
-pub const FRAGMENT_PRIO_HINTED: u32 = 1 << 31;
-
 #[derive(Clone, Copy, Eq)]
 pub struct QueuedFragment {
     pub fragment: LiveSetFragment,

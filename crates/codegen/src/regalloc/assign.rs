@@ -8,7 +8,6 @@ use smallvec::SmallVec;
 use crate::{
     lir::{PhysReg, PhysRegSet},
     machine::MachineRegalloc,
-    regalloc::types::FRAGMENT_PRIO_HINTED,
 };
 
 use super::{
@@ -41,6 +40,8 @@ struct ProbeHint {
 }
 
 type ProbeOrder = Vec<ProbeHint>;
+
+const FRAGMENT_PRIO_HINTED: u32 = 1 << 31;
 
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn enqueue_fragment(&mut self, fragment: LiveSetFragment) {

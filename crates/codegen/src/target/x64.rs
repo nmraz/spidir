@@ -263,10 +263,11 @@ impl MachineRegalloc for X64Machine {
 
     fn remat_cost(&self, instr: &X64Instr) -> Option<RematCost> {
         match instr {
-            X64Instr::MovRmS32(..) | X64Instr::MovRU32(..) | X64Instr::StackAddr(..) => {
-                Some(RematCost::CheapAsCopy)
-            }
-            X64Instr::MovRI64(..) => Some(RematCost::CheapAsLoad),
+            X64Instr::MovRmS32(..)
+            | X64Instr::MovRU32(..)
+            | X64Instr::FuncAddrRel(..)
+            | X64Instr::StackAddr(..) => Some(RematCost::CheapAsCopy),
+            X64Instr::MovRI64(..) | X64Instr::FuncAddrAbs(..) => Some(RematCost::CheapAsLoad),
             _ => None,
         }
     }

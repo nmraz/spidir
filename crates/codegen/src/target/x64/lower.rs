@@ -10,9 +10,9 @@ use smallvec::{smallvec, SmallVec};
 
 use crate::{
     cfg::Block,
-    isel::IselContext,
+    isel::{IselContext, MachineIselError, ParamLoc},
     lir::{DefOperand, PhysReg, PhysRegSet, RegClass, StackSlot, UseOperand, VirtReg},
-    machine::{MachineIselError, MachineLower, ParamLoc},
+    machine::MachineLower,
     num_utils::{is_sint, is_uint},
 };
 

@@ -7,7 +7,7 @@ use crate::{
     cfg::Block,
     code_buffer::{CodeBuffer, FixupKind},
     emit::BlockLabelMap,
-    isel::IselContext,
+    isel::{IselContext, MachineIselError, ParamLoc},
     lir::{Lir, MemLayout, PhysReg, RegClass},
     regalloc::{Assignment, OperandAssignment},
 };
@@ -21,13 +21,6 @@ pub trait MachineCore {
     fn reg_class_name(class: RegClass) -> &'static str;
     fn reg_name(reg: PhysReg) -> &'static str;
 }
-
-pub enum ParamLoc {
-    Reg { reg: PhysReg },
-    Stack { fp_offset: i32 },
-}
-
-pub struct MachineIselError;
 
 pub trait MachineLower: MachineCore {
     fn reg_class_for_type(&self, ty: Type) -> RegClass;

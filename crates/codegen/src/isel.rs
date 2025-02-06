@@ -17,12 +17,19 @@ use smallvec::SmallVec;
 use crate::{
     cfg::{Block, CfgContext, FunctionBlockMap},
     lir::{
-        Builder as LirBuilder, DefOperand, InstrBuilder, Lir, MemLayout, PhysRegSet, RegClass,
-        StackSlot, UseOperand, VirtReg,
+        Builder as LirBuilder, DefOperand, InstrBuilder, Lir, MemLayout, PhysReg, PhysRegSet,
+        RegClass, StackSlot, UseOperand, VirtReg,
     },
-    machine::{MachineLower, ParamLoc},
+    machine::MachineLower,
     schedule::Schedule,
 };
+
+pub enum ParamLoc {
+    Reg { reg: PhysReg },
+    Stack { fp_offset: i32 },
+}
+
+pub struct MachineIselError;
 
 pub struct IselContext<'ctx, 's, M: MachineLower> {
     state: &'s mut IselState<'ctx, M>,

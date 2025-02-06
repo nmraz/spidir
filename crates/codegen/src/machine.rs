@@ -9,7 +9,7 @@ use crate::{
     emit::BlockLabelMap,
     isel::{IselContext, MachineIselError, ParamLoc},
     lir::{Lir, MemLayout, PhysReg, RegClass},
-    regalloc::{Assignment, OperandAssignment},
+    regalloc::{Assignment, OperandAssignment, RematCost},
 };
 
 pub trait Machine: MachineCore + MachineLower + MachineRegalloc + MachineEmit {}
@@ -44,9 +44,9 @@ pub trait MachineRegalloc: MachineCore {
     fn usable_regs(&self, class: RegClass) -> &[PhysReg];
     fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout;
 
-    fn can_remat(&self, instr: &Self::Instr) -> bool {
+    fn remat_cost(&self, instr: &Self::Instr) -> Option<RematCost> {
         let _ = instr;
-        false
+        None
     }
 }
 

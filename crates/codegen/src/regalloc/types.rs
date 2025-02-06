@@ -463,6 +463,12 @@ impl ParallelCopyPhase {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum RematCost {
+    CheapAsCopy,
+    CheapAsLoad,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OperandAssignment {
     Reg(PhysReg),

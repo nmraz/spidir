@@ -184,7 +184,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 continue;
             }
 
-            if !self.machine.can_remat(self.lir.instr_data(instr)) {
+            if self
+                .machine
+                .remat_cost(self.lir.instr_data(instr))
+                .is_none()
+            {
                 continue;
             }
 

@@ -35,8 +35,8 @@ mod test_utils;
 
 pub use display::{DisplayAssignment, DisplayOperandAssignment};
 pub use types::{
-    AssignmentCopy, BlockExitGhostCopy, CopySourceAssignment, OperandAssignment, SpillSlot,
-    SpillSlotData, TaggedAssignmentCopy,
+    AssignmentCopy, BlockExitGhostCopy, CopySourceAssignment, OperandAssignment, RematCost,
+    SpillSlot, SpillSlotData, TaggedAssignmentCopy,
 };
 
 pub use verify::{verify, VerifierError};

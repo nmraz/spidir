@@ -5,6 +5,7 @@ use crate::{
     code_buffer::RelocKind,
     lir::{MemLayout, PhysReg, RegClass, StackSlot},
     machine::{MachineCore, MachineRegalloc},
+    regalloc::RematCost,
 };
 
 mod emit;
@@ -260,14 +261,14 @@ impl MachineRegalloc for X64Machine {
         }
     }
 
-    fn can_remat(&self, instr: &X64Instr) -> bool {
-        matches!(
-            instr,
-            X64Instr::MovRmS32(..)
-                | X64Instr::MovRU32(..)
-                | X64Instr::MovRI64(..)
-                | X64Instr::StackAddr(..)
-        )
+    fn remat_cost(&self, instr: &X64Instr) -> Option<RematCost> {
+        match instr {
+            X64Instr::MovRmS32(..) | X64Instr::MovRU32(..) | X64Instr::StackAddr(..) => {
+                Some(RematCost::CheapAsCopy)
+            }
+            X64Instr::MovRI64(..) => Some(RematCost::CheapAsLoad),
+            _ => None,
+        }
     }
 }
 

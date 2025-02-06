@@ -362,7 +362,7 @@ bitflags! {
     pub struct LiveSetFragmentFlags: u8 {
         const ATOMIC = 0b0001;
         const SPILLED = 0b0010;
-        const COMPLETELY_REMATTABLE = 0b0100;
+        const CHEAPLY_REMATTABLE = 0b0100;
     }
 }
 
@@ -491,7 +491,6 @@ impl InstrWithRematCost {
         Instr::from_u32(self.packed >> 1)
     }
 
-    #[allow(unused)]
     pub fn cost(self) -> RematCost {
         match self.packed & 1 {
             0 => RematCost::CheapAsCopy,

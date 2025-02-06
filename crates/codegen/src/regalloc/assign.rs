@@ -139,15 +139,15 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         probe_order.clear();
         self.collect_probe_hints(fragment, probe_order);
 
-        let completely_remattable = self.live_set_fragments[fragment]
+        let cheaply_remattable = self.live_set_fragments[fragment]
             .flags
-            .contains(LiveSetFragmentFlags::COMPLETELY_REMATTABLE);
+            .contains(LiveSetFragmentFlags::CHEAPLY_REMATTABLE);
         let is_hinted = !probe_order.is_empty();
 
-        // When our fragment is completely rematerializable and has register hints, treat them as
+        // When our fragment is cheaply rematerializable and has register hints, treat them as
         // mandatory: violations here will lead to copies later, but we would be better served by
         // rematerializing into the appropriate register instead.
-        if !(completely_remattable && is_hinted) {
+        if !(cheaply_remattable && is_hinted) {
             probe_order.extend(
                 self.machine
                     .usable_regs(class)

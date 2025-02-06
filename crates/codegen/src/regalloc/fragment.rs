@@ -3,6 +3,7 @@ use smallvec::smallvec;
 use crate::{
     lir::{Instr, VirtReg},
     machine::MachineRegalloc,
+    regalloc::RematCost,
 };
 
 use super::{
@@ -47,7 +48,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn compute_live_fragment_properties(&mut self, fragment: LiveSetFragment) {
         enum RematState {
             Uninit,
-            Yes(VirtReg),
+            Yes((VirtReg, RematCost)),
             No,
         }
 
@@ -72,16 +73,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             // The fragment can only be rematerialized when all its ranges come from the same vreg,
             // and that vreg can itself be rematerialized.
-            let can_remat = match remat_state {
-                RematState::Uninit if self.remattable_vreg_defs[vreg].is_some() => true,
-                RematState::Yes(existing_vreg) if existing_vreg == vreg => true,
-                _ => false,
-            };
-
-            remat_state = if can_remat {
-                RematState::Yes(vreg)
-            } else {
-                RematState::No
+            remat_state = match remat_state {
+                RematState::Uninit => match self.remattable_vreg_defs[vreg].expand() {
+                    Some(remat) => RematState::Yes((vreg, remat.cost())),
+                    None => RematState::No,
+                },
+                RematState::Yes((existing_vreg, _)) if existing_vreg == vreg => remat_state,
+                _ => RematState::No,
             };
 
             for instr in &range_data.instrs {
@@ -115,8 +113,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .set(LiveSetFragmentFlags::ATOMIC, is_atomic);
 
         fragment_data.flags.set(
-            LiveSetFragmentFlags::COMPLETELY_REMATTABLE,
-            all_ranges_remat,
+            LiveSetFragmentFlags::CHEAPLY_REMATTABLE,
+            matches!(remat_state, RematState::Yes((_, RematCost::CheapAsCopy))),
         );
 
         fragment_data.spill_weight = if is_atomic {

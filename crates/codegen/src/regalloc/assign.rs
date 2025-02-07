@@ -128,6 +128,17 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         probe_order: &mut ProbeOrder,
         fragment: LiveSetFragment,
     ) -> Result<(), RegallocError> {
+        let cheaply_remattable = self.live_set_fragments[fragment]
+            .flags
+            .contains(LiveSetFragmentFlags::CHEAPLY_REMATTABLE);
+
+        if cheaply_remattable && !self.fragment_has_weight(fragment) {
+            // Cheaply rematerializable fragments have no reason to exist unless someone is actively
+            // using them.
+            self.spill_fragment_and_neighbors(fragment);
+            return Ok(());
+        }
+
         let live_set = self.live_set_fragments[fragment].live_set;
         let class = self.live_sets[live_set].class;
 
@@ -139,9 +150,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         probe_order.clear();
         self.collect_probe_hints(fragment, probe_order);
 
-        let cheaply_remattable = self.live_set_fragments[fragment]
-            .flags
-            .contains(LiveSetFragmentFlags::CHEAPLY_REMATTABLE);
         let is_hinted = !probe_order.is_empty();
 
         // When our fragment is cheaply rematerializable and has register hints, treat them as

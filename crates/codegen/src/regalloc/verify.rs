@@ -1,11 +1,18 @@
 use core::fmt;
 
-use alloc::{borrow::ToOwned, collections::VecDeque, string::ToString};
+use alloc::{
+    borrow::ToOwned,
+    boxed::Box,
+    collections::VecDeque,
+    format,
+    string::{String, ToString},
+};
 
 use cranelift_entity::SecondaryMap;
 use fx_utils::FxHashMap;
-use itertools::izip;
+use itertools::{izip, Itertools};
 use log::trace;
+use smallvec::{smallvec, SmallVec};
 
 use crate::{
     cfg::{Block, CfgContext},
@@ -18,7 +25,7 @@ use crate::{
 
 use super::{Assignment, AssignmentCopy, OperandAssignment};
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub enum VerifierError {
     BadUseCount(Instr),
     BadDefCount(Instr),
@@ -33,7 +40,7 @@ pub enum VerifierError {
     BadUse {
         instr: Instr,
         op: u32,
-        found_vreg: Option<VirtReg>,
+        found_vregs: Option<Box<[VirtReg]>>,
     },
     IllegalSpillCopy {
         copy_idx: u32,
@@ -49,7 +56,7 @@ pub enum VerifierError {
     },
     BadGhostCopySource {
         ghost_copy_idx: u32,
-        found_vreg: Option<VirtReg>,
+        found_vregs: Option<Box<[VirtReg]>>,
     },
 }
 
@@ -111,15 +118,13 @@ impl<M: MachineCore> fmt::Display for DisplayVerifierError<'_, M> {
             VerifierError::BadUse {
                 instr,
                 op,
-                found_vreg,
+                ref found_vregs,
             } => {
-                let found_vreg = found_vreg.map_or("garbage".to_owned(), |found_vreg: VirtReg| {
-                    found_vreg.to_string()
-                });
+                let found_vregs = display_found_vregs(found_vregs.as_deref());
                 let expected_vreg = self.lir.instr_uses(instr)[op as usize].reg();
                 write!(
                     f,
-                    "expected {instr} use {op} to be of {expected_vreg}, found {found_vreg}"
+                    "expected {instr} use {op} to be of {expected_vreg}, found {found_vregs}"
                 )
             }
             VerifierError::IllegalSpillCopy { copy_idx } => {
@@ -158,16 +163,15 @@ impl<M: MachineCore> fmt::Display for DisplayVerifierError<'_, M> {
             }
             VerifierError::BadGhostCopySource {
                 ghost_copy_idx,
-                found_vreg,
+                ref found_vregs,
             } => {
-                let found_vreg =
-                    found_vreg.map_or("garbage".to_owned(), |found_vreg| found_vreg.to_string());
+                let found_vregs = display_found_vregs(found_vregs.as_deref());
                 let ghost_copy = &self.assignment.block_exit_ghost_copies[ghost_copy_idx as usize];
                 let block = ghost_copy.block;
                 let expected_vreg = ghost_copy.from_vreg;
                 write!(
                     f,
-                    "expected ghost copy for '{}' at end of '{block}' to be from {expected_vreg}, found {found_vreg}",
+                    "expected ghost copy for '{}' at end of '{block}' to be from {expected_vreg}, found {found_vregs}",
                     ghost_copy.assignment.display::<M>(),
                 )
             }
@@ -183,9 +187,10 @@ pub fn verify<M: MachineCore>(
     let mut block_entry_reg_states = BlockKnownRegState::with_capacity(cfg_ctx.block_order.len());
 
     let entry = cfg_ctx.block_order[0];
+
     let mut reg_state = KnownRegState::default();
     for (&live_in, &preg) in lir.block_params(entry).iter().zip(lir.live_in_regs()) {
-        reg_state.insert(OperandAssignment::Reg(preg), live_in);
+        reg_state.insert(OperandAssignment::Reg(preg), smallvec![live_in]);
     }
 
     let mut worklist = VecDeque::new();
@@ -212,7 +217,17 @@ pub fn verify<M: MachineCore>(
     Ok(())
 }
 
-type KnownRegState = FxHashMap<OperandAssignment, VirtReg>;
+fn display_found_vregs(found_vregs: Option<&[VirtReg]>) -> String {
+    match found_vregs {
+        Some(&[found_vreg]) => found_vreg.to_string(),
+        Some(found_vregs) => {
+            format!("{{{}}}", found_vregs.iter().format(", "))
+        }
+        None => "garbage".to_owned(),
+    }
+}
+
+type KnownRegState = FxHashMap<OperandAssignment, SmallVec<[VirtReg; 2]>>;
 type BlockKnownRegState = SecondaryMap<Block, Option<KnownRegState>>;
 
 fn verify_block_ghost_copies(
@@ -229,13 +244,20 @@ fn verify_block_ghost_copies(
     for ghost_copy_idx in ghost_copy_range {
         let ghost_copy = &assignment.block_exit_ghost_copies[ghost_copy_idx];
         let operand = ghost_copy.assignment;
-        check_assigned_vreg(operand, ghost_copy.from_vreg, &*reg_state).map_err(|found_vreg| {
+        check_assigned_vreg(operand, ghost_copy.from_vreg, reg_state).map_err(|found_vregs| {
             VerifierError::BadGhostCopySource {
                 ghost_copy_idx: ghost_copy_idx.try_into().unwrap(),
-                found_vreg,
+                found_vregs,
             }
         })?;
-        reg_state.insert(operand, ghost_copy.to_vreg);
+
+        // Ghost copies are special in that they copy between vregs in the same physical assignment
+        // rather than between physical assignments in the same vreg. That means the same physical
+        // assignment may now simultaneously house an additional vreg.
+        let vregs = reg_state.get_mut(&operand).unwrap();
+        if !vregs.contains(&ghost_copy.to_vreg) {
+            vregs.push(ghost_copy.to_vreg);
+        }
     }
 
     Ok(())
@@ -273,10 +295,13 @@ fn verify_copy<M: MachineCore>(
         return Err(VerifierError::IllegalSpillCopy { copy_idx });
     }
 
-    let from_vreg = match copy.from {
-        CopySourceAssignment::Operand(from) => *reg_state
-            .get(&from)
-            .ok_or(VerifierError::UndefCopySource { copy_idx })?,
+    match copy.from {
+        CopySourceAssignment::Operand(from) => {
+            let from = reg_state
+                .get(&from)
+                .ok_or(VerifierError::UndefCopySource { copy_idx })?;
+            reg_state.insert(copy.to, from.clone());
+        }
         CopySourceAssignment::Remat(instr) => {
             if !lir.instr_uses(instr).is_empty() {
                 return Err(VerifierError::BadRematOperands { copy_idx });
@@ -293,11 +318,9 @@ fn verify_copy<M: MachineCore>(
                 return Err(VerifierError::BadRematOperands { copy_idx });
             }
 
-            def.reg()
+            reg_state.insert(copy.to, smallvec![def.reg()]);
         }
     };
-
-    reg_state.insert(copy.to, from_vreg);
 
     Ok(())
 }
@@ -324,11 +347,11 @@ fn verify_instr<M: MachineCore>(
         if !use_matches_constraint(use_op, use_assignment, def_assignments) {
             return Err(VerifierError::UseConstraintViolation { instr, op: i });
         }
-        check_use_assignment(use_op, use_assignment, reg_state).map_err(|found_vreg| {
+        check_use_assignment(use_op, use_assignment, reg_state).map_err(|found_vregs| {
             VerifierError::BadUse {
                 instr,
                 op: i,
-                found_vreg,
+                found_vregs,
             }
         })?;
     }
@@ -341,7 +364,7 @@ fn verify_instr<M: MachineCore>(
         if !def_matches_constraint(def_op, def_assignment) {
             return Err(VerifierError::DefConstraintViolation { instr, op: i });
         }
-        reg_state.insert(def_assignment, def_op.reg());
+        reg_state.insert(def_assignment, smallvec![def_op.reg()]);
     }
 
     Ok(())
@@ -351,7 +374,7 @@ fn check_use_assignment(
     use_op: UseOperand,
     use_assignment: OperandAssignment,
     reg_state: &KnownRegState,
-) -> Result<(), Option<VirtReg>> {
+) -> Result<(), Option<Box<[VirtReg]>>> {
     check_assigned_vreg(use_assignment, use_op.reg(), reg_state)
 }
 
@@ -359,12 +382,17 @@ fn check_assigned_vreg(
     assignment: OperandAssignment,
     expected_vreg: VirtReg,
     reg_state: &KnownRegState,
-) -> Result<(), Option<VirtReg>> {
-    let found_vreg = reg_state.get(&assignment).copied();
-    if found_vreg != Some(expected_vreg) {
-        return Err(found_vreg);
+) -> Result<(), Option<Box<[VirtReg]>>> {
+    match reg_state.get(&assignment) {
+        Some(found_vregs) => {
+            if !found_vregs.contains(&expected_vreg) {
+                return Err(Some(found_vregs.as_slice().into()));
+            }
+
+            Ok(())
+        }
+        None => Err(None),
     }
-    Ok(())
 }
 
 fn use_matches_constraint(
@@ -415,10 +443,19 @@ fn merge_reg_state(
 ) -> bool {
     let mut changed = false;
 
-    existing_reg_state.retain(|operand, known_reg| {
-        let retain = incoming_reg_state
-            .get(operand)
-            .is_some_and(|incoming| incoming == known_reg);
+    existing_reg_state.retain(|operand, known_regs| {
+        let retain = match incoming_reg_state.get(operand) {
+            Some(incoming) => {
+                // This can end up quadratic in the worst case, but these lists will almost always
+                // have 1 or 2 elements in practice. We also don't care that much about the
+                // performance of the verifier as long as it isn't unbearably slow - it's just a
+                // debugging aid.
+                known_regs.retain(|reg| incoming.contains(reg));
+                !known_regs.is_empty()
+            }
+            None => false,
+        };
+
         if !retain {
             changed = true;
         }

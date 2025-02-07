@@ -54,7 +54,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     fn should_spill_prev_neighbor(&self, prev_neighbor: LiveSetFragment) -> bool {
-        if !self.fragment_has_instrs(prev_neighbor) {
+        if !self.fragment_has_weight(prev_neighbor) {
             // Empty neighbors are always worth spilling.
             return true;
         }
@@ -88,7 +88,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     fn should_spill_next_neighbor(&self, next_neighbor: LiveSetFragment) -> bool {
-        if !self.fragment_has_instrs(next_neighbor) {
+        if !self.fragment_has_weight(next_neighbor) {
             // Empty neighbors are always worth spilling.
             return true;
         }

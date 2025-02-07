@@ -152,8 +152,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         Some(instr)
     }
 
-    pub fn fragment_has_instrs(&self, fragment: LiveSetFragment) -> bool {
-        self.fragment_instrs(fragment).next().is_some()
+    pub fn fragment_has_weight(&self, fragment: LiveSetFragment) -> bool {
+        self.live_set_fragments[fragment].spill_weight != 0.0
     }
 
     pub fn fragment_instrs(

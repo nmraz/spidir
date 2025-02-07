@@ -408,7 +408,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) -> Option<LiveRange> {
         let live_range = self.record_def(vreg, def_point, dead_use_point)?;
         let can_remat = self.remattable_vreg_defs[vreg].is_some();
-        let weight = self.get_range_instr_weight(instr, can_remat);
+        let weight = self.get_range_instr_weight(instr, true, can_remat);
         self.live_ranges[live_range]
             .instrs
             .push(LiveRangeInstr::new(instr, weight, true, needs_reg, op_pos));
@@ -453,7 +453,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) -> LiveRange {
         let instr = use_point.instr();
         let can_remat = self.remattable_vreg_defs[vreg].is_some();
-        let weight = self.get_range_instr_weight(instr, can_remat);
+        let weight = self.get_range_instr_weight(instr, false, can_remat);
 
         let op_pos = LiveRangeOpPos::for_instr_slot(use_point.slot());
         let live_range = self.open_use_range(vreg, use_point, block);
@@ -553,7 +553,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         )
     }
 
-    fn get_range_instr_weight(&self, instr: Instr, can_remat: bool) -> f32 {
+    fn get_range_instr_weight(&self, instr: Instr, is_def: bool, can_remat: bool) -> f32 {
+        if can_remat && is_def {
+            // Always give rematerializable definitions a weight of 0 because we want them to be
+            // treated exactly like an inserted copy/reload.
+            return 0.0;
+        }
+
         let mut weight = get_weight_at_instr(self.lir, self.cfg_ctx, instr);
         if can_remat {
             weight *= 0.5;

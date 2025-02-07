@@ -192,8 +192,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) {
         trace!("collecting intra-block copies: {vreg}");
 
-        let mut last_canonical_range: Option<(LiveRange, CopySourceAssignment)> = None;
+        let class = self.lir.vreg_class(vreg);
 
+        let mut last_canonical_range: Option<(LiveRange, CopySourceAssignment)> = None;
         for &range in ranges {
             let range_assignment = self.get_range_assignment(range);
             let range_data = &self.live_ranges[range];
@@ -227,7 +228,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     copies,
                                     instr,
                                     ParallelCopyPhase::Before,
-                                    self.lir.vreg_class(last_range_data.vreg),
+                                    class,
                                     last_assignment,
                                     range_assignment,
                                 );
@@ -249,8 +250,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
                 debug_assert!(!source.is_reg(), "spill/reload to/from register");
 
-                let spill_range_data = &self.live_ranges[spill_range];
-                let spill_prog_range = spill_range_data.prog_range;
+                let spill_prog_range = self.live_ranges[spill_range].prog_range;
 
                 debug_assert!(spill_prog_range.contains(prog_range));
 
@@ -264,9 +264,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 // We should never have inserted spills/reloads for non-`needs_reg`
                 // operands.
                 debug_assert!(range_instr.needs_reg());
-
-                let vreg = spill_range_data.vreg;
-                let class = self.lir.vreg_class(vreg);
 
                 if range_instr.is_def() {
                     // We should never have any spill connectors for rematerializable defs: those

@@ -527,9 +527,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             // Now that we know all outputs from predecessors feeding into this block param, place
             // the copies moving them to the correct assignment.
 
-            if let Ok(&out_assignment) = outs
+            if let Ok(out_assignment) = outs
                 .iter()
-                .map(|source| &source.assignment)
+                .map(|source| source.assignment)
                 .all_equal_value()
             {
                 // If the sources all have the same assignment, we can sink the copy into the
@@ -547,11 +547,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 // Record a "ghost copy" in each of the predecessors indicating that the source
                 // belongs to the destination vreg upon exit.
                 if let Some(out_op_assignment) = out_assignment.as_operand() {
-                    for source in &outs {
+                    for out in &outs {
                         assignment.block_exit_ghost_copies.push(BlockExitGhostCopy {
-                            block: source.block,
+                            block: out.block,
                             assignment: out_op_assignment,
-                            from_vreg: source.vreg,
+                            from_vreg: out.vreg,
                             to_vreg: incoming.vreg,
                         });
                     }

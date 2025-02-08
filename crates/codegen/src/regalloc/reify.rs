@@ -5,6 +5,7 @@ use alloc::vec::Vec;
 use cranelift_entity::{packed_option::ReservedValue, EntityRef, PrimaryMap, SecondaryMap};
 use entity_set::DenseEntitySet;
 use fx_utils::FxHashMap;
+use itertools::Itertools;
 use log::trace;
 use smallvec::SmallVec;
 
@@ -472,9 +473,21 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) {
         trace!("collecting block param copies");
 
+        struct BlockParamOut {
+            block: Block,
+            vreg: VirtReg,
+            assignment: CopySourceAssignment,
+        }
+
+        let mut outs = SmallVec::<[BlockParamOut; 4]>::new();
+
         for incoming in block_param_ins {
             trace!("  -> {} ({})", incoming.vreg, incoming.block);
+
             let class = self.lir.vreg_class(incoming.vreg);
+
+            // Start by collecting sources for this value from all predecessors.
+            outs.clear();
             for &pred in self.cfg_ctx.cfg.block_preds(incoming.block) {
                 trace!("    {pred}");
                 let (from_vreg, from_assignment) = *block_param_outs
@@ -483,27 +496,72 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         to_vreg: incoming.vreg,
                     })
                     .expect("block param source not recorded for predecessor");
+                outs.push(BlockParamOut {
+                    block: pred,
+                    vreg: from_vreg,
+                    assignment: from_assignment,
+                });
+            }
 
-                // We always insert copies for block params in the predecessor because we know we
-                // are its unique successor.
-                let pred_terminator = self.lir.block_terminator(pred);
+            // Now that we know all outputs from predecessors feeding into this block param, place
+            // the copies moving them to the correct assignment.
+
+            if let Ok(&out_assignment) = outs
+                .iter()
+                .map(|source| &source.assignment)
+                .all_equal_value()
+            {
+                // If the sources all have the same assignment, we can sink the copy into the
+                // receiving block instead of performing it in every predecessor individually.
+
                 record_parallel_copy(
                     copies,
-                    pred_terminator,
-                    ParallelCopyPhase::PreCopy,
+                    self.lir.block_instrs(incoming.block).start,
+                    ParallelCopyPhase::Before,
                     class,
-                    from_assignment,
+                    out_assignment,
                     incoming.assignment,
                 );
 
-                // Record a "ghost copy" indicating that the new assignment now belongs to the
-                // destination vreg and not the source vreg.
-                assignment.block_exit_ghost_copies.push(BlockExitGhostCopy {
-                    block: pred,
-                    assignment: incoming.assignment,
-                    from_vreg,
-                    to_vreg: incoming.vreg,
-                });
+                // Record a "ghost copy" in each of the predecessors indicating that the source
+                // belongs to the destination vreg upon exit.
+                if let Some(out_op_assignment) = out_assignment.as_operand() {
+                    for source in &outs {
+                        assignment.block_exit_ghost_copies.push(BlockExitGhostCopy {
+                            block: source.block,
+                            assignment: out_op_assignment,
+                            from_vreg: source.vreg,
+                            to_vreg: incoming.vreg,
+                        });
+                    }
+                }
+            } else {
+                // Assignments in predecessors weren't identical: perform the copies in each of them
+                // instead. This is legal because each of those predecessors have only the receiving
+                // block as a successor.
+
+                for out in &outs {
+                    // We always insert copies for block params in the predecessor because we know
+                    // we are its unique successor.
+                    let pred_terminator = self.lir.block_terminator(out.block);
+                    record_parallel_copy(
+                        copies,
+                        pred_terminator,
+                        ParallelCopyPhase::PreCopy,
+                        class,
+                        out.assignment,
+                        incoming.assignment,
+                    );
+
+                    // Record a ghost copy indicating that the new assignment now belongs to the
+                    // destination vreg and not the source vreg.
+                    assignment.block_exit_ghost_copies.push(BlockExitGhostCopy {
+                        block: out.block,
+                        assignment: incoming.assignment,
+                        from_vreg: out.vreg,
+                        to_vreg: incoming.vreg,
+                    });
+                }
             }
         }
 

@@ -40,15 +40,16 @@ struct BlockParamEdgeKey {
     to_vreg: VirtReg,
 }
 
-type BlockParamOutMap = FxHashMap<BlockParamEdgeKey, (VirtReg, CopySourceAssignment)>;
-
 struct BlockParamIn {
     block: Block,
     vreg: VirtReg,
     assignment: OperandAssignment,
 }
 
+type BlockIns = Vec<(Block, OperandAssignment)>;
+type BlockOutMap = FxHashMap<Block, CopySourceAssignment>;
 type BlockParamIns = Vec<BlockParamIn>;
+type BlockParamOutMap = FxHashMap<BlockParamEdgeKey, (VirtReg, CopySourceAssignment)>;
 
 fn record_parallel_copy(
     copies: &mut ParallelCopies,
@@ -302,8 +303,74 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         block_param_ins: &mut BlockParamIns,
         block_param_outs: &mut BlockParamOutMap,
     ) {
-        let mut block_outs = FxHashMap::default();
-        let mut block_ins = Vec::new();
+        let mut block_outs = BlockOutMap::default();
+        let mut block_ins = BlockIns::new();
+
+        self.collect_block_in_outs(
+            vreg,
+            ranges,
+            &mut block_ins,
+            &mut block_outs,
+            block_param_ins,
+            block_param_outs,
+        );
+
+        trace!("placing inter-block copies: {vreg}");
+
+        // Now that we have the necessary liveness information, place copies along the appropriate
+        // edges.
+        for &(block, assignment) in &block_ins {
+            let preds = self.cfg_ctx.cfg.block_preds(block);
+            let single_pred = preds.len() == 1;
+
+            for &pred in preds {
+                let Some(&pred_assignment) = block_outs.get(&pred) else {
+                    panic!("vreg {vreg} not live-out across edge {pred} -> {block}");
+                };
+
+                if pred_assignment == assignment.into() {
+                    // Nothing to copy here, don't bother trying to figure out where.
+                    continue;
+                }
+
+                // If we have a single predecessor, we can safely insert the copy at the start of
+                // our own block. Otherwise, our predecessors should each have only `block` as a
+                // successor, allowing the copy to be inserted at the end of each.
+                let (instr, phase) = if single_pred {
+                    (
+                        self.lir.block_instrs(block).start,
+                        ParallelCopyPhase::Before,
+                    )
+                } else {
+                    debug_assert!(
+                        self.cfg_ctx.cfg.block_succs(pred).len() == 1,
+                        "critical edge not split"
+                    );
+                    let pred_terminator = self.lir.block_terminator(pred);
+                    (pred_terminator, ParallelCopyPhase::PreCopy)
+                };
+
+                trace!("  {pred} -> {block} at {instr}");
+                copies.push(ParallelCopy {
+                    instr,
+                    phase,
+                    class: self.lir.vreg_class(vreg),
+                    from: pred_assignment,
+                    to: assignment,
+                });
+            }
+        }
+    }
+
+    fn collect_block_in_outs(
+        &self,
+        vreg: VirtReg,
+        ranges: &[LiveRange],
+        block_ins: &mut BlockIns,
+        block_outs: &mut BlockOutMap,
+        block_param_ins: &mut BlockParamIns,
+        block_param_outs: &mut BlockParamOutMap,
+    ) {
         let block_order = &self.cfg_ctx.block_order[..];
 
         let mut last_range_end_block = 0;
@@ -415,52 +482,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             }
 
             last_range_end_block = block_idx;
-        }
-
-        trace!("placing inter-block copies: {vreg}");
-
-        // Now that we have the necessary liveness information, place copies along the appropriate
-        // edges.
-        for &(block, assignment) in &block_ins {
-            let preds = self.cfg_ctx.cfg.block_preds(block);
-            let single_pred = preds.len() == 1;
-
-            for &pred in preds {
-                let Some(&pred_assignment) = block_outs.get(&pred) else {
-                    panic!("vreg {vreg} not live-out across edge {pred} -> {block}");
-                };
-
-                if pred_assignment == assignment.into() {
-                    // Nothing to copy here, don't bother trying to figure out where.
-                    continue;
-                }
-
-                // If we have a single predecessor, we can safely insert the copy at the start of
-                // our own block. Otherwise, our predecessors should each have only `block` as a
-                // successor, allowing the copy to be inserted at the end of each.
-                let (instr, phase) = if single_pred {
-                    (
-                        self.lir.block_instrs(block).start,
-                        ParallelCopyPhase::Before,
-                    )
-                } else {
-                    debug_assert!(
-                        self.cfg_ctx.cfg.block_succs(pred).len() == 1,
-                        "critical edge not split"
-                    );
-                    let pred_terminator = self.lir.block_terminator(pred);
-                    (pred_terminator, ParallelCopyPhase::PreCopy)
-                };
-
-                trace!("  {pred} -> {block} at {instr}");
-                copies.push(ParallelCopy {
-                    instr,
-                    phase,
-                    class: self.lir.vreg_class(vreg),
-                    from: pred_assignment,
-                    to: assignment,
-                });
-            }
         }
     }
 

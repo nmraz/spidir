@@ -12,7 +12,7 @@ use crate::{
 
 use super::{
     context::RegAllocContext,
-    types::{ConflictBoundary, LiveSetFragment, ProgramPoint},
+    types::{ConflictBoundary, LiveSetFragment, ProgramPoint, TaggedFragmentCopyHints},
     utils::get_block_weight,
 };
 
@@ -157,9 +157,25 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         debug_assert!(self.can_split_fragment_before(fragment, instr));
 
+        let new_fragment = self.split_fragment_ranges(fragment, instr);
+        self.split_fragment_copy_hints(fragment, new_fragment, instr);
+        self.mark_fragment_split_neighbors(fragment, new_fragment);
+
+        self.compute_live_fragment_properties(fragment);
+        self.compute_live_fragment_properties(new_fragment);
+
+        self.enqueue_fragment(fragment);
+        self.enqueue_fragment(new_fragment);
+    }
+
+    fn split_fragment_ranges(
+        &mut self,
+        fragment: LiveSetFragment,
+        instr: Instr,
+    ) -> LiveSetFragment {
         let pos = ProgramPoint::before(instr);
 
-        let (split_idx, split_boundary_range) = match self.live_set_fragments[fragment]
+        let (range_split_idx, split_boundary_range) = match self.live_set_fragments[fragment]
             .ranges
             .binary_search_by_key(&pos, |range| range.prog_range.start)
         {
@@ -192,7 +208,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let live_set = self.live_set_fragments[fragment].live_set;
         let new_ranges = self.live_set_fragments[fragment]
             .ranges
-            .drain(split_idx..)
+            .drain(range_split_idx..)
             .collect();
         let new_fragment = self.create_live_fragment(live_set, new_ranges);
 
@@ -200,16 +216,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             self.split_fragment_boundary_range_before(fragment, new_fragment, instr);
         }
 
-        self.live_set_fragments[new_fragment].prev_split_neighbor = fragment.into();
-        self.live_set_fragments[new_fragment].next_split_neighbor =
-            self.live_set_fragments[fragment].next_split_neighbor;
-        self.live_set_fragments[fragment].next_split_neighbor = new_fragment.into();
-
-        self.compute_live_fragment_properties(fragment);
-        self.compute_live_fragment_properties(new_fragment);
-
-        self.enqueue_fragment(fragment);
-        self.enqueue_fragment(new_fragment);
+        new_fragment
     }
 
     fn split_fragment_boundary_range_before(
@@ -287,5 +294,43 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 self.live_range_hints.insert(new_live_range, low_hints);
             }
         }
+    }
+
+    fn split_fragment_copy_hints(
+        &mut self,
+        old_fragment: LiveSetFragment,
+        new_fragment: LiveSetFragment,
+        instr: Instr,
+    ) {
+        let Some(hints) = self.uncoalesced_fragment_copy_hints.get_mut(&old_fragment) else {
+            return;
+        };
+
+        let copy_hint_split_idx = hints.partition_point(|hint| hint.instr < instr);
+
+        let new_copy_hints: TaggedFragmentCopyHints = hints.drain(copy_hint_split_idx..).collect();
+        if new_copy_hints.is_empty() {
+            return;
+        }
+
+        // Make sure to replace all references to the old fragment with the new one in the hints
+        // we've moved.
+        for tagged_hint in &new_copy_hints {
+            self.fragment_copy_hints[tagged_hint.hint].replace_fragment(old_fragment, new_fragment);
+        }
+
+        self.uncoalesced_fragment_copy_hints
+            .insert(new_fragment, new_copy_hints);
+    }
+
+    fn mark_fragment_split_neighbors(
+        &mut self,
+        old_fragment: LiveSetFragment,
+        new_fragment: LiveSetFragment,
+    ) {
+        self.live_set_fragments[new_fragment].prev_split_neighbor = old_fragment.into();
+        self.live_set_fragments[new_fragment].next_split_neighbor =
+            self.live_set_fragments[old_fragment].next_split_neighbor;
+        self.live_set_fragments[old_fragment].next_split_neighbor = new_fragment.into();
     }
 }

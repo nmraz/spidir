@@ -13,7 +13,7 @@ use crate::{
 
 use super::{
     context::RegAllocContext,
-    types::{AnnotatedPhysRegHint, LiveRange, LiveSet, LiveSetFragment},
+    types::{AnnotatedPhysRegHint, LiveRange, LiveSet, LiveSetFragment, TaggedFragmentCopyHint},
     utils::get_weight_at_instr,
 };
 
@@ -131,6 +131,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let mut ranges = mem::take(&mut self.live_set_fragments[fragment].ranges);
 
+        let copy_hints = self.uncoalesced_fragment_copy_hints.remove(&fragment);
+        let mut copy_hints = copy_hints.as_deref().unwrap_or_default();
+
         let mut reg_instrs = SmallVec::<[LiveRangeInstr; 4]>::new();
         let mut new_fragments = SmallVec::<[LiveSetFragment; 8]>::new();
 
@@ -181,11 +184,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 reg_instrs.extend(instrs.drain_filter(|instr| instr.needs_reg()));
             }
 
-            let hints = self
+            let phys_hints = self
                 .live_range_hints
                 .remove(&range.live_range)
                 .unwrap_or_default();
-            let mut hints = &hints[..];
+            let mut phys_hints = &phys_hints[..];
 
             // Note: we assume the instructions are all in sorted order here so that the
             // `last_instr` checks inside make sense.
@@ -241,7 +244,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     smallvec![*instr],
                     true,
                 );
-                self.set_range_hints_for_instr(new_live_range, instr.instr(), &mut hints);
+                self.set_range_hints_for_instr(new_live_range, instr.instr(), &mut phys_hints);
+                self.set_fragment_copy_hints_for_instr(
+                    fragment,
+                    new_fragment,
+                    instr.instr(),
+                    &mut copy_hints,
+                );
 
                 last_instr = Some(instr.instr());
             }
@@ -272,6 +281,26 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         if let Some(instr_hints) = take_hints_for_instr(hints, instr, |hint| hint.instr) {
             self.live_range_hints.insert(live_range, instr_hints.into());
         };
+    }
+
+    fn set_fragment_copy_hints_for_instr(
+        &mut self,
+        old_fragment: LiveSetFragment,
+        new_fragment: LiveSetFragment,
+        instr: Instr,
+        hints: &mut &[TaggedFragmentCopyHint],
+    ) {
+        let Some(instr_hints) = take_hints_for_instr(hints, instr, |hint| hint.instr) else {
+            return;
+        };
+
+        for tagged_hint in instr_hints {
+            self.fragment_copy_hints[tagged_hint.hint].replace_fragment(old_fragment, new_fragment);
+        }
+        self.uncoalesced_fragment_copy_hints
+            .entry(new_fragment)
+            .or_default()
+            .extend_from_slice(instr_hints);
     }
 
     fn expand_spill_hull(&mut self, live_set: LiveSet, range: ProgramRange) {

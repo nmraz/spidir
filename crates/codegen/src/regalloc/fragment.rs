@@ -117,6 +117,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             matches!(remat_state, RematState::Yes((_, RematCost::CheapAsCopy))),
         );
 
+        fragment_data.flags.set(
+            LiveSetFragmentFlags::HAS_UNCOALESCED_COPY_HINTS,
+            self.uncoalesced_fragment_copy_hints.contains_key(&fragment),
+        );
+
         fragment_data.spill_weight = if is_atomic {
             ATOMIC_FRAGMENT_WEIGHT
         } else {

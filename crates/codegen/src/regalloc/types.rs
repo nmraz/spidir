@@ -364,12 +364,50 @@ pub struct AnnotatedPhysRegHint {
 
 pub type PhysRegHints = SmallVec<[PhysRegHint; 2]>;
 
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct FragmentCopyHint(u32);
+entity_impl!(FragmentCopyHint);
+
+#[derive(Clone, Copy)]
+pub struct FragmentCopyHintData {
+    delta: u32,
+}
+
+impl FragmentCopyHintData {
+    pub fn new(a: LiveSetFragment, b: LiveSetFragment) -> Self {
+        Self {
+            delta: a.as_u32() ^ b.as_u32(),
+        }
+    }
+
+    pub fn get_other_fragment(self, fragment: LiveSetFragment) -> LiveSetFragment {
+        LiveSetFragment::from_u32(self.delta ^ fragment.as_u32())
+    }
+
+    pub fn replace_fragment(
+        &mut self,
+        old_fragment: LiveSetFragment,
+        new_fragment: LiveSetFragment,
+    ) {
+        self.delta ^= old_fragment.as_u32() ^ new_fragment.as_u32();
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct TaggedFragmentCopyHint {
+    pub hint: FragmentCopyHint,
+    pub instr: Instr,
+}
+
+pub type TaggedFragmentCopyHints = SmallVec<[TaggedFragmentCopyHint; 2]>;
+
 bitflags! {
     #[derive(Clone, Copy)]
     pub struct LiveSetFragmentFlags: u8 {
         const ATOMIC = 0b0001;
         const SPILLED = 0b0010;
         const CHEAPLY_REMATTABLE = 0b0100;
+        const HAS_UNCOALESCED_COPY_HINTS = 0b1000;
     }
 }
 

@@ -6,7 +6,7 @@ use log::trace;
 use smallvec::SmallVec;
 
 use crate::{
-    lir::{PhysReg, PhysRegSet},
+    lir::{Instr, PhysReg, PhysRegSet},
     machine::MachineRegalloc,
 };
 
@@ -282,12 +282,16 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 }),
         );
 
+        let has_uncoalesced_copy_hints = self.live_set_fragments[fragment]
+            .flags
+            .contains(LiveSetFragmentFlags::HAS_UNCOALESCED_COPY_HINTS);
+
         let prev_fragment = self.live_set_fragments[fragment].prev_split_neighbor;
         let next_fragment = self.live_set_fragments[fragment].next_split_neighbor;
 
         // Avoid all the extra shuffling/sorting work when we don't need it, as we know the original
         // hints are sorted by weight.
-        if prev_fragment.is_none() && next_fragment.is_none() {
+        if !has_uncoalesced_copy_hints && prev_fragment.is_none() && next_fragment.is_none() {
             return;
         }
 
@@ -298,32 +302,38 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let hull = self.fragment_hull(fragment);
 
         if let Some(prev_fragment) = prev_fragment.expand() {
-            if let Some(prev_assignment) =
-                self.live_set_fragments[prev_fragment].assignment.expand()
-            {
-                let weight = get_weight_at_instr(self.lir, self.cfg_ctx, hull.start.instr());
-                probe_order.push(ProbeHint {
-                    preg: prev_assignment,
-                    hint_weight: 0.0,
-                    sort_weight: weight,
-                });
-            }
+            self.collect_hint_from_fragment(hull.start.instr(), prev_fragment, probe_order);
         }
 
         if let Some(next_fragment) = next_fragment.expand() {
-            if let Some(next_assignment) =
-                self.live_set_fragments[next_fragment].assignment.expand()
-            {
-                let weight = get_weight_at_instr(self.lir, self.cfg_ctx, hull.end.instr());
-                probe_order.push(ProbeHint {
-                    preg: next_assignment,
-                    hint_weight: 0.0,
-                    sort_weight: weight,
-                });
+            self.collect_hint_from_fragment(hull.end.instr(), next_fragment, probe_order);
+        }
+
+        if has_uncoalesced_copy_hints {
+            for uncoalesced_copy in &self.uncoalesced_fragment_copy_hints[&fragment] {
+                let hint_fragment =
+                    self.fragment_copy_hints[uncoalesced_copy.hint].get_other_fragment(fragment);
+                self.collect_hint_from_fragment(uncoalesced_copy.instr, hint_fragment, probe_order);
             }
         }
 
         sort_probe_hints(probe_order);
+    }
+
+    fn collect_hint_from_fragment(
+        &self,
+        instr: Instr,
+        hint_fragment: LiveSetFragment,
+        probe_order: &mut ProbeOrder,
+    ) {
+        if let Some(hint_assignment) = self.live_set_fragments[hint_fragment].assignment.expand() {
+            let weight = get_weight_at_instr(self.lir, self.cfg_ctx, instr);
+            probe_order.push(ProbeHint {
+                preg: hint_assignment,
+                hint_weight: 0.0,
+                sort_weight: weight,
+            });
+        }
     }
 
     fn probe_phys_reg(&self, preg: PhysReg, fragment: LiveSetFragment) -> Option<ProbeConflict> {

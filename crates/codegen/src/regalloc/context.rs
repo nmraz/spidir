@@ -16,8 +16,9 @@ use crate::{
 
 use super::{
     types::{
-        AnnotatedPhysRegHint, FragmentQueue, InstrWithRematCost, LiveRange, LiveRangeData, LiveSet,
-        LiveSetData, LiveSetFragment, LiveSetFragmentData, PhysRegReservation, RangeEndKey,
+        AnnotatedPhysRegHint, FragmentCopyHint, FragmentCopyHintData, FragmentQueue,
+        InstrWithRematCost, LiveRange, LiveRangeData, LiveSet, LiveSetData, LiveSetFragment,
+        LiveSetFragmentData, PhysRegReservation, RangeEndKey, TaggedFragmentCopyHints,
     },
     virt_reg_set::VirtRegSet,
 };
@@ -33,6 +34,8 @@ pub struct RegAllocContext<'a, M: MachineRegalloc> {
     pub live_ranges: PrimaryMap<LiveRange, LiveRangeData>,
     pub live_range_hints: FxHashMap<LiveRange, SmallVec<[AnnotatedPhysRegHint; 2]>>,
     pub live_set_fragments: PrimaryMap<LiveSetFragment, LiveSetFragmentData>,
+    pub uncoalesced_fragment_copy_hints: FxHashMap<LiveSetFragment, TaggedFragmentCopyHints>,
+    pub fragment_copy_hints: PrimaryMap<FragmentCopyHint, FragmentCopyHintData>,
     pub live_sets: PrimaryMap<LiveSet, LiveSetData>,
     pub phys_reg_reservations: Vec<Vec<PhysRegReservation>>,
     pub phys_reg_assignments: Vec<BTreeMap<RangeEndKey, LiveRange>>,
@@ -54,6 +57,8 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             live_ranges: PrimaryMap::new(),
             live_range_hints: FxHashMap::default(),
             live_set_fragments: PrimaryMap::new(),
+            uncoalesced_fragment_copy_hints: FxHashMap::default(),
+            fragment_copy_hints: PrimaryMap::new(),
             live_sets: PrimaryMap::new(),
             phys_reg_reservations: vec![Vec::new(); phys_reg_count],
             phys_reg_assignments: vec![BTreeMap::new(); phys_reg_count],

@@ -143,9 +143,9 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0098:     Jumpcc(Ne, block13, block15)
     # nextln:       block13:
     # nextln:           $$rdx = MovRU32(4294967291)
-    # nextln:           $$rbx = $$rdx
     # nextln:           $$rcx = $$rax
     # nextln:           $$rax = $$rdx
+    # nextln:           $$rbx = $$rdx
     # nextln: 0099:     Jump(block14)
     # nextln:       block15:
     # nextln:           $$rbx = $$rcx
@@ -200,17 +200,18 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0127:     AluRRm(S32, Test) $$rdx, $$rdx
     # nextln: 0128:     Jumpcc(Ne, block28, block30)
     # nextln:       block28:
-    # nextln:           $$r13 = $$rcx
+    # nextln:           $$spill3 = $$rax
     # nextln:           $$r12 = $$rax
+    # nextln:           $$r13 = $$rcx
     # nextln: 0129:     Jump(block29)
     # nextln:       block30:
     # nextln: 0130:     $$rax = FuncAddrAbs(External(extfunc3))
-    # nextln:           $$r12 = MovRU32(4294967291)
     # nextln:           $$r13 = $$rcx
+    # nextln:           $$r12 = MovRU32(4294967291)
     # nextln: 0131:     $$rax = CallRm $$rax
+    # nextln:           $$spill3 = $$rax
     # nextln: 0132:     Jump(block29)
     # nextln:       block29:
-    # nextln:           $$spill3 = $$rax
     # nextln: 0133:     $$rax = MovRStack(!0, S8)
     # nextln: 0134:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0135:     Jumpcc(Ne, block31, block33)

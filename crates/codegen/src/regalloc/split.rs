@@ -33,13 +33,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         if let Some(global_split) = self.global_split_point(fragment) {
             trace!("    found global split: {global_split}");
-            self.split_fragment_before(fragment, global_split);
+            self.split_and_requeue_fragment(fragment, global_split);
             return true;
         }
 
         if let Some(conflict_split) = self.split_point_for_conflict(fragment, boundary) {
             trace!("    found conflict split: {conflict_split}");
-            self.split_fragment_before(fragment, conflict_split);
+            self.split_and_requeue_fragment(fragment, conflict_split);
             return true;
         };
 
@@ -149,7 +149,17 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .then_some(instr)
     }
 
-    fn split_fragment_before(&mut self, fragment: LiveSetFragment, instr: Instr) {
+    fn split_and_requeue_fragment(&mut self, fragment: LiveSetFragment, instr: Instr) {
+        let new_fragment = self.split_fragment(fragment, instr);
+
+        self.compute_live_fragment_properties(fragment);
+        self.compute_live_fragment_properties(new_fragment);
+
+        self.enqueue_fragment(fragment);
+        self.enqueue_fragment(new_fragment);
+    }
+
+    fn split_fragment(&mut self, fragment: LiveSetFragment, instr: Instr) -> LiveSetFragment {
         trace!(
             "  split: {fragment} (hull {:?}) at {instr}",
             self.fragment_hull(fragment)
@@ -161,11 +171,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.split_fragment_copy_hints(fragment, new_fragment, instr);
         self.mark_fragment_split_neighbors(fragment, new_fragment);
 
-        self.compute_live_fragment_properties(fragment);
-        self.compute_live_fragment_properties(new_fragment);
-
-        self.enqueue_fragment(fragment);
-        self.enqueue_fragment(new_fragment);
+        new_fragment
     }
 
     fn split_fragment_ranges(

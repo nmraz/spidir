@@ -67,7 +67,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             return;
         }
 
-        trace!("liveranges:");
+        trace!("vregs:");
         for (vreg, ranges) in self.vreg_ranges.iter() {
             if ranges.is_empty() {
                 continue;
@@ -129,7 +129,11 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
             for reservation in reservations {
                 let range = reservation.prog_range;
                 if let Some(copied_live_range) = reservation.copied_live_range.expand() {
-                    trace!("  {range:?} ({})", self.live_ranges[copied_live_range].vreg);
+                    trace!(
+                        "  {range:?} ({}, {})",
+                        self.live_ranges[copied_live_range].vreg,
+                        self.live_ranges[copied_live_range].fragment
+                    );
                 } else {
                     trace!("  {range:?}");
                 }
@@ -147,7 +151,11 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
 
             for (&range_key, &live_range) in assignments {
                 let range = range_key.0;
-                trace!("  {range:?} ({})", self.live_ranges[live_range].vreg);
+                trace!(
+                    "  {range:?} ({}, {})",
+                    self.live_ranges[live_range].vreg,
+                    self.live_ranges[live_range].fragment
+                );
             }
         }
     }

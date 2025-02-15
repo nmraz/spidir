@@ -130,7 +130,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     // We always split *before* the selected instruction, but we want to split *after*
                     // the last use here.
                     .map(|frag_instr| frag_instr.instr().next())
-                    .take_while(|&frag_instr| frag_instr < instr)
+                    .take_while(|&frag_instr| frag_instr <= instr)
                     .last();
 
                 last_instr_below.unwrap_or(instr)
@@ -139,7 +139,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 let first_instr_above = self
                     .fragment_instrs(fragment)
                     .map(|frag_instr| frag_instr.instr())
-                    .find(|&frag_instr| frag_instr > instr);
+                    .find(|&frag_instr| frag_instr >= instr);
 
                 first_instr_above.unwrap_or(instr)
             }

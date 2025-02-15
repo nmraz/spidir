@@ -165,24 +165,18 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
 
         if can_remat_low_cheaply {
-            let low_split_point = low_split_point
-                .filter(|_| {
-                    // If the lower half of the range contains only a rematerializable definitions,
-                    // don't even bother to insert an extra split there, as everything is going to be
-                    // spilled anyway.
-                    saw_low_use
-                })
-                .unwrap_or(boundary_instr);
+            let low_split_point = low_split_point.filter(|_| {
+                // If the lower half of the range contains only a rematerializable definitions,
+                // don't even bother to insert an extra split there, as everything is going to be
+                // spilled anyway.
+                saw_low_use
+            });
 
-            let low_split_point = self
-                .can_split_fragment_before(fragment, low_split_point)
-                .then_some(low_split_point);
+            let low_split_point =
+                self.get_real_split_point(fragment, low_split_point, boundary_instr);
 
-            let high_split_point = high_split_point.unwrap_or(boundary_instr);
-
-            let high_split_point = self
-                .can_split_fragment_before(fragment, high_split_point)
-                .then_some(high_split_point);
+            let high_split_point =
+                self.get_real_split_point(fragment, high_split_point, boundary_instr);
 
             let split_kind = match (low_split_point, high_split_point) {
                 (Some(low_split_point), Some(high_split_point))
@@ -194,20 +188,17 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 (_, Some(high_split_point)) => SplitKind::Single(high_split_point),
                 _ => return None,
             };
+
             return Some(split_kind);
         }
 
-        let instr = match boundary {
-            ConflictBoundary::StartsAt(instr) => {
-                low_split_point.map_or(instr, |low_split_point| low_split_point)
-            }
-            ConflictBoundary::EndsAt(instr) => {
-                high_split_point.map_or(instr, |high_split_point| high_split_point)
-            }
+        let split_point = match boundary {
+            ConflictBoundary::StartsAt(..) => low_split_point,
+            ConflictBoundary::EndsAt(..) => high_split_point,
         };
 
-        self.can_split_fragment_before(fragment, instr)
-            .then_some(SplitKind::Single(instr))
+        self.get_real_split_point(fragment, split_point, boundary_instr)
+            .map(SplitKind::Single)
     }
 
     fn split_and_requeue_fragment(&mut self, fragment: LiveSetFragment, split: SplitKind) {
@@ -411,5 +402,20 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.live_set_fragments[new_fragment].next_split_neighbor =
             self.live_set_fragments[old_fragment].next_split_neighbor;
         self.live_set_fragments[old_fragment].next_split_neighbor = new_fragment.into();
+    }
+
+    fn get_real_split_point(
+        &self,
+        fragment: LiveSetFragment,
+        split_point: Option<Instr>,
+        fallback: Instr,
+    ) -> Option<Instr> {
+        let split_point = split_point.unwrap_or(fallback);
+        // Note: we check whether the fragment can be split after selecting whether we want the
+        // fallback, so that an unsuitable split point makes us select nothing rather than taking
+        // the fallback. Experience shows that it is better to spill than to select a poor split
+        // point.
+        self.can_split_fragment_before(fragment, split_point)
+            .then_some(split_point)
     }
 }

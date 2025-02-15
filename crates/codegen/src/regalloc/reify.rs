@@ -928,6 +928,10 @@ fn advance_redundant_copy_tracker<M: MachineCore>(
     }
 
     for instr in InstrRange::new(from_instr, to_instr) {
+        if assignment.killed_remat_defs.contains(instr) {
+            continue;
+        }
+
         for &def in assignment.instr_def_assignments(instr) {
             tracker.assignment_clobbered(def);
         }

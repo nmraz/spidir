@@ -71,8 +71,7 @@ fn record_parallel_copy(
 
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn reify(&mut self) -> Assignment {
-        let mut assignment = Assignment::empty_for_lir(self.lir);
-        let mut copies = ParallelCopies::new();
+        let mut assignment = Assignment::new(self.lir, mem::take(&mut self.killed_remat_defs));
 
         self.assign_spill_slots(&mut assignment);
 
@@ -80,6 +79,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // ranges.
         self.reify_fixed_operands(&mut assignment);
 
+        let mut copies = ParallelCopies::new();
         // Now, extract everything else we need (operand assignments, copies) out of the live range
         // assignments.
         self.reify_allocated_operands(&mut assignment, &mut copies);
@@ -87,8 +87,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.collect_cross_range_copies(&mut assignment, &mut copies);
 
         self.resolve_parallel_copies(&mut assignment, copies);
-
-        assignment.killed_remat_defs = mem::take(&mut self.killed_remat_defs);
 
         if cfg!(debug_assertions) {
             assignment.verify_all_assigned();
@@ -738,7 +736,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 }
 
 impl Assignment {
-    fn empty_for_lir<M: MachineRegalloc>(lir: &Lir<M>) -> Self {
+    fn new<M: MachineRegalloc>(lir: &Lir<M>, killed_remat_defs: DenseEntitySet<Instr>) -> Self {
         let instr_count = lir.all_instrs().end.as_u32() as usize;
 
         let mut assignment = Assignment {
@@ -750,7 +748,7 @@ impl Assignment {
             // but should usually be compensated for by the fact that many instructions have more
             // than one operand.
             operand_assignment_pool: Vec::with_capacity(instr_count),
-            killed_remat_defs: DenseEntitySet::new(),
+            killed_remat_defs,
         };
 
         for instr in lir.all_instrs() {

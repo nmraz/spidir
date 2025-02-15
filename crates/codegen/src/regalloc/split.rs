@@ -18,7 +18,6 @@ use super::{
 };
 
 #[derive(Debug)]
-#[allow(unused)]
 enum SplitKind {
     Single(Instr),
     Double(Instr, Instr),
@@ -134,9 +133,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let boundary_instr = boundary.instr();
 
         let mut can_remat_low_cheaply = true;
+        let mut saw_low_use = false;
 
-        let mut last_instr_below = None;
-        let mut first_instr_above = None;
+        let mut low_split_point = None;
+        let mut high_split_point = None;
 
         'ranges: for tagged_range in &self.live_set_fragments[fragment].ranges {
             // Track rematerializability for everything that might end up in the first half of the
@@ -151,9 +151,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             for &instr in &self.live_ranges[tagged_range.live_range].instrs {
                 if instr.instr() < boundary_instr {
-                    last_instr_below = Some(instr);
+                    saw_low_use |= !instr.is_def();
+                    // We always split *before* the selected instruction, but we want to split
+                    // *after* the last use.
+                    low_split_point = Some(instr.instr().next());
                 } else {
-                    first_instr_above = Some(instr);
+                    high_split_point = Some(instr.instr());
                     // Once we've found the first instruction after the split point, we have all
                     // the information we need.
                     break 'ranges;
@@ -161,14 +164,45 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             }
         }
 
+        if can_remat_low_cheaply {
+            let low_split_point = low_split_point
+                .filter(|_| {
+                    // If the lower half of the range contains only a rematerializable definitions,
+                    // don't even bother to insert an extra split there, as everything is going to be
+                    // spilled anyway.
+                    saw_low_use
+                })
+                .unwrap_or(boundary_instr);
+
+            let low_split_point = self
+                .can_split_fragment_before(fragment, low_split_point)
+                .then_some(low_split_point);
+
+            let high_split_point = high_split_point.unwrap_or(boundary_instr);
+
+            let high_split_point = self
+                .can_split_fragment_before(fragment, high_split_point)
+                .then_some(high_split_point);
+
+            let split_kind = match (low_split_point, high_split_point) {
+                (Some(low_split_point), Some(high_split_point))
+                    if high_split_point != low_split_point =>
+                {
+                    SplitKind::Double(low_split_point, high_split_point)
+                }
+                (Some(low_split_point), _) => SplitKind::Single(low_split_point),
+                (_, Some(high_split_point)) => SplitKind::Single(high_split_point),
+                _ => return None,
+            };
+            return Some(split_kind);
+        }
+
         let instr = match boundary {
             ConflictBoundary::StartsAt(instr) => {
-                // We always split *before* the selected instruction, but we want to split *after*
-                // the last use here.
-                last_instr_below.map_or(instr, |last_instr_below| last_instr_below.instr().next())
+                low_split_point.map_or(instr, |low_split_point| low_split_point)
             }
             ConflictBoundary::EndsAt(instr) => {
-                first_instr_above.map_or(instr, |first_instr_above| first_instr_above.instr())
+                high_split_point.map_or(instr, |high_split_point| high_split_point)
             }
         };
 

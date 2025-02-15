@@ -14,6 +14,7 @@ use super::{
     context::RegAllocContext,
     types::{ConflictBoundary, LiveSetFragment, ProgramPoint, TaggedFragmentCopyHints},
     utils::get_block_weight,
+    RematCost,
 };
 
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
@@ -123,25 +124,44 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             return None;
         }
 
+        let boundary_instr = boundary.instr();
+
+        let mut can_remat_low_cheaply = true;
+
+        let mut last_instr_below = None;
+        let mut first_instr_above = None;
+
+        'ranges: for tagged_range in &self.live_set_fragments[fragment].ranges {
+            // Track rematerializability for everything that might end up in the first half of the
+            // split. We're trying to split before the boundary instruction, so ranges starting
+            // exactly at the boundary actually belong to the upper half.
+            if tagged_range.prog_range.start.instr() < boundary_instr && can_remat_low_cheaply {
+                let vreg = self.live_ranges[tagged_range.live_range].vreg;
+                can_remat_low_cheaply = self.remattable_vreg_defs[vreg]
+                    .expand()
+                    .is_some_and(|def| def.cost() == RematCost::CheapAsCopy);
+            }
+
+            for &instr in &self.live_ranges[tagged_range.live_range].instrs {
+                if instr.instr() < boundary_instr {
+                    last_instr_below = Some(instr);
+                } else {
+                    first_instr_above = Some(instr);
+                    // Once we've found the first instruction after the split point, we have all
+                    // the information we need.
+                    break 'ranges;
+                }
+            }
+        }
+
         let instr = match boundary {
             ConflictBoundary::StartsAt(instr) => {
-                let last_instr_below = self
-                    .fragment_instrs(fragment)
-                    // We always split *before* the selected instruction, but we want to split *after*
-                    // the last use here.
-                    .map(|frag_instr| frag_instr.instr().next())
-                    .take_while(|&frag_instr| frag_instr <= instr)
-                    .last();
-
-                last_instr_below.unwrap_or(instr)
+                // We always split *before* the selected instruction, but we want to split *after*
+                // the last use here.
+                last_instr_below.map_or(instr, |last_instr_below| last_instr_below.instr().next())
             }
             ConflictBoundary::EndsAt(instr) => {
-                let first_instr_above = self
-                    .fragment_instrs(fragment)
-                    .map(|frag_instr| frag_instr.instr())
-                    .find(|&frag_instr| frag_instr >= instr);
-
-                first_instr_above.unwrap_or(instr)
+                first_instr_above.map_or(instr, |first_instr_above| first_instr_above.instr())
             }
         };
 

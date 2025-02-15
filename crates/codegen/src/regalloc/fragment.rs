@@ -59,9 +59,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // Track whether this fragment is completely rematerializable.
         let mut remat_state = RematState::Uninit;
 
-        // Track whether this fragment contains any uses.
-        let mut has_uses = false;
-
         let fragment_data = &mut self.live_set_fragments[fragment];
         fragment_data.phys_hints.clear();
 
@@ -85,7 +82,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             for instr in &range_data.instrs {
                 total_weight += instr.weight();
                 some_instr_needs_reg |= instr.needs_reg();
-                has_uses |= !instr.is_def();
             }
 
             if let Some(range_hints) = self.live_range_hints.get(&range.live_range) {
@@ -99,14 +95,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         fragment_data.size = size;
 
-        let all_ranges_remat = matches!(remat_state, RematState::Yes(..));
-        let remat_no_uses = all_ranges_remat && !has_uses;
-
-        // Single-instruction fragments requiring a register _cannot_ be spilled (we don't have a
-        // way to chop them smaller), unless they only cover a rematerializable definition, in which
-        // case spilling will just kill the instruction.
-        let is_atomic =
-            !remat_no_uses && some_instr_needs_reg && covers_single_instr(fragment_data.hull());
+        let is_atomic = some_instr_needs_reg && is_atomic_range(fragment_data.hull());
 
         fragment_data
             .flags
@@ -204,8 +193,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 }
 
-fn covers_single_instr(range: ProgramRange) -> bool {
-    range.start.instr() == range.end.prev().instr()
+fn is_atomic_range(range: ProgramRange) -> bool {
+    // Every instruction has 4 slots, so if the range covers less it crosses at most one instruction
+    // boundary. We spill/reload only on instruction boundaries, so if there's already only one we
+    // don't have any way to make the range smaller.
+    range.len() < 4
 }
 
 fn sort_reg_hints(hints: &mut PhysRegHints) {

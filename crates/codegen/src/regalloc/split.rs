@@ -17,6 +17,13 @@ use super::{
     RematCost,
 };
 
+#[derive(Debug)]
+#[allow(unused)]
+enum SplitKind {
+    Single(Instr),
+    Double(Instr, Instr),
+}
+
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     pub fn try_split_fragment_for_conflict(
         &mut self,
@@ -34,12 +41,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         if let Some(global_split) = self.global_split_point(fragment) {
             trace!("    found global split: {global_split}");
-            self.split_and_requeue_fragment(fragment, global_split);
+            self.split_and_requeue_fragment(fragment, SplitKind::Single(global_split));
             return true;
         }
 
-        if let Some(conflict_split) = self.split_point_for_conflict(fragment, boundary) {
-            trace!("    found conflict split: {conflict_split}");
+        if let Some(conflict_split) = self.split_kind_for_conflict(fragment, boundary) {
+            trace!("    found conflict split: {conflict_split:?}");
             self.split_and_requeue_fragment(fragment, conflict_split);
             return true;
         };
@@ -110,11 +117,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         split_point
     }
 
-    fn split_point_for_conflict(
+    fn split_kind_for_conflict(
         &self,
         fragment: LiveSetFragment,
         boundary: ConflictBoundary,
-    ) -> Option<Instr> {
+    ) -> Option<SplitKind> {
         if self.is_fragment_split(fragment) && self.fragment_only_instr(fragment).is_some() {
             // We don't want to repeatedly split single-instruction fragments on conflict
             // boundaries, as they can get us into pointless eviction/splitting/shuffling fights
@@ -166,17 +173,26 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         };
 
         self.can_split_fragment_before(fragment, instr)
-            .then_some(instr)
+            .then_some(SplitKind::Single(instr))
     }
 
-    fn split_and_requeue_fragment(&mut self, fragment: LiveSetFragment, instr: Instr) {
-        let new_fragment = self.split_fragment(fragment, instr);
+    fn split_and_requeue_fragment(&mut self, fragment: LiveSetFragment, split: SplitKind) {
+        match split {
+            SplitKind::Single(instr) => {
+                let new_fragment = self.split_fragment(fragment, instr);
 
-        self.compute_live_fragment_properties(fragment);
-        self.compute_live_fragment_properties(new_fragment);
+                self.enqueue_fragment(fragment);
+                self.enqueue_fragment(new_fragment);
+            }
+            SplitKind::Double(instr1, instr2) => {
+                let mid = self.split_fragment(fragment, instr1);
+                let high = self.split_fragment(mid, instr2);
 
-        self.enqueue_fragment(fragment);
-        self.enqueue_fragment(new_fragment);
+                self.enqueue_fragment(fragment);
+                self.enqueue_fragment(mid);
+                self.enqueue_fragment(high);
+            }
+        }
     }
 
     fn split_fragment(&mut self, fragment: LiveSetFragment, instr: Instr) -> LiveSetFragment {
@@ -190,6 +206,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let new_fragment = self.split_fragment_ranges(fragment, instr);
         self.split_fragment_copy_hints(fragment, new_fragment, instr);
         self.mark_fragment_split_neighbors(fragment, new_fragment);
+
+        self.compute_live_fragment_properties(fragment);
+        self.compute_live_fragment_properties(new_fragment);
 
         new_fragment
     }

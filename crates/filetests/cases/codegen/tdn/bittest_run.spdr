@@ -34,20 +34,20 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 00003b: 48 89 04 24                     mov qword ptr [rsp], rax
     # nextln: 00003f: b8 01 00 00 00                  mov eax, 1
     # nextln: 000044: 41 bc 03 00 00 00               mov r12d, 3
-    # nextln: 00004a: ba 02 00 00 00                  mov edx, 2
-    # nextln: 00004f: 48 63 c8                        movsxd rcx, eax
-    # nextln: 000052: 48 63 fa                        movsxd rdi, edx
+    # nextln: 00004a: b9 02 00 00 00                  mov ecx, 2
+    # nextln: 00004f: 48 63 d0                        movsxd rdx, eax
+    # nextln: 000052: 48 63 f9                        movsxd rdi, ecx
     # nextln: 000055: be 80 ff ff ff                  mov esi, 0xffffff80
     # nextln: 00005a: 40 88 74 24 1f                  mov byte ptr [rsp + 0x1f], sil
     # nextln: 00005f: be 00 80 ff ff                  mov esi, 0xffff8000
     # nextln: 000064: 88 44 24 1e                     mov byte ptr [rsp + 0x1e], al
-    # nextln: 000068: 88 54 24 20                     mov byte ptr [rsp + 0x20], dl
+    # nextln: 000068: 88 4c 24 20                     mov byte ptr [rsp + 0x20], cl
     # nextln: 00006c: 66 89 74 24 1c                  mov word ptr [rsp + 0x1c], si
     # nextln: 000071: 66 89 44 24 1a                  mov word ptr [rsp + 0x1a], ax
-    # nextln: 000076: 66 89 54 24 18                  mov word ptr [rsp + 0x18], dx
+    # nextln: 000076: 66 89 4c 24 18                  mov word ptr [rsp + 0x18], cx
     # nextln: 00007b: 89 44 24 14                     mov dword ptr [rsp + 0x14], eax
-    # nextln: 00007f: 89 54 24 10                     mov dword ptr [rsp + 0x10], edx
-    # nextln: 000083: 48 89 4c 24 08                  mov qword ptr [rsp + 8], rcx
+    # nextln: 00007f: 89 4c 24 10                     mov dword ptr [rsp + 0x10], ecx
+    # nextln: 000083: 48 89 54 24 08                  mov qword ptr [rsp + 8], rdx
     # nextln: 000088: 48 89 3c 24                     mov qword ptr [rsp], rdi
     # nextln: 00008c: 0f b6 44 24 1f                  movzx eax, byte ptr [rsp + 0x1f]
     # nextln: 000091: 0f be f8                        movsx edi, al

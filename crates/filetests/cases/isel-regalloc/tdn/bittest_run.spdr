@@ -44,20 +44,20 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:       block2:
     # nextln: 0026:     $$rax = MovRmS32(1)
     # nextln: 0030:     $$r12 = MovRmS32(3)
-    # nextln: 0032:     $$rdx = MovRmS32(2)
-    # nextln: 0033:     $$rcx = MovsxRRm(Ext32_64) $$rax
-    # nextln: 0034:     $$rdi = MovsxRRm(Ext32_64) $$rdx
+    # nextln: 0032:     $$rcx = MovRmS32(2)
+    # nextln: 0033:     $$rdx = MovsxRRm(Ext32_64) $$rax
+    # nextln: 0034:     $$rdi = MovsxRRm(Ext32_64) $$rcx
     # nextln: 0035:     $$rsi = MovRU32(4294967168)
     # nextln: 0036:     MovStackR(!8, S8) $$rsi
     # nextln: 0037:     $$rsi = MovRU32(4294934528)
     # nextln: 0038:     MovStackR(!0, S8) $$rax
-    # nextln: 0039:     MovStackR(!9, S8) $$rdx
+    # nextln: 0039:     MovStackR(!9, S8) $$rcx
     # nextln: 0040:     MovStackR(!7, S16) $$rsi
     # nextln: 0041:     MovStackR(!5, S16) $$rax
-    # nextln: 0042:     MovStackR(!1, S16) $$rdx
+    # nextln: 0042:     MovStackR(!1, S16) $$rcx
     # nextln: 0043:     MovStackR(!6, S32) $$rax
-    # nextln: 0044:     MovStackR(!4, S32) $$rdx
-    # nextln: 0045:     MovStackR(!3, S64) $$rcx
+    # nextln: 0044:     MovStackR(!4, S32) $$rcx
+    # nextln: 0045:     MovStackR(!3, S64) $$rdx
     # nextln: 0046:     MovStackR(!2, S64) $$rdi
     # nextln: 0047:     $$rax = MovRStack(!8, S8)
     # nextln: 0048:     $$rdi = MovsxRRm(Ext8_32) $$rax

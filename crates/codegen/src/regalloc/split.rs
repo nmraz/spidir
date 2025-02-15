@@ -165,15 +165,15 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
 
         if can_remat_low_cheaply {
+            let low_split_point =
+                self.get_real_split_point(fragment, low_split_point, boundary_instr);
+
             let low_split_point = low_split_point.filter(|_| {
                 // If the lower half of the range contains only a rematerializable definitions,
                 // don't even bother to insert an extra split there, as everything is going to be
                 // spilled anyway.
                 saw_low_use
             });
-
-            let low_split_point =
-                self.get_real_split_point(fragment, low_split_point, boundary_instr);
 
             let high_split_point =
                 self.get_real_split_point(fragment, high_split_point, boundary_instr);

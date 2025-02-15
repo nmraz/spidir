@@ -117,11 +117,11 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0072:     AluRRm(S64, Cmp) $$r13, $$rax
     # nextln: 0073:     Jumpcc(L, block9, block10)
     # nextln:       block9:
-    # nextln:           $$rcx = MovRmS32(4)
-    # nextln:           $$rdi = $$rcx
+    # nextln:           $$rax = MovRmS32(4)
+    # nextln:           $$rdi = $$rax
     # nextln: 0074:     $$rdi = ImulRRm(S64) $$rdi, $$r13
-    # nextln:           $$rax = MovRmS32(40)
-    # nextln:           $$rsi = $$rax
+    # nextln:           $$rcx = MovRmS32(40)
+    # nextln:           $$rsi = $$rcx
     # nextln: 0075:     $$rsi = AluRRm(S64, Add) $$rsi, $$rdi
     # nextln: 0076:     $$rdx = AluRRm(S64, Add) $$rdx, $$rsi
     # nextln: 0077:     $$rdi = MovRmS32(21)
@@ -133,9 +133,9 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0082:     AluRRm(S64, Cmp) $$r15, $$rdi
     # nextln: 0083:     Jumpcc(L, block11, block12)
     # nextln:       block11:
-    # nextln:           $$rdi = $$rcx
+    # nextln:           $$rdi = $$rax
     # nextln: 0084:     $$rdi = ImulRRm(S64) $$rdi, $$r15
-    # nextln:           $$rsi = $$rax
+    # nextln:           $$rsi = $$rcx
     # nextln: 0085:     $$rsi = AluRRm(S64, Add) $$rsi, $$rdi
     # nextln: 0086:     $$rdx = AluRRm(S64, Add) $$rdx, $$rsi
     # nextln: 0087:     $$rdi = MovRU32(4294967269)
@@ -147,11 +147,11 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0092:     AluRRm(S64, Cmp) $$r14, $$rdi
     # nextln: 0093:     Jumpcc(L, block13, block14)
     # nextln:       block13:
-    # nextln:           $$rdi = $$rcx
+    # nextln:           $$rdi = $$rax
     # nextln: 0094:     $$rdi = ImulRRm(S64) $$rdi, $$r14
-    # nextln:           $$rcx = $$rax
-    # nextln: 0095:     $$rcx = AluRRm(S64, Add) $$rcx, $$rdi
-    # nextln: 0096:     $$rdx = AluRRm(S64, Add) $$rdx, $$rcx
+    # nextln:           $$rax = $$rcx
+    # nextln: 0095:     $$rax = AluRRm(S64, Add) $$rax, $$rdi
+    # nextln: 0096:     $$rdx = AluRRm(S64, Add) $$rdx, $$rax
     # nextln: 0097:     $$rax = MovRU32(4294967265)
     # nextln: 0098:     MovMR(S32) $$rdx, $$rax
     # nextln: 0099:     $$rax = MovRI64(105690555221104)

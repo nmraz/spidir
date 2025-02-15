@@ -2581,10 +2581,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 00277b: 48 8b 44 24 08                  mov rax, qword ptr [rsp + 8]
     # nextln: 002780: 48 89 c1                        mov rcx, rax
     # nextln: 002783: 48 83 c1 20                     add rcx, 0x20
-    # nextln: 002787: 8b 7c 24 1c                     mov edi, dword ptr [rsp + 0x1c]
-    # nextln: 00278b: 8b 11                           mov edx, dword ptr [rcx]
-    # nextln: 00278d: 48 63 cf                        movsxd rcx, edi
-    # nextln: 002790: 48 3b ca                        cmp rcx, rdx
+    # nextln: 002787: 8b 54 24 1c                     mov edx, dword ptr [rsp + 0x1c]
+    # nextln: 00278b: 8b 39                           mov edi, dword ptr [rcx]
+    # nextln: 00278d: 48 63 ca                        movsxd rcx, edx
+    # nextln: 002790: 48 3b cf                        cmp rcx, rdi
     # nextln: 002793: 0f 8d 0f 00 00 00               jge 0x27a8
     # nextln: 002799: 48 83 c1 28                     add rcx, 0x28
     # nextln: 00279d: 48 03 c1                        add rax, rcx
@@ -2761,10 +2761,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 002a46: 48 8b 04 24                     mov rax, qword ptr [rsp]
     # nextln: 002a4a: 48 89 c1                        mov rcx, rax
     # nextln: 002a4d: 48 83 c1 20                     add rcx, 0x20
-    # nextln: 002a51: 8b 7c 24 1c                     mov edi, dword ptr [rsp + 0x1c]
-    # nextln: 002a55: 8b 11                           mov edx, dword ptr [rcx]
-    # nextln: 002a57: 48 63 cf                        movsxd rcx, edi
-    # nextln: 002a5a: 48 3b ca                        cmp rcx, rdx
+    # nextln: 002a51: 8b 54 24 1c                     mov edx, dword ptr [rsp + 0x1c]
+    # nextln: 002a55: 8b 39                           mov edi, dword ptr [rcx]
+    # nextln: 002a57: 48 63 ca                        movsxd rcx, edx
+    # nextln: 002a5a: 48 3b cf                        cmp rcx, rdi
     # nextln: 002a5d: 0f 8d ee 15 00 00               jge 0x4051
     # nextln: 002a63: 48 83 c1 28                     add rcx, 0x28
     # nextln: 002a67: 48 03 c1                        add rax, rcx
@@ -3614,10 +3614,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0037ac: 48 8b 44 24 08                  mov rax, qword ptr [rsp + 8]
     # nextln: 0037b1: 48 89 c1                        mov rcx, rax
     # nextln: 0037b4: 48 83 c1 20                     add rcx, 0x20
-    # nextln: 0037b8: 8b 7c 24 1c                     mov edi, dword ptr [rsp + 0x1c]
-    # nextln: 0037bc: 8b 11                           mov edx, dword ptr [rcx]
-    # nextln: 0037be: 48 63 cf                        movsxd rcx, edi
-    # nextln: 0037c1: 48 3b ca                        cmp rcx, rdx
+    # nextln: 0037b8: 8b 54 24 1c                     mov edx, dword ptr [rsp + 0x1c]
+    # nextln: 0037bc: 8b 39                           mov edi, dword ptr [rcx]
+    # nextln: 0037be: 48 63 ca                        movsxd rcx, edx
+    # nextln: 0037c1: 48 3b cf                        cmp rcx, rdi
     # nextln: 0037c4: 0f 8d d1 07 00 00               jge 0x3f9b
     # nextln: 0037ca: 48 83 c1 28                     add rcx, 0x28
     # nextln: 0037ce: 48 03 c1                        add rax, rcx
@@ -3636,10 +3636,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003800: 48 8b 04 24                     mov rax, qword ptr [rsp]
     # nextln: 003804: 48 89 c1                        mov rcx, rax
     # nextln: 003807: 48 83 c1 20                     add rcx, 0x20
-    # nextln: 00380b: 8b 54 24 1c                     mov edx, dword ptr [rsp + 0x1c]
-    # nextln: 00380f: 8b 39                           mov edi, dword ptr [rcx]
-    # nextln: 003811: 48 63 ca                        movsxd rcx, edx
-    # nextln: 003814: 48 3b cf                        cmp rcx, rdi
+    # nextln: 00380b: 8b 7c 24 1c                     mov edi, dword ptr [rsp + 0x1c]
+    # nextln: 00380f: 8b 11                           mov edx, dword ptr [rcx]
+    # nextln: 003811: 48 63 cf                        movsxd rcx, edi
+    # nextln: 003814: 48 3b ca                        cmp rcx, rdx
     # nextln: 003817: 0f 8d 0f 00 00 00               jge 0x382c
     # nextln: 00381d: 48 83 c1 28                     add rcx, 0x28
     # nextln: 003821: 48 03 c1                        add rax, rcx
@@ -3816,10 +3816,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003ac4: 48 8b 04 24                     mov rax, qword ptr [rsp]
     # nextln: 003ac8: 48 89 c1                        mov rcx, rax
     # nextln: 003acb: 48 83 c1 20                     add rcx, 0x20
-    # nextln: 003acf: 8b 7c 24 1c                     mov edi, dword ptr [rsp + 0x1c]
-    # nextln: 003ad3: 8b 11                           mov edx, dword ptr [rcx]
-    # nextln: 003ad5: 48 63 cf                        movsxd rcx, edi
-    # nextln: 003ad8: 48 3b ca                        cmp rcx, rdx
+    # nextln: 003acf: 8b 54 24 1c                     mov edx, dword ptr [rsp + 0x1c]
+    # nextln: 003ad3: 8b 39                           mov edi, dword ptr [rcx]
+    # nextln: 003ad5: 48 63 ca                        movsxd rcx, edx
+    # nextln: 003ad8: 48 3b cf                        cmp rcx, rdi
     # nextln: 003adb: 0f 8d ac 04 00 00               jge 0x3f8d
     # nextln: 003ae1: 48 83 c1 28                     add rcx, 0x28
     # nextln: 003ae5: 48 03 c1                        add rax, rcx
@@ -3901,10 +3901,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003c0e: 48 8b 44 24 08                  mov rax, qword ptr [rsp + 8]
     # nextln: 003c13: 48 89 c1                        mov rcx, rax
     # nextln: 003c16: 48 83 c1 20                     add rcx, 0x20
-    # nextln: 003c1a: 8b 54 24 1c                     mov edx, dword ptr [rsp + 0x1c]
-    # nextln: 003c1e: 8b 39                           mov edi, dword ptr [rcx]
-    # nextln: 003c20: 48 63 ca                        movsxd rcx, edx
-    # nextln: 003c23: 48 3b cf                        cmp rcx, rdi
+    # nextln: 003c1a: 8b 7c 24 1c                     mov edi, dword ptr [rsp + 0x1c]
+    # nextln: 003c1e: 8b 11                           mov edx, dword ptr [rcx]
+    # nextln: 003c20: 48 63 cf                        movsxd rcx, edi
+    # nextln: 003c23: 48 3b ca                        cmp rcx, rdx
     # nextln: 003c26: 0f 8d 0f 00 00 00               jge 0x3c3b
     # nextln: 003c2c: 48 83 c1 28                     add rcx, 0x28
     # nextln: 003c30: 48 03 c1                        add rax, rcx

@@ -46,18 +46,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     }
 
     pub fn compute_live_fragment_properties(&mut self, fragment: LiveSetFragment) {
-        enum RematState {
-            Uninit,
-            Yes((VirtReg, RematCost)),
-            No,
-        }
-
         let mut size = 0;
         let mut total_weight = 0.0;
         let mut some_instr_needs_reg = false;
 
-        // Track whether this fragment is completely rematerializable.
-        let mut remat_state = RematState::Uninit;
+        // Track whether all ranges in this fragment are cheap to rematerialize (even if they don't
+        // all come from the same source).
+        let mut cheaply_remattable = true;
 
         let fragment_data = &mut self.live_set_fragments[fragment];
         fragment_data.phys_hints.clear();
@@ -68,16 +63,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             range_data.fragment = fragment;
             size += range.prog_range.len();
 
-            // The fragment can only be rematerialized when all its ranges come from the same vreg,
-            // and that vreg can itself be rematerialized.
-            remat_state = match remat_state {
-                RematState::Uninit => match self.remattable_vreg_defs[vreg].expand() {
-                    Some(remat) => RematState::Yes((vreg, remat.cost())),
-                    None => RematState::No,
-                },
-                RematState::Yes((existing_vreg, _)) if existing_vreg == vreg => remat_state,
-                _ => RematState::No,
-            };
+            if cheaply_remattable {
+                cheaply_remattable = self.remattable_vreg_defs[vreg]
+                    .expand()
+                    .is_some_and(|def| def.cost() == RematCost::CheapAsCopy);
+            }
 
             for instr in &range_data.instrs {
                 total_weight += instr.weight();
@@ -101,10 +91,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .flags
             .set(LiveSetFragmentFlags::ATOMIC, is_atomic);
 
-        fragment_data.flags.set(
-            LiveSetFragmentFlags::CHEAPLY_REMATTABLE,
-            matches!(remat_state, RematState::Yes((_, RematCost::CheapAsCopy))),
-        );
+        fragment_data
+            .flags
+            .set(LiveSetFragmentFlags::CHEAPLY_REMATTABLE, cheaply_remattable);
 
         fragment_data.flags.set(
             LiveSetFragmentFlags::HAS_UNCOALESCED_COPY_HINTS,

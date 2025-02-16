@@ -5,7 +5,7 @@ func @iota(ptr, i64) {
     # nextln: clobbers: rax, rcx, rdx
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln: 0000:     $$rax = MovRZ
+    # nextln: 0000:     $$rax = MovRmS32(0)
     # nextln: 0001:     AluRRm(S64, Test) $$rsi, $$rsi
     # nextln: 0002:     Jumpcc(E, block1, block3)
     # nextln:       block1:

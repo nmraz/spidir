@@ -18,8 +18,8 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln:       block0:
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:
-    # nextln: 0001:     $$rax = MovRZ
-    # nextln: 0002:     $$rbx = MovRZ
+    # nextln: 0001:     $$rax = MovRmS32(0)
+    # nextln: 0002:     $$rbx = MovRmS32(0)
     # nextln: 0003:     MovStackR(!4, S32) $$rbx
     # nextln: 0004:     MovStackR(!1, S32) $$rbx
     # nextln: 0005:     MovStackR(!2, S8) $$rbx

@@ -39,7 +39,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0003:     $$rdi = MovRmS32(171)
     # nextln: 0004:     $$r13 = MovRmS32(2)
     # nextln: 0005:     $$r12 = MovRmS32(1)
-    # nextln: 0006:     $$rax = MovRZ
+    # nextln: 0006:     $$rax = MovRmS32(0)
     # nextln: 0007:     MovStackR(!0, S64) $$rax
     # nextln: 0008:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
     # nextln:           $$rcx = $$rax

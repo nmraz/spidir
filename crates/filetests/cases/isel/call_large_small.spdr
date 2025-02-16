@@ -107,8 +107,8 @@ func @call_single_stack_arg() {
 func @call_many_params(ptr) {
     # check: function `call_many_params`:
     # nextln:       block0[%2:gpr($$rdi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = MovRZ
-    # nextln: 0001:      %1:gpr(reg)[late] = MovRZ
+    # nextln: 0000:      %0:gpr(any)[late] = MovRmS32(0)
+    # nextln: 0001:      %1:gpr(any)[late] = MovRmS32(0)
     # nextln: 0002:      Push %1(reg)[early]
     # nextln: 0003:      Push %0(reg)[early]
     # nextln: 0004:      Push %2(reg)[early]

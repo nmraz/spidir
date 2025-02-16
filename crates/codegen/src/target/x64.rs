@@ -145,7 +145,6 @@ pub enum X64Instr {
     ShiftRmI(OperandSize, ShiftOp, u8),
     Div(OperandSize, DivOp),
     ConvertWord(OperandSize),
-    MovRZ,
     MovRmS32(i32),
     MovRU32(u32),
     MovRI64(u64),
@@ -170,6 +169,76 @@ pub enum X64Instr {
     Jump(Block),
     Jumpcc(CondCode, Block, Block),
     Ud2,
+}
+
+impl X64Instr {
+    fn uses_flags(&self) -> bool {
+        match self {
+            X64Instr::AluRRm(..) => false,
+            X64Instr::AluRmI(..) => false,
+            X64Instr::ImulRRm(..) => false,
+            X64Instr::ImulRRmI(..) => false,
+            X64Instr::ShiftRmR(..) => false,
+            X64Instr::ShiftRmI(..) => false,
+            X64Instr::Div(..) => false,
+            X64Instr::ConvertWord(..) => false,
+            X64Instr::MovRmS32(..) => false,
+            X64Instr::MovRU32(..) => false,
+            X64Instr::MovRI64(..) => false,
+            X64Instr::MovsxRRm(..) => false,
+            X64Instr::Setcc(..) => true,
+            X64Instr::MovRRbp { .. } => false,
+            X64Instr::StackAddr(..) => false,
+            X64Instr::MovRStack(..) => false,
+            X64Instr::MovStackR(..) => false,
+            X64Instr::Push => false,
+            X64Instr::AddSp(..) => false,
+            X64Instr::MovRM(..) => false,
+            X64Instr::MovMR(..) => false,
+            X64Instr::Ret => false,
+            X64Instr::FuncAddrRel(..) => false,
+            X64Instr::FuncAddrAbs(..) => false,
+            X64Instr::CallRel(..) => false,
+            X64Instr::CallRm => false,
+            X64Instr::Jump(..) => false,
+            X64Instr::Jumpcc(..) => true,
+            X64Instr::Ud2 => false,
+        }
+    }
+
+    fn defines_flags(&self) -> bool {
+        match self {
+            X64Instr::AluRRm(..) => true,
+            X64Instr::AluRmI(..) => true,
+            X64Instr::ImulRRm(..) => true,
+            X64Instr::ImulRRmI(..) => true,
+            X64Instr::ShiftRmR(..) => true,
+            X64Instr::ShiftRmI(..) => true,
+            X64Instr::Div(..) => true,
+            X64Instr::ConvertWord(..) => false,
+            X64Instr::MovRmS32(..) => false,
+            X64Instr::MovRU32(..) => false,
+            X64Instr::MovRI64(..) => false,
+            X64Instr::MovsxRRm(..) => false,
+            X64Instr::Setcc(..) => false,
+            X64Instr::MovRRbp { .. } => false,
+            X64Instr::StackAddr(..) => false,
+            X64Instr::MovRStack(..) => false,
+            X64Instr::MovStackR(..) => false,
+            X64Instr::Push => false,
+            X64Instr::AddSp(..) => true,
+            X64Instr::MovRM(..) => false,
+            X64Instr::MovMR(..) => false,
+            X64Instr::Ret => false,
+            X64Instr::FuncAddrRel(..) => false,
+            X64Instr::FuncAddrAbs(..) => false,
+            X64Instr::CallRel(..) => false,
+            X64Instr::CallRm => false,
+            X64Instr::Jump(..) => false,
+            X64Instr::Jumpcc(..) => false,
+            X64Instr::Ud2 => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

@@ -99,7 +99,7 @@ func @select_slez:i32(i32, i32, i32) {
 func @select_ultz:i32(i32, i32, i32) {
     # check: function `select_ultz`:
     # nextln:       block0[%2:gpr($$rsi), %1:gpr($$rdx)]:
-    # nextln: 0000:      %3:gpr(reg)[late] = MovRZ
+    # nextln: 0000:      %3:gpr(any)[late] = MovRmS32(0)
     # nextln: 0001:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0002:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3

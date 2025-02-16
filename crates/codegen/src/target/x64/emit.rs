@@ -1,3 +1,4 @@
+use entity_set::DenseEntitySet;
 use ir::node::FunctionRef;
 
 use crate::{
@@ -58,6 +59,7 @@ pub struct X64EmitState {
     sp_frame_offset: i32,
     realign: FrameRealign,
     restore_method: FrameRestoreMethod,
+    block_flag_liveness: Option<DenseEntitySet<Instr>>,
 }
 
 impl X64EmitState {
@@ -85,6 +87,35 @@ impl X64EmitState {
             index: None,
             offset,
         }
+    }
+
+    fn are_flags_live_before(&mut self, ctx: &EmitContext<'_, X64Machine>, pos: Instr) -> bool {
+        let block_flag_liveness = self.block_flag_liveness.get_or_insert_with(|| {
+            let mut block_flag_liveness = DenseEntitySet::new();
+
+            let block = ctx.lir.instr_block_index(pos);
+            let block = ctx.cfg_ctx.block_order[block];
+
+            let mut flags_live = false;
+            for instr in ctx.lir.block_instrs(block).into_iter().rev() {
+                let instr_data = ctx.lir.instr_data(instr);
+
+                // Note: instructions that both define and use flags keep them live.
+                if instr_data.uses_flags() {
+                    flags_live = true;
+                } else if instr_data.defines_flags() {
+                    flags_live = false;
+                }
+
+                if flags_live {
+                    block_flag_liveness.insert(instr);
+                }
+            }
+
+            block_flag_liveness
+        });
+
+        block_flag_liveness.contains(pos)
     }
 }
 
@@ -131,6 +162,7 @@ impl MachineEmit for X64Machine {
             sp_frame_offset: 0,
             realign,
             restore_method,
+            block_flag_liveness: None,
         }
     }
 
@@ -159,15 +191,17 @@ impl MachineEmit for X64Machine {
     fn prepare_block(
         &self,
         _ctx: &EmitContext<'_, Self>,
-        _state: &mut Self::EmitState,
+        state: &mut Self::EmitState,
         _block: Block,
     ) {
+        // Forget our flag liveness information now that we've entered a new block.
+        state.block_flag_liveness = None;
     }
 
     fn emit_instr(
         &self,
         ctx: &EmitContext<'_, Self>,
-        _pos: Instr,
+        pos: Instr,
         instr: &EmitInstrData<'_, Self>,
         state: &mut X64EmitState,
         buffer: &mut CodeBuffer<X64Fixup>,
@@ -214,19 +248,9 @@ impl MachineEmit for X64Machine {
                 let dest = defs[0].as_reg().unwrap();
                 emit_setcc_r(buffer, code, dest);
             }
-            X64Instr::MovRZ => {
-                let dest = defs[0].as_reg().unwrap();
-                // Note: some renamers recognize only the 32-bit instruction as a zeroing idiom.
-                emit_alu_r_rm(
-                    buffer,
-                    AluOp::Xor,
-                    OperandSize::S32,
-                    dest,
-                    RegMem::Reg(dest),
-                );
-            }
             &X64Instr::MovRmS32(val) => {
-                emit_mov_rm_s32(buffer, state.operand_reg_mem(defs[0]), val)
+                let dest = state.operand_reg_mem(defs[0]);
+                emit_mov_rm_s32(ctx, pos, state, buffer, dest, val)
             }
             &X64Instr::MovRU32(val) => emit_mov_r_u32(buffer, defs[0].as_reg().unwrap(), val),
             &X64Instr::MovRI64(val) => emit_movabs_r_i(buffer, defs[0].as_reg().unwrap(), val),
@@ -412,9 +436,29 @@ fn emit_mov_r_r(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: PhysReg) 
     emit_mov_rm_r(buffer, FullOperandSize::S64, RegMem::Reg(dest), src);
 }
 
-fn emit_mov_rm_s32(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, imm: i32) {
-    // Use the shorter `mov r32, imm32` encoding when possible.
+fn emit_mov_rm_s32(
+    ctx: &EmitContext<'_, X64Machine>,
+    pos: Instr,
+    state: &mut X64EmitState,
+    buffer: &mut CodeBuffer<X64Fixup>,
+    dest: RegMem,
+    imm: i32,
+) {
+    // Use a zeroing idiom or the shorter `mov r32, imm32` encoding when possible.
+
     if let RegMem::Reg(dest) = dest {
+        if imm == 0 && !state.are_flags_live_before(ctx, pos) {
+            // Note: some renamers recognize only the 32-bit instruction as a zeroing idiom.
+            emit_alu_r_rm(
+                buffer,
+                AluOp::Xor,
+                OperandSize::S32,
+                dest,
+                RegMem::Reg(dest),
+            );
+            return;
+        }
+
         // Note: sign-extend the immediate before checking.
         if is_uint::<32>(imm as i64 as u64) {
             emit_mov_r_u32(buffer, dest, imm as u32);

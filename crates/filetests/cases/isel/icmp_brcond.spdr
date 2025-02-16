@@ -141,7 +141,7 @@ func @select_ule:i32(i32, i32, i32, i32) {
 func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # check: function `select_slt_cond_reused`:
     # nextln:       block0[%7:gpr($$rdi), %8:gpr($$rsi), %5:gpr($$rdx), %4:gpr($$rcx)]:
-    # nextln: 0000:      %6:gpr(reg)[late] = MovRZ
+    # nextln: 0000:      %6:gpr(any)[late] = MovRmS32(0)
     # nextln: 0001:      AluRRm(S32, Cmp) %7(reg)[early], %8(any)[early]
     # nextln: 0002:      %3:gpr(reg)[late] = Setcc(L) %6(tied:0)[early]
     # nextln: 0003:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]

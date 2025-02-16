@@ -9,7 +9,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln:     !2: 8
     # nextln:     !3: 12
     # nextln:       block0:
-    # nextln: 0000:     $$rax = MovRZ
+    # nextln: 0000:     $$rax = MovRmS32(0)
     # nextln: 0001:     MovStackR(!1, S32) $$rax
     # nextln: 0002:     MovStackR(!3, S32) $$rax
     # nextln: 0003:     MovStackR(!0, S32) $$rax

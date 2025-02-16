@@ -15,7 +15,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln:       block0:
     # nextln: 0000:     MovStackR(!3, S32) $$rdi
     # nextln: 0001:     MovStackR(!2, S32) $$rsi
-    # nextln: 0002:     $$rbx = MovRZ
+    # nextln: 0002:     $$rbx = MovRmS32(0)
     # nextln: 0003:     $$r13 = MovRmS32(1)
     # nextln: 0004:     $$r12 = MovRmS32(2)
     # nextln: 0005:     MovStackR(!1, S32) $$rbx

@@ -246,9 +246,7 @@ fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, val: u64
     let [output] = ctx.node_outputs_exact(node);
     let output = ctx.get_value_vreg(output);
 
-    if val == 0 {
-        emit_mov_rz(ctx, output);
-    } else if is_sint::<32>(val) {
+    if is_sint::<32>(val) {
         // Prefer the signed 32-bit variant where possible, since we can use both registers and
         // memory there.
         ctx.emit_instr(
@@ -631,7 +629,7 @@ fn emit_sdiv(
 }
 
 fn emit_mov_rz(ctx: &mut IselContext<'_, '_, X64Machine>, output: VirtReg) {
-    ctx.emit_instr(X64Instr::MovRZ, &[DefOperand::any_reg(output)], &[]);
+    ctx.emit_instr(X64Instr::MovRmS32(0), &[DefOperand::any(output)], &[]);
 }
 
 fn emit_movsx_rr(

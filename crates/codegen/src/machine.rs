@@ -63,6 +63,8 @@ pub trait MachineEmit: MachineCore + Sized {
         buffer: &mut CodeBuffer<Self::Fixup>,
     );
 
+    fn prepare_block(&self, ctx: &EmitContext<'_, Self>, state: &mut Self::EmitState, block: Block);
+
     fn emit_instr(
         &self,
         ctx: &EmitContext<'_, Self>,

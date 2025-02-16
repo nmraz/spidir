@@ -51,6 +51,8 @@ pub fn emit_code<M: MachineEmit>(
             block_labels: &block_labels,
         };
 
+        machine.prepare_block(&ctx, &mut state, block);
+
         for instr in assignment.instrs_and_copies(lir.block_instrs(block)) {
             match instr {
                 InstrOrCopy::Instr(instr) => {

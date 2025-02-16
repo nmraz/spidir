@@ -1,6 +1,7 @@
 use ir::node::FunctionRef;
 
 use crate::{
+    cfg::Block,
     code_buffer::{CodeBuffer, FixupKind, InstrSink, Label},
     emit::EmitContext,
     frame::FrameLayout,
@@ -154,6 +155,15 @@ impl MachineEmit for X64Machine {
             emit_alu_r64_i(buffer, AluOp::And, REG_RSP, -align);
         }
     }
+
+    fn prepare_block(
+        &self,
+        _ctx: &EmitContext<'_, Self>,
+        _state: &mut Self::EmitState,
+        _block: Block,
+    ) {
+    }
+
 
     fn emit_instr(
         &self,

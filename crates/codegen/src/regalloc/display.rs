@@ -14,7 +14,9 @@ use crate::{
     machine::MachineCore,
 };
 
-use super::{types::CopySourceAssignment, Assignment, InstrOrCopy, OperandAssignment};
+use super::{
+    types::CopySourceAssignment, Assignment, InstrOrCopy, OperandAssignment, TaggedAssignmentCopy,
+};
 
 pub struct DisplayOperandAssignment<M: MachineCore> {
     pub(super) assignment: OperandAssignment,
@@ -72,7 +74,7 @@ impl<M: MachineCore> fmt::Display for DisplayAssignment<'_, M> {
                             write!(f, " {}", format_op_assignments::<M>(uses.iter().copied()))?;
                         }
                     }
-                    InstrOrCopy::Copy(copy) => {
+                    InstrOrCopy::Copy(TaggedAssignmentCopy { copy, .. }) => {
                         write!(f, "{}    ", display_instr_gutter_padding())?;
                         write!(
                             f,

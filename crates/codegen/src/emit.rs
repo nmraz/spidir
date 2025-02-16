@@ -5,7 +5,7 @@ use crate::{
     code_buffer::{CodeBlob, CodeBuffer, Label},
     lir::Lir,
     machine::MachineEmit,
-    regalloc::{Assignment, CopySourceAssignment, InstrOrCopy},
+    regalloc::{Assignment, CopySourceAssignment, InstrOrCopy, TaggedAssignmentCopy},
 };
 
 pub type BlockLabelMap = SecondaryMap<Block, Label>;
@@ -43,7 +43,7 @@ pub fn emit_code<M: MachineEmit>(
                         assignment.instr_use_assignments(instr),
                     );
                 }
-                InstrOrCopy::Copy(copy) => match copy.from {
+                InstrOrCopy::Copy(TaggedAssignmentCopy { copy, .. }) => match copy.from {
                     CopySourceAssignment::Operand(from) => {
                         machine.emit_copy(&mut state, &mut buffer, from, copy.to)
                     }

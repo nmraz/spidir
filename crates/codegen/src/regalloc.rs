@@ -177,7 +177,7 @@ impl AssignmentEditTracker<'_> {
 
 pub enum InstrOrCopy {
     Instr(Instr),
-    Copy(AssignmentCopy),
+    Copy(TaggedAssignmentCopy),
 }
 
 pub struct AssignmentInstrIter<'a> {
@@ -198,7 +198,12 @@ impl Iterator for AssignmentInstrIter<'_> {
             }
 
             match self.edits.next_copy_for(instr) {
-                Some((_, copy)) => break (instr, Some(InstrOrCopy::Copy(copy))),
+                Some((_, copy)) => {
+                    break (
+                        instr,
+                        Some(InstrOrCopy::Copy(TaggedAssignmentCopy { instr, copy })),
+                    )
+                }
                 None => {
                     if !self.edits.is_killed_remat_def(instr) {
                         break (instr.next(), Some(InstrOrCopy::Instr(instr)));

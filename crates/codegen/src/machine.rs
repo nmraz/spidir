@@ -6,9 +6,9 @@ use ir::{node::Type, valgraph::Node};
 use crate::{
     cfg::Block,
     code_buffer::{CodeBuffer, FixupKind},
-    emit::EmitContext,
+    emit::{EmitContext, EmitInstrData},
     isel::{IselContext, MachineIselError, ParamLoc},
-    lir::{MemLayout, PhysReg, RegClass},
+    lir::{Instr, MemLayout, PhysReg, RegClass},
     regalloc::{OperandAssignment, RematCost},
 };
 
@@ -68,19 +68,19 @@ pub trait MachineEmit: MachineCore + Sized {
     fn emit_instr(
         &self,
         ctx: &EmitContext<'_, Self>,
+        pos: Instr,
+        instr: &EmitInstrData<'_, Self>,
         state: &mut Self::EmitState,
         buffer: &mut CodeBuffer<Self::Fixup>,
-        instr: &Self::Instr,
-        defs: &[OperandAssignment],
-        uses: &[OperandAssignment],
     );
 
     fn emit_copy(
         &self,
         ctx: &EmitContext<'_, Self>,
-        state: &mut Self::EmitState,
-        buffer: &mut CodeBuffer<Self::Fixup>,
+        pos: Instr,
         from: OperandAssignment,
         to: OperandAssignment,
+        state: &mut Self::EmitState,
+        buffer: &mut CodeBuffer<Self::Fixup>,
     );
 }

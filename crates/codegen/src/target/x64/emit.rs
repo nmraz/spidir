@@ -3,9 +3,9 @@ use ir::node::FunctionRef;
 use crate::{
     cfg::Block,
     code_buffer::{CodeBuffer, FixupKind, InstrSink, Label},
-    emit::EmitContext,
+    emit::{EmitContext, EmitInstrData},
     frame::FrameLayout,
-    lir::{PhysReg, PhysRegSet, StackSlot},
+    lir::{Instr, PhysReg, PhysRegSet, StackSlot},
     machine::MachineEmit,
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{OperandAssignment, SpillSlot},
@@ -164,17 +164,18 @@ impl MachineEmit for X64Machine {
     ) {
     }
 
-
     fn emit_instr(
         &self,
         ctx: &EmitContext<'_, Self>,
+        _pos: Instr,
+        instr: &EmitInstrData<'_, Self>,
         state: &mut X64EmitState,
         buffer: &mut CodeBuffer<X64Fixup>,
-        instr: &X64Instr,
-        defs: &[OperandAssignment],
-        uses: &[OperandAssignment],
     ) {
-        match instr {
+        let defs = instr.defs;
+        let uses = instr.uses;
+
+        match instr.instr {
             &X64Instr::AluRRm(op_size, op) => {
                 let arg0 = uses[0].as_reg().unwrap();
                 let arg1 = state.operand_reg_mem(uses[1]);
@@ -318,10 +319,11 @@ impl MachineEmit for X64Machine {
     fn emit_copy(
         &self,
         _ctx: &EmitContext<'_, Self>,
-        state: &mut X64EmitState,
-        buffer: &mut CodeBuffer<X64Fixup>,
+        _pos: Instr,
         from: OperandAssignment,
         to: OperandAssignment,
+        state: &mut X64EmitState,
+        buffer: &mut CodeBuffer<X64Fixup>,
     ) {
         match (from, to) {
             (OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {

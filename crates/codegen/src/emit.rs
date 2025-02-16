@@ -5,7 +5,9 @@ use crate::{
     code_buffer::{CodeBlob, CodeBuffer, Label},
     lir::Lir,
     machine::MachineEmit,
-    regalloc::{Assignment, CopySourceAssignment, InstrOrCopy, TaggedAssignmentCopy},
+    regalloc::{
+        Assignment, CopySourceAssignment, InstrOrCopy, OperandAssignment, TaggedAssignmentCopy,
+    },
 };
 
 pub type BlockLabelMap = SecondaryMap<Block, Label>;
@@ -15,6 +17,12 @@ pub struct EmitContext<'a, M: MachineEmit> {
     pub cfg_ctx: &'a CfgContext,
     pub assignment: &'a Assignment,
     pub block_labels: &'a BlockLabelMap,
+}
+
+pub struct EmitInstrData<'a, M: MachineEmit> {
+    pub instr: &'a M::Instr,
+    pub defs: &'a [OperandAssignment],
+    pub uses: &'a [OperandAssignment],
 }
 
 pub fn emit_code<M: MachineEmit>(
@@ -58,24 +66,30 @@ pub fn emit_code<M: MachineEmit>(
                 InstrOrCopy::Instr(instr) => {
                     machine.emit_instr(
                         &ctx,
+                        instr,
+                        &EmitInstrData {
+                            instr: lir.instr_data(instr),
+                            defs: assignment.instr_def_assignments(instr),
+                            uses: assignment.instr_use_assignments(instr),
+                        },
                         &mut state,
                         &mut buffer,
-                        lir.instr_data(instr),
-                        assignment.instr_def_assignments(instr),
-                        assignment.instr_use_assignments(instr),
                     );
                 }
-                InstrOrCopy::Copy(TaggedAssignmentCopy { copy, .. }) => match copy.from {
+                InstrOrCopy::Copy(TaggedAssignmentCopy { copy, instr }) => match copy.from {
                     CopySourceAssignment::Operand(from) => {
-                        machine.emit_copy(&ctx, &mut state, &mut buffer, from, copy.to)
+                        machine.emit_copy(&ctx, instr, from, copy.to, &mut state, &mut buffer)
                     }
                     CopySourceAssignment::Remat(instr) => machine.emit_instr(
                         &ctx,
+                        instr,
+                        &EmitInstrData {
+                            instr: lir.instr_data(instr),
+                            defs: &[copy.to],
+                            uses: &[],
+                        },
                         &mut state,
                         &mut buffer,
-                        lir.instr_data(instr),
-                        &[copy.to],
-                        &[],
                     ),
                 },
             }

@@ -2,7 +2,7 @@ use core::{cmp::Ordering, mem};
 
 use hashbrown::hash_map::Entry;
 use log::trace;
-use smallvec::{smallvec, SmallVec};
+use smallvec::SmallVec;
 
 use crate::{
     lir::Instr,
@@ -317,16 +317,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // probably better for cache locality.
 
         let mut instrs = mem::take(&mut self.live_ranges[split_live_range].instrs);
-        let instr_split_idx = instrs
-            .iter()
-            // Note: we're splitting before `instr`, so we want `instr` itself to be part of
-            // the upper half of the range.
-            .position(|range_instr| range_instr.instr() >= instr);
-        let high_instrs = if let Some(instr_split_idx) = instr_split_idx {
-            instrs.drain(instr_split_idx..).collect()
-        } else {
-            smallvec![]
-        };
+        // Note: we're splitting before `instr`, so we want `instr` itself to be part of the upper
+        // half of the range.
+        let instr_split_idx = instrs.partition_point(|range_instr| range_instr.instr() < instr);
+        let high_instrs = instrs.drain(instr_split_idx..).collect();
 
         self.live_ranges[split_live_range].instrs = high_instrs;
 

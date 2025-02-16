@@ -90,6 +90,8 @@ These are abstracted away by the C construction API, which provides a simple blo
   - Improved x64 instruction selection
   - Minor register allocator improvements
     - Use 3-address instructions instead of copies where possible
+    - Spill slot coloring
+    - Better stack access rewrites
     - Improved redundant copy elimination?
 
 - Optimization:

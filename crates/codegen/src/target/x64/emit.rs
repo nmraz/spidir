@@ -2,12 +2,12 @@ use ir::node::FunctionRef;
 
 use crate::{
     code_buffer::{CodeBuffer, FixupKind, InstrSink, Label},
-    emit::BlockLabelMap,
+    emit::EmitContext,
     frame::FrameLayout,
-    lir::{Lir, PhysReg, PhysRegSet, StackSlot},
+    lir::{PhysReg, PhysRegSet, StackSlot},
     machine::MachineEmit,
     num_utils::{align_up, is_sint, is_uint},
-    regalloc::{Assignment, OperandAssignment, SpillSlot},
+    regalloc::{OperandAssignment, SpillSlot},
     target::x64::CALLEE_SAVED_REGS,
 };
 
@@ -93,10 +93,10 @@ impl MachineEmit for X64Machine {
     type EmitState = X64EmitState;
     type Fixup = X64Fixup;
 
-    fn prepare_state(&self, lir: &Lir<Self>, assignment: &Assignment) -> X64EmitState {
-        let frame_layout = FrameLayout::compute(lir, assignment);
-        let saved_regs =
-            &assignment.compute_global_clobbers(lir) & &PhysRegSet::from_iter(CALLEE_SAVED_REGS);
+    fn prepare_state(&self, ctx: &EmitContext<'_, Self>) -> X64EmitState {
+        let frame_layout = FrameLayout::compute(ctx.lir, ctx.assignment);
+        let saved_regs = &ctx.assignment.compute_global_clobbers(ctx.lir)
+            & &PhysRegSet::from_iter(CALLEE_SAVED_REGS);
 
         let full_frame_layout = frame_layout.full_layout;
         let mut raw_frame_size = align_up(full_frame_layout.size, DEFAULT_FRAME_ALIGN);
@@ -133,7 +133,12 @@ impl MachineEmit for X64Machine {
         }
     }
 
-    fn emit_prologue(&self, state: &mut X64EmitState, buffer: &mut CodeBuffer<X64Fixup>) {
+    fn emit_prologue(
+        &self,
+        _ctx: &EmitContext<'_, Self>,
+        state: &mut X64EmitState,
+        buffer: &mut CodeBuffer<X64Fixup>,
+    ) {
         emit_push(buffer, REG_RBP);
         emit_mov_r_r(buffer, REG_RBP, REG_RSP);
 
@@ -152,9 +157,9 @@ impl MachineEmit for X64Machine {
 
     fn emit_instr(
         &self,
+        ctx: &EmitContext<'_, Self>,
         state: &mut X64EmitState,
         buffer: &mut CodeBuffer<X64Fixup>,
-        block_labels: &BlockLabelMap,
         instr: &X64Instr,
         defs: &[OperandAssignment],
         uses: &[OperandAssignment],
@@ -291,17 +296,18 @@ impl MachineEmit for X64Machine {
             }
             &X64Instr::CallRm => emit_call_rm(buffer, state.operand_reg_mem(uses[0])),
             &X64Instr::Jump(target) => {
-                emit_jmp(buffer, block_labels[target]);
+                emit_jmp(buffer, ctx.block_labels[target]);
             }
             &X64Instr::Jumpcc(code, true_target, false_target) => {
-                emit_jcc(buffer, code, block_labels[true_target]);
-                emit_jmp(buffer, block_labels[false_target]);
+                emit_jcc(buffer, code, ctx.block_labels[true_target]);
+                emit_jmp(buffer, ctx.block_labels[false_target]);
             }
         }
     }
 
     fn emit_copy(
         &self,
+        _ctx: &EmitContext<'_, Self>,
         state: &mut X64EmitState,
         buffer: &mut CodeBuffer<X64Fixup>,
         from: OperandAssignment,

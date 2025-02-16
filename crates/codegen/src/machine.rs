@@ -6,10 +6,10 @@ use ir::{node::Type, valgraph::Node};
 use crate::{
     cfg::Block,
     code_buffer::{CodeBuffer, FixupKind},
-    emit::BlockLabelMap,
+    emit::EmitContext,
     isel::{IselContext, MachineIselError, ParamLoc},
-    lir::{Lir, MemLayout, PhysReg, RegClass},
-    regalloc::{Assignment, OperandAssignment, RematCost},
+    lir::{MemLayout, PhysReg, RegClass},
+    regalloc::{OperandAssignment, RematCost},
 };
 
 pub trait Machine: MachineCore + MachineLower + MachineRegalloc + MachineEmit {}
@@ -54,15 +54,20 @@ pub trait MachineEmit: MachineCore + Sized {
     type EmitState;
     type Fixup: FixupKind;
 
-    fn prepare_state(&self, lir: &Lir<Self>, assignment: &Assignment) -> Self::EmitState;
+    fn prepare_state(&self, ctx: &EmitContext<'_, Self>) -> Self::EmitState;
 
-    fn emit_prologue(&self, state: &mut Self::EmitState, buffer: &mut CodeBuffer<Self::Fixup>);
+    fn emit_prologue(
+        &self,
+        ctx: &EmitContext<'_, Self>,
+        state: &mut Self::EmitState,
+        buffer: &mut CodeBuffer<Self::Fixup>,
+    );
 
     fn emit_instr(
         &self,
+        ctx: &EmitContext<'_, Self>,
         state: &mut Self::EmitState,
         buffer: &mut CodeBuffer<Self::Fixup>,
-        block_labels: &BlockLabelMap,
         instr: &Self::Instr,
         defs: &[OperandAssignment],
         uses: &[OperandAssignment],
@@ -70,6 +75,7 @@ pub trait MachineEmit: MachineCore + Sized {
 
     fn emit_copy(
         &self,
+        ctx: &EmitContext<'_, Self>,
         state: &mut Self::EmitState,
         buffer: &mut CodeBuffer<Self::Fixup>,
         from: OperandAssignment,

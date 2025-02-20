@@ -33,17 +33,17 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 0011:     MovStackR(!4, S32) $$rax
     # nextln: 0012:     MovStackR(!2, S32) $$rax
     # nextln: 0013:     $$r15 = MovsxRRm(Ext32_64) $$rax
-    # nextln: 0014:     $$rax = MovRmS32(3)
+    # nextln:           $$rax = MovRmS32(3)
     # nextln: 0015:     $$r14 = MovsxRRm(Ext32_64) $$rax
     # nextln: 0017:     $$rbx = ImulRRmI(S64, 1) $$r14
     # nextln: 0018:     $$rbx = AluRmI(S64, Add, 48) $$rbx
     # nextln: 0019:     $$r12 = MovRI64(106721347401152)
     # nextln: 0020:     $$rdi = MovRI64(106721347409152)
-    # nextln: 0021:     $$rsi = MovRmS32(35)
     # nextln: 0022:     $$rax = MovRmS32(1)
     # nextln: 0023:     MovStackR(!3, S32) $$rax
     # nextln: 0024:     MovStackR(!6, S8) $$rax
     # nextln: 0025:     $$rax = FuncAddrAbs(External(extfunc0))
+    # nextln:           $$rsi = MovRmS32(35)
     # nextln: 0026:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$r13 = $$rax
     # nextln: 0027:     $$rax = FuncAddrAbs(External(extfunc3))
@@ -100,7 +100,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln:           $$rdx = $$rcx
     # nextln: 0061:     $$rdx = AluRmI(S64, Add, 32) $$rdx
     # nextln: 0062:     $$rdx = MovRM(S32) $$rdx
-    # nextln: 0063:     $$rdi = MovRmS32(2)
+    # nextln:           $$rdi = MovRmS32(2)
     # nextln: 0064:     $$rdi = MovsxRRm(Ext32_64) $$rdi
     # nextln: 0065:     AluRRm(S64, Cmp) $$rdi, $$rdx
     # nextln: 0066:     Jumpcc(L, block7, block8)
@@ -2698,8 +2698,8 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2046:     $$rcx = MovRM(S8) $$rax
     # nextln: 2047:     Jump(block519)
     # nextln:       block518:
-    # nextln:           $$rcx = MovRmS32(0)
     # nextln:           $$rax = $$r13
+    # nextln:           $$rcx = MovRmS32(0)
     # nextln: 2048:     Jump(block519)
     # nextln:       block519:
     # nextln: 2049:     AluRRm(S32, Test) $$rcx, $$rcx
@@ -3324,10 +3324,10 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 2502:     $$rax = MovRStack(!5, S64)
     # nextln:           $$rcx = $$rax
     # nextln: 2503:     $$rcx = AluRmI(S64, Add, 32) $$rcx
-    # nextln: 2504:     $$rdi = MovRStack(!3, S32)
-    # nextln: 2505:     $$rdx = MovRM(S32) $$rcx
-    # nextln: 2506:     $$rcx = MovsxRRm(Ext32_64) $$rdi
-    # nextln: 2507:     AluRRm(S64, Cmp) $$rcx, $$rdx
+    # nextln: 2504:     $$rdx = MovRStack(!3, S32)
+    # nextln: 2505:     $$rdi = MovRM(S32) $$rcx
+    # nextln: 2506:     $$rcx = MovsxRRm(Ext32_64) $$rdx
+    # nextln: 2507:     AluRRm(S64, Cmp) $$rcx, $$rdi
     # nextln: 2508:     Jumpcc(L, block1243, block1244)
     # nextln:       block1243:
     # nextln:           $$rdx = $$r14

@@ -40,8 +40,8 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 48 83 ec 10                     sub rsp, 0x10
-    # nextln: 000008: 33 c0                           xor eax, eax
-    # nextln: 00000a: 89 3c 24                        mov dword ptr [rsp], edi
+    # nextln: 000008: 89 3c 24                        mov dword ptr [rsp], edi
+    # nextln: 00000b: 33 c0                           xor eax, eax
     # nextln: 00000d: 89 44 24 04                     mov dword ptr [rsp + 4], eax
     # nextln: 000011: 8b 04 24                        mov eax, dword ptr [rsp]
     # nextln: 000014: 85 c0                           test eax, eax

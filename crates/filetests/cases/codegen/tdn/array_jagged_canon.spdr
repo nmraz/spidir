@@ -38,12 +38,12 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 00000a: 53                              push rbx
     # nextln: 00000b: 48 83 ec 10                     sub rsp, 0x10
     # nextln: 00000f: 48 89 fb                        mov rbx, rdi
-    # nextln: 000012: be 28 00 00 00                  mov esi, 0x28
-    # nextln: 000017: bf ab 00 00 00                  mov edi, 0xab
-    # nextln: 00001c: 41 bd 02 00 00 00               mov r13d, 2
-    # nextln: 000022: 41 bc 01 00 00 00               mov r12d, 1
-    # nextln: 000028: 33 c0                           xor eax, eax
-    # nextln: 00002a: 48 89 04 24                     mov qword ptr [rsp], rax
+    # nextln: 000012: 41 bd 02 00 00 00               mov r13d, 2
+    # nextln: 000018: 41 bc 01 00 00 00               mov r12d, 1
+    # nextln: 00001e: 33 c0                           xor eax, eax
+    # nextln: 000020: 48 89 04 24                     mov qword ptr [rsp], rax
+    # nextln: 000024: be 28 00 00 00                  mov esi, 0x28
+    # nextln: 000029: bf ab 00 00 00                  mov edi, 0xab
     # nextln: 00002e: e8 00 00 00 00                  call 0x33  # RELOC_PC32 -> @gc_new + -4
     # nextln: 000033: 48 89 c1                        mov rcx, rax
     # nextln: 000036: 48 83 c1 10                     add rcx, 0x10

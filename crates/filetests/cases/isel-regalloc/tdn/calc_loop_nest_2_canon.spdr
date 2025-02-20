@@ -4,7 +4,7 @@ extfunc @"System.Void Tests.Program::WriteInt(System.Int32)"(i32)
 
 func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # check: function `System.Void Tests.Program::Test(System.Int32, System.Int32)`:
-    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12
     # nextln: frame: size 24, align 4
     # nextln:     !0: 0
     # nextln:     !1: 4
@@ -16,8 +16,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0000:     MovStackR(!3, S32) $$rdi
     # nextln: 0001:     MovStackR(!2, S32) $$rsi
     # nextln: 0002:     $$rbx = MovRmS32(0)
-    # nextln: 0003:     $$r13 = MovRmS32(1)
-    # nextln: 0004:     $$r12 = MovRmS32(2)
+    # nextln: 0003:     $$r12 = MovRmS32(1)
     # nextln: 0005:     MovStackR(!1, S32) $$rbx
     # nextln: 0006:     MovStackR(!4, S32) $$rbx
     # nextln: 0007:     MovStackR(!0, S32) $$rbx
@@ -57,7 +56,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0033:     $$rdi = MovRStack(!3, S32)
     # nextln: 0034:     Jump(block24)
     # nextln:       block23:
-    # nextln:           $$rdi = $$r13
+    # nextln:           $$rdi = $$r12
     # nextln: 0035:     Jump(block24)
     # nextln:       block24:
     # nextln: 0036:     $$rax = AluRRm(S32, Add) $$rax, $$rcx
@@ -68,7 +67,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln:       block25:
     # nextln: 0041:     Jump(block26)
     # nextln:       block27:
-    # nextln: 0042:     MovStackR(!0, S32) $$r13
+    # nextln: 0042:     MovStackR(!0, S32) $$r12
     # nextln: 0043:     Jump(block28)
     # nextln:       block28:
     # nextln: 0044:     $$rax = MovRStack(!0, S32)
@@ -140,7 +139,8 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0097:     $$rcx = MovRStack(!3, S32)
     # nextln: 0098:     $$rax = MovRStack(!5, S32)
     # nextln: 0099:     $$rdx = ConvertWord(S32) $$rax
-    # nextln: 0100:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$r12
+    # nextln:           $$rdi = MovRmS32(2)
+    # nextln: 0100:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
     # nextln: 0101:     AluRRm(S32, Test) $$rdx, $$rdx
     # nextln: 0102:     Jumpcc(Ne, block10, block11)
     # nextln:       block10:

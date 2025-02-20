@@ -35,12 +35,12 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:     !0: 0
     # nextln:       block0:
     # nextln:           $$rbx = $$rdi
-    # nextln: 0002:     $$rsi = MovRmS32(40)
-    # nextln: 0003:     $$rdi = MovRmS32(171)
     # nextln: 0004:     $$r13 = MovRmS32(2)
     # nextln: 0005:     $$r12 = MovRmS32(1)
-    # nextln: 0006:     $$rax = MovRmS32(0)
+    # nextln:           $$rax = MovRmS32(0)
     # nextln: 0007:     MovStackR(!0, S64) $$rax
+    # nextln:           $$rsi = MovRmS32(40)
+    # nextln:           $$rdi = MovRmS32(171)
     # nextln: 0008:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
     # nextln:           $$rcx = $$rax
     # nextln: 0009:     $$rcx = AluRmI(S64, Add, 16) $$rcx
@@ -61,7 +61,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0019:     $$rcx = AluRmI(S64, Add, 16) $$rcx
     # nextln:           $$rdx = $$rax
     # nextln: 0020:     $$rdx = AluRmI(S64, Add, 24) $$rdx
-    # nextln: 0021:     $$rdi = MovRmS32(1)
+    # nextln:           $$rdi = MovRmS32(1)
     # nextln: 0022:     MovMR(S32) $$rdx, $$rdi
     # nextln: 0023:     $$rcx = MovRM(S32) $$rcx
     # nextln: 0024:     AluRRm(S64, Test) $$rcx, $$rcx
@@ -82,7 +82,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:       block6:
     # nextln:           $$rdx = $$rax
     # nextln: 0035:     $$rdx = AluRmI(S64, Add, 20) $$rdx
-    # nextln: 0036:     $$rdi = MovRmS32(2)
+    # nextln:           $$rdi = MovRmS32(2)
     # nextln: 0037:     MovMR(S32) $$rdx, $$rdi
     # nextln: 0038:     $$rcx = MovRM(S32) $$rcx
     # nextln: 0039:     AluRRm(S64, Cmp) $$r12, $$rcx
@@ -92,7 +92,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0041:     $$rcx = AluRmI(S64, Add, 16) $$rcx
     # nextln:           $$rdx = $$rax
     # nextln: 0042:     $$rdx = AluRmI(S64, Add, 24) $$rdx
-    # nextln: 0043:     $$rdi = MovRmS32(3)
+    # nextln:           $$rdi = MovRmS32(3)
     # nextln: 0044:     MovMR(S32) $$rdx, $$rdi
     # nextln: 0045:     $$rcx = MovRM(S32) $$rcx
     # nextln: 0046:     AluRRm(S64, Cmp) $$r12, $$rcx

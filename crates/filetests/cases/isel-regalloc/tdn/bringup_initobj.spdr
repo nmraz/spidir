@@ -5,7 +5,7 @@ extfunc @bzero(ptr, i64)
 
 func @"System.Boolean Tests.CodeGenBringUpTests::InitObj()":i32() {
     # check: function `System.Boolean Tests.CodeGenBringUpTests::InitObj()`:
-    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12
     # nextln: frame: size 24, align 4
     # nextln:     !0: 0
     # nextln:     !1: 12
@@ -18,9 +18,8 @@ func @"System.Boolean Tests.CodeGenBringUpTests::InitObj()":i32() {
     # nextln: 0004:     CallRm $$rax, $$rdi, $$rsi
     # nextln: 0005:     Jump(block2)
     # nextln:       block2:
-    # nextln: 0006:     $$rbx = StackAddr(!1)
-    # nextln:           $$r13 = $$rbx
-    # nextln: 0007:     $$r13 = AluRmI(S64, Add, 4) $$r13
+    # nextln:           $$rbx = StackAddr(!1)
+    # nextln: 0007:     $$rbx = AluRmI(S64, Add, 4) $$rbx
     # nextln: 0009:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln:           $$rsi = MovRmS32(12)
     # nextln:           $$rdi = StackAddr(!0)
@@ -36,7 +35,7 @@ func @"System.Boolean Tests.CodeGenBringUpTests::InitObj()":i32() {
     # nextln:           $$rsi = StackAddr(!0)
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0015:     CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0016:     $$rax = MovRM(S32) $$r13
+    # nextln: 0016:     $$rax = MovRM(S32) $$rbx
     # nextln: 0017:     AluRRm(S32, Cmp) $$r12, $$rax
     # nextln: 0018:     Jumpcc(Ne, block3, block5)
     # nextln:       block3:
@@ -49,7 +48,7 @@ func @"System.Boolean Tests.CodeGenBringUpTests::InitObj()":i32() {
     # nextln:           $$rsi = StackAddr(!0)
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0022:     CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0023:     $$rbx = MovRM(S32) $$r13
+    # nextln: 0023:     $$rbx = MovRM(S32) $$rbx
     # nextln: 0024:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rdx = MovRmS32(12)
     # nextln:           $$rsi = StackAddr(!0)

@@ -27,8 +27,8 @@ func @aligned_stack_with_saved_regs:i32(i32) {
     # nextln: 000005: 48 83 ec 20                     sub rsp, 0x20
     # nextln: 000009: 48 83 e4 e0                     and rsp, 0xffffffffffffffe0
     # nextln: 00000d: 48 89 fb                        mov rbx, rdi
-    # nextln: 000010: 48 89 e7                        mov rdi, rsp
-    # nextln: 000013: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @g + 0
+    # nextln: 000010: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @g + 0
+    # nextln: 00001a: 48 89 e7                        mov rdi, rsp
     # nextln: 00001d: ff d0                           call rax
     # nextln: 00001f: 48 89 d8                        mov rax, rbx
     # nextln: 000022: 48 8d 65 f8                     lea rsp, [rbp - 8]

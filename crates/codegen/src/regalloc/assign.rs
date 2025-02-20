@@ -132,9 +132,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .flags
             .contains(LiveSetFragmentFlags::CHEAPLY_REMATTABLE);
 
-        if cheaply_remattable && !self.fragment_has_weight(fragment) {
-            // Cheaply rematerializable fragments have no reason to exist unless someone is actively
-            // using them.
+        if cheaply_remattable && self.should_spill_cheap_remat(fragment) {
             self.spill_fragment_and_neighbors(fragment);
             return Ok(());
         }
@@ -268,6 +266,24 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let instr = self.fragment_hull(fragment).start.instr();
         Err(RegallocError::OutOfRegisters(instr))
+    }
+
+    fn should_spill_cheap_remat(&self, fragment: LiveSetFragment) -> bool {
+        if !self.fragment_has_weight(fragment) {
+            // If the fragment is completely weightless, it has no uses and can be spilled eagerly.
+            return true;
+        }
+
+        if self.is_fragment_atomic(fragment) {
+            // Before inspecting uses, make sure we won't try to spill an atomic fragment again.
+            return false;
+        }
+
+        // If the fragment has only one use, trim it as close to that use as we possibly can.
+        self.fragment_instrs(fragment)
+            .filter(|instr| !instr.is_def())
+            .nth(1)
+            .is_none()
     }
 
     fn collect_probe_hints(&self, fragment: LiveSetFragment, probe_order: &mut ProbeOrder) {

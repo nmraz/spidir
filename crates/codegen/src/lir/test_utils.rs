@@ -49,9 +49,9 @@ impl MachineCore for DummyMachine {
     }
 }
 
-pub fn push_instr_with_clobbers<const U: usize>(
-    builder: &mut Builder<'_, DummyMachine>,
-    instr: DummyInstr,
+pub fn push_instr_with_clobbers<M: MachineCore, const U: usize>(
+    builder: &mut Builder<'_, M>,
+    instr: M::Instr,
     defs: impl IntoIterator<Item = DefOperand>,
     uses: [(UseOperandConstraint, OperandPos); U],
     clobbers: PhysRegSet,
@@ -73,9 +73,9 @@ pub fn push_instr_with_clobbers<const U: usize>(
     use_regs
 }
 
-pub fn push_instr<const U: usize>(
-    builder: &mut Builder<DummyMachine>,
-    instr: DummyInstr,
+pub fn push_instr<M: MachineCore, const U: usize>(
+    builder: &mut Builder<M>,
+    instr: M::Instr,
     defs: impl IntoIterator<Item = DefOperand>,
     uses: [(UseOperandConstraint, OperandPos); U],
 ) -> [VirtReg; U] {

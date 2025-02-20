@@ -49,7 +49,6 @@ enum FrameRealign {
 }
 
 enum FrameRestoreMethod {
-    None,
     AddSp(i32),
     FromRbp,
 }
@@ -122,10 +121,8 @@ impl MachineEmit for X64Machine {
         let restore_method = if matches!(realign, FrameRealign::AlignTo(_)) {
             // We won't actually know how much to add, so always use rbp.
             FrameRestoreMethod::FromRbp
-        } else if raw_frame_size != 0 {
-            FrameRestoreMethod::AddSp(raw_frame_size)
         } else {
-            FrameRestoreMethod::None
+            FrameRestoreMethod::AddSp(raw_frame_size)
         };
 
         X64EmitState {
@@ -152,9 +149,7 @@ impl MachineEmit for X64Machine {
             emit_push(buffer, saved_reg);
         }
 
-        if state.raw_frame_size > 0 {
-            emit_add_sp(buffer, -state.raw_frame_size);
-        }
+        emit_add_sp(buffer, -state.raw_frame_size);
 
         if let FrameRealign::AlignTo(align) = state.realign {
             emit_alu_r64_i(buffer, AluOp::And, REG_RSP, -align);
@@ -349,7 +344,6 @@ impl MachineEmit for X64Machine {
 
 fn emit_epilogue(buffer: &mut CodeBuffer<X64Fixup>, state: &X64EmitState) {
     match state.restore_method {
-        FrameRestoreMethod::None => {}
         FrameRestoreMethod::AddSp(offset) => emit_add_sp(buffer, offset),
         FrameRestoreMethod::FromRbp => {
             let saved_reg_size = (state.saved_regs.len() * 8) as i32;
@@ -378,7 +372,7 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Fixup>, offset: i32) {
         emit_push(buffer, REG_RAX);
     } else if offset < 0 {
         emit_alu_r64_i(buffer, AluOp::Sub, REG_RSP, -offset);
-    } else {
+    } else if offset > 0 {
         emit_alu_r64_i(buffer, AluOp::Add, REG_RSP, offset);
     }
 }

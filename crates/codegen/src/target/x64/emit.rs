@@ -1,4 +1,4 @@
-use entity_set::DenseEntitySet;
+use flag_liveness::BlockFlagLivenessTracker;
 use ir::node::FunctionRef;
 
 use crate::{
@@ -18,6 +18,8 @@ use super::{
     X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8, REG_R9, REG_RAX,
     REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64, RELOC_PC32,
 };
+
+mod flag_liveness;
 
 #[derive(Debug, Clone, Copy)]
 pub enum X64Fixup {
@@ -59,7 +61,7 @@ pub struct X64EmitState {
     sp_frame_offset: i32,
     realign: FrameRealign,
     restore_method: FrameRestoreMethod,
-    block_flag_liveness: Option<DenseEntitySet<Instr>>,
+    block_flag_liveness: BlockFlagLivenessTracker,
 }
 
 impl X64EmitState {
@@ -87,35 +89,6 @@ impl X64EmitState {
             index: None,
             offset,
         }
-    }
-
-    fn are_flags_live_before(&mut self, ctx: &EmitContext<'_, X64Machine>, pos: Instr) -> bool {
-        let block_flag_liveness = self.block_flag_liveness.get_or_insert_with(|| {
-            let mut block_flag_liveness = DenseEntitySet::new();
-
-            let block = ctx.lir.instr_block_index(pos);
-            let block = ctx.cfg_ctx.block_order[block];
-
-            let mut flags_live = false;
-            for instr in ctx.lir.block_instrs(block).into_iter().rev() {
-                let instr_data = ctx.lir.instr_data(instr);
-
-                // Note: instructions that both define and use flags keep them live.
-                if instr_data.uses_flags() {
-                    flags_live = true;
-                } else if instr_data.defines_flags() {
-                    flags_live = false;
-                }
-
-                if flags_live {
-                    block_flag_liveness.insert(instr);
-                }
-            }
-
-            block_flag_liveness
-        });
-
-        block_flag_liveness.contains(pos)
     }
 }
 
@@ -162,7 +135,7 @@ impl MachineEmit for X64Machine {
             sp_frame_offset: 0,
             realign,
             restore_method,
-            block_flag_liveness: None,
+            block_flag_liveness: BlockFlagLivenessTracker::new(),
         }
     }
 
@@ -195,7 +168,7 @@ impl MachineEmit for X64Machine {
         _block: Block,
     ) {
         // Forget our flag liveness information now that we've entered a new block.
-        state.block_flag_liveness = None;
+        state.block_flag_liveness.reset_block();
     }
 
     fn emit_instr(
@@ -447,7 +420,11 @@ fn emit_mov_rm_s32(
     // Use a zeroing idiom or the shorter `mov r32, imm32` encoding when possible.
 
     if let RegMem::Reg(dest) = dest {
-        if imm == 0 && !state.are_flags_live_before(ctx, pos) {
+        if imm == 0
+            && !state
+                .block_flag_liveness
+                .flags_live_before(ctx.cfg_ctx, ctx.lir, pos)
+        {
             // Note: some renamers recognize only the 32-bit instruction as a zeroing idiom.
             emit_alu_r_rm(
                 buffer,

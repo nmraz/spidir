@@ -143,11 +143,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         probe_order: &mut ProbeOrder,
         fragment: LiveSetFragment,
     ) -> Result<(), RegallocError> {
-        let cheaply_remattable = self.live_set_fragments[fragment]
-            .flags
-            .contains(LiveSetFragmentFlags::CHEAPLY_REMATTABLE);
-
-        if cheaply_remattable && self.should_spill_cheap_remat(fragment) {
+        if self.is_fragment_cheaply_remattable(fragment) && self.should_spill_cheap_remat(fragment)
+        {
             self.spill_fragment_and_neighbors(fragment);
             return Ok(());
         }
@@ -212,10 +209,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         fragment: LiveSetFragment,
         probe_order: &mut ProbeOrder,
     ) -> ProbeResult {
-        let cheaply_remattable = self.live_set_fragments[fragment]
-            .flags
-            .contains(LiveSetFragmentFlags::CHEAPLY_REMATTABLE);
-
         let live_set = self.live_set_fragments[fragment].live_set;
         let class = self.live_sets[live_set].class;
 
@@ -232,7 +225,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // When our fragment is cheaply rematerializable and has register hints, treat them as
         // mandatory: violations here will lead to copies later, but we would be better served by
         // rematerializing into the appropriate register instead.
-        if !(cheaply_remattable && is_hinted) {
+        if !(self.is_fragment_cheaply_remattable(fragment) && is_hinted) {
             probe_order.extend(
                 self.machine
                     .usable_regs(class)

@@ -192,6 +192,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .contains(LiveSetFragmentFlags::ATOMIC)
     }
 
+    pub fn is_fragment_cheaply_remattable(&self, fragment: LiveSetFragment) -> bool {
+        self.live_set_fragments[fragment]
+            .flags
+            .contains(LiveSetFragmentFlags::CHEAPLY_REMATTABLE)
+    }
+
     pub fn fragment_hull(&self, fragment: LiveSetFragment) -> ProgramRange {
         self.live_set_fragments[fragment].hull()
     }

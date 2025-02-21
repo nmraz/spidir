@@ -366,13 +366,20 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         new_fragment: LiveSetFragment,
         instr: Instr,
     ) {
-        let Some(hints) = self.uncoalesced_fragment_copy_hints.get_mut(&old_fragment) else {
+        let Entry::Occupied(mut entry) = self.uncoalesced_fragment_copy_hints.entry(old_fragment)
+        else {
             return;
         };
+
+        let hints = entry.get_mut();
 
         let copy_hint_split_idx = hints.partition_point(|hint| hint.instr < instr);
 
         let new_copy_hints: TaggedFragmentCopyHints = hints.drain(copy_hint_split_idx..).collect();
+        if hints.is_empty() {
+            entry.remove();
+        }
+
         if new_copy_hints.is_empty() {
             return;
         }

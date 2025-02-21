@@ -32,6 +32,21 @@ enum RegProbeConflict {
     },
 }
 
+enum ProbeResult {
+    Found {
+        preg: PhysReg,
+        hint_weight: f32,
+    },
+    FoundSoftConflict {
+        preg: PhysReg,
+        hint_weight: f32,
+        conflicting_fragments: SmallVec<[LiveSetFragment; 4]>,
+    },
+    HardConflict {
+        boundary: Option<ConflictBoundary>,
+    },
+}
+
 #[derive(Clone, Copy)]
 struct ProbeHint {
     preg: PhysReg,
@@ -137,6 +152,70 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             return Ok(());
         }
 
+        let probe_result = self.probe_regs_for_fragment(fragment, probe_order);
+
+        match probe_result {
+            ProbeResult::Found { preg, hint_weight } => {
+                self.assign_fragment_to_phys_reg(fragment, preg, hint_weight);
+                Ok(())
+            }
+            ProbeResult::FoundSoftConflict {
+                preg,
+                hint_weight,
+                conflicting_fragments,
+            } => {
+                for conflicting_fragment in conflicting_fragments {
+                    self.evict_fragment(conflicting_fragment);
+                    self.enqueue_fragment(conflicting_fragment);
+                }
+                self.assign_fragment_to_phys_reg(fragment, preg, hint_weight);
+                Ok(())
+            }
+            ProbeResult::HardConflict { boundary } => {
+                if let Some(boundary) = boundary {
+                    if self.try_split_fragment_for_conflict(fragment, boundary) {
+                        return Ok(());
+                    }
+                }
+
+                if !self.is_fragment_atomic(fragment) {
+                    self.spill_fragment_and_neighbors(fragment);
+                    return Ok(());
+                }
+
+                let instr = self.fragment_hull(fragment).start.instr();
+                Err(RegallocError::OutOfRegisters(instr))
+            }
+        }
+    }
+
+    fn should_spill_cheap_remat(&self, fragment: LiveSetFragment) -> bool {
+        if !self.fragment_has_weight(fragment) {
+            // If the fragment is completely weightless, it has no uses and can be spilled eagerly.
+            return true;
+        }
+
+        if self.is_fragment_atomic(fragment) {
+            // Before inspecting uses, make sure we won't try to spill an atomic fragment again.
+            return false;
+        }
+
+        // If the fragment has only one use, trim it as close to that use as we possibly can.
+        self.fragment_instrs(fragment)
+            .filter(|instr| !instr.is_def())
+            .nth(1)
+            .is_none()
+    }
+
+    fn probe_regs_for_fragment(
+        &self,
+        fragment: LiveSetFragment,
+        probe_order: &mut ProbeOrder,
+    ) -> ProbeResult {
+        let cheaply_remattable = self.live_set_fragments[fragment]
+            .flags
+            .contains(LiveSetFragmentFlags::CHEAPLY_REMATTABLE);
+
         let live_set = self.live_set_fragments[fragment].live_set;
         let class = self.live_sets[live_set].class;
 
@@ -166,7 +245,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             );
         }
 
-        let mut no_conflict_reg = None;
         let mut lightest_soft_conflict = None;
         let mut lightest_soft_conflict_weight = f32::INFINITY;
         let mut earliest_hard_conflict_boundary: Option<ConflictBoundary> = None;
@@ -186,8 +264,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             match self.probe_phys_reg(preg, fragment) {
                 None => {
                     trace!("    no conflict");
-                    no_conflict_reg = Some((preg, hint_weight));
-                    break;
+                    return ProbeResult::Found { preg, hint_weight };
                 }
                 Some(RegProbeConflict::Soft {
                     fragments,
@@ -239,51 +316,17 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             }
         }
 
-        if let Some((no_conflict_reg, hint_weight)) = no_conflict_reg {
-            self.assign_fragment_to_phys_reg(fragment, no_conflict_reg, hint_weight);
-            return Ok(());
+        if let Some((preg, hint_weight, conflicting_fragments)) = lightest_soft_conflict {
+            return ProbeResult::FoundSoftConflict {
+                preg,
+                hint_weight,
+                conflicting_fragments,
+            };
         }
 
-        if let Some((preg, hint_weight, soft_conflicts)) = lightest_soft_conflict {
-            for conflicting_fragment in soft_conflicts {
-                self.evict_fragment(conflicting_fragment);
-                self.enqueue_fragment(conflicting_fragment);
-            }
-            self.assign_fragment_to_phys_reg(fragment, preg, hint_weight);
-            return Ok(());
+        ProbeResult::HardConflict {
+            boundary: earliest_hard_conflict_boundary,
         }
-
-        if let Some(boundary) = earliest_hard_conflict_boundary {
-            if self.try_split_fragment_for_conflict(fragment, boundary) {
-                return Ok(());
-            }
-        }
-
-        if !self.is_fragment_atomic(fragment) {
-            self.spill_fragment_and_neighbors(fragment);
-            return Ok(());
-        }
-
-        let instr = self.fragment_hull(fragment).start.instr();
-        Err(RegallocError::OutOfRegisters(instr))
-    }
-
-    fn should_spill_cheap_remat(&self, fragment: LiveSetFragment) -> bool {
-        if !self.fragment_has_weight(fragment) {
-            // If the fragment is completely weightless, it has no uses and can be spilled eagerly.
-            return true;
-        }
-
-        if self.is_fragment_atomic(fragment) {
-            // Before inspecting uses, make sure we won't try to spill an atomic fragment again.
-            return false;
-        }
-
-        // If the fragment has only one use, trim it as close to that use as we possibly can.
-        self.fragment_instrs(fragment)
-            .filter(|instr| !instr.is_def())
-            .nth(1)
-            .is_none()
     }
 
     fn collect_probe_hints(&self, fragment: LiveSetFragment, probe_order: &mut ProbeOrder) {

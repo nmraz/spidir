@@ -21,7 +21,7 @@ use super::{
     RegallocError,
 };
 
-enum ProbeConflict {
+enum RegProbeConflict {
     Soft {
         fragments: SmallVec<[LiveSetFragment; 4]>,
         weight: f32,
@@ -189,7 +189,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     no_conflict_reg = Some((preg, hint_weight));
                     break;
                 }
-                Some(ProbeConflict::Soft {
+                Some(RegProbeConflict::Soft {
                     fragments,
                     weight: conflict_weight,
                     hint_weight: conflict_hint_weight,
@@ -215,7 +215,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         lightest_soft_conflict_weight = conflict_weight;
                     }
                 }
-                Some(ProbeConflict::Hard { boundary, .. }) => {
+                Some(RegProbeConflict::Hard { boundary, .. }) => {
                     trace!("    hard conflict with boundary {boundary:?}");
 
                     // This boundary is interesting for splitting if it can non-degenerately split
@@ -362,7 +362,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
-    fn probe_phys_reg(&self, preg: PhysReg, fragment: LiveSetFragment) -> Option<ProbeConflict> {
+    fn probe_phys_reg(&self, preg: PhysReg, fragment: LiveSetFragment) -> Option<RegProbeConflict> {
         // See if we conflict with a reservation (derived from an operand constraint) first. If
         // everything there checks out, move on to comparing with other fragments assigned to the
         // register.
@@ -374,7 +374,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         &self,
         preg: PhysReg,
         fragment: LiveSetFragment,
-    ) -> Option<ProbeConflict> {
+    ) -> Option<RegProbeConflict> {
         let reservations = iter_slice_ranges(
             &self.phys_reg_reservations[preg.as_u8() as usize],
             |reservation| (reservation.prog_range, &reservation.copied_live_range),
@@ -408,7 +408,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             // okay, though, because the reservation of `$rax` is copied out of `%1`.
 
             if reservation_copy.expand() != Some(fragment_live_range) {
-                return Some(ProbeConflict::Hard {
+                return Some(RegProbeConflict::Hard {
                     boundary: conflict_boundary(reservation_range, fragment_range),
                 });
             }
@@ -421,7 +421,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         &self,
         preg: PhysReg,
         fragment: LiveSetFragment,
-    ) -> Option<ProbeConflict> {
+    ) -> Option<RegProbeConflict> {
         let preg_ranges = iter_btree_ranges(&self.phys_reg_assignments[preg.as_u8() as usize]);
         let fragment_ranges = iter_slice_ranges(
             &self.live_set_fragments[fragment].ranges,
@@ -452,7 +452,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             let allocated_weight = fragment_data.spill_weight;
             if allocated_weight >= fragment_weight {
-                return Some(ProbeConflict::Hard {
+                return Some(RegProbeConflict::Hard {
                     boundary: conflict_boundary(preg_range, fragment_range),
                 });
             }
@@ -464,7 +464,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
 
         if !soft_conflicts.is_empty() {
-            Some(ProbeConflict::Soft {
+            Some(RegProbeConflict::Soft {
                 fragments: soft_conflicts,
                 weight: soft_conflict_weight,
                 hint_weight: soft_conflict_hint_weight,

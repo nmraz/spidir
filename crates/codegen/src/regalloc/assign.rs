@@ -240,7 +240,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let mut lightest_soft_conflict = None;
         let mut lightest_soft_conflict_weight = f32::INFINITY;
-        let mut earliest_hard_conflict_boundary: Option<ConflictBoundary> = None;
+        let mut earliest_hard_conflict_boundary = None;
 
         let mut probed_regs = PhysRegSet::empty();
         for hint in probe_order.iter() {
@@ -287,24 +287,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 }
                 Some(RegProbeConflict::Hard { boundary, .. }) => {
                     trace!("    hard conflict with boundary {boundary:?}");
-
-                    // This boundary is interesting for splitting if it can non-degenerately split
-                    // the fragment in two.
-                    let split_boundary = boundary.filter(|boundary| {
-                        self.can_split_fragment_before(fragment, boundary.instr())
-                    });
-                    if let Some(split_boundary) = split_boundary {
-                        match earliest_hard_conflict_boundary {
-                            Some(cur_boundary) => {
-                                if split_boundary.instr() < cur_boundary.instr() {
-                                    earliest_hard_conflict_boundary = Some(split_boundary);
-                                }
-                            }
-                            None => {
-                                earliest_hard_conflict_boundary = Some(split_boundary);
-                            }
-                        }
-                    }
+                    self.update_earliest_conflict_boundary(
+                        fragment,
+                        &mut earliest_hard_conflict_boundary,
+                        boundary,
+                    );
                 }
             }
         }
@@ -395,6 +382,31 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 hint_weight: 0.0,
                 sort_weight: weight,
             });
+        }
+    }
+
+    fn update_earliest_conflict_boundary(
+        &self,
+        fragment: LiveSetFragment,
+        earliest_conflict_boundary: &mut Option<ConflictBoundary>,
+        new_conflict_boundary: Option<ConflictBoundary>,
+    ) {
+        // This boundary is interesting for splitting if it can non-degenerately split the fragment
+        // in two.
+        let split_boundary = new_conflict_boundary.filter(|new_conflict_boundary| {
+            self.can_split_fragment_before(fragment, new_conflict_boundary.instr())
+        });
+        if let Some(split_boundary) = split_boundary {
+            match earliest_conflict_boundary {
+                Some(cur_boundary) => {
+                    if split_boundary.instr() < cur_boundary.instr() {
+                        *earliest_conflict_boundary = Some(split_boundary);
+                    }
+                }
+                None => {
+                    *earliest_conflict_boundary = Some(split_boundary);
+                }
+            }
         }
     }
 

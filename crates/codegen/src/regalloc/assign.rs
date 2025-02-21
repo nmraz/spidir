@@ -364,49 +364,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
 
         if has_uncoalesced_copy_hints {
-            let cheaply_remattable = self.is_fragment_cheaply_remattable(fragment);
-
-            let mut saw_conflicts = false;
-            let mut earliest_conflict_boundary = None;
-
-            for uncoalesced_copy in &self.uncoalesced_fragment_copy_hints[&fragment] {
-                let hint_fragment =
-                    self.fragment_copy_hints[uncoalesced_copy.hint].get_other_fragment(fragment);
-
-                // If this fragment hasn't been assigned yet, it isn't interesting as a copy hint.
-                let Some(hint_assignment) =
-                    self.live_set_fragments[hint_fragment].assignment.expand()
-                else {
-                    continue;
-                };
-
-                // Don't collect a hint here if the fragments still interfere somewhere, since we
-                // can't currently assign them to the same register anyway.
-                if let Some((existing_range, conflicting_range)) =
-                    self.first_fragment_conflict(hint_fragment, fragment)
-                {
-                    // If the fragment is cheaply rematerializable, keep around the earliest
-                    // conflict boundary in case we need it.
-                    if cheaply_remattable {
-                        self.update_earliest_conflict_boundary(
-                            fragment,
-                            &mut earliest_conflict_boundary,
-                            conflict_boundary(existing_range, conflicting_range),
-                        );
-                        saw_conflicts = true;
-                    }
-                    continue;
-                }
-
-                self.collect_hint_at_instr(uncoalesced_copy.instr, hint_assignment, probe_order);
-            }
-
-            // If none of a cheaply-rematerializable fragment's hints can be satisfied due to
-            // conflicts, report that to the caller and let them split/spill appropriately. It's
-            // better to rematerialize than to copy all over the place.
-            if cheaply_remattable && saw_conflicts && probe_order.is_empty() {
-                return Err(earliest_conflict_boundary);
-            }
+            self.collect_uncoalesced_copy_hints(fragment, probe_order)?;
         }
 
         sort_probe_hints(probe_order);
@@ -423,6 +381,57 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         if let Some(hint_assignment) = self.live_set_fragments[hint_fragment].assignment.expand() {
             self.collect_hint_at_instr(instr, hint_assignment, probe_order);
         }
+    }
+
+    fn collect_uncoalesced_copy_hints(
+        &self,
+        fragment: LiveSetFragment,
+        probe_order: &mut Vec<ProbeHint>,
+    ) -> Result<(), Option<ConflictBoundary>> {
+        let cheaply_remattable = self.is_fragment_cheaply_remattable(fragment);
+
+        let mut saw_conflicts = false;
+        let mut earliest_conflict_boundary = None;
+
+        for uncoalesced_copy in &self.uncoalesced_fragment_copy_hints[&fragment] {
+            let hint_fragment =
+                self.fragment_copy_hints[uncoalesced_copy.hint].get_other_fragment(fragment);
+
+            // If this fragment hasn't been assigned yet, it isn't interesting as a copy hint.
+            let Some(hint_assignment) = self.live_set_fragments[hint_fragment].assignment.expand()
+            else {
+                continue;
+            };
+
+            // Don't collect a hint here if the fragments still interfere somewhere, since we can't
+            // currently assign them to the same register anyway.
+            if let Some((existing_range, conflicting_range)) =
+                self.first_fragment_conflict(hint_fragment, fragment)
+            {
+                // If the fragment is cheaply rematerializable, keep around the earliest
+                // conflict boundary in case we need it.
+                if cheaply_remattable {
+                    self.update_earliest_conflict_boundary(
+                        fragment,
+                        &mut earliest_conflict_boundary,
+                        conflict_boundary(existing_range, conflicting_range),
+                    );
+                    saw_conflicts = true;
+                }
+                continue;
+            }
+
+            self.collect_hint_at_instr(uncoalesced_copy.instr, hint_assignment, probe_order);
+        }
+
+        // If none of a cheaply-rematerializable fragment's hints can be satisfied due to conflicts,
+        // report that to the caller and let them split/spill appropriately. It's better to
+        // rematerialize than to copy all over the place.
+        if cheaply_remattable && saw_conflicts && probe_order.is_empty() {
+            return Err(earliest_conflict_boundary);
+        }
+
+        Ok(())
     }
 
     fn collect_hint_at_instr(

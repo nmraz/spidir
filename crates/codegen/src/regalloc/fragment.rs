@@ -7,6 +7,7 @@ use crate::{
 };
 
 use super::{
+    conflict::{iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{
         LiveRange, LiveRangeInstr, LiveRangeInstrs, LiveSet, LiveSetFragment, LiveSetFragmentData,
@@ -147,6 +148,20 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .ranges
             .iter()
             .flat_map(|range| self.live_ranges[range.live_range].instrs.iter().copied())
+    }
+
+    pub fn first_fragment_conflict(
+        &self,
+        a: LiveSetFragment,
+        b: LiveSetFragment,
+    ) -> Option<(ProgramRange, ProgramRange)> {
+        let a = iter_slice_ranges(&self.live_set_fragments[a].ranges, |tagged_range| {
+            (tagged_range.prog_range, &())
+        });
+        let b = iter_slice_ranges(&self.live_set_fragments[b].ranges, |tagged_range| {
+            (tagged_range.prog_range, &())
+        });
+        iter_conflicts(a, b).next().map(|((a, _), (b, _))| (a, b))
     }
 
     pub fn can_split_fragment_before(&self, fragment: LiveSetFragment, instr: Instr) -> bool {

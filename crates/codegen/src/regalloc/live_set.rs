@@ -14,7 +14,6 @@ use crate::{
 };
 
 use super::{
-    conflict::{iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{
         FragmentCopyHintData, LiveSet, LiveSetData, LiveSetFragment, TaggedFragmentCopyHint,
@@ -151,10 +150,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             return;
         }
 
-        if self.live_sets_interfere(
-            &self.live_set_fragments[dest_fragment].ranges,
-            &self.live_set_fragments[src_fragment].ranges,
-        ) {
+        if self
+            .first_fragment_conflict(dest_fragment, src_fragment)
+            .is_some()
+        {
             // We couldn't coalesce these fragments now, but we might be able to later because of
             // splitting. Record a copy hint so we remember to do so.
             self.hint_fragment_copy(instr, src_fragment, dest_fragment);
@@ -211,11 +210,5 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .entry(b)
             .or_default()
             .push(TaggedFragmentCopyHint { hint, instr });
-    }
-
-    fn live_sets_interfere(&self, a: &[TaggedLiveRange], b: &[TaggedLiveRange]) -> bool {
-        let a = iter_slice_ranges(a, |tagged_range| (tagged_range.prog_range, &()));
-        let b = iter_slice_ranges(b, |tagged_range| (tagged_range.prog_range, &()));
-        iter_conflicts(a, b).next().is_some()
     }
 }

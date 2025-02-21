@@ -329,6 +329,16 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             for uncoalesced_copy in &self.uncoalesced_fragment_copy_hints[&fragment] {
                 let hint_fragment =
                     self.fragment_copy_hints[uncoalesced_copy.hint].get_other_fragment(fragment);
+
+                // Don't collect a hint here if the fragments still interfere somewhere, since we
+                // can't currently assign them to the same register anyway.
+                if self
+                    .first_fragment_conflict(fragment, hint_fragment)
+                    .is_some()
+                {
+                    continue;
+                }
+
                 self.collect_hint_from_fragment(uncoalesced_copy.instr, hint_fragment, probe_order);
             }
         }

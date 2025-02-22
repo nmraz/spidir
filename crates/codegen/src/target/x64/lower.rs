@@ -348,34 +348,23 @@ fn select_imul(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
 fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: IcmpKind) -> CondCode {
     let [op1, op2] = ctx.node_inputs_exact(node);
 
-    let ty = ctx.value_type(op1);
-
-    match (match_iconst(ctx, op1), kind, match_iconst(ctx, op2)) {
-        (Some(0), _, _) => {
-            emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
-            cond_code_for_icmp_zr(kind)
+    if let Some((op, imm, code)) = match_icmp_imm32(ctx, op1, op2, kind) {
+        if imm == 0 {
+            emit_alu_rr_discarded(ctx, op, op, AluOp::Test);
+        } else {
+            let op_size = operand_size_for_ty(ctx.value_type(op));
+            let op = ctx.get_value_vreg(op);
+            ctx.emit_instr(
+                X64Instr::AluRmI(op_size, AluOp::Cmp, imm),
+                &[],
+                &[UseOperand::any(op)],
+            );
         }
-        (Some(0xffffffffffffffff), IcmpKind::Slt, _) if ty.bit_width() == 64 => {
-            emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
-            cond_code_for_icmp_zr(IcmpKind::Sle)
-        }
-        (Some(0xffffffff), IcmpKind::Slt, _) if ty.bit_width() == 32 => {
-            emit_alu_rr_discarded(ctx, op2, op2, AluOp::Test);
-            cond_code_for_icmp_zr(IcmpKind::Sle)
-        }
-        (_, _, Some(0)) => {
-            emit_alu_rr_discarded(ctx, op1, op1, AluOp::Test);
-            cond_code_for_icmp_rz(kind)
-        }
-        (_, IcmpKind::Slt, Some(1)) => {
-            emit_alu_rr_discarded(ctx, op1, op1, AluOp::Test);
-            cond_code_for_icmp_rz(IcmpKind::Sle)
-        }
-        _ => {
-            emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
-            cond_code_for_icmp(kind)
-        }
+        return code;
     }
+
+    emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
+    cond_code_for_icmp(kind)
 }
 
 fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {
@@ -682,6 +671,35 @@ fn emit_alu_rr_discarded(
 
 // Matching helpers
 
+fn match_icmp_imm32(
+    ctx: &IselContext<'_, '_, X64Machine>,
+    op1: DepValue,
+    op2: DepValue,
+    mut kind: IcmpKind,
+) -> Option<(DepValue, i32, CondCode)> {
+    if let Some(mut c2) = match_imm32(ctx, op2) {
+        // Convert canonical `x < 1` to `x <= 0`.
+        if c2 == 1 && kind == IcmpKind::Slt {
+            c2 = 0;
+            kind = IcmpKind::Sle;
+        }
+
+        return Some((op1, c2, cond_code_for_icmp_ri(kind, c2)));
+    }
+
+    if let Some(mut c1) = match_imm32(ctx, op1) {
+        // Convert canonical `-1 < x` to `0 <= x`.
+        if c1 == -1 && kind == IcmpKind::Slt {
+            c1 = 0;
+            kind = IcmpKind::Sle;
+        }
+
+        return Some((op2, c1, cond_code_for_icmp_ir(kind, c1)));
+    }
+
+    None
+}
+
 fn match_imm32(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<i32> {
     if let Some(const_val) = match_iconst(ctx, value) {
         let ty = ctx.value_type(value);
@@ -713,14 +731,19 @@ fn match_stack_slot(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> O
     None
 }
 
-fn cond_code_for_icmp_zr(kind: IcmpKind) -> CondCode {
-    match kind {
-        IcmpKind::Eq => CondCode::E,
-        IcmpKind::Ne => CondCode::Ne,
-        IcmpKind::Slt => CondCode::G,
-        IcmpKind::Sle => CondCode::Ns,
-        IcmpKind::Ult => CondCode::Ne,
-        IcmpKind::Ule => CondCode::Ae,
+fn cond_code_for_icmp_ri(kind: IcmpKind, imm: i32) -> CondCode {
+    if imm == 0 {
+        cond_code_for_icmp_rz(kind)
+    } else {
+        cond_code_for_icmp(kind)
+    }
+}
+
+fn cond_code_for_icmp_ir(kind: IcmpKind, imm: i32) -> CondCode {
+    if imm == 0 {
+        cond_code_for_icmp_zr(kind)
+    } else {
+        cond_code_for_flipped_icmp(kind)
     }
 }
 
@@ -735,6 +758,17 @@ fn cond_code_for_icmp_rz(kind: IcmpKind) -> CondCode {
     }
 }
 
+fn cond_code_for_icmp_zr(kind: IcmpKind) -> CondCode {
+    match kind {
+        IcmpKind::Eq => CondCode::E,
+        IcmpKind::Ne => CondCode::Ne,
+        IcmpKind::Slt => CondCode::G,
+        IcmpKind::Sle => CondCode::Ns,
+        IcmpKind::Ult => CondCode::Ne,
+        IcmpKind::Ule => CondCode::Ae,
+    }
+}
+
 fn cond_code_for_icmp(kind: IcmpKind) -> CondCode {
     match kind {
         IcmpKind::Eq => CondCode::E,
@@ -743,6 +777,17 @@ fn cond_code_for_icmp(kind: IcmpKind) -> CondCode {
         IcmpKind::Sle => CondCode::Le,
         IcmpKind::Ult => CondCode::B,
         IcmpKind::Ule => CondCode::Be,
+    }
+}
+
+fn cond_code_for_flipped_icmp(kind: IcmpKind) -> CondCode {
+    match kind {
+        IcmpKind::Eq => CondCode::E,
+        IcmpKind::Ne => CondCode::Ne,
+        IcmpKind::Slt => CondCode::G,
+        IcmpKind::Sle => CondCode::Ge,
+        IcmpKind::Ult => CondCode::A,
+        IcmpKind::Ule => CondCode::Ae,
     }
 }
 

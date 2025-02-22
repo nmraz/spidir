@@ -16,106 +16,103 @@ func @"System.Int32 Tests.CodeGenBringUpTests::JTrueGeInt1(System.Int32)":i32(i3
     # nextln: 000026: 88 44 24 0b                     mov byte ptr [rsp + 0xb], al
     # nextln: 00002a: 89 04 24                        mov dword ptr [rsp], eax
     # nextln: 00002d: 33 c9                           xor ecx, ecx
-    # nextln: 00002f: b8 ff ff ff 7f                  mov eax, 0x7fffffff
-    # nextln: 000034: 3b f8                           cmp edi, eax
-    # nextln: 000036: 0f 9c c1                        setl cl
-    # nextln: 000039: 33 c0                           xor eax, eax
-    # nextln: 00003b: 85 c9                           test ecx, ecx
-    # nextln: 00003d: 0f 94 c0                        sete al
-    # nextln: 000040: b9 ff ff ff ff                  mov ecx, 0xffffffff
-    # nextln: 000045: 89 4c 24 04                     mov dword ptr [rsp + 4], ecx
-    # nextln: 000049: 88 44 24 08                     mov byte ptr [rsp + 8], al
-    # nextln: 00004d: 0f b6 44 24 08                  movzx eax, byte ptr [rsp + 8]
-    # nextln: 000052: 85 c0                           test eax, eax
-    # nextln: 000054: 0f 84 0e 00 00 00               je 0x68
-    # nextln: 00005a: b8 07 00 00 00                  mov eax, 7
-    # nextln: 00005f: 89 44 24 04                     mov dword ptr [rsp + 4], eax
-    # nextln: 000063: e9 19 01 00 00                  jmp 0x181
-    # nextln: 000068: b8 02 00 00 00                  mov eax, 2
-    # nextln: 00006d: 33 d2                           xor edx, edx
-    # nextln: 00006f: 3b f8                           cmp edi, eax
-    # nextln: 000071: 0f 9c c2                        setl dl
-    # nextln: 000074: 33 f6                           xor esi, esi
-    # nextln: 000076: 85 d2                           test edx, edx
-    # nextln: 000078: 40 0f 94 c6                     sete sil
-    # nextln: 00007c: 40 88 74 24 0d                  mov byte ptr [rsp + 0xd], sil
-    # nextln: 000081: 0f b6 54 24 0d                  movzx edx, byte ptr [rsp + 0xd]
-    # nextln: 000086: 85 d2                           test edx, edx
-    # nextln: 000088: 0f 84 0e 00 00 00               je 0x9c
-    # nextln: 00008e: b8 06 00 00 00                  mov eax, 6
-    # nextln: 000093: 89 44 24 04                     mov dword ptr [rsp + 4], eax
-    # nextln: 000097: e9 e5 00 00 00                  jmp 0x181
-    # nextln: 00009c: 33 d2                           xor edx, edx
-    # nextln: 00009e: 85 ff                           test edi, edi
-    # nextln: 0000a0: 0f 9e c2                        setle dl
-    # nextln: 0000a3: 33 f6                           xor esi, esi
-    # nextln: 0000a5: 85 d2                           test edx, edx
-    # nextln: 0000a7: 40 0f 94 c6                     sete sil
-    # nextln: 0000ab: 40 88 74 24 09                  mov byte ptr [rsp + 9], sil
-    # nextln: 0000b0: 0f b6 54 24 09                  movzx edx, byte ptr [rsp + 9]
-    # nextln: 0000b5: 85 d2                           test edx, edx
-    # nextln: 0000b7: 0f 84 0e 00 00 00               je 0xcb
-    # nextln: 0000bd: b8 05 00 00 00                  mov eax, 5
-    # nextln: 0000c2: 89 44 24 04                     mov dword ptr [rsp + 4], eax
-    # nextln: 0000c6: e9 b6 00 00 00                  jmp 0x181
-    # nextln: 0000cb: 33 d2                           xor edx, edx
-    # nextln: 0000cd: 85 ff                           test edi, edi
-    # nextln: 0000cf: 0f 98 c2                        sets dl
-    # nextln: 0000d2: 33 f6                           xor esi, esi
-    # nextln: 0000d4: 85 d2                           test edx, edx
-    # nextln: 0000d6: 40 0f 94 c6                     sete sil
-    # nextln: 0000da: 40 88 74 24 0e                  mov byte ptr [rsp + 0xe], sil
-    # nextln: 0000df: 0f b6 54 24 0e                  movzx edx, byte ptr [rsp + 0xe]
-    # nextln: 0000e4: 85 d2                           test edx, edx
-    # nextln: 0000e6: 0f 84 0e 00 00 00               je 0xfa
-    # nextln: 0000ec: b8 04 00 00 00                  mov eax, 4
-    # nextln: 0000f1: 89 44 24 04                     mov dword ptr [rsp + 4], eax
-    # nextln: 0000f5: e9 87 00 00 00                  jmp 0x181
-    # nextln: 0000fa: 33 d2                           xor edx, edx
-    # nextln: 0000fc: 3b f9                           cmp edi, ecx
-    # nextln: 0000fe: 0f 9c c2                        setl dl
-    # nextln: 000101: 33 c9                           xor ecx, ecx
-    # nextln: 000103: 85 d2                           test edx, edx
-    # nextln: 000105: 0f 94 c1                        sete cl
-    # nextln: 000108: 88 4c 24 0c                     mov byte ptr [rsp + 0xc], cl
-    # nextln: 00010c: 0f b6 4c 24 0c                  movzx ecx, byte ptr [rsp + 0xc]
-    # nextln: 000111: 85 c9                           test ecx, ecx
-    # nextln: 000113: 0f 84 0e 00 00 00               je 0x127
-    # nextln: 000119: b8 03 00 00 00                  mov eax, 3
-    # nextln: 00011e: 89 44 24 04                     mov dword ptr [rsp + 4], eax
-    # nextln: 000122: e9 5a 00 00 00                  jmp 0x181
-    # nextln: 000127: 33 c9                           xor ecx, ecx
-    # nextln: 000129: ba 01 00 00 80                  mov edx, 0x80000001
-    # nextln: 00012e: 3b fa                           cmp edi, edx
-    # nextln: 000130: 0f 9c c1                        setl cl
-    # nextln: 000133: 33 d2                           xor edx, edx
-    # nextln: 000135: 85 c9                           test ecx, ecx
-    # nextln: 000137: 0f 94 c2                        sete dl
-    # nextln: 00013a: 88 54 24 0a                     mov byte ptr [rsp + 0xa], dl
-    # nextln: 00013e: 0f b6 4c 24 0a                  movzx ecx, byte ptr [rsp + 0xa]
-    # nextln: 000143: 85 c9                           test ecx, ecx
-    # nextln: 000145: 0f 84 09 00 00 00               je 0x154
-    # nextln: 00014b: 89 44 24 04                     mov dword ptr [rsp + 4], eax
-    # nextln: 00014f: e9 2d 00 00 00                  jmp 0x181
-    # nextln: 000154: 33 c0                           xor eax, eax
-    # nextln: 000156: b9 00 00 00 80                  mov ecx, 0x80000000
-    # nextln: 00015b: 3b f9                           cmp edi, ecx
-    # nextln: 00015d: 0f 9c c0                        setl al
-    # nextln: 000160: 33 c9                           xor ecx, ecx
-    # nextln: 000162: 85 c0                           test eax, eax
-    # nextln: 000164: 0f 94 c1                        sete cl
-    # nextln: 000167: 88 4c 24 0b                     mov byte ptr [rsp + 0xb], cl
-    # nextln: 00016b: 0f b6 44 24 0b                  movzx eax, byte ptr [rsp + 0xb]
-    # nextln: 000170: 85 c0                           test eax, eax
-    # nextln: 000172: 0f 84 09 00 00 00               je 0x181
-    # nextln: 000178: b8 01 00 00 00                  mov eax, 1
-    # nextln: 00017d: 89 44 24 04                     mov dword ptr [rsp + 4], eax
-    # nextln: 000181: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
-    # nextln: 000185: 89 04 24                        mov dword ptr [rsp], eax
-    # nextln: 000188: 8b 04 24                        mov eax, dword ptr [rsp]
-    # nextln: 00018b: 48 83 c4 10                     add rsp, 0x10
-    # nextln: 00018f: 5d                              pop rbp
-    # nextln: 000190: c3                              ret
+    # nextln: 00002f: 81 ff ff ff ff 7f               cmp edi, 0x7fffffff
+    # nextln: 000035: 0f 9c c1                        setl cl
+    # nextln: 000038: 33 c0                           xor eax, eax
+    # nextln: 00003a: 85 c9                           test ecx, ecx
+    # nextln: 00003c: 0f 94 c0                        sete al
+    # nextln: 00003f: b9 ff ff ff ff                  mov ecx, 0xffffffff
+    # nextln: 000044: 89 4c 24 04                     mov dword ptr [rsp + 4], ecx
+    # nextln: 000048: 88 44 24 08                     mov byte ptr [rsp + 8], al
+    # nextln: 00004c: 0f b6 44 24 08                  movzx eax, byte ptr [rsp + 8]
+    # nextln: 000051: 85 c0                           test eax, eax
+    # nextln: 000053: 0f 84 0e 00 00 00               je 0x67
+    # nextln: 000059: b8 07 00 00 00                  mov eax, 7
+    # nextln: 00005e: 89 44 24 04                     mov dword ptr [rsp + 4], eax
+    # nextln: 000062: e9 13 01 00 00                  jmp 0x17a
+    # nextln: 000067: 33 c0                           xor eax, eax
+    # nextln: 000069: 83 ff 02                        cmp edi, 2
+    # nextln: 00006c: 0f 9c c0                        setl al
+    # nextln: 00006f: 33 c9                           xor ecx, ecx
+    # nextln: 000071: 85 c0                           test eax, eax
+    # nextln: 000073: 0f 94 c1                        sete cl
+    # nextln: 000076: 88 4c 24 0d                     mov byte ptr [rsp + 0xd], cl
+    # nextln: 00007a: 0f b6 44 24 0d                  movzx eax, byte ptr [rsp + 0xd]
+    # nextln: 00007f: 85 c0                           test eax, eax
+    # nextln: 000081: 0f 84 0e 00 00 00               je 0x95
+    # nextln: 000087: b8 06 00 00 00                  mov eax, 6
+    # nextln: 00008c: 89 44 24 04                     mov dword ptr [rsp + 4], eax
+    # nextln: 000090: e9 e5 00 00 00                  jmp 0x17a
+    # nextln: 000095: 33 c0                           xor eax, eax
+    # nextln: 000097: 85 ff                           test edi, edi
+    # nextln: 000099: 0f 9e c0                        setle al
+    # nextln: 00009c: 33 c9                           xor ecx, ecx
+    # nextln: 00009e: 85 c0                           test eax, eax
+    # nextln: 0000a0: 0f 94 c1                        sete cl
+    # nextln: 0000a3: 88 4c 24 09                     mov byte ptr [rsp + 9], cl
+    # nextln: 0000a7: 0f b6 44 24 09                  movzx eax, byte ptr [rsp + 9]
+    # nextln: 0000ac: 85 c0                           test eax, eax
+    # nextln: 0000ae: 0f 84 0e 00 00 00               je 0xc2
+    # nextln: 0000b4: b8 05 00 00 00                  mov eax, 5
+    # nextln: 0000b9: 89 44 24 04                     mov dword ptr [rsp + 4], eax
+    # nextln: 0000bd: e9 b8 00 00 00                  jmp 0x17a
+    # nextln: 0000c2: 33 c0                           xor eax, eax
+    # nextln: 0000c4: 85 ff                           test edi, edi
+    # nextln: 0000c6: 0f 98 c0                        sets al
+    # nextln: 0000c9: 33 c9                           xor ecx, ecx
+    # nextln: 0000cb: 85 c0                           test eax, eax
+    # nextln: 0000cd: 0f 94 c1                        sete cl
+    # nextln: 0000d0: 88 4c 24 0e                     mov byte ptr [rsp + 0xe], cl
+    # nextln: 0000d4: 0f b6 44 24 0e                  movzx eax, byte ptr [rsp + 0xe]
+    # nextln: 0000d9: 85 c0                           test eax, eax
+    # nextln: 0000db: 0f 84 0e 00 00 00               je 0xef
+    # nextln: 0000e1: b8 04 00 00 00                  mov eax, 4
+    # nextln: 0000e6: 89 44 24 04                     mov dword ptr [rsp + 4], eax
+    # nextln: 0000ea: e9 8b 00 00 00                  jmp 0x17a
+    # nextln: 0000ef: 33 c0                           xor eax, eax
+    # nextln: 0000f1: 83 ff ff                        cmp edi, -1
+    # nextln: 0000f4: 0f 9c c0                        setl al
+    # nextln: 0000f7: 33 c9                           xor ecx, ecx
+    # nextln: 0000f9: 85 c0                           test eax, eax
+    # nextln: 0000fb: 0f 94 c1                        sete cl
+    # nextln: 0000fe: 88 4c 24 0c                     mov byte ptr [rsp + 0xc], cl
+    # nextln: 000102: 0f b6 44 24 0c                  movzx eax, byte ptr [rsp + 0xc]
+    # nextln: 000107: 85 c0                           test eax, eax
+    # nextln: 000109: 0f 84 0e 00 00 00               je 0x11d
+    # nextln: 00010f: b8 03 00 00 00                  mov eax, 3
+    # nextln: 000114: 89 44 24 04                     mov dword ptr [rsp + 4], eax
+    # nextln: 000118: e9 5d 00 00 00                  jmp 0x17a
+    # nextln: 00011d: 33 c0                           xor eax, eax
+    # nextln: 00011f: 81 ff 01 00 00 80               cmp edi, 0x80000001
+    # nextln: 000125: 0f 9c c0                        setl al
+    # nextln: 000128: 33 c9                           xor ecx, ecx
+    # nextln: 00012a: 85 c0                           test eax, eax
+    # nextln: 00012c: 0f 94 c1                        sete cl
+    # nextln: 00012f: 88 4c 24 0a                     mov byte ptr [rsp + 0xa], cl
+    # nextln: 000133: 0f b6 44 24 0a                  movzx eax, byte ptr [rsp + 0xa]
+    # nextln: 000138: 85 c0                           test eax, eax
+    # nextln: 00013a: 0f 84 0e 00 00 00               je 0x14e
+    # nextln: 000140: b8 02 00 00 00                  mov eax, 2
+    # nextln: 000145: 89 44 24 04                     mov dword ptr [rsp + 4], eax
+    # nextln: 000149: e9 2c 00 00 00                  jmp 0x17a
+    # nextln: 00014e: 33 c0                           xor eax, eax
+    # nextln: 000150: 81 ff 00 00 00 80               cmp edi, 0x80000000
+    # nextln: 000156: 0f 9c c0                        setl al
+    # nextln: 000159: 33 c9                           xor ecx, ecx
+    # nextln: 00015b: 85 c0                           test eax, eax
+    # nextln: 00015d: 0f 94 c1                        sete cl
+    # nextln: 000160: 88 4c 24 0b                     mov byte ptr [rsp + 0xb], cl
+    # nextln: 000164: 0f b6 44 24 0b                  movzx eax, byte ptr [rsp + 0xb]
+    # nextln: 000169: 85 c0                           test eax, eax
+    # nextln: 00016b: 0f 84 09 00 00 00               je 0x17a
+    # nextln: 000171: b8 01 00 00 00                  mov eax, 1
+    # nextln: 000176: 89 44 24 04                     mov dword ptr [rsp + 4], eax
+    # nextln: 00017a: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
+    # nextln: 00017e: 89 04 24                        mov dword ptr [rsp], eax
+    # nextln: 000181: 8b 04 24                        mov eax, dword ptr [rsp]
+    # nextln: 000184: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 000188: 5d                              pop rbp
+    # nextln: 000189: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:ctrl, %3:phisel = region %0

@@ -282,24 +282,41 @@ fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluBinO
         return;
     }
 
-    match (op, match_iconst(ctx, op2)) {
-        (AluBinOp::Xor, Some(c)) if c == ty.all_ones_val() => {
+    let c2 = match_iconst(ctx, op2);
+
+    if op == AluBinOp::Xor && c2 == Some(ty.all_ones_val()) {
+        let op1 = ctx.get_value_vreg(op1);
+        emit_alu_r(ctx, ty, op1, output, AluUnOp::Not);
+        return;
+    }
+
+    if let (AluBinOp::And, Some(c2)) = (op, c2) {
+        let zext_size = match c2 {
+            0xff => Some(FullOperandSize::S8),
+            0xffff => Some(FullOperandSize::S16),
+            0xffffffff => Some(FullOperandSize::S32),
+            _ => None,
+        };
+
+        if let Some(zext_size) = zext_size {
             let op1 = ctx.get_value_vreg(op1);
-            emit_alu_r(ctx, ty, op1, output, AluUnOp::Not);
+            ctx.emit_instr(
+                X64Instr::MovzxRRm(zext_size),
+                &[DefOperand::any_reg(output)],
+                &[UseOperand::any(op1)],
+            );
             return;
         }
-        (_, Some(imm)) => {
-            if let Some(imm) = as_imm32(ty, imm) {
-                let op1 = ctx.get_value_vreg(op1);
-                ctx.emit_instr(
-                    X64Instr::AluRmI(op_size, op, imm),
-                    &[DefOperand::any(output)],
-                    &[UseOperand::tied(op1, 0)],
-                );
-                return;
-            }
-        }
-        _ => {}
+    }
+
+    if let Some(imm) = c2.and_then(|c2| as_imm32(ty, c2)) {
+        let op1 = ctx.get_value_vreg(op1);
+        ctx.emit_instr(
+            X64Instr::AluRmI(op_size, op, imm),
+            &[DefOperand::any(output)],
+            &[UseOperand::tied(op1, 0)],
+        );
+        return;
     }
 
     let op1 = ctx.get_value_vreg(op1);

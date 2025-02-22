@@ -1,0 +1,71 @@
+# run: codegen
+
+func @zext_8_32:i32(i32) {
+    # check: function `zext_8_32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 40 0f b6 c7                     movzx eax, dil
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %0:ctrl, %1:i32 = entry
+    %m:i32 = iconst 255
+    %2:i32 = and %1, %m
+    return %0, %2
+}
+
+func @zext_16_32:i32(i32) {
+    # check: function `zext_16_32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 0f b7 c7                        movzx eax, di
+    # nextln: 000007: 5d                              pop rbp
+    # nextln: 000008: c3                              ret
+
+    %0:ctrl, %1:i32 = entry
+    %m:i32 = iconst 65535
+    %2:i32 = and %1, %m
+    return %0, %2
+}
+
+func @zext_8_64:i64(i64) {
+    # check: function `zext_8_64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 40 0f b6 c7                     movzx eax, dil
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %0:ctrl, %1:i64 = entry
+    %m:i64 = iconst 255
+    %2:i64 = and %1, %m
+    return %0, %2
+}
+
+func @zext_16_64:i64(i64) {
+    # check: function `zext_16_64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 0f b7 c7                        movzx eax, di
+    # nextln: 000007: 5d                              pop rbp
+    # nextln: 000008: c3                              ret
+
+    %0:ctrl, %1:i64 = entry
+    %m:i64 = iconst 65535
+    %2:i64 = and %1, %m
+    return %0, %2
+}
+
+func @zext_32_64:i64(i64) {
+    # check: function `zext_32_64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 8b c7                           mov eax, edi
+    # nextln: 000006: 5d                              pop rbp
+    # nextln: 000007: c3                              ret
+
+    %0:ctrl, %1:i64 = entry
+    %m:i64 = iconst 4294967295
+    %2:i64 = and %1, %m
+    return %0, %2
+}

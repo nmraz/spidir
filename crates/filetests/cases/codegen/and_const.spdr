@@ -34,11 +34,9 @@ func @and_pos_large64:i64(i64) {
     # check: function `and_pos_large64`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: b9 ff ff ff ff                  mov ecx, 0xffffffff
-    # nextln: 00000c: 48 23 c1                        and rax, rcx
-    # nextln: 00000f: 5d                              pop rbp
-    # nextln: 000010: c3                              ret
+    # nextln: 000004: 8b c7                           mov eax, edi
+    # nextln: 000006: 5d                              pop rbp
+    # nextln: 000007: c3                              ret
 
     %c:ctrl, %a:i64 = entry
     %b:i64 = iconst 4294967295

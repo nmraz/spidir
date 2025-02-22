@@ -27,9 +27,8 @@ func @and_neg64:i64(i64) {
 func @and_pos_large64:i64(i64) {
     # check: function `and_pos_large64`:
     # nextln:       block0[%1:gpr($$rdi)]:
-    # nextln: 0000:      %2:gpr(reg)[late] = MovRU32(4294967295)
-    # nextln: 0001:      %0:gpr(reg)[late] = AluRRm(S64, And) %1(tied:0)[early], %2(any)[early]
-    # nextln: 0002:      Ret %0($$rax)[early]
+    # nextln: 0000:      %0:gpr(reg)[late] = MovzxRRm(S32) %1(any)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i64 = entry
     %b:i64 = iconst 4294967295

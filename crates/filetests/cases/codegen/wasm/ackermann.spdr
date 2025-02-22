@@ -1,0 +1,54 @@
+# run: codegen
+
+func @func00000001:i64(i32, i32) {
+    # check: function `func00000001`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 53                              push rbx
+    # nextln: 000005: 50                              push rax
+    # nextln: 000006: 48 89 fb                        mov rbx, rdi
+    # nextln: 000009: 85 db                           test ebx, ebx
+    # nextln: 00000b: 0f 84 2b 00 00 00               je 0x3c
+    # nextln: 000011: 85 f6                           test esi, esi
+    # nextln: 000013: 0f 84 13 00 00 00               je 0x2c
+    # nextln: 000019: 83 c6 ff                        add esi, -1
+    # nextln: 00001c: 48 89 df                        mov rdi, rbx
+    # nextln: 00001f: e8 00 00 00 00                  call 0x24  # RELOC_PC32 -> @func00000001 + -4
+    # nextln: 000024: 48 89 c6                        mov rsi, rax
+    # nextln: 000027: e9 05 00 00 00                  jmp 0x31
+    # nextln: 00002c: be 01 00 00 00                  mov esi, 1
+    # nextln: 000031: 83 c3 ff                        add ebx, -1
+    # nextln: 000034: 85 db                           test ebx, ebx
+    # nextln: 000036: 0f 85 d5 ff ff ff               jne 0x11
+    # nextln: 00003c: 83 c6 01                        add esi, 1
+    # nextln: 00003f: 8b c6                           mov eax, esi
+    # nextln: 000041: 48 83 c4 08                     add rsp, 8
+    # nextln: 000045: 5b                              pop rbx
+    # nextln: 000046: 5d                              pop rbp
+    # nextln: 000047: c3                              ret
+
+    %0:ctrl, %1:i32, %2:i32 = entry
+    %44:i64 = iconst 4294967295
+    %31:i32 = iconst 1
+    %32:i32 = iconst 4294967295
+    %9:i32 = iconst 0
+    %10:i32 = icmp eq %1, %9
+    %13:ctrl, %14:ctrl = brcond %0, %10
+    %15:ctrl, %16:phisel = region %14, %40
+    %17:i32 = phi %16, %1, %37
+    %37:i32 = iadd %17, %32
+    %34:ctrl, %35:i64 = call @func00000001 %29, %17, %33
+    %36:i32 = itrunc %35
+    %22:i32 = phi %20, %31, %36
+    %18:i32 = phi %16, %2, %22
+    %33:i32 = iadd %18, %32
+    %29:ctrl, %30:ctrl = brcond %15, %18
+    %19:ctrl, %20:phisel = region %30, %34
+    %40:ctrl, %41:ctrl = brcond %19, %37
+    %5:ctrl, %6:phisel = region %13, %41
+    %8:i32 = phi %6, %2, %22
+    %42:i32 = iadd %8, %31
+    %43:i64 = iext %42
+    %45:i64 = and %43, %44
+    return %5, %45
+}

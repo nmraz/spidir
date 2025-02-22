@@ -1,0 +1,31 @@
+# run: codegen
+
+func @not64:i64(i64) {
+    # check: function `not64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: 48 f7 d0                        not rax
+    # nextln: 00000a: 5d                              pop rbp
+    # nextln: 00000b: c3                              ret
+
+    %c:ctrl, %a:i64 = entry
+    %f:i64 = iconst 18446744073709551615
+    %r:i64 = xor %a, %f
+    return %c, %r
+}
+
+func @not32:i32(i32) {
+    # check: function `not32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 89 f8                        mov rax, rdi
+    # nextln: 000007: f7 d0                           not eax
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
+
+    %c:ctrl, %a:i32 = entry
+    %f:i32 = iconst 4294967295
+    %r:i32 = xor %a, %f
+    return %c, %r
+}

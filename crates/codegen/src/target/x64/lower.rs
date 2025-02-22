@@ -278,22 +278,28 @@ fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluBinO
 
     if op == AluBinOp::Sub && match_iconst(ctx, op1) == Some(0) {
         let op2 = ctx.get_value_vreg(op2);
-        ctx.emit_instr(
-            X64Instr::AluRm(op_size, AluUnOp::Neg),
-            &[DefOperand::any(output)],
-            &[UseOperand::tied(op2, 0)],
-        );
+        emit_alu_r(ctx, ty, op2, output, AluUnOp::Neg);
         return;
     }
 
-    if let Some(imm) = match_imm32(ctx, op2) {
-        let op1 = ctx.get_value_vreg(op1);
-        ctx.emit_instr(
-            X64Instr::AluRmI(op_size, op, imm),
-            &[DefOperand::any(output)],
-            &[UseOperand::tied(op1, 0)],
-        );
-        return;
+    match (op, match_iconst(ctx, op2)) {
+        (AluBinOp::Xor, Some(c)) if c == ty.all_ones_val() => {
+            let op1 = ctx.get_value_vreg(op1);
+            emit_alu_r(ctx, ty, op1, output, AluUnOp::Not);
+            return;
+        }
+        (_, Some(imm)) => {
+            if let Some(imm) = as_imm32(ty, imm) {
+                let op1 = ctx.get_value_vreg(op1);
+                ctx.emit_instr(
+                    X64Instr::AluRmI(op_size, op, imm),
+                    &[DefOperand::any(output)],
+                    &[UseOperand::tied(op1, 0)],
+                );
+                return;
+            }
+        }
+        _ => {}
     }
 
     let op1 = ctx.get_value_vreg(op1);
@@ -677,6 +683,20 @@ fn emit_alu_rr_discarded(
         X64Instr::AluRRm(operand_size_for_ty(ty), op),
         &[],
         &[UseOperand::any_reg(op1), UseOperand::any(op2)],
+    );
+}
+
+fn emit_alu_r(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    ty: Type,
+    input: VirtReg,
+    output: VirtReg,
+    op: AluUnOp,
+) {
+    ctx.emit_instr(
+        X64Instr::AluRm(operand_size_for_ty(ty), op),
+        &[DefOperand::any(output)],
+        &[UseOperand::tied(input, 0)],
     );
 }
 

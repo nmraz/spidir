@@ -97,8 +97,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, bitand),
 
                 (_, Some(0)) => replace_with_iconst(ctx, output, 0),
-                (_, Some(0xffffffff)) if ty == Type::I32 => ctx.replace_value(output, a),
-                (_, Some(0xffffffffffffffff)) => ctx.replace_value(output, a),
+                (_, Some(c)) if c == ty.all_ones_val() => ctx.replace_value(output, a),
 
                 (Some(_), None) => commute_node_inputs(ctx, node, a, b),
 
@@ -114,12 +113,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, bitor),
 
                 (_, Some(0)) => ctx.replace_value(output, a),
-                (_, Some(0xffffffff)) if ty == Type::I32 => {
-                    replace_with_iconst(ctx, output, 0xffffffff)
-                }
-                (_, Some(0xffffffffffffffff)) => {
-                    replace_with_iconst(ctx, output, 0xffffffffffffffff)
-                }
+                (_, Some(c)) if c == ty.all_ones_val() => replace_with_iconst(ctx, output, c),
 
                 (Some(_), None) => commute_node_inputs(ctx, node, a, b),
 

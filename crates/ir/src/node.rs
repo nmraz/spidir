@@ -49,6 +49,22 @@ impl Type {
     pub fn bit_width(self) -> usize {
         self.byte_size() * 8
     }
+
+    #[inline]
+    pub fn extend_s32(self, val: i32) -> u64 {
+        if self == Self::I32 {
+            // Keep the value as 32 bits.
+            val as u32 as u64
+        } else {
+            // Sign-extend to 64 bits.
+            val as u64
+        }
+    }
+
+    #[inline]
+    pub fn all_ones_val(self) -> u64 {
+        self.extend_s32(-1)
+    }
 }
 
 impl fmt::Display for Type {

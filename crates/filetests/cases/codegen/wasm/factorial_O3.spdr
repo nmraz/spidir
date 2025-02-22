@@ -1,0 +1,147 @@
+# run: codegen
+
+func @func00000001:i64(i32) {
+    # check: function `func00000001`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: b8 01 00 00 00                  mov eax, 1
+    # nextln: 000009: 85 ff                           test edi, edi
+    # nextln: 00000b: 0f 8e d8 00 00 00               jle 0xe9
+    # nextln: 000011: 83 c7 01                        add edi, 1
+    # nextln: 000014: 48 89 fa                        mov rdx, rdi
+    # nextln: 000017: 48 83 c2 fe                     add rdx, -2
+    # nextln: 00001b: 49 89 f8                        mov r8, rdi
+    # nextln: 00001e: 49 83 c0 ff                     add r8, -1
+    # nextln: 000022: 4c 89 c1                        mov rcx, r8
+    # nextln: 000025: 48 83 e1 07                     and rcx, 7
+    # nextln: 000029: 33 f6                           xor esi, esi
+    # nextln: 00002b: 41 b9 06 00 00 00               mov r9d, 6
+    # nextln: 000031: 4c 3b ca                        cmp r9, rdx
+    # nextln: 000034: 0f 83 87 00 00 00               jae 0xc1
+    # nextln: 00003a: 48 83 c7 f7                     add rdi, -9
+    # nextln: 00003e: 49 83 e0 f8                     and r8, 0xfffffffffffffff8
+    # nextln: 000042: 48 89 fa                        mov rdx, rdi
+    # nextln: 000045: 48 83 e2 f8                     and rdx, 0xfffffffffffffff8
+    # nextln: 000049: 49 2b f0                        sub rsi, r8
+    # nextln: 00004c: bf 08 00 00 00                  mov edi, 8
+    # nextln: 000051: 49 89 f8                        mov r8, rdi
+    # nextln: 000054: 4d 89 c1                        mov r9, r8
+    # nextln: 000057: 49 83 c1 f9                     add r9, -7
+    # nextln: 00005b: 49 0f af c1                     imul rax, r9
+    # nextln: 00005f: 4d 89 c1                        mov r9, r8
+    # nextln: 000062: 49 83 c1 fa                     add r9, -6
+    # nextln: 000066: 49 0f af c1                     imul rax, r9
+    # nextln: 00006a: 4d 89 c1                        mov r9, r8
+    # nextln: 00006d: 49 83 c1 fb                     add r9, -5
+    # nextln: 000071: 49 0f af c1                     imul rax, r9
+    # nextln: 000075: 4d 89 c1                        mov r9, r8
+    # nextln: 000078: 49 83 c1 fc                     add r9, -4
+    # nextln: 00007c: 49 0f af c1                     imul rax, r9
+    # nextln: 000080: 4d 89 c1                        mov r9, r8
+    # nextln: 000083: 49 83 c1 fd                     add r9, -3
+    # nextln: 000087: 49 0f af c1                     imul rax, r9
+    # nextln: 00008b: 4d 89 c1                        mov r9, r8
+    # nextln: 00008e: 49 83 c1 fe                     add r9, -2
+    # nextln: 000092: 49 0f af c1                     imul rax, r9
+    # nextln: 000096: 4d 89 c1                        mov r9, r8
+    # nextln: 000099: 49 83 c1 ff                     add r9, -1
+    # nextln: 00009d: 49 0f af c1                     imul rax, r9
+    # nextln: 0000a1: 49 0f af c0                     imul rax, r8
+    # nextln: 0000a5: 49 83 c0 08                     add r8, 8
+    # nextln: 0000a9: 49 89 f1                        mov r9, rsi
+    # nextln: 0000ac: 4d 03 c8                        add r9, r8
+    # nextln: 0000af: 4c 3b cf                        cmp r9, rdi
+    # nextln: 0000b2: 0f 85 9c ff ff ff               jne 0x54
+    # nextln: 0000b8: 48 83 c2 09                     add rdx, 9
+    # nextln: 0000bc: e9 03 00 00 00                  jmp 0xc4
+    # nextln: 0000c1: 48 89 c2                        mov rdx, rax
+    # nextln: 0000c4: 48 85 c9                        test rcx, rcx
+    # nextln: 0000c7: 0f 84 1a 00 00 00               je 0xe7
+    # nextln: 0000cd: 48 83 c1 ff                     add rcx, -1
+    # nextln: 0000d1: 48 0f af c2                     imul rax, rdx
+    # nextln: 0000d5: 48 85 c9                        test rcx, rcx
+    # nextln: 0000d8: 0f 84 09 00 00 00               je 0xe7
+    # nextln: 0000de: 48 83 c2 01                     add rdx, 1
+    # nextln: 0000e2: e9 e6 ff ff ff                  jmp 0xcd
+    # nextln: 0000e7: 5d                              pop rbp
+    # nextln: 0000e8: c3                              ret
+    # nextln: 0000e9: 5d                              pop rbp
+    # nextln: 0000ea: c3                              ret
+
+    %0:ctrl, %1:i32 = entry
+    %2:i64 = iconst 1
+    %3:i64 = iconst 9
+    %4:i64 = iconst 18446744073709551608
+    %5:i64 = iconst 18446744073709551607
+    %7:i32 = iconst 1
+    %8:i32 = iadd %1, %7
+    %9:i64 = iext %8
+    %11:i64 = iadd %9, %5
+    %12:i64 = and %11, %4
+    %15:i64 = iconst 8
+    %6:i64 = iconst 18446744073709551615
+    %13:i64 = iadd %9, %6
+    %14:i64 = and %13, %4
+    %16:i64 = iconst 0
+    %17:i64 = isub %16, %14
+    %18:i64 = iconst 18446744073709551614
+    %19:i64 = iadd %9, %18
+    %20:i64 = iconst 18446744073709551613
+    %21:i64 = iconst 18446744073709551612
+    %22:i64 = iconst 18446744073709551611
+    %23:i64 = iconst 18446744073709551610
+    %24:i64 = iconst 18446744073709551609
+    %25:i64 = iconst 7
+    %26:i64 = and %13, %25
+    %27:i64 = iconst 6
+    %28:i32 = icmp ult %27, %19
+    %29:i32 = iconst 0
+    %30:i32 = icmp slt %29, %1
+    %31:ctrl, %32:ctrl = brcond %0, %30
+    %33:ctrl, %34:ctrl = brcond %31, %28
+    %35:ctrl, %36:phisel = region %33, %45
+    %41:i64 = phi %36, %15, %42
+    %53:i64 = iadd %41, %24
+    %52:i64 = iadd %41, %23
+    %51:i64 = iadd %41, %22
+    %50:i64 = iadd %41, %21
+    %49:i64 = iadd %41, %20
+    %48:i64 = iadd %41, %18
+    %47:i64 = iadd %41, %6
+    %60:i64 = imul %59, %47
+    %61:i64 = imul %60, %41
+    %62:i64 = phi %36, %2, %61
+    %54:i64 = imul %62, %53
+    %55:i64 = imul %54, %52
+    %56:i64 = imul %55, %51
+    %57:i64 = imul %56, %50
+    %58:i64 = imul %57, %49
+    %59:i64 = imul %58, %48
+    %42:i64 = iadd %41, %15
+    %40:i64 = phi %36, %26, %40
+    %39:i64 = phi %36, %17, %39
+    %43:i64 = iadd %39, %42
+    %44:i32 = icmp ne %43, %15
+    %45:ctrl, %46:ctrl = brcond %35, %44
+    %37:i64 = phi %36, %12, %37
+    %38:i64 = iadd %37, %3
+    %63:ctrl, %64:phisel = region %34, %46
+    %79:i64 = phi %64, %2, %38
+    %78:i64 = phi %64, %2, %61
+    %65:i64 = phi %64, %26, %40
+    %66:i32 = icmp eq %65, %16
+    %67:ctrl, %68:ctrl = brcond %63, %66
+    %69:ctrl, %70:phisel = region %68, %74
+    %80:i64 = phi %70, %79, %81
+    %82:i64 = imul %84, %80
+    %84:i64 = phi %70, %78, %82
+    %81:i64 = iadd %80, %2
+    %71:i64 = phi %70, %65, %72
+    %72:i64 = iadd %71, %6
+    %73:i32 = icmp ne %72, %16
+    %74:ctrl, %75:ctrl = brcond %69, %73
+    %76:ctrl, %77:phisel = region %67, %75
+    %83:i64 = phi %77, %78, %82
+    return %76, %83
+    return %32, %2
+}

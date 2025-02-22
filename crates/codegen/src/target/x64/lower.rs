@@ -712,11 +712,12 @@ fn match_icmp_imm32(
 }
 
 fn match_imm32(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<i32> {
-    if let Some(const_val) = match_iconst(ctx, value) {
-        let ty = ctx.value_type(value);
-        if ty == Type::I32 || is_sint::<32>(const_val) {
-            return Some(const_val as i32);
-        }
+    match_iconst(ctx, value).and_then(|const_val| as_imm32(ctx.value_type(value), const_val))
+}
+
+fn as_imm32(ty: Type, val: u64) -> Option<i32> {
+    if ty == Type::I32 || is_sint::<32>(val) {
+        return Some(val as i32);
     }
 
     None

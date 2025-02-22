@@ -1,0 +1,44 @@
+# run: codegen
+
+func @func00000001:i64(i32) {
+    # check: function `func00000001`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: b8 01 00 00 00                  mov eax, 1
+    # nextln: 000009: 85 ff                           test edi, edi
+    # nextln: 00000b: 0f 8e 24 00 00 00               jle 0x35
+    # nextln: 000011: 83 c7 01                        add edi, 1
+    # nextln: 000014: 8b cf                           mov ecx, edi
+    # nextln: 000016: 48 89 c7                        mov rdi, rax
+    # nextln: 000019: 48 89 fa                        mov rdx, rdi
+    # nextln: 00001c: 48 83 c2 01                     add rdx, 1
+    # nextln: 000020: 48 0f af c7                     imul rax, rdi
+    # nextln: 000024: 48 3b ca                        cmp rcx, rdx
+    # nextln: 000027: 0f 84 08 00 00 00               je 0x35
+    # nextln: 00002d: 48 89 d7                        mov rdi, rdx
+    # nextln: 000030: e9 e4 ff ff ff                  jmp 0x19
+    # nextln: 000035: 5d                              pop rbp
+    # nextln: 000036: c3                              ret
+
+    %0:ctrl, %1:i32 = entry
+    %23:i64 = iconst 1
+    %26:i64 = iconst 4294967295
+    %17:i32 = iconst 1
+    %24:i32 = iadd %1, %17
+    %25:i64 = iext %24
+    %27:i64 = and %25, %26
+    %41:i32 = iconst 0
+    %42:i32 = icmp slt %41, %1
+    %21:ctrl, %22:ctrl = brcond %0, %42
+    %28:ctrl, %29:phisel = region %21, %39
+    %33:i64 = phi %29, %23, %35
+    %35:i64 = iadd %33, %23
+    %32:i64 = phi %29, %27, %32
+    %36:i32 = icmp ne %32, %35
+    %39:ctrl, %40:ctrl = brcond %28, %36
+    %31:i64 = phi %29, %23, %34
+    %34:i64 = imul %31, %33
+    %5:ctrl, %6:phisel = region %22, %40
+    %8:i64 = phi %6, %23, %34
+    return %5, %8
+}

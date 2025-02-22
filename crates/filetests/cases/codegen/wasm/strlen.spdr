@@ -1,0 +1,39 @@
+# run: codegen
+
+func @func00000001:i32(i32) {
+    # check: function `func00000001`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 48 89 f9                        mov rcx, rdi
+    # nextln: 000009: 03 c8                           add ecx, eax
+    # nextln: 00000b: 83 c0 01                        add eax, 1
+    # nextln: 00000e: 8b d1                           mov edx, ecx
+    # nextln: 000010: 33 c9                           xor ecx, ecx
+    # nextln: 000012: 48 03 ca                        add rcx, rdx
+    # nextln: 000015: 0f b6 09                        movzx ecx, byte ptr [rcx]
+    # nextln: 000018: 85 c9                           test ecx, ecx
+    # nextln: 00001a: 0f 85 e6 ff ff ff               jne 6
+    # nextln: 000020: 83 c0 ff                        add eax, -1
+    # nextln: 000023: 5d                              pop rbp
+    # nextln: 000024: c3                              ret
+
+    %0:ctrl, %1:i32 = entry
+    %26:i32 = iconst 4294967295
+    %12:i32 = iconst 1
+    %2:i32 = iconst 0
+    %16:i64 = iconst 4294967295
+    %18:ptr = iconst 0
+    %19:ptr = ptroff %18, %17
+    %20:ctrl, %21:i32 = load.1 %5, %19
+    %24:ctrl, %25:ctrl = brcond %20, %21
+    %5:ctrl, %6:phisel = region %0, %24
+    %8:i32 = phi %6, %2, %13
+    %13:i32 = iadd %8, %12
+    %27:i32 = iadd %13, %26
+    %7:i32 = phi %6, %1, %7
+    %11:i32 = iadd %7, %8
+    %15:i64 = iext %11
+    %17:i64 = and %15, %16
+    return %25, %27
+}

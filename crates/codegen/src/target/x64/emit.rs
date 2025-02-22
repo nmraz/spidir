@@ -184,8 +184,8 @@ impl MachineEmit for X64Machine {
                 emit_alu_r_rm(buffer, op, op_size, arg0, arg1);
             }
             &X64Instr::AluRmI(op_size, op, imm) => {
-                let dest = state.operand_reg_mem(defs[0]);
-                emit_alu_rm_i(buffer, op, op_size, dest, imm);
+                let arg = state.operand_reg_mem(uses[0]);
+                emit_alu_rm_i(buffer, op, op_size, arg, imm);
             }
             &X64Instr::ImulRRm(op_size) => emit_imul_r_rm(
                 buffer,

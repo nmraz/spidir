@@ -673,18 +673,18 @@ fn emit_alu_r_rm(
     arg0: PhysReg,
     arg1: RegMem,
 ) {
-    let opcode: &[u8] = match op {
-        AluBinOp::Add => &[0x3],
-        AluBinOp::And => &[0x23],
-        AluBinOp::Cmp => &[0x3b],
-        AluBinOp::Or => &[0xb],
-        AluBinOp::Sub => &[0x2b],
+    let opcode = match op {
+        AluBinOp::Add => 0x3,
+        AluBinOp::And => 0x23,
+        AluBinOp::Cmp => 0x3b,
+        AluBinOp::Or => 0xb,
+        AluBinOp::Sub => 0x2b,
         AluBinOp::Test => {
             // This encoding is actually backwards (`test r/m, r`), but it doesn't matter because
             // `test` is commutative and has no outputs other than flags.
-            &[0x85]
+            0x85
         }
-        AluBinOp::Xor => &[0x33],
+        AluBinOp::Xor => 0x33,
     };
 
     let (rex, modrm_sib) = encode_reg_mem_parts(arg1, |rex| {
@@ -694,7 +694,7 @@ fn emit_alu_r_rm(
 
     buffer.instr(|sink| {
         rex.emit(sink);
-        sink.emit(opcode);
+        sink.emit(&[opcode]);
         modrm_sib.emit(sink);
     });
 }
@@ -703,7 +703,7 @@ fn emit_alu_rm_i(
     buffer: &mut CodeBuffer<X64Fixup>,
     op: AluBinOp,
     op_size: OperandSize,
-    dest: RegMem,
+    arg: RegMem,
     imm: i32,
 ) {
     let mut is_imm8 = is_sint::<8>(imm as u64);
@@ -724,7 +724,7 @@ fn emit_alu_rm_i(
         AluBinOp::Xor => 0x6,
     };
 
-    let (rex, modrm_sib) = encode_reg_mem_parts(dest, |rex| {
+    let (rex, modrm_sib) = encode_reg_mem_parts(arg, |rex| {
         rex.encode_operand_size(op_size);
         reg_opcode
     });

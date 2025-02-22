@@ -17,7 +17,7 @@ use crate::{
 };
 
 use super::{
-    AluBinOp, CodeModel, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, ShiftOp,
+    AluBinOp, AluUnOp, CodeModel, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, ShiftOp,
     X64Instr, X64Machine, CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI,
     REG_RDX, REG_RSI,
 };
@@ -276,6 +276,16 @@ fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluBinO
     let op_size = operand_size_for_ty(ty);
     let output = ctx.get_value_vreg(output);
 
+    if op == AluBinOp::Sub && match_iconst(ctx, op1) == Some(0) {
+        let op2 = ctx.get_value_vreg(op2);
+        ctx.emit_instr(
+            X64Instr::AluRm(op_size, AluUnOp::Neg),
+            &[DefOperand::any(output)],
+            &[UseOperand::tied(op2, 0)],
+        );
+        return;
+    }
+
     if let Some(imm) = match_imm32(ctx, op2) {
         let op1 = ctx.get_value_vreg(op1);
         ctx.emit_instr(
@@ -283,15 +293,16 @@ fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluBinO
             &[DefOperand::any(output)],
             &[UseOperand::tied(op1, 0)],
         );
-    } else {
-        let op1 = ctx.get_value_vreg(op1);
-        let op2 = ctx.get_value_vreg(op2);
-        ctx.emit_instr(
-            X64Instr::AluRRm(op_size, op),
-            &[DefOperand::any_reg(output)],
-            &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
-        );
+        return;
     }
+
+    let op1 = ctx.get_value_vreg(op1);
+    let op2 = ctx.get_value_vreg(op2);
+    ctx.emit_instr(
+        X64Instr::AluRRm(op_size, op),
+        &[DefOperand::any_reg(output)],
+        &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
+    );
 }
 
 fn select_shift(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: ShiftOp) {

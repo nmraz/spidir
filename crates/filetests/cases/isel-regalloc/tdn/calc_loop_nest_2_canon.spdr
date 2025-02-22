@@ -144,9 +144,8 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0101:     AluRRm(S32, Test) $$rdx, $$rdx
     # nextln: 0102:     Jumpcc(Ne, block10, block11)
     # nextln:       block10:
-    # nextln: 0103:     $$rdx = MovRStack(!2, S32)
-    # nextln:           $$rax = $$rbx
-    # nextln: 0104:     $$rax = AluRRm(S32, Sub) $$rax, $$rdx
+    # nextln: 0103:     $$rax = MovRStack(!2, S32)
+    # nextln: 0104:     $$rax = AluRm(S32, Neg) $$rax
     # nextln: 0105:     Jump(block12)
     # nextln:       block11:
     # nextln: 0106:     $$rax = MovRStack(!2, S32)

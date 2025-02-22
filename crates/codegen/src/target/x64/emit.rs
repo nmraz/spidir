@@ -14,9 +14,9 @@ use crate::{
 };
 
 use super::{
-    AluBinOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale, OperandSize, ShiftOp,
-    X64Instr, X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8, REG_R9,
-    REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64,
+    AluBinOp, AluUnOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale, OperandSize,
+    ShiftOp, X64Instr, X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8,
+    REG_R9, REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64,
     RELOC_PC32,
 };
 
@@ -187,6 +187,10 @@ impl MachineEmit for X64Machine {
             &X64Instr::AluRmI(op_size, op, imm) => {
                 let arg = state.operand_reg_mem(uses[0]);
                 emit_alu_rm_i(buffer, op, op_size, arg, imm);
+            }
+            &X64Instr::AluRm(op_size, op) => {
+                let arg = state.operand_reg_mem(uses[0]);
+                emit_alu_rm(buffer, op, op_size, arg);
             }
             &X64Instr::ImulRRm(op_size) => emit_imul_r_rm(
                 buffer,
@@ -739,6 +743,24 @@ fn emit_alu_rm_i(
         } else {
             sink.emit(&imm.to_le_bytes());
         }
+    });
+}
+
+fn emit_alu_rm(buffer: &mut CodeBuffer<X64Fixup>, op: AluUnOp, op_size: OperandSize, arg: RegMem) {
+    let reg_opcode = match op {
+        AluUnOp::Not => 0x2,
+        AluUnOp::Neg => 0x3,
+    };
+
+    let (rex, modrm_sib) = encode_reg_mem_parts(arg, |rex| {
+        rex.encode_operand_size(op_size);
+        reg_opcode
+    });
+
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf7]);
+        modrm_sib.emit(sink);
     });
 }
 

@@ -115,6 +115,12 @@ pub enum AluBinOp {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AluUnOp {
+    Not,
+    Neg,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ShiftOp {
     Shl,
     Shr,
@@ -139,6 +145,7 @@ pub enum IndexScale {
 pub enum X64Instr {
     AluRRm(OperandSize, AluBinOp),
     AluRmI(OperandSize, AluBinOp, i32),
+    AluRm(OperandSize, AluUnOp),
     ImulRRm(OperandSize),
     ImulRRmI(OperandSize, i32),
     ShiftRmR(OperandSize, ShiftOp),
@@ -176,6 +183,7 @@ impl X64Instr {
         match self {
             X64Instr::AluRRm(..) => false,
             X64Instr::AluRmI(..) => false,
+            X64Instr::AluRm(..) => false,
             X64Instr::ImulRRm(..) => false,
             X64Instr::ImulRRmI(..) => false,
             X64Instr::ShiftRmR(..) => false,
@@ -210,6 +218,7 @@ impl X64Instr {
         match self {
             X64Instr::AluRRm(..) => true,
             X64Instr::AluRmI(..) => true,
+            X64Instr::AluRm(..) => true,
             X64Instr::ImulRRm(..) => true,
             X64Instr::ImulRRmI(..) => true,
             X64Instr::ShiftRmR(..) => true,

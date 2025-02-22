@@ -227,6 +227,12 @@ impl MachineEmit for X64Machine {
             }
             &X64Instr::MovRU32(val) => emit_mov_r_u32(buffer, defs[0].as_reg().unwrap(), val),
             &X64Instr::MovRI64(val) => emit_movabs_r_i(buffer, defs[0].as_reg().unwrap(), val),
+            &X64Instr::MovzxRRm(full_op_size) => emit_movzx_r_rm(
+                buffer,
+                full_op_size,
+                defs[0].as_reg().unwrap(),
+                state.operand_reg_mem(uses[0]),
+            ),
             &X64Instr::MovsxRRm(width) => emit_movsx_r_rm(
                 buffer,
                 width,

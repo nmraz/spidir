@@ -17,9 +17,9 @@ use crate::{
 };
 
 use super::{
-    AluOp, CodeModel, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, ShiftOp, X64Instr,
-    X64Machine, CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX,
-    REG_RSI,
+    AluBinOp, CodeModel, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, ShiftOp,
+    X64Instr, X64Machine, CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI,
+    REG_RDX, REG_RSI,
 };
 
 const FIXED_ARG_COUNT: usize = 6;
@@ -92,11 +92,11 @@ impl MachineLower for X64Machine {
         let _ = targets;
         match ctx.node_kind(node) {
             NodeKind::IConst(val) => select_iconst(ctx, node, val),
-            NodeKind::Iadd => select_alu(ctx, node, AluOp::Add),
-            NodeKind::And => select_alu(ctx, node, AluOp::And),
-            NodeKind::Or => select_alu(ctx, node, AluOp::Or),
-            NodeKind::Isub => select_alu(ctx, node, AluOp::Sub),
-            NodeKind::Xor => select_alu(ctx, node, AluOp::Xor),
+            NodeKind::Iadd => select_alu(ctx, node, AluBinOp::Add),
+            NodeKind::And => select_alu(ctx, node, AluBinOp::And),
+            NodeKind::Or => select_alu(ctx, node, AluBinOp::Or),
+            NodeKind::Isub => select_alu(ctx, node, AluBinOp::Sub),
+            NodeKind::Xor => select_alu(ctx, node, AluBinOp::Xor),
             NodeKind::Shl => select_shift(ctx, node, ShiftOp::Shl),
             NodeKind::Lshr => select_shift(ctx, node, ShiftOp::Shr),
             NodeKind::Ashr => select_shift(ctx, node, ShiftOp::Sar),
@@ -178,7 +178,7 @@ impl MachineLower for X64Machine {
                     &[UseOperand::tied(temp, 0)],
                 );
             }
-            NodeKind::PtrOff => select_alu(ctx, node, AluOp::Add),
+            NodeKind::PtrOff => select_alu(ctx, node, AluBinOp::Add),
             NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
             NodeKind::StackSlot { .. } => {
@@ -207,7 +207,7 @@ impl MachineLower for X64Machine {
                     }
                 }
 
-                emit_alu_rr_discarded(ctx, cond, cond, AluOp::Test);
+                emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
                 ctx.emit_instr(
                     X64Instr::Jumpcc(CondCode::Ne, targets[0], targets[1]),
                     &[],
@@ -268,7 +268,7 @@ fn select_iconst(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, val: u64
     }
 }
 
-fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluOp) {
+fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluBinOp) {
     let [output] = ctx.node_outputs_exact(node);
     let [op1, op2] = ctx.node_inputs_exact(node);
 
@@ -350,12 +350,12 @@ fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: Icmp
 
     if let Some((op, imm, code)) = match_icmp_imm32(ctx, op1, op2, kind) {
         if imm == 0 {
-            emit_alu_rr_discarded(ctx, op, op, AluOp::Test);
+            emit_alu_rr_discarded(ctx, op, op, AluBinOp::Test);
         } else {
             let op_size = operand_size_for_ty(ctx.value_type(op));
             let op = ctx.get_value_vreg(op);
             ctx.emit_instr(
-                X64Instr::AluRmI(op_size, AluOp::Cmp, imm),
+                X64Instr::AluRmI(op_size, AluBinOp::Cmp, imm),
                 &[],
                 &[UseOperand::any(op)],
             );
@@ -363,7 +363,7 @@ fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: Icmp
         return code;
     }
 
-    emit_alu_rr_discarded(ctx, op1, op2, AluOp::Cmp);
+    emit_alu_rr_discarded(ctx, op1, op2, AluBinOp::Cmp);
     cond_code_for_icmp(kind)
 }
 
@@ -655,7 +655,7 @@ fn emit_alu_rr_discarded(
     ctx: &mut IselContext<'_, '_, X64Machine>,
     op1: DepValue,
     op2: DepValue,
-    op: AluOp,
+    op: AluBinOp,
 ) {
     let ty = ctx.value_type(op1);
 

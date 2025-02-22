@@ -14,9 +14,10 @@ use crate::{
 };
 
 use super::{
-    AluOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale, OperandSize, ShiftOp, X64Instr,
-    X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8, REG_R9, REG_RAX,
-    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64, RELOC_PC32,
+    AluBinOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale, OperandSize, ShiftOp,
+    X64Instr, X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8, REG_R9,
+    REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64,
+    RELOC_PC32,
 };
 
 mod flag_liveness;
@@ -152,7 +153,7 @@ impl MachineEmit for X64Machine {
         emit_add_sp(buffer, -state.raw_frame_size);
 
         if let FrameRealign::AlignTo(align) = state.realign {
-            emit_alu_r64_i(buffer, AluOp::And, REG_RSP, -align);
+            emit_alu_r64_i(buffer, AluBinOp::And, REG_RSP, -align);
         }
     }
 
@@ -371,9 +372,9 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Fixup>, offset: i32) {
         // This generates smaller code without penalizing performance.
         emit_push(buffer, REG_RAX);
     } else if offset < 0 {
-        emit_alu_r64_i(buffer, AluOp::Sub, REG_RSP, -offset);
+        emit_alu_r64_i(buffer, AluBinOp::Sub, REG_RSP, -offset);
     } else if offset > 0 {
-        emit_alu_r64_i(buffer, AluOp::Add, REG_RSP, offset);
+        emit_alu_r64_i(buffer, AluBinOp::Add, REG_RSP, offset);
     }
 }
 
@@ -422,7 +423,7 @@ fn emit_mov_rm_s32(
             // Note: some renamers recognize only the 32-bit instruction as a zeroing idiom.
             emit_alu_r_rm(
                 buffer,
-                AluOp::Xor,
+                AluBinOp::Xor,
                 OperandSize::S32,
                 dest,
                 RegMem::Reg(dest),
@@ -667,23 +668,23 @@ fn emit_ud2(buffer: &mut CodeBuffer<X64Fixup>) {
 
 fn emit_alu_r_rm(
     buffer: &mut CodeBuffer<X64Fixup>,
-    op: AluOp,
+    op: AluBinOp,
     op_size: OperandSize,
     arg0: PhysReg,
     arg1: RegMem,
 ) {
     let opcode: &[u8] = match op {
-        AluOp::Add => &[0x3],
-        AluOp::And => &[0x23],
-        AluOp::Cmp => &[0x3b],
-        AluOp::Or => &[0xb],
-        AluOp::Sub => &[0x2b],
-        AluOp::Test => {
+        AluBinOp::Add => &[0x3],
+        AluBinOp::And => &[0x23],
+        AluBinOp::Cmp => &[0x3b],
+        AluBinOp::Or => &[0xb],
+        AluBinOp::Sub => &[0x2b],
+        AluBinOp::Test => {
             // This encoding is actually backwards (`test r/m, r`), but it doesn't matter because
             // `test` is commutative and has no outputs other than flags.
             &[0x85]
         }
-        AluOp::Xor => &[0x33],
+        AluBinOp::Xor => &[0x33],
     };
 
     let (rex, modrm_sib) = encode_reg_mem_parts(arg1, |rex| {
@@ -700,7 +701,7 @@ fn emit_alu_r_rm(
 
 fn emit_alu_rm_i(
     buffer: &mut CodeBuffer<X64Fixup>,
-    op: AluOp,
+    op: AluBinOp,
     op_size: OperandSize,
     dest: RegMem,
     imm: i32,
@@ -709,18 +710,18 @@ fn emit_alu_rm_i(
     let mut opcode = if is_imm8 { 0x83 } else { 0x81 };
 
     let reg_opcode = match op {
-        AluOp::Add => 0x0,
-        AluOp::And => 0x4,
-        AluOp::Cmp => 0x7,
-        AluOp::Or => 0x1,
-        AluOp::Sub => 0x5,
-        AluOp::Test => {
+        AluBinOp::Add => 0x0,
+        AluBinOp::And => 0x4,
+        AluBinOp::Cmp => 0x7,
+        AluBinOp::Or => 0x1,
+        AluBinOp::Sub => 0x5,
+        AluBinOp::Test => {
             // `test` is special. Who knows why.
             opcode = 0xf7;
             is_imm8 = false;
             0x0
         }
-        AluOp::Xor => 0x6,
+        AluBinOp::Xor => 0x6,
     };
 
     let (rex, modrm_sib) = encode_reg_mem_parts(dest, |rex| {
@@ -741,7 +742,7 @@ fn emit_alu_rm_i(
     });
 }
 
-fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: AluOp, dest: PhysReg, imm: i32) {
+fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: AluBinOp, dest: PhysReg, imm: i32) {
     emit_alu_rm_i(buffer, op, OperandSize::S64, RegMem::Reg(dest), imm);
 }
 

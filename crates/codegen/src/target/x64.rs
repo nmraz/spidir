@@ -104,7 +104,7 @@ impl CondCode {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AluOp {
+pub enum AluBinOp {
     Add,
     And,
     Cmp,
@@ -137,8 +137,8 @@ pub enum IndexScale {
 
 #[derive(Debug, Clone, Copy)]
 pub enum X64Instr {
-    AluRRm(OperandSize, AluOp),
-    AluRmI(OperandSize, AluOp, i32),
+    AluRRm(OperandSize, AluBinOp),
+    AluRmI(OperandSize, AluBinOp, i32),
     ImulRRm(OperandSize),
     ImulRRmI(OperandSize, i32),
     ShiftRmR(OperandSize, ShiftOp),

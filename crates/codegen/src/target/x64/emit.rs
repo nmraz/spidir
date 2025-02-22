@@ -518,6 +518,11 @@ fn emit_movzx_r_rm(
 
     let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| {
         rex.encode_operand_size(op_size);
+        if full_op_size == FullOperandSize::S8 {
+            if let RegMem::Reg(src) = src {
+                rex.use_reg8(src);
+            }
+        }
         rex.encode_modrm_reg(dest)
     });
 

@@ -224,11 +224,11 @@ impl<'a> LoopAnnotator<'a> {
 
 impl Annotate for LoopAnnotator<'_> {
     fn annotate_node(&mut self, graph: &ValGraph, node: Node, attrs: &mut DotAttributes) {
-        let Some(domtre_node) = self.domtree.get_tree_node(node) else {
+        let Some(domtree_node) = self.domtree.get_tree_node(node) else {
             return;
         };
 
-        let Some(loop_node) = self.loop_forest.containing_loop(domtre_node) else {
+        let Some(loop_node) = self.loop_forest.containing_loop(domtree_node) else {
             return;
         };
 
@@ -236,7 +236,7 @@ impl Annotate for LoopAnnotator<'_> {
         attrs.insert("color".to_owned(), get_loop_color(loop_id));
         attrs.extend([("penwidth".to_owned(), "2".to_owned())]);
 
-        let mut tooltip = if domtre_node == self.loop_forest.loop_header(loop_node) {
+        let mut tooltip = if domtree_node == self.loop_forest.loop_header(loop_node) {
             format!("loop {loop_id} header")
         } else {
             attrs.insert("style".to_owned(), "filled,dashed".to_owned());
@@ -252,7 +252,7 @@ impl Annotate for LoopAnnotator<'_> {
         for ancestor in self.loop_forest.loop_ancestors(loop_node) {
             if self
                 .loop_forest
-                .is_latch(graph, self.domtree, ancestor, domtre_node)
+                .is_latch(graph, self.domtree, ancestor, domtree_node)
             {
                 write!(tooltip, "&#10;loop {} latch", ancestor.as_u32()).unwrap();
             }

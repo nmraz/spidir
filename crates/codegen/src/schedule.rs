@@ -232,7 +232,10 @@ impl<'a> Scheduler<'a> {
         let mut best_tree_loc = cur_tree_loc;
         let mut i = 0;
 
-        loop {
+        while cur_tree_loc != early_tree_loc {
+            cur_tree_loc = domtree.idom(cur_tree_loc).unwrap();
+            i += 1;
+
             if i > MAX_HOIST_DEPTH {
                 trace!("place: reached maximum hoist depth {MAX_HOIST_DEPTH}, stopping search");
                 break;
@@ -247,13 +250,6 @@ impl<'a> Scheduler<'a> {
                 );
                 best_tree_loc = cur_tree_loc;
             }
-
-            if cur_tree_loc == early_tree_loc {
-                break;
-            }
-
-            cur_tree_loc = domtree.idom(cur_tree_loc).unwrap();
-            i += 1;
         }
 
         debug_assert!(domtree.dominates(early_tree_loc, best_tree_loc));

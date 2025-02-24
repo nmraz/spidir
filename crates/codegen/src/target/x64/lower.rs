@@ -194,7 +194,7 @@ impl MachineLower for X64Machine {
             NodeKind::BrCond => {
                 let [cond] = ctx.node_inputs_exact(node);
                 if ctx.has_one_use(cond) {
-                    if let Some((cond_node, 0)) = ctx.value_def(cond) {
+                    if let (cond_node, 0) = ctx.value_def(cond) {
                         if let NodeKind::Icmp(kind) = ctx.node_kind(cond_node) {
                             let cond_code = select_icmp(ctx, cond_node, kind);
                             ctx.emit_instr(
@@ -761,7 +761,7 @@ fn as_imm32(ty: Type, val: u64) -> Option<i32> {
 }
 
 fn match_iconst(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<u64> {
-    if let Some((node, 0)) = ctx.value_def(value) {
+    if let (node, 0) = ctx.value_def(value) {
         if let NodeKind::IConst(val) = ctx.node_kind(node) {
             return Some(val);
         }
@@ -771,7 +771,7 @@ fn match_iconst(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Optio
 }
 
 fn match_stack_slot(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<StackSlot> {
-    if let Some((node, 0)) = ctx.value_def(value) {
+    if let (node, 0) = ctx.value_def(value) {
         if matches!(ctx.node_kind(node), NodeKind::StackSlot { .. }) {
             return Some(ctx.node_stack_slot(node));
         }

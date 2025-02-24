@@ -45,15 +45,8 @@ impl<'ctx, M: MachineLower> IselContext<'ctx, '_, M> {
         self.state.graph().value_kind(value).as_value().unwrap()
     }
 
-    pub fn value_def(&self, value: DepValue) -> Option<(Node, u32)> {
-        let (node, output_idx) = self.state.graph().value_def(value);
-
-        // Only allow pure nodes to be looked through for pattern matching.
-        if !self.node_kind(node).has_side_effects() {
-            Some((node, output_idx))
-        } else {
-            None
-        }
+    pub fn value_def(&self, value: DepValue) -> (Node, u32) {
+        self.state.graph().value_def(value)
     }
 
     pub fn value_use_count(&self, value: DepValue) -> u32 {

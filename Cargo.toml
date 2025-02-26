@@ -20,6 +20,7 @@ ir = { path = "crates/ir" }
 ir-graphviz = { path = "crates/ir-graphviz" }
 opt = { path = "crates/opt" }
 parser = { path = "crates/parser" }
+valmatch = { path = "crates/valmatch" }
 
 anyhow = "1.0.89"
 bitflags = { version = "2.6.0", default-features = false }

@@ -195,8 +195,8 @@ impl MachineLower for X64Machine {
             NodeKind::BrCond => {
                 let [cond] = ctx.node_inputs_exact(node);
                 if ctx.has_one_use(cond) {
-                    if let (cond_node, 0) = ctx.value_def(cond) {
-                        if let &NodeKind::Icmp(kind) = ctx.node_kind(cond_node) {
+                    match_value! {
+                        if let node cond_node @ &NodeKind::Icmp(kind) = ctx, cond {
                             let cond_code = select_icmp(ctx, cond_node, kind);
                             ctx.emit_instr(
                                 X64Instr::Jumpcc(cond_code, targets[0], targets[1]),

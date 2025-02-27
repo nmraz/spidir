@@ -92,7 +92,7 @@ impl MachineLower for X64Machine {
     {
         let _ = targets;
         match ctx.node_kind(node) {
-            NodeKind::IConst(val) => select_iconst(ctx, node, val),
+            &NodeKind::IConst(val) => select_iconst(ctx, node, val),
             NodeKind::Iadd => select_alu(ctx, node, AluBinOp::Add),
             NodeKind::And => select_alu(ctx, node, AluBinOp::And),
             NodeKind::Or => select_alu(ctx, node, AluBinOp::Or),
@@ -159,7 +159,7 @@ impl MachineLower for X64Machine {
                     }
                 }
             }
-            NodeKind::Icmp(kind) => {
+            &NodeKind::Icmp(kind) => {
                 let [output] = ctx.node_outputs_exact(node);
                 let output = ctx.get_value_vreg(output);
 
@@ -180,8 +180,8 @@ impl MachineLower for X64Machine {
                 );
             }
             NodeKind::PtrOff => select_alu(ctx, node, AluBinOp::Add),
-            NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
-            NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
+            &NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
+            &NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
             NodeKind::StackSlot { .. } => {
                 let [output] = ctx.node_outputs_exact(node);
                 let output = ctx.get_value_vreg(output);
@@ -196,7 +196,7 @@ impl MachineLower for X64Machine {
                 let [cond] = ctx.node_inputs_exact(node);
                 if ctx.has_one_use(cond) {
                     if let (cond_node, 0) = ctx.value_def(cond) {
-                        if let NodeKind::Icmp(kind) = ctx.node_kind(cond_node) {
+                        if let &NodeKind::Icmp(kind) = ctx.node_kind(cond_node) {
                             let cond_code = select_icmp(ctx, cond_node, kind);
                             ctx.emit_instr(
                                 X64Instr::Jumpcc(cond_code, targets[0], targets[1]),
@@ -226,8 +226,8 @@ impl MachineLower for X64Machine {
                     ctx.emit_instr(X64Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
                 }
             },
-            NodeKind::FuncAddr(func) => emit_funcaddr(self, ctx, node, func),
-            NodeKind::Call(func) => emit_call(self, ctx, node, func),
+            &NodeKind::FuncAddr(func) => emit_funcaddr(self, ctx, node, func),
+            &NodeKind::Call(func) => emit_call(self, ctx, node, func),
             NodeKind::CallInd(_) => {
                 let mut vals = ctx.node_inputs(node);
                 let target =
@@ -763,7 +763,7 @@ fn as_imm32(ty: Type, val: u64) -> Option<i32> {
 
 fn match_iconst(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<u64> {
     match_value! {
-        if let NodeKind::IConst(val) = ctx, value {
+        if let &NodeKind::IConst(val) = ctx, value {
             return Some(val);
         }
     }

@@ -57,8 +57,8 @@ impl<'ctx, M: MachineLower> IselContext<'ctx, '_, M> {
         self.value_use_count(value) == 1
     }
 
-    pub fn node_kind(&self, node: Node) -> NodeKind {
-        *self.state.graph().node_kind(node)
+    pub fn node_kind(&self, node: Node) -> &NodeKind {
+        self.state.graph().node_kind(node)
     }
 
     pub fn node_stack_slot(&self, node: Node) -> StackSlot {

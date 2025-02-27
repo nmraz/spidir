@@ -50,7 +50,7 @@ impl ProgramPoint {
         let slot = slot as u32;
         assert!(instr <= u32::MAX >> 2);
         Self {
-            index: instr << 2 | slot,
+            index: (instr << 2) | slot,
         }
     }
 
@@ -522,7 +522,7 @@ impl InstrWithRematCost {
         let cost = cost as u32;
         assert!(instr <= u32::MAX >> 1);
         Self {
-            packed: instr << 1 | cost,
+            packed: (instr << 1) | cost,
         }
     }
 

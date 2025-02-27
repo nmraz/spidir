@@ -85,5 +85,5 @@ struct FrameObject {
 
 fn frame_object_sort_key(obj: &FrameObject) -> u64 {
     // Sort by alignment, break ties with size.
-    (obj.layout.align as u64) << 32 | obj.layout.size as u64
+    ((obj.layout.align as u64) << 32) | obj.layout.size as u64
 }

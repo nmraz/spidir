@@ -10,6 +10,7 @@ use ir::{
     node::{IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
+use valmatch::match_value;
 
 use crate::reduce::{reduce_body, ReduceContext};
 
@@ -599,11 +600,10 @@ fn unsigned_max_for_ty(ty: Type) -> u64 {
 }
 
 fn match_iconst(graph: &ValGraph, value: DepValue) -> Option<u64> {
-    if let (node, 0) = graph.value_def(value) {
-        if let &NodeKind::IConst(value) = graph.node_kind(node) {
-            return Some(value);
+    match_value! {
+        if let &NodeKind::IConst(val) = graph, value {
+            return Some(val);
         }
     }
-
     None
 }

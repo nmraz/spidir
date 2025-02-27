@@ -569,6 +569,7 @@ dependencies = [
  "itertools",
  "log",
  "smallvec",
+ "valmatch",
 ]
 
 [[package]]

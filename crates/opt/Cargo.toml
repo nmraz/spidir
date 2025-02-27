@@ -8,6 +8,7 @@ rust-version.workspace = true
 entity-set.workspace = true
 fx-utils.workspace = true
 ir.workspace = true
+valmatch.workspace = true
 
 bitflags.workspace = true
 cranelift-entity.workspace = true

@@ -2,7 +2,7 @@ use core::{cmp, iter, mem};
 
 use alloc::vec::Vec;
 
-use cranelift_entity::{entity_impl, packed_option::PackedOption, PrimaryMap, SecondaryMap};
+use cranelift_entity::{PrimaryMap, SecondaryMap, entity_impl, packed_option::PackedOption};
 use ir::node::FunctionRef;
 use smallvec::SmallVec;
 

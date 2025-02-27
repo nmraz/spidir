@@ -4,7 +4,7 @@ use anyhow::Result;
 use ir::{domtree::DomTree, loops::LoopForest, module::Module};
 
 use crate::{
-    provider::{update_per_func_output, SimpleTestProvider, Updater},
+    provider::{SimpleTestProvider, Updater, update_per_func_output},
     utils::write_body_with_trailing_comments,
 };
 

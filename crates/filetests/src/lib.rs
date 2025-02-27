@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use anyhow::{anyhow, Context, Ok, Result};
+use anyhow::{Context, Ok, Result, anyhow};
 use hooks::catch_panic_message;
 
 use crate::utils::find_run_line;

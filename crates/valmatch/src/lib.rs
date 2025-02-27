@@ -1,12 +1,12 @@
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use syn::{
-    bracketed,
+    Block, Ident, Pat, Result, Token, bracketed,
     parse::{Parse, ParseStream},
     parse_macro_input,
     punctuated::Punctuated,
-    token, Block, Ident, Pat, Result, Token,
+    token,
 };
 
 enum BindingKind {

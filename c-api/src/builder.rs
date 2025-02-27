@@ -4,18 +4,18 @@ use ir::module::Module;
 use paste::paste;
 
 use crate::types::{
-    block_from_api, block_to_api, funcref_from_api, icmp_kind_from_api, mem_size_from_api,
-    opt_value_from_api, opt_value_to_api, signature_from_api, type_from_api, value_from_api,
-    value_list_from_api, value_to_api, ApiBlock, ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi,
-    ApiType, ApiValue,
+    ApiBlock, ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue, block_from_api,
+    block_to_api, funcref_from_api, icmp_kind_from_api, mem_size_from_api, opt_value_from_api,
+    opt_value_to_api, signature_from_api, type_from_api, value_from_api, value_list_from_api,
+    value_to_api,
 };
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_get_module(builder: *mut FunctionBuilder<'_>) -> *mut Module {
     unsafe { (*builder).module_mut() }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_create_block(builder: *mut FunctionBuilder<'_>) -> ApiBlock {
     unsafe {
         let builder = &mut *builder;
@@ -24,7 +24,7 @@ unsafe extern "C" fn spidir_builder_create_block(builder: *mut FunctionBuilder<'
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_cur_block(
     builder: *mut FunctionBuilder<'_>,
     out_block: *mut ApiBlock,
@@ -40,7 +40,7 @@ unsafe extern "C" fn spidir_builder_cur_block(
     false
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_set_block(builder: *mut FunctionBuilder<'_>, block: ApiBlock) {
     unsafe {
         let builder = &mut *builder;
@@ -48,7 +48,7 @@ unsafe extern "C" fn spidir_builder_set_block(builder: *mut FunctionBuilder<'_>,
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_set_entry_block(
     builder: *mut FunctionBuilder<'_>,
     block: ApiBlock,
@@ -59,7 +59,7 @@ unsafe extern "C" fn spidir_builder_set_entry_block(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_param_ref(
     builder: *mut FunctionBuilder<'_>,
     index: u32,
@@ -70,7 +70,7 @@ unsafe extern "C" fn spidir_builder_build_param_ref(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_funcaddr(
     builder: *mut FunctionBuilder<'_>,
     func: ApiFunction,
@@ -81,7 +81,7 @@ unsafe extern "C" fn spidir_builder_build_funcaddr(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_call(
     builder: *mut FunctionBuilder<'_>,
     func: ApiFunction,
@@ -95,7 +95,7 @@ unsafe extern "C" fn spidir_builder_build_call(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_callind(
     builder: *mut FunctionBuilder<'_>,
     ret_type: ApiType,
@@ -112,7 +112,7 @@ unsafe extern "C" fn spidir_builder_build_callind(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_return(
     builder: *mut FunctionBuilder<'_>,
     value: ApiValue,
@@ -123,7 +123,7 @@ unsafe extern "C" fn spidir_builder_build_return(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_branch(
     builder: *mut FunctionBuilder<'_>,
     dest: ApiBlock,
@@ -134,7 +134,7 @@ unsafe extern "C" fn spidir_builder_build_branch(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_brcond(
     builder: *mut FunctionBuilder<'_>,
     cond: ApiValue,
@@ -151,7 +151,7 @@ unsafe extern "C" fn spidir_builder_build_brcond(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_unreachable(builder: *mut FunctionBuilder<'_>) {
     unsafe {
         let builder = &mut *builder;
@@ -159,7 +159,7 @@ unsafe extern "C" fn spidir_builder_build_unreachable(builder: *mut FunctionBuil
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_phi(
     builder: *mut FunctionBuilder<'_>,
     ty: ApiType,
@@ -179,7 +179,7 @@ unsafe extern "C" fn spidir_builder_build_phi(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_add_phi_input(
     builder: *mut FunctionBuilder<'_>,
     phi: ApiPhi,
@@ -191,7 +191,7 @@ unsafe extern "C" fn spidir_builder_add_phi_input(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_iconst(
     builder: *mut FunctionBuilder<'_>,
     ty: ApiType,
@@ -203,7 +203,7 @@ unsafe extern "C" fn spidir_builder_build_iconst(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_fconst(
     builder: *mut FunctionBuilder<'_>,
     value: f64,
@@ -217,7 +217,7 @@ unsafe extern "C" fn spidir_builder_build_fconst(
 macro_rules! impl_builder_binop {
     ($binop:ident) => {
         paste! {
-            #[no_mangle]
+            #[unsafe(no_mangle)]
             unsafe extern "C" fn [<spidir_builder_build_ $binop>](
                 builder: *mut FunctionBuilder<'_>,
                 lhs: ApiValue,
@@ -251,7 +251,7 @@ impl_builder_binop!(urem);
 macro_rules! impl_builder_unop {
     ($unop:ident) => {
         paste! {
-            #[no_mangle]
+            #[unsafe(no_mangle)]
             unsafe extern "C" fn [<spidir_builder_build_ $unop>](
                 builder: *mut FunctionBuilder<'_>,
                 value: ApiValue
@@ -272,7 +272,7 @@ impl_builder_unop!(itrunc);
 impl_builder_unop!(inttoptr);
 impl_builder_unop!(ptrtoint);
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_sfill(
     builder: *mut FunctionBuilder<'_>,
     width: u8,
@@ -284,7 +284,7 @@ unsafe extern "C" fn spidir_builder_build_sfill(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_icmp(
     builder: *mut FunctionBuilder<'_>,
     kind: ApiIcmpKind,
@@ -303,7 +303,7 @@ unsafe extern "C" fn spidir_builder_build_icmp(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_ptroff(
     builder: *mut FunctionBuilder<'_>,
     ptr: ApiValue,
@@ -315,7 +315,7 @@ unsafe extern "C" fn spidir_builder_build_ptroff(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_load(
     builder: *mut FunctionBuilder<'_>,
     size: ApiMemSize,
@@ -332,7 +332,7 @@ unsafe extern "C" fn spidir_builder_build_load(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_store(
     builder: *mut FunctionBuilder<'_>,
     size: ApiMemSize,
@@ -349,7 +349,7 @@ unsafe extern "C" fn spidir_builder_build_store(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_stackslot(
     builder: *mut FunctionBuilder<'_>,
     size: u32,

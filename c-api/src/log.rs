@@ -7,10 +7,10 @@ type LogCallback = extern "C" fn(ApiLevel, *const c_char, usize, *const c_char, 
 mod imp {
     use super::{ApiLevel, LogCallback};
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     unsafe extern "C" fn spidir_log_init(_callback: LogCallback) {}
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     unsafe extern "C" fn spidir_log_set_max_level(_level: ApiLevel) {}
 }
 
@@ -85,14 +85,14 @@ mod imp {
         fn flush(&self) {}
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     unsafe extern "C" fn spidir_log_init(callback: LogCallback) {
         static LOGGER: Logger = Logger;
         log::set_logger(&LOGGER).expect("logging already initialized");
         LOG_CALLBACK.store(callback as *mut (), Ordering::Release);
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     unsafe extern "C" fn spidir_log_set_max_level(level: ApiLevel) {
         log::set_max_level(log_level_from_api(level));
     }

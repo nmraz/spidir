@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use codegen::{
     api::lower_func, frame::FrameLayout, machine::MachineCore, regalloc, target::x64::X64Machine,
 };
@@ -8,7 +8,7 @@ use ir::module::Module;
 use itertools::Itertools;
 
 use crate::{
-    provider::{update_per_func_output, SimpleTestProvider, Updater},
+    provider::{SimpleTestProvider, Updater, update_per_func_output},
     utils::sanitize_raw_output,
 };
 

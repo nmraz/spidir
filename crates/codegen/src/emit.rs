@@ -1,4 +1,4 @@
-use cranelift_entity::{packed_option::ReservedValue, SecondaryMap};
+use cranelift_entity::{SecondaryMap, packed_option::ReservedValue};
 
 use crate::{
     cfg::{Block, CfgContext},

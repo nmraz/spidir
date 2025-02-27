@@ -1,7 +1,7 @@
 use fx_utils::FxHashMap;
 use smallvec::SmallVec;
 
-use super::{types::CopySourceAssignment, AssignmentCopy, OperandAssignment};
+use super::{AssignmentCopy, OperandAssignment, types::CopySourceAssignment};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RedundantCopyVerdict {
@@ -70,7 +70,7 @@ impl RedundantCopyTracker {
 mod tests {
     use core::fmt::Write;
 
-    use expect_test::{expect, Expect};
+    use expect_test::{Expect, expect};
 
     use crate::regalloc::test_utils::{parse_copy_source, parse_operand};
 

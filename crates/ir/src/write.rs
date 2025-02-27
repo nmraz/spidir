@@ -350,7 +350,7 @@ fn is_unquoted_ident_char(c: char) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use expect_test::{expect, Expect};
+    use expect_test::{Expect, expect};
 
     use crate::{
         builder::{BuilderExt, SimpleBuilder},

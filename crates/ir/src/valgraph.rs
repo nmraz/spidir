@@ -1,7 +1,7 @@
 use core::{array, ops::Index, slice};
 
 use cranelift_entity::{
-    entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap,
+    EntityList, ListPool, PrimaryMap, entity_impl, packed_option::PackedOption,
 };
 use smallvec::SmallVec;
 

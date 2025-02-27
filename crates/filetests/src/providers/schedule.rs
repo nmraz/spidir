@@ -7,7 +7,7 @@ use fx_utils::FxHashMap;
 use ir::module::Module;
 
 use crate::{
-    provider::{update_per_func_output, TestProvider, Updater},
+    provider::{TestProvider, Updater, update_per_func_output},
     regexes::VAL_REGEX,
     utils::generalize_per_function_value_names,
 };

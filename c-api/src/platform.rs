@@ -7,7 +7,7 @@ use core::{
 
 use alloc::string::ToString;
 
-extern "C" {
+unsafe extern "C" {
     fn spidir_platform_alloc(size: usize, align: usize) -> *mut u8;
     fn spidir_platform_free(ptr: *mut u8, size: usize, align: usize);
     fn spidir_platform_realloc(

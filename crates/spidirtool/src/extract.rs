@@ -66,7 +66,7 @@ fn collect_referenced_functions(body: &FunctionBody) -> FxHashSet<FunctionRef> {
 
 #[cfg(test)]
 mod tests {
-    use expect_test::{expect, Expect};
+    use expect_test::{Expect, expect};
     use parser::parse_module;
 
     use super::*;

@@ -3,8 +3,8 @@ use core::mem;
 use hashbrown::hash_map::Entry;
 
 use cranelift_entity::{
-    packed_option::{PackedOption, ReservedValue},
     SecondaryMap,
+    packed_option::{PackedOption, ReservedValue},
 };
 use log::trace;
 
@@ -99,9 +99,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         for candidate in &candidates {
             trace!(
                 "coalesce candidate: {} -> {}, weight {}",
-                candidate.src,
-                candidate.dest,
-                candidate.weight
+                candidate.src, candidate.dest, candidate.weight
             );
             self.try_coalesce(
                 &mut fragments_by_vreg,

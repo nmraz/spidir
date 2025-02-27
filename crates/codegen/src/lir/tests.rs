@@ -1,13 +1,13 @@
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 
 use crate::cfg::{Block, BlockCfg};
 
 use super::{
-    test_utils::{
-        push_instr, push_instr_with_clobbers, DummyInstr, DummyMachine, RC_GPR, REG_R0, REG_R1,
-        REG_R2,
-    },
     Builder, DefOperand, Lir, MemLayout, OperandPos, PhysRegSet, UseOperandConstraint,
+    test_utils::{
+        DummyInstr, DummyMachine, RC_GPR, REG_R0, REG_R1, REG_R2, push_instr,
+        push_instr_with_clobbers,
+    },
 };
 
 fn check_lir(lir: Lir<DummyMachine>, cfg: &BlockCfg, block_order: &[Block], expected: Expect) {

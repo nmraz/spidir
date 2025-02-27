@@ -1,19 +1,19 @@
 use std::fmt::Write;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use ir::{
     domtree::DomTree,
     function::FunctionData,
     loops::LoopForest,
     module::Module,
-    verify::{verify_func, FunctionVerifierError},
+    verify::{FunctionVerifierError, verify_func},
 };
 use ir_graphviz::{
     annotate::{Annotate, ColoredAnnotator, DomTreeAnnotator, ErrorAnnotator, LoopAnnotator},
     write_graphviz,
 };
 
-use crate::provider::{update_per_func_output, SimpleTestProvider, Updater};
+use crate::provider::{SimpleTestProvider, Updater, update_per_func_output};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum AnnotatorKind {

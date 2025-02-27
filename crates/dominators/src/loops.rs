@@ -2,14 +2,14 @@ use alloc::{borrow::ToOwned, vec::Vec};
 use core::{iter, ops::ControlFlow};
 
 use cranelift_entity::{
-    entity_impl, packed_option::PackedOption, EntityRef, PrimaryMap, SecondaryMap,
+    EntityRef, PrimaryMap, SecondaryMap, entity_impl, packed_option::PackedOption,
 };
 use graphwalk::PredGraphRef;
 use smallvec::SmallVec;
 
 use crate::{
-    domtree::{DomTree, DomTreeNode},
     IntoCfg,
+    domtree::{DomTree, DomTreeNode},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

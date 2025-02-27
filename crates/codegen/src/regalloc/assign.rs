@@ -11,6 +11,7 @@ use crate::{
 };
 
 use super::{
+    RegallocError,
     conflict::{iter_btree_ranges, iter_conflicts, iter_slice_ranges},
     context::RegAllocContext,
     types::{
@@ -18,7 +19,6 @@ use super::{
         RangeEndKey,
     },
     utils::{coalesce_slice, get_weight_at_instr},
-    RegallocError,
 };
 
 enum RegProbeConflict {
@@ -111,8 +111,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             let fragment = queued_fragment.fragment;
             trace!(
                 "process: {fragment}, prio {}, weight {}",
-                queued_fragment.prio,
-                self.live_set_fragments[fragment].spill_weight,
+                queued_fragment.prio, self.live_set_fragments[fragment].spill_weight,
             );
             self.try_assign(&mut probe_order, fragment)?;
         }

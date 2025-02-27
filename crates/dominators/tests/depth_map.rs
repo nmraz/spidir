@@ -1,5 +1,5 @@
 use dominators::{depth_map::DepthMap, domtree::DomTree, loops::LoopForest};
-use graphmock::{graph, Graph, Node};
+use graphmock::{Graph, Node, graph};
 
 macro_rules! test_depth_map {
     ($name:ident, $graph:literal, { $( $node:literal : ($dom_depth:literal, $loop_depth:literal) ),* $(,)? }) => {

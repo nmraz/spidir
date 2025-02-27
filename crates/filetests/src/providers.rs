@@ -1,4 +1,4 @@
-use anyhow::{bail, ensure, Result};
+use anyhow::{Result, bail, ensure};
 use isel_regalloc::IselRegallocProvider;
 
 use crate::provider::DynTestProvider;

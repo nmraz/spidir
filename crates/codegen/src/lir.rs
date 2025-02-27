@@ -8,9 +8,8 @@ use cranelift_bitset::ScalarBitSet;
 use fx_utils::FxHashMap;
 
 use cranelift_entity::{
-    entity_impl,
+    EntityRef, Keys, PrimaryMap, SecondaryMap, entity_impl,
     packed_option::{PackedOption, ReservedValue},
-    EntityRef, Keys, PrimaryMap, SecondaryMap,
 };
 
 use crate::{
@@ -19,8 +18,8 @@ use crate::{
 };
 
 use display::{
-    display_block_params, Display, DisplayBlockParams, DisplayDefOperand, DisplayInstrData,
-    DisplayUseOperand, DisplayVirtRegWithClass,
+    Display, DisplayBlockParams, DisplayDefOperand, DisplayInstrData, DisplayUseOperand,
+    DisplayVirtRegWithClass, display_block_params,
 };
 
 pub mod display;
@@ -137,13 +136,13 @@ impl<'a> BitOr<&'a PhysRegSet> for &'a PhysRegSet {
     type Output = PhysRegSet;
 
     fn bitor(self, rhs: &'a PhysRegSet) -> PhysRegSet {
-        PhysRegSet(ScalarBitSet(self.0 .0 | rhs.0 .0))
+        PhysRegSet(ScalarBitSet(self.0.0 | rhs.0.0))
     }
 }
 
 impl<'a> BitOrAssign<&'a PhysRegSet> for PhysRegSet {
     fn bitor_assign(&mut self, rhs: &'a PhysRegSet) {
-        self.0 .0 |= rhs.0 .0;
+        self.0.0 |= rhs.0.0;
     }
 }
 
@@ -151,13 +150,13 @@ impl<'a> BitAnd<&'a PhysRegSet> for &'a PhysRegSet {
     type Output = PhysRegSet;
 
     fn bitand(self, rhs: &'a PhysRegSet) -> PhysRegSet {
-        PhysRegSet(ScalarBitSet(self.0 .0 & rhs.0 .0))
+        PhysRegSet(ScalarBitSet(self.0.0 & rhs.0.0))
     }
 }
 
 impl<'a> BitAndAssign<&'a PhysRegSet> for PhysRegSet {
     fn bitand_assign(&mut self, rhs: &'a PhysRegSet) {
-        self.0 .0 &= rhs.0 .0;
+        self.0.0 &= rhs.0.0;
     }
 }
 

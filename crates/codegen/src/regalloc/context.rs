@@ -1,7 +1,7 @@
 use core::cell::RefCell;
 
 use alloc::{collections::BTreeMap, vec, vec::Vec};
-use cranelift_entity::{packed_option::PackedOption, PrimaryMap, SecondaryMap};
+use cranelift_entity::{PrimaryMap, SecondaryMap, packed_option::PackedOption};
 use entity_set::DenseEntitySet;
 use fx_utils::FxHashMap;
 use itertools::Itertools;
@@ -158,8 +158,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
                 let range = range_key.0;
                 trace!(
                     "  {range:?} ({}, {})",
-                    self.live_ranges[live_range].vreg,
-                    self.live_ranges[live_range].fragment
+                    self.live_ranges[live_range].vreg, self.live_ranges[live_range].fragment
                 );
             }
         }

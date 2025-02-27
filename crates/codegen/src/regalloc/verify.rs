@@ -10,9 +10,9 @@ use alloc::{
 
 use cranelift_entity::SecondaryMap;
 use fx_utils::FxHashMap;
-use itertools::{izip, Itertools};
+use itertools::{Itertools, izip};
 use log::trace;
-use smallvec::{smallvec, SmallVec};
+use smallvec::{SmallVec, smallvec};
 
 use crate::{
     cfg::{Block, CfgContext},
@@ -159,7 +159,10 @@ impl<M: MachineCore> fmt::Display for DisplayVerifierError<'_, M> {
                 )
             }
             VerifierError::BadGhostCopyBlock { block } => {
-                write!(f, "block '{block}' contained exit ghost copies despite not having a single successor")
+                write!(
+                    f,
+                    "block '{block}' contained exit ghost copies despite not having a single successor"
+                )
             }
             VerifierError::BadGhostCopySource {
                 ghost_copy_idx,

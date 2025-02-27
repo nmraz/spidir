@@ -2,7 +2,7 @@ use core::ops::ControlFlow;
 
 use alloc::vec::Vec;
 use cranelift_entity::{
-    entity_impl, packed_option::PackedOption, EntityList, ListPool, PrimaryMap, SecondaryMap,
+    EntityList, ListPool, PrimaryMap, SecondaryMap, entity_impl, packed_option::PackedOption,
 };
 use dominators::{depth_map::DepthMap, domtree::DomTree, loops::LoopForest};
 use fx_utils::FxHashMap;

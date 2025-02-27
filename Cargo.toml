@@ -4,8 +4,8 @@ members = ["crates/*", "c-api"]
 default-members = ["crates/*"]
 
 [workspace.package]
-edition = "2021"
-rust-version = "1.82"
+edition = "2024"
+rust-version = "1.85"
 
 [workspace.dependencies]
 codegen = { path = "crates/codegen" }

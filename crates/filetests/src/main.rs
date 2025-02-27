@@ -3,8 +3,8 @@ use std::{
     path::{Path, PathBuf},
     process,
     sync::{
-        atomic::{AtomicU32, Ordering},
         Mutex,
+        atomic::{AtomicU32, Ordering},
     },
     time::Instant,
 };
@@ -12,8 +12,9 @@ use std::{
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
 use filetests::{
+    TestOutcome, UpdateMode,
     hooks::{capture_logs, init_log_capture, with_panic_capture},
-    run_file_test, TestOutcome, UpdateMode,
+    run_file_test,
 };
 use glob::Pattern;
 use log::LevelFilter as LogLevelFilter;
@@ -167,7 +168,9 @@ fn main() -> Result<()> {
 
     let duration_secs = test_duration.as_secs();
     let duration_centis = test_duration.subsec_millis() / 10;
-    eprintln!("test result: {status}. {passed} passed; {failed} failed; {updated} updated; {filtered} filtered out; finished in {duration_secs}.{duration_centis:02}s\n");
+    eprintln!(
+        "test result: {status}. {passed} passed; {failed} failed; {updated} updated; {filtered} filtered out; finished in {duration_secs}.{duration_centis:02}s\n"
+    );
 
     if failed > 0 {
         process::exit(1);

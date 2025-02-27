@@ -77,11 +77,7 @@ pub fn colored_node_attrs(graph: &ValGraph, node: Node, attrs: &mut DotAttribute
     }
 
     let fill_color = if has_ctrl {
-        if has_value {
-            "#ffd3e4"
-        } else {
-            "#c2c2ff"
-        }
+        if has_value { "#ffd3e4" } else { "#c2c2ff" }
     } else if has_phisel {
         "#dbdbdb"
     } else {

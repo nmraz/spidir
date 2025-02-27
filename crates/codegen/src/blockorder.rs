@@ -3,7 +3,7 @@ use core::{cell::RefCell, ops::ControlFlow};
 use alloc::vec::Vec;
 
 use dominators::loops::LoopForest;
-use graphwalk::{entity_postorder, GraphRef};
+use graphwalk::{GraphRef, entity_postorder};
 use log::trace;
 use smallvec::SmallVec;
 

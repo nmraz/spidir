@@ -6,7 +6,7 @@ use ir::{
     node::{FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node},
 };
-use smallvec::{smallvec, SmallVec};
+use smallvec::{SmallVec, smallvec};
 use valmatch::match_value;
 
 use crate::{
@@ -18,9 +18,9 @@ use crate::{
 };
 
 use super::{
-    AluBinOp, AluUnOp, CodeModel, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, ShiftOp,
-    X64Instr, X64Machine, CALLER_SAVED_REGS, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI,
-    REG_RDX, REG_RSI,
+    AluBinOp, AluUnOp, CALLER_SAVED_REGS, CodeModel, CondCode, DivOp, ExtWidth, FullOperandSize,
+    OperandSize, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, ShiftOp,
+    X64Instr, X64Machine,
 };
 
 const FIXED_ARG_COUNT: usize = 6;

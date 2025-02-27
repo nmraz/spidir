@@ -7,7 +7,7 @@ use dominators::{
 };
 use entity_set::DenseEntitySet;
 use expect_test::expect;
-use graphmock::{graph, Graph, Node};
+use graphmock::{Graph, Node, graph};
 use itertools::Itertools;
 
 macro_rules! test_loops {
@@ -108,13 +108,15 @@ fn simple_query() {
         ",
     );
 
-    assert!(lf
-        .containing_loop(domtree_node(&g, &domtree, "a"))
-        .is_none());
+    assert!(
+        lf.containing_loop(domtree_node(&g, &domtree, "a"))
+            .is_none()
+    );
 
-    assert!(lf
-        .containing_loop(domtree_node(&g, &domtree, "e"))
-        .is_none());
+    assert!(
+        lf.containing_loop(domtree_node(&g, &domtree, "e"))
+            .is_none()
+    );
 
     let b = domtree_node(&g, &domtree, "b");
     let l = lf.containing_loop(b).unwrap();
@@ -140,12 +142,14 @@ fn triple_nested_loop_query() {
         ",
     );
 
-    assert!(lf
-        .containing_loop(domtree_node(&g, &domtree, "entry"))
-        .is_none());
-    assert!(lf
-        .containing_loop(domtree_node(&g, &domtree, "exit"))
-        .is_none());
+    assert!(
+        lf.containing_loop(domtree_node(&g, &domtree, "entry"))
+            .is_none()
+    );
+    assert!(
+        lf.containing_loop(domtree_node(&g, &domtree, "exit"))
+            .is_none()
+    );
 
     let h1 = domtree_node(&g, &domtree, "h1");
     let l1 = lf.containing_loop(h1).unwrap();

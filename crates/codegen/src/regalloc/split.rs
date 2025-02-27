@@ -11,10 +11,10 @@ use crate::{
 };
 
 use super::{
+    RematCost,
     context::RegAllocContext,
     types::{ConflictBoundary, LiveSetFragment, ProgramPoint, TaggedFragmentCopyHints},
     utils::get_block_weight,
-    RematCost,
 };
 
 #[derive(Debug)]

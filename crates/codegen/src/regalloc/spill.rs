@@ -1,7 +1,7 @@
 use core::mem;
 
 use log::{log_enabled, trace};
-use smallvec::{smallvec, SmallVec};
+use smallvec::{SmallVec, smallvec};
 
 use crate::{
     lir::Instr,

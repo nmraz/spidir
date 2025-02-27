@@ -1,10 +1,10 @@
 use std::mem;
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use codegen::{
     api::{Codegen, CodegenOpts},
     code_buffer::{CodeBlob, RelocKind},
-    target::x64::{CodeModel, X64Machine, X64MachineConfig, RELOC_ABS64, RELOC_PC32},
+    target::x64::{CodeModel, RELOC_ABS64, RELOC_PC32, X64Machine, X64MachineConfig},
 };
 use cranelift_entity::SecondaryMap;
 use fx_utils::FxHashMap;

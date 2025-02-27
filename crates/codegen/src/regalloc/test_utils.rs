@@ -1,6 +1,6 @@
 use crate::lir::{Instr, PhysReg};
 
-use super::{types::CopySourceAssignment, OperandAssignment, SpillSlot};
+use super::{OperandAssignment, SpillSlot, types::CopySourceAssignment};
 
 pub fn parse_operand(s: &str) -> OperandAssignment {
     match s.as_bytes()[0] {

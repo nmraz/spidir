@@ -1,6 +1,6 @@
 use ir::module::Module;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_opt_run(module: *mut Module) {
     let module = unsafe { &mut *module };
 

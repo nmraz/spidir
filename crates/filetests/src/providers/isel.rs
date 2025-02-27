@@ -1,11 +1,11 @@
 use core::fmt::Write;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use codegen::{api::lower_func, target::x64::X64Machine};
 use ir::module::Module;
 
 use crate::{
-    provider::{update_per_func_output, SimpleTestProvider, Updater},
+    provider::{SimpleTestProvider, Updater, update_per_func_output},
     utils::sanitize_raw_output,
 };
 

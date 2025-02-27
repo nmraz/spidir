@@ -2,11 +2,11 @@ use std::fmt::Write;
 
 use anyhow::{Context, Result};
 use capstone::{
-    arch::{
-        x86::{ArchMode, ArchSyntax},
-        BuildsCapstone, BuildsCapstoneSyntax,
-    },
     Capstone,
+    arch::{
+        BuildsCapstone, BuildsCapstoneSyntax,
+        x86::{ArchMode, ArchSyntax},
+    },
 };
 use codegen::{
     code_buffer::{CodeBlob, RelocKind},

@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use dominators::domtree::DomTree;
 use expect_test::expect;
-use graphmock::{graph, Graph, Node};
+use graphmock::{Graph, Node, graph};
 use graphwalk::WalkPhase;
 
 macro_rules! test_domtree {

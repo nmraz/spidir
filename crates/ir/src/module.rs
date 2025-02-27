@@ -1,6 +1,6 @@
 use core::fmt;
 
-use cranelift_entity::{entity_impl, PrimaryMap};
+use cranelift_entity::{PrimaryMap, entity_impl};
 
 use crate::{
     function::{FunctionData, FunctionMetadata},

@@ -12,7 +12,7 @@ use ir::{
 };
 use valmatch::match_value;
 
-use crate::reduce::{reduce_body, ReduceContext};
+use crate::reduce::{ReduceContext, reduce_body};
 
 pub fn canonicalize(body: &mut FunctionBody, node_cache: &mut NodeCache) {
     reduce_body(body, node_cache, canonicalize_node);

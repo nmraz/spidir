@@ -3,8 +3,8 @@ use core::{cmp::Ordering, ops::ControlFlow};
 use alloc::{collections::BinaryHeap, vec::Vec};
 
 use cranelift_entity::{
-    packed_option::{PackedOption, ReservedValue},
     EntityList, ListPool, SecondaryMap,
+    packed_option::{PackedOption, ReservedValue},
 };
 use dominators::depth_map::DepthMap;
 use entity_set::DenseEntitySet;
@@ -14,11 +14,11 @@ use ir::{
     function::FunctionBody,
     module::Module,
     node::NodeKind,
-    schedule::{schedule_early, schedule_late, ScheduleContext},
+    schedule::{ScheduleContext, schedule_early, schedule_late},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{
-        dataflow_inputs, dataflow_preds, dataflow_succs, def_use_preds, raw_dataflow_succs,
-        raw_def_use_succs, LiveNodeInfo,
+        LiveNodeInfo, dataflow_inputs, dataflow_preds, dataflow_succs, def_use_preds,
+        raw_dataflow_succs, raw_def_use_succs,
     },
 };
 use log::trace;
@@ -306,10 +306,11 @@ impl<'a> Scheduler<'a> {
                     let loc = self.block_map.cfg_pred_block(graph, ctrl_input);
 
                     if let Some(loc) = loc {
-                        debug_assert!(self
-                            .cfg()
-                            .block_preds(self.block_map.containing_block(region).unwrap())
-                            .contains(&loc));
+                        debug_assert!(
+                            self.cfg()
+                                .block_preds(self.block_map.containing_block(region).unwrap())
+                                .contains(&loc)
+                        );
                         trace!(
                             "    succ: phi {} input {} ({loc})",
                             node.as_u32(),

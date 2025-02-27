@@ -1,6 +1,6 @@
 use codegen::target::x64::{CodeModel, X64Machine, X64MachineConfig};
 
-use crate::codegen::{codegen_machine_to_api, ApiCodegenMachine};
+use crate::codegen::{ApiCodegenMachine, codegen_machine_to_api};
 
 type ApiX64CodeModel = u8;
 
@@ -28,12 +28,12 @@ fn x64_machine_config_from_api(machine_config: &ApiX64MachineConfig) -> X64Machi
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn spidir_codegen_create_x64_machine() -> *mut ApiCodegenMachine {
     codegen_machine_to_api(X64Machine::default())
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_codegen_create_x64_machine_with_config(
     config: *const ApiX64MachineConfig,
 ) -> *mut ApiCodegenMachine {

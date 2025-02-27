@@ -12,24 +12,24 @@ use ir::{
 };
 
 use crate::types::{
-    funcref_from_api, funcref_to_api, name_signature_from_api, ApiFunction, ApiType,
-    BuildFunctionCallback, DumpCallback, SPIDIR_DUMP_CONTINUE,
+    ApiFunction, ApiType, BuildFunctionCallback, DumpCallback, SPIDIR_DUMP_CONTINUE,
+    funcref_from_api, funcref_to_api, name_signature_from_api,
 };
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn spidir_module_create() -> *mut Module {
     let module = Box::new(Module::new());
     Box::into_raw(module)
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_module_destroy(module: *mut Module) {
     unsafe {
         drop(Box::from_raw(module));
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_module_create_function(
     module: *mut Module,
     name: *const c_char,
@@ -46,7 +46,7 @@ unsafe extern "C" fn spidir_module_create_function(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_module_create_extern_function(
     module: *mut Module,
     name: *const c_char,
@@ -63,7 +63,7 @@ unsafe extern "C" fn spidir_module_create_extern_function(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_module_build_function(
     module: *mut Module,
     func: ApiFunction,
@@ -81,7 +81,7 @@ unsafe extern "C" fn spidir_module_build_function(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_module_dump(
     module: *const Module,
     callback: DumpCallback,

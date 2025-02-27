@@ -19,9 +19,9 @@ use ir::{
 };
 use itertools::Itertools;
 use pest::{
+    Parser, Span,
     error::{Error, ErrorVariant},
     iterators::{Pair, Pairs},
-    Parser, Span,
 };
 use pest_derive::Parser;
 
@@ -474,7 +474,7 @@ fn parse_from_str<T: FromStr>(pair: &Pair<'_, Rule>, message: &str) -> Result<T,
 
 #[cfg(test)]
 mod tests {
-    use expect_test::{expect, Expect};
+    use expect_test::{Expect, expect};
 
     use super::*;
 

@@ -5,7 +5,7 @@ use std::{
     sync::OnceLock,
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use fx_utils::FxHashMap;
 use hashbrown::hash_map::Entry;
 use itertools::Itertools;
@@ -16,7 +16,7 @@ use ir::{
     module::Module,
     valgraph::{DepValue, Node},
     verify::verify_module,
-    write::{write_annotated_body, write_annotated_node, write_node_kind, AnnotateGraph},
+    write::{AnnotateGraph, write_annotated_body, write_annotated_node, write_node_kind},
 };
 use parser::unqoute_ident;
 

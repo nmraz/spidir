@@ -39,7 +39,7 @@ pub use types::{
     SpillSlot, SpillSlotData, TaggedAssignmentCopy,
 };
 
-pub use verify::{verify, VerifierError};
+pub use verify::{VerifierError, verify};
 
 #[derive(Debug, Clone, Copy)]
 pub enum RegallocError {
@@ -202,7 +202,7 @@ impl Iterator for AssignmentInstrIter<'_> {
                     break (
                         instr,
                         Some(InstrOrCopy::Copy(TaggedAssignmentCopy { instr, copy })),
-                    )
+                    );
                 }
                 None => {
                     if !self.edits.is_killed_remat_def(instr) {

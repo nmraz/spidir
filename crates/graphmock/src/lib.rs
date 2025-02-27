@@ -1,6 +1,6 @@
 use std::ops::ControlFlow;
 
-use cranelift_entity::{entity_impl, PrimaryMap};
+use cranelift_entity::{PrimaryMap, entity_impl};
 use fx_utils::FxHashMap;
 use graphwalk::{GraphRef, PredGraphRef};
 

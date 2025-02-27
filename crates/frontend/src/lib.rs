@@ -1,6 +1,6 @@
 #![cfg_attr(not(test), no_std)]
 
-use cranelift_entity::{entity_impl, PrimaryMap};
+use cranelift_entity::{PrimaryMap, entity_impl};
 use log::trace;
 
 use ir::{
@@ -374,7 +374,7 @@ impl Builder for GraphBuilderWrapper<'_> {
 
 #[cfg(test)]
 mod tests {
-    use expect_test::{expect, Expect};
+    use expect_test::{Expect, expect};
     use ir::{
         function::{FunctionData, Signature},
         module::Module,

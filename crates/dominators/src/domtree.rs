@@ -6,9 +6,8 @@ use core::{
 use alloc::{vec, vec::Vec};
 
 use cranelift_entity::{
-    entity_impl,
+    EntityList, EntityRef, ListPool, PrimaryMap, SecondaryMap, entity_impl,
     packed_option::{PackedOption, ReservedValue},
-    EntityList, EntityRef, ListPool, PrimaryMap, SecondaryMap,
 };
 use graphwalk::{PredGraphRef, TreePostOrder, TreePreOrder, WalkPhase};
 use smallvec::SmallVec;
@@ -264,7 +263,7 @@ impl<N> Preorder<N> {
         PreorderNum::new(self.0.len() as u32)
     }
 
-    fn iter(&self) -> impl DoubleEndedIterator<Item = PreorderNum> + ExactSizeIterator {
+    fn iter(&self) -> impl DoubleEndedIterator<Item = PreorderNum> + ExactSizeIterator + use<N> {
         (0..self.next_num().get()).map(PreorderNum::new)
     }
 }

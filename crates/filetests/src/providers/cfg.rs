@@ -7,7 +7,7 @@ use ir::module::Module;
 use itertools::Itertools;
 
 use crate::{
-    provider::{update_per_func_output, SimpleTestProvider, Updater},
+    provider::{SimpleTestProvider, Updater, update_per_func_output},
     utils::write_body_with_trailing_comments,
 };
 

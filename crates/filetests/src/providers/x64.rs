@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use codegen::target::x64::{CodeModel, X64Machine, X64MachineConfig};
 
 pub fn create_x64_machine(params: &[&str]) -> Result<X64Machine> {

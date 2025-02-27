@@ -7,11 +7,11 @@ use std::{
     process::Command,
 };
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
 use codegen::{
-    api::{codegen_func, lower_func, schedule_graph, CodegenOpts},
+    api::{CodegenOpts, codegen_func, lower_func, schedule_graph},
     target::x64::{CodeModel, X64Machine, X64MachineConfig},
 };
 use codegen_test_tools::{disasm::disasm_code, exec::codegen_and_exec};

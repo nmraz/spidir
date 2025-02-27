@@ -61,10 +61,10 @@ mod tests {
     use crate::{
         cfg::{Block, BlockCfg},
         lir::{
-            test_utils::{push_instr, RC_GPR},
             Builder as LirBuilder, DefOperand, OperandPos, UseOperandConstraint,
+            test_utils::{RC_GPR, push_instr},
         },
-        target::x64::{AluBinOp, CondCode, OperandSize, X64Instr, REG_RAX},
+        target::x64::{AluBinOp, CondCode, OperandSize, REG_RAX, X64Instr},
     };
 
     use super::*;

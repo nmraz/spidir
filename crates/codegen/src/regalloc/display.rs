@@ -8,14 +8,14 @@ use itertools::Itertools;
 use crate::{
     cfg::Block,
     lir::{
-        display::{display_instr_gutter, display_instr_gutter_padding},
         Lir,
+        display::{display_instr_gutter, display_instr_gutter_padding},
     },
     machine::MachineCore,
 };
 
 use super::{
-    types::CopySourceAssignment, Assignment, InstrOrCopy, OperandAssignment, TaggedAssignmentCopy,
+    Assignment, InstrOrCopy, OperandAssignment, TaggedAssignmentCopy, types::CopySourceAssignment,
 };
 
 pub struct DisplayOperandAssignment<M: MachineCore> {

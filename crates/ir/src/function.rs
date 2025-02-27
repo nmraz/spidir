@@ -1,13 +1,13 @@
 use alloc::{string::String, vec::Vec};
 use core::{fmt, iter};
 
-use cranelift_entity::{entity_impl, packed_option::ReservedValue, PrimaryMap};
+use cranelift_entity::{PrimaryMap, entity_impl, packed_option::ReservedValue};
 
 use crate::{
     cache::NodeCache,
     node::{DepValueKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::{cfg_preorder, CfgPreorder, LiveNodeInfo},
+    valwalk::{CfgPreorder, LiveNodeInfo, cfg_preorder},
     write::write_function_metadata,
 };
 

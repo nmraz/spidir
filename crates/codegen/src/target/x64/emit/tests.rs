@@ -1,11 +1,11 @@
 use capstone::{
-    arch::{
-        x86::{ArchMode, ArchSyntax},
-        BuildsCapstone, BuildsCapstoneSyntax,
-    },
     Capstone,
+    arch::{
+        BuildsCapstone, BuildsCapstoneSyntax,
+        x86::{ArchMode, ArchSyntax},
+    },
 };
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 use itertools::Itertools;
 
 use super::*;

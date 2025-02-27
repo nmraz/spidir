@@ -6,7 +6,7 @@ use graphwalk::PostOrderContext;
 use crate::{
     node::NodeKind,
     valgraph::{Node, ValGraph},
-    valwalk::{dataflow_preds, dataflow_succs, get_attached_phis, LiveNodeInfo},
+    valwalk::{LiveNodeInfo, dataflow_preds, dataflow_succs, get_attached_phis},
 };
 
 pub struct ScheduleContext<'a> {

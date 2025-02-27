@@ -1,15 +1,15 @@
 use std::fmt::Write;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use codegen::{
-    api::{codegen_func, CodegenOpts},
+    api::{CodegenOpts, codegen_func},
     target::x64::X64Machine,
 };
 use codegen_test_tools::disasm::disasm_code;
 use ir::module::Module;
 
 use crate::{
-    provider::{update_per_func_output, SimpleTestProvider, Updater},
+    provider::{SimpleTestProvider, Updater, update_per_func_output},
     utils::sanitize_raw_output,
 };
 

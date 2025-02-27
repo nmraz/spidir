@@ -1,8 +1,8 @@
 use alloc::collections::VecDeque;
-use cranelift_entity::{packed_option::ReservedValue, SecondaryMap};
+use cranelift_entity::{SecondaryMap, packed_option::ReservedValue};
 use entity_set::DenseEntitySet;
 use log::trace;
-use smallvec::{smallvec, SmallVec};
+use smallvec::{SmallVec, smallvec};
 
 use crate::{
     cfg::{Block, CfgContext},
@@ -12,6 +12,7 @@ use crate::{
 };
 
 use super::{
+    RegAllocContext,
     types::{
         AnnotatedPhysRegHint, LiveRange, LiveRangeData, LiveRangeFlags, LiveRangeInstr,
         LiveRangeInstrs, LiveRangeOpPos, LiveSetFragment, PhysRegHint, PhysRegReservation,
@@ -19,7 +20,6 @@ use super::{
     },
     utils::get_weight_at_instr,
     virt_reg_set::VirtRegSet,
-    RegAllocContext,
 };
 
 impl<M: MachineRegalloc> RegAllocContext<'_, M> {
@@ -121,16 +121,20 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         for live_ranges in self.vreg_ranges.values_mut() {
             live_ranges.reverse();
 
-            debug_assert!(live_ranges
-                .is_sorted_by_key(|&live_range| self.live_ranges[live_range].prog_range.start));
+            debug_assert!(
+                live_ranges
+                    .is_sorted_by_key(|&live_range| self.live_ranges[live_range].prog_range.start)
+            );
         }
 
         // Do the same thing for all physical register reservations...
         for preg in 0..M::phys_reg_count() {
             self.phys_reg_reservations[preg as usize].reverse();
 
-            debug_assert!(&self.phys_reg_reservations[preg as usize]
-                .is_sorted_by_key(|reservation| reservation.prog_range.start));
+            debug_assert!(
+                &self.phys_reg_reservations[preg as usize]
+                    .is_sorted_by_key(|reservation| reservation.prog_range.start)
+            );
         }
 
         // ...and for instruction lists within each live range.

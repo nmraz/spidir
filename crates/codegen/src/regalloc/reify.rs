@@ -2,7 +2,7 @@ use core::{cmp, iter, mem};
 
 use alloc::vec::Vec;
 
-use cranelift_entity::{packed_option::ReservedValue, EntityRef, PrimaryMap, SecondaryMap};
+use cranelift_entity::{EntityRef, PrimaryMap, SecondaryMap, packed_option::ReservedValue};
 use entity_set::DenseEntitySet;
 use fx_utils::FxHashMap;
 use log::trace;
@@ -19,7 +19,8 @@ use crate::{
 };
 
 use super::{
-    conflict::{iter_btree_ranges, iter_slice_ranges, RangeKeyIter},
+    Assignment, InstrAssignmentData, OperandAssignment, SpillSlot, SpillSlotData,
+    conflict::{RangeKeyIter, iter_btree_ranges, iter_slice_ranges},
     context::RegAllocContext,
     parallel_copy::{self, RegScavenger},
     redundant_copy::{RedundantCopyTracker, RedundantCopyVerdict},
@@ -27,7 +28,6 @@ use super::{
         BlockExitGhostCopy, CopySourceAssignment, InstrSlot, LiveRange, ParallelCopies,
         ParallelCopy, ParallelCopyPhase, ProgramPoint, TaggedAssignmentCopy,
     },
-    Assignment, InstrAssignmentData, OperandAssignment, SpillSlot, SpillSlotData,
 };
 
 // Every block parameter is uniquely identified by its destination vreg because everything is in
@@ -367,11 +367,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             // is only possible when the vreg is a block param.
                             trace!("      in (block param)");
 
-                            debug_assert!(self
-                                .lir
-                                .block_params(block)
-                                .iter()
-                                .any(|&param| param == vreg));
+                            debug_assert!(
+                                self.lir
+                                    .block_params(block)
+                                    .iter()
+                                    .any(|&param| param == vreg)
+                            );
 
                             block_param_ins.push(BlockParamIn {
                                 block,

@@ -14,10 +14,10 @@ use crate::{
 };
 
 use super::{
-    AluBinOp, AluUnOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale, OperandSize,
-    ShiftOp, X64Instr, X64Machine, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_R8,
-    REG_R9, REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64,
-    RELOC_PC32,
+    AluBinOp, AluUnOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale, OperandSize, REG_R8,
+    REG_R9, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_RAX, REG_RBP, REG_RBX,
+    REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64, RELOC_PC32, ShiftOp, X64Instr,
+    X64Machine,
 };
 
 mod flag_liveness;

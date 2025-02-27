@@ -4,7 +4,7 @@ use std::{
     ptr::{self, NonNull},
 };
 
-use anyhow::{bail, Error, Result};
+use anyhow::{Error, Result, bail};
 use libc::{MAP_ANONYMOUS, MAP_FAILED, MAP_PRIVATE, PROT_EXEC, PROT_READ, PROT_WRITE};
 
 pub struct JitBuf {

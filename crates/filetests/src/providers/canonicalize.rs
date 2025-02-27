@@ -6,7 +6,7 @@ use ir::module::Module;
 use opt::canonicalize::canonicalize;
 
 use crate::{
-    provider::{update_transformed_module_output, TestProvider, Updater},
+    provider::{TestProvider, Updater, update_transformed_module_output},
     regexes::VAL_REGEX,
     utils::verify_module_with_err,
 };

@@ -1,10 +1,10 @@
-use smallvec::{smallvec, SmallVec};
+use smallvec::{SmallVec, smallvec};
 
 use crate::lir::{Instr, PhysReg};
 
 use super::{
-    types::{AssignmentCopy, CopySourceAssignment, ParallelCopy},
     OperandAssignment, SpillSlot,
+    types::{AssignmentCopy, CopySourceAssignment, ParallelCopy},
 };
 
 pub trait RegScavenger {
@@ -278,16 +278,16 @@ mod tests {
     use std::fmt::Write;
 
     use cranelift_entity::EntityRef;
-    use expect_test::{expect, Expect};
+    use expect_test::{Expect, expect};
 
     use crate::{
         lir::{Instr, PhysReg, PhysRegSet, RegClass},
         regalloc::{
+            SpillSlot,
             test_utils::{
                 copy_source_to_string, operand_to_string, parse_copy_source, parse_operand,
             },
             types::ParallelCopyPhase,
-            SpillSlot,
         },
     };
 

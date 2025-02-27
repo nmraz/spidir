@@ -1,10 +1,10 @@
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 
 use crate::{
     cfg::{BlockCfg, CfgContext},
     lir::{
-        test_utils::{push_instr, DummyInstr, DummyMachine, RC_GPR, REG_R0, REG_R1, REG_R2},
         Builder as LirBuilder, MemLayout, OperandPos, PhysReg, RegClass, UseOperandConstraint,
+        test_utils::{DummyInstr, DummyMachine, RC_GPR, REG_R0, REG_R1, REG_R2, push_instr},
     },
     machine::MachineRegalloc,
 };

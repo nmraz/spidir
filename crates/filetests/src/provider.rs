@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt::Write, iter};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use filecheck::{Checker, CheckerBuilder, Value, VariableMap};
 
 use fx_utils::FxHashMap;

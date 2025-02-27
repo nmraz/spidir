@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use ir::{
     function::FunctionData,
     module::{Function, Module},

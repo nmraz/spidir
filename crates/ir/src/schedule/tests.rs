@@ -10,7 +10,7 @@ use crate::{
     valwalk::LiveNodeInfo,
 };
 
-use super::{is_pinned_node, schedule_early, schedule_late, ScheduleContext};
+use super::{ScheduleContext, is_pinned_node, schedule_early, schedule_late};
 
 fn check_live_scheduled(
     graph: &ValGraph,

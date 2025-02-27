@@ -204,11 +204,7 @@ fn hash_node(
     let hash = state.finish() as u32;
 
     // Make sure we have a free sentinel value.
-    if hash != HASH_NONE {
-        hash
-    } else {
-        0
-    }
+    if hash != HASH_NONE { hash } else { 0 }
 }
 
 fn should_cache_built_node(kind: &NodeKind) -> bool {

@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::{array, fmt};
 
-use cranelift_entity::{packed_option::PackedOption, SecondaryMap};
+use cranelift_entity::{SecondaryMap, packed_option::PackedOption};
 use fx_utils::FxHashMap;
 use ir::{
     function::{FunctionBody, FunctionData},

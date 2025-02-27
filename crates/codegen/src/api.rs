@@ -14,7 +14,7 @@ use crate::{
     cfg::{CfgContext, FunctionBlockMap},
     code_buffer::CodeBlob,
     emit::emit_code,
-    isel::{select_instrs, IselError},
+    isel::{IselError, select_instrs},
     lir::Lir,
     machine::{Machine, MachineLower},
     regalloc::{self, RegallocError},

@@ -2,7 +2,7 @@ use core::ptr;
 
 use alloc::{boxed::Box, vec::Vec};
 use codegen::{
-    api::{codegen_func, CodegenError, CodegenOpts},
+    api::{CodegenError, CodegenOpts, codegen_func},
     code_buffer::CodeBlob,
     machine::Machine,
 };
@@ -13,8 +13,8 @@ use ir::{
 use log::error;
 
 use crate::types::{
-    funcref_from_api, reloc_to_api, ApiCodegenConfig, ApiCodegenStatus, ApiFunction, ApiReloc,
-    SPIDIR_CODEGEN_ERROR_ISEL, SPIDIR_CODEGEN_ERROR_REGALLOC, SPIDIR_CODEGEN_OK,
+    ApiCodegenConfig, ApiCodegenStatus, ApiFunction, ApiReloc, SPIDIR_CODEGEN_ERROR_ISEL,
+    SPIDIR_CODEGEN_ERROR_REGALLOC, SPIDIR_CODEGEN_OK, funcref_from_api, reloc_to_api,
 };
 
 struct ApiCodegenMachineVtable {
@@ -78,7 +78,7 @@ fn codegen_blob_to_api(blob: CodeBlob) -> *mut ApiCodegenBlob {
     Box::into_raw(Box::new(ApiCodegenBlob { code, relocs }))
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_codegen_machine_destroy(machine: *mut ApiCodegenMachine) {
     unsafe {
         let dropper = (*machine).vtable.drop;
@@ -86,32 +86,32 @@ unsafe extern "C" fn spidir_codegen_machine_destroy(machine: *mut ApiCodegenMach
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_codegen_blob_destroy(blob: *mut ApiCodegenBlob) {
     unsafe {
         drop(Box::from_raw(blob));
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_codegen_blob_get_code_size(blob: *const ApiCodegenBlob) -> usize {
     let blob = unsafe { &*blob };
     blob.code.len()
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_codegen_blob_get_code(blob: *const ApiCodegenBlob) -> *const u8 {
     let blob = unsafe { &*blob };
     blob.code.as_ptr()
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_codegen_blob_get_reloc_count(blob: *const ApiCodegenBlob) -> usize {
     let blob = unsafe { &*blob };
     blob.relocs.len()
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_codegen_blob_get_relocs(
     blob: *const ApiCodegenBlob,
 ) -> *const ApiReloc {
@@ -119,7 +119,7 @@ unsafe extern "C" fn spidir_codegen_blob_get_relocs(
     blob.relocs.as_ptr()
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_codegen_emit_function(
     machine: *mut ApiCodegenMachine,
     config: *const ApiCodegenConfig,

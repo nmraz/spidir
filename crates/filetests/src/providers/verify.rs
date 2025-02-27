@@ -1,12 +1,12 @@
 use std::{fmt::Write, sync::OnceLock};
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use cranelift_entity::SecondaryMap;
 use filecheck::Value;
 use fx_utils::FxHashMap;
 use ir::{
     module::Module,
-    verify::{verify_module, ModuleVerifierError},
+    verify::{ModuleVerifierError, verify_module},
     write::display_node,
 };
 use itertools::Itertools;

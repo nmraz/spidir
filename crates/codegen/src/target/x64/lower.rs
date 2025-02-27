@@ -7,6 +7,7 @@ use ir::{
     valgraph::{DepValue, Node},
 };
 use smallvec::{smallvec, SmallVec};
+use valmatch::match_value;
 
 use crate::{
     cfg::Block,
@@ -761,22 +762,20 @@ fn as_imm32(ty: Type, val: u64) -> Option<i32> {
 }
 
 fn match_iconst(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<u64> {
-    if let (node, 0) = ctx.value_def(value) {
-        if let NodeKind::IConst(val) = ctx.node_kind(node) {
+    match_value! {
+        if let NodeKind::IConst(val) = ctx, value {
             return Some(val);
         }
     }
-
     None
 }
 
 fn match_stack_slot(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<StackSlot> {
-    if let (node, 0) = ctx.value_def(value) {
-        if matches!(ctx.node_kind(node), NodeKind::StackSlot { .. }) {
-            return Some(ctx.node_stack_slot(node));
+    match_value! {
+        if let node n @ NodeKind::StackSlot { .. } = ctx, value {
+            return Some(ctx.node_stack_slot(n));
         }
     }
-
     None
 }
 

@@ -190,6 +190,7 @@ dependencies = [
  "quickcheck",
  "quickcheck_macros",
  "smallvec",
+ "valmatch",
 ]
 
 [[package]]

@@ -13,6 +13,7 @@ fx-utils.workspace = true
 graphwalk.workspace = true
 ir.workspace = true
 log.workspace = true
+valmatch.workspace = true
 
 bitflags.workspace = true
 cranelift-bitset.workspace = true

@@ -29,13 +29,13 @@ func @"System.Boolean Tests.CodeGenBringUpTests::InitObj()":i32() {
     # nextln:           $$rsi = StackAddr(!0)
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0012:     CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0013:     $$r12 = MovRStack(!1, S32)
+    # nextln: 0013:     $$r12 = MovRM(S32, [!1 + 0])
     # nextln: 0014:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rdx = MovRmS32(12)
     # nextln:           $$rsi = StackAddr(!0)
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0015:     CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0016:     $$rax = MovRM(S32) $$rbx
+    # nextln: 0016:     $$rax = MovRM(S32, [reg + 0]) $$rbx
     # nextln: 0017:     AluRRm(S32, Cmp) $$r12, $$rax
     # nextln: 0018:     Jumpcc(Ne, block3, block5)
     # nextln:       block3:
@@ -48,13 +48,13 @@ func @"System.Boolean Tests.CodeGenBringUpTests::InitObj()":i32() {
     # nextln:           $$rsi = StackAddr(!0)
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0022:     CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0023:     $$rbx = MovRM(S32) $$rbx
+    # nextln: 0023:     $$rbx = MovRM(S32, [reg + 0]) $$rbx
     # nextln: 0024:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rdx = MovRmS32(12)
     # nextln:           $$rsi = StackAddr(!0)
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0025:     CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0026:     $$rax = MovRM(S32) $$r12
+    # nextln: 0026:     $$rax = MovRM(S32, [reg + 0]) $$r12
     # nextln: 0027:     AluRRm(S32, Cmp) $$rbx, $$rax
     # nextln: 0028:     Jumpcc(Ne, block6, block7)
     # nextln:       block6:
@@ -68,7 +68,7 @@ func @"System.Boolean Tests.CodeGenBringUpTests::InitObj()":i32() {
     # nextln:           $$rsi = StackAddr(!0)
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0032:     CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0033:     $$rcx = MovRM(S32) $$r12
+    # nextln: 0033:     $$rcx = MovRM(S32, [reg + 0]) $$r12
     # nextln: 0034:     $$rax = MovRmS32(0)
     # nextln: 0035:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0036:     $$rax = Setcc(E) $$rax

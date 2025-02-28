@@ -14,10 +14,10 @@ use crate::{
 };
 
 use super::{
-    AluBinOp, AluUnOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale, OperandSize, REG_R8,
-    REG_R9, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_RAX, REG_RBP, REG_RBX,
-    REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64, RELOC_PC32, ShiftOp, X64Instr,
-    X64Machine,
+    AddrBase, AddrMode, AluBinOp, AluUnOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale,
+    OperandSize, REG_R8, REG_R9, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_RAX,
+    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64, RELOC_PC32,
+    ShiftOp, X64Instr, X64Machine,
 };
 
 mod flag_liveness;
@@ -69,6 +69,29 @@ impl X64EmitState {
         match operand {
             OperandAssignment::Reg(reg) => RegMem::Reg(reg),
             OperandAssignment::Spill(spill) => RegMem::Mem(self.spill_slot_addr(spill)),
+        }
+    }
+
+    fn lower_addr_mode(&self, addr_mode: &AddrMode, regs: &[OperandAssignment]) -> RawAddrMode {
+        let mut regs = regs.iter().map(|reg| reg.as_reg().unwrap());
+        let mut offset = 0;
+
+        let base = match addr_mode.base {
+            Some(AddrBase::Reg) => Some(regs.next().unwrap()),
+            Some(AddrBase::Stack(slot)) => {
+                offset = self.sp_offset(self.frame_layout.stack_slot_offsets[slot]);
+                Some(REG_RSP)
+            }
+            None => None,
+        };
+
+        let index = addr_mode.index.map(|scale| (scale, regs.next().unwrap()));
+        offset = offset.checked_add(addr_mode.offset).unwrap();
+
+        RawAddrMode::BaseIndexOff {
+            base,
+            index,
+            offset,
         }
     }
 
@@ -251,36 +274,16 @@ impl MachineEmit for X64Machine {
                     offset,
                 }),
             ),
-            &X64Instr::MovRM(full_op_size) => emit_movzx_r_rm(
+            X64Instr::MovRM(full_op_size, addr_mode) => emit_movzx_r_rm(
                 buffer,
-                full_op_size,
+                *full_op_size,
                 defs[0].as_reg().unwrap(),
-                RegMem::Mem(RawAddrMode::BaseIndexOff {
-                    base: Some(uses[0].as_reg().unwrap()),
-                    index: None,
-                    offset: 0,
-                }),
+                RegMem::Mem(state.lower_addr_mode(addr_mode, uses)),
             ),
-            &X64Instr::MovRStack(slot, full_op_size) => emit_movzx_r_rm(
+            X64Instr::MovMR(full_op_size, addr_mode) => emit_mov_rm_r(
                 buffer,
-                full_op_size,
-                defs[0].as_reg().unwrap(),
-                RegMem::Mem(state.stack_slot_addr(slot)),
-            ),
-            &X64Instr::MovMR(full_op_size) => emit_mov_rm_r(
-                buffer,
-                full_op_size,
-                RegMem::Mem(RawAddrMode::BaseIndexOff {
-                    base: Some(uses[1].as_reg().unwrap()),
-                    index: None,
-                    offset: 0,
-                }),
-                uses[0].as_reg().unwrap(),
-            ),
-            &X64Instr::MovStackR(slot, full_op_size) => emit_mov_rm_r(
-                buffer,
-                full_op_size,
-                RegMem::Mem(state.stack_slot_addr(slot)),
+                *full_op_size,
+                RegMem::Mem(state.lower_addr_mode(addr_mode, &uses[1..])),
                 uses[0].as_reg().unwrap(),
             ),
             &X64Instr::StackAddr(slot) => emit_lea_or_mov(

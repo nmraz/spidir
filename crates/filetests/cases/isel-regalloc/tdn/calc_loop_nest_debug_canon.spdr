@@ -40,335 +40,335 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0007:     $$r9 = MovRmS32(5)
     # nextln: 0009:     $$r10 = MovRmS32(3)
     # nextln: 0010:     $$r11 = MovRmS32(2)
-    # nextln: 0016:     MovStackR(!18, S32) $$r8
-    # nextln: 0017:     MovStackR(!1, S32) $$r8
-    # nextln: 0018:     MovStackR(!0, S32) $$r8
-    # nextln: 0019:     MovStackR(!15, S32) $$r8
-    # nextln: 0020:     MovStackR(!14, S32) $$r8
-    # nextln: 0021:     MovStackR(!13, S32) $$r8
-    # nextln: 0022:     MovStackR(!12, S32) $$r8
-    # nextln: 0023:     MovStackR(!11, S32) $$r8
-    # nextln: 0024:     MovStackR(!10, S32) $$r8
-    # nextln: 0025:     MovStackR(!9, S32) $$r8
-    # nextln: 0026:     MovStackR(!8, S32) $$r8
-    # nextln: 0027:     MovStackR(!7, S32) $$r8
-    # nextln: 0028:     MovStackR(!6, S32) $$r8
-    # nextln: 0029:     MovStackR(!5, S32) $$r8
-    # nextln: 0030:     MovStackR(!4, S32) $$r8
-    # nextln: 0031:     MovStackR(!3, S32) $$r8
-    # nextln: 0032:     MovStackR(!17, S32) $$r8
-    # nextln: 0033:     MovStackR(!23, S32) $$r8
-    # nextln: 0034:     MovStackR(!24, S32) $$r8
-    # nextln: 0035:     MovStackR(!25, S32) $$r8
-    # nextln: 0036:     MovStackR(!26, S8) $$r8
-    # nextln: 0037:     MovStackR(!16, S8) $$r8
-    # nextln: 0038:     MovStackR(!27, S8) $$r8
-    # nextln: 0039:     MovStackR(!21, S32) $$r8
-    # nextln: 0040:     MovStackR(!22, S8) $$r8
-    # nextln: 0041:     MovStackR(!19, S32) $$r8
-    # nextln: 0042:     MovStackR(!20, S8) $$r8
-    # nextln: 0043:     MovStackR(!28, S8) $$r8
-    # nextln: 0044:     MovStackR(!2, S32) $$r8
+    # nextln: 0016:     MovMR(S32, [!18 + 0]) $$r8
+    # nextln: 0017:     MovMR(S32, [!1 + 0]) $$r8
+    # nextln: 0018:     MovMR(S32, [!0 + 0]) $$r8
+    # nextln: 0019:     MovMR(S32, [!15 + 0]) $$r8
+    # nextln: 0020:     MovMR(S32, [!14 + 0]) $$r8
+    # nextln: 0021:     MovMR(S32, [!13 + 0]) $$r8
+    # nextln: 0022:     MovMR(S32, [!12 + 0]) $$r8
+    # nextln: 0023:     MovMR(S32, [!11 + 0]) $$r8
+    # nextln: 0024:     MovMR(S32, [!10 + 0]) $$r8
+    # nextln: 0025:     MovMR(S32, [!9 + 0]) $$r8
+    # nextln: 0026:     MovMR(S32, [!8 + 0]) $$r8
+    # nextln: 0027:     MovMR(S32, [!7 + 0]) $$r8
+    # nextln: 0028:     MovMR(S32, [!6 + 0]) $$r8
+    # nextln: 0029:     MovMR(S32, [!5 + 0]) $$r8
+    # nextln: 0030:     MovMR(S32, [!4 + 0]) $$r8
+    # nextln: 0031:     MovMR(S32, [!3 + 0]) $$r8
+    # nextln: 0032:     MovMR(S32, [!17 + 0]) $$r8
+    # nextln: 0033:     MovMR(S32, [!23 + 0]) $$r8
+    # nextln: 0034:     MovMR(S32, [!24 + 0]) $$r8
+    # nextln: 0035:     MovMR(S32, [!25 + 0]) $$r8
+    # nextln: 0036:     MovMR(S8, [!26 + 0]) $$r8
+    # nextln: 0037:     MovMR(S8, [!16 + 0]) $$r8
+    # nextln: 0038:     MovMR(S8, [!27 + 0]) $$r8
+    # nextln: 0039:     MovMR(S32, [!21 + 0]) $$r8
+    # nextln: 0040:     MovMR(S8, [!22 + 0]) $$r8
+    # nextln: 0041:     MovMR(S32, [!19 + 0]) $$r8
+    # nextln: 0042:     MovMR(S8, [!20 + 0]) $$r8
+    # nextln: 0043:     MovMR(S8, [!28 + 0]) $$r8
+    # nextln: 0044:     MovMR(S32, [!2 + 0]) $$r8
     # nextln:           $$rax = MovRmS32(1)
-    # nextln: 0045:     MovStackR(!18, S32) $$rax
-    # nextln: 0046:     MovStackR(!1, S32) $$r11
-    # nextln: 0047:     MovStackR(!0, S32) $$r10
-    # nextln: 0048:     MovStackR(!15, S32) $$rcx
-    # nextln: 0049:     MovStackR(!14, S32) $$r9
-    # nextln: 0050:     MovStackR(!13, S32) $$rsi
+    # nextln: 0045:     MovMR(S32, [!18 + 0]) $$rax
+    # nextln: 0046:     MovMR(S32, [!1 + 0]) $$r11
+    # nextln: 0047:     MovMR(S32, [!0 + 0]) $$r10
+    # nextln: 0048:     MovMR(S32, [!15 + 0]) $$rcx
+    # nextln: 0049:     MovMR(S32, [!14 + 0]) $$r9
+    # nextln: 0050:     MovMR(S32, [!13 + 0]) $$rsi
     # nextln:           $$rax = MovRmS32(7)
-    # nextln: 0051:     MovStackR(!12, S32) $$rax
+    # nextln: 0051:     MovMR(S32, [!12 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(8)
-    # nextln: 0052:     MovStackR(!11, S32) $$rax
+    # nextln: 0052:     MovMR(S32, [!11 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(9)
-    # nextln: 0053:     MovStackR(!10, S32) $$rax
+    # nextln: 0053:     MovMR(S32, [!10 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(10)
-    # nextln: 0054:     MovStackR(!9, S32) $$rax
+    # nextln: 0054:     MovMR(S32, [!9 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(11)
-    # nextln: 0055:     MovStackR(!8, S32) $$rax
+    # nextln: 0055:     MovMR(S32, [!8 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(12)
-    # nextln: 0056:     MovStackR(!7, S32) $$rax
+    # nextln: 0056:     MovMR(S32, [!7 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(13)
-    # nextln: 0057:     MovStackR(!6, S32) $$rax
+    # nextln: 0057:     MovMR(S32, [!6 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(14)
-    # nextln: 0058:     MovStackR(!5, S32) $$rax
+    # nextln: 0058:     MovMR(S32, [!5 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(15)
-    # nextln: 0059:     MovStackR(!4, S32) $$rax
-    # nextln: 0060:     MovStackR(!3, S32) $$r8
-    # nextln: 0061:     MovStackR(!17, S32) $$r8
+    # nextln: 0059:     MovMR(S32, [!4 + 0]) $$rax
+    # nextln: 0060:     MovMR(S32, [!3 + 0]) $$r8
+    # nextln: 0061:     MovMR(S32, [!17 + 0]) $$r8
     # nextln: 0062:     Jump(block1)
     # nextln:       block1:
-    # nextln: 0063:     $$rdx = MovRStack(!17, S32)
+    # nextln: 0063:     $$rdx = MovRM(S32, [!17 + 0])
     # nextln: 0064:     $$rax = MovRmS32(0)
     # nextln: 0065:     AluRRm(S32, Cmp) $$rdx, $$rdi
     # nextln: 0066:     $$rax = Setcc(L) $$rax
-    # nextln: 0067:     MovStackR(!28, S8) $$rax
-    # nextln: 0068:     $$rax = MovRStack(!28, S8)
+    # nextln: 0067:     MovMR(S8, [!28 + 0]) $$rax
+    # nextln: 0068:     $$rax = MovRM(S8, [!28 + 0])
     # nextln: 0069:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0070:     Jumpcc(Ne, block2, block3)
     # nextln:       block2:
-    # nextln: 0071:     MovStackR(!23, S32) $$r8
+    # nextln: 0071:     MovMR(S32, [!23 + 0]) $$r8
     # nextln: 0072:     Jump(block4)
     # nextln:       block4:
-    # nextln: 0073:     $$rbx = MovRStack(!23, S32)
+    # nextln: 0073:     $$rbx = MovRM(S32, [!23 + 0])
     # nextln:           $$rax = $$rdi
     # nextln: 0074:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0075:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$r11
     # nextln: 0076:     $$rdx = MovRmS32(0)
     # nextln: 0077:     AluRRm(S32, Cmp) $$rbx, $$rax
     # nextln: 0078:     $$rdx = Setcc(L) $$rdx
-    # nextln: 0079:     MovStackR(!27, S8) $$rdx
-    # nextln: 0080:     $$rax = MovRStack(!27, S8)
+    # nextln: 0079:     MovMR(S8, [!27 + 0]) $$rdx
+    # nextln: 0080:     $$rax = MovRM(S8, [!27 + 0])
     # nextln: 0081:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0082:     Jumpcc(Ne, block5, block6)
     # nextln:       block5:
-    # nextln: 0083:     $$rax = MovRStack(!3, S32)
-    # nextln: 0084:     $$rdx = MovRStack(!18, S32)
-    # nextln: 0085:     $$rbx = MovRStack(!1, S32)
+    # nextln: 0083:     $$rax = MovRM(S32, [!3 + 0])
+    # nextln: 0084:     $$rdx = MovRM(S32, [!18 + 0])
+    # nextln: 0085:     $$rbx = MovRM(S32, [!1 + 0])
     # nextln: 0086:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
-    # nextln: 0087:     $$rbx = MovRStack(!0, S32)
+    # nextln: 0087:     $$rbx = MovRM(S32, [!0 + 0])
     # nextln: 0088:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
     # nextln: 0089:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
-    # nextln: 0090:     MovStackR(!3, S32) $$rax
-    # nextln: 0091:     $$rax = MovRStack(!18, S32)
-    # nextln: 0092:     $$rdx = MovRStack(!17, S32)
+    # nextln: 0090:     MovMR(S32, [!3 + 0]) $$rax
+    # nextln: 0091:     $$rax = MovRM(S32, [!18 + 0])
+    # nextln: 0092:     $$rdx = MovRM(S32, [!17 + 0])
     # nextln: 0093:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0094:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0095:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0096:     MovStackR(!18, S32) $$rdx
-    # nextln: 0097:     $$rax = MovRStack(!1, S32)
-    # nextln: 0098:     $$rdx = MovRStack(!23, S32)
+    # nextln: 0096:     MovMR(S32, [!18 + 0]) $$rdx
+    # nextln: 0097:     $$rax = MovRM(S32, [!1 + 0])
+    # nextln: 0098:     $$rdx = MovRM(S32, [!23 + 0])
     # nextln: 0099:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0100:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0101:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0102:     MovStackR(!1, S32) $$rdx
-    # nextln: 0103:     $$rax = MovRStack(!0, S32)
-    # nextln: 0104:     $$rdx = MovRStack(!18, S32)
+    # nextln: 0102:     MovMR(S32, [!1 + 0]) $$rdx
+    # nextln: 0103:     $$rax = MovRM(S32, [!0 + 0])
+    # nextln: 0104:     $$rdx = MovRM(S32, [!18 + 0])
     # nextln: 0105:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
-    # nextln: 0106:     $$rdx = MovRStack(!1, S32)
+    # nextln: 0106:     $$rdx = MovRM(S32, [!1 + 0])
     # nextln: 0107:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0108:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0109:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0110:     MovStackR(!0, S32) $$rdx
-    # nextln: 0111:     MovStackR(!24, S32) $$r8
+    # nextln: 0110:     MovMR(S32, [!0 + 0]) $$rdx
+    # nextln: 0111:     MovMR(S32, [!24 + 0]) $$r8
     # nextln: 0112:     Jump(block13)
     # nextln:       block13:
-    # nextln: 0113:     $$rbx = MovRStack(!24, S32)
+    # nextln: 0113:     $$rbx = MovRM(S32, [!24 + 0])
     # nextln:           $$rax = $$rdi
     # nextln: 0114:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0115:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$r10
     # nextln: 0116:     $$rdx = MovRmS32(0)
     # nextln: 0117:     AluRRm(S32, Cmp) $$rbx, $$rax
     # nextln: 0118:     $$rdx = Setcc(L) $$rdx
-    # nextln: 0119:     MovStackR(!16, S8) $$rdx
-    # nextln: 0120:     $$rax = MovRStack(!16, S8)
+    # nextln: 0119:     MovMR(S8, [!16 + 0]) $$rdx
+    # nextln: 0120:     $$rax = MovRM(S8, [!16 + 0])
     # nextln: 0121:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0122:     Jumpcc(Ne, block14, block15)
     # nextln:       block14:
-    # nextln: 0123:     $$rax = MovRStack(!15, S32)
-    # nextln: 0124:     $$rdx = MovRStack(!24, S32)
+    # nextln: 0123:     $$rax = MovRM(S32, [!15 + 0])
+    # nextln: 0124:     $$rdx = MovRM(S32, [!24 + 0])
     # nextln: 0125:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0126:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0127:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0128:     MovStackR(!15, S32) $$rdx
-    # nextln: 0129:     $$rax = MovRStack(!14, S32)
-    # nextln: 0130:     $$rdx = MovRStack(!15, S32)
+    # nextln: 0128:     MovMR(S32, [!15 + 0]) $$rdx
+    # nextln: 0129:     $$rax = MovRM(S32, [!14 + 0])
+    # nextln: 0130:     $$rdx = MovRM(S32, [!15 + 0])
     # nextln: 0131:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0132:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0133:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0134:     MovStackR(!14, S32) $$rdx
-    # nextln: 0135:     $$rax = MovRStack(!3, S32)
-    # nextln: 0136:     $$rdx = MovRStack(!15, S32)
-    # nextln: 0137:     $$rbx = MovRStack(!14, S32)
+    # nextln: 0134:     MovMR(S32, [!14 + 0]) $$rdx
+    # nextln: 0135:     $$rax = MovRM(S32, [!3 + 0])
+    # nextln: 0136:     $$rdx = MovRM(S32, [!15 + 0])
+    # nextln: 0137:     $$rbx = MovRM(S32, [!14 + 0])
     # nextln: 0138:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
     # nextln: 0139:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
-    # nextln: 0140:     MovStackR(!3, S32) $$rax
-    # nextln: 0141:     MovStackR(!25, S32) $$r8
+    # nextln: 0140:     MovMR(S32, [!3 + 0]) $$rax
+    # nextln: 0141:     MovMR(S32, [!25 + 0]) $$r8
     # nextln: 0142:     Jump(block16)
     # nextln:       block16:
-    # nextln: 0143:     $$rbx = MovRStack(!25, S32)
+    # nextln: 0143:     $$rbx = MovRM(S32, [!25 + 0])
     # nextln:           $$rax = $$rdi
     # nextln: 0144:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0145:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rcx
     # nextln: 0146:     $$rdx = MovRmS32(0)
     # nextln: 0147:     AluRRm(S32, Cmp) $$rbx, $$rax
     # nextln: 0148:     $$rdx = Setcc(L) $$rdx
-    # nextln: 0149:     MovStackR(!26, S8) $$rdx
-    # nextln: 0150:     $$rax = MovRStack(!26, S8)
+    # nextln: 0149:     MovMR(S8, [!26 + 0]) $$rdx
+    # nextln: 0150:     $$rax = MovRM(S8, [!26 + 0])
     # nextln: 0151:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0152:     Jumpcc(Ne, block17, block18)
     # nextln:       block17:
-    # nextln: 0153:     $$rax = MovRStack(!13, S32)
-    # nextln: 0154:     $$rdx = MovRStack(!12, S32)
-    # nextln: 0155:     $$rbx = MovRStack(!11, S32)
+    # nextln: 0153:     $$rax = MovRM(S32, [!13 + 0])
+    # nextln: 0154:     $$rdx = MovRM(S32, [!12 + 0])
+    # nextln: 0155:     $$rbx = MovRM(S32, [!11 + 0])
     # nextln: 0156:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
-    # nextln: 0157:     $$rbx = MovRStack(!25, S32)
+    # nextln: 0157:     $$rbx = MovRM(S32, [!25 + 0])
     # nextln: 0158:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
     # nextln: 0159:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
-    # nextln: 0160:     MovStackR(!13, S32) $$rax
-    # nextln: 0161:     $$rax = MovRStack(!12, S32)
-    # nextln: 0162:     $$rdx = MovRStack(!13, S32)
+    # nextln: 0160:     MovMR(S32, [!13 + 0]) $$rax
+    # nextln: 0161:     $$rax = MovRM(S32, [!12 + 0])
+    # nextln: 0162:     $$rdx = MovRM(S32, [!13 + 0])
     # nextln: 0163:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
-    # nextln: 0164:     $$rdx = MovRStack(!25, S32)
+    # nextln: 0164:     $$rdx = MovRM(S32, [!25 + 0])
     # nextln: 0165:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0166:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0167:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0168:     MovStackR(!12, S32) $$rdx
-    # nextln: 0169:     $$rax = MovRStack(!11, S32)
-    # nextln: 0170:     $$rdx = MovRStack(!12, S32)
+    # nextln: 0168:     MovMR(S32, [!12 + 0]) $$rdx
+    # nextln: 0169:     $$rax = MovRM(S32, [!11 + 0])
+    # nextln: 0170:     $$rdx = MovRM(S32, [!12 + 0])
     # nextln: 0171:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0172:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0173:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0174:     MovStackR(!11, S32) $$rdx
-    # nextln: 0175:     $$rax = MovRStack(!3, S32)
-    # nextln: 0176:     $$rdx = MovRStack(!13, S32)
-    # nextln: 0177:     $$rbx = MovRStack(!12, S32)
+    # nextln: 0174:     MovMR(S32, [!11 + 0]) $$rdx
+    # nextln: 0175:     $$rax = MovRM(S32, [!3 + 0])
+    # nextln: 0176:     $$rdx = MovRM(S32, [!13 + 0])
+    # nextln: 0177:     $$rbx = MovRM(S32, [!12 + 0])
     # nextln: 0178:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
-    # nextln: 0179:     $$rbx = MovRStack(!11, S32)
+    # nextln: 0179:     $$rbx = MovRM(S32, [!11 + 0])
     # nextln: 0180:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
     # nextln: 0181:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
-    # nextln: 0182:     MovStackR(!3, S32) $$rax
-    # nextln: 0183:     $$rax = MovRStack(!25, S32)
+    # nextln: 0182:     MovMR(S32, [!3 + 0]) $$rax
+    # nextln: 0183:     $$rax = MovRM(S32, [!25 + 0])
     # nextln: 0184:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 0185:     MovStackR(!25, S32) $$rax
+    # nextln: 0185:     MovMR(S32, [!25 + 0]) $$rax
     # nextln: 0186:     Jump(block16)
     # nextln:       block18:
-    # nextln: 0187:     $$rax = MovRStack(!24, S32)
+    # nextln: 0187:     $$rax = MovRM(S32, [!24 + 0])
     # nextln: 0188:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 0189:     MovStackR(!24, S32) $$rax
+    # nextln: 0189:     MovMR(S32, [!24 + 0]) $$rax
     # nextln: 0190:     Jump(block13)
     # nextln:       block15:
-    # nextln: 0191:     $$rax = MovRStack(!23, S32)
+    # nextln: 0191:     $$rax = MovRM(S32, [!23 + 0])
     # nextln: 0192:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 0193:     MovStackR(!23, S32) $$rax
+    # nextln: 0193:     MovMR(S32, [!23 + 0]) $$rax
     # nextln: 0194:     Jump(block4)
     # nextln:       block6:
-    # nextln: 0195:     MovStackR(!21, S32) $$r8
+    # nextln: 0195:     MovMR(S32, [!21 + 0]) $$r8
     # nextln: 0196:     Jump(block7)
     # nextln:       block7:
-    # nextln: 0197:     $$rbx = MovRStack(!21, S32)
+    # nextln: 0197:     $$rbx = MovRM(S32, [!21 + 0])
     # nextln:           $$rax = $$rdi
     # nextln: 0198:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0199:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$r9
     # nextln: 0200:     $$rdx = MovRmS32(0)
     # nextln: 0201:     AluRRm(S32, Cmp) $$rbx, $$rax
     # nextln: 0202:     $$rdx = Setcc(L) $$rdx
-    # nextln: 0203:     MovStackR(!22, S8) $$rdx
-    # nextln: 0204:     $$rax = MovRStack(!22, S8)
+    # nextln: 0203:     MovMR(S8, [!22 + 0]) $$rdx
+    # nextln: 0204:     $$rax = MovRM(S8, [!22 + 0])
     # nextln: 0205:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0206:     Jumpcc(Ne, block8, block9)
     # nextln:       block8:
-    # nextln: 0207:     $$rax = MovRStack(!10, S32)
-    # nextln: 0208:     $$rdx = MovRStack(!21, S32)
+    # nextln: 0207:     $$rax = MovRM(S32, [!10 + 0])
+    # nextln: 0208:     $$rdx = MovRM(S32, [!21 + 0])
     # nextln: 0209:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0210:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0211:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0212:     MovStackR(!10, S32) $$rdx
-    # nextln: 0213:     $$rax = MovRStack(!9, S32)
-    # nextln: 0214:     $$rdx = MovRStack(!10, S32)
+    # nextln: 0212:     MovMR(S32, [!10 + 0]) $$rdx
+    # nextln: 0213:     $$rax = MovRM(S32, [!9 + 0])
+    # nextln: 0214:     $$rdx = MovRM(S32, [!10 + 0])
     # nextln: 0215:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0216:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0217:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0218:     MovStackR(!9, S32) $$rdx
-    # nextln: 0219:     $$rax = MovRStack(!3, S32)
-    # nextln: 0220:     $$rdx = MovRStack(!10, S32)
-    # nextln: 0221:     $$rbx = MovRStack(!9, S32)
+    # nextln: 0218:     MovMR(S32, [!9 + 0]) $$rdx
+    # nextln: 0219:     $$rax = MovRM(S32, [!3 + 0])
+    # nextln: 0220:     $$rdx = MovRM(S32, [!10 + 0])
+    # nextln: 0221:     $$rbx = MovRM(S32, [!9 + 0])
     # nextln: 0222:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
     # nextln: 0223:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
-    # nextln: 0224:     MovStackR(!3, S32) $$rax
-    # nextln: 0225:     $$rax = MovRStack(!21, S32)
+    # nextln: 0224:     MovMR(S32, [!3 + 0]) $$rax
+    # nextln: 0225:     $$rax = MovRM(S32, [!21 + 0])
     # nextln: 0226:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 0227:     MovStackR(!21, S32) $$rax
+    # nextln: 0227:     MovMR(S32, [!21 + 0]) $$rax
     # nextln: 0228:     Jump(block7)
     # nextln:       block9:
-    # nextln: 0229:     MovStackR(!19, S32) $$r8
+    # nextln: 0229:     MovMR(S32, [!19 + 0]) $$r8
     # nextln: 0230:     Jump(block10)
     # nextln:       block10:
-    # nextln: 0231:     $$rbx = MovRStack(!19, S32)
+    # nextln: 0231:     $$rbx = MovRM(S32, [!19 + 0])
     # nextln:           $$rax = $$rdi
     # nextln: 0232:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0233:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rsi
     # nextln: 0234:     $$rdx = MovRmS32(0)
     # nextln: 0235:     AluRRm(S32, Cmp) $$rbx, $$rax
     # nextln: 0236:     $$rdx = Setcc(L) $$rdx
-    # nextln: 0237:     MovStackR(!20, S8) $$rdx
-    # nextln: 0238:     $$rax = MovRStack(!20, S8)
+    # nextln: 0237:     MovMR(S8, [!20 + 0]) $$rdx
+    # nextln: 0238:     $$rax = MovRM(S8, [!20 + 0])
     # nextln: 0239:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0240:     Jumpcc(Ne, block11, block12)
     # nextln:       block11:
-    # nextln: 0241:     $$rax = MovRStack(!8, S32)
-    # nextln: 0242:     $$rdx = MovRStack(!19, S32)
+    # nextln: 0241:     $$rax = MovRM(S32, [!8 + 0])
+    # nextln: 0242:     $$rdx = MovRM(S32, [!19 + 0])
     # nextln: 0243:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0244:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0245:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0246:     MovStackR(!8, S32) $$rdx
-    # nextln: 0247:     $$rax = MovRStack(!7, S32)
-    # nextln: 0248:     $$rdx = MovRStack(!8, S32)
+    # nextln: 0246:     MovMR(S32, [!8 + 0]) $$rdx
+    # nextln: 0247:     $$rax = MovRM(S32, [!7 + 0])
+    # nextln: 0248:     $$rdx = MovRM(S32, [!8 + 0])
     # nextln: 0249:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0250:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0251:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0252:     MovStackR(!7, S32) $$rdx
-    # nextln: 0253:     $$rax = MovRStack(!6, S32)
-    # nextln: 0254:     $$rdx = MovRStack(!7, S32)
+    # nextln: 0252:     MovMR(S32, [!7 + 0]) $$rdx
+    # nextln: 0253:     $$rax = MovRM(S32, [!6 + 0])
+    # nextln: 0254:     $$rdx = MovRM(S32, [!7 + 0])
     # nextln: 0255:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
-    # nextln: 0256:     $$rdx = MovRStack(!19, S32)
+    # nextln: 0256:     $$rdx = MovRM(S32, [!19 + 0])
     # nextln: 0257:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
     # nextln: 0258:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0259:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
-    # nextln: 0260:     MovStackR(!6, S32) $$rdx
-    # nextln: 0261:     $$rax = MovRStack(!3, S32)
-    # nextln: 0262:     $$rdx = MovRStack(!8, S32)
-    # nextln: 0263:     $$rbx = MovRStack(!7, S32)
+    # nextln: 0260:     MovMR(S32, [!6 + 0]) $$rdx
+    # nextln: 0261:     $$rax = MovRM(S32, [!3 + 0])
+    # nextln: 0262:     $$rdx = MovRM(S32, [!8 + 0])
+    # nextln: 0263:     $$rbx = MovRM(S32, [!7 + 0])
     # nextln: 0264:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
-    # nextln: 0265:     $$rbx = MovRStack(!6, S32)
+    # nextln: 0265:     $$rbx = MovRM(S32, [!6 + 0])
     # nextln: 0266:     $$rdx = AluRRm(S32, Add) $$rdx, $$rbx
     # nextln: 0267:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
-    # nextln: 0268:     MovStackR(!3, S32) $$rax
-    # nextln: 0269:     $$rax = MovRStack(!19, S32)
+    # nextln: 0268:     MovMR(S32, [!3 + 0]) $$rax
+    # nextln: 0269:     $$rax = MovRM(S32, [!19 + 0])
     # nextln: 0270:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 0271:     MovStackR(!19, S32) $$rax
+    # nextln: 0271:     MovMR(S32, [!19 + 0]) $$rax
     # nextln: 0272:     Jump(block10)
     # nextln:       block12:
-    # nextln: 0273:     $$rax = MovRStack(!17, S32)
+    # nextln: 0273:     $$rax = MovRM(S32, [!17 + 0])
     # nextln: 0274:     $$rax = AluRmI(S32, Add, 1) $$rax
-    # nextln: 0275:     MovStackR(!17, S32) $$rax
+    # nextln: 0275:     MovMR(S32, [!17 + 0]) $$rax
     # nextln: 0276:     Jump(block1)
     # nextln:       block3:
-    # nextln: 0277:     $$rax = MovRStack(!3, S32)
-    # nextln: 0278:     $$rcx = MovRStack(!18, S32)
-    # nextln: 0279:     $$rdx = MovRStack(!1, S32)
+    # nextln: 0277:     $$rax = MovRM(S32, [!3 + 0])
+    # nextln: 0278:     $$rcx = MovRM(S32, [!18 + 0])
+    # nextln: 0279:     $$rdx = MovRM(S32, [!1 + 0])
     # nextln: 0280:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0281:     $$rdx = MovRStack(!0, S32)
+    # nextln: 0281:     $$rdx = MovRM(S32, [!0 + 0])
     # nextln: 0282:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0283:     $$rdx = MovRStack(!15, S32)
+    # nextln: 0283:     $$rdx = MovRM(S32, [!15 + 0])
     # nextln: 0284:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0285:     $$rdx = MovRStack(!14, S32)
+    # nextln: 0285:     $$rdx = MovRM(S32, [!14 + 0])
     # nextln: 0286:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0287:     $$rdx = MovRStack(!13, S32)
+    # nextln: 0287:     $$rdx = MovRM(S32, [!13 + 0])
     # nextln: 0288:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0289:     $$rdx = MovRStack(!12, S32)
+    # nextln: 0289:     $$rdx = MovRM(S32, [!12 + 0])
     # nextln: 0290:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0291:     $$rdx = MovRStack(!11, S32)
+    # nextln: 0291:     $$rdx = MovRM(S32, [!11 + 0])
     # nextln: 0292:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0293:     $$rdx = MovRStack(!10, S32)
+    # nextln: 0293:     $$rdx = MovRM(S32, [!10 + 0])
     # nextln: 0294:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0295:     $$rdx = MovRStack(!9, S32)
+    # nextln: 0295:     $$rdx = MovRM(S32, [!9 + 0])
     # nextln: 0296:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0297:     $$rdx = MovRStack(!8, S32)
+    # nextln: 0297:     $$rdx = MovRM(S32, [!8 + 0])
     # nextln: 0298:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0299:     $$rdx = MovRStack(!7, S32)
+    # nextln: 0299:     $$rdx = MovRM(S32, [!7 + 0])
     # nextln: 0300:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0301:     $$rdx = MovRStack(!6, S32)
+    # nextln: 0301:     $$rdx = MovRM(S32, [!6 + 0])
     # nextln: 0302:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0303:     $$rdx = MovRStack(!5, S32)
+    # nextln: 0303:     $$rdx = MovRM(S32, [!5 + 0])
     # nextln: 0304:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0305:     $$rdx = MovRStack(!4, S32)
+    # nextln: 0305:     $$rdx = MovRM(S32, [!4 + 0])
     # nextln: 0306:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
     # nextln: 0307:     $$rax = AluRRm(S32, Add) $$rax, $$rcx
-    # nextln: 0308:     MovStackR(!3, S32) $$rax
-    # nextln: 0309:     $$rax = MovRStack(!3, S32)
-    # nextln: 0310:     MovStackR(!2, S32) $$rax
-    # nextln: 0311:     $$rax = MovRStack(!2, S32)
+    # nextln: 0308:     MovMR(S32, [!3 + 0]) $$rax
+    # nextln: 0309:     $$rax = MovRM(S32, [!3 + 0])
+    # nextln: 0310:     MovMR(S32, [!2 + 0]) $$rax
+    # nextln: 0311:     $$rax = MovRM(S32, [!2 + 0])
     # nextln: 0312:     Ret $$rax
 
     %0:ctrl, %1:i32 = entry

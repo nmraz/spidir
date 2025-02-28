@@ -18,9 +18,9 @@ use crate::{
 };
 
 use super::{
-    AluBinOp, AluUnOp, CALLER_SAVED_REGS, CodeModel, CondCode, DivOp, ExtWidth, FullOperandSize,
-    OperandSize, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, ShiftOp,
-    X64Instr, X64Machine,
+    AddrBase, AddrMode, AluBinOp, AluUnOp, CALLER_SAVED_REGS, CodeModel, CondCode, DivOp, ExtWidth,
+    FullOperandSize, OperandSize, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX,
+    REG_RSI, ShiftOp, X64Instr, X64Machine,
 };
 
 const FIXED_ARG_COUNT: usize = 6;
@@ -412,7 +412,14 @@ fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: 
     match match_stack_slot(ctx, addr) {
         Some(stack_slot) => {
             ctx.emit_instr(
-                X64Instr::MovRStack(stack_slot, op_size),
+                X64Instr::MovRM(
+                    op_size,
+                    AddrMode {
+                        base: Some(AddrBase::Stack(stack_slot)),
+                        index: None,
+                        offset: 0,
+                    },
+                ),
                 &[DefOperand::any_reg(output)],
                 &[],
             );
@@ -420,7 +427,14 @@ fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: 
         None => {
             let addr = ctx.get_value_vreg(addr);
             ctx.emit_instr(
-                X64Instr::MovRM(op_size),
+                X64Instr::MovRM(
+                    op_size,
+                    AddrMode {
+                        base: Some(AddrBase::Reg),
+                        index: None,
+                        offset: 0,
+                    },
+                ),
                 &[DefOperand::any_reg(output)],
                 &[UseOperand::any_reg(addr)],
             )
@@ -436,7 +450,14 @@ fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size:
     match match_stack_slot(ctx, addr) {
         Some(stack_slot) => {
             ctx.emit_instr(
-                X64Instr::MovStackR(stack_slot, op_size),
+                X64Instr::MovMR(
+                    op_size,
+                    AddrMode {
+                        base: Some(AddrBase::Stack(stack_slot)),
+                        index: None,
+                        offset: 0,
+                    },
+                ),
                 &[],
                 &[UseOperand::any_reg(value)],
             );
@@ -444,7 +465,14 @@ fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size:
         None => {
             let addr = ctx.get_value_vreg(addr);
             ctx.emit_instr(
-                X64Instr::MovMR(op_size),
+                X64Instr::MovMR(
+                    op_size,
+                    AddrMode {
+                        base: Some(AddrBase::Reg),
+                        index: None,
+                        offset: 0,
+                    },
+                ),
                 &[],
                 &[UseOperand::any_reg(value), UseOperand::any_reg(addr)],
             );

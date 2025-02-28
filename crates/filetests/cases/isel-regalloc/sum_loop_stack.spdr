@@ -9,25 +9,25 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln:       block0:
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:
-    # nextln: 0002:     MovStackR(!0, S32) $$rdi
+    # nextln: 0002:     MovMR(S32, [!0 + 0]) $$rdi
     # nextln:           $$rax = MovRmS32(0)
-    # nextln: 0003:     MovStackR(!1, S32) $$rax
+    # nextln: 0003:     MovMR(S32, [!1 + 0]) $$rax
     # nextln: 0004:     Jump(block2)
     # nextln:       block2:
-    # nextln: 0005:     $$rax = MovRStack(!0, S32)
+    # nextln: 0005:     $$rax = MovRM(S32, [!0 + 0])
     # nextln: 0006:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0007:     Jumpcc(E, block3, block4)
     # nextln:       block4:
-    # nextln: 0008:     $$rdx = MovRStack(!0, S32)
+    # nextln: 0008:     $$rdx = MovRM(S32, [!0 + 0])
     # nextln:           $$rax = $$rdx
     # nextln: 0009:     $$rax = AluRmI(S32, Sub, 1) $$rax
-    # nextln: 0010:     $$rcx = MovRStack(!1, S32)
+    # nextln: 0010:     $$rcx = MovRM(S32, [!1 + 0])
     # nextln: 0011:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
-    # nextln: 0012:     MovStackR(!0, S32) $$rax
-    # nextln: 0013:     MovStackR(!1, S32) $$rcx
+    # nextln: 0012:     MovMR(S32, [!0 + 0]) $$rax
+    # nextln: 0013:     MovMR(S32, [!1 + 0]) $$rcx
     # nextln: 0014:     Jump(block2)
     # nextln:       block3:
-    # nextln: 0015:     $$rax = MovRStack(!1, S32)
+    # nextln: 0015:     $$rax = MovRM(S32, [!1 + 0])
     # nextln: 0016:     Ret $$rax
 
     %0:ctrl, %1:i32 = entry

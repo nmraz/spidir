@@ -30,50 +30,50 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0005:     $$rcx = MovRmS32(0)
     # nextln: 0020:     $$rdi = MovRmS32(0)
     # nextln: 0021:     $$rdx = MovRmS32(2)
-    # nextln: 0024:     MovStackR(!0, S8) $$rcx
-    # nextln: 0025:     MovStackR(!1, S8) $$rcx
-    # nextln: 0026:     MovStackR(!2, S8) $$rcx
-    # nextln: 0027:     MovStackR(!3, S16) $$rcx
-    # nextln: 0028:     MovStackR(!4, S16) $$rcx
-    # nextln: 0029:     MovStackR(!5, S16) $$rcx
-    # nextln: 0030:     MovStackR(!6, S32) $$rcx
-    # nextln: 0031:     MovStackR(!7, S32) $$rcx
-    # nextln: 0032:     MovStackR(!8, S64) $$rdi
-    # nextln: 0033:     MovStackR(!9, S64) $$rdi
+    # nextln: 0024:     MovMR(S8, [!0 + 0]) $$rcx
+    # nextln: 0025:     MovMR(S8, [!1 + 0]) $$rcx
+    # nextln: 0026:     MovMR(S8, [!2 + 0]) $$rcx
+    # nextln: 0027:     MovMR(S16, [!3 + 0]) $$rcx
+    # nextln: 0028:     MovMR(S16, [!4 + 0]) $$rcx
+    # nextln: 0029:     MovMR(S16, [!5 + 0]) $$rcx
+    # nextln: 0030:     MovMR(S32, [!6 + 0]) $$rcx
+    # nextln: 0031:     MovMR(S32, [!7 + 0]) $$rcx
+    # nextln: 0032:     MovMR(S64, [!8 + 0]) $$rdi
+    # nextln: 0033:     MovMR(S64, [!9 + 0]) $$rdi
     # nextln:           $$rcx = MovRU32(4294967168)
-    # nextln: 0034:     MovStackR(!0, S8) $$rcx
-    # nextln: 0035:     MovStackR(!1, S8) $$rax
-    # nextln: 0036:     MovStackR(!2, S8) $$rdx
+    # nextln: 0034:     MovMR(S8, [!0 + 0]) $$rcx
+    # nextln: 0035:     MovMR(S8, [!1 + 0]) $$rax
+    # nextln: 0036:     MovMR(S8, [!2 + 0]) $$rdx
     # nextln:           $$rcx = MovRU32(4294934528)
-    # nextln: 0037:     MovStackR(!3, S16) $$rcx
-    # nextln: 0038:     MovStackR(!4, S16) $$rax
-    # nextln: 0039:     MovStackR(!5, S16) $$rdx
-    # nextln: 0040:     MovStackR(!6, S32) $$rax
-    # nextln: 0041:     MovStackR(!7, S32) $$rdx
+    # nextln: 0037:     MovMR(S16, [!3 + 0]) $$rcx
+    # nextln: 0038:     MovMR(S16, [!4 + 0]) $$rax
+    # nextln: 0039:     MovMR(S16, [!5 + 0]) $$rdx
+    # nextln: 0040:     MovMR(S32, [!6 + 0]) $$rax
+    # nextln: 0041:     MovMR(S32, [!7 + 0]) $$rdx
     # nextln:           $$rax = MovRmS32(1)
-    # nextln: 0042:     MovStackR(!8, S64) $$rax
+    # nextln: 0042:     MovMR(S64, [!8 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(2)
-    # nextln: 0043:     MovStackR(!9, S64) $$rax
-    # nextln: 0044:     $$rax = MovRStack(!0, S8)
+    # nextln: 0043:     MovMR(S64, [!9 + 0]) $$rax
+    # nextln: 0044:     $$rax = MovRM(S8, [!0 + 0])
     # nextln: 0045:     $$rdi = MovsxRRm(Ext8_32) $$rax
     # nextln: 0046:     $$rax = FuncAddrAbs(External(extfunc5))
     # nextln:           $$rsi = MovRmS32(7)
     # nextln: 0047:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$rbx = $$rax
     # nextln: 0048:     $$rbx = AluRmI(S32, And, 1) $$rbx
-    # nextln: 0049:     $$rax = MovRStack(!0, S8)
+    # nextln: 0049:     $$rax = MovRM(S8, [!0 + 0])
     # nextln: 0050:     $$rdi = MovsxRRm(Ext8_32) $$rax
     # nextln: 0051:     $$rax = FuncAddrAbs(External(extfunc5))
     # nextln:           $$rsi = MovRmS32(8)
     # nextln: 0052:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0053:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0054:     $$rax = MovRStack(!1, S8)
+    # nextln: 0054:     $$rax = MovRM(S8, [!1 + 0])
     # nextln: 0055:     $$rdi = MovsxRRm(Ext8_32) $$rax
     # nextln: 0056:     $$rax = FuncAddrAbs(External(extfunc5))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0057:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0058:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0059:     $$rax = MovRStack(!1, S8)
+    # nextln: 0059:     $$rax = MovRM(S8, [!1 + 0])
     # nextln: 0060:     $$rdi = MovsxRRm(Ext8_32) $$rax
     # nextln: 0061:     $$rax = FuncAddrAbs(External(extfunc5))
     # nextln:           $$rsi = MovRmS32(8)
@@ -82,13 +82,13 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0064:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0065:     $$rcx = Setcc(E) $$rcx
     # nextln: 0066:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0067:     $$rax = MovRStack(!1, S8)
+    # nextln: 0067:     $$rax = MovRM(S8, [!1 + 0])
     # nextln: 0068:     $$rdi = MovsxRRm(Ext8_32) $$rax
     # nextln: 0069:     $$rax = FuncAddrAbs(External(extfunc5))
     # nextln:           $$rsi = MovRmS32(32)
     # nextln: 0070:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0071:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0072:     $$rax = MovRStack(!2, S8)
+    # nextln: 0072:     $$rax = MovRM(S8, [!2 + 0])
     # nextln: 0073:     $$rdi = MovsxRRm(Ext8_32) $$rax
     # nextln: 0074:     $$rax = FuncAddrAbs(External(extfunc5))
     # nextln:           $$rsi = MovRmS32(0)
@@ -133,25 +133,25 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0101:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0102:     $$rcx = Setcc(E) $$rcx
     # nextln: 0103:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0104:     $$rax = MovRStack(!3, S16)
+    # nextln: 0104:     $$rax = MovRM(S16, [!3 + 0])
     # nextln: 0105:     $$rdi = MovsxRRm(Ext16_32) $$rax
     # nextln: 0106:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln:           $$rsi = MovRmS32(15)
     # nextln: 0107:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0108:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0109:     $$rax = MovRStack(!3, S16)
+    # nextln: 0109:     $$rax = MovRM(S16, [!3 + 0])
     # nextln: 0110:     $$rdi = MovsxRRm(Ext16_32) $$rax
     # nextln: 0111:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln:           $$rsi = MovRmS32(16)
     # nextln: 0112:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0113:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0114:     $$rax = MovRStack(!4, S16)
+    # nextln: 0114:     $$rax = MovRM(S16, [!4 + 0])
     # nextln: 0115:     $$rdi = MovsxRRm(Ext16_32) $$rax
     # nextln: 0116:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0117:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0118:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0119:     $$rax = MovRStack(!4, S16)
+    # nextln: 0119:     $$rax = MovRM(S16, [!4 + 0])
     # nextln: 0120:     $$rdi = MovsxRRm(Ext16_32) $$rax
     # nextln: 0121:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln:           $$rsi = MovRmS32(16)
@@ -160,13 +160,13 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0124:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0125:     $$rcx = Setcc(E) $$rcx
     # nextln: 0126:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0127:     $$rax = MovRStack(!4, S16)
+    # nextln: 0127:     $$rax = MovRM(S16, [!4 + 0])
     # nextln: 0128:     $$rdi = MovsxRRm(Ext16_32) $$rax
     # nextln: 0129:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln:           $$rsi = MovRmS32(32)
     # nextln: 0130:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0131:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0132:     $$rax = MovRStack(!5, S16)
+    # nextln: 0132:     $$rax = MovRM(S16, [!5 + 0])
     # nextln: 0133:     $$rdi = MovsxRRm(Ext16_32) $$rax
     # nextln: 0134:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln:           $$rsi = MovRmS32(0)
@@ -211,17 +211,17 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0161:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0162:     $$rcx = Setcc(E) $$rcx
     # nextln: 0163:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0164:     $$rdi = MovRStack(!6, S32)
+    # nextln: 0164:     $$rdi = MovRM(S32, [!6 + 0])
     # nextln: 0165:     $$rax = FuncAddrAbs(External(extfunc7))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0166:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0167:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0168:     $$rdi = MovRStack(!6, S32)
+    # nextln: 0168:     $$rdi = MovRM(S32, [!6 + 0])
     # nextln: 0169:     $$rax = FuncAddrAbs(External(extfunc7))
     # nextln:           $$rsi = MovRmS32(32)
     # nextln: 0170:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0171:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0172:     $$rdi = MovRStack(!7, S32)
+    # nextln: 0172:     $$rdi = MovRM(S32, [!7 + 0])
     # nextln: 0173:     $$rax = FuncAddrAbs(External(extfunc7))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0174:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -229,7 +229,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0176:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0177:     $$rcx = Setcc(E) $$rcx
     # nextln: 0178:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0179:     $$rdi = MovRStack(!6, S32)
+    # nextln: 0179:     $$rdi = MovRM(S32, [!6 + 0])
     # nextln: 0180:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0181:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -237,7 +237,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0183:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0184:     $$rcx = Setcc(E) $$rcx
     # nextln: 0185:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0186:     $$rdi = MovRStack(!6, S32)
+    # nextln: 0186:     $$rdi = MovRM(S32, [!6 + 0])
     # nextln: 0187:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rsi = MovRmS32(32)
     # nextln: 0188:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -245,12 +245,12 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0190:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0191:     $$rcx = Setcc(E) $$rcx
     # nextln: 0192:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0193:     $$rdi = MovRStack(!7, S32)
+    # nextln: 0193:     $$rdi = MovRM(S32, [!7 + 0])
     # nextln: 0194:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0195:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0196:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0197:     $$rdi = MovRStack(!6, S32)
+    # nextln: 0197:     $$rdi = MovRM(S32, [!6 + 0])
     # nextln: 0198:     $$rax = FuncAddrAbs(External(extfunc3))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0199:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -258,7 +258,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0201:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0202:     $$rcx = Setcc(E) $$rcx
     # nextln: 0203:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0204:     $$rdi = MovRStack(!6, S32)
+    # nextln: 0204:     $$rdi = MovRM(S32, [!6 + 0])
     # nextln: 0205:     $$rax = FuncAddrAbs(External(extfunc3))
     # nextln:           $$rsi = MovRmS32(32)
     # nextln: 0206:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -266,7 +266,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0208:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0209:     $$rcx = Setcc(E) $$rcx
     # nextln: 0210:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0211:     $$rdi = MovRStack(!7, S32)
+    # nextln: 0211:     $$rdi = MovRM(S32, [!7 + 0])
     # nextln: 0212:     $$rax = FuncAddrAbs(External(extfunc3))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0213:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -292,12 +292,12 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0227:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0228:     $$rcx = Setcc(E) $$rcx
     # nextln: 0229:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0230:     $$rdi = MovRStack(!8, S64)
+    # nextln: 0230:     $$rdi = MovRM(S64, [!8 + 0])
     # nextln: 0231:     $$rax = FuncAddrAbs(External(extfunc9))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0232:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0233:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0234:     $$rdi = MovRStack(!8, S64)
+    # nextln: 0234:     $$rdi = MovRM(S64, [!8 + 0])
     # nextln: 0235:     $$rax = FuncAddrAbs(External(extfunc9))
     # nextln:           $$rsi = MovRmS32(32)
     # nextln: 0236:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -305,12 +305,12 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0238:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0239:     $$rcx = Setcc(E) $$rcx
     # nextln: 0240:     $$rbx = AluRRm(S32, And) $$rbx, $$rcx
-    # nextln: 0241:     $$rdi = MovRStack(!8, S64)
+    # nextln: 0241:     $$rdi = MovRM(S64, [!8 + 0])
     # nextln: 0242:     $$rax = FuncAddrAbs(External(extfunc9))
     # nextln:           $$rsi = MovRmS32(64)
     # nextln: 0243:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0244:     $$rbx = AluRRm(S32, And) $$rbx, $$rax
-    # nextln: 0245:     $$rdi = MovRStack(!9, S64)
+    # nextln: 0245:     $$rdi = MovRM(S64, [!9 + 0])
     # nextln: 0246:     $$rax = FuncAddrAbs(External(extfunc9))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0247:     $$rax = CallRm $$rax, $$rdi, $$rsi

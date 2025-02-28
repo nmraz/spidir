@@ -154,6 +154,42 @@ impl fmt::Debug for IndexScale {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum AddrBase {
+    Reg,
+    Stack(StackSlot),
+}
+
+impl fmt::Debug for AddrBase {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Reg => write!(f, "reg"),
+            Self::Stack(slot) => write!(f, "{slot}"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct AddrMode {
+    pub base: Option<AddrBase>,
+    pub index: Option<IndexScale>,
+    pub offset: i32,
+}
+
+impl fmt::Debug for AddrMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[")?;
+        if let Some(base) = self.base {
+            write!(f, "{:?} + ", base)?;
+        }
+        if let Some(index) = self.index {
+            write!(f, "{:?} + ", index)?;
+        }
+        write!(f, "{}", self.offset)?;
+        write!(f, "]")
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum X64Instr {
     AluRRm(OperandSize, AluBinOp),
@@ -176,12 +212,10 @@ pub enum X64Instr {
         offset: i32,
     },
     StackAddr(StackSlot),
-    MovRStack(StackSlot, FullOperandSize),
-    MovStackR(StackSlot, FullOperandSize),
     Push,
     AddSp(i32),
-    MovRM(FullOperandSize),
-    MovMR(FullOperandSize),
+    MovRM(FullOperandSize, AddrMode),
+    MovMR(FullOperandSize, AddrMode),
     Ret,
     FuncAddrRel(FunctionRef),
     FuncAddrAbs(FunctionRef),
@@ -212,8 +246,6 @@ impl X64Instr {
             X64Instr::Setcc(..) => true,
             X64Instr::MovRRbp { .. } => false,
             X64Instr::StackAddr(..) => false,
-            X64Instr::MovRStack(..) => false,
-            X64Instr::MovStackR(..) => false,
             X64Instr::Push => false,
             X64Instr::AddSp(..) => false,
             X64Instr::MovRM(..) => false,
@@ -248,8 +280,6 @@ impl X64Instr {
             X64Instr::Setcc(..) => false,
             X64Instr::MovRRbp { .. } => false,
             X64Instr::StackAddr(..) => false,
-            X64Instr::MovRStack(..) => false,
-            X64Instr::MovStackR(..) => false,
             X64Instr::Push => false,
             X64Instr::AddSp(..) => true,
             X64Instr::MovRM(..) => false,

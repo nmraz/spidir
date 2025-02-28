@@ -72,19 +72,19 @@ impl X64EmitState {
         }
     }
 
-    fn stack_slot_addr(&self, slot: StackSlot) -> AddrMode {
+    fn stack_slot_addr(&self, slot: StackSlot) -> RawAddrMode {
         self.stack_addr(self.frame_layout.stack_slot_offsets[slot])
     }
 
-    fn spill_slot_addr(&self, spill: SpillSlot) -> AddrMode {
+    fn spill_slot_addr(&self, spill: SpillSlot) -> RawAddrMode {
         self.stack_addr(self.frame_layout.spill_slot_offsets[spill])
     }
 
-    fn stack_addr(&self, frame_offset: u32) -> AddrMode {
+    fn stack_addr(&self, frame_offset: u32) -> RawAddrMode {
         let offset: i32 = frame_offset.try_into().unwrap();
         let offset = offset + self.sp_frame_offset;
 
-        AddrMode::BaseIndexOff {
+        RawAddrMode::BaseIndexOff {
             base: Some(REG_RSP),
             index: None,
             offset,
@@ -243,7 +243,7 @@ impl MachineEmit for X64Machine {
                 buffer,
                 FullOperandSize::S64,
                 defs[0].as_reg().unwrap(),
-                RegMem::Mem(AddrMode::BaseIndexOff {
+                RegMem::Mem(RawAddrMode::BaseIndexOff {
                     base: Some(REG_RBP),
                     index: None,
                     offset,
@@ -253,7 +253,7 @@ impl MachineEmit for X64Machine {
                 buffer,
                 full_op_size,
                 defs[0].as_reg().unwrap(),
-                RegMem::Mem(AddrMode::BaseIndexOff {
+                RegMem::Mem(RawAddrMode::BaseIndexOff {
                     base: Some(uses[0].as_reg().unwrap()),
                     index: None,
                     offset: 0,
@@ -268,7 +268,7 @@ impl MachineEmit for X64Machine {
             &X64Instr::MovMR(full_op_size) => emit_mov_rm_r(
                 buffer,
                 full_op_size,
-                RegMem::Mem(AddrMode::BaseIndexOff {
+                RegMem::Mem(RawAddrMode::BaseIndexOff {
                     base: Some(uses[1].as_reg().unwrap()),
                     index: None,
                     offset: 0,
@@ -361,7 +361,7 @@ fn emit_epilogue(buffer: &mut CodeBuffer<X64Fixup>, state: &X64EmitState) {
             emit_lea_or_mov(
                 buffer,
                 REG_RSP,
-                AddrMode::BaseIndexOff {
+                RawAddrMode::BaseIndexOff {
                     base: Some(REG_RBP),
                     index: None,
                     offset: -saved_reg_size,
@@ -533,9 +533,9 @@ fn emit_movzx_r_rm(
     });
 }
 
-fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: AddrMode) {
+fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: RawAddrMode) {
     match addr {
-        AddrMode::BaseIndexOff {
+        RawAddrMode::BaseIndexOff {
             base: Some(base),
             index: None,
             offset: 0,
@@ -546,11 +546,11 @@ fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: AddrM
 
 fn emit_lea_rip_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
     buffer.instr_with_reloc(target, -4, 3, RELOC_PC32, |sink| {
-        emit_lea_instr(sink, dest, AddrMode::RipOff { offset: 0 })
+        emit_lea_instr(sink, dest, RawAddrMode::RipOff { offset: 0 })
     });
 }
 
-fn emit_lea_instr(sink: &mut InstrSink<'_>, dest: PhysReg, addr: AddrMode) {
+fn emit_lea_instr(sink: &mut InstrSink<'_>, dest: PhysReg, addr: RawAddrMode) {
     let (rex, modrm_sib) = encode_mem_parts(addr, |rex: &mut RexPrefix| {
         rex.encode_operand_size(OperandSize::S64);
         rex.encode_modrm_reg(dest)
@@ -906,11 +906,11 @@ fn emit_shift_rm_i(
 #[derive(Clone, Copy)]
 enum RegMem {
     Reg(PhysReg),
-    Mem(AddrMode),
+    Mem(RawAddrMode),
 }
 
 #[derive(Clone, Copy)]
-enum AddrMode {
+enum RawAddrMode {
     BaseIndexOff {
         base: Option<PhysReg>,
         index: Option<(IndexScale, PhysReg)>,
@@ -1034,16 +1034,16 @@ fn encode_reg_mem_parts(
 }
 
 fn encode_mem_parts(
-    addr: AddrMode,
+    addr: RawAddrMode,
     get_reg: impl FnOnce(&mut RexPrefix) -> u8,
 ) -> (RexPrefix, ModRmSib) {
     match addr {
-        AddrMode::BaseIndexOff {
+        RawAddrMode::BaseIndexOff {
             base,
             index,
             offset: disp,
         } => encode_base_index_off_mem_parts(base, index, disp, get_reg),
-        AddrMode::RipOff { offset } => encode_rip_off_mem_parts(offset, get_reg),
+        RawAddrMode::RipOff { offset } => encode_rip_off_mem_parts(offset, get_reg),
     }
 }
 

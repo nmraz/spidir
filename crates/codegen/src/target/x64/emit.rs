@@ -81,14 +81,16 @@ impl X64EmitState {
     }
 
     fn stack_addr(&self, frame_offset: u32) -> RawAddrMode {
-        let offset: i32 = frame_offset.try_into().unwrap();
-        let offset = offset + self.sp_frame_offset;
-
         RawAddrMode::BaseIndexOff {
             base: Some(REG_RSP),
             index: None,
-            offset,
+            offset: self.sp_offset(frame_offset),
         }
+    }
+
+    fn sp_offset(&self, frame_offset: u32) -> i32 {
+        let frame_offset: i32 = frame_offset.try_into().unwrap();
+        frame_offset + self.sp_frame_offset
     }
 }
 

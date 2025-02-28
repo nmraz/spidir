@@ -269,11 +269,11 @@ impl MachineEmit for X64Machine {
                 buffer,
                 full_op_size,
                 RegMem::Mem(AddrMode::BaseIndexOff {
-                    base: Some(uses[0].as_reg().unwrap()),
+                    base: Some(uses[1].as_reg().unwrap()),
                     index: None,
                     offset: 0,
                 }),
-                uses[1].as_reg().unwrap(),
+                uses[0].as_reg().unwrap(),
             ),
             &X64Instr::MovStackR(slot, full_op_size) => emit_mov_rm_r(
                 buffer,

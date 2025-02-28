@@ -446,7 +446,7 @@ fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size:
             ctx.emit_instr(
                 X64Instr::MovMR(op_size),
                 &[],
-                &[UseOperand::any_reg(addr), UseOperand::any_reg(value)],
+                &[UseOperand::any_reg(value), UseOperand::any_reg(addr)],
             );
         }
     }

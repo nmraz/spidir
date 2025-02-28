@@ -1,3 +1,5 @@
+use core::fmt;
+
 use ir::node::FunctionRef;
 
 use crate::{
@@ -133,12 +135,23 @@ pub enum DivOp {
     Idiv,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum IndexScale {
     One,
     Two,
     Four,
     Eight,
+}
+
+impl fmt::Debug for IndexScale {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::One => write!(f, "reg"),
+            Self::Two => write!(f, "2*reg"),
+            Self::Four => write!(f, "4*reg"),
+            Self::Eight => write!(f, "8*reg"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

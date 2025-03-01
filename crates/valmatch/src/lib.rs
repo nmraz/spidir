@@ -57,7 +57,17 @@ fn parse_binding(input: ParseStream) -> Result<Option<Binding>> {
 
 impl Parse for NodeMatch {
     fn parse(input: ParseStream) -> Result<Self> {
-        let kind_pat = Pat::parse_single(input)?;
+        let mut kind_pat = Pat::parse_single(input)?;
+
+        // We need parenthesization to disambiguate top-level or patterns, but make sure we drop the
+        // parentheses before emitting them.
+        if let Pat::Paren(inner) = kind_pat {
+            kind_pat = if matches!(*inner.pat, Pat::Or(_)) {
+                *inner.pat
+            } else {
+                Pat::Paren(inner)
+            };
+        }
 
         let inputs = if input.peek(token::Bracket) {
             let content;

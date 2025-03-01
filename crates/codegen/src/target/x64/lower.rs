@@ -12,7 +12,7 @@ use valmatch::match_value;
 use crate::{
     cfg::Block,
     isel::{IselContext, MachineIselError, ParamLoc},
-    lir::{DefOperand, PhysReg, PhysRegSet, RegClass, StackSlot, UseOperand, VirtReg},
+    lir::{DefOperand, PhysReg, PhysRegSet, RegClass, UseOperand, VirtReg},
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
 };
@@ -409,37 +409,14 @@ fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: 
     let output = ctx.get_value_vreg(output);
     let op_size = operand_size_for_mem_size(mem_size);
 
-    match match_stack_slot(ctx, addr) {
-        Some(stack_slot) => {
-            ctx.emit_instr(
-                X64Instr::MovRM(
-                    op_size,
-                    AddrMode {
-                        base: Some(AddrBase::Stack(stack_slot)),
-                        index: None,
-                        offset: 0,
-                    },
-                ),
-                &[DefOperand::any_reg(output)],
-                &[],
-            );
-        }
-        None => {
-            let addr = ctx.get_value_vreg(addr);
-            ctx.emit_instr(
-                X64Instr::MovRM(
-                    op_size,
-                    AddrMode {
-                        base: Some(AddrBase::Reg),
-                        index: None,
-                        offset: 0,
-                    },
-                ),
-                &[DefOperand::any_reg(output)],
-                &[UseOperand::any_reg(addr)],
-            )
-        }
-    }
+    let mut uses = SmallVec::new();
+    let addr_mode = select_addr_mode(ctx, addr, &mut uses);
+
+    ctx.emit_instr(
+        X64Instr::MovRM(op_size, addr_mode),
+        &[DefOperand::any_reg(output)],
+        &uses,
+    );
 }
 
 fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {
@@ -447,37 +424,51 @@ fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size:
     let value = ctx.get_value_vreg(value);
     let op_size = operand_size_for_mem_size(mem_size);
 
-    match match_stack_slot(ctx, addr) {
-        Some(stack_slot) => {
-            ctx.emit_instr(
-                X64Instr::MovMR(
-                    op_size,
-                    AddrMode {
-                        base: Some(AddrBase::Stack(stack_slot)),
-                        index: None,
-                        offset: 0,
-                    },
-                ),
-                &[],
-                &[UseOperand::any_reg(value)],
-            );
-        }
-        None => {
-            let addr = ctx.get_value_vreg(addr);
-            ctx.emit_instr(
-                X64Instr::MovMR(
-                    op_size,
-                    AddrMode {
-                        base: Some(AddrBase::Reg),
-                        index: None,
-                        offset: 0,
-                    },
-                ),
-                &[],
-                &[UseOperand::any_reg(value), UseOperand::any_reg(addr)],
-            );
+    let mut uses = smallvec![UseOperand::any_reg(value)];
+    let addr_mode = select_addr_mode(ctx, addr, &mut uses);
+
+    ctx.emit_instr(X64Instr::MovMR(op_size, addr_mode), &[], &uses);
+}
+
+fn select_addr_mode(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    value: DepValue,
+    uses: &mut SmallVec<[UseOperand; 4]>,
+) -> AddrMode {
+    match_value! {
+        if let NodeKind::PtrOff[val base, &NodeKind::IConst(offset)] = ctx, value {
+            if let Some(offset) = as_imm32(Type::I64, offset) {
+                let base = select_addr_base(ctx, base, uses);
+                return AddrMode {
+                    base: Some(base),
+                    index: None,
+                    offset
+                };
+            }
         }
     }
+
+    let base = select_addr_base(ctx, value, uses);
+    AddrMode {
+        base: Some(base),
+        index: None,
+        offset: 0,
+    }
+}
+
+fn select_addr_base(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    value: DepValue,
+    uses: &mut SmallVec<[UseOperand; 4]>,
+) -> AddrBase {
+    match_value! {
+        if let node n @ NodeKind::StackSlot { .. } = ctx, value {
+            return AddrBase::Stack(ctx.node_stack_slot(n));
+        }
+    };
+
+    uses.push(UseOperand::any_reg(ctx.get_value_vreg(value)));
+    AddrBase::Reg
 }
 
 // Raw emission helpers
@@ -793,15 +784,6 @@ fn match_iconst(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Optio
     match_value! {
         if let &NodeKind::IConst(val) = ctx, value {
             return Some(val);
-        }
-    }
-    None
-}
-
-fn match_stack_slot(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<StackSlot> {
-    match_value! {
-        if let node n @ NodeKind::StackSlot { .. } = ctx, value {
-            return Some(ctx.node_stack_slot(n));
         }
     }
     None

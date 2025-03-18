@@ -391,7 +391,9 @@ impl MachineRegalloc for X64Machine {
             | X64Instr::MovRU32(..)
             | X64Instr::FuncAddrRel(..)
             | X64Instr::StackAddr(..) => Some(RematCost::CheapAsCopy),
-            X64Instr::MovRI64(..) | X64Instr::FuncAddrAbs(..) => Some(RematCost::CheapAsLoad),
+            X64Instr::MovRI64(..) | X64Instr::FuncAddrAbs(..) | X64Instr::MovRRbp { .. } => {
+                Some(RematCost::CheapAsLoad)
+            }
             _ => None,
         }
     }

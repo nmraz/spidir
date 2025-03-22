@@ -313,7 +313,7 @@ impl<'a> Scheduler<'a> {
                         );
                         trace!(
                             "    succ: phi {} input {} ({loc})",
-                            node.as_u32(),
+                            succ.as_u32(),
                             input_idx,
                         );
                     }

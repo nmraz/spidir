@@ -544,10 +544,12 @@ impl EvalContext {
         for &node in self.path.iter().rev() {
             // Compress all paths directly to the root.
             preorder[node].ancestor = root.into();
-            // We know that `preorder[node].label` was the correct minimum at least along the path
+            // We know that `preorder[node].label` had the correct minimum at least along the path
             // from `node` to `parent`, so to get it all the way to `root` just combine it with the
             // already-correct value of the parent.
-            preorder[node].label = cmp::min(preorder[node].label, preorder[parent].label);
+            if preorder[preorder[parent].label].sdom < preorder[preorder[node].label].sdom {
+                preorder[node].label = preorder[parent].label;
+            }
             parent = node;
         }
 

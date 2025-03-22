@@ -336,3 +336,22 @@ test_domtree! {
           c2
     "#]]
 }
+
+test_domtree! {
+    sub_funclet_96_schedule_bug,
+    "block18 -> block19, block21
+    block19 -> block20
+    block21 -> block22, block23
+    block22 -> block20
+    block20 -> block24
+    block23 -> block24",
+    expect![[r#"
+        block18
+          block19
+          block20
+          block24
+          block21
+            block22
+            block23
+    "#]]
+}

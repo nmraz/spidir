@@ -270,7 +270,7 @@ fn correct_retargeting_after_prune_replacement() {
 }
 
 #[test]
-fn dont_thread_after_cond_branch() {
+fn dont_delete_threaded_branch_after_cond_branch() {
     check_emitted_code(
         |buffer| {
             let before = buffer.create_label();
@@ -291,15 +291,19 @@ fn dont_thread_after_cond_branch() {
             buffer.bind_label(after);
             emit_instr(buffer, 0x3);
 
-            // The label should still be before the branch to `after`.
-            assert_eq!(buffer.resolve_label(after_pruned_branch), Some(2));
+            // The label itself can be threaded, but we need to leave the branch it points to intact
+            // because control can still reach it.
+            assert_eq!(
+                buffer.resolve_label(after_pruned_branch),
+                buffer.resolve_label(after)
+            );
         },
         expect!["01 cf b2 02 03"],
     );
 }
 
 #[test]
-fn dont_thread_after_revealed_cond_branch() {
+fn dont_delete_threaded_branch_after_revealed_cond_branch() {
     check_emitted_code(
         |buffer| {
             let before = buffer.create_label();
@@ -320,8 +324,12 @@ fn dont_thread_after_revealed_cond_branch() {
             buffer.bind_label(after);
             emit_instr(buffer, 0x3);
 
-            // The label should still be before the branch to `after`.
-            assert_eq!(buffer.resolve_label(after_pruned_branch), Some(2));
+            // The label itself can be threaded, but we need to leave the branch it points to intact
+            // because control can still reach it.
+            assert_eq!(
+                buffer.resolve_label(after_pruned_branch),
+                buffer.resolve_label(after)
+            );
         },
         expect!["01 cf b2 02 03"],
     );
@@ -533,5 +541,69 @@ fn double_cond_branch_over_uncond_branch() {
             emit_instr(buffer, 0x3);
         },
         expect!["01 c2 02 03"],
+    );
+}
+
+#[test]
+fn tdn_int_or_op_sub_funclet_89_bug() {
+    check_emitted_code(
+        |buffer| {
+            let block7 = buffer.create_label();
+            let block8 = buffer.create_label();
+            let block9 = buffer.create_label();
+            let block11 = buffer.create_label();
+            let block12 = buffer.create_label();
+
+            emit_instr(buffer, 0x6);
+            emit_cond_branch(buffer, block7);
+            emit_uncond_branch(buffer, block9);
+
+            buffer.bind_label(block7);
+            emit_uncond_branch(buffer, block8);
+
+            buffer.bind_label(block9);
+            emit_instr(buffer, 0x9);
+
+            emit_cond_branch(buffer, block8);
+            emit_uncond_branch(buffer, block11);
+
+            buffer.bind_label(block8);
+            emit_uncond_branch(buffer, block12);
+
+            buffer.bind_label(block11);
+            emit_instr(buffer, 0xb);
+
+            buffer.bind_label(block12);
+            emit_instr(buffer, 0xc);
+        },
+        expect!["06 c4 09 c2 0b 0c"],
+    );
+}
+
+#[test]
+fn thread_uncond_branch_after_reversed_branch() {
+    check_emitted_code(
+        |buffer| {
+            let block8 = buffer.create_label();
+            let block11 = buffer.create_label();
+            let block12 = buffer.create_label();
+
+            emit_cond_branch(buffer, block8);
+            emit_instr(buffer, 0x1);
+
+            emit_cond_branch(buffer, block8);
+            emit_uncond_branch(buffer, block11);
+
+            // Cause the last branch pair to be reversed, which .
+            buffer.bind_label(block8);
+            emit_uncond_branch(buffer, block12);
+
+            buffer.bind_label(block11);
+            emit_instr(buffer, 0x2);
+
+            buffer.bind_label(block12);
+            emit_instr(buffer, 0x3);
+        },
+        expect!["c4 01 c2 02 03"],
     );
 }

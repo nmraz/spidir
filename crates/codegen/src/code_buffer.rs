@@ -423,7 +423,7 @@ impl<F: FixupKind> CodeBuffer<F> {
         // Grab all recently bound labels pertaining to the current offset.
         let cur_label_base = self
             .last_bound_labels
-            .partition_point(|&label| self.labels[label].unwrap() != offset);
+            .partition_point(|&label| self.labels[label].unwrap() < offset);
         let cur_labels = &self.last_bound_labels[cur_label_base..];
 
         for &cur_label in cur_labels {

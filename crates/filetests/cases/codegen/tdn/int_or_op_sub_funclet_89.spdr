@@ -1,0 +1,49 @@
+# run: codegen
+
+func @"System.Int32 testout1::Sub_Funclet_89()":i32() {
+    # check: function `System.Int32 testout1::Sub_Funclet_89()`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: bf 01 00 00 00                  mov edi, 1
+    # nextln: 000009: 48 ba 90 a5 00 00 20 50 00 00   movabs rdx, 0x50200000a590
+    # nextln: 000013: b9 03 00 00 00                  mov ecx, 3
+    # nextln: 000018: 40 88 3a                        mov byte ptr [rdx], dil
+    # nextln: 00001b: 85 ff                           test edi, edi
+    # nextln: 00001d: 0f 85 0b 00 00 00               jne 0x2e
+    # nextln: 000023: 0f b6 02                        movzx eax, byte ptr [rdx]
+    # nextln: 000026: 85 c0                           test eax, eax
+    # nextln: 000028: 0f 84 08 00 00 00               je 0x36
+    # nextln: 00002e: 48 89 c8                        mov rax, rcx
+    # nextln: 000031: e9 05 00 00 00                  jmp 0x3b
+    # nextln: 000036: b8 fb ff ff ff                  mov eax, 0xfffffffb
+    # nextln: 00003b: 85 ff                           test edi, edi
+    # nextln: 00003d: 0f 85 10 00 00 00               jne 0x53
+    # nextln: 000043: 0f b6 12                        movzx edx, byte ptr [rdx]
+    # nextln: 000046: 85 d2                           test edx, edx
+    # nextln: 000048: 0f 85 05 00 00 00               jne 0x53
+    # nextln: 00004e: b9 fb ff ff ff                  mov ecx, 0xfffffffb
+    # nextln: 000053: 03 c1                           add eax, ecx
+    # nextln: 000055: 5d                              pop rbp
+    # nextln: 000056: c3                              ret
+
+    %0:ctrl = entry
+    %60:i32 = iconst 3
+    %22:i32 = iconst 4294967291
+    %26:ptr = iconst 88098369217936
+    %23:i32 = iconst 1
+    %27:ctrl = store.1 %0, %23, %26
+    %32:ctrl, %33:ctrl = brcond %27, %23
+    %34:ctrl, %35:i32 = load.1 %33, %26
+    %36:ctrl, %37:ctrl = brcond %34, %35
+    %7:ctrl, %8:phisel = region %32, %36
+    %9:ctrl, %10:phisel = region %37, %7
+    %48:ctrl, %49:ctrl = brcond %9, %23
+    %50:ctrl, %51:i32 = load.1 %49, %26
+    %52:ctrl, %53:ctrl = brcond %50, %51
+    %15:ctrl, %16:phisel = region %48, %52
+    %17:ctrl, %18:phisel = region %53, %15
+    %55:i32 = phi %18, %22, %60
+    %39:i32 = phi %10, %22, %60
+    %59:i32 = iadd %39, %55
+    return %17, %59
+}

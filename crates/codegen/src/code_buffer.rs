@@ -3,6 +3,7 @@ use core::{cmp, iter, mem};
 use alloc::vec::Vec;
 
 use cranelift_entity::{PrimaryMap, SecondaryMap, entity_impl, packed_option::PackedOption};
+use fx_utils::FxHashMap;
 use ir::node::FunctionRef;
 use smallvec::SmallVec;
 
@@ -25,7 +26,7 @@ pub struct CodeBlob {
     pub relocs: Vec<Reloc>,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Label(u32);
 entity_impl!(Label, "l");
 
@@ -58,6 +59,7 @@ enum LastBranchKind {
 
 struct LastBranch {
     start: u32,
+    generation: u32,
     bound_label_end: u32,
     kind: LastBranchKind,
 }
@@ -71,7 +73,9 @@ pub struct CodeBuffer<F: FixupKind> {
     relocs: Vec<Reloc>,
     last_branches: SmallVec<[LastBranch; 4]>,
     last_bound_labels: SmallVec<[Label; 16]>,
+    last_bound_label_branch_generations: FxHashMap<Label, u32>,
     first_unpinned_bound_label: usize,
+    next_branch_generation: u32,
 }
 
 impl<F: FixupKind> CodeBuffer<F> {
@@ -85,7 +89,9 @@ impl<F: FixupKind> CodeBuffer<F> {
             relocs: Vec::new(),
             last_branches: SmallVec::new(),
             last_bound_labels: SmallVec::new(),
+            last_bound_label_branch_generations: FxHashMap::default(),
             first_unpinned_bound_label: 0,
+            next_branch_generation: 0,
         }
     }
 
@@ -195,7 +201,16 @@ impl<F: FixupKind> CodeBuffer<F> {
         // This offset might be temporary if we are inside a "last branch" area. The label may be
         // moved earlier and will be pinned at its final offset in `flush_tracked_branches`.
         self.labels[label] = Some(self.offset());
+
         self.last_bound_labels.push(label);
+
+        if let Some(last_branch) = self.last_branches.last() {
+            // Remember the last branch we saw before binding this label so we can determine whether
+            // this label still points to the end of the buffer later.
+            self.last_bound_label_branch_generations
+                .insert(label, last_branch.generation);
+        }
+
         self.prune_last_branches();
     }
 
@@ -259,8 +274,11 @@ impl<F: FixupKind> CodeBuffer<F> {
         // Note: we're recording fixups and branches in lock step.
         self.instr_with_fixup_raw(target, fixup_instr_offset, fixup_kind, f);
         let bound_label_end = self.last_bound_labels.len() as u32;
+        let generation = self.next_branch_generation;
+        self.next_branch_generation = generation + 1;
         self.last_branches.push(LastBranch {
             start,
+            generation,
             bound_label_end,
             kind,
         });
@@ -276,7 +294,8 @@ impl<F: FixupKind> CodeBuffer<F> {
                 break;
             };
 
-            if self.is_branch_target_here(last_branch_target) {
+            // Note: `last_branch_target` cannot be a threaded label because it is fully resolved.
+            if self.is_label_bound_here(last_branch_target) {
                 // This is a branch to the instruction immediately succeeding it, remove it.
                 self.prune_last_branch();
                 continue;
@@ -313,7 +332,8 @@ impl<F: FixupKind> CodeBuffer<F> {
                 break;
             };
 
-            if !self.is_branch_target_here(cond_branch_target) {
+            // Note: `cond_branch_target` cannot be a threaded label because it is fully resolved.
+            if !self.is_label_bound_here(cond_branch_target) {
                 // ...that jumps to right after the unconditional branch.
                 break;
             }
@@ -351,12 +371,30 @@ impl<F: FixupKind> CodeBuffer<F> {
         }
     }
 
-    fn is_branch_target_here(&mut self, target: Label) -> bool {
-        // Any resolved targets that are at or above the current offset will end up exactly at the
-        // current offset. We might get targets above the current immediate offset if we haven't yet
-        // retargeted labels from previous prune iterations.
-        self.resolve_label(target)
-            .is_some_and(|offset| offset >= self.offset())
+    fn is_label_bound_here(&self, label: Label) -> bool {
+        // This logic is only correct when we know the actual target of the label.
+        debug_assert!(self.threaded_branches[label].is_none());
+
+        let Some(target) = self.labels[label] else {
+            // Labels that haven't been bound definitely can't be bound here.
+            return false;
+        };
+
+        if target < self.offset() {
+            // Any targets below the current offset are definitely not bound to the end of the
+            // buffer.
+            return false;
+        }
+
+        let Some(last_branch) = self.last_branches.last() else {
+            // If we aren't in a last-branch area, the label is already fixed in place.
+            return true;
+        };
+
+        // This label must have been bound within this last branch area, because it points at least
+        // at the current offset. It is actually bound here iff it is at least as new as the last
+        // branch we currently have.
+        self.last_bound_label_branch_generations[&label] >= last_branch.generation
     }
 
     fn prune_last_branch(&mut self) {
@@ -373,7 +411,7 @@ impl<F: FixupKind> CodeBuffer<F> {
         // `flush_tracked_branches`.
     }
 
-    fn get_last_nth_branch(&self, n: usize) -> Option<(usize, LastBranchKind, Label)> {
+    fn get_last_nth_branch(&mut self, n: usize) -> Option<(usize, LastBranchKind, Label)> {
         if self.last_branches.len() < n {
             return None;
         }
@@ -384,6 +422,7 @@ impl<F: FixupKind> CodeBuffer<F> {
 
         // Every recorded last branch should always come with a corresponding fixup.
         let target = self.fixups[self.fixups.len() - n].label;
+        let target = self.resolve_threaded_target(target);
 
         Some((start, kind, target))
     }
@@ -411,19 +450,30 @@ impl<F: FixupKind> CodeBuffer<F> {
     }
 
     fn thread_last_bound_labels(&mut self, target: Label) -> bool {
-        let offset = self.offset();
         let final_target = self.resolve_threaded_target(target);
 
-        if self.labels[final_target] == Some(offset) {
+        // Note: `final_target` cannot be a threaded label because it is fully resolved.
+        if self.is_label_bound_here(final_target) {
             // Don't alias a label to itself or to other labels bound at the same offset; doing so
             // could cause an infinite loop later.
             return false;
         }
 
-        // Grab all recently bound labels pertaining to the current offset.
+        // Grab all recently bound labels pertaining to the end of our buffer. We take advantage of
+        // two important facts about `last_bound_labels` here:
+        //
+        // 1. It is always partitioned into labels bound before the end of the buffer and those
+        //    bound exactly at the end
+        //
+        // 2. No label in it can be threaded, because label threading always removes labels from the
+        //    end of the list.
+        //
+        // These facts allow us to perform a binary search on `last_bound_labels` using
+        // `is_label_bound_here` to find the list of labels that need to be threaded.
         let cur_label_base = self
             .last_bound_labels
-            .partition_point(|&label| self.labels[label].unwrap() < offset);
+            .partition_point(|&label| !self.is_label_bound_here(label));
+
         let cur_labels = &self.last_bound_labels[cur_label_base..];
 
         for &cur_label in cur_labels {
@@ -441,7 +491,9 @@ impl<F: FixupKind> CodeBuffer<F> {
     fn clear_branch_tracking(&mut self) {
         self.flush_tracked_branches();
         self.last_bound_labels.clear();
+        self.last_bound_label_branch_generations.clear();
         self.first_unpinned_bound_label = 0;
+        self.next_branch_generation = 0;
     }
 
     fn flush_tracked_branches(&mut self) {

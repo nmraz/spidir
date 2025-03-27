@@ -80,6 +80,24 @@ fn tight_loop() {
 }
 
 #[test]
+fn tight_loop_with_several_labels() {
+    check_emitted_code(
+        |buffer| {
+            let label1 = buffer.create_label();
+            let label2 = buffer.create_label();
+
+            emit_cond_branch(buffer, label2);
+            emit_instr(buffer, 0x1);
+
+            buffer.bind_label(label1);
+            buffer.bind_label(label2);
+            emit_uncond_branch(buffer, label1);
+        },
+        expect!["c2 01 b0"],
+    );
+}
+
+#[test]
 fn prune_simple_branch() {
     check_emitted_code(
         |buffer| {
@@ -605,5 +623,119 @@ fn thread_uncond_branch_after_reversed_branch() {
             emit_instr(buffer, 0x3);
         },
         expect!["c4 01 c2 02 03"],
+    );
+}
+
+#[test]
+fn tight_loop_after_pruned_branches() {
+    check_emitted_code(
+        |buffer| {
+            // This test's purpose is to make sure we correctly track which labels point to the end
+            // of the code buffer, even when the pruning of previous branches causes them to move
+            // back.
+
+            let collapsed = buffer.create_label();
+            let loop_header = buffer.create_label();
+            let end = buffer.create_label();
+
+            // Keep at least one branch in the buffer that won't be pruned when we bind `collapsed`.
+            // That way, we won't `flush_tracked_branches` before trying to create the loop, which
+            // means `loop_header` will point past the end of the buffer after pruning.
+            emit_cond_branch(buffer, end);
+
+            // Add a bunch of branches that will all be pruned when we bind `collapsed`.
+            emit_uncond_branch(buffer, collapsed);
+            emit_uncond_branch(buffer, collapsed);
+            emit_uncond_branch(buffer, collapsed);
+            emit_uncond_branch(buffer, collapsed);
+
+            // Bind our loop header now, at buffer offset 5. It won't be moved back when `collapsed`
+            // is bound because of the extra branch to `end` at the start of the buffer, which will
+            // prevent a `flush_tracked_branches` here.
+            buffer.bind_label(loop_header);
+
+            // Bind `collapsed`, which will prune all branches leading to it here.
+            buffer.bind_label(collapsed);
+
+            // Loop back to `loop_header`. This branch should _not_ be pruned or threaded, even if
+            // its label currently points past the end of the buffer.
+            emit_uncond_branch(buffer, loop_header);
+
+            // Flush all branch state now.
+            emit_instr(buffer, 0x1);
+
+            buffer.bind_label(end);
+        },
+        expect!["c3 b0 01"],
+    );
+}
+
+#[test]
+fn cond_loop_after_pruned_branches() {
+    check_emitted_code(
+        |buffer| {
+            // This test's purpose is to make sure we correctly track which labels point to the end
+            // of the code buffer, even when the pruning of previous branches causes them to move
+            // back.
+
+            let collapsed = buffer.create_label();
+            let loop_header = buffer.create_label();
+            let end = buffer.create_label();
+
+            // Keep at least one branch in the buffer that won't be pruned when we bind `collapsed`.
+            // That way, we won't `flush_tracked_branches` before trying to create the loop, which
+            // means `loop_header` will point past the end of the buffer after pruning.
+            emit_cond_branch(buffer, end);
+
+            // Add a bunch of branches that will all be pruned when we bind `collapsed`.
+            emit_uncond_branch(buffer, collapsed);
+            emit_uncond_branch(buffer, collapsed);
+            emit_uncond_branch(buffer, collapsed);
+            emit_uncond_branch(buffer, collapsed);
+
+            // Bind our loop header now, at buffer offset 5. It won't be moved back when `collapsed`
+            // is bound because of the extra branch to `end` at the start of the buffer, which will
+            // prevent a `flush_tracked_branches` here.
+            buffer.bind_label(loop_header);
+
+            // Bind `collapsed`, which will prune all branches leading to it here.
+            buffer.bind_label(collapsed);
+
+            emit_cond_branch(buffer, end);
+
+            // Loop back to `loop_header`. This branch should _not_ be pruned or threaded, even if
+            // its label currently points past the end of the buffer.
+            emit_uncond_branch(buffer, loop_header);
+
+            // Flush all branch state now.
+            emit_instr(buffer, 0x1);
+
+            buffer.bind_label(end);
+        },
+        expect!["c4 c3 bf 01"],
+    );
+}
+
+#[test]
+fn try_prune_threaded_branch() {
+    check_emitted_code(
+        |buffer| {
+            let start = buffer.create_label();
+            let mid = buffer.create_label();
+            let end = buffer.create_label();
+
+            buffer.bind_label(start);
+            emit_uncond_branch(buffer, end);
+
+            emit_instr(buffer, 0x1);
+            emit_cond_branch(buffer, start);
+
+            // Force branch pruning to run here (though it won't actually prune anything).
+            buffer.bind_label(mid);
+
+            emit_instr(buffer, 0x2);
+            buffer.bind_label(end);
+        },
+        expect!["b4 01 c2 02"],
     );
 }

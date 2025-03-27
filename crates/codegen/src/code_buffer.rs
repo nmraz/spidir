@@ -348,7 +348,7 @@ impl<F: FixupKind> CodeBuffer<F> {
 
             // Swap
             //
-            //     reversed_cond_branch_bytes[cond_branch_reversed_start..]
+            //     reversed_cond_branch_bytes[cond_branch_reversed_start..cond_branch_reversed_end]
             //
             // and
             //

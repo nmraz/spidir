@@ -758,10 +758,10 @@ impl Assignment {
             let def_base = assignment.operand_assignment_pool.len();
             let use_base = def_base + def_len;
 
-            assignment.operand_assignment_pool.extend(
-                iter::repeat(OperandAssignment::Reg(PhysReg::reserved_value()))
-                    .take(def_len + use_len),
-            );
+            assignment.operand_assignment_pool.extend(iter::repeat_n(
+                OperandAssignment::Reg(PhysReg::reserved_value()),
+                def_len + use_len,
+            ));
 
             assignment.instr_assignments[instr] = InstrAssignmentData {
                 def_base: def_base.try_into().unwrap(),

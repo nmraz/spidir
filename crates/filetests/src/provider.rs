@@ -361,12 +361,12 @@ fn get_non_directive_lines(input: &str) -> Vec<&str> {
                 // This was a directive-only line, so delete any empty lines that came before it.
                 post_directive_only = was_directive;
             } else {
-                other_lines.extend(iter::repeat("").take(empty_line_run));
+                other_lines.extend(iter::repeat_n("", empty_line_run));
                 other_lines.push(pre_line);
                 post_directive_only = false;
             }
         } else {
-            other_lines.extend(iter::repeat("").take(empty_line_run));
+            other_lines.extend(iter::repeat_n("", empty_line_run));
             other_lines.push(line);
             post_directive_only = false;
         }

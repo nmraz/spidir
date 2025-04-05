@@ -1,5 +1,3 @@
-use core::slice;
-
 use alloc::vec::Vec;
 
 use ir::{
@@ -599,7 +597,7 @@ fn emit_call_wrapper(
         DefOperand::fixed(retval, REG_RAX)
     });
 
-    let call_defs = retval.as_ref().map(slice::from_ref).unwrap_or_default();
+    let call_defs = retval.as_slice();
     emit_inner(ctx, call_defs, &reg_args);
 
     if stack_size > 0 {

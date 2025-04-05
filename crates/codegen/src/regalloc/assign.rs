@@ -191,11 +191,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             return true;
         }
 
-        if self.is_fragment_atomic(fragment) {
-            // Before inspecting uses, make sure we won't try to spill an atomic fragment again.
-            return false;
-        }
-
         // If the fragment has only one use, trim it as close to that use as we possibly can.
         self.fragment_instrs(fragment)
             .filter(|instr| !instr.is_def())

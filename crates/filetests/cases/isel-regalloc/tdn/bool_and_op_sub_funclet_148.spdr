@@ -1,0 +1,1226 @@
+# run: isel-regalloc
+
+extfunc @jit_newarr:ptr(ptr, i64)
+extfunc @jit_throw_index_out_of_range()
+extfunc @jit_newobj:ptr(ptr)
+
+func @"System.Int32 testout1::Sub_Funclet_148()":i32() {
+    # check: function `System.Int32 testout1::Sub_Funclet_148()`:
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13
+    # nextln: frame: size 0, align 0
+    # nextln:       block0:
+    # nextln: 0000:     $$r13 = MovRI64(89197881030336)
+    # nextln: 0002:     $$rdi = MovRI64(89197881029952)
+    # nextln: 0003:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0004:     $$rax = CallRm $$rax, $$rdi
+    # nextln:           $$rbx = $$rax
+    # nextln: 0005:     $$rax = FuncAddrAbs(External(extfunc0))
+    # nextln:           $$rsi = MovRmS32(3)
+    # nextln:           $$rdi = $$r13
+    # nextln: 0006:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln:           $$r12 = $$rax
+    # nextln:           $$rax = MovRmS32(3)
+    # nextln: 0007:     MovMR(S32, [reg + 16]) $$rax, $$r12
+    # nextln: 0008:     $$rax = FuncAddrAbs(External(extfunc0))
+    # nextln:           $$rsi = MovRmS32(3)
+    # nextln:           $$rdi = $$r13
+    # nextln: 0009:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln:           $$rcx = $$rax
+    # nextln:           $$rax = MovRmS32(3)
+    # nextln: 0010:     MovMR(S32, [reg + 16]) $$rax, $$rcx
+    # nextln: 0011:     $$rax = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0012:     AluRRm(S64, Test) $$rax, $$rax
+    # nextln: 0013:     Jumpcc(Ne, block1, block2)
+    # nextln:       block1:
+    # nextln: 0014:     $$rax = MovRmS32(1)
+    # nextln: 0015:     MovMR(S8, [reg + 24]) $$rax, $$rcx
+    # nextln: 0016:     $$rdx = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0017:     AluRmI(S64, Cmp, 1) $$rdx
+    # nextln: 0018:     Jumpcc(A, block3, block4)
+    # nextln:       block3:
+    # nextln: 0019:     MovMR(S8, [reg + 25]) $$rax, $$rcx
+    # nextln: 0020:     $$rdx = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0021:     AluRmI(S64, Cmp, 2) $$rdx
+    # nextln: 0022:     Jumpcc(A, block5, block6)
+    # nextln:       block5:
+    # nextln: 0023:     MovMR(S8, [reg + 26]) $$rax, $$rcx
+    # nextln: 0024:     $$rdx = MovRI64(88098369250416)
+    # nextln: 0025:     MovMR(S8, [reg + 0]) $$rax, $$rdx
+    # nextln: 0027:     $$rdi = MovRI64(88098369250480)
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0028:     MovMR(S8, [reg + 0]) $$rsi, $$rdi
+    # nextln: 0029:     $$rdi = MovRI64(88098369250544)
+    # nextln: 0030:     MovMR(S8, [reg + 0]) $$rax, $$rdi
+    # nextln: 0031:     MovMR(S8, [reg + 16]) $$rax, $$rbx
+    # nextln:           $$rdi = MovRmS32(0)
+    # nextln: 0032:     MovMR(S8, [reg + 17]) $$rdi, $$rbx
+    # nextln: 0033:     MovMR(S8, [reg + 18]) $$rax, $$rbx
+    # nextln: 0034:     AluRRm(S32, Test) $$rdi, $$rdi
+    # nextln: 0035:     Jumpcc(Ne, block7, block8)
+    # nextln:       block7:
+    # nextln: 0036:     $$rdi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0037:     AluRmI(S64, Cmp, 1) $$rdi
+    # nextln: 0038:     Jumpcc(A, block231, block232)
+    # nextln:       block231:
+    # nextln: 0039:     $$rdi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0040:     AluRRm(S32, Test) $$rdi, $$rdi
+    # nextln: 0041:     Jumpcc(Ne, block233, block234)
+    # nextln:       block233:
+    # nextln: 0042:     Jump(block10)
+    # nextln:       block234:
+    # nextln: 0043:     Jump(block9)
+    # nextln:       block232:
+    # nextln: 0044:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0045:     CallRm $$rax
+    # nextln: 0046:     Ud2
+    # nextln:       block8:
+    # nextln: 0047:     Jump(block9)
+    # nextln:       block9:
+    # nextln: 0048:     Jump(block10)
+    # nextln:       block10:
+    # nextln:           $$rdi = MovRmS32(0)
+    # nextln: 0049:     AluRRm(S32, Test) $$rdi, $$rdi
+    # nextln: 0050:     Jumpcc(Ne, block11, block13)
+    # nextln:       block11:
+    # nextln:           $$rdi = MovRmS32(0)
+    # nextln: 0051:     Jump(block12)
+    # nextln:       block13:
+    # nextln:           $$rdi = MovRmS32(0)
+    # nextln:           $$rdi = $$rax
+    # nextln:           $$rax = MovRmS32(0)
+    # nextln: 0052:     Jump(block12)
+    # nextln:       block12:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0053:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0054:     Jumpcc(Ne, block14, block15)
+    # nextln:       block14:
+    # nextln: 0055:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0056:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0057:     Jumpcc(A, block227, block228)
+    # nextln:       block227:
+    # nextln: 0058:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0059:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0060:     Jumpcc(Ne, block229, block230)
+    # nextln:       block229:
+    # nextln: 0061:     Jump(block17)
+    # nextln:       block230:
+    # nextln: 0062:     Jump(block16)
+    # nextln:       block228:
+    # nextln: 0063:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0064:     CallRm $$rax
+    # nextln: 0065:     Ud2
+    # nextln:       block15:
+    # nextln: 0066:     Jump(block16)
+    # nextln:       block16:
+    # nextln: 0067:     Jump(block17)
+    # nextln:       block17:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0068:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0069:     Jumpcc(Ne, block18, block20)
+    # nextln:       block18:
+    # nextln: 0070:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0071:     Jump(block19)
+    # nextln:       block20:
+    # nextln: 0072:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0073:     Jump(block19)
+    # nextln:       block19:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0074:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0075:     Jumpcc(Ne, block21, block22)
+    # nextln:       block21:
+    # nextln: 0076:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0077:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0078:     Jumpcc(A, block223, block224)
+    # nextln:       block223:
+    # nextln: 0079:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0080:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0081:     Jumpcc(Ne, block225, block226)
+    # nextln:       block225:
+    # nextln: 0082:     Jump(block24)
+    # nextln:       block226:
+    # nextln: 0083:     Jump(block23)
+    # nextln:       block224:
+    # nextln: 0084:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0085:     CallRm $$rax
+    # nextln: 0086:     Ud2
+    # nextln:       block22:
+    # nextln: 0087:     Jump(block23)
+    # nextln:       block23:
+    # nextln: 0088:     Jump(block24)
+    # nextln:       block24:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0089:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0090:     Jumpcc(Ne, block25, block27)
+    # nextln:       block25:
+    # nextln: 0091:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0092:     Jump(block26)
+    # nextln:       block27:
+    # nextln: 0093:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0094:     Jump(block26)
+    # nextln:       block26:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0095:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0096:     Jumpcc(Ne, block28, block29)
+    # nextln:       block28:
+    # nextln: 0097:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0098:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0099:     Jumpcc(A, block219, block220)
+    # nextln:       block219:
+    # nextln: 0100:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0101:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0102:     Jumpcc(Ne, block221, block222)
+    # nextln:       block221:
+    # nextln: 0103:     Jump(block31)
+    # nextln:       block222:
+    # nextln: 0104:     Jump(block30)
+    # nextln:       block220:
+    # nextln: 0105:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0106:     CallRm $$rax
+    # nextln: 0107:     Ud2
+    # nextln:       block29:
+    # nextln: 0108:     Jump(block30)
+    # nextln:       block30:
+    # nextln: 0109:     $$rsi = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0110:     Jump(block31)
+    # nextln:       block31:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0111:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0112:     Jumpcc(Ne, block32, block34)
+    # nextln:       block32:
+    # nextln: 0113:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0114:     Jump(block33)
+    # nextln:       block34:
+    # nextln: 0115:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0116:     Jump(block33)
+    # nextln:       block33:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0117:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0118:     Jumpcc(Ne, block35, block36)
+    # nextln:       block35:
+    # nextln: 0119:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0120:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0121:     Jumpcc(A, block215, block216)
+    # nextln:       block215:
+    # nextln: 0122:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0123:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0124:     Jumpcc(Ne, block217, block218)
+    # nextln:       block217:
+    # nextln: 0125:     Jump(block38)
+    # nextln:       block218:
+    # nextln: 0126:     Jump(block37)
+    # nextln:       block216:
+    # nextln: 0127:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0128:     CallRm $$rax
+    # nextln: 0129:     Ud2
+    # nextln:       block36:
+    # nextln: 0130:     Jump(block37)
+    # nextln:       block37:
+    # nextln: 0131:     $$rsi = MovRM(S8, [reg + 16]) $$rbx
+    # nextln: 0132:     Jump(block38)
+    # nextln:       block38:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0133:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0134:     Jumpcc(Ne, block39, block41)
+    # nextln:       block39:
+    # nextln: 0135:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0136:     Jump(block40)
+    # nextln:       block41:
+    # nextln: 0137:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0138:     Jump(block40)
+    # nextln:       block40:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0139:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0140:     Jumpcc(Ne, block42, block43)
+    # nextln:       block42:
+    # nextln: 0141:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0142:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0143:     Jumpcc(A, block211, block212)
+    # nextln:       block211:
+    # nextln: 0144:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0145:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0146:     Jumpcc(Ne, block213, block214)
+    # nextln:       block213:
+    # nextln: 0147:     Jump(block45)
+    # nextln:       block214:
+    # nextln: 0148:     Jump(block44)
+    # nextln:       block212:
+    # nextln: 0149:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0150:     CallRm $$rax
+    # nextln: 0151:     Ud2
+    # nextln:       block43:
+    # nextln: 0152:     Jump(block44)
+    # nextln:       block44:
+    # nextln: 0153:     Jump(block45)
+    # nextln:       block45:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0154:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0155:     Jumpcc(Ne, block46, block48)
+    # nextln:       block46:
+    # nextln: 0156:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0157:     Jump(block47)
+    # nextln:       block48:
+    # nextln: 0158:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0159:     Jump(block47)
+    # nextln:       block47:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0160:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0161:     Jumpcc(Ne, block49, block50)
+    # nextln:       block49:
+    # nextln: 0162:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0163:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0164:     Jumpcc(A, block207, block208)
+    # nextln:       block207:
+    # nextln: 0165:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0166:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0167:     Jumpcc(Ne, block209, block210)
+    # nextln:       block209:
+    # nextln: 0168:     Jump(block54)
+    # nextln:       block210:
+    # nextln: 0169:     Jump(block51)
+    # nextln:       block208:
+    # nextln: 0170:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0171:     CallRm $$rax
+    # nextln: 0172:     Ud2
+    # nextln:       block50:
+    # nextln: 0173:     Jump(block51)
+    # nextln:       block51:
+    # nextln: 0174:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0175:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0176:     Jumpcc(A, block52, block53)
+    # nextln:       block52:
+    # nextln: 0177:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0178:     Jump(block54)
+    # nextln:       block54:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0179:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0180:     Jumpcc(Ne, block55, block57)
+    # nextln:       block55:
+    # nextln: 0181:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0182:     Jump(block56)
+    # nextln:       block57:
+    # nextln: 0183:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0184:     Jump(block56)
+    # nextln:       block56:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0185:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0186:     Jumpcc(Ne, block58, block59)
+    # nextln:       block58:
+    # nextln: 0187:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0188:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0189:     Jumpcc(A, block203, block204)
+    # nextln:       block203:
+    # nextln: 0190:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0191:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0192:     Jumpcc(Ne, block205, block206)
+    # nextln:       block205:
+    # nextln: 0193:     Jump(block63)
+    # nextln:       block206:
+    # nextln: 0194:     Jump(block60)
+    # nextln:       block204:
+    # nextln: 0195:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0196:     CallRm $$rax
+    # nextln: 0197:     Ud2
+    # nextln:       block59:
+    # nextln: 0198:     Jump(block60)
+    # nextln:       block60:
+    # nextln: 0199:     $$rsi = MovRM(S32, [reg + 16]) $$r12
+    # nextln: 0200:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0201:     Jumpcc(A, block61, block62)
+    # nextln:       block61:
+    # nextln: 0202:     $$rsi = MovRM(S8, [reg + 25]) $$r12
+    # nextln: 0203:     Jump(block63)
+    # nextln:       block63:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0204:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0205:     Jumpcc(Ne, block64, block66)
+    # nextln:       block64:
+    # nextln: 0206:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0207:     Jump(block65)
+    # nextln:       block66:
+    # nextln: 0208:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0209:     Jump(block65)
+    # nextln:       block65:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0210:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0211:     Jumpcc(Ne, block67, block68)
+    # nextln:       block67:
+    # nextln: 0212:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0213:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0214:     Jumpcc(A, block199, block200)
+    # nextln:       block199:
+    # nextln: 0215:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0216:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0217:     Jumpcc(Ne, block201, block202)
+    # nextln:       block201:
+    # nextln: 0218:     $$rsi = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0219:     Jump(block70)
+    # nextln:       block202:
+    # nextln: 0220:     Jump(block69)
+    # nextln:       block200:
+    # nextln: 0221:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0222:     CallRm $$rax
+    # nextln: 0223:     Ud2
+    # nextln:       block68:
+    # nextln: 0224:     Jump(block69)
+    # nextln:       block69:
+    # nextln: 0225:     Jump(block70)
+    # nextln:       block70:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0226:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0227:     Jumpcc(Ne, block71, block73)
+    # nextln:       block71:
+    # nextln: 0228:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0229:     Jump(block72)
+    # nextln:       block73:
+    # nextln: 0230:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0231:     Jump(block72)
+    # nextln:       block72:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0232:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0233:     Jumpcc(Ne, block74, block75)
+    # nextln:       block74:
+    # nextln: 0234:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0235:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0236:     Jumpcc(A, block195, block196)
+    # nextln:       block195:
+    # nextln: 0237:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0238:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0239:     Jumpcc(Ne, block197, block198)
+    # nextln:       block197:
+    # nextln: 0240:     $$rsi = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0241:     Jump(block77)
+    # nextln:       block198:
+    # nextln: 0242:     Jump(block76)
+    # nextln:       block196:
+    # nextln: 0243:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0244:     CallRm $$rax
+    # nextln: 0245:     Ud2
+    # nextln:       block75:
+    # nextln: 0246:     Jump(block76)
+    # nextln:       block76:
+    # nextln: 0247:     Jump(block77)
+    # nextln:       block77:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0248:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0249:     Jumpcc(Ne, block78, block80)
+    # nextln:       block78:
+    # nextln: 0250:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0251:     Jump(block79)
+    # nextln:       block80:
+    # nextln: 0252:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0253:     Jump(block79)
+    # nextln:       block79:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0254:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0255:     Jumpcc(Ne, block81, block82)
+    # nextln:       block81:
+    # nextln: 0256:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0257:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0258:     Jumpcc(A, block191, block192)
+    # nextln:       block191:
+    # nextln: 0259:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0260:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0261:     Jumpcc(Ne, block193, block194)
+    # nextln:       block193:
+    # nextln: 0262:     $$rsi = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0263:     Jump(block84)
+    # nextln:       block194:
+    # nextln: 0264:     Jump(block83)
+    # nextln:       block192:
+    # nextln: 0265:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0266:     CallRm $$rax
+    # nextln: 0267:     Ud2
+    # nextln:       block82:
+    # nextln: 0268:     Jump(block83)
+    # nextln:       block83:
+    # nextln: 0269:     Jump(block84)
+    # nextln:       block84:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0270:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0271:     Jumpcc(Ne, block85, block87)
+    # nextln:       block85:
+    # nextln: 0272:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0273:     Jump(block86)
+    # nextln:       block87:
+    # nextln: 0274:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0275:     Jump(block86)
+    # nextln:       block86:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0276:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0277:     Jumpcc(Ne, block88, block89)
+    # nextln:       block88:
+    # nextln: 0278:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0279:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0280:     Jumpcc(A, block187, block188)
+    # nextln:       block187:
+    # nextln: 0281:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0282:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0283:     Jumpcc(Ne, block189, block190)
+    # nextln:       block189:
+    # nextln: 0284:     $$rsi = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0285:     Jump(block91)
+    # nextln:       block190:
+    # nextln: 0286:     Jump(block90)
+    # nextln:       block188:
+    # nextln: 0287:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0288:     CallRm $$rax
+    # nextln: 0289:     Ud2
+    # nextln:       block89:
+    # nextln: 0290:     Jump(block90)
+    # nextln:       block90:
+    # nextln: 0291:     $$rsi = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0292:     Jump(block91)
+    # nextln:       block91:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0293:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0294:     Jumpcc(Ne, block92, block94)
+    # nextln:       block92:
+    # nextln: 0295:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0296:     Jump(block93)
+    # nextln:       block94:
+    # nextln: 0297:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0298:     Jump(block93)
+    # nextln:       block93:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0299:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0300:     Jumpcc(Ne, block95, block96)
+    # nextln:       block95:
+    # nextln: 0301:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0302:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0303:     Jumpcc(A, block183, block184)
+    # nextln:       block183:
+    # nextln: 0304:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0305:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0306:     Jumpcc(Ne, block185, block186)
+    # nextln:       block185:
+    # nextln: 0307:     $$rsi = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0308:     Jump(block98)
+    # nextln:       block186:
+    # nextln: 0309:     Jump(block97)
+    # nextln:       block184:
+    # nextln: 0310:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0311:     CallRm $$rax
+    # nextln: 0312:     Ud2
+    # nextln:       block96:
+    # nextln: 0313:     Jump(block97)
+    # nextln:       block97:
+    # nextln: 0314:     $$rsi = MovRM(S8, [reg + 16]) $$rbx
+    # nextln: 0315:     Jump(block98)
+    # nextln:       block98:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0316:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0317:     Jumpcc(Ne, block99, block101)
+    # nextln:       block99:
+    # nextln: 0318:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0319:     Jump(block100)
+    # nextln:       block101:
+    # nextln: 0320:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0321:     Jump(block100)
+    # nextln:       block100:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0322:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0323:     Jumpcc(Ne, block102, block103)
+    # nextln:       block102:
+    # nextln: 0324:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0325:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0326:     Jumpcc(A, block179, block180)
+    # nextln:       block179:
+    # nextln: 0327:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0328:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0329:     Jumpcc(Ne, block181, block182)
+    # nextln:       block181:
+    # nextln: 0330:     $$rsi = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0331:     Jump(block105)
+    # nextln:       block182:
+    # nextln: 0332:     Jump(block104)
+    # nextln:       block180:
+    # nextln: 0333:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0334:     CallRm $$rax
+    # nextln: 0335:     Ud2
+    # nextln:       block103:
+    # nextln: 0336:     Jump(block104)
+    # nextln:       block104:
+    # nextln: 0337:     Jump(block105)
+    # nextln:       block105:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0338:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0339:     Jumpcc(Ne, block106, block108)
+    # nextln:       block106:
+    # nextln: 0340:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0341:     Jump(block107)
+    # nextln:       block108:
+    # nextln: 0342:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0343:     Jump(block107)
+    # nextln:       block107:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0344:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0345:     Jumpcc(Ne, block109, block110)
+    # nextln:       block109:
+    # nextln: 0346:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0347:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0348:     Jumpcc(A, block175, block176)
+    # nextln:       block175:
+    # nextln: 0349:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0350:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0351:     Jumpcc(Ne, block177, block178)
+    # nextln:       block177:
+    # nextln: 0352:     $$rsi = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0353:     Jump(block114)
+    # nextln:       block178:
+    # nextln: 0354:     Jump(block111)
+    # nextln:       block176:
+    # nextln: 0355:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0356:     CallRm $$rax
+    # nextln: 0357:     Ud2
+    # nextln:       block110:
+    # nextln: 0358:     Jump(block111)
+    # nextln:       block111:
+    # nextln: 0359:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0360:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0361:     Jumpcc(A, block112, block113)
+    # nextln:       block112:
+    # nextln: 0362:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0363:     Jump(block114)
+    # nextln:       block114:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0364:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0365:     Jumpcc(Ne, block115, block117)
+    # nextln:       block115:
+    # nextln: 0366:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0367:     Jump(block116)
+    # nextln:       block117:
+    # nextln: 0368:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0369:     Jump(block116)
+    # nextln:       block116:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0370:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0371:     Jumpcc(Ne, block118, block119)
+    # nextln:       block118:
+    # nextln: 0372:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0373:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0374:     Jumpcc(A, block171, block172)
+    # nextln:       block171:
+    # nextln: 0375:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0376:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0377:     Jumpcc(Ne, block173, block174)
+    # nextln:       block173:
+    # nextln: 0378:     $$rsi = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0379:     Jump(block123)
+    # nextln:       block174:
+    # nextln: 0380:     Jump(block120)
+    # nextln:       block172:
+    # nextln: 0381:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0382:     CallRm $$rax
+    # nextln: 0383:     Ud2
+    # nextln:       block119:
+    # nextln: 0384:     Jump(block120)
+    # nextln:       block120:
+    # nextln: 0385:     $$rsi = MovRM(S32, [reg + 16]) $$r12
+    # nextln: 0386:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0387:     Jumpcc(A, block121, block122)
+    # nextln:       block121:
+    # nextln: 0388:     $$rsi = MovRM(S8, [reg + 25]) $$r12
+    # nextln: 0389:     Jump(block123)
+    # nextln:       block123:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0390:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0391:     Jumpcc(Ne, block124, block126)
+    # nextln:       block124:
+    # nextln: 0392:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0393:     Jump(block125)
+    # nextln:       block126:
+    # nextln: 0394:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0395:     Jump(block125)
+    # nextln:       block125:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0396:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0397:     Jumpcc(Ne, block127, block128)
+    # nextln:       block127:
+    # nextln: 0398:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0399:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0400:     Jumpcc(A, block167, block168)
+    # nextln:       block167:
+    # nextln: 0401:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0402:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0403:     Jumpcc(Ne, block169, block170)
+    # nextln:       block169:
+    # nextln: 0404:     $$rsi = MovRM(S8, [reg + 16]) $$rbx
+    # nextln: 0405:     Jump(block130)
+    # nextln:       block170:
+    # nextln: 0406:     Jump(block129)
+    # nextln:       block168:
+    # nextln: 0407:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0408:     CallRm $$rax
+    # nextln: 0409:     Ud2
+    # nextln:       block128:
+    # nextln: 0410:     Jump(block129)
+    # nextln:       block129:
+    # nextln: 0411:     Jump(block130)
+    # nextln:       block130:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0412:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0413:     Jumpcc(Ne, block131, block133)
+    # nextln:       block131:
+    # nextln: 0414:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0415:     Jump(block132)
+    # nextln:       block133:
+    # nextln: 0416:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0417:     Jump(block132)
+    # nextln:       block132:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0418:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0419:     Jumpcc(Ne, block134, block135)
+    # nextln:       block134:
+    # nextln: 0420:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0421:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0422:     Jumpcc(A, block163, block164)
+    # nextln:       block163:
+    # nextln: 0423:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0424:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0425:     Jumpcc(Ne, block165, block166)
+    # nextln:       block165:
+    # nextln: 0426:     $$rsi = MovRM(S8, [reg + 16]) $$rbx
+    # nextln: 0427:     Jump(block137)
+    # nextln:       block166:
+    # nextln: 0428:     Jump(block136)
+    # nextln:       block164:
+    # nextln: 0429:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0430:     CallRm $$rax
+    # nextln: 0431:     Ud2
+    # nextln:       block135:
+    # nextln: 0432:     Jump(block136)
+    # nextln:       block136:
+    # nextln: 0433:     Jump(block137)
+    # nextln:       block137:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0434:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0435:     Jumpcc(Ne, block138, block140)
+    # nextln:       block138:
+    # nextln: 0436:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0437:     Jump(block139)
+    # nextln:       block140:
+    # nextln: 0438:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0439:     Jump(block139)
+    # nextln:       block139:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0440:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0441:     Jumpcc(Ne, block141, block142)
+    # nextln:       block141:
+    # nextln: 0442:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0443:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0444:     Jumpcc(A, block159, block160)
+    # nextln:       block159:
+    # nextln: 0445:     $$rsi = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0446:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0447:     Jumpcc(Ne, block161, block162)
+    # nextln:       block161:
+    # nextln: 0448:     $$rsi = MovRM(S8, [reg + 16]) $$rbx
+    # nextln: 0449:     Jump(block144)
+    # nextln:       block162:
+    # nextln: 0450:     Jump(block143)
+    # nextln:       block160:
+    # nextln: 0451:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0452:     CallRm $$rax
+    # nextln: 0453:     Ud2
+    # nextln:       block142:
+    # nextln: 0454:     Jump(block143)
+    # nextln:       block143:
+    # nextln: 0455:     Jump(block144)
+    # nextln:       block144:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0456:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0457:     Jumpcc(Ne, block145, block147)
+    # nextln:       block145:
+    # nextln: 0458:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0459:     Jump(block146)
+    # nextln:       block147:
+    # nextln: 0460:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0461:     Jump(block146)
+    # nextln:       block146:
+    # nextln:           $$rsi = MovRmS32(0)
+    # nextln: 0462:     AluRRm(S32, Test) $$rsi, $$rsi
+    # nextln: 0463:     Jumpcc(Ne, block148, block149)
+    # nextln:       block148:
+    # nextln: 0464:     $$rsi = MovRM(S32, [reg + 16]) $$rcx
+    # nextln: 0465:     AluRmI(S64, Cmp, 1) $$rsi
+    # nextln: 0466:     Jumpcc(A, block155, block156)
+    # nextln:       block155:
+    # nextln: 0467:     $$rcx = MovRM(S8, [reg + 25]) $$rcx
+    # nextln: 0468:     AluRRm(S32, Test) $$rcx, $$rcx
+    # nextln: 0469:     Jumpcc(Ne, block157, block158)
+    # nextln:       block157:
+    # nextln: 0470:     $$rcx = MovRM(S8, [reg + 16]) $$rbx
+    # nextln: 0471:     Jump(block151)
+    # nextln:       block158:
+    # nextln: 0472:     Jump(block150)
+    # nextln:       block156:
+    # nextln: 0473:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0474:     CallRm $$rax
+    # nextln: 0475:     Ud2
+    # nextln:       block149:
+    # nextln: 0476:     Jump(block150)
+    # nextln:       block150:
+    # nextln: 0477:     $$rcx = MovRM(S8, [reg + 0]) $$rdx
+    # nextln: 0478:     Jump(block151)
+    # nextln:       block151:
+    # nextln: 0479:     AluRRm(S32, Test) $$rcx, $$rcx
+    # nextln: 0480:     Jumpcc(Ne, block152, block154)
+    # nextln:       block152:
+    # nextln: 0481:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0482:     Jump(block153)
+    # nextln:       block154:
+    # nextln: 0483:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0484:     Jump(block153)
+    # nextln:       block153:
+    # nextln: 0485:     $$rax = ShiftRmI(S32, Shl, 1) $$rax
+    # nextln: 0486:     $$rax = AluRRm(S32, Sub) $$rax, $$rdi
+    # nextln: 0487:     Ret $$rax
+    # nextln:       block122:
+    # nextln: 0488:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0489:     CallRm $$rax
+    # nextln: 0490:     Ud2
+    # nextln:       block113:
+    # nextln: 0491:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0492:     CallRm $$rax
+    # nextln: 0493:     Ud2
+    # nextln:       block62:
+    # nextln: 0494:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0495:     CallRm $$rax
+    # nextln: 0496:     Ud2
+    # nextln:       block53:
+    # nextln: 0497:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0498:     CallRm $$rax
+    # nextln: 0499:     Ud2
+    # nextln:       block6:
+    # nextln: 0500:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0501:     CallRm $$rax
+    # nextln: 0502:     Ud2
+    # nextln:       block4:
+    # nextln: 0503:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0504:     CallRm $$rax
+    # nextln: 0505:     Ud2
+    # nextln:       block2:
+    # nextln: 0506:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0507:     CallRm $$rax
+    # nextln: 0508:     Ud2
+
+    %0:ctrl = entry
+    %1:i32 = iconst 1
+    %2:i32 = iconst 0
+    %3:i64 = iconst 16
+    %4:i64 = iconst 25
+    %5:i64 = iconst 1
+    %6:ptr = iconst 88098369250416
+    %7:i64 = iconst 18
+    %8:i64 = iconst 17
+    %9:ptr = iconst 88098369250544
+    %10:ptr = iconst 88098369250480
+    %11:i64 = iconst 26
+    %12:i64 = iconst 2
+    %13:i64 = iconst 24
+    %14:i64 = iconst 0
+    %15:i64 = iconst 3
+    %16:ptr = iconst 89197881030336
+    %17:ptr = iconst 89197881029952
+    %18:ctrl, %19:ptr = call @jit_newobj %0, %17
+    %20:ctrl, %21:ptr = call @jit_newarr %18, %16, %15
+    %23:ptr = ptroff %21, %3
+    %24:ctrl = store.4 %20, %15, %23
+    %25:ctrl, %26:ptr = call @jit_newarr %24, %16, %15
+    %30:ptr = ptroff %26, %3
+    %31:ctrl = store.4 %25, %15, %30
+    %32:ctrl, %33:i64 = load.4 %31, %30
+    %34:i32 = icmp ne %33, %14
+    %35:ctrl, %36:ctrl = brcond %32, %34
+    %55:ctrl = call @jit_throw_index_out_of_range %36
+    unreachable %55
+    %29:ptr = ptroff %26, %13
+    %37:ctrl = store.1 %35, %1, %29
+    %38:ctrl, %39:i64 = load.4 %37, %30
+    %40:i32 = icmp ult %5, %39
+    %41:ctrl, %42:ctrl = brcond %38, %40
+    %54:ctrl = call @jit_throw_index_out_of_range %42
+    unreachable %54
+    %28:ptr = ptroff %26, %4
+    %43:ctrl = store.1 %41, %1, %28
+    %44:ctrl, %45:i64 = load.4 %43, %30
+    %46:i32 = icmp ult %12, %45
+    %47:ctrl, %48:ctrl = brcond %44, %46
+    %53:ctrl = call @jit_throw_index_out_of_range %48
+    unreachable %53
+    %27:ptr = ptroff %26, %11
+    %49:ctrl = store.1 %47, %1, %27
+    %50:ctrl = store.1 %49, %1, %6
+    %51:ctrl = store.1 %50, %2, %10
+    %52:ctrl = store.1 %51, %1, %9
+    %22:ptr = ptroff %21, %4
+    %58:ptr = ptroff %19, %3
+    %59:ctrl = store.1 %52, %1, %58
+    %57:ptr = ptroff %19, %8
+    %60:ctrl = store.1 %59, %2, %57
+    %56:ptr = ptroff %19, %7
+    %61:ctrl = store.1 %60, %1, %56
+    %62:ctrl, %63:ctrl = brcond %61, %2
+    %64:ctrl, %65:i64 = load.4 %62, %30
+    %66:i32 = icmp ult %5, %65
+    %67:ctrl, %68:ctrl = brcond %64, %66
+    %69:ctrl, %70:i32 = load.1 %67, %28
+    %71:ctrl, %72:ctrl = brcond %69, %70
+    %73:ctrl = call @jit_throw_index_out_of_range %68
+    unreachable %73
+    %74:ctrl, %75:phisel = region %63, %72
+    %76:ctrl, %77:phisel = region %71, %74
+    %78:ctrl, %79:ctrl = brcond %76, %2
+    %80:ctrl, %81:phisel = region %78, %79
+    %82:ctrl, %83:ctrl = brcond %80, %2
+    %84:ctrl, %85:i64 = load.4 %82, %30
+    %86:i32 = icmp ult %5, %85
+    %87:ctrl, %88:ctrl = brcond %84, %86
+    %89:ctrl, %90:i32 = load.1 %87, %28
+    %91:ctrl, %92:ctrl = brcond %89, %90
+    %93:ctrl = call @jit_throw_index_out_of_range %88
+    unreachable %93
+    %94:ctrl, %95:phisel = region %83, %92
+    %96:ctrl, %97:phisel = region %91, %94
+    %98:ctrl, %99:ctrl = brcond %96, %2
+    %100:ctrl, %101:phisel = region %98, %99
+    %102:ctrl, %103:ctrl = brcond %100, %2
+    %104:ctrl, %105:i64 = load.4 %102, %30
+    %106:i32 = icmp ult %5, %105
+    %107:ctrl, %108:ctrl = brcond %104, %106
+    %109:ctrl, %110:i32 = load.1 %107, %28
+    %111:ctrl, %112:ctrl = brcond %109, %110
+    %113:ctrl = call @jit_throw_index_out_of_range %108
+    unreachable %113
+    %114:ctrl, %115:phisel = region %103, %112
+    %116:ctrl, %117:phisel = region %111, %114
+    %118:ctrl, %119:ctrl = brcond %116, %2
+    %120:ctrl, %121:phisel = region %118, %119
+    %122:ctrl, %123:ctrl = brcond %120, %2
+    %124:ctrl, %125:i64 = load.4 %122, %30
+    %126:i32 = icmp ult %5, %125
+    %127:ctrl, %128:ctrl = brcond %124, %126
+    %129:ctrl, %130:i32 = load.1 %127, %28
+    %131:ctrl, %132:ctrl = brcond %129, %130
+    %133:ctrl = call @jit_throw_index_out_of_range %128
+    unreachable %133
+    %134:ctrl, %135:phisel = region %123, %132
+    %136:ctrl, %137:i32 = load.1 %134, %6
+    %138:ctrl, %139:phisel = region %131, %136
+    %140:ctrl, %141:ctrl = brcond %138, %2
+    %142:ctrl, %143:phisel = region %140, %141
+    %144:ctrl, %145:ctrl = brcond %142, %2
+    %146:ctrl, %147:i64 = load.4 %144, %30
+    %148:i32 = icmp ult %5, %147
+    %149:ctrl, %150:ctrl = brcond %146, %148
+    %151:ctrl, %152:i32 = load.1 %149, %28
+    %153:ctrl, %154:ctrl = brcond %151, %152
+    %155:ctrl = call @jit_throw_index_out_of_range %150
+    unreachable %155
+    %156:ctrl, %157:phisel = region %145, %154
+    %158:ctrl, %159:i32 = load.1 %156, %58
+    %160:ctrl, %161:phisel = region %153, %158
+    %162:ctrl, %163:ctrl = brcond %160, %2
+    %164:ctrl, %165:phisel = region %162, %163
+    %166:ctrl, %167:ctrl = brcond %164, %2
+    %168:ctrl, %169:i64 = load.4 %166, %30
+    %170:i32 = icmp ult %5, %169
+    %171:ctrl, %172:ctrl = brcond %168, %170
+    %173:ctrl, %174:i32 = load.1 %171, %28
+    %175:ctrl, %176:ctrl = brcond %173, %174
+    %177:ctrl = call @jit_throw_index_out_of_range %172
+    unreachable %177
+    %178:ctrl, %179:phisel = region %167, %176
+    %180:ctrl, %181:phisel = region %175, %178
+    %182:ctrl, %183:ctrl = brcond %180, %2
+    %184:ctrl, %185:phisel = region %182, %183
+    %186:ctrl, %187:ctrl = brcond %184, %2
+    %188:ctrl, %189:i64 = load.4 %186, %30
+    %190:i32 = icmp ult %5, %189
+    %191:ctrl, %192:ctrl = brcond %188, %190
+    %193:ctrl, %194:i32 = load.1 %191, %28
+    %195:ctrl, %196:ctrl = brcond %193, %194
+    %197:ctrl = call @jit_throw_index_out_of_range %192
+    unreachable %197
+    %198:ctrl, %199:phisel = region %187, %196
+    %200:ctrl, %201:i64 = load.4 %198, %30
+    %202:i32 = icmp ult %5, %201
+    %203:ctrl, %204:ctrl = brcond %200, %202
+    %205:ctrl, %206:i32 = load.1 %203, %28
+    %207:ctrl, %208:phisel = region %195, %205
+    %209:ctrl, %210:ctrl = brcond %207, %2
+    %211:ctrl, %212:phisel = region %209, %210
+    %213:ctrl, %214:ctrl = brcond %211, %2
+    %215:ctrl, %216:i64 = load.4 %213, %30
+    %217:i32 = icmp ult %5, %216
+    %218:ctrl, %219:ctrl = brcond %215, %217
+    %220:ctrl, %221:i32 = load.1 %218, %28
+    %222:ctrl, %223:ctrl = brcond %220, %221
+    %224:ctrl = call @jit_throw_index_out_of_range %219
+    unreachable %224
+    %225:ctrl, %226:phisel = region %214, %223
+    %227:ctrl, %228:i64 = load.4 %225, %23
+    %229:i32 = icmp ult %5, %228
+    %230:ctrl, %231:ctrl = brcond %227, %229
+    %232:ctrl, %233:i32 = load.1 %230, %22
+    %234:ctrl, %235:phisel = region %222, %232
+    %236:ctrl, %237:ctrl = brcond %234, %2
+    %238:ctrl, %239:phisel = region %236, %237
+    %240:ctrl, %241:ctrl = brcond %238, %2
+    %242:ctrl, %243:i64 = load.4 %240, %30
+    %244:i32 = icmp ult %5, %243
+    %245:ctrl, %246:ctrl = brcond %242, %244
+    %247:ctrl, %248:i32 = load.1 %245, %28
+    %249:ctrl, %250:ctrl = brcond %247, %248
+    %251:ctrl, %252:i32 = load.1 %249, %6
+    %253:ctrl = call @jit_throw_index_out_of_range %246
+    unreachable %253
+    %254:ctrl, %255:phisel = region %241, %250
+    %256:ctrl, %257:phisel = region %251, %254
+    %258:ctrl, %259:ctrl = brcond %256, %2
+    %260:ctrl, %261:phisel = region %258, %259
+    %262:ctrl, %263:ctrl = brcond %260, %2
+    %264:ctrl, %265:i64 = load.4 %262, %30
+    %266:i32 = icmp ult %5, %265
+    %267:ctrl, %268:ctrl = brcond %264, %266
+    %269:ctrl, %270:i32 = load.1 %267, %28
+    %271:ctrl, %272:ctrl = brcond %269, %270
+    %273:ctrl, %274:i32 = load.1 %271, %6
+    %275:ctrl = call @jit_throw_index_out_of_range %268
+    unreachable %275
+    %276:ctrl, %277:phisel = region %263, %272
+    %278:ctrl, %279:phisel = region %273, %276
+    %280:ctrl, %281:ctrl = brcond %278, %2
+    %282:ctrl, %283:phisel = region %280, %281
+    %284:ctrl, %285:ctrl = brcond %282, %2
+    %286:ctrl, %287:i64 = load.4 %284, %30
+    %288:i32 = icmp ult %5, %287
+    %289:ctrl, %290:ctrl = brcond %286, %288
+    %291:ctrl, %292:i32 = load.1 %289, %28
+    %293:ctrl, %294:ctrl = brcond %291, %292
+    %295:ctrl, %296:i32 = load.1 %293, %6
+    %297:ctrl = call @jit_throw_index_out_of_range %290
+    unreachable %297
+    %298:ctrl, %299:phisel = region %285, %294
+    %300:ctrl, %301:phisel = region %295, %298
+    %302:ctrl, %303:ctrl = brcond %300, %2
+    %304:ctrl, %305:phisel = region %302, %303
+    %306:ctrl, %307:ctrl = brcond %304, %2
+    %308:ctrl, %309:i64 = load.4 %306, %30
+    %310:i32 = icmp ult %5, %309
+    %311:ctrl, %312:ctrl = brcond %308, %310
+    %313:ctrl, %314:i32 = load.1 %311, %28
+    %315:ctrl, %316:ctrl = brcond %313, %314
+    %317:ctrl, %318:i32 = load.1 %315, %6
+    %319:ctrl = call @jit_throw_index_out_of_range %312
+    unreachable %319
+    %320:ctrl, %321:phisel = region %307, %316
+    %322:ctrl, %323:i32 = load.1 %320, %6
+    %324:ctrl, %325:phisel = region %317, %322
+    %326:ctrl, %327:ctrl = brcond %324, %2
+    %328:ctrl, %329:phisel = region %326, %327
+    %330:ctrl, %331:ctrl = brcond %328, %2
+    %332:ctrl, %333:i64 = load.4 %330, %30
+    %334:i32 = icmp ult %5, %333
+    %335:ctrl, %336:ctrl = brcond %332, %334
+    %337:ctrl, %338:i32 = load.1 %335, %28
+    %339:ctrl, %340:ctrl = brcond %337, %338
+    %341:ctrl, %342:i32 = load.1 %339, %6
+    %343:ctrl = call @jit_throw_index_out_of_range %336
+    unreachable %343
+    %344:ctrl, %345:phisel = region %331, %340
+    %346:ctrl, %347:i32 = load.1 %344, %58
+    %348:ctrl, %349:phisel = region %341, %346
+    %350:ctrl, %351:ctrl = brcond %348, %2
+    %352:ctrl, %353:phisel = region %350, %351
+    %354:ctrl, %355:ctrl = brcond %352, %2
+    %356:ctrl, %357:i64 = load.4 %354, %30
+    %358:i32 = icmp ult %5, %357
+    %359:ctrl, %360:ctrl = brcond %356, %358
+    %361:ctrl, %362:i32 = load.1 %359, %28
+    %363:ctrl, %364:ctrl = brcond %361, %362
+    %365:ctrl, %366:i32 = load.1 %363, %6
+    %367:ctrl = call @jit_throw_index_out_of_range %360
+    unreachable %367
+    %368:ctrl, %369:phisel = region %355, %364
+    %370:ctrl, %371:phisel = region %365, %368
+    %372:ctrl, %373:ctrl = brcond %370, %2
+    %374:ctrl, %375:phisel = region %372, %373
+    %376:ctrl, %377:ctrl = brcond %374, %2
+    %378:ctrl, %379:i64 = load.4 %376, %30
+    %380:i32 = icmp ult %5, %379
+    %381:ctrl, %382:ctrl = brcond %378, %380
+    %383:ctrl, %384:i32 = load.1 %381, %28
+    %385:ctrl, %386:ctrl = brcond %383, %384
+    %387:ctrl, %388:i32 = load.1 %385, %6
+    %389:ctrl = call @jit_throw_index_out_of_range %382
+    unreachable %389
+    %390:ctrl, %391:phisel = region %377, %386
+    %392:ctrl, %393:i64 = load.4 %390, %30
+    %394:i32 = icmp ult %5, %393
+    %395:ctrl, %396:ctrl = brcond %392, %394
+    %397:ctrl, %398:i32 = load.1 %395, %28
+    %399:ctrl, %400:phisel = region %387, %397
+    %401:ctrl, %402:ctrl = brcond %399, %2
+    %403:ctrl, %404:phisel = region %401, %402
+    %405:ctrl, %406:ctrl = brcond %403, %2
+    %407:ctrl, %408:i64 = load.4 %405, %30
+    %409:i32 = icmp ult %5, %408
+    %410:ctrl, %411:ctrl = brcond %407, %409
+    %412:ctrl, %413:i32 = load.1 %410, %28
+    %414:ctrl, %415:ctrl = brcond %412, %413
+    %416:ctrl, %417:i32 = load.1 %414, %6
+    %418:ctrl = call @jit_throw_index_out_of_range %411
+    unreachable %418
+    %419:ctrl, %420:phisel = region %406, %415
+    %421:ctrl, %422:i64 = load.4 %419, %23
+    %423:i32 = icmp ult %5, %422
+    %424:ctrl, %425:ctrl = brcond %421, %423
+    %426:ctrl, %427:i32 = load.1 %424, %22
+    %428:ctrl, %429:phisel = region %416, %426
+    %430:ctrl, %431:ctrl = brcond %428, %2
+    %432:ctrl, %433:phisel = region %430, %431
+    %434:ctrl, %435:ctrl = brcond %432, %2
+    %436:ctrl, %437:i64 = load.4 %434, %30
+    %438:i32 = icmp ult %5, %437
+    %439:ctrl, %440:ctrl = brcond %436, %438
+    %441:ctrl, %442:i32 = load.1 %439, %28
+    %443:ctrl, %444:ctrl = brcond %441, %442
+    %445:ctrl, %446:i32 = load.1 %443, %58
+    %447:ctrl = call @jit_throw_index_out_of_range %440
+    unreachable %447
+    %448:ctrl, %449:phisel = region %435, %444
+    %450:ctrl, %451:phisel = region %445, %448
+    %452:ctrl, %453:ctrl = brcond %450, %2
+    %454:ctrl, %455:phisel = region %452, %453
+    %456:ctrl, %457:ctrl = brcond %454, %2
+    %458:ctrl, %459:i64 = load.4 %456, %30
+    %460:i32 = icmp ult %5, %459
+    %461:ctrl, %462:ctrl = brcond %458, %460
+    %463:ctrl, %464:i32 = load.1 %461, %28
+    %465:ctrl, %466:ctrl = brcond %463, %464
+    %467:ctrl, %468:i32 = load.1 %465, %58
+    %469:ctrl = call @jit_throw_index_out_of_range %462
+    unreachable %469
+    %470:ctrl, %471:phisel = region %457, %466
+    %472:ctrl, %473:phisel = region %467, %470
+    %474:ctrl, %475:ctrl = brcond %472, %2
+    %476:ctrl, %477:phisel = region %474, %475
+    %478:ctrl, %479:ctrl = brcond %476, %2
+    %480:ctrl, %481:i64 = load.4 %478, %30
+    %482:i32 = icmp ult %5, %481
+    %483:ctrl, %484:ctrl = brcond %480, %482
+    %485:ctrl, %486:i32 = load.1 %483, %28
+    %487:ctrl, %488:ctrl = brcond %485, %486
+    %489:ctrl, %490:i32 = load.1 %487, %58
+    %491:ctrl = call @jit_throw_index_out_of_range %484
+    unreachable %491
+    %492:ctrl, %493:phisel = region %479, %488
+    %494:ctrl, %495:phisel = region %489, %492
+    %496:ctrl, %497:ctrl = brcond %494, %2
+    %498:ctrl, %499:phisel = region %496, %497
+    %500:ctrl, %501:ctrl = brcond %498, %2
+    %502:ctrl, %503:i64 = load.4 %500, %30
+    %504:i32 = icmp ult %5, %503
+    %505:ctrl, %506:ctrl = brcond %502, %504
+    %507:ctrl, %508:i32 = load.1 %505, %28
+    %509:ctrl, %510:ctrl = brcond %507, %508
+    %511:ctrl, %512:i32 = load.1 %509, %58
+    %513:ctrl = call @jit_throw_index_out_of_range %506
+    unreachable %513
+    %514:ctrl, %515:phisel = region %501, %510
+    %516:ctrl, %517:i32 = load.1 %514, %6
+    %518:ctrl, %519:phisel = region %511, %516
+    %520:i32 = phi %519, %512, %517
+    %521:ctrl, %522:ctrl = brcond %518, %520
+    %523:ctrl, %524:phisel = region %521, %522
+    %525:ctrl = call @jit_throw_index_out_of_range %425
+    unreachable %525
+    %526:ctrl = call @jit_throw_index_out_of_range %396
+    unreachable %526
+    %527:ctrl = call @jit_throw_index_out_of_range %231
+    unreachable %527
+    %528:ctrl = call @jit_throw_index_out_of_range %204
+    unreachable %528
+    %568:i32 = phi %81, %1, %2
+    %569:i32 = iadd %568, %1
+    %570:i32 = phi %101, %569, %568
+    %571:i32 = iadd %570, %1
+    %572:i32 = phi %121, %571, %570
+    %573:i32 = iadd %572, %1
+    %574:i32 = phi %143, %573, %572
+    %575:i32 = iadd %574, %1
+    %576:i32 = phi %165, %575, %574
+    %577:i32 = iadd %576, %1
+    %578:i32 = phi %185, %577, %576
+    %579:i32 = iadd %578, %1
+    %580:i32 = phi %212, %579, %578
+    %581:i32 = iadd %580, %1
+    %582:i32 = phi %239, %581, %580
+    %583:i32 = iadd %582, %1
+    %584:i32 = phi %261, %583, %582
+    %585:i32 = iadd %584, %1
+    %586:i32 = phi %283, %585, %584
+    %587:i32 = iadd %586, %1
+    %588:i32 = phi %305, %587, %586
+    %589:i32 = iadd %588, %1
+    %590:i32 = phi %329, %589, %588
+    %591:i32 = iadd %590, %1
+    %592:i32 = phi %353, %591, %590
+    %593:i32 = iadd %592, %1
+    %594:i32 = phi %375, %593, %592
+    %595:i32 = iadd %594, %1
+    %596:i32 = phi %404, %595, %594
+    %597:i32 = iadd %596, %1
+    %598:i32 = phi %433, %597, %596
+    %599:i32 = iadd %598, %1
+    %600:i32 = phi %455, %599, %598
+    %601:i32 = iadd %600, %1
+    %602:i32 = phi %477, %601, %600
+    %603:i32 = iadd %602, %1
+    %604:i32 = phi %499, %603, %602
+    %605:i32 = iadd %604, %1
+    %606:i32 = phi %524, %605, %604
+    %607:i32 = shl %606, %1
+    %529:i32 = phi %81, %2, %1
+    %530:i32 = iadd %529, %1
+    %531:i32 = phi %101, %529, %530
+    %532:i32 = iadd %531, %1
+    %533:i32 = phi %121, %531, %532
+    %534:i32 = iadd %533, %1
+    %535:i32 = phi %143, %533, %534
+    %536:i32 = iadd %535, %1
+    %537:i32 = phi %165, %535, %536
+    %538:i32 = iadd %537, %1
+    %539:i32 = phi %185, %537, %538
+    %540:i32 = iadd %539, %1
+    %541:i32 = phi %212, %539, %540
+    %542:i32 = iadd %541, %1
+    %543:i32 = phi %239, %541, %542
+    %544:i32 = iadd %543, %1
+    %545:i32 = phi %261, %543, %544
+    %546:i32 = iadd %545, %1
+    %547:i32 = phi %283, %545, %546
+    %548:i32 = iadd %547, %1
+    %549:i32 = phi %305, %547, %548
+    %550:i32 = iadd %549, %1
+    %551:i32 = phi %329, %549, %550
+    %552:i32 = iadd %551, %1
+    %553:i32 = phi %353, %551, %552
+    %554:i32 = iadd %553, %1
+    %555:i32 = phi %375, %553, %554
+    %556:i32 = iadd %555, %1
+    %557:i32 = phi %404, %555, %556
+    %558:i32 = iadd %557, %1
+    %559:i32 = phi %433, %557, %558
+    %560:i32 = iadd %559, %1
+    %561:i32 = phi %455, %559, %560
+    %562:i32 = iadd %561, %1
+    %563:i32 = phi %477, %561, %562
+    %564:i32 = iadd %563, %1
+    %565:i32 = phi %499, %563, %564
+    %566:i32 = iadd %565, %1
+    %567:i32 = phi %524, %565, %566
+    %608:i32 = isub %607, %567
+    return %523, %608
+}

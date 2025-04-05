@@ -53,7 +53,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         // Track whether all ranges in this fragment are cheap to rematerialize (even if they don't
         // all come from the same source).
-        let mut cheaply_remattable = true;
+        let mut cheaply_remattable_defs = true;
 
         let fragment_data = &mut self.live_set_fragments[fragment];
         fragment_data.phys_hints.clear();
@@ -64,8 +64,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             range_data.fragment = fragment;
             size += range.prog_range.len();
 
-            if cheaply_remattable {
-                cheaply_remattable = self.remattable_vreg_defs[vreg]
+            if cheaply_remattable_defs {
+                cheaply_remattable_defs = self.remattable_vreg_defs[vreg]
                     .expand()
                     .is_some_and(|def| def.cost() == RematCost::CheapAsCopy);
             }
@@ -92,9 +92,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             .flags
             .set(LiveSetFragmentFlags::ATOMIC, is_atomic);
 
-        fragment_data
-            .flags
-            .set(LiveSetFragmentFlags::CHEAPLY_REMATTABLE, cheaply_remattable);
+        // Never mark atomic fragments as "cheaply rematerializable", because we can't _actually_
+        // rematerialize them if we fail to allocate them.
+        fragment_data.flags.set(
+            LiveSetFragmentFlags::CHEAPLY_REMATTABLE,
+            cheaply_remattable_defs && !is_atomic,
+        );
 
         fragment_data.flags.set(
             LiveSetFragmentFlags::HAS_UNCOALESCED_COPY_HINTS,

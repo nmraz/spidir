@@ -1,5 +1,10 @@
 # run: isel-regalloc
 
+# This test case was emitted for the `Bool_And_Op` dotnet test by a buggy version of TDN that didn't
+# always use the correct phi inputs at control merge points. This incorrect code exposed a bug in
+# how the register allocator treats atomic fragments with rematerializable definitions, though, so
+# keep it around to test for that.
+
 extfunc @jit_newarr:ptr(ptr, i64)
 extfunc @jit_throw_index_out_of_range()
 extfunc @jit_newobj:ptr(ptr)

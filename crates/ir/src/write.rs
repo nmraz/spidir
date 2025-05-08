@@ -300,7 +300,7 @@ pub fn write_node_kind(
 }
 
 pub fn write_extern_function(w: &mut dyn fmt::Write, metadata: &FunctionMetadata) -> fmt::Result {
-    write!(w, "extfunc {}", metadata)?;
+    write!(w, "extfunc {metadata}")?;
     writeln!(w)
 }
 
@@ -322,7 +322,7 @@ fn write_signature(w: &mut dyn fmt::Write, sig: &Signature, after_name: bool) ->
         if after_name {
             write!(w, ":")?;
         }
-        write!(w, "{}", ret_type)?;
+        write!(w, "{ret_type}")?;
     }
 
     w.write_str("(")?;
@@ -333,7 +333,7 @@ fn write_signature(w: &mut dyn fmt::Write, sig: &Signature, after_name: bool) ->
             w.write_str(", ")?;
         }
         first_arg = false;
-        write!(w, "{}", arg_type)?;
+        write!(w, "{arg_type}")?;
     }
 
     w.write_str(")")

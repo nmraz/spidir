@@ -79,7 +79,7 @@ fn stringify_loops(g: &Graph) -> String {
             }
             f(&g.name(domtree.get_cfg_node(node)))
         });
-        writeln!(output, "{}", line).unwrap();
+        writeln!(output, "{line}").unwrap();
 
         stack.extend(loop_children[l].iter().rev());
     }

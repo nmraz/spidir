@@ -352,10 +352,9 @@ fn build_single_output_pure(
 }
 
 fn get_input_ty(builder: &mut (impl Builder + ?Sized), lhs: DepValue) -> Type {
-    let ty = builder
+    builder
         .graph()
         .value_kind(lhs)
         .as_value()
-        .expect("input should be a value");
-    ty
+        .expect("input should be a value")
 }

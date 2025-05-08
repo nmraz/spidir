@@ -180,10 +180,10 @@ impl fmt::Debug for AddrMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[")?;
         if let Some(base) = self.base {
-            write!(f, "{:?} + ", base)?;
+            write!(f, "{base:?} + ")?;
         }
         if let Some(index) = self.index {
-            write!(f, "{:?} + ", index)?;
+            write!(f, "{index:?} + ")?;
         }
         write!(f, "{}", self.offset)?;
         write!(f, "]")

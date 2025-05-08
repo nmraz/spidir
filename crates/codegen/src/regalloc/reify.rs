@@ -367,12 +367,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             // is only possible when the vreg is a block param.
                             trace!("      in (block param)");
 
-                            debug_assert!(
-                                self.lir
-                                    .block_params(block)
-                                    .iter()
-                                    .any(|&param| param == vreg)
-                            );
+                            debug_assert!(self.lir.block_params(block).contains(&vreg));
 
                             block_param_ins.push(BlockParamIn {
                                 block,
@@ -691,9 +686,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         .expect("non-reg live range should be spilled");
                     assert!(
                         spill_hull.contains(prog_range),
-                        "unassigned live range {:?} not contained in live-set spill hull {:?}",
-                        prog_range,
-                        spill_hull
+                        "unassigned live range {prog_range:?} not contained in live-set spill hull {spill_hull:?}"
                     );
                 }
 

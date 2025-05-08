@@ -106,7 +106,7 @@ impl<N: Copy> PreOrderContext<N> {
 
         visited.mark_visited(node);
 
-        graph.successors(node, |succ| {
+        let _ = graph.successors(node, |succ| {
             // This extra check here is an optimization to avoid needlessly placing
             // an obviously-visited node on to the stack. Even if the node is not
             // visited now, it may be by the time it is popped off the stack later.
@@ -215,7 +215,7 @@ impl<N: Copy> PostOrderContext<N> {
                     if !visited.is_visited(node) {
                         visited.mark_visited(node);
                         self.stack.push((WalkPhase::Post, node));
-                        graph.successors(node, |succ| {
+                        let _ = graph.successors(node, |succ| {
                             // This extra check here is an optimization to avoid needlessly placing
                             // an obviously-visited node on to the stack. Even if the node is not
                             // visited now, it may be by the time it is popped off the stack later.

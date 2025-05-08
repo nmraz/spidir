@@ -64,7 +64,7 @@ impl fmt::Display for DisplayCodegenError<'_> {
         write!(f, "codegen for `{}` failed: ", self.func.metadata.name)?;
         match self.error {
             CodegenError::Isel(isel) => write!(f, "{}", isel.display(self.module, &self.func.body)),
-            CodegenError::Regalloc(regalloc) => write!(f, "{}", regalloc),
+            CodegenError::Regalloc(regalloc) => write!(f, "{regalloc}"),
         }
     }
 }

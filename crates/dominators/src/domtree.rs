@@ -317,7 +317,7 @@ fn do_dfs<N: EntityRef>(
             });
             preorder_by_node[node] = num.into();
 
-            graph.successors(node, |succ| {
+            let _ = graph.successors(node, |succ| {
                 // Optimization: avoid placing the node on the stack at all if it has already
                 // been visited.
                 if preorder_by_node[succ].is_none() {
@@ -385,7 +385,7 @@ fn compute_reldoms<N: EntityRef>(
         //
         // This only works because we are traversing in reverse preorder, which means that the
         // semidominators for any nodes with a higher preorder number are already correct.
-        graph.predecessors(preorder[node].node, |pred| {
+        let _ = graph.predecessors(preorder[node].node, |pred| {
             let Some(pred) = preorder_by_node[pred].expand() else {
                 // This predecessor isn't reachable in the CFG, so it can (and should) be completely
                 // ignored.

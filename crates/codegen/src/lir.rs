@@ -644,7 +644,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
 
     pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
         let src = resolve_vreg_copy(&mut self.vreg_copies, src).unwrap_or(src);
-        assert!(dest != src, "vreg copy cycle on register {}", dest);
+        assert!(dest != src, "vreg copy cycle on register {dest}");
         let src_class = self.lir.vreg_class(src);
         let dest_class = self.lir.vreg_class(dest);
         assert!(
@@ -656,7 +656,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
 
         let prev = self.vreg_copies.insert(dest, src);
         if let Some(prev) = prev {
-            panic!("vreg {} already copied from {}", dest, prev);
+            panic!("vreg {dest} already copied from {prev}");
         }
     }
 

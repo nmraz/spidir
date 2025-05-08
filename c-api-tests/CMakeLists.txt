@@ -1,8 +1,12 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 project(spidir-c-tests)
 enable_testing()
 
 add_compile_options(-Wall -Wextra -Werror)
+
+set(SPIDIR_RUSTUP_TOOLCHAIN nightly-2025-05-07)
+set(SPIDIR_CARGO_TARGET x86_64-unknown-linux-none)
+set(SPIDIR_CARGO_FLAGS "-Zbuild-std=core,alloc")
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../c-api spidir)
 add_subdirectory(utils)

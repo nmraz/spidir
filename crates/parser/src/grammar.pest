@@ -10,9 +10,12 @@ quoted_ident        = @{ "\"" ~ quoted_ident_letter+ ~ "\"" }
 ident = @{ ("_" | "-" | ASCII_ALPHANUMERIC)+ | quoted_ident }
 
 integer = @{ "-"? ~ ASCII_DIGIT+ }
-float   = @{
-    "-"? ~ ((ASCII_DIGIT+ ~ ("." ~ (ASCII_DIGIT*))?) | ("." ~ ASCII_DIGIT+))
+
+special_float =  { "NaN" | "inf" | "-inf" }
+hexfloat      = @{
+    ("-"? ~ "0x" ~ ASCII_HEX_DIGIT* ~ ("." ~ ASCII_HEX_DIGIT*)? ~ (("p" | "P") ~ "-"? ~ ASCII_DIGIT+)?)
 }
+float         = _{ hexfloat | special_float }
 
 valname  = @{ "%" ~ ident }
 funcname = @{ "@" ~ ident }

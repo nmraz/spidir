@@ -3,6 +3,8 @@ use core::{
     hash::{Hash, Hasher},
 };
 
+use hexfloat2::HexFloat;
+
 use crate::{
     function::SignatureRef,
     module::{ExternFunction, Function},
@@ -153,7 +155,7 @@ impl Hash for BitwiseF64 {
 
 impl fmt::Display for BitwiseF64 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", HexFloat(self.0))
     }
 }
 

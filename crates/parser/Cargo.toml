@@ -9,6 +9,8 @@ rust-version.workspace = true
 [dependencies]
 fx-utils.workspace = true
 ir.workspace = true
+
+hexfloat2.workspace = true
 itertools.workspace = true
 
 pest = { version = "2.7.14", default-features = false }

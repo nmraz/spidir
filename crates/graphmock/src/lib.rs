@@ -82,7 +82,7 @@ pub fn graph(input: &str) -> Graph {
 impl GraphRef for &'_ Graph {
     type Node = Node;
 
-    fn successors(
+    fn try_successors(
         &self,
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,
@@ -92,7 +92,7 @@ impl GraphRef for &'_ Graph {
 }
 
 impl PredGraphRef for &'_ Graph {
-    fn predecessors(
+    fn try_predecessors(
         &self,
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,

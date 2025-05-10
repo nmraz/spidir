@@ -46,7 +46,11 @@ impl<'a> LiveNodeSuccs<'a> {
 impl graphwalk::GraphRef for LiveNodeSuccs<'_> {
     type Node = Node;
 
-    fn successors(&self, node: Node, f: impl FnMut(Node) -> ControlFlow<()>) -> ControlFlow<()> {
+    fn try_successors(
+        &self,
+        node: Node,
+        f: impl FnMut(Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
         live_node_succs(self.0, node).try_for_each(f)
     }
 }
@@ -91,7 +95,7 @@ impl<'a> RawDefUseSuccs<'a> {
 impl graphwalk::GraphRef for RawDefUseSuccs<'_> {
     type Node = Node;
 
-    fn successors(
+    fn try_successors(
         &self,
         node: Node,
         mut f: impl FnMut(Node) -> ControlFlow<()>,
@@ -116,7 +120,7 @@ impl<'a> DefUseSuccs<'a> {
 impl graphwalk::GraphRef for DefUseSuccs<'_> {
     type Node = Node;
 
-    fn successors(
+    fn try_successors(
         &self,
         node: Node,
         mut f: impl FnMut(Node) -> ControlFlow<()>,
@@ -226,7 +230,7 @@ impl<'a> ForwardCfg<'a> {
 impl graphwalk::GraphRef for ForwardCfg<'_> {
     type Node = Node;
 
-    fn successors(
+    fn try_successors(
         &self,
         node: Self::Node,
         f: impl FnMut(Node) -> ControlFlow<()>,
@@ -236,7 +240,7 @@ impl graphwalk::GraphRef for ForwardCfg<'_> {
 }
 
 impl graphwalk::PredGraphRef for ForwardCfg<'_> {
-    fn predecessors(
+    fn try_predecessors(
         &self,
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,

@@ -16,7 +16,7 @@ pub enum WalkPhase {
 
 pub trait GraphRef {
     type Node: Copy;
-    fn successors(
+    fn try_successors(
         &self,
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,
@@ -26,16 +26,16 @@ pub trait GraphRef {
 impl<G: GraphRef> GraphRef for &'_ G {
     type Node = G::Node;
 
-    fn successors(
+    fn try_successors(
         &self,
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,
     ) -> ControlFlow<()> {
-        (*self).successors(node, f)
+        (*self).try_successors(node, f)
     }
 }
 pub trait PredGraphRef: GraphRef {
-    fn predecessors(
+    fn try_predecessors(
         &self,
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,
@@ -43,12 +43,12 @@ pub trait PredGraphRef: GraphRef {
 }
 
 impl<G: PredGraphRef> PredGraphRef for &'_ G {
-    fn predecessors(
+    fn try_predecessors(
         &self,
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,
     ) -> ControlFlow<()> {
-        (*self).predecessors(node, f)
+        (*self).try_predecessors(node, f)
     }
 }
 
@@ -106,7 +106,7 @@ impl<N: Copy> PreOrderContext<N> {
 
         visited.mark_visited(node);
 
-        let _ = graph.successors(node, |succ| {
+        let _ = graph.try_successors(node, |succ| {
             // This extra check here is an optimization to avoid needlessly placing
             // an obviously-visited node on to the stack. Even if the node is not
             // visited now, it may be by the time it is popped off the stack later.
@@ -215,7 +215,7 @@ impl<N: Copy> PostOrderContext<N> {
                     if !visited.is_visited(node) {
                         visited.mark_visited(node);
                         self.stack.push((WalkPhase::Post, node));
-                        let _ = graph.successors(node, |succ| {
+                        let _ = graph.try_successors(node, |succ| {
                             // This extra check here is an optimization to avoid needlessly placing
                             // an obviously-visited node on to the stack. Even if the node is not
                             // visited now, it may be by the time it is popped off the stack later.

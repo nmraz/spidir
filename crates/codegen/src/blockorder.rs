@@ -39,7 +39,7 @@ struct LoopGroupedCfg<'a> {
 impl GraphRef for LoopGroupedCfg<'_> {
     type Node = Block;
 
-    fn successors(
+    fn try_successors(
         &self,
         node: Self::Node,
         mut f: impl FnMut(Self::Node) -> ControlFlow<()>,

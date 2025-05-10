@@ -681,7 +681,7 @@ struct BlockSubgraph<'a> {
 impl GraphRef for BlockSubgraph<'_> {
     type Node = Node;
 
-    fn successors(
+    fn try_successors(
         &self,
         node: Node,
         mut f: impl FnMut(Node) -> ControlFlow<()>,

@@ -119,7 +119,11 @@ impl<'a> UnpinnedDataPreds<'a> {
 impl graphwalk::GraphRef for UnpinnedDataPreds<'_> {
     type Node = Node;
 
-    fn successors(&self, node: Node, f: impl FnMut(Node) -> ControlFlow<()>) -> ControlFlow<()> {
+    fn try_successors(
+        &self,
+        node: Node,
+        f: impl FnMut(Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
         unpinned_dataflow_preds(self.graph, node).try_for_each(f)
     }
 }
@@ -147,7 +151,7 @@ impl<'a> UnpinnedDataSuccs<'a> {
 impl graphwalk::GraphRef for UnpinnedDataSuccs<'_> {
     type Node = Node;
 
-    fn successors(
+    fn try_successors(
         &self,
         node: Node,
         mut f: impl FnMut(Node) -> ControlFlow<()>,

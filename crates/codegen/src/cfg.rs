@@ -68,13 +68,17 @@ impl BlockCfg {
 impl GraphRef for &'_ BlockCfg {
     type Node = Block;
 
-    fn successors(&self, node: Block, f: impl FnMut(Block) -> ControlFlow<()>) -> ControlFlow<()> {
+    fn try_successors(
+        &self,
+        node: Block,
+        f: impl FnMut(Block) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
         self.block_succs(node).iter().copied().try_for_each(f)
     }
 }
 
 impl PredGraphRef for &'_ BlockCfg {
-    fn predecessors(
+    fn try_predecessors(
         &self,
         node: Block,
         f: impl FnMut(Block) -> ControlFlow<()>,

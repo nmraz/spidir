@@ -304,7 +304,7 @@ fn extract_special_node_kind(
             &inner.next().unwrap(),
             "invalid integer literal",
         )?),
-        Rule::fconst_nodekind => NodeKind::FConst(BitwiseF64(
+        Rule::fconst64_nodekind => NodeKind::FConst64(BitwiseF64(
             parse_from_str::<HexFloat64>(&inner.next().unwrap(), "invalid floating-point literal")?
                 .0,
         )),
@@ -667,10 +667,10 @@ mod tests {
             "icmp sle",
             "icmp ult",
             "icmp ule",
-            "fconst 0x1.5ae147ae147aep1",
-            "fconst 0x1.0000000000000p0",
-            "fconst -0x1.0000000000000p0",
-            "fconst 0x1.0000000000000p-5",
+            "fconst64 0x1.5ae147ae147aep1",
+            "fconst64 0x1.0000000000000p0",
+            "fconst64 -0x1.0000000000000p0",
+            "fconst64 0x1.0000000000000p-5",
             "ptroff",
             "inttoptr",
             "ptrtoint",
@@ -730,7 +730,7 @@ mod tests {
                 %25:i32 = icmp sle %24, %6
                 %26:i32 = icmp ult %25, %6
                 %27:i32 = icmp ule %26, %6
-                %28:f64 = fconst 0x1.921cac083126fp1
+                %28:f64 = fconst64 0x1.921cac083126fp1
                 %31:ctrl = store.8 %29, %28, %1
                 %32:ctrl, %33:ctrl = brcond %31, %27
                 return %32, %27
@@ -768,7 +768,7 @@ mod tests {
                     %27:i32 = icmp sle %26, %6
                     %28:i32 = icmp ult %27, %6
                     %29:i32 = icmp ule %28, %6
-                    %30:f64 = fconst 0x1.921cac083126fp1
+                    %30:f64 = fconst64 0x1.921cac083126fp1
                     %31:ctrl = store.8 %20, %30, %1
                     %32:ctrl, %33:ctrl = brcond %31, %29
                     return %32, %29
@@ -857,7 +857,7 @@ mod tests {
             "
             func @f:f64() {
                 %0:ctrl = entry
-                %1:f64 = fconst 0x1.0
+                %1:f64 = fconst64 0x1.0
                 return %0, %1
             }
             ",
@@ -869,7 +869,7 @@ mod tests {
 
             func @f:f64() {
                 %0:ctrl = entry
-                %1:f64 = fconst 0x1.0000000000000p0
+                %1:f64 = fconst64 0x1.0000000000000p0
                 return %0, %1
             }
         "#]],
@@ -882,7 +882,7 @@ mod tests {
             "
             func @f:f64() {
                 %0:ctrl = entry
-                %1:f64 = fconst -0x1.0
+                %1:f64 = fconst64 -0x1.0
                 return %0, %1
             }
             ",
@@ -894,7 +894,7 @@ mod tests {
 
                 func @f:f64() {
                     %0:ctrl = entry
-                    %1:f64 = fconst -0x1.0000000000000p0
+                    %1:f64 = fconst64 -0x1.0000000000000p0
                     return %0, %1
                 }
             "#]],
@@ -907,7 +907,7 @@ mod tests {
             "
             func @f:f64() {
                 %0:ctrl = entry
-                %1:f64 = fconst 0x1.0p-5
+                %1:f64 = fconst64 0x1.0p-5
                 return %0, %1
             }
             ",
@@ -919,7 +919,7 @@ mod tests {
 
                 func @f:f64() {
                     %0:ctrl = entry
-                    %1:f64 = fconst 0x1.0000000000000p-5
+                    %1:f64 = fconst64 0x1.0000000000000p-5
                     return %0, %1
                 }
             "#]],
@@ -932,7 +932,7 @@ mod tests {
             "
             func @f:f64() {
                 %0:ctrl = entry
-                %1:f64 = fconst inf
+                %1:f64 = fconst64 inf
                 return %0, %1
             }
             ",
@@ -944,7 +944,7 @@ mod tests {
 
                 func @f:f64() {
                     %0:ctrl = entry
-                    %1:f64 = fconst inf
+                    %1:f64 = fconst64 inf
                     return %0, %1
                 }
             "#]],
@@ -957,7 +957,7 @@ mod tests {
             "
             func @f:f64() {
                 %0:ctrl = entry
-                %1:f64 = fconst -inf
+                %1:f64 = fconst64 -inf
                 return %0, %1
             }
             ",
@@ -969,7 +969,7 @@ mod tests {
 
                 func @f:f64() {
                     %0:ctrl = entry
-                    %1:f64 = fconst -inf
+                    %1:f64 = fconst64 -inf
                     return %0, %1
                 }
             "#]],
@@ -982,7 +982,7 @@ mod tests {
             "
             func @f:f64() {
                 %0:ctrl = entry
-                %1:f64 = fconst NaN
+                %1:f64 = fconst64 NaN
                 return %0, %1
             }
             ",
@@ -994,7 +994,7 @@ mod tests {
 
                 func @f:f64() {
                     %0:ctrl = entry
-                    %1:f64 = fconst NaN
+                    %1:f64 = fconst64 NaN
                     return %0, %1
                 }
             "#]],

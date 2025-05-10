@@ -34,7 +34,7 @@ icmpkind = { "eq" | "ne" | "slt" | "sle" | "ult" | "ule" }
 memsize  = { "1" | "2" | "4" | "8" }
 
 iconst_nodekind    =  { "iconst" ~ integer }
-fconst_nodekind    =  { "fconst" ~ float }
+fconst64_nodekind  =  { "fconst64" ~ float }
 sfill_nodekind     =  { "sfill" ~ integer }
 icmp_nodekind      =  { "icmp" ~ icmpkind }
 load_nodekind      = ${ "load." ~ memsize }
@@ -50,7 +50,7 @@ nodekind           =  {
   | "unreachable"
   | "phi"
   | iconst_nodekind
-  | fconst_nodekind
+  | fconst64_nodekind
   | "iadd"
   | "isub"
   | "and"

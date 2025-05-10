@@ -29,7 +29,7 @@ func @call_mixed_params(ptr, ptr) {
     %0:ctrl, %fp:ptr, %p:ptr = entry
     %zero32:i32 = iconst 0
     %zero64:i64 = iconst 0
-    %fivef:f64 = fconst 0x5
+    %fivef:f64 = fconst64 0x5
     %1:ctrl = callind (i32, i64, f64, ptr, i64) %0, %fp, %zero32, %fivef, %zero64, %p, %zero64
     return %1
 }

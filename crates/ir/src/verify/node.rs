@@ -42,7 +42,7 @@ pub fn verify_node_kind(
         NodeKind::Itrunc => verify_itrunc(graph, node, errors),
         NodeKind::Sfill(width) => verify_sfill(graph, node, *width, errors),
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
-        NodeKind::FConst(_) => verify_fconst(graph, node, errors),
+        NodeKind::FConst64(_) => verify_fconst64(graph, node, errors),
         NodeKind::PtrOff => verify_ptroff(graph, node, errors),
         NodeKind::IntToPtr => verify_inttoptr(graph, node, errors),
         NodeKind::PtrToInt => verify_ptrtoint(graph, node, errors),
@@ -193,7 +193,7 @@ fn verify_iconst(graph: &ValGraph, node: Node, val: u64, errors: &mut Vec<Functi
     }
 }
 
-fn verify_fconst(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+fn verify_fconst64(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
     let Ok([result]) = verify_node_arity(graph, node, 0, errors) else {
         return;
     };

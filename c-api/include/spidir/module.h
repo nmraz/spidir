@@ -522,8 +522,8 @@ spidir_value_t spidir_builder_build_iconst(spidir_builder_handle_t builder,
 /// @param[in] value   The value of the constant to build.
 /// @return An SSA value representing the constant. This value will have type
 ///         `SPIDIR_TYPE_F64`.
-spidir_value_t spidir_builder_build_fconst(spidir_builder_handle_t builder,
-                                           double value);
+spidir_value_t spidir_builder_build_fconst64(spidir_builder_handle_t builder,
+                                             double value);
 
 /// Builds an integer add operation at the current insertion point. This
 /// operation can be used for both signed and unsigned additions.

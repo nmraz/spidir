@@ -188,8 +188,8 @@ pub trait BuilderExt: Builder {
     fn build_iconst(&mut self, ty: Type, value: u64) -> DepValue {
         build_single_output_pure(self, NodeKind::IConst(value), [], ty)
     }
-    fn build_fconst(&mut self, value: f64) -> DepValue {
-        build_single_output_pure(self, NodeKind::FConst(BitwiseF64(value)), [], Type::F64)
+    fn build_fconst64(&mut self, value: f64) -> DepValue {
+        build_single_output_pure(self, NodeKind::FConst64(BitwiseF64(value)), [], Type::F64)
     }
 
     fn build_iadd(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {

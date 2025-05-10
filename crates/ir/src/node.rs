@@ -184,7 +184,7 @@ pub enum NodeKind {
     Itrunc,
     Sfill(u8),
     Icmp(IcmpKind),
-    FConst(BitwiseF64),
+    FConst64(BitwiseF64),
     PtrOff,
     IntToPtr,
     PtrToInt,

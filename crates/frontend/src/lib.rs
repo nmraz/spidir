@@ -168,8 +168,8 @@ impl<'a> FunctionBuilder<'a> {
         self.builder().build_iconst(ty, value)
     }
 
-    pub fn build_fconst(&mut self, value: f64) -> DepValue {
-        self.builder().build_fconst(value)
+    pub fn build_fconst64(&mut self, value: f64) -> DepValue {
+        self.builder().build_fconst64(value)
     }
 
     pub fn build_iadd(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {

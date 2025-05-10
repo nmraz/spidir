@@ -43,17 +43,15 @@ impl LoopForest {
             let cfg_node = domtree.get_cfg_node(tree_node);
 
             latches.clear();
-            let _ = graph.try_predecessors(cfg_node, |pred| {
+            graph.predecessors(cfg_node, |pred| {
                 let Some(pred_tree_node) = domtree.get_tree_node(pred) else {
                     // Skip any unreachable nodes.
-                    return ControlFlow::Continue(());
+                    return;
                 };
 
                 if domtree.dominates(tree_node, pred_tree_node) {
                     latches.push(pred_tree_node);
                 }
-
-                ControlFlow::Continue(())
             });
 
             if !latches.is_empty() {
@@ -186,7 +184,7 @@ fn push_loop_preds<N: EntityRef>(
     header: DomTreeNode,
     stack: &mut Vec<DomTreeNode>,
 ) {
-    let _ = graph.try_predecessors(domtree.get_cfg_node(node), |pred| {
+    graph.predecessors(domtree.get_cfg_node(node), |pred| {
         if let Some(tree_pred) = domtree.get_tree_node(pred) {
             debug_assert!(domtree.dominates(header, tree_pred));
 
@@ -197,7 +195,5 @@ fn push_loop_preds<N: EntityRef>(
                 stack.push(tree_pred);
             }
         }
-
-        ControlFlow::Continue(())
     });
 }

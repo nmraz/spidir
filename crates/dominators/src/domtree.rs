@@ -317,7 +317,7 @@ fn do_dfs<N: EntityRef>(
             });
             preorder_by_node[node] = num.into();
 
-            let _ = graph.try_successors(node, |succ| {
+            graph.successors(node, |succ| {
                 // Optimization: avoid placing the node on the stack at all if it has already
                 // been visited.
                 if preorder_by_node[succ].is_none() {
@@ -326,8 +326,6 @@ fn do_dfs<N: EntityRef>(
                         parent: num.into(),
                     });
                 }
-
-                ControlFlow::Continue(())
             });
         }
     }
@@ -385,11 +383,11 @@ fn compute_reldoms<N: EntityRef>(
         //
         // This only works because we are traversing in reverse preorder, which means that the
         // semidominators for any nodes with a higher preorder number are already correct.
-        let _ = graph.try_predecessors(preorder[node].node, |pred| {
+        graph.predecessors(preorder[node].node, |pred| {
             let Some(pred) = preorder_by_node[pred].expand() else {
                 // This predecessor isn't reachable in the CFG, so it can (and should) be completely
                 // ignored.
-                return ControlFlow::Continue(());
+                return;
             };
 
             // Apply Theorem 4.
@@ -418,8 +416,6 @@ fn compute_reldoms<N: EntityRef>(
 
             let info = &mut preorder[node];
             info.sdom = cmp::min(info.sdom, pred_ancestor_sdom);
-
-            ControlFlow::Continue(())
         });
 
         let sdom = preorder[node].sdom;

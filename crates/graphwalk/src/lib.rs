@@ -121,15 +121,13 @@ impl<N: Copy> PreOrderContext<N> {
 
         visited.mark_visited(node);
 
-        let _ = graph.try_successors(node, |succ| {
+        graph.successors(node, |succ| {
             // This extra check here is an optimization to avoid needlessly placing
             // an obviously-visited node on to the stack. Even if the node is not
             // visited now, it may be by the time it is popped off the stack later.
             if !visited.is_visited(succ) {
                 self.stack.push(succ);
             }
-
-            ControlFlow::Continue(())
         });
 
         Some(node)
@@ -230,15 +228,13 @@ impl<N: Copy> PostOrderContext<N> {
                     if !visited.is_visited(node) {
                         visited.mark_visited(node);
                         self.stack.push((WalkPhase::Post, node));
-                        let _ = graph.try_successors(node, |succ| {
+                        graph.successors(node, |succ| {
                             // This extra check here is an optimization to avoid needlessly placing
                             // an obviously-visited node on to the stack. Even if the node is not
                             // visited now, it may be by the time it is popped off the stack later.
                             if !visited.is_visited(succ) {
                                 self.stack.push((WalkPhase::Pre, succ));
                             }
-
-                            ControlFlow::Continue(())
                         });
 
                         return Some((WalkPhase::Pre, node));

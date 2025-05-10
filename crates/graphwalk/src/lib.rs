@@ -16,11 +16,19 @@ pub enum WalkPhase {
 
 pub trait GraphRef {
     type Node: Copy;
+
     fn try_successors(
         &self,
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,
     ) -> ControlFlow<()>;
+
+    fn successors(&self, node: Self::Node, mut f: impl FnMut(Self::Node)) {
+        let _ = self.try_successors(node, |succ| {
+            f(succ);
+            ControlFlow::Continue(())
+        });
+    }
 }
 
 impl<G: GraphRef> GraphRef for &'_ G {
@@ -40,6 +48,13 @@ pub trait PredGraphRef: GraphRef {
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,
     ) -> ControlFlow<()>;
+
+    fn predecessors(&self, node: Self::Node, mut f: impl FnMut(Self::Node)) {
+        let _ = self.try_predecessors(node, |pred| {
+            f(pred);
+            ControlFlow::Continue(())
+        });
+    }
 }
 
 impl<G: PredGraphRef> PredGraphRef for &'_ G {

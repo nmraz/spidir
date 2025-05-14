@@ -50,7 +50,6 @@ nodekind           =  {
   | "unreachable"
   | "phi"
   | iconst_nodekind
-  | fconst64_nodekind
   | "iadd"
   | "isub"
   | "and"
@@ -68,6 +67,11 @@ nodekind           =  {
   | "itrunc"
   | sfill_nodekind
   | icmp_nodekind
+  | fconst64_nodekind
+  | "fadd"
+  | "fsub"
+  | "fmul"
+  | "fdiv"
   | "ptroff"
   | "inttoptr"
   | "ptrtoint"

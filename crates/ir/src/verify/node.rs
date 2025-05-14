@@ -43,6 +43,10 @@ pub fn verify_node_kind(
         NodeKind::Sfill(width) => verify_sfill(graph, node, *width, errors),
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
         NodeKind::FConst64(_) => verify_fconst64(graph, node, errors),
+        NodeKind::Fadd => verify_float_binop(graph, node, errors),
+        NodeKind::Fsub => verify_float_binop(graph, node, errors),
+        NodeKind::Fmul => verify_float_binop(graph, node, errors),
+        NodeKind::Fdiv => verify_float_binop(graph, node, errors),
         NodeKind::PtrOff => verify_ptroff(graph, node, errors),
         NodeKind::IntToPtr => verify_inttoptr(graph, node, errors),
         NodeKind::PtrToInt => verify_ptrtoint(graph, node, errors),
@@ -206,6 +210,20 @@ fn verify_int_binop(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerif
     };
 
     if verify_integer_output_kind(graph, result, errors).is_err() {
+        return;
+    }
+
+    let result_kind = graph.value_kind(result);
+    let _ = verify_input_kind(graph, node, 0, &[result_kind], errors);
+    let _ = verify_input_kind(graph, node, 1, &[result_kind], errors);
+}
+
+fn verify_float_binop(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 2, errors) else {
+        return;
+    };
+
+    if verify_float_output_kind(graph, result, errors).is_err() {
         return;
     }
 
@@ -569,6 +587,14 @@ fn verify_intlike_output_kind(
     errors: &mut Vec<FunctionVerifierError>,
 ) -> Result<(), ()> {
     verify_output_kind(graph, value, ALL_INTLIKE_TYPES, errors)
+}
+
+fn verify_float_output_kind(
+    graph: &ValGraph,
+    value: DepValue,
+    errors: &mut Vec<FunctionVerifierError>,
+) -> Result<(), ()> {
+    verify_output_kind(graph, value, &[DepValueKind::Value(Type::F64)], errors)
 }
 
 fn verify_value_output_kind(

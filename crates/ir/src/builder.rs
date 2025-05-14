@@ -188,9 +188,6 @@ pub trait BuilderExt: Builder {
     fn build_iconst(&mut self, ty: Type, value: u64) -> DepValue {
         build_single_output_pure(self, NodeKind::IConst(value), [], ty)
     }
-    fn build_fconst64(&mut self, value: f64) -> DepValue {
-        build_single_output_pure(self, NodeKind::FConst64(BitwiseF64(value)), [], Type::F64)
-    }
 
     fn build_iadd(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
         build_binop_with_lhs_type(self, NodeKind::Iadd, lhs, rhs)
@@ -253,6 +250,23 @@ pub trait BuilderExt: Builder {
         rhs: DepValue,
     ) -> DepValue {
         build_single_output_pure(self, NodeKind::Icmp(kind), [lhs, rhs], output_ty)
+    }
+
+    fn build_fconst64(&mut self, value: f64) -> DepValue {
+        build_single_output_pure(self, NodeKind::FConst64(BitwiseF64(value)), [], Type::F64)
+    }
+
+    fn build_fadd(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Fadd, lhs, rhs)
+    }
+    fn build_fsub(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Fsub, lhs, rhs)
+    }
+    fn build_fmul(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Fmul, lhs, rhs)
+    }
+    fn build_fdiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        build_binop_with_lhs_type(self, NodeKind::Fdiv, lhs, rhs)
     }
 
     fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {

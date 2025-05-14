@@ -1,0 +1,11 @@
+
+func @func:f64(f64) {
+    %0:ctrl, %1:f64 = entry
+    %2:ctrl, %3:phisel = region %0
+    %4:f64 = fconst64 0x1.0000000000000p6
+    %5:f64 = fadd %1, %4
+    %6:f64 = fsub %5, %4
+    %7:f64 = fmul %6, %4
+    %8:f64 = fdiv %7, %4
+    return %2, %8
+}

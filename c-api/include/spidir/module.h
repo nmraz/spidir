@@ -516,15 +516,6 @@ spidir_value_t spidir_builder_build_iconst(spidir_builder_handle_t builder,
                                            spidir_value_type_t type,
                                            uint64_t value);
 
-/// Builds a floating-point constant value at the current insertion point.
-///
-/// @param[in] builder A handle to the function builder.
-/// @param[in] value   The value of the constant to build.
-/// @return An SSA value representing the constant. This value will have type
-///         `SPIDIR_TYPE_F64`.
-spidir_value_t spidir_builder_build_fconst64(spidir_builder_handle_t builder,
-                                             double value);
-
 /// Builds an integer add operation at the current insertion point. This
 /// operation can be used for both signed and unsigned additions.
 ///
@@ -764,6 +755,87 @@ spidir_value_t spidir_builder_build_sfill(spidir_builder_handle_t builder,
 spidir_value_t spidir_builder_build_icmp(spidir_builder_handle_t builder,
                                          spidir_icmp_kind_t icmp_kind,
                                          spidir_value_type_t output_type,
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
+
+/// Builds a 64-bit floating-point constant value at the current insertion
+/// point.
+///
+/// @note Spidir internally assumes this operation will not trap and may
+/// speculate it accordingly.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] value   The value of the constant to build.
+/// @return An SSA value representing the constant. This value will have type
+///         `SPIDIR_TYPE_F64`.
+spidir_value_t spidir_builder_build_fconst64(spidir_builder_handle_t builder,
+                                             double value);
+
+/// Builds a floating-point add operation at the current insertion point.
+///
+/// The values `lhs` and `rhs` must both be floating-point values of the same
+/// type.
+///
+/// @note Spidir internally assumes this operation will not trap and may
+/// speculate it accordingly.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the same type as `lhs` and `rhs`.
+spidir_value_t spidir_builder_build_fadd(spidir_builder_handle_t builder,
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
+
+/// Builds a floating-point subtract operation at the current insertion point.
+///
+/// The values `lhs` and `rhs` must both be floating-point values of the same
+/// type.
+///
+/// @note Spidir internally assumes this operation will not trap and may
+/// speculate it accordingly.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the same type as `lhs` and `rhs`.
+spidir_value_t spidir_builder_build_fsub(spidir_builder_handle_t builder,
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
+
+/// Builds a floating-point multiply operation at the current insertion point.
+///
+/// The values `lhs` and `rhs` must both be floating-point values of the same
+/// type.
+///
+/// @note Spidir internally assumes this operation will not trap and may
+/// speculate it accordingly.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the same type as `lhs` and `rhs`.
+spidir_value_t spidir_builder_build_fmul(spidir_builder_handle_t builder,
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
+
+/// Builds a floating-point division operation at the current insertion point.
+///
+/// The values `lhs` and `rhs` must both be floating-point values of the same
+/// type.
+///
+/// @note Spidir internally assumes this operation will not trap, even when
+/// dividing by 0, and may speculate it accordingly.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] lhs     The left-hand input value.
+/// @param[in] rhs     The right-hand input value.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the same type as `lhs` and `rhs`.
+spidir_value_t spidir_builder_build_fdiv(spidir_builder_handle_t builder,
                                          spidir_value_t lhs,
                                          spidir_value_t rhs);
 

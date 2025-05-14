@@ -168,10 +168,6 @@ impl<'a> FunctionBuilder<'a> {
         self.builder().build_iconst(ty, value)
     }
 
-    pub fn build_fconst64(&mut self, value: f64) -> DepValue {
-        self.builder().build_fconst64(value)
-    }
-
     pub fn build_iadd(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
         self.builder().build_iadd(lhs, rhs)
     }
@@ -256,6 +252,23 @@ impl<'a> FunctionBuilder<'a> {
         rhs: DepValue,
     ) -> DepValue {
         self.builder().build_icmp(kind, output_ty, lhs, rhs)
+    }
+
+    pub fn build_fconst64(&mut self, value: f64) -> DepValue {
+        self.builder().build_fconst64(value)
+    }
+
+    pub fn build_fadd(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.builder().build_fadd(lhs, rhs)
+    }
+    pub fn build_fsub(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.builder().build_fsub(lhs, rhs)
+    }
+    pub fn build_fmul(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.builder().build_fmul(lhs, rhs)
+    }
+    pub fn build_fdiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
+        self.builder().build_fdiv(lhs, rhs)
     }
 
     pub fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {

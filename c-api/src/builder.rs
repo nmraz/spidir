@@ -248,6 +248,11 @@ impl_builder_binop!(udiv);
 impl_builder_binop!(srem);
 impl_builder_binop!(urem);
 
+impl_builder_binop!(fadd);
+impl_builder_binop!(fsub);
+impl_builder_binop!(fmul);
+impl_builder_binop!(fdiv);
+
 macro_rules! impl_builder_unop {
     ($unop:ident) => {
         paste! {

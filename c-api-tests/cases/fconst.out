@@ -1,7 +1,0 @@
-
-func @func:f64() {
-    %0:ctrl = entry
-    %1:ctrl, %2:phisel = region %0
-    %3:f64 = fconst64 0x1.0000000000000p6
-    return %1, %3
-}

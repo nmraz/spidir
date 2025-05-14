@@ -772,9 +772,6 @@ spidir_value_t spidir_builder_build_icmp(spidir_builder_handle_t builder,
 /// new pointer value.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] kind    The kind of comparison to perform. See the `SPIDIR_ICMP_`
-///                    constants for the allowed operation kinds.
-/// @param[in] type    The desired output type. This must be an integer type.
 /// @param[in] ptr     The pointer value to offset.
 /// @param[in] off     The byte offset to add to the pointer.
 /// @return An SSA value representing the result of the operation. This value

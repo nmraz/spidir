@@ -8,7 +8,7 @@ use crate::{
 };
 
 pub fn create_const_typed(graph: &mut ValGraph, ty: Type) -> DepValue {
-    let node = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(ty)]);
+    let node = graph.create_node(NodeKind::Iconst(5), [], [DepValueKind::Value(ty)]);
     graph.node_outputs(node)[0]
 }
 

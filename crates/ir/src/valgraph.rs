@@ -495,8 +495,8 @@ mod tests {
     #[test]
     fn create_single_node() {
         let mut graph = ValGraph::new();
-        let node = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
-        assert_eq!(graph.node_kind(node), &NodeKind::IConst(5));
+        let node = graph.create_node(NodeKind::Iconst(5), [], [DepValueKind::Value(Type::I32)]);
+        assert_eq!(graph.node_kind(node), &NodeKind::Iconst(5));
         check_node_inputs(&graph, node, []);
         let outputs = graph.node_outputs(node);
         let output_kinds: Vec<_> = outputs
@@ -562,7 +562,7 @@ mod tests {
 
         let old_const_val = create_const32(&mut graph);
 
-        let three = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Value(Type::I32)]);
+        let three = graph.create_node(NodeKind::Iconst(3), [], [DepValueKind::Value(Type::I32)]);
         let three_val = graph.node_outputs(three)[0];
 
         let add = graph.create_node(
@@ -576,7 +576,7 @@ mod tests {
             [DepValueKind::Value(Type::I32)],
         );
 
-        let seven = graph.create_node(NodeKind::IConst(7), [], [DepValueKind::Value(Type::I32)]);
+        let seven = graph.create_node(NodeKind::Iconst(7), [], [DepValueKind::Value(Type::I32)]);
         let seven_val = graph.node_outputs(seven)[0];
 
         replace_all_uses(&mut graph, old_const_val, seven_val);

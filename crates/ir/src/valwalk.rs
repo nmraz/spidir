@@ -343,7 +343,7 @@ mod tests {
         let mut graph = ValGraph::new();
         let (entry, control_value, [param1]) = create_entry(&mut graph, [Type::I32]);
 
-        let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+        let five = graph.create_node(NodeKind::Iconst(5), [], [DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
         let add = graph.create_node(
             NodeKind::Iadd,
@@ -360,9 +360,9 @@ mod tests {
     fn live_info_add_consts() {
         let mut graph = ValGraph::new();
         let (entry, control_value, []) = create_entry(&mut graph, []);
-        let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+        let five = graph.create_node(NodeKind::Iconst(5), [], [DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
-        let three = graph.create_node(NodeKind::IConst(3), [], [DepValueKind::Value(Type::I32)]);
+        let three = graph.create_node(NodeKind::Iconst(3), [], [DepValueKind::Value(Type::I32)]);
         let three_val = graph.node_outputs(three)[0];
         let add = graph.create_node(
             NodeKind::Iadd,
@@ -384,7 +384,7 @@ mod tests {
     fn live_info_dead_value() {
         let mut graph = ValGraph::new();
         let (entry, control_value, [param1]) = create_entry(&mut graph, [Type::I32]);
-        graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+        graph.create_node(NodeKind::Iconst(5), [], [DepValueKind::Value(Type::I32)]);
         let ret = create_return(&mut graph, [control_value, param1]);
 
         check_live_info(&graph, entry, &[entry], &[entry, ret]);
@@ -453,7 +453,7 @@ mod tests {
         let mut graph = ValGraph::new();
 
         let (entry, control_value, []) = create_entry(&mut graph, []);
-        let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+        let five = graph.create_node(NodeKind::Iconst(5), [], [DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
 
         let add1 = graph.create_node(
@@ -498,7 +498,7 @@ mod tests {
         let mut graph = ValGraph::new();
         let (entry, control_value, [param1]) = create_entry(&mut graph, [Type::I32]);
 
-        let five = graph.create_node(NodeKind::IConst(5), [], [DepValueKind::Value(Type::I32)]);
+        let five = graph.create_node(NodeKind::Iconst(5), [], [DepValueKind::Value(Type::I32)]);
         let five_val = graph.node_outputs(five)[0];
         let add = graph.create_node(
             NodeKind::Iadd,

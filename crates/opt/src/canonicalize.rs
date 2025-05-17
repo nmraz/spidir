@@ -601,7 +601,7 @@ fn unsigned_max_for_ty(ty: Type) -> u64 {
 
 fn match_iconst(graph: &ValGraph, value: DepValue) -> Option<u64> {
     match_value! {
-        if let &NodeKind::IConst(val) = graph, value {
+        if let &NodeKind::Iconst(val) = graph, value {
             return Some(val);
         }
     }

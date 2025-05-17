@@ -308,11 +308,11 @@ fn extract_special_node_kind(
     let mut inner = special_pair.into_inner();
 
     let kind = match rule {
-        Rule::iconst_nodekind => NodeKind::IConst(parse_from_str(
+        Rule::iconst_nodekind => NodeKind::Iconst(parse_from_str(
             &inner.next().unwrap(),
             "invalid integer literal",
         )?),
-        Rule::fconst64_nodekind => NodeKind::FConst64(BitwiseF64(
+        Rule::fconst64_nodekind => NodeKind::Fconst64(BitwiseF64(
             parse_from_str::<HexFloat64>(&inner.next().unwrap(), "invalid floating-point literal")?
                 .0,
         )),

@@ -90,7 +90,7 @@ impl MachineLower for X64Machine {
     {
         let _ = targets;
         match ctx.node_kind(node) {
-            &NodeKind::IConst(val) => select_iconst(ctx, node, val),
+            &NodeKind::Iconst(val) => select_iconst(ctx, node, val),
             NodeKind::Iadd => select_alu(ctx, node, AluBinOp::Add),
             NodeKind::And => select_alu(ctx, node, AluBinOp::And),
             NodeKind::Or => select_alu(ctx, node, AluBinOp::Or),
@@ -434,7 +434,7 @@ fn select_addr_mode(
     uses: &mut SmallVec<[UseOperand; 4]>,
 ) -> AddrMode {
     match_value! {
-        if let NodeKind::PtrOff[val base, &NodeKind::IConst(offset)] = ctx, value {
+        if let NodeKind::PtrOff[val base, &NodeKind::Iconst(offset)] = ctx, value {
             if let Some(offset) = as_imm32(Type::I64, offset) {
                 let base = select_addr_base(ctx, base, uses);
                 return AddrMode {
@@ -780,7 +780,7 @@ fn as_imm32(ty: Type, val: u64) -> Option<i32> {
 
 fn match_iconst(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<u64> {
     match_value! {
-        if let &NodeKind::IConst(val) = ctx, value {
+        if let &NodeKind::Iconst(val) = ctx, value {
             return Some(val);
         }
     }

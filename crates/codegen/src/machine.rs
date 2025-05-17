@@ -27,7 +27,7 @@ pub trait MachineLower: MachineCore {
     fn param_locs(&self, param_types: &[Type]) -> Vec<ParamLoc>;
 
     fn make_jump(&self, block: Block) -> Self::Instr;
-    fn make_fp_relative_load(&self, offset: i32) -> Self::Instr;
+    fn make_fp_relative_load(&self, ty: Type, offset: i32) -> Self::Instr;
 
     fn select_instr(
         &self,

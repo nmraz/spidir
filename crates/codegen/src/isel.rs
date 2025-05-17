@@ -349,9 +349,10 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                             live_in_regs.push(reg);
                         }
                         ParamLoc::Stack { fp_offset } => builder.build_instrs(|mut builder| {
+                            let ty = self.graph().value_kind(value).as_value().unwrap();
                             emit_instr(
                                 &mut builder,
-                                self.machine.make_fp_relative_load(fp_offset),
+                                self.machine.make_fp_relative_load(ty, fp_offset),
                                 &[DefOperand::any_reg(vreg)],
                                 &[],
                                 PhysRegSet::empty(),

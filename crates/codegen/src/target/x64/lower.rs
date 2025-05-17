@@ -75,7 +75,7 @@ impl MachineLower for X64Machine {
         X64Instr::Jump(block)
     }
 
-    fn make_fp_relative_load(&self, offset: i32) -> Self::Instr {
+    fn make_fp_relative_load(&self, _ty: Type, offset: i32) -> Self::Instr {
         X64Instr::MovRRbp { offset }
     }
 

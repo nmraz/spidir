@@ -341,6 +341,7 @@ impl MachineCore for X64Machine {
     fn reg_class_name(class: RegClass) -> &'static str {
         match class {
             RC_GPR => "gpr",
+            RC_XMM => "xmm",
             _ => panic!("unknown register class"),
         }
     }
@@ -361,6 +362,22 @@ impl MachineCore for X64Machine {
             REG_R13 => "r13",
             REG_R14 => "r14",
             REG_R15 => "r15",
+            REG_XMM0 => "xmm0",
+            REG_XMM1 => "xmm1",
+            REG_XMM2 => "xmm2",
+            REG_XMM3 => "xmm3",
+            REG_XMM4 => "xmm4",
+            REG_XMM5 => "xmm5",
+            REG_XMM6 => "xmm6",
+            REG_XMM7 => "xmm7",
+            REG_XMM8 => "xmm8",
+            REG_XMM9 => "xmm9",
+            REG_XMM10 => "xmm10",
+            REG_XMM11 => "xmm11",
+            REG_XMM12 => "xmm12",
+            REG_XMM13 => "xmm13",
+            REG_XMM14 => "xmm14",
+            REG_XMM15 => "xmm15",
             _ => panic!("unknown physical register"),
         }
     }
@@ -368,12 +385,13 @@ impl MachineCore for X64Machine {
 
 impl MachineRegalloc for X64Machine {
     fn phys_reg_count() -> u32 {
-        16
+        32
     }
 
     fn usable_regs(&self, class: RegClass) -> &[PhysReg] {
         match class {
             RC_GPR => &GPR_ORDER,
+            RC_XMM => &XMM_ORDER,
             _ => panic!("unknown register class"),
         }
     }
@@ -381,6 +399,10 @@ impl MachineRegalloc for X64Machine {
     fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout {
         match class {
             RC_GPR => MemLayout { size: 8, align: 8 },
+            RC_XMM => MemLayout {
+                size: 16,
+                align: 16,
+            },
             _ => panic!("unknown register class"),
         }
     }
@@ -400,6 +422,7 @@ impl MachineRegalloc for X64Machine {
 }
 
 const RC_GPR: RegClass = RegClass::new(0);
+const RC_XMM: RegClass = RegClass::new(1);
 
 const REG_RAX: PhysReg = PhysReg::new(0);
 const REG_RBX: PhysReg = PhysReg::new(1);
@@ -420,8 +443,27 @@ const REG_R13: PhysReg = PhysReg::new(13);
 const REG_R14: PhysReg = PhysReg::new(14);
 const REG_R15: PhysReg = PhysReg::new(15);
 
-const CALLER_SAVED_REGS: [PhysReg; 9] = [
-    REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11,
+const REG_XMM0: PhysReg = PhysReg::new(16);
+const REG_XMM1: PhysReg = PhysReg::new(17);
+const REG_XMM2: PhysReg = PhysReg::new(18);
+const REG_XMM3: PhysReg = PhysReg::new(19);
+const REG_XMM4: PhysReg = PhysReg::new(20);
+const REG_XMM5: PhysReg = PhysReg::new(21);
+const REG_XMM6: PhysReg = PhysReg::new(22);
+const REG_XMM7: PhysReg = PhysReg::new(23);
+const REG_XMM8: PhysReg = PhysReg::new(24);
+const REG_XMM9: PhysReg = PhysReg::new(25);
+const REG_XMM10: PhysReg = PhysReg::new(26);
+const REG_XMM11: PhysReg = PhysReg::new(27);
+const REG_XMM12: PhysReg = PhysReg::new(28);
+const REG_XMM13: PhysReg = PhysReg::new(29);
+const REG_XMM14: PhysReg = PhysReg::new(30);
+const REG_XMM15: PhysReg = PhysReg::new(31);
+
+const CALLER_SAVED_REGS: [PhysReg; 25] = [
+    REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11, REG_XMM0,
+    REG_XMM1, REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, REG_XMM8, REG_XMM9,
+    REG_XMM10, REG_XMM11, REG_XMM12, REG_XMM13, REG_XMM14, REG_XMM15,
 ];
 
 const CALLEE_SAVED_REGS: [PhysReg; 5] = [REG_RBX, REG_R12, REG_R13, REG_R14, REG_R15];
@@ -431,4 +473,9 @@ const CALLEE_SAVED_REGS: [PhysReg; 5] = [REG_RBX, REG_R12, REG_R13, REG_R14, REG
 const GPR_ORDER: [PhysReg; 14] = [
     REG_RAX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_R8, REG_R9, REG_R10, REG_R11, REG_RBX,
     REG_R12, REG_R13, REG_R14, REG_R15,
+];
+
+const XMM_ORDER: [PhysReg; 16] = [
+    REG_XMM0, REG_XMM1, REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, REG_XMM8,
+    REG_XMM9, REG_XMM10, REG_XMM11, REG_XMM12, REG_XMM13, REG_XMM14, REG_XMM15,
 ];

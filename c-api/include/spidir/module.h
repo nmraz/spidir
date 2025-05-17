@@ -89,6 +89,38 @@ enum spidir_icmp_kind {
     SPIDIR_ICMP_ULE = 5,
 };
 
+/// Represents a type of floating-point comparison operation.
+///
+/// See the `SPIDIR_FCMP_` constants for possible values.
+typedef uint8_t spidir_fcmp_kind_t;
+
+enum spidir_fcmp_kind {
+    /// Floating-point ordered equality comparison: holds when the operands are
+    /// equal and neither is a NaN.
+    SPIDIR_FCMP_OEQ = 0,
+    /// Floating-point ordered inequality comparison: holds when the operands
+    /// are not equal and neither is a NaN.
+    SPIDIR_FCMP_ONE = 1,
+    /// Floating-point ordered less-than comparison: holds when the LHS is less
+    /// than the RHS and neither is a NaN.
+    SPIDIR_FCMP_OLT = 2,
+    /// Floating-point ordered less-than-or-equal comparison: holds when the LHS
+    /// is less than or equal to the RHS, and neither is a NaN.
+    SPIDIR_FCMP_OLE = 3,
+    /// Floating-point unordered equality comparison: holds when the operands
+    /// are equal or either is a NaN.
+    SPIDIR_FCMP_UEQ = 4,
+    /// Floating-point unordered inequality comparison: holds when the operands
+    /// are not equal or either is a NaN.
+    SPIDIR_FCMP_UNE = 5,
+    /// Floating-point unordered less-than comparison: holds when the LHS is
+    /// less than the RHS or either is a NaN.
+    SPIDIR_FCMP_ULT = 6,
+    /// Floating-point unordered less-than-or-equal comparison: holds when the
+    /// LHS is less than or equal to the RHS, or either is a NaN.
+    SPIDIR_FCMP_ULE = 7,
+};
+
 /// Represents the possible access sizes of a memory (load or store) operation.
 ///
 /// See the `SPIDIR_MEM_SIZE_` constants for possible values.
@@ -836,6 +868,32 @@ spidir_value_t spidir_builder_build_fmul(spidir_builder_handle_t builder,
 /// @return An SSA value representing the result of the operation. This value
 ///         will have the same type as `lhs` and `rhs`.
 spidir_value_t spidir_builder_build_fdiv(spidir_builder_handle_t builder,
+                                         spidir_value_t lhs,
+                                         spidir_value_t rhs);
+
+/// Builds a floating-point compare operation at the current insertion point.
+///
+/// The values `lhs` and `rhs` must both have the same floating-point type.
+///
+/// The value returned by this operation will be 1 if the comparison holds and
+/// 0 otherwise.
+///
+/// @note Spidir internally assumes this operation will not trap and may
+/// speculate it accordingly.
+///
+/// @param[in] builder     A handle to the function builder.
+/// @param[in] kind        The kind of comparison to perform. See the
+///                        `SPIDIR_FCMP_` constants for the allowed operation
+///                        kinds.
+/// @param[in] output_type The desired output type. This must be an integer
+///                        type.
+/// @param[in] lhs         The left-hand input value.
+/// @param[in] rhs         The right-hand input value.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the type `output_type`.
+spidir_value_t spidir_builder_build_fcmp(spidir_builder_handle_t builder,
+                                         spidir_fcmp_kind_t fcmp_kind,
+                                         spidir_value_type_t output_type,
                                          spidir_value_t lhs,
                                          spidir_value_t rhs);
 

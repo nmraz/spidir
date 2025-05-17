@@ -4,10 +4,10 @@ use ir::module::Module;
 use paste::paste;
 
 use crate::types::{
-    ApiBlock, ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue, block_from_api,
-    block_to_api, funcref_from_api, icmp_kind_from_api, mem_size_from_api, opt_value_from_api,
-    opt_value_to_api, signature_from_api, type_from_api, value_from_api, value_list_from_api,
-    value_to_api,
+    ApiBlock, ApiFcmpKind, ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
+    block_from_api, block_to_api, fcmp_kind_from_api, funcref_from_api, icmp_kind_from_api,
+    mem_size_from_api, opt_value_from_api, opt_value_to_api, signature_from_api, type_from_api,
+    value_from_api, value_list_from_api, value_to_api,
 };
 
 #[unsafe(no_mangle)]
@@ -301,6 +301,25 @@ unsafe extern "C" fn spidir_builder_build_icmp(
         let builder = &mut *builder;
         value_to_api(builder.build_icmp(
             icmp_kind_from_api(kind),
+            type_from_api(ty),
+            value_from_api(a),
+            value_from_api(b),
+        ))
+    }
+}
+
+#[unsafe(no_mangle)]
+unsafe extern "C" fn spidir_builder_build_fcmp(
+    builder: *mut FunctionBuilder<'_>,
+    kind: ApiFcmpKind,
+    ty: ApiType,
+    a: ApiValue,
+    b: ApiValue,
+) -> ApiValue {
+    unsafe {
+        let builder = &mut *builder;
+        value_to_api(builder.build_fcmp(
+            fcmp_kind_from_api(kind),
             type_from_api(ty),
             value_from_api(a),
             value_from_api(b),

@@ -9,7 +9,7 @@ use frontend::{Block, FunctionBuilder};
 use ir::{
     function::Signature,
     module::{ExternFunction, Function},
-    node::{FunctionRef, IcmpKind, MemSize, Type},
+    node::{FcmpKind, FunctionRef, IcmpKind, MemSize, Type},
     valgraph::DepValue,
 };
 use smallvec::SmallVec;
@@ -45,6 +45,7 @@ pub struct ApiCodegenConfig {
 
 pub type ApiType = u8;
 pub type ApiIcmpKind = u8;
+pub type ApiFcmpKind = u8;
 pub type ApiMemSize = u8;
 pub type ApiCodegenStatus = u32;
 
@@ -72,6 +73,15 @@ const SPIDIR_ICMP_SLT: u8 = 2;
 const SPIDIR_ICMP_SLE: u8 = 3;
 const SPIDIR_ICMP_ULT: u8 = 4;
 const SPIDIR_ICMP_ULE: u8 = 5;
+
+const SPIDIR_FCMP_OEQ: u8 = 0;
+const SPIDIR_FCMP_ONE: u8 = 1;
+const SPIDIR_FCMP_OLT: u8 = 2;
+const SPIDIR_FCMP_OLE: u8 = 3;
+const SPIDIR_FCMP_UEQ: u8 = 4;
+const SPIDIR_FCMP_UNE: u8 = 5;
+const SPIDIR_FCMP_ULT: u8 = 6;
+const SPIDIR_FCMP_ULE: u8 = 7;
 
 const SPIDIR_MEM_SIZE_1: u8 = 0;
 const SPIDIR_MEM_SIZE_2: u8 = 1;
@@ -206,6 +216,21 @@ pub fn icmp_kind_from_api(kind: ApiIcmpKind) -> IcmpKind {
         SPIDIR_ICMP_ULT => IcmpKind::Ult,
         SPIDIR_ICMP_ULE => IcmpKind::Ule,
         _ => panic!("unexpected icmp kind {kind}"),
+    }
+}
+
+#[track_caller]
+pub fn fcmp_kind_from_api(kind: ApiFcmpKind) -> FcmpKind {
+    match kind {
+        SPIDIR_FCMP_OEQ => FcmpKind::Oeq,
+        SPIDIR_FCMP_ONE => FcmpKind::One,
+        SPIDIR_FCMP_OLT => FcmpKind::Olt,
+        SPIDIR_FCMP_OLE => FcmpKind::Ole,
+        SPIDIR_FCMP_UEQ => FcmpKind::Ueq,
+        SPIDIR_FCMP_UNE => FcmpKind::Une,
+        SPIDIR_FCMP_ULT => FcmpKind::Ult,
+        SPIDIR_FCMP_ULE => FcmpKind::Ule,
+        _ => panic!("unexpected fcmp kind {kind}"),
     }
 }
 

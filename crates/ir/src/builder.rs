@@ -2,7 +2,7 @@ use core::iter;
 
 use crate::{
     function::{FunctionBody, Signature},
-    node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
+    node::{BitwiseF64, DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 
@@ -267,6 +267,16 @@ pub trait BuilderExt: Builder {
     }
     fn build_fdiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
         build_binop_with_lhs_type(self, NodeKind::Fdiv, lhs, rhs)
+    }
+
+    fn build_fcmp(
+        &mut self,
+        kind: FcmpKind,
+        output_ty: Type,
+        lhs: DepValue,
+        rhs: DepValue,
+    ) -> DepValue {
+        build_single_output_pure(self, NodeKind::Fcmp(kind), [lhs, rhs], output_ty)
     }
 
     fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {

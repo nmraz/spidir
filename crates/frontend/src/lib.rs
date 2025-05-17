@@ -8,7 +8,7 @@ use ir::{
     cache::CachingBuilder,
     function::{FunctionBody, Signature},
     module::{Function, Module},
-    node::{DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
+    node::{DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     write::display_node,
 };
@@ -269,6 +269,16 @@ impl<'a> FunctionBuilder<'a> {
     }
     pub fn build_fdiv(&mut self, lhs: DepValue, rhs: DepValue) -> DepValue {
         self.builder().build_fdiv(lhs, rhs)
+    }
+
+    pub fn build_fcmp(
+        &mut self,
+        kind: FcmpKind,
+        output_ty: Type,
+        lhs: DepValue,
+        rhs: DepValue,
+    ) -> DepValue {
+        self.builder().build_fcmp(kind, output_ty, lhs, rhs)
     }
 
     pub fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {

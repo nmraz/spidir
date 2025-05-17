@@ -209,6 +209,7 @@ pub enum X64Instr {
     Setcc(CondCode),
     /// Load from [rbp + offset]
     MovRRbp {
+        op_size: FullOperandSize,
         offset: i32,
     },
     StackAddr(StackSlot),

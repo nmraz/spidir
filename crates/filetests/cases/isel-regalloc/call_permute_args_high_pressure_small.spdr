@@ -5,7 +5,7 @@ extfunc @sink_large(i32, i32, i32, i32, i32, i32)
 
 func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # check: function `call_permute_args_high_pressure`:
-    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     # nextln: frame: size 32, align 8
     # nextln:     spill0: 0
     # nextln:     spill1: 8
@@ -16,7 +16,7 @@ func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # nextln:           $$r8 = $$r9
     # nextln:           $$r9 = $$rdi
     # nextln:           $$rdi = $$rsi
-    # nextln: 0000:     $$rsi = MovRRbp { offset: 16 }
+    # nextln: 0000:     $$rsi = MovRRbp { op_size: S64, offset: 16 }
     # nextln: 0001:     $$r15 = MovRM(S32, [reg + 0]) $$rsi
     # nextln: 0002:     $$r10 = MovRM(S32, [reg + 0]) $$rsi
     # nextln:           $$spill3 = $$r10

@@ -264,9 +264,9 @@ impl MachineEmit for X64Machine {
                 defs[0].as_reg().unwrap(),
                 state.operand_reg_mem(uses[0]),
             ),
-            &X64Instr::MovRRbp { offset } => emit_movzx_r_rm(
+            &X64Instr::MovRRbp { op_size, offset } => emit_movzx_r_rm(
                 buffer,
-                FullOperandSize::S64,
+                op_size,
                 defs[0].as_reg().unwrap(),
                 RegMem::Mem(RawAddrMode::BaseIndexOff {
                     base: Some(REG_RBP),

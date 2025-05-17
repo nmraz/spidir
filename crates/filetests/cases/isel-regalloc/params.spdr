@@ -6,8 +6,8 @@ func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
     # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln:           $$rax = $$rdi
-    # nextln: 0000:     $$rdi = MovRRbp { offset: 24 }
-    # nextln: 0001:     $$r10 = MovRRbp { offset: 16 }
+    # nextln: 0000:     $$rdi = MovRRbp { op_size: S64, offset: 24 }
+    # nextln: 0001:     $$r10 = MovRRbp { op_size: S64, offset: 16 }
     # nextln: 0002:     $$rax = AluRRm(S64, Add) $$rax, $$rsi
     # nextln: 0003:     $$rax = AluRRm(S64, Add) $$rax, $$rdx
     # nextln: 0004:     $$rax = AluRRm(S64, Add) $$rax, $$rcx

@@ -281,6 +281,19 @@ impl<'a> FunctionBuilder<'a> {
         self.builder().build_fcmp(kind, output_ty, lhs, rhs)
     }
 
+    pub fn build_sinttofloat(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        self.builder().build_sinttofloat(output_ty, value)
+    }
+    pub fn build_uinttofloat(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        self.builder().build_uinttofloat(output_ty, value)
+    }
+    pub fn build_floattosint(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        self.builder().build_floattosint(output_ty, value)
+    }
+    pub fn build_floattouint(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        self.builder().build_floattouint(output_ty, value)
+    }
+
     pub fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {
         self.builder().build_ptroff(ptr, off)
     }

@@ -897,6 +897,66 @@ spidir_value_t spidir_builder_build_fcmp(spidir_builder_handle_t builder,
                                          spidir_value_t lhs,
                                          spidir_value_t rhs);
 
+/// Builds a signed integer-to-float conversion operation at the current
+/// insertion point.
+///
+/// @param[in] builder     A handle to the function builder.
+/// @param[in] output_type The desired output type. This must be a
+///                        floating-point type.
+/// @param[in] value       The value to convert. This must be an integer.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the type `output_type`.
+spidir_value_t spidir_builder_build_sinttofloat(spidir_builder_handle_t builder,
+                                                spidir_value_type_t output_type,
+                                                spidir_value_t value);
+
+/// Builds an unsigned integer-to-float conversion operation at the current
+/// insertion point.
+///
+/// @param[in] builder     A handle to the function builder.
+/// @param[in] output_type The desired output type. This must be a
+///                        floating-point type.
+/// @param[in] value       The value to convert. This must be an integer.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the type `output_type`.
+spidir_value_t spidir_builder_build_uinttofloat(spidir_builder_handle_t builder,
+                                                spidir_value_type_t output_type,
+                                                spidir_value_t value);
+
+/// Builds a float-to-signed-integer conversion operation at the current
+/// insertion point.
+///
+/// @note If the value does not fit in the requested output type, the operation
+/// will return an unspecified value.
+///
+/// @param[in] builder     A handle to the function builder.
+/// @param[in] output_type The desired output type. This must be an integer
+///                        type.
+/// @param[in] value       The value to convert. This must be a floating-point
+///                        value.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the type `output_type`.
+spidir_value_t spidir_builder_build_floattosint(spidir_builder_handle_t builder,
+                                                spidir_value_type_t output_type,
+                                                spidir_value_t value);
+
+/// Builds a float-to-unsigned-integer conversion operation at the current
+/// insertion point.
+///
+/// @note If the value does not fit in the requested output type, the operation
+/// will return an unspecified value.
+///
+/// @param[in] builder     A handle to the function builder.
+/// @param[in] output_type The desired output type. This must be an integer
+///                        type.
+/// @param[in] value       The value to convert. This must be a floating-point
+///                        value.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the type `output_type`.
+spidir_value_t spidir_builder_build_floattouint(spidir_builder_handle_t builder,
+                                                spidir_value_type_t output_type,
+                                                spidir_value_t value);
+
 /// Builds a pointer offset operation at the current insertion point. This
 /// operation adds an integer byte offset to an existing pointer to produce a
 /// new pointer value.

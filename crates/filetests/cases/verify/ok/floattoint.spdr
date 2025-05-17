@@ -1,0 +1,27 @@
+# run: verify-ok
+
+# check: $()
+
+func @floattosint32:i32(f64) {
+    %0:ctrl, %1:f64 = entry
+    %2:i32 = floattosint %1
+    return %0, %2
+}
+
+func @floattosint64:i64(f64) {
+    %0:ctrl, %1:f64 = entry
+    %2:i64 = floattosint %1
+    return %0, %2
+}
+
+func @floattouint32:i32(f64) {
+    %0:ctrl, %1:f64 = entry
+    %2:i32 = floattouint %1
+    return %0, %2
+}
+
+func @floattouint64:i64(f64) {
+    %0:ctrl, %1:f64 = entry
+    %2:i64 = floattouint %1
+    return %0, %2
+}

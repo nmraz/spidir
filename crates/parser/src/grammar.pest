@@ -75,6 +75,10 @@ nodekind           =  {
   | "fmul"
   | "fdiv"
   | fcmp_nodekind
+  | "sinttofloat"
+  | "uinttofloat"
+  | "floattosint"
+  | "floattouint"
   | "ptroff"
   | "inttoptr"
   | "ptrtoint"

@@ -327,6 +327,31 @@ unsafe extern "C" fn spidir_builder_build_fcmp(
     }
 }
 
+macro_rules! impl_builder_convop {
+    ($convop:ident) => {
+        paste! {
+            #[unsafe(no_mangle)]
+            unsafe extern "C" fn [<spidir_builder_build_ $convop>](
+                builder: *mut FunctionBuilder<'_>,
+                ty: ApiType,
+                value: ApiValue
+            ) -> ApiValue {
+                unsafe {
+                    let builder = &mut *builder;
+                    value_to_api(
+                        builder.[<build_ $convop>](type_from_api(ty), value_from_api(value))
+                    )
+                }
+            }
+        }
+    };
+}
+
+impl_builder_convop!(sinttofloat);
+impl_builder_convop!(uinttofloat);
+impl_builder_convop!(floattosint);
+impl_builder_convop!(floattouint);
+
 #[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_ptroff(
     builder: *mut FunctionBuilder<'_>,

@@ -1,0 +1,10 @@
+
+func @func:i32(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:phisel = region %0
+    %4:f64 = sinttofloat %1
+    %5:i32 = floattosint %4
+    %6:f64 = uinttofloat %5
+    %7:i32 = floattouint %6
+    return %2, %7
+}

@@ -279,6 +279,19 @@ pub trait BuilderExt: Builder {
         build_single_output_pure(self, NodeKind::Fcmp(kind), [lhs, rhs], output_ty)
     }
 
+    fn build_sinttofloat(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::SintToFloat, [value], output_ty)
+    }
+    fn build_uinttofloat(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::UintToFloat, [value], output_ty)
+    }
+    fn build_floattosint(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::FloatToSint, [value], output_ty)
+    }
+    fn build_floattouint(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::FloatToUint, [value], output_ty)
+    }
+
     fn build_ptroff(&mut self, ptr: DepValue, off: DepValue) -> DepValue {
         build_single_output_pure(self, NodeKind::PtrOff, [ptr, off], Type::Ptr)
     }

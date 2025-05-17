@@ -1,0 +1,27 @@
+# run: verify-ok
+
+# check: $()
+
+func @sint32tofloat:f64(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:f64 = sinttofloat %1
+    return %0, %2
+}
+
+func @sint64tofloat:f64(i64) {
+    %0:ctrl, %1:i64 = entry
+    %2:f64 = sinttofloat %1
+    return %0, %2
+}
+
+func @uint32tofloat:f64(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:f64 = uinttofloat %1
+    return %0, %2
+}
+
+func @uint64tofloat:f64(i64) {
+    %0:ctrl, %1:i64 = entry
+    %2:f64 = uinttofloat %1
+    return %0, %2
+}

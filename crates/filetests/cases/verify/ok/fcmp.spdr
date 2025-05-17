@@ -1,0 +1,99 @@
+# run: verify-ok
+
+# check: $()
+
+func @fcmp_oeq_i32:i32(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i32 = fcmp oeq %1, %2
+    return %0, %3
+}
+
+func @fcmp_one_i32:i32(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i32 = fcmp one %1, %2
+    return %0, %3
+}
+
+func @fcmp_olt_i32:i32(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i32 = fcmp olt %1, %2
+    return %0, %3
+}
+
+func @fcmp_ole_i32:i32(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i32 = fcmp ole %1, %2
+    return %0, %3
+}
+
+func @fcmp_ueq_i32:i32(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i32 = fcmp ueq %1, %2
+    return %0, %3
+}
+
+func @fcmp_une_i32:i32(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i32 = fcmp une %1, %2
+    return %0, %3
+}
+
+func @fcmp_ult_i32:i32(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i32 = fcmp ult %1, %2
+    return %0, %3
+}
+
+func @fcmp_ule_i32:i32(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i32 = fcmp ule %1, %2
+    return %0, %3
+}
+
+func @fcmp_oeq_i64:i64(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp oeq %1, %2
+    return %0, %3
+}
+
+func @fcmp_one_i64:i64(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp one %1, %2
+    return %0, %3
+}
+
+func @fcmp_olt_i64:i64(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp olt %1, %2
+    return %0, %3
+}
+
+func @fcmp_ole_i64:i64(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp ole %1, %2
+    return %0, %3
+}
+
+func @fcmp_ueq_i64:i64(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp ueq %1, %2
+    return %0, %3
+}
+
+func @fcmp_une_i64:i64(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp une %1, %2
+    return %0, %3
+}
+
+func @fcmp_ult_i64:i64(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp ult %1, %2
+    return %0, %3
+}
+
+func @fcmp_ule_i64:i64(f64, f64) {
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp ule %1, %2
+    return %0, %3
+}

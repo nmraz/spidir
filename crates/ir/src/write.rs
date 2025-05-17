@@ -280,6 +280,7 @@ pub fn write_node_kind(
         NodeKind::Fsub => write!(w, "fsub")?,
         NodeKind::Fmul => write!(w, "fmul")?,
         NodeKind::Fdiv => write!(w, "fdiv")?,
+        NodeKind::Fcmp(kind) => write!(w, "fcmp {kind}")?,
         NodeKind::PtrOff => w.write_str("ptroff")?,
         NodeKind::IntToPtr => w.write_str("inttoptr")?,
         NodeKind::PtrToInt => w.write_str("ptrtoint")?,
@@ -358,7 +359,7 @@ mod tests {
 
     use crate::{
         builder::{BuilderExt, SimpleBuilder},
-        node::{BitwiseF64, IcmpKind, MemSize, Type},
+        node::{BitwiseF64, FcmpKind, IcmpKind, MemSize, Type},
         test_utils::create_loop_body,
     };
 
@@ -470,6 +471,14 @@ mod tests {
             (NodeKind::Fsub, "fsub"),
             (NodeKind::Fmul, "fmul"),
             (NodeKind::Fdiv, "fdiv"),
+            (NodeKind::Fcmp(FcmpKind::Oeq), "fcmp oeq"),
+            (NodeKind::Fcmp(FcmpKind::One), "fcmp one"),
+            (NodeKind::Fcmp(FcmpKind::Olt), "fcmp olt"),
+            (NodeKind::Fcmp(FcmpKind::Ole), "fcmp ole"),
+            (NodeKind::Fcmp(FcmpKind::Ueq), "fcmp ueq"),
+            (NodeKind::Fcmp(FcmpKind::Une), "fcmp une"),
+            (NodeKind::Fcmp(FcmpKind::Ult), "fcmp ult"),
+            (NodeKind::Fcmp(FcmpKind::Ule), "fcmp ule"),
             (NodeKind::PtrOff, "ptroff"),
             (NodeKind::IntToPtr, "inttoptr"),
             (NodeKind::PtrToInt, "ptrtoint"),

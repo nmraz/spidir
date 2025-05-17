@@ -31,12 +31,14 @@ extfunc = { "extfunc" ~ signature }
 valkind = { "ctrl" | "phisel" | type }
 
 icmpkind = { "eq" | "ne" | "slt" | "sle" | "ult" | "ule" }
+fcmpkind = { "oeq" | "one" | "olt" | "ole" | "ueq" | "une" | "ult" | "ule" }
 memsize  = { "1" | "2" | "4" | "8" }
 
 iconst_nodekind    =  { "iconst" ~ integer }
 fconst64_nodekind  =  { "fconst64" ~ float }
 sfill_nodekind     =  { "sfill" ~ integer }
 icmp_nodekind      =  { "icmp" ~ icmpkind }
+fcmp_nodekind      =  { "fcmp" ~ fcmpkind }
 load_nodekind      = ${ "load." ~ memsize }
 store_nodekind     = ${ "store." ~ memsize }
 stackslot_nodekind =  { "stackslot" ~ integer ~ ":" ~ integer }
@@ -72,6 +74,7 @@ nodekind           =  {
   | "fsub"
   | "fmul"
   | "fdiv"
+  | fcmp_nodekind
   | "ptroff"
   | "inttoptr"
   | "ptrtoint"

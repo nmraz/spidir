@@ -104,6 +104,46 @@ impl IcmpKind {
     }
 }
 
+impl fmt::Display for IcmpKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FcmpKind {
+    Oeq,
+    One,
+    Olt,
+    Ole,
+    Ueq,
+    Une,
+    Ult,
+    Ule,
+}
+
+impl FcmpKind {
+    #[inline]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            FcmpKind::Oeq => "oeq",
+            FcmpKind::One => "one",
+            FcmpKind::Olt => "olt",
+            FcmpKind::Ole => "ole",
+            FcmpKind::Ueq => "ueq",
+            FcmpKind::Une => "une",
+            FcmpKind::Ult => "ult",
+            FcmpKind::Ule => "ule",
+        }
+    }
+}
+
+impl fmt::Display for FcmpKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MemSize {
     S1,
@@ -121,12 +161,6 @@ impl MemSize {
             MemSize::S4 => "4",
             MemSize::S8 => "8",
         }
-    }
-}
-
-impl fmt::Display for IcmpKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.as_str())
     }
 }
 
@@ -189,6 +223,7 @@ pub enum NodeKind {
     Fsub,
     Fmul,
     Fdiv,
+    Fcmp(FcmpKind),
     PtrOff,
     IntToPtr,
     PtrToInt,

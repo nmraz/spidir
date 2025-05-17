@@ -15,7 +15,7 @@ use hexfloat2::HexFloat64;
 use ir::{
     function::{FunctionBody, FunctionData, FunctionMetadata, Signature},
     module::{Function, Module},
-    node::{BitwiseF64, DepValueKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
+    node::{BitwiseF64, DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::DepValue,
 };
 use itertools::Itertools;
@@ -317,6 +317,7 @@ fn extract_special_node_kind(
             "invalid fill width",
         )?),
         Rule::icmp_nodekind => NodeKind::Icmp(extract_icmpkind(inner.next().unwrap())),
+        Rule::fcmp_nodekind => NodeKind::Fcmp(extract_fcmpkind(inner.next().unwrap())),
         Rule::load_nodekind => NodeKind::Load(extract_mem_size(inner.next().unwrap())),
         Rule::store_nodekind => NodeKind::Store(extract_mem_size(inner.next().unwrap())),
         Rule::stackslot_nodekind => {
@@ -366,6 +367,20 @@ fn extract_icmpkind(icmpkind_pair: Pair<'_, Rule>) -> IcmpKind {
         "sle" => IcmpKind::Sle,
         "ult" => IcmpKind::Ult,
         "ule" => IcmpKind::Ule,
+        _ => unreachable!(),
+    }
+}
+
+fn extract_fcmpkind(icmpkind_pair: Pair<'_, Rule>) -> FcmpKind {
+    match icmpkind_pair.as_str() {
+        "oeq" => FcmpKind::Oeq,
+        "one" => FcmpKind::One,
+        "olt" => FcmpKind::Olt,
+        "ole" => FcmpKind::Ole,
+        "ueq" => FcmpKind::Ueq,
+        "une" => FcmpKind::Une,
+        "ult" => FcmpKind::Ult,
+        "ule" => FcmpKind::Ule,
         _ => unreachable!(),
     }
 }
@@ -679,6 +694,14 @@ mod tests {
             "fsub",
             "fmul",
             "fdiv",
+            "fcmp oeq",
+            "fcmp one",
+            "fcmp olt",
+            "fcmp ole",
+            "fcmp ueq",
+            "fcmp une",
+            "fcmp ult",
+            "fcmp ule",
             "ptroff",
             "inttoptr",
             "ptrtoint",

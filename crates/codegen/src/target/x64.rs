@@ -212,6 +212,9 @@ pub enum X64Instr {
         op_size: FullOperandSize,
         offset: i32,
     },
+    MovsdRRbp {
+        offset: i32,
+    },
     StackAddr(StackSlot),
     Push,
     AddSp(i32),
@@ -246,6 +249,7 @@ impl X64Instr {
             X64Instr::MovsxRRm(..) => false,
             X64Instr::Setcc(..) => true,
             X64Instr::MovRRbp { .. } => false,
+            X64Instr::MovsdRRbp { .. } => false,
             X64Instr::StackAddr(..) => false,
             X64Instr::Push => false,
             X64Instr::AddSp(..) => false,
@@ -280,6 +284,7 @@ impl X64Instr {
             X64Instr::MovsxRRm(..) => false,
             X64Instr::Setcc(..) => false,
             X64Instr::MovRRbp { .. } => false,
+            X64Instr::MovsdRRbp { .. } => false,
             X64Instr::StackAddr(..) => false,
             X64Instr::Push => false,
             X64Instr::AddSp(..) => true,
@@ -414,9 +419,10 @@ impl MachineRegalloc for X64Machine {
             | X64Instr::MovRU32(..)
             | X64Instr::FuncAddrRel(..)
             | X64Instr::StackAddr(..) => Some(RematCost::CheapAsCopy),
-            X64Instr::MovRI64(..) | X64Instr::FuncAddrAbs(..) | X64Instr::MovRRbp { .. } => {
-                Some(RematCost::CheapAsLoad)
-            }
+            X64Instr::MovRI64(..)
+            | X64Instr::FuncAddrAbs(..)
+            | X64Instr::MovRRbp { .. }
+            | X64Instr::MovsdRRbp { .. } => Some(RematCost::CheapAsLoad),
             _ => None,
         }
     }

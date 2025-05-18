@@ -93,7 +93,7 @@ impl MachineLower for X64Machine {
                 op_size: FullOperandSize::S64,
                 offset,
             },
-            Type::F64 => todo!(),
+            Type::F64 => X64Instr::MovsdRRbp { offset },
         }
     }
 

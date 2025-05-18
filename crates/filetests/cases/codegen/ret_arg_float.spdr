@@ -25,6 +25,18 @@ func @ret_second:f64(f64, f64) {
     return %0, %2
 }
 
+func @ret_ninth:f64(f64, f64, f64, f64, f64, f64, f64, f64, f64) {
+    # check: function `ret_ninth`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f 10 45 10                  movsd xmm0, qword ptr [rbp + 0x10]
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
+
+    %0:ctrl, %1:f64, %2:f64, %3:f64, %4:f64, %5:f64, %6:f64, %7:f64, %8:f64, %9:f64 = entry
+    return %0, %9
+}
+
 func @spill_arg:f64(f64) {
     # check: function `spill_arg`:
     # nextln: 000000: 55                              push rbp

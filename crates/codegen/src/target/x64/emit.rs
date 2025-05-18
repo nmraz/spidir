@@ -276,6 +276,15 @@ impl MachineEmit for X64Machine {
                     offset,
                 }),
             ),
+            &X64Instr::MovsdRRbp { offset } => emit_movsd_r_rm(
+                buffer,
+                defs[0].as_reg().unwrap(),
+                RegMem::Mem(RawAddrMode::BaseIndexOff {
+                    base: Some(REG_RBP),
+                    index: None,
+                    offset,
+                }),
+            ),
             X64Instr::MovRM(full_op_size, addr_mode) => emit_movzx_r_rm(
                 buffer,
                 *full_op_size,
@@ -940,6 +949,15 @@ fn emit_movaps_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysRe
     buffer.instr(|sink| {
         rex.emit(sink);
         sink.emit(&[0xf, 0x29]);
+        modrm_sib.emit(sink);
+    });
+}
+
+fn emit_movsd_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| rex.encode_modrm_reg(dest));
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf2, 0xf, 0x10]);
         modrm_sib.emit(sink);
     });
 }

@@ -17,3 +17,13 @@ func @ret_second:f64(f64, f64) {
     %0:ctrl, %1:f64, %2:f64 = entry
     return %0, %2
 }
+
+func @ret_ninth:f64(f64, f64, f64, f64, f64, f64, f64, f64, f64) {
+    # check: function `ret_ninth`:
+    # nextln:       block0[]:
+    # nextln: 0000:      %0:xmm(reg)[late] = MovsdRRbp { offset: 16 }
+    # nextln: 0001:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:f64, %2:f64, %3:f64, %4:f64, %5:f64, %6:f64, %7:f64, %8:f64, %9:f64 = entry
+    return %0, %9
+}

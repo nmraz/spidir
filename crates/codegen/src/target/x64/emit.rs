@@ -16,8 +16,10 @@ use crate::{
 use super::{
     AddrBase, AddrMode, AluBinOp, AluUnOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale,
     OperandSize, REG_R8, REG_R9, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_RAX,
-    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, RELOC_ABS64, RELOC_PC32,
-    ShiftOp, X64Instr, X64Machine,
+    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, REG_XMM0, REG_XMM1, REG_XMM2,
+    REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, REG_XMM8, REG_XMM9, REG_XMM10, REG_XMM11,
+    REG_XMM12, REG_XMM13, REG_XMM14, REG_XMM15, RELOC_ABS64, RELOC_PC32, ShiftOp, X64Instr,
+    X64Machine,
 };
 
 mod flag_liveness;
@@ -1187,6 +1189,23 @@ fn encode_reg(reg: PhysReg) -> u8 {
         REG_R13 => 13,
         REG_R14 => 14,
         REG_R15 => 15,
+
+        REG_XMM0 => 0,
+        REG_XMM1 => 1,
+        REG_XMM2 => 2,
+        REG_XMM3 => 3,
+        REG_XMM4 => 4,
+        REG_XMM5 => 5,
+        REG_XMM6 => 6,
+        REG_XMM7 => 7,
+        REG_XMM8 => 8,
+        REG_XMM9 => 9,
+        REG_XMM10 => 10,
+        REG_XMM11 => 11,
+        REG_XMM12 => 12,
+        REG_XMM13 => 13,
+        REG_XMM14 => 14,
+        REG_XMM15 => 15,
 
         _ => unreachable!("unknown register"),
     }

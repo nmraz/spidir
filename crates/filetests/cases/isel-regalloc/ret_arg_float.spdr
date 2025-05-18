@@ -1,0 +1,24 @@
+# run: isel-regalloc
+
+func @ret_first:f64(f64, f64) {
+    # check: function `ret_first`:
+    # nextln: clobbers: 
+    # nextln: frame: size 0, align 0
+    # nextln:       block0:
+    # nextln: 0000:     Ret $$xmm0
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    return %0, %1
+}
+
+func @ret_second:f64(f64, f64) {
+    # check: function `ret_second`:
+    # nextln: clobbers: xmm0
+    # nextln: frame: size 0, align 0
+    # nextln:       block0:
+    # nextln:           $$xmm0 = $$xmm1
+    # nextln: 0000:     Ret $$xmm0
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    return %0, %2
+}

@@ -1,0 +1,19 @@
+# run: isel
+
+func @ret_first:f64(f64, f64) {
+    # check: function `ret_first`:
+    # nextln:       block0[%0:xmm($$xmm0)]:
+    # nextln: 0000:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    return %0, %1
+}
+
+func @ret_second:f64(f64, f64) {
+    # check: function `ret_second`:
+    # nextln:       block0[%0:xmm($$xmm1)]:
+    # nextln: 0000:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    return %0, %2
+}

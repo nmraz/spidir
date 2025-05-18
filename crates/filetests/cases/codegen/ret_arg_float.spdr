@@ -1,0 +1,24 @@
+# run: codegen
+
+func @ret_first:f64(f64, f64) {
+    # check: function `ret_first`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 5d                              pop rbp
+    # nextln: 000005: c3                              ret
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    return %0, %1
+}
+
+func @ret_second:f64(f64, f64) {
+    # check: function `ret_second`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 0f 28 c1                        movaps xmm0, xmm1
+    # nextln: 000007: 5d                              pop rbp
+    # nextln: 000008: c3                              ret
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    return %0, %2
+}

@@ -17,54 +17,62 @@ use crate::{
 
 use super::{
     AddrBase, AddrMode, AluBinOp, AluUnOp, CALLER_SAVED_REGS, CodeModel, CondCode, DivOp, ExtWidth,
-    FullOperandSize, OperandSize, RC_GPR, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX,
-    REG_RSI, ShiftOp, X64Instr, X64Machine,
+    FullOperandSize, OperandSize, RC_GPR, RC_XMM, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI,
+    REG_RDX, REG_RSI, REG_XMM0, REG_XMM1, REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6,
+    REG_XMM7, ShiftOp, X64Instr, X64Machine,
 };
 
-const FIXED_ARG_COUNT: usize = 6;
-const FIXED_ARG_REGS: [PhysReg; FIXED_ARG_COUNT] =
+const FIXED_ARG_GPR_COUNT: usize = 6;
+const FIXED_ARG_GPRS: [PhysReg; FIXED_ARG_GPR_COUNT] =
     [REG_RDI, REG_RSI, REG_RDX, REG_RCX, REG_R8, REG_R9];
+
+const FIXED_ARG_XMMS: [PhysReg; 8] = [
+    REG_XMM0, REG_XMM1, REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7,
+];
 
 impl MachineLower for X64Machine {
     fn reg_class_for_type(&self, ty: Type) -> RegClass {
         match ty {
             Type::I32 | Type::I64 | Type::Ptr => RC_GPR,
-            Type::F64 => unimplemented!("floating point"),
+            Type::F64 => RC_XMM,
         }
     }
 
     fn param_locs(&self, param_types: &[Type]) -> Vec<ParamLoc> {
-        assert!(
-            param_types
-                .iter()
-                .all(|&ty| self.reg_class_for_type(ty) == RC_GPR),
-            "non-integer arguments not supported"
-        );
+        let mut args = Vec::new();
 
-        let mut args: Vec<_> = FIXED_ARG_REGS
-            .into_iter()
-            .take(param_types.len())
-            .map(|reg| ParamLoc::Reg { reg })
-            .collect();
+        let mut fixed_gpr_iter = FIXED_ARG_GPRS.iter();
+        let mut fixed_xmm_iter = FIXED_ARG_XMMS.iter();
 
-        if param_types.len() > FIXED_ARG_REGS.len() {
-            for i in 0..param_types.len() - FIXED_ARG_REGS.len() {
-                // Frame layout recap:
-                //
-                // +-------+
-                // |  ...  |
-                // +-------+
-                // |  A7   |
-                // +-------+
-                // |  A6   |
-                // +-------+ < rbp + 16
-                // |  RA   |
-                // +-------+ < rbp + 8
-                // |  RBP  |
-                // +-------+ < rbp
-                args.push(ParamLoc::Stack {
-                    fp_offset: 16 + 8 * i as i32,
-                });
+        let mut stack_idx = 0;
+
+        for &param_type in param_types {
+            let reg = match param_type {
+                Type::I32 | Type::I64 | Type::Ptr => fixed_gpr_iter.next(),
+                Type::F64 => fixed_xmm_iter.next(),
+            };
+
+            match reg {
+                Some(&reg) => args.push(ParamLoc::Reg { reg }),
+                None => {
+                    // Frame layout recap:
+                    //
+                    // +-------+
+                    // |  ...  |
+                    // +-------+
+                    // |  A7   |
+                    // +-------+
+                    // |  A6   |
+                    // +-------+ < rbp + 16
+                    // |  RA   |
+                    // +-------+ < rbp + 8
+                    // |  RBP  |
+                    // +-------+ < rbp
+                    args.push(ParamLoc::Stack {
+                        fp_offset: 16 + 8 * stack_idx,
+                    });
+                    stack_idx += 1;
+                }
             }
         }
 
@@ -226,12 +234,16 @@ impl MachineLower for X64Machine {
             NodeKind::Return => match ctx.node_inputs(node).next() {
                 None => ctx.emit_instr(X64Instr::Ret, &[], &[]),
                 Some(retval) => {
-                    if !ctx.value_type(retval).is_integer_or_pointer() {
-                        return Err(MachineIselError);
-                    }
-
-                    let retval = ctx.get_value_vreg(retval);
-                    ctx.emit_instr(X64Instr::Ret, &[], &[UseOperand::fixed(retval, REG_RAX)]);
+                    let retval_vreg = ctx.get_value_vreg(retval);
+                    let retval_reg = match ctx.value_type(retval) {
+                        Type::I32 | Type::I64 | Type::Ptr => REG_RAX,
+                        Type::F64 => REG_XMM0,
+                    };
+                    ctx.emit_instr(
+                        X64Instr::Ret,
+                        &[],
+                        &[UseOperand::fixed(retval_vreg, retval_reg)],
+                    );
                 }
             },
             &NodeKind::FuncAddr(func) => emit_funcaddr(self, ctx, node, func),
@@ -540,7 +552,7 @@ fn emit_call_abs(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Fu
             &[],
         );
 
-        let mut uses: SmallVec<[_; FIXED_ARG_COUNT + 1]> = smallvec![UseOperand::any(target)];
+        let mut uses: SmallVec<[_; FIXED_ARG_GPR_COUNT + 1]> = smallvec![UseOperand::any(target)];
         uses.extend_from_slice(args);
         ctx.emit_instr_with_clobbers(
             X64Instr::CallRm,
@@ -558,7 +570,7 @@ fn emit_callind(
     args: impl Iterator<Item = DepValue>,
 ) {
     emit_call_wrapper(ctx, node, args, |ctx, retvals, args| {
-        let mut uses: SmallVec<[_; FIXED_ARG_COUNT + 1]> = smallvec![UseOperand::any(target)];
+        let mut uses: SmallVec<[_; FIXED_ARG_GPR_COUNT + 1]> = smallvec![UseOperand::any(target)];
         uses.extend_from_slice(args);
         ctx.emit_instr_with_clobbers(
             X64Instr::CallRm,
@@ -578,10 +590,10 @@ fn emit_call_wrapper(
     // The `take` here is important, because `zip` will advance the argument iterator before
     // realizing it has run out of physical registers, causing the first stack argument to be
     // dropped.
-    let reg_args: SmallVec<[_; FIXED_ARG_COUNT]> = args
+    let reg_args: SmallVec<[_; FIXED_ARG_GPR_COUNT]> = args
         .by_ref()
-        .take(FIXED_ARG_COUNT)
-        .zip(FIXED_ARG_REGS)
+        .take(FIXED_ARG_GPR_COUNT)
+        .zip(FIXED_ARG_GPRS)
         .map(|(arg, reg)| {
             let arg = ctx.get_value_vreg(arg);
             UseOperand::fixed(arg, reg)

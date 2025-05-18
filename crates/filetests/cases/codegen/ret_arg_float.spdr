@@ -1,5 +1,7 @@
 # run: codegen
 
+extfunc @ext()
+
 func @ret_first:f64(f64, f64) {
     # check: function `ret_first`:
     # nextln: 000000: 55                              push rbp
@@ -21,4 +23,22 @@ func @ret_second:f64(f64, f64) {
 
     %0:ctrl, %1:f64, %2:f64 = entry
     return %0, %2
+}
+
+func @spill_arg:f64(f64) {
+    # check: function `spill_arg`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 83 ec 10                     sub rsp, 0x10
+    # nextln: 000008: 0f 29 04 24                     movaps xmmword ptr [rsp], xmm0
+    # nextln: 00000c: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @ext + 0
+    # nextln: 000016: ff d0                           call rax
+    # nextln: 000018: 0f 28 04 24                     movaps xmm0, xmmword ptr [rsp]
+    # nextln: 00001c: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 000020: 5d                              pop rbp
+    # nextln: 000021: c3                              ret
+
+    %0:ctrl, %1:f64 = entry
+    %2:ctrl = call @ext %0
+    return %2, %1
 }

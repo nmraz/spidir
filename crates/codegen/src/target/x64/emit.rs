@@ -337,20 +337,38 @@ impl MachineEmit for X64Machine {
     ) {
         match (from, to) {
             (OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
-                emit_mov_r_r(buffer, to, from)
+                if is_gpr(from) {
+                    debug_assert!(is_gpr(to));
+                    emit_mov_r_r(buffer, to, from);
+                } else {
+                    debug_assert!(!is_gpr(to));
+                    emit_movaps_r_rm(buffer, to, RegMem::Reg(from));
+                }
             }
-            (OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => emit_movzx_r_rm(
-                buffer,
-                FullOperandSize::S64,
-                to,
-                RegMem::Mem(state.spill_slot_addr(from)),
-            ),
-            (OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => emit_mov_rm_r(
-                buffer,
-                FullOperandSize::S64,
-                RegMem::Mem(state.spill_slot_addr(to)),
-                from,
-            ),
+            (OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
+                if is_gpr(to) {
+                    emit_movzx_r_rm(
+                        buffer,
+                        FullOperandSize::S64,
+                        to,
+                        RegMem::Mem(state.spill_slot_addr(from)),
+                    );
+                } else {
+                    emit_movaps_r_rm(buffer, to, RegMem::Mem(state.spill_slot_addr(from)));
+                }
+            }
+            (OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => {
+                if is_gpr(from) {
+                    emit_mov_rm_r(
+                        buffer,
+                        FullOperandSize::S64,
+                        RegMem::Mem(state.spill_slot_addr(to)),
+                        from,
+                    );
+                } else {
+                    emit_movaps_rm_r(buffer, RegMem::Mem(state.spill_slot_addr(to)), from);
+                }
+            }
             (OperandAssignment::Spill(_), OperandAssignment::Spill(_)) => {
                 unreachable!("mem-to-mem copy")
             }
@@ -905,6 +923,24 @@ fn emit_shift_rm_i(
         if emit_imm {
             sink.emit(&[imm]);
         }
+    });
+}
+
+fn emit_movaps_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| rex.encode_modrm_reg(dest));
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf, 0x28]);
+        modrm_sib.emit(sink);
+    });
+}
+
+fn emit_movaps_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(dest, |rex| rex.encode_modrm_reg(src));
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf, 0x29]);
+        modrm_sib.emit(sink);
     });
 }
 

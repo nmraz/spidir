@@ -298,6 +298,11 @@ impl MachineEmit for X64Machine {
                 RegMem::Mem(state.lower_addr_mode(addr_mode, &uses[1..])),
                 uses[0].as_reg().unwrap(),
             ),
+            X64Instr::MovsdMR(addr_mode) => emit_movsd_rm_r(
+                buffer,
+                RegMem::Mem(state.lower_addr_mode(addr_mode, &uses[1..])),
+                uses[0].as_reg().unwrap(),
+            ),
             &X64Instr::StackAddr(slot) => emit_lea_or_mov(
                 buffer,
                 defs[0].as_reg().unwrap(),
@@ -959,6 +964,15 @@ fn emit_movsd_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem
     buffer.instr(|sink| {
         rex.emit(sink);
         sink.emit(&[0xf2, 0xf, 0x10]);
+        modrm_sib.emit(sink);
+    });
+}
+
+fn emit_movsd_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(dest, |rex| rex.encode_modrm_reg(src));
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf2, 0xf, 0x11]);
         modrm_sib.emit(sink);
     });
 }

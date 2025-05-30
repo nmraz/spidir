@@ -80,6 +80,7 @@ impl X64EmitState {
 
         let base = match addr_mode.base {
             Some(AddrBase::Reg) => Some(regs.next().unwrap()),
+            Some(AddrBase::Rsp) => Some(REG_RSP),
             Some(AddrBase::Stack(slot)) => {
                 offset = self.sp_offset(self.frame_layout.stack_slot_offsets[slot]);
                 Some(REG_RSP)

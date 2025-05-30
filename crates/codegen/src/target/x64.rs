@@ -157,6 +157,7 @@ impl fmt::Debug for IndexScale {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum AddrBase {
     Reg,
+    Rsp,
     Stack(StackSlot),
 }
 
@@ -164,6 +165,7 @@ impl fmt::Debug for AddrBase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Reg => write!(f, "reg"),
+            Self::Rsp => write!(f, "rsp"),
             Self::Stack(slot) => write!(f, "{slot}"),
         }
     }

@@ -584,39 +584,58 @@ fn emit_callind(
 fn emit_call_wrapper(
     ctx: &mut IselContext<'_, '_, X64Machine>,
     node: Node,
-    mut args: impl Iterator<Item = DepValue>,
+    args: impl Iterator<Item = DepValue>,
     emit_inner: impl FnOnce(&mut IselContext<'_, '_, X64Machine>, &[DefOperand], &[UseOperand]),
 ) {
-    // The `take` here is important, because `zip` will advance the argument iterator before
-    // realizing it has run out of physical registers, causing the first stack argument to be
-    // dropped.
-    let reg_args: SmallVec<[_; FIXED_ARG_GPR_COUNT]> = args
-        .by_ref()
-        .take(FIXED_ARG_GPR_COUNT)
-        .zip(FIXED_ARG_GPRS)
-        .map(|(arg, reg)| {
-            let arg = ctx.get_value_vreg(arg);
-            UseOperand::fixed(arg, reg)
-        })
-        .collect();
-
-    let stack_args: SmallVec<[_; 4]> = args.map(|arg| ctx.get_value_vreg(arg)).collect();
-
+    let mut reg_args: SmallVec<[_; FIXED_ARG_GPR_COUNT]> = SmallVec::new();
+    let mut stack_gpr_args: SmallVec<[_; 4]> = SmallVec::new();
     let mut stack_size = 0;
-    if stack_args.len() % 2 != 0 {
+
+    let mut fixed_gpr_iter = FIXED_ARG_GPRS.iter();
+
+    for arg in args {
+        let ty = ctx.value_type(arg);
+        let arg = ctx.get_value_vreg(arg);
+
+        let reg = match ty {
+            Type::I32 | Type::I64 | Type::Ptr => fixed_gpr_iter.next(),
+            Type::F64 => todo!(),
+        };
+
+        match reg {
+            Some(&reg) => reg_args.push(UseOperand::fixed(arg, reg)),
+            None => {
+                stack_size += 8;
+                stack_gpr_args.push(arg);
+            }
+        }
+    }
+
+    if stack_size % 16 != 0 {
         // Just pushing these arguments would misalign the stack, so make sure to compensate.
-        ctx.emit_instr(X64Instr::AddSp(-8), &[], &[]);
         stack_size += 8;
     }
 
-    for &stack_arg in stack_args.iter().rev() {
+    // If the stack requires extra padding, adjust it manually.
+    if stack_size as usize != 8 * stack_gpr_args.len() {
+        ctx.emit_instr(
+            X64Instr::AddSp(8 * stack_gpr_args.len() as i32 - stack_size),
+            &[],
+            &[],
+        );
+    }
+
+    for &stack_arg in stack_gpr_args.iter().rev() {
         ctx.emit_instr(X64Instr::Push, &[], &[UseOperand::any_reg(stack_arg)]);
-        stack_size += 8;
     }
 
     let retval = ctx.node_outputs(node).next().map(|retval| {
+        let reg = match ctx.value_type(retval) {
+            Type::I32 | Type::I64 | Type::Ptr => REG_RAX,
+            Type::F64 => todo!(),
+        };
         let retval = ctx.get_value_vreg(retval);
-        DefOperand::fixed(retval, REG_RAX)
+        DefOperand::fixed(retval, reg)
     });
 
     let call_defs = retval.as_slice();

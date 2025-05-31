@@ -14,12 +14,12 @@ use crate::{
 };
 
 use super::{
-    AddrBase, AddrMode, AluBinOp, AluUnOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale,
-    OperandSize, REG_R8, REG_R9, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_RAX,
-    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, REG_XMM0, REG_XMM1, REG_XMM2,
-    REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, REG_XMM8, REG_XMM9, REG_XMM10, REG_XMM11,
-    REG_XMM12, REG_XMM13, REG_XMM14, REG_XMM15, RELOC_ABS64, RELOC_PC32, ShiftOp, X64Instr,
-    X64Machine,
+    AddrBase, AddrMode, AluBinOp, AluUnOp, CondCode, DivOp, ExtWidth, FpuBinOp, FullOperandSize,
+    IndexScale, OperandSize, REG_R8, REG_R9, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15,
+    REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, REG_XMM0, REG_XMM1,
+    REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, REG_XMM8, REG_XMM9, REG_XMM10,
+    REG_XMM11, REG_XMM12, REG_XMM13, REG_XMM14, REG_XMM15, RELOC_ABS64, RELOC_PC32, ShiftOp,
+    X64Instr, X64Machine,
 };
 
 mod flag_liveness;
@@ -266,6 +266,14 @@ impl MachineEmit for X64Machine {
                 width,
                 defs[0].as_reg().unwrap(),
                 state.operand_reg_mem(uses[0]),
+            ),
+            &X64Instr::FpuRRm(op) => emit_fpu_r_rm(
+                buffer,
+                op,
+                uses[0].as_reg().unwrap(),
+                // Note: thank goodness for little endian, because we currently spill the full 16
+                // bytes.
+                state.operand_reg_mem(uses[1]),
             ),
             &X64Instr::MovRRbp { op_size, offset } => emit_movzx_r_rm(
                 buffer,
@@ -955,6 +963,18 @@ fn emit_alu_rm(buffer: &mut CodeBuffer<X64Fixup>, op: AluUnOp, op_size: OperandS
 
 fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: AluBinOp, dest: PhysReg, imm: i32) {
     emit_alu_rm_i(buffer, op, OperandSize::S64, RegMem::Reg(dest), imm);
+}
+
+fn emit_fpu_r_rm(buffer: &mut CodeBuffer<X64Fixup>, op: FpuBinOp, arg0: PhysReg, arg1: RegMem) {
+    let opcode = match op {
+        FpuBinOp::Add => &[0xf2, 0xf, 0x58],
+        FpuBinOp::Sub => &[0xf2, 0xf, 0x5c],
+        FpuBinOp::Mul => &[0xf2, 0xf, 0x59],
+        FpuBinOp::Div => &[0xf2, 0xf, 0x5e],
+        FpuBinOp::Ucmp => &[0x66, 0xf, 0x2e],
+    };
+
+    emit_reg_mem_instr(buffer, opcode, arg0, arg1);
 }
 
 fn emit_reg_mem_instr(

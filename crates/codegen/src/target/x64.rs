@@ -135,6 +135,15 @@ pub enum DivOp {
     Idiv,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FpuBinOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Ucmp,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum IndexScale {
     One,
@@ -209,6 +218,7 @@ pub enum X64Instr {
     MovzxRRm(FullOperandSize),
     MovsxRRm(ExtWidth),
     Setcc(CondCode),
+    FpuRRm(FpuBinOp),
     /// Load from [rbp + offset]
     MovRRbp {
         op_size: FullOperandSize,
@@ -251,6 +261,7 @@ impl X64Instr {
             X64Instr::MovzxRRm(..) => false,
             X64Instr::MovsxRRm(..) => false,
             X64Instr::Setcc(..) => true,
+            X64Instr::FpuRRm(..) => false,
             X64Instr::MovRRbp { .. } => false,
             X64Instr::MovsdRRbp { .. } => false,
             X64Instr::StackAddr(..) => false,
@@ -286,6 +297,8 @@ impl X64Instr {
             X64Instr::MovRI64(..) => false,
             X64Instr::MovzxRRm(..) => false,
             X64Instr::MovsxRRm(..) => false,
+            X64Instr::FpuRRm(FpuBinOp::Ucmp) => true,
+            X64Instr::FpuRRm(..) => false,
             X64Instr::Setcc(..) => false,
             X64Instr::MovRRbp { .. } => false,
             X64Instr::MovsdRRbp { .. } => false,

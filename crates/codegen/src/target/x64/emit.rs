@@ -635,190 +635,6 @@ fn emit_mov_rm_r(
     });
 }
 
-fn emit_setcc_r(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, dest: PhysReg) {
-    let mut rex = RexPrefix::new();
-    rex.use_reg8(dest);
-    let dest = rex.encode_modrm_base(dest);
-
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, dest)]);
-    });
-}
-
-fn emit_movsx_r_rm(buffer: &mut CodeBuffer<X64Fixup>, width: ExtWidth, dest: PhysReg, src: RegMem) {
-    let (opcode, op_size): (&[u8], _) = match width {
-        ExtWidth::Ext8_32 => (&[0xf, 0xbe], OperandSize::S32),
-        ExtWidth::Ext8_64 => (&[0xf, 0xbe], OperandSize::S64),
-        ExtWidth::Ext16_32 => (&[0xf, 0xbf], OperandSize::S32),
-        ExtWidth::Ext16_64 => (&[0xf, 0xbf], OperandSize::S64),
-        ExtWidth::Ext32_64 => (&[0x63], OperandSize::S64),
-    };
-
-    let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| {
-        rex.encode_operand_size(op_size);
-        if matches!(width, ExtWidth::Ext8_32 | ExtWidth::Ext8_64) {
-            if let RegMem::Reg(src) = src {
-                rex.use_reg8(src);
-            }
-        }
-        rex.encode_modrm_reg(dest)
-    });
-
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(opcode);
-        modrm_sib.emit(sink);
-    });
-}
-
-fn emit_call_rel(buffer: &mut CodeBuffer<X64Fixup>, target: FunctionRef) {
-    buffer.instr_with_reloc(target, -4, 1, RELOC_PC32, |sink| {
-        sink.emit(&[0xe8]);
-        sink.emit(&0u32.to_le_bytes());
-    });
-}
-
-fn emit_call_rm(buffer: &mut CodeBuffer<X64Fixup>, target: RegMem) {
-    let (rex, modrm_sib) = encode_reg_mem_parts(target, |_rex| 2);
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[0xff]);
-        modrm_sib.emit(sink);
-    });
-}
-
-fn emit_jmp(buffer: &mut CodeBuffer<X64Fixup>, target: Label) {
-    buffer.uncond_branch(target, 1, X64Fixup::Rela4(-4), |sink| {
-        sink.emit(&[0xe9]);
-        sink.emit(&0u32.to_le_bytes());
-    });
-}
-
-fn emit_jcc(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, target: Label) {
-    buffer.cond_branch(
-        target,
-        2,
-        X64Fixup::Rela4(-4),
-        |sink| emit_jcc_instr(sink, code),
-        |sink| emit_jcc_instr(sink, code.negate()),
-    );
-}
-
-fn emit_jcc_instr(sink: &mut InstrSink<'_>, code: CondCode) {
-    let code = encode_cond_code(code);
-    sink.emit(&[0xf, 0x80 + code]);
-    sink.emit(&0u32.to_le_bytes());
-}
-
-fn emit_ret(buffer: &mut CodeBuffer<X64Fixup>) {
-    buffer.instr(|sink| sink.emit(&[0xc3]));
-}
-
-fn emit_ud2(buffer: &mut CodeBuffer<X64Fixup>) {
-    buffer.instr(|sink| sink.emit(&[0xf, 0xb]));
-}
-
-// Instruction group emission helpers
-
-fn emit_alu_r_rm(
-    buffer: &mut CodeBuffer<X64Fixup>,
-    op: AluBinOp,
-    op_size: OperandSize,
-    arg0: PhysReg,
-    arg1: RegMem,
-) {
-    let opcode = match op {
-        AluBinOp::Add => 0x3,
-        AluBinOp::And => 0x23,
-        AluBinOp::Cmp => 0x3b,
-        AluBinOp::Or => 0xb,
-        AluBinOp::Sub => 0x2b,
-        AluBinOp::Test => {
-            // This encoding is actually backwards (`test r/m, r`), but it doesn't matter because
-            // `test` is commutative and has no outputs other than flags.
-            0x85
-        }
-        AluBinOp::Xor => 0x33,
-    };
-
-    let (rex, modrm_sib) = encode_reg_mem_parts(arg1, |rex| {
-        rex.encode_operand_size(op_size);
-        rex.encode_modrm_reg(arg0)
-    });
-
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[opcode]);
-        modrm_sib.emit(sink);
-    });
-}
-
-fn emit_alu_rm_i(
-    buffer: &mut CodeBuffer<X64Fixup>,
-    op: AluBinOp,
-    op_size: OperandSize,
-    arg: RegMem,
-    imm: i32,
-) {
-    let mut is_imm8 = is_sint::<8>(imm as u64);
-    let mut opcode = if is_imm8 { 0x83 } else { 0x81 };
-
-    let reg_opcode = match op {
-        AluBinOp::Add => 0x0,
-        AluBinOp::And => 0x4,
-        AluBinOp::Cmp => 0x7,
-        AluBinOp::Or => 0x1,
-        AluBinOp::Sub => 0x5,
-        AluBinOp::Test => {
-            // `test` is special. Who knows why.
-            opcode = 0xf7;
-            is_imm8 = false;
-            0x0
-        }
-        AluBinOp::Xor => 0x6,
-    };
-
-    let (rex, modrm_sib) = encode_reg_mem_parts(arg, |rex| {
-        rex.encode_operand_size(op_size);
-        reg_opcode
-    });
-
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[opcode]);
-        modrm_sib.emit(sink);
-
-        if is_imm8 {
-            sink.emit(&[imm as u8]);
-        } else {
-            sink.emit(&imm.to_le_bytes());
-        }
-    });
-}
-
-fn emit_alu_rm(buffer: &mut CodeBuffer<X64Fixup>, op: AluUnOp, op_size: OperandSize, arg: RegMem) {
-    let reg_opcode = match op {
-        AluUnOp::Not => 0x2,
-        AluUnOp::Neg => 0x3,
-    };
-
-    let (rex, modrm_sib) = encode_reg_mem_parts(arg, |rex| {
-        rex.encode_operand_size(op_size);
-        reg_opcode
-    });
-
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[0xf7]);
-        modrm_sib.emit(sink);
-    });
-}
-
-fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: AluBinOp, dest: PhysReg, imm: i32) {
-    emit_alu_rm_i(buffer, op, OperandSize::S64, RegMem::Reg(dest), imm);
-}
-
 fn emit_imul_r_rm(
     buffer: &mut CodeBuffer<X64Fixup>,
     op_size: OperandSize,
@@ -941,6 +757,90 @@ fn emit_shift_rm_i(
     });
 }
 
+fn emit_setcc_r(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, dest: PhysReg) {
+    let mut rex = RexPrefix::new();
+    rex.use_reg8(dest);
+    let dest = rex.encode_modrm_base(dest);
+
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, dest)]);
+    });
+}
+
+fn emit_movsx_r_rm(buffer: &mut CodeBuffer<X64Fixup>, width: ExtWidth, dest: PhysReg, src: RegMem) {
+    let (opcode, op_size): (&[u8], _) = match width {
+        ExtWidth::Ext8_32 => (&[0xf, 0xbe], OperandSize::S32),
+        ExtWidth::Ext8_64 => (&[0xf, 0xbe], OperandSize::S64),
+        ExtWidth::Ext16_32 => (&[0xf, 0xbf], OperandSize::S32),
+        ExtWidth::Ext16_64 => (&[0xf, 0xbf], OperandSize::S64),
+        ExtWidth::Ext32_64 => (&[0x63], OperandSize::S64),
+    };
+
+    let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| {
+        rex.encode_operand_size(op_size);
+        if matches!(width, ExtWidth::Ext8_32 | ExtWidth::Ext8_64) {
+            if let RegMem::Reg(src) = src {
+                rex.use_reg8(src);
+            }
+        }
+        rex.encode_modrm_reg(dest)
+    });
+
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(opcode);
+        modrm_sib.emit(sink);
+    });
+}
+
+fn emit_call_rel(buffer: &mut CodeBuffer<X64Fixup>, target: FunctionRef) {
+    buffer.instr_with_reloc(target, -4, 1, RELOC_PC32, |sink| {
+        sink.emit(&[0xe8]);
+        sink.emit(&0u32.to_le_bytes());
+    });
+}
+
+fn emit_call_rm(buffer: &mut CodeBuffer<X64Fixup>, target: RegMem) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(target, |_rex| 2);
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xff]);
+        modrm_sib.emit(sink);
+    });
+}
+
+fn emit_jmp(buffer: &mut CodeBuffer<X64Fixup>, target: Label) {
+    buffer.uncond_branch(target, 1, X64Fixup::Rela4(-4), |sink| {
+        sink.emit(&[0xe9]);
+        sink.emit(&0u32.to_le_bytes());
+    });
+}
+
+fn emit_jcc(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, target: Label) {
+    buffer.cond_branch(
+        target,
+        2,
+        X64Fixup::Rela4(-4),
+        |sink| emit_jcc_instr(sink, code),
+        |sink| emit_jcc_instr(sink, code.negate()),
+    );
+}
+
+fn emit_jcc_instr(sink: &mut InstrSink<'_>, code: CondCode) {
+    let code = encode_cond_code(code);
+    sink.emit(&[0xf, 0x80 + code]);
+    sink.emit(&0u32.to_le_bytes());
+}
+
+fn emit_ret(buffer: &mut CodeBuffer<X64Fixup>) {
+    buffer.instr(|sink| sink.emit(&[0xc3]));
+}
+
+fn emit_ud2(buffer: &mut CodeBuffer<X64Fixup>) {
+    buffer.instr(|sink| sink.emit(&[0xf, 0xb]));
+}
+
 fn emit_movaps_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
     emit_reg_mem_instr(buffer, &[0xf, 0x28], dest, src);
 }
@@ -955,6 +855,120 @@ fn emit_movsd_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem
 
 fn emit_movsd_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
     emit_reg_mem_instr(buffer, &[0xf2, 0xf, 0x11], src, dest);
+}
+
+// Instruction group emission helpers
+
+fn emit_alu_r_rm(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op: AluBinOp,
+    op_size: OperandSize,
+    arg0: PhysReg,
+    arg1: RegMem,
+) {
+    let opcode = match op {
+        AluBinOp::Add => 0x3,
+        AluBinOp::And => 0x23,
+        AluBinOp::Cmp => 0x3b,
+        AluBinOp::Or => 0xb,
+        AluBinOp::Sub => 0x2b,
+        AluBinOp::Test => {
+            // This encoding is actually backwards (`test r/m, r`), but it doesn't matter because
+            // `test` is commutative and has no outputs other than flags.
+            0x85
+        }
+        AluBinOp::Xor => 0x33,
+    };
+
+    let (rex, modrm_sib) = encode_reg_mem_parts(arg1, |rex| {
+        rex.encode_operand_size(op_size);
+        rex.encode_modrm_reg(arg0)
+    });
+
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[opcode]);
+        modrm_sib.emit(sink);
+    });
+}
+
+fn emit_alu_rm_i(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op: AluBinOp,
+    op_size: OperandSize,
+    arg: RegMem,
+    imm: i32,
+) {
+    let mut is_imm8 = is_sint::<8>(imm as u64);
+    let mut opcode = if is_imm8 { 0x83 } else { 0x81 };
+
+    let reg_opcode = match op {
+        AluBinOp::Add => 0x0,
+        AluBinOp::And => 0x4,
+        AluBinOp::Cmp => 0x7,
+        AluBinOp::Or => 0x1,
+        AluBinOp::Sub => 0x5,
+        AluBinOp::Test => {
+            // `test` is special. Who knows why.
+            opcode = 0xf7;
+            is_imm8 = false;
+            0x0
+        }
+        AluBinOp::Xor => 0x6,
+    };
+
+    let (rex, modrm_sib) = encode_reg_mem_parts(arg, |rex| {
+        rex.encode_operand_size(op_size);
+        reg_opcode
+    });
+
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[opcode]);
+        modrm_sib.emit(sink);
+
+        if is_imm8 {
+            sink.emit(&[imm as u8]);
+        } else {
+            sink.emit(&imm.to_le_bytes());
+        }
+    });
+}
+
+fn emit_alu_rm(buffer: &mut CodeBuffer<X64Fixup>, op: AluUnOp, op_size: OperandSize, arg: RegMem) {
+    let reg_opcode = match op {
+        AluUnOp::Not => 0x2,
+        AluUnOp::Neg => 0x3,
+    };
+
+    let (rex, modrm_sib) = encode_reg_mem_parts(arg, |rex| {
+        rex.encode_operand_size(op_size);
+        reg_opcode
+    });
+
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf7]);
+        modrm_sib.emit(sink);
+    });
+}
+
+fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: AluBinOp, dest: PhysReg, imm: i32) {
+    emit_alu_rm_i(buffer, op, OperandSize::S64, RegMem::Reg(dest), imm);
+}
+
+fn emit_reg_mem_instr(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    opcode: &[u8],
+    reg: PhysReg,
+    reg_mem: RegMem,
+) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(reg_mem, |rex| rex.encode_modrm_reg(reg));
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(opcode);
+        modrm_sib.emit(sink);
+    });
 }
 
 // Prefixes and encoding
@@ -1067,20 +1081,6 @@ impl RexPrefix {
             sink.emit(&[value]);
         }
     }
-}
-
-fn emit_reg_mem_instr(
-    buffer: &mut CodeBuffer<X64Fixup>,
-    opcode: &[u8],
-    reg: PhysReg,
-    reg_mem: RegMem,
-) {
-    let (rex, modrm_sib) = encode_reg_mem_parts(reg_mem, |rex| rex.encode_modrm_reg(reg));
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(opcode);
-        modrm_sib.emit(sink);
-    });
 }
 
 fn encode_reg_mem_parts(

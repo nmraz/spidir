@@ -942,39 +942,19 @@ fn emit_shift_rm_i(
 }
 
 fn emit_movaps_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
-    let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| rex.encode_modrm_reg(dest));
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[0xf, 0x28]);
-        modrm_sib.emit(sink);
-    });
+    emit_reg_mem_instr(buffer, &[0xf, 0x28], dest, src);
 }
 
 fn emit_movaps_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
-    let (rex, modrm_sib) = encode_reg_mem_parts(dest, |rex| rex.encode_modrm_reg(src));
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[0xf, 0x29]);
-        modrm_sib.emit(sink);
-    });
+    emit_reg_mem_instr(buffer, &[0xf, 0x29], src, dest);
 }
 
 fn emit_movsd_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
-    let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| rex.encode_modrm_reg(dest));
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[0xf2, 0xf, 0x10]);
-        modrm_sib.emit(sink);
-    });
+    emit_reg_mem_instr(buffer, &[0xf2, 0xf, 0x10], dest, src);
 }
 
 fn emit_movsd_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
-    let (rex, modrm_sib) = encode_reg_mem_parts(dest, |rex| rex.encode_modrm_reg(src));
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[0xf2, 0xf, 0x11]);
-        modrm_sib.emit(sink);
-    });
+    emit_reg_mem_instr(buffer, &[0xf2, 0xf, 0x11], src, dest);
 }
 
 // Prefixes and encoding
@@ -1087,6 +1067,20 @@ impl RexPrefix {
             sink.emit(&[value]);
         }
     }
+}
+
+fn emit_reg_mem_instr(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    opcode: &[u8],
+    reg: PhysReg,
+    reg_mem: RegMem,
+) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(reg_mem, |rex| rex.encode_modrm_reg(reg));
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(opcode);
+        modrm_sib.emit(sink);
+    });
 }
 
 fn encode_reg_mem_parts(

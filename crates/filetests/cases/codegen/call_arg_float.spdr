@@ -1,0 +1,86 @@
+# run: codegen
+
+extfunc @source:f64()
+extfunc @sink(f64)
+extfunc @large_sink(f64, f64, f64, f64, f64, f64, f64, f64, f64)
+extfunc @larger_sink(f64, f64, f64, f64, f64, f64, f64, f64, f64, f64)
+
+func @caller(f64) {
+    # check: function `caller`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @sink + 0
+    # nextln: 00000e: ff d0                           call rax
+    # nextln: 000010: 5d                              pop rbp
+    # nextln: 000011: c3                              ret
+
+    %0:ctrl, %1:f64 = entry
+    %2:ctrl = call @sink %0, %1
+    return %2
+}
+
+func @large_caller(f64) {
+    # check: function `large_caller`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 83 ec 10                     sub rsp, 0x10
+    # nextln: 000008: f2 0f 11 04 24                  movsd qword ptr [rsp], xmm0
+    # nextln: 00000d: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @large_sink + 0
+    # nextln: 000017: 0f 28 f8                        movaps xmm7, xmm0
+    # nextln: 00001a: 0f 28 f0                        movaps xmm6, xmm0
+    # nextln: 00001d: 0f 28 e8                        movaps xmm5, xmm0
+    # nextln: 000020: 0f 28 e0                        movaps xmm4, xmm0
+    # nextln: 000023: 0f 28 d8                        movaps xmm3, xmm0
+    # nextln: 000026: 0f 28 d0                        movaps xmm2, xmm0
+    # nextln: 000029: 0f 28 c8                        movaps xmm1, xmm0
+    # nextln: 00002c: ff d0                           call rax
+    # nextln: 00002e: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 000032: 5d                              pop rbp
+    # nextln: 000033: c3                              ret
+
+    %0:ctrl, %1:f64 = entry
+    %2:ctrl = call @large_sink %0, %1, %1, %1, %1, %1, %1, %1, %1, %1
+    return %2
+}
+
+func @larger_caller(f64, f64) {
+    # check: function `larger_caller`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 83 ec 10                     sub rsp, 0x10
+    # nextln: 000008: f2 0f 11 04 24                  movsd qword ptr [rsp], xmm0
+    # nextln: 00000d: f2 0f 11 4c 24 08               movsd qword ptr [rsp + 8], xmm1
+    # nextln: 000013: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @larger_sink + 0
+    # nextln: 00001d: 0f 28 f8                        movaps xmm7, xmm0
+    # nextln: 000020: 0f 28 f0                        movaps xmm6, xmm0
+    # nextln: 000023: 0f 28 e8                        movaps xmm5, xmm0
+    # nextln: 000026: 0f 28 e0                        movaps xmm4, xmm0
+    # nextln: 000029: 0f 28 d8                        movaps xmm3, xmm0
+    # nextln: 00002c: 0f 28 d0                        movaps xmm2, xmm0
+    # nextln: 00002f: 0f 28 c8                        movaps xmm1, xmm0
+    # nextln: 000032: ff d0                           call rax
+    # nextln: 000034: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 000038: 5d                              pop rbp
+    # nextln: 000039: c3                              ret
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:ctrl = call @larger_sink %0, %1, %1, %1, %1, %1, %1, %1, %1, %1, %2
+    return %3
+}
+
+func @source_sink() {
+    # check: function `source_sink`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @source + 0
+    # nextln: 00000e: ff d0                           call rax
+    # nextln: 000010: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @sink + 0
+    # nextln: 00001a: ff d0                           call rax
+    # nextln: 00001c: 5d                              pop rbp
+    # nextln: 00001d: c3                              ret
+
+    %0:ctrl = entry
+    %1:ctrl, %2:f64 = call @source %0
+    %3:ctrl = call @sink %1, %2
+    return %3
+}

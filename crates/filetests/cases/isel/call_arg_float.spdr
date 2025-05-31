@@ -1,0 +1,64 @@
+# run: isel
+
+extfunc @source:f64()
+extfunc @sink(f64)
+extfunc @large_sink(f64, f64, f64, f64, f64, f64, f64, f64, f64)
+extfunc @larger_sink(f64, f64, f64, f64, f64, f64, f64, f64, f64, f64)
+
+func @caller(f64) {
+    # check: function `caller`:
+    # nextln:       block0[%0:xmm($$xmm0)]:
+    # nextln: 0000:      %1:gpr(reg)[late] = FuncAddrAbs(External(extfunc1))
+    # nextln: 0001:      CallRm %1(any)[early], %0($$xmm0)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
+    # nextln: 0002:      Ret
+
+    %0:ctrl, %1:f64 = entry
+    %2:ctrl = call @sink %0, %1
+    return %2
+}
+
+func @large_caller(f64) {
+    # check: function `large_caller`:
+    # nextln:       block0[%0:xmm($$xmm0)]:
+    # nextln: 0000:      AddSp(-16)
+    # nextln: 0001:      MovsdMR([rsp + 0]) %0(reg)[early]
+    # nextln: 0002:      %1:gpr(reg)[late] = FuncAddrAbs(External(extfunc2))
+    # nextln: 0003:      CallRm %1(any)[early], %0($$xmm0)[early], %0($$xmm1)[early], %0($$xmm2)[early], %0($$xmm3)[early], %0($$xmm4)[early], %0($$xmm5)[early], %0($$xmm6)[early], %0($$xmm7)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
+    # nextln: 0004:      AddSp(16)
+    # nextln: 0005:      Ret
+
+    %0:ctrl, %1:f64 = entry
+    %2:ctrl = call @large_sink %0, %1, %1, %1, %1, %1, %1, %1, %1, %1
+    return %2
+}
+
+func @larger_caller(f64, f64) {
+    # check: function `larger_caller`:
+    # nextln:       block0[%0:xmm($$xmm0), %1:xmm($$xmm1)]:
+    # nextln: 0000:      AddSp(-16)
+    # nextln: 0001:      MovsdMR([rsp + 0]) %0(reg)[early]
+    # nextln: 0002:      MovsdMR([rsp + 8]) %1(reg)[early]
+    # nextln: 0003:      %2:gpr(reg)[late] = FuncAddrAbs(External(extfunc3))
+    # nextln: 0004:      CallRm %2(any)[early], %0($$xmm0)[early], %0($$xmm1)[early], %0($$xmm2)[early], %0($$xmm3)[early], %0($$xmm4)[early], %0($$xmm5)[early], %0($$xmm6)[early], %0($$xmm7)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
+    # nextln: 0005:      AddSp(16)
+    # nextln: 0006:      Ret
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:ctrl = call @larger_sink %0, %1, %1, %1, %1, %1, %1, %1, %1, %1, %2
+    return %3
+}
+
+func @source_sink() {
+    # check: function `source_sink`:
+    # nextln:       block0[]:
+    # nextln: 0000:      %2:gpr(reg)[late] = FuncAddrAbs(External(extfunc0))
+    # nextln: 0001:      %0:xmm($$xmm0)[late] = CallRm %2(any)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
+    # nextln: 0002:      %1:gpr(reg)[late] = FuncAddrAbs(External(extfunc1))
+    # nextln: 0003:      CallRm %1(any)[early], %0($$xmm0)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
+    # nextln: 0004:      Ret
+
+    %0:ctrl = entry
+    %1:ctrl, %2:f64 = call @source %0
+    %3:ctrl = call @sink %1, %2
+    return %3
+}

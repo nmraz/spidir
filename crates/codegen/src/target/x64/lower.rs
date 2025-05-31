@@ -26,9 +26,12 @@ const FIXED_ARG_GPR_COUNT: usize = 6;
 const FIXED_ARG_GPRS: [PhysReg; FIXED_ARG_GPR_COUNT] =
     [REG_RDI, REG_RSI, REG_RDX, REG_RCX, REG_R8, REG_R9];
 
-const FIXED_ARG_XMMS: [PhysReg; 8] = [
+const FIXED_ARG_XMM_COUNT: usize = 8;
+const FIXED_ARG_XMMS: [PhysReg; FIXED_ARG_XMM_COUNT] = [
     REG_XMM0, REG_XMM1, REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7,
 ];
+
+const FIXED_ARG_REG_COUNT: usize = FIXED_ARG_GPR_COUNT + FIXED_ARG_XMM_COUNT;
 
 impl MachineLower for X64Machine {
     fn reg_class_for_type(&self, ty: Type) -> RegClass {
@@ -552,7 +555,7 @@ fn emit_call_abs(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Fu
             &[],
         );
 
-        let mut uses: SmallVec<[_; FIXED_ARG_GPR_COUNT + 1]> = smallvec![UseOperand::any(target)];
+        let mut uses: SmallVec<[_; FIXED_ARG_REG_COUNT + 1]> = smallvec![UseOperand::any(target)];
         uses.extend_from_slice(args);
         ctx.emit_instr_with_clobbers(
             X64Instr::CallRm,
@@ -570,7 +573,7 @@ fn emit_callind(
     args: impl Iterator<Item = DepValue>,
 ) {
     emit_call_wrapper(ctx, node, args, |ctx, retvals, args| {
-        let mut uses: SmallVec<[_; FIXED_ARG_GPR_COUNT + 1]> = smallvec![UseOperand::any(target)];
+        let mut uses: SmallVec<[_; FIXED_ARG_REG_COUNT + 1]> = smallvec![UseOperand::any(target)];
         uses.extend_from_slice(args);
         ctx.emit_instr_with_clobbers(
             X64Instr::CallRm,
@@ -587,26 +590,36 @@ fn emit_call_wrapper(
     args: impl Iterator<Item = DepValue>,
     emit_inner: impl FnOnce(&mut IselContext<'_, '_, X64Machine>, &[DefOperand], &[UseOperand]),
 ) {
-    let mut reg_args: SmallVec<[_; FIXED_ARG_GPR_COUNT]> = SmallVec::new();
-    let mut stack_gpr_args: SmallVec<[_; 4]> = SmallVec::new();
+    let mut reg_args: SmallVec<[_; FIXED_ARG_REG_COUNT]> = SmallVec::new();
+    let mut stack_args: SmallVec<[_; 4]> = SmallVec::new();
     let mut stack_size = 0;
 
     let mut fixed_gpr_iter = FIXED_ARG_GPRS.iter();
+    let mut fixed_xmm_iter = FIXED_ARG_XMMS.iter();
+
+    let mut has_stack_xmm = false;
 
     for arg in args {
         let ty = ctx.value_type(arg);
         let arg = ctx.get_value_vreg(arg);
 
-        let reg = match ty {
-            Type::I32 | Type::I64 | Type::Ptr => fixed_gpr_iter.next(),
-            Type::F64 => todo!(),
+        let is_xmm = match ty {
+            Type::I32 | Type::I64 | Type::Ptr => false,
+            Type::F64 => true,
+        };
+
+        let reg = if is_xmm {
+            fixed_xmm_iter.next()
+        } else {
+            fixed_gpr_iter.next()
         };
 
         match reg {
             Some(&reg) => reg_args.push(UseOperand::fixed(arg, reg)),
             None => {
+                stack_args.push((arg, ty));
+                has_stack_xmm |= is_xmm;
                 stack_size += 8;
-                stack_gpr_args.push(arg);
             }
         }
     }
@@ -616,23 +629,48 @@ fn emit_call_wrapper(
         stack_size += 8;
     }
 
-    // If the stack requires extra padding, adjust it manually.
-    if stack_size as usize != 8 * stack_gpr_args.len() {
-        ctx.emit_instr(
-            X64Instr::AddSp(8 * stack_gpr_args.len() as i32 - stack_size),
-            &[],
-            &[],
-        );
+    if !has_stack_xmm {
+        // When we have only GPRs passed on the stack, using pushes results in smaller code.
+
+        // If the stack requires extra padding, adjust it manually. Note that this adjustment can
+        // only ever be 8 bytes, which the emitter can encode compactly as a push.
+        let stack_arg_size = 8 * stack_args.len() as i32;
+        if stack_size != stack_arg_size {
+            ctx.emit_instr(X64Instr::AddSp(stack_arg_size - stack_size), &[], &[]);
+        }
+
+        for &(stack_arg, _) in stack_args.iter().rev() {
+            ctx.emit_instr(X64Instr::Push, &[], &[UseOperand::any_reg(stack_arg)]);
+        }
+    } else {
+        // When we need to pass values held XMM registers via the stack, we need a manual subtract
+        // and move anyway, so use it for all stack arguments.
+        ctx.emit_instr(X64Instr::AddSp(-stack_size), &[], &[]);
+
+        let mut offset = 0;
+        for &(stack_arg, ty) in &stack_args {
+            let addr_mode = AddrMode {
+                base: Some(AddrBase::Rsp),
+                index: None,
+                offset,
+            };
+
+            let instr = match ty {
+                Type::I32 => X64Instr::MovMR(FullOperandSize::S32, addr_mode),
+                Type::I64 | Type::Ptr => X64Instr::MovMR(FullOperandSize::S64, addr_mode),
+                Type::F64 => X64Instr::MovsdMR(addr_mode),
+            };
+
+            ctx.emit_instr(instr, &[], &[UseOperand::any_reg(stack_arg)]);
+
+            offset += 8;
+        }
     }
 
-    for &stack_arg in stack_gpr_args.iter().rev() {
-        ctx.emit_instr(X64Instr::Push, &[], &[UseOperand::any_reg(stack_arg)]);
-    }
-
-    let retval = ctx.node_outputs(node).next().map(|retval| {
+    let retval = ctx.node_outputs(node).next().map(|retval: DepValue| {
         let reg = match ctx.value_type(retval) {
             Type::I32 | Type::I64 | Type::Ptr => REG_RAX,
-            Type::F64 => todo!(),
+            Type::F64 => REG_XMM0,
         };
         let retval = ctx.get_value_vreg(retval);
         DefOperand::fixed(retval, reg)

@@ -13,6 +13,7 @@ use crate::{
     lir::{DefOperand, PhysReg, PhysRegSet, RegClass, UseOperand, VirtReg},
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
+    target::x64::FpuBinOp,
 };
 
 use super::{
@@ -198,6 +199,10 @@ impl MachineLower for X64Machine {
                     &[UseOperand::tied(temp, 0)],
                 );
             }
+            NodeKind::Fadd => emit_fpu_rr(ctx, node, FpuBinOp::Add),
+            NodeKind::Fsub => emit_fpu_rr(ctx, node, FpuBinOp::Sub),
+            NodeKind::Fmul => emit_fpu_rr(ctx, node, FpuBinOp::Mul),
+            NodeKind::Fdiv => emit_fpu_rr(ctx, node, FpuBinOp::Div),
             NodeKind::PtrOff => select_alu(ctx, node, AluBinOp::Add),
             &NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             &NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
@@ -811,6 +816,21 @@ fn emit_alu_r(
         X64Instr::AluRm(operand_size_for_ty(ty), op),
         &[DefOperand::any(output)],
         &[UseOperand::tied(input, 0)],
+    );
+}
+
+fn emit_fpu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: FpuBinOp) {
+    let [output] = ctx.node_outputs_exact(node);
+    let [op1, op2] = ctx.node_inputs_exact(node);
+
+    let output = ctx.get_value_vreg(output);
+    let op1 = ctx.get_value_vreg(op1);
+    let op2 = ctx.get_value_vreg(op2);
+
+    ctx.emit_instr(
+        X64Instr::FpuRRm(op),
+        &[DefOperand::any_reg(output)],
+        &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
 }
 

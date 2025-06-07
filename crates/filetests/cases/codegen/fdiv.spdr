@@ -1,0 +1,14 @@
+# run: codegen
+
+func @fdiv:f64(f64, f64) {
+    # check: function `fdiv`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f 5e c1                     divsd xmm0, xmm1
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %c:ctrl, %a:f64, %b:f64 = entry
+    %val:f64 = fdiv %a, %b
+    return %c, %val
+}

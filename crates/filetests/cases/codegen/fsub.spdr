@@ -1,0 +1,14 @@
+# run: codegen
+
+func @fsub:f64(f64, f64) {
+    # check: function `fsub`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f 5c c1                     subsd xmm0, xmm1
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %c:ctrl, %a:f64, %b:f64 = entry
+    %val:f64 = fsub %a, %b
+    return %c, %val
+}

@@ -1342,24 +1342,7 @@ fn is_gpr(reg: PhysReg) -> bool {
 }
 
 fn encode_cond_code(code: CondCode) -> u8 {
-    match code {
-        CondCode::O => 0x0,
-        CondCode::No => 0x1,
-        CondCode::B => 0x2,
-        CondCode::Ae => 0x3,
-        CondCode::E => 0x4,
-        CondCode::Ne => 0x5,
-        CondCode::Be => 0x6,
-        CondCode::A => 0x7,
-        CondCode::S => 0x8,
-        CondCode::Ns => 0x9,
-        CondCode::P => 0xa,
-        CondCode::Np => 0xb,
-        CondCode::L => 0xc,
-        CondCode::Ge => 0xd,
-        CondCode::Le => 0xe,
-        CondCode::G => 0xf,
-    }
+    code as u8
 }
 
 fn encode_shift_op(op: ShiftOp) -> u8 {

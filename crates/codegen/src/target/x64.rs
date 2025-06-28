@@ -42,37 +42,37 @@ pub enum ExtWidth {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CondCode {
     /// Overflow (OF = 1)
-    O,
+    O = 0x0,
     /// No Overflow (OF = 0)
-    No,
+    No = 0x1,
     /// Below (CF = 1)
-    B,
+    B = 0x2,
     /// Above or Equal (CF = 0)
-    Ae,
+    Ae = 0x3,
     /// Equal (ZF = 1)
-    E,
+    E = 0x4,
     /// Not Equal (ZF = 0)
-    Ne,
+    Ne = 0x5,
     /// Below or Equal ((CF | ZF) = 1)
-    Be,
+    Be = 0x6,
     /// Above ((CF | ZF) = 0)
-    A,
+    A = 0x7,
     /// Sign (SF = 1)
-    S,
+    S = 0x8,
     /// No Sign (SF = 0)
-    Ns,
+    Ns = 0x9,
     /// Parity (PF = 1)
-    P,
+    P = 0xa,
     /// No Parity (PF = 0)
-    Np,
+    Np = 0xb,
     /// Less ((SF ^ OF) = 1)
-    L,
+    L = 0xc,
     /// Greater or Equal ((SF ^ OF) = 0)
-    Ge,
+    Ge = 0xd,
     /// Less or Equal (((SF ^ OF) | ZF) = 1)
-    Le,
+    Le = 0xe,
     /// Greater (((SF ^ OF) | ZF) = 0)
-    G,
+    G = 0xf,
 }
 
 impl CondCode {

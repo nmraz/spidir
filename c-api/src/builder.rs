@@ -4,7 +4,7 @@ use ir::module::Module;
 use paste::paste;
 
 use crate::types::{
-    ApiBlock, ApiFcmpKind, ApiFunction, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
+    ApiBlock, ApiFcmpKind, ApiFunctionRef, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
     block_from_api, block_to_api, fcmp_kind_from_api, funcref_from_api, icmp_kind_from_api,
     mem_size_from_api, opt_value_from_api, opt_value_to_api, signature_from_api, type_from_api,
     value_from_api, value_list_from_api, value_to_api,
@@ -73,7 +73,7 @@ unsafe extern "C" fn spidir_builder_build_param_ref(
 #[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_funcaddr(
     builder: *mut FunctionBuilder<'_>,
-    func: ApiFunction,
+    func: ApiFunctionRef,
 ) -> ApiValue {
     unsafe {
         let builder = &mut *builder;
@@ -84,7 +84,7 @@ unsafe extern "C" fn spidir_builder_build_funcaddr(
 #[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_call(
     builder: *mut FunctionBuilder<'_>,
-    func: ApiFunction,
+    func: ApiFunctionRef,
     arg_count: usize,
     args: *const ApiValue,
 ) -> ApiValue {

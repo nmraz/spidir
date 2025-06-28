@@ -15,7 +15,7 @@
 #define FUNCTION_ALIGN 0x10
 
 typedef struct {
-    spidir_function_t inner;
+    spidir_funcref_t inner;
 } func_context_t;
 
 size_t align_up(size_t val, size_t align) {
@@ -49,8 +49,8 @@ void outer_builder_callback(spidir_builder_handle_t builder, void* ctx) {
     spidir_builder_build_return(builder, retval);
 }
 
-void apply_relocs(uintptr_t base, spidir_function_t inner, uintptr_t inner_addr,
-                  spidir_function_t outer, uintptr_t outer_addr,
+void apply_relocs(uintptr_t base, spidir_funcref_t inner, uintptr_t inner_addr,
+                  spidir_funcref_t outer, uintptr_t outer_addr,
                   const spidir_codegen_reloc_t* relocs, size_t reloc_count,
                   spidir_reloc_kind_t expected_reloc) {
     for (size_t i = 0; i < reloc_count; i++) {
@@ -85,9 +85,9 @@ void apply_relocs(uintptr_t base, spidir_function_t inner, uintptr_t inner_addr,
     }
 }
 
-void map_and_run(spidir_function_t inner,
+void map_and_run(spidir_funcref_t inner,
                  spidir_codegen_blob_handle_t inner_code,
-                 spidir_function_t outer,
+                 spidir_funcref_t outer,
                  spidir_codegen_blob_handle_t outer_code,
                  spidir_reloc_kind_t expected_reloc) {
     size_t inner_size = spidir_codegen_blob_get_code_size(inner_code);
@@ -136,7 +136,9 @@ void codegen_and_run(spidir_module_handle_t module, spidir_function_t inner,
         codegen_function(machine, module, inner, verify_regalloc);
     spidir_codegen_blob_handle_t outer_code =
         codegen_function(machine, module, outer, verify_regalloc);
-    map_and_run(inner, inner_code, outer, outer_code, expected_reloc);
+    map_and_run(spidir_funcref_make_internal(inner), inner_code,
+                spidir_funcref_make_internal(outer), outer_code,
+                expected_reloc);
     spidir_codegen_blob_destroy(inner_code);
     spidir_codegen_blob_destroy(outer_code);
 }
@@ -156,7 +158,7 @@ int main(void) {
     spidir_module_build_function(module, inner, inner_builder_callback, NULL);
 
     func_context_t func_ctx = {
-        .inner = inner,
+        .inner = spidir_funcref_make_internal(inner),
     };
 
     spidir_function_t outer = spidir_module_create_function(
@@ -174,7 +176,7 @@ int main(void) {
 
     spidir_codegen_machine_handle_t large_machine =
         spidir_codegen_create_x64_machine_with_config(
-            &((spidir_x64_machine_config_t){
+            &((spidir_x64_machine_config_t) {
                 .internal_code_model = SPIDIR_X64_CM_LARGE_ABS,
                 .extern_code_model = SPIDIR_X64_CM_LARGE_ABS,
             }));
@@ -184,7 +186,7 @@ int main(void) {
 
     spidir_codegen_machine_handle_t small_machine =
         spidir_codegen_create_x64_machine_with_config(
-            &((spidir_x64_machine_config_t){
+            &((spidir_x64_machine_config_t) {
                 .internal_code_model = SPIDIR_X64_CM_SMALL_PIC,
                 .extern_code_model = SPIDIR_X64_CM_SMALL_PIC,
             }));

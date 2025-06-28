@@ -44,7 +44,7 @@ typedef uint8_t spidir_reloc_kind_t;
 /// generated code.
 typedef struct spidir_codegen_reloc {
     /// The target of this relocation (either internal or external).
-    spidir_function_t target;
+    spidir_funcref_t target;
     /// The addend for this relocation.
     /// The exact meaning of this field depends on the target archtitecture and
     /// the value of the `kind` field.

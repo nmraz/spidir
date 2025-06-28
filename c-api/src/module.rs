@@ -8,12 +8,12 @@ use frontend::FunctionBuilder;
 use ir::{
     function::{FunctionData, FunctionMetadata},
     module::Module,
-    node::FunctionRef,
 };
 
 use crate::types::{
-    ApiFunction, ApiType, BuildFunctionCallback, DumpCallback, SPIDIR_DUMP_CONTINUE,
-    funcref_from_api, funcref_to_api, name_signature_from_api,
+    ApiExternFunction, ApiFunction, ApiType, BuildFunctionCallback, DumpCallback,
+    SPIDIR_DUMP_CONTINUE, extern_function_to_api, function_from_api, function_to_api,
+    name_signature_from_api,
 };
 
 #[unsafe(no_mangle)]
@@ -42,7 +42,7 @@ unsafe extern "C" fn spidir_module_create_function(
 
         let (name, sig) = name_signature_from_api(name, ret_type, param_count, param_types);
         let func = module.functions.push(FunctionData::new(name, sig));
-        funcref_to_api(FunctionRef::Internal(func))
+        function_to_api(func)
     }
 }
 
@@ -53,13 +53,13 @@ unsafe extern "C" fn spidir_module_create_extern_function(
     ret_type: ApiType,
     param_count: usize,
     param_types: *const ApiType,
-) -> ApiFunction {
+) -> ApiExternFunction {
     unsafe {
         let module = &mut *module;
 
         let (name, sig) = name_signature_from_api(name, ret_type, param_count, param_types);
         let func = module.extern_functions.push(FunctionMetadata { name, sig });
-        funcref_to_api(FunctionRef::External(func))
+        extern_function_to_api(func)
     }
 }
 
@@ -70,13 +70,9 @@ unsafe extern "C" fn spidir_module_build_function(
     callback: BuildFunctionCallback,
     ctx: *mut (),
 ) {
-    let FunctionRef::Internal(func) = funcref_from_api(func) else {
-        panic!("external function passed to `spidir_module_build_function`");
-    };
-
     unsafe {
         let module = &mut *module;
-        let mut builder = FunctionBuilder::new(module, func);
+        let mut builder = FunctionBuilder::new(module, function_from_api(func));
         callback(&mut builder, ctx);
     }
 }

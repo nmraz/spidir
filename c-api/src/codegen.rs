@@ -6,15 +6,12 @@ use codegen::{
     code_buffer::CodeBlob,
     machine::Machine,
 };
-use ir::{
-    function::FunctionData, module::Module, node::FunctionRef, verify::verify_func,
-    write::display_node,
-};
+use ir::{function::FunctionData, module::Module, verify::verify_func, write::display_node};
 use log::error;
 
 use crate::types::{
     ApiCodegenConfig, ApiCodegenStatus, ApiFunction, ApiReloc, SPIDIR_CODEGEN_ERROR_ISEL,
-    SPIDIR_CODEGEN_ERROR_REGALLOC, SPIDIR_CODEGEN_OK, funcref_from_api, reloc_to_api,
+    SPIDIR_CODEGEN_ERROR_REGALLOC, SPIDIR_CODEGEN_OK, function_from_api, reloc_to_api,
 };
 
 struct ApiCodegenMachineVtable {
@@ -127,9 +124,7 @@ unsafe extern "C" fn spidir_codegen_emit_function(
     func: ApiFunction,
     out_blob: *mut *mut ApiCodegenBlob,
 ) -> ApiCodegenStatus {
-    let FunctionRef::Internal(func) = funcref_from_api(func) else {
-        panic!("external function passed to `spidir_codegen_emit_function`");
-    };
+    let func = function_from_api(func);
 
     let module = unsafe { &*module };
     let config = unsafe { &*config };

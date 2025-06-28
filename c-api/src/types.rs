@@ -16,7 +16,13 @@ use smallvec::SmallVec;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
-pub struct ApiFunction(pub u64);
+pub struct ApiFunction(pub u32);
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(C)]
+pub struct ApiExternFunction(pub u32);
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(C)]
+pub struct ApiFunctionRef(pub u64);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ApiBlock(pub u32);
@@ -30,7 +36,7 @@ pub struct ApiPhi(pub u32);
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct ApiReloc {
-    pub target: ApiFunction,
+    pub target: ApiFunctionRef,
     pub addend: i64,
     pub offset: u32,
     pub kind: u8,
@@ -59,7 +65,9 @@ pub const SPIDIR_CODEGEN_ERROR_ISEL: u32 = 1;
 pub const SPIDIR_CODEGEN_ERROR_REGALLOC: u32 = 2;
 
 const SPIDIR_VALUE_INVALID: ApiValue = ApiValue(u32::MAX);
-const EXTERN_FUNCTION_BIT: u64 = 1 << 63;
+
+const SPIDIR_FUNCREF_INTERNAL: u64 = 0;
+const SPIDIR_FUNCREF_EXTERNAL: u64 = 1;
 
 const SPIDIR_TYPE_I32: u8 = 0;
 const SPIDIR_TYPE_I64: u8 = 1;
@@ -156,21 +164,35 @@ pub fn opt_type_from_api(opt_type: ApiType) -> Option<Type> {
     }
 }
 
-pub fn funcref_from_api(func: ApiFunction) -> FunctionRef {
-    let val = func.0;
-    if val & EXTERN_FUNCTION_BIT != 0 {
-        FunctionRef::External(ExternFunction::from_u32(val as u32))
-    } else {
-        FunctionRef::Internal(Function::from_u32(val as u32))
+pub fn function_from_api(func: ApiFunction) -> Function {
+    Function::from_u32(func.0)
+}
+
+pub fn function_to_api(func: Function) -> ApiFunction {
+    ApiFunction(func.as_u32())
+}
+
+pub fn extern_function_to_api(func: ExternFunction) -> ApiExternFunction {
+    ApiExternFunction(func.as_u32())
+}
+
+pub fn funcref_from_api(func: ApiFunctionRef) -> FunctionRef {
+    let val = func.0 as u32;
+    let kind = func.0 >> 32;
+
+    match kind {
+        SPIDIR_FUNCREF_INTERNAL => FunctionRef::Internal(Function::from_u32(val)),
+        SPIDIR_FUNCREF_EXTERNAL => FunctionRef::External(ExternFunction::from_u32(val)),
+        _ => panic!("corrupt function reference"),
     }
 }
 
-pub fn funcref_to_api(func: FunctionRef) -> ApiFunction {
+pub fn funcref_to_api(func: FunctionRef) -> ApiFunctionRef {
     let val = match func {
-        FunctionRef::Internal(func) => func.as_u32() as u64,
-        FunctionRef::External(func) => (func.as_u32() as u64) | EXTERN_FUNCTION_BIT,
+        FunctionRef::Internal(func) => (SPIDIR_FUNCREF_INTERNAL << 32) | (func.as_u32() as u64),
+        FunctionRef::External(func) => (SPIDIR_FUNCREF_EXTERNAL << 32) | (func.as_u32() as u64),
     };
-    ApiFunction(val)
+    ApiFunctionRef(val)
 }
 
 pub fn value_to_api(value: DepValue) -> ApiValue {

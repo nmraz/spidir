@@ -24,14 +24,40 @@ typedef struct spidir_module* spidir_module_handle_t;
 /// See `spidir_module_build_function` for more information.
 typedef struct spidir_builder* spidir_builder_handle_t;
 
-/// An identifier representing a function (either external or internal) within a
-/// module.
+/// An identifier referring to an internal function within a module.
 ///
 /// Values of this type are only guaranteed to be unique within the context of a
 /// module, and should not be mixed across different modules.
 typedef struct spidir_function {
-    uint64_t id;
+    uint32_t id;
 } spidir_function_t;
+
+/// An identifier referring to an external function within a module.
+///
+/// Values of this type are only guaranteed to be unique within the context of a
+/// module, and should not be mixed across different modules.
+typedef struct spidir_extern_function {
+    uint32_t id;
+} spidir_extern_function_t;
+
+/// The different kinds of function references that can exist within a module.
+typedef enum spidir_funcref_kind {
+    /// A reference to an internal function (one created by
+    /// `spidir_module_create_function`).
+    SPIDIR_FUNCREF_INTERNAL = 0,
+    /// A reference to an external function (one created by
+    /// `spidir_module_create_extern_function`).
+    SPIDIR_FUNCREF_EXTERNAL = 1,
+} spidir_funcref_kind_t;
+
+/// An identifier referring to a function (either external or internal) within a
+/// module.
+///
+/// Values of this type are only guaranteed to be unique within the context of a
+/// module, and should not be mixed across different modules.
+typedef struct spidir_funcref {
+    uint64_t id;
+} spidir_funcref_t;
 
 /// An identifier representing a basic block during function construction.
 typedef struct spidir_block {
@@ -179,6 +205,71 @@ typedef void (*spidir_build_function_callback_t)(
 typedef spidir_dump_status_t (*spidir_dump_callback_t)(const char* data,
                                                        size_t size, void* ctx);
 
+/// Creates a reference pointing to a module-internal function.
+///
+/// @param[in] func The internal function to get a reference to.
+/// @return A reference to the function.
+static inline spidir_funcref_t
+spidir_funcref_make_internal(spidir_function_t func) {
+    return (spidir_funcref_t) {
+        .id = ((uint64_t) SPIDIR_FUNCREF_INTERNAL << 32) | func.id,
+    };
+}
+
+/// Creates a reference pointing to a module-external function.
+///
+/// @param[in] func The external function to get a reference to.
+/// @return A reference to the function.
+static inline spidir_funcref_t
+spidir_funcref_make_external(spidir_extern_function_t func) {
+    return (spidir_funcref_t) {
+        .id = ((uint64_t) SPIDIR_FUNCREF_EXTERNAL << 32) | func.id,
+    };
+}
+
+/// Queries what kind of function is pointed to by a function reference.
+///
+/// @param[in] func The reference to query.
+/// @return The kind of function pointed to.
+static inline spidir_funcref_kind_t
+spidir_funcref_get_kind(spidir_funcref_t func) {
+    return func.id >> 32;
+}
+
+/// Returns the module-internal function pointed to by a reference previously
+/// created with `spidir_funcref_make_internal`.
+///
+/// @note This function should only be called on module-internal references; the
+/// behavior is undefined if a different kind of reference is passed in. See
+/// `spidir_funcref_get_kind` for a way to query what kind of function is
+/// pointed to by a reference.
+///
+/// @param[in] func The reference to query.
+/// @return The internal function pointed to.
+static inline spidir_function_t
+spidir_funcref_get_internal(spidir_funcref_t func) {
+    return (spidir_function_t) {
+        .id = (uint32_t) func.id,
+    };
+}
+
+/// Returns the module-external function pointed to by a reference previously
+/// created with `spidir_funcref_make_external`.
+///
+/// @note This function should only be called on module-external references; the
+/// behavior is undefined if a different kind of reference is passed in. See
+/// `spidir_funcref_get_kind` for a way to query what kind of function is
+/// pointed to by a reference.
+///
+/// @param[in] func The reference to query.
+/// @return The external function pointed to.
+static inline spidir_function_t
+spidir_funcref_get_external(spidir_funcref_t func) {
+    return (spidir_function_t) {
+        .id = (uint32_t) func.id,
+    };
+}
+
 /// Creates a new, empty module.
 ///
 /// @return The newly-allocated module.
@@ -233,7 +324,7 @@ spidir_module_create_function(spidir_module_handle_t module, const char* name,
 ///                        the function. This parameter may be null if
 ///                        `param_count` is 0.
 /// @return A value identifying the newly-created external function.
-spidir_function_t spidir_module_create_extern_function(
+spidir_extern_function_t spidir_module_create_extern_function(
     spidir_module_handle_t module, const char* name,
     spidir_value_type_t ret_type, size_t param_count,
     const spidir_value_type_t* param_types);
@@ -367,7 +458,7 @@ spidir_value_t spidir_builder_build_param_ref(spidir_builder_handle_t builder,
 /// @return An SSA value containing the address of `func` for use with
 ///         the `callind` instruction. This value will be a pointer.
 spidir_value_t spidir_builder_build_funcaddr(spidir_builder_handle_t builder,
-                                             spidir_function_t func);
+                                             spidir_funcref_t func);
 
 /// Builds an instruction calling the function `func` at the current insertion
 /// point.
@@ -386,7 +477,7 @@ spidir_value_t spidir_builder_build_funcaddr(spidir_builder_handle_t builder,
 ///         called function had no return type, the returned value will be
 ///         `SPIDIR_VALUE_INVALID`.
 spidir_value_t spidir_builder_build_call(spidir_builder_handle_t builder,
-                                         spidir_function_t func,
+                                         spidir_funcref_t func,
                                          size_t arg_count,
                                          const spidir_value_t* args);
 

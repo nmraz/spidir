@@ -207,29 +207,7 @@ impl MachineLower for X64Machine {
                     &[],
                 );
             }
-            NodeKind::BrCond => {
-                let [cond] = ctx.node_inputs_exact(node);
-                if ctx.has_one_use(cond) {
-                    match_value! {
-                        if let node cond_node @ &NodeKind::Icmp(kind) = ctx, cond {
-                            let cond_code = select_icmp(ctx, cond_node, kind);
-                            ctx.emit_instr(
-                                X64Instr::Jumpcc(cond_code, targets[0], targets[1]),
-                                &[],
-                                &[],
-                            );
-                            return Ok(());
-                        }
-                    }
-                }
-
-                emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
-                ctx.emit_instr(
-                    X64Instr::Jumpcc(CondCode::Ne, targets[0], targets[1]),
-                    &[],
-                    &[],
-                );
-            }
+            NodeKind::BrCond => select_brcond(ctx, node, targets[0], targets[1]),
             NodeKind::Return => match ctx.node_inputs(node).next() {
                 None => ctx.emit_instr(X64Instr::Ret, &[], &[]),
                 Some(retval) => {
@@ -543,6 +521,35 @@ fn select_addr_base(
 
     uses.push(UseOperand::any_reg(ctx.get_value_vreg(value)));
     AddrBase::Reg
+}
+
+fn select_brcond(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+    true_target: Block,
+    false_target: Block,
+) {
+    let [cond] = ctx.node_inputs_exact(node);
+    if ctx.has_one_use(cond) {
+        match_value! {
+            if let node cond_node @ &NodeKind::Icmp(kind) = ctx, cond {
+                let cond_code = select_icmp(ctx, cond_node, kind);
+                ctx.emit_instr(
+                    X64Instr::Jumpcc(cond_code, true_target, false_target),
+                    &[],
+                    &[],
+                );
+                return;
+            }
+        }
+    }
+
+    emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
+    ctx.emit_instr(
+        X64Instr::Jumpcc(CondCode::Ne, true_target, false_target),
+        &[],
+        &[],
+    );
 }
 
 // Raw emission helpers

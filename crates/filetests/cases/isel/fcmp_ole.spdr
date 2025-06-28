@@ -1,0 +1,27 @@
+# run: isel
+
+func @fcmp_ole_i32:i32(f64, f64) {
+    # check: function `fcmp_ole_i32`:
+    # nextln:       block0[%1:xmm($$xmm0), %2:xmm($$xmm1)]:
+    # nextln: 0000:      %3:gpr(any)[late] = MovRmS32(0)
+    # nextln: 0001:      FpuRRm(Ucomi) %2(reg)[early], %1(any)[early]
+    # nextln: 0002:      %0:gpr(reg)[late] = Setcc(Ae) %3(tied:0)[early]
+    # nextln: 0003:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i32 = fcmp ole %1, %2
+    return %0, %3
+}
+
+func @fcmp_ole_i64:i64(f64, f64) {
+    # check: function `fcmp_ole_i64`:
+    # nextln:       block0[%1:xmm($$xmm0), %2:xmm($$xmm1)]:
+    # nextln: 0000:      %3:gpr(any)[late] = MovRmS32(0)
+    # nextln: 0001:      FpuRRm(Ucomi) %2(reg)[early], %1(any)[early]
+    # nextln: 0002:      %0:gpr(reg)[late] = Setcc(Ae) %3(tied:0)[early]
+    # nextln: 0003:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp ole %1, %2
+    return %0, %3
+}

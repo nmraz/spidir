@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 
 use ir::{
-    node::{FunctionRef, IcmpKind, MemSize, NodeKind, Type},
+    node::{FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node},
 };
 use smallvec::{SmallVec, smallvec};
@@ -13,7 +13,7 @@ use crate::{
     lir::{DefOperand, PhysReg, PhysRegSet, RegClass, UseOperand, VirtReg},
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
-    target::x64::FpuBinOp,
+    target::x64::{FpuBinOp, FpuCmpCode},
 };
 
 use super::{
@@ -193,6 +193,7 @@ impl MachineLower for X64Machine {
             NodeKind::Fsub => emit_fpu_rr(ctx, node, FpuBinOp::Sub),
             NodeKind::Fmul => emit_fpu_rr(ctx, node, FpuBinOp::Mul),
             NodeKind::Fdiv => emit_fpu_rr(ctx, node, FpuBinOp::Div),
+            &NodeKind::Fcmp(kind) => select_direct_fcmp(ctx, node, kind),
             NodeKind::PtrOff => select_alu(ctx, node, AluBinOp::Add),
             &NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             &NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
@@ -418,6 +419,61 @@ fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: Icmp
 
     emit_alu_rr_discarded(ctx, op1, op2, AluBinOp::Cmp);
     cond_code_for_icmp(kind)
+}
+
+fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: FcmpKind) {
+    let [output] = ctx.node_outputs_exact(node);
+    let [op1, op2] = ctx.node_inputs_exact(node);
+
+    let output = ctx.get_value_vreg(output);
+
+    let op1 = ctx.get_value_vreg(op1);
+    let op2 = ctx.get_value_vreg(op2);
+
+    match kind {
+        FcmpKind::Oeq => {
+            // Unfortunately, unordered `ucomisd` results set ZF, so we need to be a bit more
+            // creative in our choice of instructions here. One option is to emit extra code to
+            // check PF as well, but LLVM appears to prefer a direct `cmpeqsd` followed by an
+            // XMM-to-GPR move. Let's do the same for now, because it results in simpler code and
+            // less register pressure.
+            emit_fpu_cmp_sequence(ctx, FpuCmpCode::Eq, output, op1, op2);
+        }
+        FcmpKind::One => {
+            // We can use a `ucomisd` here because unordered results set ZF, causing us to return
+            // false.
+            emit_fpu_ucomi_sequence(ctx, CondCode::Ne, output, op1, op2);
+        }
+        FcmpKind::Olt => {
+            // Note: reverse the operands and the condition code so that CF=1, ZF=1 cause us to
+            // return false when the result is unordered.
+            emit_fpu_ucomi_sequence(ctx, CondCode::A, output, op2, op1);
+        }
+        FcmpKind::Ole => {
+            // Note: reverse the operands and the condition code so that CF=1 causes us to return
+            // false when the result is unordered.
+            emit_fpu_ucomi_sequence(ctx, CondCode::Ae, output, op2, op1);
+        }
+        FcmpKind::Ueq => {
+            // Now we actually do want unordered results to return true, so a simple `sete` is
+            // correct.
+            emit_fpu_ucomi_sequence(ctx, CondCode::E, output, op1, op2);
+        }
+        FcmpKind::Une => {
+            // The `neq` predicate in SSE `cmps[sd]` returns the logical inverse of the `eq`
+            // predicate, so DeMorgan's laws give us exactly what we want.
+            emit_fpu_cmp_sequence(ctx, FpuCmpCode::Neq, output, op1, op2);
+        }
+        FcmpKind::Ult => {
+            // Finally, the straightforward condition code actually does what we want (we also get
+            // CF=1 on unordered inputs).
+            emit_fpu_ucomi_sequence(ctx, CondCode::B, output, op1, op2);
+        }
+        FcmpKind::Ule => {
+            // Once again, this condition code achieves exactly what we need.
+            emit_fpu_ucomi_sequence(ctx, CondCode::Be, output, op1, op2);
+        }
+    };
 }
 
 fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {
@@ -843,6 +899,49 @@ fn emit_fpu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: FpuBin
         &[DefOperand::any_reg(output)],
         &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
+}
+
+fn emit_fpu_cmp_sequence(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    code: FpuCmpCode,
+    output: VirtReg,
+    op1: VirtReg,
+    op2: VirtReg,
+) {
+    let tmp_xmm_out = ctx.create_temp_vreg(RC_XMM);
+    let tmp_gpr_out = ctx.create_temp_vreg(RC_GPR);
+    ctx.emit_instr(
+        X64Instr::FpuCmp(code),
+        &[DefOperand::any_reg(tmp_xmm_out)],
+        &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
+    );
+    ctx.emit_instr(
+        X64Instr::MovGprmXmm(OperandSize::S64),
+        &[DefOperand::any(tmp_gpr_out)],
+        &[UseOperand::any_reg(tmp_xmm_out)],
+    );
+    ctx.emit_instr(
+        X64Instr::AluRmI(OperandSize::S32, AluBinOp::And, 1),
+        &[DefOperand::any(output)],
+        &[UseOperand::tied(tmp_gpr_out, 0)],
+    );
+}
+
+fn emit_fpu_ucomi_sequence(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    code: CondCode,
+    output: VirtReg,
+    op1: VirtReg,
+    op2: VirtReg,
+) {
+    emit_setcc_sequence(ctx, output, |ctx| {
+        ctx.emit_instr(
+            X64Instr::FpuRRm(FpuBinOp::Ucomi),
+            &[],
+            &[UseOperand::any_reg(op1), UseOperand::any(op2)],
+        );
+        code
+    });
 }
 
 // Matching helpers

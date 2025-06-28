@@ -1,0 +1,31 @@
+# run: codegen
+
+func @fcmp_une_i32:i32(f64, f64) {
+    # check: function `fcmp_une_i32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f c2 c1 04                  cmpneqsd xmm0, xmm1
+    # nextln: 000009: 66 48 0f 7e c0                  movq rax, xmm0
+    # nextln: 00000e: 83 e0 01                        and eax, 1
+    # nextln: 000011: 5d                              pop rbp
+    # nextln: 000012: c3                              ret
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i32 = fcmp une %1, %2
+    return %0, %3
+}
+
+func @fcmp_une_i64:i64(f64, f64) {
+    # check: function `fcmp_une_i64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f c2 c1 04                  cmpneqsd xmm0, xmm1
+    # nextln: 000009: 66 48 0f 7e c0                  movq rax, xmm0
+    # nextln: 00000e: 83 e0 01                        and eax, 1
+    # nextln: 000011: 5d                              pop rbp
+    # nextln: 000012: c3                              ret
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp une %1, %2
+    return %0, %3
+}

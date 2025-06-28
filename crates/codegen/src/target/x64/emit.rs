@@ -10,7 +10,7 @@ use crate::{
     machine::MachineEmit,
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{OperandAssignment, SpillSlot},
-    target::x64::{CALLEE_SAVED_REGS, FpuCmpCode},
+    target::x64::{CALLEE_SAVED_REGS, CompoundCondCode, FpuCmpCode},
 };
 
 use super::{
@@ -358,6 +358,9 @@ impl MachineEmit for X64Machine {
                 emit_jcc(buffer, code, ctx.block_labels[true_target]);
                 emit_jmp(buffer, ctx.block_labels[false_target]);
             }
+            &X64Instr::CompundJumpcc(code, true_target, false_target) => {
+                emit_compound_jcc(ctx, buffer, code, true_target, false_target);
+            }
         }
     }
 
@@ -446,6 +449,29 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Fixup>, offset: i32) {
     } else if offset > 0 {
         emit_alu_r64_i(buffer, AluBinOp::Add, REG_RSP, offset);
     }
+}
+
+fn emit_compound_jcc(
+    ctx: &EmitContext<'_, X64Machine>,
+    buffer: &mut CodeBuffer<X64Fixup>,
+    code: CompoundCondCode,
+    true_target: Block,
+    false_target: Block,
+) {
+    let true_target = ctx.block_labels[true_target];
+    let false_target = ctx.block_labels[false_target];
+
+    match code {
+        CompoundCondCode::FpuOeq => {
+            emit_jcc(buffer, CondCode::Ne, false_target);
+            emit_jcc(buffer, CondCode::P, false_target);
+        }
+        CompoundCondCode::FpuUne => {
+            emit_jcc(buffer, CondCode::Ne, true_target);
+            emit_jcc(buffer, CondCode::Np, false_target);
+        }
+    }
+    emit_jmp(buffer, true_target);
 }
 
 // Single-instruction emission helpers

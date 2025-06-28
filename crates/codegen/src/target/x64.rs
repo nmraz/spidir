@@ -219,6 +219,7 @@ pub enum X64Instr {
     MovsxRRm(ExtWidth),
     Setcc(CondCode),
     FpuRRm(FpuBinOp),
+    MovGprmXmm(OperandSize),
     /// Load from [rbp + offset]
     MovRRbp {
         op_size: FullOperandSize,
@@ -262,6 +263,7 @@ impl X64Instr {
             X64Instr::MovsxRRm(..) => false,
             X64Instr::Setcc(..) => true,
             X64Instr::FpuRRm(..) => false,
+            X64Instr::MovGprmXmm(..) => false,
             X64Instr::MovRRbp { .. } => false,
             X64Instr::MovsdRRbp { .. } => false,
             X64Instr::StackAddr(..) => false,
@@ -299,6 +301,7 @@ impl X64Instr {
             X64Instr::MovsxRRm(..) => false,
             X64Instr::FpuRRm(FpuBinOp::Ucmp) => true,
             X64Instr::FpuRRm(..) => false,
+            X64Instr::MovGprmXmm(..) => false,
             X64Instr::Setcc(..) => false,
             X64Instr::MovRRbp { .. } => false,
             X64Instr::MovsdRRbp { .. } => false,

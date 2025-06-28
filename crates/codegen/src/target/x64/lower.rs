@@ -187,17 +187,7 @@ impl MachineLower for X64Machine {
                 // `setcc` modifies only the low byte of its output operand, so clearing the
                 // register first avoids the (false) partial dependency on the previous value of the
                 // `setcc` output register.
-
-                let temp = ctx.create_temp_vreg(RC_GPR);
-
-                // Note: the `xor` must precede the `cmp` because it clobbers flags.
-                emit_mov_rz(ctx, temp);
-                let cond_code = select_icmp(ctx, node, kind);
-                ctx.emit_instr(
-                    X64Instr::Setcc(cond_code),
-                    &[DefOperand::any_reg(output)],
-                    &[UseOperand::tied(temp, 0)],
-                );
+                emit_setcc_sequence(ctx, output, |ctx| select_icmp(ctx, node, kind));
             }
             NodeKind::Fadd => emit_fpu_rr(ctx, node, FpuBinOp::Add),
             NodeKind::Fsub => emit_fpu_rr(ctx, node, FpuBinOp::Sub),
@@ -816,6 +806,27 @@ fn emit_alu_r(
         X64Instr::AluRm(operand_size_for_ty(ty), op),
         &[DefOperand::any(output)],
         &[UseOperand::tied(input, 0)],
+    );
+}
+
+fn emit_setcc_sequence(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    output: VirtReg,
+    f: impl FnOnce(&mut IselContext<'_, '_, X64Machine>) -> CondCode,
+) {
+    let temp = ctx.create_temp_vreg(RC_GPR);
+
+    // Note: put the move of 0 above so flags aren't live and it can be turned into an `xor`.
+    emit_mov_rz(ctx, temp);
+
+    // Emit the flag-affecting instruction/sequence
+    let cond_code = f(ctx);
+
+    // Perform the flag test.
+    ctx.emit_instr(
+        X64Instr::Setcc(cond_code),
+        &[DefOperand::any_reg(output)],
+        &[UseOperand::tied(temp, 0)],
     );
 }
 

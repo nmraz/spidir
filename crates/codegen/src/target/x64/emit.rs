@@ -996,7 +996,7 @@ fn emit_fpu_r_rm(buffer: &mut CodeBuffer<X64Fixup>, op: FpuBinOp, arg0: PhysReg,
         FpuBinOp::Sub => &[0xf2, 0xf, 0x5c],
         FpuBinOp::Mul => &[0xf2, 0xf, 0x59],
         FpuBinOp::Div => &[0xf2, 0xf, 0x5e],
-        FpuBinOp::Ucmp => &[0x66, 0xf, 0x2e],
+        FpuBinOp::Ucomi => &[0x66, 0xf, 0x2e],
     };
 
     emit_reg_mem_instr(buffer, opcode, arg0, arg1);

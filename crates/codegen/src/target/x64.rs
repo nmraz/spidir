@@ -141,7 +141,7 @@ pub enum FpuBinOp {
     Sub,
     Mul,
     Div,
-    Ucmp,
+    Ucomi,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -299,7 +299,7 @@ impl X64Instr {
             X64Instr::MovRI64(..) => false,
             X64Instr::MovzxRRm(..) => false,
             X64Instr::MovsxRRm(..) => false,
-            X64Instr::FpuRRm(FpuBinOp::Ucmp) => true,
+            X64Instr::FpuRRm(FpuBinOp::Ucomi) => true,
             X64Instr::FpuRRm(..) => false,
             X64Instr::MovGprmXmm(..) => false,
             X64Instr::Setcc(..) => false,

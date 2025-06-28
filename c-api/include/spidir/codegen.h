@@ -115,8 +115,7 @@ spidir_codegen_blob_get_relocs(spidir_codegen_blob_handle_t blob);
 ///                      backend-specific API to create a suitable machine.
 /// @param[in] config    Machine-agnostic configuration to use.
 /// @param[in] module    The module containing the function to be emitted.
-/// @param[in] func      The function for which to generate code. This function
-///                      must be internal to the module.
+/// @param[in] func      The function for which to generate code.
 /// @param[out] out_blob An out parameter that will receive the generated code
 ///                      upon success. This parameter will be cleared on error.
 /// @return A status indicating whether code generation was successful.

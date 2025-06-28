@@ -106,6 +106,18 @@ impl CondCode {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FpuCmpCode {
+    Eq = 0,
+    Lt = 1,
+    Le = 2,
+    Unord = 3,
+    Neq = 4,
+    Nlt = 5,
+    Nle = 6,
+    Ord = 7,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AluBinOp {
     Add,
     And,
@@ -219,6 +231,7 @@ pub enum X64Instr {
     MovsxRRm(ExtWidth),
     Setcc(CondCode),
     FpuRRm(FpuBinOp),
+    FpuCmp(FpuCmpCode),
     MovGprmXmm(OperandSize),
     /// Load from [rbp + offset]
     MovRRbp {
@@ -263,6 +276,7 @@ impl X64Instr {
             X64Instr::MovsxRRm(..) => false,
             X64Instr::Setcc(..) => true,
             X64Instr::FpuRRm(..) => false,
+            X64Instr::FpuCmp(..) => false,
             X64Instr::MovGprmXmm(..) => false,
             X64Instr::MovRRbp { .. } => false,
             X64Instr::MovsdRRbp { .. } => false,
@@ -301,6 +315,7 @@ impl X64Instr {
             X64Instr::MovsxRRm(..) => false,
             X64Instr::FpuRRm(FpuBinOp::Ucomi) => true,
             X64Instr::FpuRRm(..) => false,
+            X64Instr::FpuCmp(..) => false,
             X64Instr::MovGprmXmm(..) => false,
             X64Instr::Setcc(..) => false,
             X64Instr::MovRRbp { .. } => false,

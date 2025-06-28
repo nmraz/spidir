@@ -10,7 +10,7 @@ use crate::{
     machine::MachineEmit,
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{OperandAssignment, SpillSlot},
-    target::x64::CALLEE_SAVED_REGS,
+    target::x64::{CALLEE_SAVED_REGS, FpuCmpCode},
 };
 
 use super::{
@@ -273,6 +273,12 @@ impl MachineEmit for X64Machine {
                 uses[0].as_reg().unwrap(),
                 // Note: thank goodness for little endian, because we currently spill the full 16
                 // bytes.
+                state.operand_reg_mem(uses[1]),
+            ),
+            &X64Instr::FpuCmp(code) => emit_fpu_cmp(
+                buffer,
+                code,
+                defs[0].as_reg().unwrap(),
                 state.operand_reg_mem(uses[1]),
             ),
             &X64Instr::MovGprmXmm(op_size) => emit_mov_gprm_xmm(
@@ -869,6 +875,21 @@ fn emit_movsd_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem
 
 fn emit_movsd_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
     emit_reg_mem_instr(buffer, &[0xf2, 0xf, 0x11], src, dest);
+}
+
+fn emit_fpu_cmp(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    code: FpuCmpCode,
+    arg0_dest: PhysReg,
+    arg1: RegMem,
+) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(arg1, |rex| rex.encode_modrm_reg(arg0_dest));
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf2, 0xf, 0xc2]);
+        modrm_sib.emit(sink);
+        sink.emit(&[code as u8]);
+    });
 }
 
 fn emit_mov_gprm_xmm(

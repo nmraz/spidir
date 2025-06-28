@@ -236,6 +236,22 @@ spidir_funcref_get_kind(spidir_funcref_t func) {
     return func.id >> 32;
 }
 
+/// Queries whether a function reference points to an internal function.
+///
+/// @param[in] func The reference to query.
+/// @return True if `func` refers to an internal function.
+static inline bool spidir_funcref_is_internal(spidir_funcref_t func) {
+    return spidir_funcref_get_kind(func) == SPIDIR_FUNCREF_INTERNAL;
+}
+
+/// Queries whether a function reference points to an external function.
+///
+/// @param[in] func The reference to query.
+/// @return True if `func` refers to an external function.
+static inline bool spidir_funcref_is_external(spidir_funcref_t func) {
+    return spidir_funcref_get_kind(func) == SPIDIR_FUNCREF_EXTERNAL;
+}
+
 /// Returns the module-internal function pointed to by a reference previously
 /// created with `spidir_funcref_make_internal`.
 ///

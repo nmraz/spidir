@@ -38,6 +38,13 @@ void caller_builder_callback(spidir_builder_handle_t builder, void* ctx) {
 
     spidir_value_t args[] = {ptr, ival};
 
+    ASSERT(spidir_funcref_get_kind(func_ctx->extfunc) ==
+           SPIDIR_FUNCREF_EXTERNAL);
+    ASSERT(spidir_funcref_is_external(func_ctx->extfunc));
+    ASSERT(spidir_funcref_get_kind(func_ctx->infunc) ==
+           SPIDIR_FUNCREF_INTERNAL);
+    ASSERT(spidir_funcref_is_internal(func_ctx->infunc));
+
     spidir_builder_build_call(builder, func_ctx->extfunc, 2, args);
     spidir_value_t ext_ret =
         spidir_builder_build_call(builder, func_ctx->extfunc2, 2, args);

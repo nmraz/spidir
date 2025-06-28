@@ -1,3 +1,5 @@
+use core::mem;
+
 use alloc::vec::Vec;
 
 use ir::{
@@ -13,7 +15,7 @@ use crate::{
     lir::{DefOperand, PhysReg, PhysRegSet, RegClass, UseOperand, VirtReg},
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
-    target::x64::{FpuBinOp, FpuCmpCode},
+    target::x64::{CompoundCondCode, FpuBinOp, FpuCmpCode},
 };
 
 use super::{
@@ -542,6 +544,12 @@ fn select_brcond(
                 return;
             }
         }
+
+        match_value! {
+            if let node cmp_node @ &NodeKind::Fcmp(kind) = ctx, cond {
+                return select_fcmp_brcond(ctx, cmp_node, kind, true_target, false_target);
+            }
+        }
     }
 
     emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
@@ -550,6 +558,67 @@ fn select_brcond(
         &[],
         &[],
     );
+}
+
+fn select_fcmp_brcond(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    cmp_node: Node,
+    cmp_kind: FcmpKind,
+    true_target: Block,
+    false_target: Block,
+) {
+    let [op1, op2] = ctx.node_inputs_exact(cmp_node);
+
+    let mut op1 = ctx.get_value_vreg(op1);
+    let mut op2 = ctx.get_value_vreg(op2);
+
+    // See `select_direct_fcmp` for more detail about what's going on here.
+    let (swap_cmp_operands, branch_instr) = match cmp_kind {
+        FcmpKind::Oeq => (
+            false,
+            X64Instr::CompundJumpcc(CompoundCondCode::FpuOeq, true_target, false_target),
+        ),
+        FcmpKind::One => (
+            false,
+            X64Instr::Jumpcc(CondCode::Ne, true_target, false_target),
+        ),
+        FcmpKind::Olt => (
+            true,
+            X64Instr::Jumpcc(CondCode::A, true_target, false_target),
+        ),
+        FcmpKind::Ole => (
+            true,
+            X64Instr::Jumpcc(CondCode::Ae, true_target, false_target),
+        ),
+        FcmpKind::Ueq => (
+            false,
+            X64Instr::Jumpcc(CondCode::E, true_target, false_target),
+        ),
+        FcmpKind::Une => (
+            false,
+            X64Instr::CompundJumpcc(CompoundCondCode::FpuUne, true_target, false_target),
+        ),
+        FcmpKind::Ult => (
+            false,
+            X64Instr::Jumpcc(CondCode::B, true_target, false_target),
+        ),
+        FcmpKind::Ule => (
+            false,
+            X64Instr::Jumpcc(CondCode::Be, true_target, false_target),
+        ),
+    };
+
+    if swap_cmp_operands {
+        mem::swap(&mut op1, &mut op2);
+    }
+
+    ctx.emit_instr(
+        X64Instr::FpuRRm(FpuBinOp::Ucomi),
+        &[],
+        &[UseOperand::any_reg(op1), UseOperand::any(op2)],
+    );
+
+    ctx.emit_instr(branch_instr, &[], &[]);
 }
 
 // Raw emission helpers

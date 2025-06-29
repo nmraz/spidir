@@ -3,7 +3,7 @@
 func @fcmp_oeq_i32:i32(f64, f64) {
     # check: function `fcmp_oeq_i32`:
     # nextln:       block0[%1:xmm($$xmm0), %2:xmm($$xmm1)]:
-    # nextln: 0000:      %3:xmm(reg)[late] = FpuCmp(Eq) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0000:      %3:xmm(reg)[late] = SseScalarFpuRRm(Cmp(Eq)) %1(tied:0)[early], %2(any)[early]
     # nextln: 0001:      %4:gpr(any)[late] = MovGprmXmm(S64) %3(reg)[early]
     # nextln: 0002:      %0:gpr(any)[late] = AluRmI(S32, And, 1) %4(tied:0)[early]
     # nextln: 0003:      Ret %0($$rax)[early]
@@ -16,7 +16,7 @@ func @fcmp_oeq_i32:i32(f64, f64) {
 func @fcmp_oeq_i64:i64(f64, f64) {
     # check: function `fcmp_oeq_i64`:
     # nextln:       block0[%1:xmm($$xmm0), %2:xmm($$xmm1)]:
-    # nextln: 0000:      %3:xmm(reg)[late] = FpuCmp(Eq) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0000:      %3:xmm(reg)[late] = SseScalarFpuRRm(Cmp(Eq)) %1(tied:0)[early], %2(any)[early]
     # nextln: 0001:      %4:gpr(any)[late] = MovGprmXmm(S64) %3(reg)[early]
     # nextln: 0002:      %0:gpr(any)[late] = AluRmI(S32, And, 1) %4(tied:0)[early]
     # nextln: 0003:      Ret %0($$rax)[early]

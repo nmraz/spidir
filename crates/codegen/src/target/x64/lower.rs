@@ -15,7 +15,7 @@ use crate::{
     lir::{DefOperand, PhysReg, PhysRegSet, RegClass, UseOperand, VirtReg},
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
-    target::x64::{CompoundCondCode, FpuBinOp, FpuCmpCode},
+    target::x64::{CompoundCondCode, SseFpuBinOp, SseFpuCmpCode},
 };
 
 use super::{
@@ -191,10 +191,10 @@ impl MachineLower for X64Machine {
                 // `setcc` output register.
                 emit_setcc_sequence(ctx, output, |ctx| select_icmp(ctx, node, kind));
             }
-            NodeKind::Fadd => emit_fpu_rr(ctx, node, FpuBinOp::Add),
-            NodeKind::Fsub => emit_fpu_rr(ctx, node, FpuBinOp::Sub),
-            NodeKind::Fmul => emit_fpu_rr(ctx, node, FpuBinOp::Mul),
-            NodeKind::Fdiv => emit_fpu_rr(ctx, node, FpuBinOp::Div),
+            NodeKind::Fadd => emit_fpu_rr(ctx, node, SseFpuBinOp::Add),
+            NodeKind::Fsub => emit_fpu_rr(ctx, node, SseFpuBinOp::Sub),
+            NodeKind::Fmul => emit_fpu_rr(ctx, node, SseFpuBinOp::Mul),
+            NodeKind::Fdiv => emit_fpu_rr(ctx, node, SseFpuBinOp::Div),
             &NodeKind::Fcmp(kind) => select_direct_fcmp(ctx, node, kind),
             NodeKind::PtrOff => select_alu(ctx, node, AluBinOp::Add),
             &NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
@@ -417,7 +417,7 @@ fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kin
             // check PF as well, but LLVM appears to prefer a direct `cmpeqsd` followed by an
             // XMM-to-GPR move. Let's do the same for now, because it results in simpler code and
             // less register pressure.
-            emit_fpu_cmp_sequence(ctx, FpuCmpCode::Eq, output, op1, op2);
+            emit_fpu_cmp_sequence(ctx, SseFpuCmpCode::Eq, output, op1, op2);
         }
         FcmpKind::One => {
             // We can use a `ucomisd` here because unordered results set ZF, causing us to return
@@ -442,7 +442,7 @@ fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kin
         FcmpKind::Une => {
             // The `neq` predicate in SSE `cmps[sd]` returns the logical inverse of the `eq`
             // predicate, so DeMorgan's laws give us exactly what we want.
-            emit_fpu_cmp_sequence(ctx, FpuCmpCode::Neq, output, op1, op2);
+            emit_fpu_cmp_sequence(ctx, SseFpuCmpCode::Neq, output, op1, op2);
         }
         FcmpKind::Ult => {
             // Finally, the straightforward condition code actually does what we want (we also get
@@ -613,7 +613,7 @@ fn select_fcmp_brcond(
     }
 
     ctx.emit_instr(
-        X64Instr::FpuRRm(FpuBinOp::Ucomi),
+        X64Instr::SseScalarFpuRRm(SseFpuBinOp::Ucomi),
         &[],
         &[UseOperand::any_reg(op1), UseOperand::any(op2)],
     );
@@ -962,7 +962,7 @@ fn emit_setcc_sequence(
     );
 }
 
-fn emit_fpu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: FpuBinOp) {
+fn emit_fpu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: SseFpuBinOp) {
     let [output] = ctx.node_outputs_exact(node);
     let [op1, op2] = ctx.node_inputs_exact(node);
 
@@ -971,7 +971,7 @@ fn emit_fpu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: FpuBin
     let op2 = ctx.get_value_vreg(op2);
 
     ctx.emit_instr(
-        X64Instr::FpuRRm(op),
+        X64Instr::SseScalarFpuRRm(op),
         &[DefOperand::any_reg(output)],
         &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
@@ -979,7 +979,7 @@ fn emit_fpu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: FpuBin
 
 fn emit_fpu_cmp_sequence(
     ctx: &mut IselContext<'_, '_, X64Machine>,
-    code: FpuCmpCode,
+    code: SseFpuCmpCode,
     output: VirtReg,
     op1: VirtReg,
     op2: VirtReg,
@@ -987,7 +987,7 @@ fn emit_fpu_cmp_sequence(
     let tmp_xmm_out = ctx.create_temp_vreg(RC_XMM);
     let tmp_gpr_out = ctx.create_temp_vreg(RC_GPR);
     ctx.emit_instr(
-        X64Instr::FpuCmp(code),
+        X64Instr::SseScalarFpuRRm(SseFpuBinOp::Cmp(code)),
         &[DefOperand::any_reg(tmp_xmm_out)],
         &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
@@ -1012,7 +1012,7 @@ fn emit_fpu_ucomi_sequence(
 ) {
     emit_setcc_sequence(ctx, output, |ctx| {
         ctx.emit_instr(
-            X64Instr::FpuRRm(FpuBinOp::Ucomi),
+            X64Instr::SseScalarFpuRRm(SseFpuBinOp::Ucomi),
             &[],
             &[UseOperand::any_reg(op1), UseOperand::any(op2)],
         );

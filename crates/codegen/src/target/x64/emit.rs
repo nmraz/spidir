@@ -10,15 +10,15 @@ use crate::{
     machine::MachineEmit,
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{OperandAssignment, SpillSlot},
-    target::x64::{CALLEE_SAVED_REGS, CompoundCondCode, FpuCmpCode},
+    target::x64::{CALLEE_SAVED_REGS, CompoundCondCode, SseFpuCmpCode},
 };
 
 use super::{
-    AddrBase, AddrMode, AluBinOp, AluUnOp, CondCode, DivOp, ExtWidth, FpuBinOp, FullOperandSize,
-    IndexScale, OperandSize, REG_R8, REG_R9, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15,
-    REG_RAX, REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, REG_XMM0, REG_XMM1,
-    REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, REG_XMM8, REG_XMM9, REG_XMM10,
-    REG_XMM11, REG_XMM12, REG_XMM13, REG_XMM14, REG_XMM15, RELOC_ABS64, RELOC_PC32, ShiftOp,
+    AddrBase, AddrMode, AluBinOp, AluUnOp, CondCode, DivOp, ExtWidth, FullOperandSize, IndexScale,
+    OperandSize, REG_R8, REG_R9, REG_R10, REG_R11, REG_R12, REG_R13, REG_R14, REG_R15, REG_RAX,
+    REG_RBP, REG_RBX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_RSP, REG_XMM0, REG_XMM1, REG_XMM2,
+    REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, REG_XMM8, REG_XMM9, REG_XMM10, REG_XMM11,
+    REG_XMM12, REG_XMM13, REG_XMM14, REG_XMM15, RELOC_ABS64, RELOC_PC32, ShiftOp, SseFpuBinOp,
     X64Instr, X64Machine,
 };
 
@@ -267,18 +267,12 @@ impl MachineEmit for X64Machine {
                 defs[0].as_reg().unwrap(),
                 state.operand_reg_mem(uses[0]),
             ),
-            &X64Instr::FpuRRm(op) => emit_fpu_r_rm(
+            &X64Instr::SseScalarFpuRRm(op) => emit_sse_fpu_r_rm(
                 buffer,
                 op,
                 uses[0].as_reg().unwrap(),
                 // Note: thank goodness for little endian, because we currently spill the full 16
                 // bytes.
-                state.operand_reg_mem(uses[1]),
-            ),
-            &X64Instr::FpuCmp(code) => emit_fpu_cmp(
-                buffer,
-                code,
-                defs[0].as_reg().unwrap(),
                 state.operand_reg_mem(uses[1]),
             ),
             &X64Instr::MovGprmXmm(op_size) => emit_mov_gprm_xmm(
@@ -903,9 +897,9 @@ fn emit_movsd_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg
     emit_reg_mem_instr(buffer, &[0xf2, 0xf, 0x11], src, dest);
 }
 
-fn emit_fpu_cmp(
+fn emit_sse_fpu_cmp(
     buffer: &mut CodeBuffer<X64Fixup>,
-    code: FpuCmpCode,
+    code: SseFpuCmpCode,
     arg0_dest: PhysReg,
     arg1: RegMem,
 ) {
@@ -1037,13 +1031,20 @@ fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: AluBinOp, dest: PhysReg
     emit_alu_rm_i(buffer, op, OperandSize::S64, RegMem::Reg(dest), imm);
 }
 
-fn emit_fpu_r_rm(buffer: &mut CodeBuffer<X64Fixup>, op: FpuBinOp, arg0: PhysReg, arg1: RegMem) {
+fn emit_sse_fpu_r_rm(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op: SseFpuBinOp,
+    arg0: PhysReg,
+    arg1: RegMem,
+) {
     let opcode = match op {
-        FpuBinOp::Add => &[0xf2, 0xf, 0x58],
-        FpuBinOp::Sub => &[0xf2, 0xf, 0x5c],
-        FpuBinOp::Mul => &[0xf2, 0xf, 0x59],
-        FpuBinOp::Div => &[0xf2, 0xf, 0x5e],
-        FpuBinOp::Ucomi => &[0x66, 0xf, 0x2e],
+        SseFpuBinOp::Add => &[0xf2, 0xf, 0x58],
+        SseFpuBinOp::Sub => &[0xf2, 0xf, 0x5c],
+        SseFpuBinOp::Mul => &[0xf2, 0xf, 0x59],
+        SseFpuBinOp::Div => &[0xf2, 0xf, 0x5e],
+        SseFpuBinOp::Ucomi => &[0x66, 0xf, 0x2e],
+        // This encoding is weird enough that we need a dedicated function.
+        SseFpuBinOp::Cmp(code) => return emit_sse_fpu_cmp(buffer, code, arg0, arg1),
     };
 
     emit_reg_mem_instr(buffer, opcode, arg0, arg1);

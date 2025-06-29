@@ -3,7 +3,7 @@
 func @fadd:f64(f64, f64) {
     # check: function `fadd`:
     # nextln:       block0[%1:xmm($$xmm0), %2:xmm($$xmm1)]:
-    # nextln: 0000:      %0:xmm(reg)[late] = FpuRRm(Add) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0000:      %0:xmm(reg)[late] = SseScalarFpuRRm(Add) %1(tied:0)[early], %2(any)[early]
     # nextln: 0001:      Ret %0($$xmm0)[early]
 
     %c:ctrl, %a:f64, %b:f64 = entry

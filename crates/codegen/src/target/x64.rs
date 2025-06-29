@@ -114,7 +114,7 @@ pub enum CompoundCondCode {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FpuCmpCode {
+pub enum SseFpuCmpCode {
     Eq = 0,
     Lt = 1,
     Le = 2,
@@ -156,11 +156,12 @@ pub enum DivOp {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FpuBinOp {
+pub enum SseFpuBinOp {
     Add,
     Sub,
     Mul,
     Div,
+    Cmp(SseFpuCmpCode),
     Ucomi,
 }
 
@@ -238,8 +239,7 @@ pub enum X64Instr {
     MovzxRRm(FullOperandSize),
     MovsxRRm(ExtWidth),
     Setcc(CondCode),
-    FpuRRm(FpuBinOp),
-    FpuCmp(FpuCmpCode),
+    SseScalarFpuRRm(SseFpuBinOp),
     MovGprmXmm(OperandSize),
     /// Load from [rbp + offset]
     MovRRbp {
@@ -284,8 +284,7 @@ impl X64Instr {
             X64Instr::MovzxRRm(..) => false,
             X64Instr::MovsxRRm(..) => false,
             X64Instr::Setcc(..) => true,
-            X64Instr::FpuRRm(..) => false,
-            X64Instr::FpuCmp(..) => false,
+            X64Instr::SseScalarFpuRRm(..) => false,
             X64Instr::MovGprmXmm(..) => false,
             X64Instr::MovRRbp { .. } => false,
             X64Instr::MovsdRRbp { .. } => false,
@@ -323,9 +322,8 @@ impl X64Instr {
             X64Instr::MovRI64(..) => false,
             X64Instr::MovzxRRm(..) => false,
             X64Instr::MovsxRRm(..) => false,
-            X64Instr::FpuRRm(FpuBinOp::Ucomi) => true,
-            X64Instr::FpuRRm(..) => false,
-            X64Instr::FpuCmp(..) => false,
+            X64Instr::SseScalarFpuRRm(SseFpuBinOp::Ucomi) => true,
+            X64Instr::SseScalarFpuRRm(..) => false,
             X64Instr::MovGprmXmm(..) => false,
             X64Instr::Setcc(..) => false,
             X64Instr::MovRRbp { .. } => false,

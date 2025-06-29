@@ -10,7 +10,7 @@ use crate::{
     machine::MachineEmit,
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{OperandAssignment, SpillSlot},
-    target::x64::{CALLEE_SAVED_REGS, CompoundCondCode, SseFpuCmpCode},
+    target::x64::{CALLEE_SAVED_REGS, CompoundCondCode, SseFpuCmpCode, SseFpuPrecision},
 };
 
 use super::{
@@ -882,19 +882,19 @@ fn emit_ud2(buffer: &mut CodeBuffer<X64Fixup>) {
 }
 
 fn emit_movaps_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
-    emit_reg_mem_instr(buffer, &[0xf, 0x28], dest, src);
+    emit_sse_fpu_with_op_size(buffer, SseFpuPrecision::Single, 0x28, dest, src);
 }
 
 fn emit_movaps_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
-    emit_reg_mem_instr(buffer, &[0xf, 0x29], src, dest);
+    emit_sse_fpu_with_op_size(buffer, SseFpuPrecision::Single, 0x29, src, dest);
 }
 
 fn emit_movsd_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
-    emit_reg_mem_instr(buffer, &[0xf2, 0xf, 0x10], dest, src);
+    emit_sse_fpu_with_mandatory_prefix(buffer, SseFpuPrecision::Double, 0x10, dest, src);
 }
 
 fn emit_movsd_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
-    emit_reg_mem_instr(buffer, &[0xf2, 0xf, 0x11], src, dest);
+    emit_sse_fpu_with_mandatory_prefix(buffer, SseFpuPrecision::Double, 0x11, src, dest);
 }
 
 fn emit_sse_fpu_cmp(
@@ -1038,28 +1038,56 @@ fn emit_sse_fpu_r_rm(
     arg1: RegMem,
 ) {
     let opcode = match op {
-        SseFpuBinOp::Add => &[0xf2, 0xf, 0x58],
-        SseFpuBinOp::Sub => &[0xf2, 0xf, 0x5c],
-        SseFpuBinOp::Mul => &[0xf2, 0xf, 0x59],
-        SseFpuBinOp::Div => &[0xf2, 0xf, 0x5e],
-        SseFpuBinOp::Ucomi => &[0x66, 0xf, 0x2e],
-        // This encoding is weird enough that we need a dedicated function.
+        SseFpuBinOp::Add => 0x58,
+        SseFpuBinOp::Sub => 0x5c,
+        SseFpuBinOp::Mul => 0x59,
+        SseFpuBinOp::Div => 0x5e,
+        // This is the odd one out: it uses a packed-like encoding even though it's scalar.
+        SseFpuBinOp::Ucomi => {
+            return emit_sse_fpu_with_op_size(buffer, SseFpuPrecision::Double, 0x2e, arg0, arg1);
+        }
+        // This encoding has an extra immediate, so use a dedicated function.
         SseFpuBinOp::Cmp(code) => return emit_sse_fpu_cmp(buffer, code, arg0, arg1),
     };
 
-    emit_reg_mem_instr(buffer, opcode, arg0, arg1);
+    emit_sse_fpu_with_mandatory_prefix(buffer, SseFpuPrecision::Double, opcode, arg0, arg1);
 }
 
-fn emit_reg_mem_instr(
+fn emit_sse_fpu_with_op_size(
     buffer: &mut CodeBuffer<X64Fixup>,
-    opcode: &[u8],
+    prec: SseFpuPrecision,
+    opcode: u8,
     reg: PhysReg,
     reg_mem: RegMem,
 ) {
     let (rex, modrm_sib) = encode_reg_mem_parts(reg_mem, |rex| rex.encode_modrm_reg(reg));
     buffer.instr(|sink| {
+        if prec == SseFpuPrecision::Double {
+            sink.emit(&[PREFIX_OPERAND_SIZE]);
+        }
         rex.emit(sink);
-        sink.emit(opcode);
+        sink.emit(&[0xf, opcode]);
+        modrm_sib.emit(sink);
+    });
+}
+
+fn emit_sse_fpu_with_mandatory_prefix(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    prec: SseFpuPrecision,
+    opcode: u8,
+    reg: PhysReg,
+    reg_mem: RegMem,
+) {
+    let prefix = match prec {
+        SseFpuPrecision::Single => 0xf3,
+        SseFpuPrecision::Double => 0xf2,
+    };
+
+    let (rex, modrm_sib) = encode_reg_mem_parts(reg_mem, |rex| rex.encode_modrm_reg(reg));
+    buffer.instr(|sink| {
+        sink.emit(&[prefix]);
+        rex.emit(sink);
+        sink.emit(&[0xf, opcode]);
         modrm_sib.emit(sink);
     });
 }

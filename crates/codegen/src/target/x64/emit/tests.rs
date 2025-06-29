@@ -484,3 +484,77 @@ fn rip_off_addr_mode() {
         expect!["89 05 04 00 00 00         mov dword ptr [rip + 4], eax"],
     );
 }
+
+#[test]
+fn movsd() {
+    let check = |dest, src, expected| {
+        check_emit_instr(|buffer| emit_movsd_r_rm(buffer, dest, src), expected);
+    };
+
+    check(
+        REG_XMM0,
+        RegMem::Reg(REG_XMM1),
+        expect!["f2 0f 10 c1               movsd xmm0, xmm1"],
+    );
+    check(
+        REG_XMM10,
+        RegMem::Reg(REG_XMM1),
+        expect!["f2 44 0f 10 d1            movsd xmm10, xmm1"],
+    );
+    check(
+        REG_XMM0,
+        RegMem::Reg(REG_XMM10),
+        expect!["f2 41 0f 10 c2            movsd xmm0, xmm10"],
+    );
+    check(
+        REG_XMM15,
+        RegMem::Reg(REG_XMM10),
+        expect!["f2 45 0f 10 fa            movsd xmm15, xmm10"],
+    );
+    check(
+        REG_XMM7,
+        RegMem::Mem(RawAddrMode::BaseIndexOff {
+            base: Some(REG_R8),
+            index: None,
+            offset: 0,
+        }),
+        expect!["f2 41 0f 10 38            movsd xmm7, qword ptr [r8]"],
+    );
+}
+
+#[test]
+fn movaps() {
+    let check = |dest, src, expected| {
+        check_emit_instr(|buffer| emit_movaps_r_rm(buffer, dest, src), expected);
+    };
+
+    check(
+        REG_XMM0,
+        RegMem::Reg(REG_XMM1),
+        expect!["0f 28 c1                  movaps xmm0, xmm1"],
+    );
+    check(
+        REG_XMM10,
+        RegMem::Reg(REG_XMM1),
+        expect!["44 0f 28 d1               movaps xmm10, xmm1"],
+    );
+    check(
+        REG_XMM0,
+        RegMem::Reg(REG_XMM10),
+        expect!["41 0f 28 c2               movaps xmm0, xmm10"],
+    );
+    check(
+        REG_XMM15,
+        RegMem::Reg(REG_XMM10),
+        expect!["45 0f 28 fa               movaps xmm15, xmm10"],
+    );
+    check(
+        REG_XMM7,
+        RegMem::Mem(RawAddrMode::BaseIndexOff {
+            base: Some(REG_R8),
+            index: None,
+            offset: 0,
+        }),
+        expect!["41 0f 28 38               movaps xmm7, xmmword ptr [r8]"],
+    );
+}

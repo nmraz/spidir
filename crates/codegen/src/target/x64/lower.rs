@@ -15,7 +15,7 @@ use crate::{
     lir::{DefOperand, PhysReg, PhysRegSet, RegClass, UseOperand, VirtReg},
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
-    target::x64::{CompoundCondCode, SseFpuBinOp, SseFpuCmpCode},
+    target::x64::{CompoundCondCode, SseFpuBinOp, SseFpuCmpCode, SseFpuPrecision},
 };
 
 use super::{
@@ -613,7 +613,7 @@ fn select_fcmp_brcond(
     }
 
     ctx.emit_instr(
-        X64Instr::SseScalarFpuRRm(SseFpuBinOp::Ucomi),
+        X64Instr::Ucomi(SseFpuPrecision::Double),
         &[],
         &[UseOperand::any_reg(op1), UseOperand::any(op2)],
     );
@@ -971,7 +971,7 @@ fn emit_fpu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: SseFpu
     let op2 = ctx.get_value_vreg(op2);
 
     ctx.emit_instr(
-        X64Instr::SseScalarFpuRRm(op),
+        X64Instr::SseScalarFpuRRm(SseFpuPrecision::Double, op),
         &[DefOperand::any_reg(output)],
         &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
@@ -987,7 +987,7 @@ fn emit_fpu_cmp_sequence(
     let tmp_xmm_out = ctx.create_temp_vreg(RC_XMM);
     let tmp_gpr_out = ctx.create_temp_vreg(RC_GPR);
     ctx.emit_instr(
-        X64Instr::SseScalarFpuRRm(SseFpuBinOp::Cmp(code)),
+        X64Instr::SseScalarFpuRRm(SseFpuPrecision::Double, SseFpuBinOp::Cmp(code)),
         &[DefOperand::any_reg(tmp_xmm_out)],
         &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
@@ -1012,7 +1012,7 @@ fn emit_fpu_ucomi_sequence(
 ) {
     emit_setcc_sequence(ctx, output, |ctx| {
         ctx.emit_instr(
-            X64Instr::SseScalarFpuRRm(SseFpuBinOp::Ucomi),
+            X64Instr::Ucomi(SseFpuPrecision::Double),
             &[],
             &[UseOperand::any_reg(op1), UseOperand::any(op2)],
         );

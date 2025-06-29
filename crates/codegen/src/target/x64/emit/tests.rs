@@ -558,3 +558,55 @@ fn movaps() {
         expect!["41 0f 28 38               movaps xmm7, xmmword ptr [r8]"],
     );
 }
+
+#[test]
+fn adds() {
+    let check = |prec, dest, src, expected| {
+        check_emit_instr(
+            |buffer| emit_sse_fpu_r_rm(buffer, prec, SseFpuBinOp::Add, dest, src),
+            expected,
+        );
+    };
+
+    check(
+        SseFpuPrecision::Single,
+        REG_XMM0,
+        RegMem::Reg(REG_XMM1),
+        expect!["f3 0f 58 c1               addss xmm0, xmm1"],
+    );
+
+    check(
+        SseFpuPrecision::Double,
+        REG_XMM0,
+        RegMem::Reg(REG_XMM1),
+        expect!["f2 0f 58 c1               addsd xmm0, xmm1"],
+    );
+    check(
+        SseFpuPrecision::Double,
+        REG_XMM10,
+        RegMem::Reg(REG_XMM1),
+        expect!["f2 44 0f 58 d1            addsd xmm10, xmm1"],
+    );
+    check(
+        SseFpuPrecision::Double,
+        REG_XMM0,
+        RegMem::Reg(REG_XMM10),
+        expect!["f2 41 0f 58 c2            addsd xmm0, xmm10"],
+    );
+    check(
+        SseFpuPrecision::Double,
+        REG_XMM15,
+        RegMem::Reg(REG_XMM10),
+        expect!["f2 45 0f 58 fa            addsd xmm15, xmm10"],
+    );
+    check(
+        SseFpuPrecision::Double,
+        REG_XMM7,
+        RegMem::Mem(RawAddrMode::BaseIndexOff {
+            base: Some(REG_R8),
+            index: None,
+            offset: 0,
+        }),
+        expect!["f2 41 0f 58 38            addsd xmm7, qword ptr [r8]"],
+    );
+}

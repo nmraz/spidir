@@ -3,7 +3,7 @@
 func @select_oeq:i32(f64, f64, i32, i32) {
     # check: function `select_oeq`:
     # nextln:       block0[%3:xmm($$xmm0), %4:xmm($$xmm1), %2:gpr($$rdi), %1:gpr($$rsi)]:
-    # nextln: 0000:      SseScalarFpuRRm(Ucomi) %3(reg)[early], %4(any)[early]
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
     # nextln: 0001:      CompundJumpcc(FpuOeq, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
@@ -26,7 +26,7 @@ func @select_oeq:i32(f64, f64, i32, i32) {
 func @select_one:i32(f64, f64, i32, i32) {
     # check: function `select_one`:
     # nextln:       block0[%3:xmm($$xmm0), %4:xmm($$xmm1), %2:gpr($$rdi), %1:gpr($$rsi)]:
-    # nextln: 0000:      SseScalarFpuRRm(Ucomi) %3(reg)[early], %4(any)[early]
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
     # nextln: 0001:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
@@ -49,7 +49,7 @@ func @select_one:i32(f64, f64, i32, i32) {
 func @select_olt:i32(f64, f64, i32, i32) {
     # check: function `select_olt`:
     # nextln:       block0[%3:xmm($$xmm0), %4:xmm($$xmm1), %2:gpr($$rdi), %1:gpr($$rsi)]:
-    # nextln: 0000:      SseScalarFpuRRm(Ucomi) %4(reg)[early], %3(any)[early]
+    # nextln: 0000:      Ucomi(Double) %4(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(A, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
@@ -72,7 +72,7 @@ func @select_olt:i32(f64, f64, i32, i32) {
 func @select_ole:i32(f64, f64, i32, i32) {
     # check: function `select_ole`:
     # nextln:       block0[%3:xmm($$xmm0), %4:xmm($$xmm1), %2:gpr($$rdi), %1:gpr($$rsi)]:
-    # nextln: 0000:      SseScalarFpuRRm(Ucomi) %4(reg)[early], %3(any)[early]
+    # nextln: 0000:      Ucomi(Double) %4(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(Ae, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
@@ -95,7 +95,7 @@ func @select_ole:i32(f64, f64, i32, i32) {
 func @select_ueq:i32(f64, f64, i32, i32) {
     # check: function `select_ueq`:
     # nextln:       block0[%3:xmm($$xmm0), %4:xmm($$xmm1), %2:gpr($$rdi), %1:gpr($$rsi)]:
-    # nextln: 0000:      SseScalarFpuRRm(Ucomi) %3(reg)[early], %4(any)[early]
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
     # nextln: 0001:      Jumpcc(E, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
@@ -118,7 +118,7 @@ func @select_ueq:i32(f64, f64, i32, i32) {
 func @select_une:i32(f64, f64, i32, i32) {
     # check: function `select_une`:
     # nextln:       block0[%3:xmm($$xmm0), %4:xmm($$xmm1), %2:gpr($$rdi), %1:gpr($$rsi)]:
-    # nextln: 0000:      SseScalarFpuRRm(Ucomi) %3(reg)[early], %4(any)[early]
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
     # nextln: 0001:      CompundJumpcc(FpuUne, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
@@ -141,7 +141,7 @@ func @select_une:i32(f64, f64, i32, i32) {
 func @select_ult:i32(f64, f64, i32, i32) {
     # check: function `select_ult`:
     # nextln:       block0[%3:xmm($$xmm0), %4:xmm($$xmm1), %2:gpr($$rdi), %1:gpr($$rsi)]:
-    # nextln: 0000:      SseScalarFpuRRm(Ucomi) %3(reg)[early], %4(any)[early]
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
     # nextln: 0001:      Jumpcc(B, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
@@ -164,7 +164,7 @@ func @select_ult:i32(f64, f64, i32, i32) {
 func @select_ule:i32(f64, f64, i32, i32) {
     # check: function `select_ule`:
     # nextln:       block0[%3:xmm($$xmm0), %4:xmm($$xmm1), %2:gpr($$rdi), %1:gpr($$rsi)]:
-    # nextln: 0000:      SseScalarFpuRRm(Ucomi) %3(reg)[early], %4(any)[early]
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
     # nextln: 0001:      Jumpcc(Be, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
@@ -188,7 +188,7 @@ func @select_olt_cond_reused:i32(f64, f64, i32, i32) {
     # check: function `select_olt_cond_reused`:
     # nextln:       block0[%6:xmm($$xmm0), %7:xmm($$xmm1), %5:gpr($$rdi), %4:gpr($$rsi)]:
     # nextln: 0000:      %8:gpr(any)[late] = MovRmS32(0)
-    # nextln: 0001:      SseScalarFpuRRm(Ucomi) %7(reg)[early], %6(any)[early]
+    # nextln: 0001:      Ucomi(Double) %7(reg)[early], %6(any)[early]
     # nextln: 0002:      %3:gpr(reg)[late] = Setcc(A) %8(tied:0)[early]
     # nextln: 0003:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0004:      Jumpcc(Ne, block1, block3)

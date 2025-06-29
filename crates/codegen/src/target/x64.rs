@@ -126,6 +126,12 @@ pub enum SseFpuCmpCode {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SseFpuPrecision {
+    Single,
+    Double,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AluBinOp {
     Add,
     And,

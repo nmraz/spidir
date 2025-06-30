@@ -1,0 +1,12 @@
+# run: isel
+
+func @zero64:f64() {
+    # check: function `zero64`:
+    # nextln:       block0[]:
+    # nextln: 0000:      %0:xmm(reg)[late] = SseMovRZ
+    # nextln: 0001:      Ret %0($$xmm0)[early]
+
+    %c:ctrl = entry
+    %0:f64 = fconst64 0x0
+    return %c, %0
+}

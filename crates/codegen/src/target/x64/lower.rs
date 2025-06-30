@@ -3,7 +3,7 @@ use core::mem;
 use alloc::vec::Vec;
 
 use ir::{
-    node::{FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
+    node::{BitwiseF64, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node},
 };
 use smallvec::{SmallVec, smallvec};
@@ -191,6 +191,7 @@ impl MachineLower for X64Machine {
                 // `setcc` output register.
                 emit_setcc_sequence(ctx, output, |ctx| select_icmp(ctx, node, kind));
             }
+            &NodeKind::Fconst64(val) => select_fconst64(ctx, node, val)?,
             NodeKind::Fadd => emit_fpu_rr(ctx, node, SseFpuBinOp::Add),
             NodeKind::Fsub => emit_fpu_rr(ctx, node, SseFpuBinOp::Sub),
             NodeKind::Fmul => emit_fpu_rr(ctx, node, SseFpuBinOp::Mul),
@@ -399,6 +400,22 @@ fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: Icmp
 
     emit_alu_rr_discarded(ctx, op1, op2, AluBinOp::Cmp);
     cond_code_for_icmp(kind)
+}
+
+fn select_fconst64(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+    val: BitwiseF64,
+) -> Result<(), MachineIselError> {
+    let [output] = ctx.node_outputs_exact(node);
+    let output = ctx.get_value_vreg(output);
+
+    if val.bits() == 0 {
+        ctx.emit_instr(X64Instr::SseMovRZ, &[DefOperand::any_reg(output)], &[]);
+        return Ok(());
+    }
+
+    Err(MachineIselError)
 }
 
 fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: FcmpKind) {

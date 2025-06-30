@@ -282,6 +282,10 @@ impl MachineEmit for X64Machine {
                 uses[0].as_reg().unwrap(),
                 state.operand_reg_mem(uses[1]),
             ),
+            &X64Instr::SseMovRZ => {
+                let dest = defs[0].as_reg().unwrap();
+                emit_xorps(buffer, dest, RegMem::Reg(dest))
+            }
             &X64Instr::MovGprmXmm(op_size) => emit_mov_gprm_xmm(
                 buffer,
                 op_size,
@@ -929,6 +933,10 @@ fn emit_ucomi(
     // For some reason, even though this opcode is scalar, it uses the operand-size encoding
     // typically used by the packed instructions.
     emit_sse_fpu_with_op_size(buffer, prec, 0x2e, arg0, arg1);
+}
+
+fn emit_xorps(buffer: &mut CodeBuffer<X64Fixup>, arg0: PhysReg, arg1: RegMem) {
+    emit_sse_fpu_with_op_size(buffer, SseFpuPrecision::Single, 0x57, arg0, arg1);
 }
 
 fn emit_mov_gprm_xmm(

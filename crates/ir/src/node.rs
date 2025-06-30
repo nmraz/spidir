@@ -173,9 +173,15 @@ pub enum FunctionRef {
 #[derive(Debug, Clone, Copy)]
 pub struct BitwiseF64(pub f64);
 
+impl BitwiseF64 {
+    pub fn bits(self) -> u64 {
+        self.0.to_bits()
+    }
+}
+
 impl PartialEq for BitwiseF64 {
     fn eq(&self, other: &Self) -> bool {
-        self.0.to_bits() == other.0.to_bits()
+        self.bits() == other.bits()
     }
 }
 
@@ -183,7 +189,7 @@ impl Eq for BitwiseF64 {}
 
 impl Hash for BitwiseF64 {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.to_bits().hash(state)
+        self.bits().hash(state)
     }
 }
 

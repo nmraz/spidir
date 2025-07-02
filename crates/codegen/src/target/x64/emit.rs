@@ -3,7 +3,7 @@ use ir::node::FunctionRef;
 
 use crate::{
     cfg::Block,
-    code_buffer::{CodeBuffer, FixupKind, InstrSink, Label},
+    code_buffer::{BufferRelocTarget, CodeBuffer, FixupKind, InstrSink, Label},
     emit::{EmitContext, EmitInstrData},
     frame::FrameLayout,
     lir::{Instr, PhysReg, PhysRegSet, StackSlot},
@@ -568,9 +568,13 @@ fn emit_movabs_r_i(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
 }
 
 fn emit_movabs_r_i_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
-    buffer.instr_with_reloc(target, 0, 2, RELOC_ABS64, |sink| {
-        emit_movabs_r_i_instr(sink, dest, 0)
-    });
+    buffer.instr_with_reloc(
+        BufferRelocTarget::Function(target),
+        0,
+        2,
+        RELOC_ABS64,
+        |sink| emit_movabs_r_i_instr(sink, dest, 0),
+    );
 }
 
 fn emit_movabs_r_i_instr(sink: &mut InstrSink<'_>, dest: PhysReg, imm: u64) {
@@ -636,9 +640,13 @@ fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: RawAd
 }
 
 fn emit_lea_rip_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
-    buffer.instr_with_reloc(target, -4, 3, RELOC_PC32, |sink| {
-        emit_lea_instr(sink, dest, RawAddrMode::RipOff { offset: 0 })
-    });
+    buffer.instr_with_reloc(
+        BufferRelocTarget::Function(target),
+        -4,
+        3,
+        RELOC_PC32,
+        |sink| emit_lea_instr(sink, dest, RawAddrMode::RipOff { offset: 0 }),
+    );
 }
 
 fn emit_lea_instr(sink: &mut InstrSink<'_>, dest: PhysReg, addr: RawAddrMode) {
@@ -846,10 +854,16 @@ fn emit_movsx_r_rm(buffer: &mut CodeBuffer<X64Fixup>, width: ExtWidth, dest: Phy
 }
 
 fn emit_call_rel(buffer: &mut CodeBuffer<X64Fixup>, target: FunctionRef) {
-    buffer.instr_with_reloc(target, -4, 1, RELOC_PC32, |sink| {
-        sink.emit(&[0xe8]);
-        sink.emit(&0u32.to_le_bytes());
-    });
+    buffer.instr_with_reloc(
+        BufferRelocTarget::Function(target),
+        -4,
+        1,
+        RELOC_PC32,
+        |sink| {
+            sink.emit(&[0xe8]);
+            sink.emit(&0u32.to_le_bytes());
+        },
+    );
 }
 
 fn emit_call_rm(buffer: &mut CodeBuffer<X64Fixup>, target: RegMem) {

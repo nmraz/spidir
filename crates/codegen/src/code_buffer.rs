@@ -7,6 +7,8 @@ use fx_utils::FxHashMap;
 use ir::node::FunctionRef;
 use smallvec::SmallVec;
 
+use crate::constant_pool::{Constant, ConstantPoolBuilder};
+
 // These types are intentionally completely machine-independent; we want the final `CodeBlob` to be
 // type-erased to enable trait objects in the high-level API.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -20,7 +22,21 @@ pub struct RawReloc<T> {
     pub addend: i64,
 }
 
-pub type Reloc = RawReloc<FunctionRef>;
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BufferRelocTarget {
+    Function(FunctionRef),
+    Constant(Constant),
+}
+
+type BufferReloc = RawReloc<BufferRelocTarget>;
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub enum RelocTarget {
+    Function(FunctionRef),
+    ConstantPool,
+}
+
+pub type Reloc = RawReloc<RelocTarget>;
 
 #[derive(Default, Clone)]
 pub struct CodeBlob {
@@ -74,12 +90,13 @@ pub struct CodeBuffer<F: FixupKind> {
     labels: PrimaryMap<Label, Option<u32>>,
     threaded_branches: SecondaryMap<Label, PackedOption<Label>>,
     fixups: Vec<Fixup<F>>,
-    relocs: Vec<Reloc>,
+    relocs: Vec<BufferReloc>,
     last_branches: SmallVec<[LastBranch; 4]>,
     last_bound_labels: SmallVec<[Label; 16]>,
     last_bound_label_branch_generations: FxHashMap<Label, u32>,
     first_unpinned_bound_label: usize,
     next_branch_generation: u32,
+    constant_pool: ConstantPoolBuilder,
 }
 
 impl<F: FixupKind> CodeBuffer<F> {
@@ -96,7 +113,12 @@ impl<F: FixupKind> CodeBuffer<F> {
             last_bound_label_branch_generations: FxHashMap::default(),
             first_unpinned_bound_label: 0,
             next_branch_generation: 0,
+            constant_pool: ConstantPoolBuilder::new(),
         }
+    }
+
+    pub fn get_constant(&mut self, align: u32, data: &[u8]) -> Constant {
+        self.constant_pool.get_constant(align, data)
     }
 
     pub fn instr(&mut self, f: impl FnOnce(&mut InstrSink<'_>)) {
@@ -108,14 +130,14 @@ impl<F: FixupKind> CodeBuffer<F> {
 
     pub fn instr_with_reloc(
         &mut self,
-        target: FunctionRef,
+        target: BufferRelocTarget,
         addend: i64,
         reloc_instr_offset: u32,
         reloc_kind: RelocKind,
         f: impl FnOnce(&mut InstrSink<'_>),
     ) {
         let offset = self.offset() + reloc_instr_offset;
-        self.relocs.push(Reloc {
+        self.relocs.push(BufferReloc {
             kind: reloc_kind,
             offset,
             target,
@@ -233,13 +255,38 @@ impl<F: FixupKind> CodeBuffer<F> {
             );
         }
 
-        // Relocations should already be sorted by offset thanks to limited public API.
+        // Lay out the constant pool.
+        let constant_pool = self.constant_pool.finish();
+
+        // Compute final relocations. Note that they are already sorted by instruction offset thanks
+        // to limited public API.
+        let relocs = self
+            .relocs
+            .into_iter()
+            .map(|reloc| match reloc.target {
+                BufferRelocTarget::Function(func) => Reloc {
+                    kind: reloc.kind,
+                    offset: reloc.offset,
+                    target: RelocTarget::Function(func),
+                    addend: reloc.addend,
+                },
+                BufferRelocTarget::Constant(constant) => {
+                    let offset = constant_pool.offsets[constant];
+                    Reloc {
+                        kind: reloc.kind,
+                        offset: reloc.offset,
+                        target: RelocTarget::ConstantPool,
+                        addend: reloc.addend.checked_add(offset as i64).unwrap(),
+                    }
+                }
+            })
+            .collect();
 
         CodeBlob {
             code: self.bytes,
-            relocs: self.relocs,
-            constant_pool_align: 1,
-            constant_pool: Vec::new(),
+            relocs,
+            constant_pool_align: constant_pool.align,
+            constant_pool: constant_pool.data,
         }
     }
 

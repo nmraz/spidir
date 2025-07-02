@@ -4,7 +4,7 @@ use core::{
 };
 
 use alloc::{borrow::ToOwned, string::String};
-use codegen::code_buffer::Reloc;
+use codegen::code_buffer::{Reloc, RelocTarget};
 use frontend::{Block, FunctionBuilder};
 use ir::{
     function::Signature,
@@ -268,8 +268,12 @@ pub fn mem_size_from_api(api_size: ApiMemSize) -> MemSize {
 }
 
 pub fn reloc_to_api(reloc: &Reloc) -> ApiReloc {
+    let target = match reloc.target {
+        RelocTarget::Function(func) => func,
+        RelocTarget::ConstantPool => todo!("support constant pool in C API"),
+    };
     ApiReloc {
-        target: funcref_to_api(reloc.target),
+        target: funcref_to_api(target),
         addend: reloc.addend,
         offset: reloc.offset,
         kind: reloc.kind.0,

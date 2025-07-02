@@ -9,7 +9,7 @@ use capstone::{
     },
 };
 use codegen::{
-    code_buffer::{CodeBlob, RelocKind},
+    code_buffer::{CodeBlob, RelocKind, RelocTarget},
     target::x64::{RELOC_ABS64, RELOC_PC32},
 };
 use ir::{module::Module, write::quote_ident};
@@ -37,7 +37,7 @@ pub fn disasm_code(
         let insn_end = insn.address() + insn.len() as u64;
 
         let insn_code = &code.code[insn_start as usize..insn_end as usize];
-        let code_bytes = format!("{:02x}", insn_code.iter().format(" "));
+        let code_bytes = format_bytes(insn_code);
 
         let line = format!(
             "{:<31} {} {}",
@@ -49,12 +49,17 @@ pub fn disasm_code(
 
         // Note: this assumes there is at most one reloc per instruction.
         if let Some(reloc) = relocs.first() {
+            let target_name = match reloc.target {
+                RelocTarget::Function(func) => quote_ident(&module.resolve_funcref(func).name),
+                RelocTarget::ConstantPool => "<CP>".into(),
+            };
+
             if (reloc.offset as u64) < insn_end {
                 write!(
                     output,
                     "  # {} -> @{} + {}",
                     reloc_name(reloc.kind),
-                    quote_ident(&module.resolve_funcref(reloc.target).name),
+                    target_name,
                     reloc.addend
                 )
                 .unwrap();
@@ -72,7 +77,25 @@ pub fn disasm_code(
         }
     }
 
+    if !code.constant_pool.is_empty() {
+        writeln!(output, "<CP>:").unwrap();
+        for (i, chunk) in code.constant_pool.chunks(CP_CHUNK_SIZE).enumerate() {
+            let byte_offset = i * CP_CHUNK_SIZE;
+            write!(
+                output,
+                "{:indent$}{byte_offset:06x}: {}",
+                "",
+                format_bytes(chunk)
+            )
+            .unwrap();
+        }
+    }
+
     Ok(())
+}
+
+fn format_bytes(bytes: &[u8]) -> String {
+    format!("{:02x}", bytes.iter().format(" "))
 }
 
 fn reloc_name(reloc: RelocKind) -> String {
@@ -82,3 +105,5 @@ fn reloc_name(reloc: RelocKind) -> String {
         _ => format!("RELOC_{}", reloc.0),
     }
 }
+
+const CP_CHUNK_SIZE: usize = 8;

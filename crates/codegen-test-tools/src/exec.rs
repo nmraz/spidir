@@ -3,7 +3,7 @@ use std::mem;
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use codegen::{
     api::{Codegen, CodegenOpts},
-    code_buffer::{CodeBlob, RelocKind},
+    code_buffer::{CodeBlob, RelocKind, RelocTarget},
     target::x64::{CodeModel, RELOC_ABS64, RELOC_PC32, X64Machine, X64MachineConfig},
 };
 use cranelift_entity::SecondaryMap;
@@ -138,13 +138,18 @@ fn relocate_buf(
 
         for reloc in &code.relocs {
             let target_abs = match reloc.target {
-                FunctionRef::Internal(func) => buf.as_ptr() as u64 + func_offsets[func] as u64,
-                FunctionRef::External(extfunc) => builtins[extfunc].ok_or_else(|| {
-                    anyhow!(
-                        "builtin `{}` not supported",
-                        module.extern_functions[extfunc].name
-                    )
-                })? as u64,
+                RelocTarget::Function(FunctionRef::Internal(func)) => {
+                    buf.as_ptr() as u64 + func_offsets[func] as u64
+                }
+                RelocTarget::Function(FunctionRef::External(extfunc)) => {
+                    builtins[extfunc].ok_or_else(|| {
+                        anyhow!(
+                            "builtin `{}` not supported",
+                            module.extern_functions[extfunc].name
+                        )
+                    })? as u64
+                }
+                RelocTarget::ConstantPool => bail!("constant pools not yet supported"),
             };
 
             apply_reloc(

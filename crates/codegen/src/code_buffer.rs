@@ -24,6 +24,8 @@ pub struct Reloc {
 pub struct CodeBlob {
     pub code: Vec<u8>,
     pub relocs: Vec<Reloc>,
+    pub constant_pool_align: u32,
+    pub constant_pool: Vec<u8>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -234,6 +236,8 @@ impl<F: FixupKind> CodeBuffer<F> {
         CodeBlob {
             code: self.bytes,
             relocs: self.relocs,
+            constant_pool_align: 1,
+            constant_pool: Vec::new(),
         }
     }
 

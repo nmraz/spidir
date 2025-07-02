@@ -13,12 +13,14 @@ use smallvec::SmallVec;
 pub struct RelocKind(pub u8);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Reloc {
+pub struct RawReloc<T> {
     pub kind: RelocKind,
     pub offset: u32,
-    pub target: FunctionRef,
+    pub target: T,
     pub addend: i64,
 }
+
+pub type Reloc = RawReloc<FunctionRef>;
 
 #[derive(Default, Clone)]
 pub struct CodeBlob {

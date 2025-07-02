@@ -55,13 +55,23 @@ pub trait FixupKind: Copy {
     fn apply(&self, offset: u32, label_offset: u32, bytes: &mut [u8]);
 }
 
+#[derive(Clone, Copy)]
+pub struct InstrAnchor(u32);
+
 pub struct InstrSink<'a> {
+    offset: u32,
     bytes: &'a mut Vec<u8>,
 }
 
 impl InstrSink<'_> {
     pub fn emit(&mut self, bytes: &[u8]) {
+        let len: u32 = bytes.len().try_into().unwrap();
+        self.offset += len;
         self.bytes.extend_from_slice(bytes);
+    }
+
+    pub fn anchor(&self) -> InstrAnchor {
+        InstrAnchor(self.offset)
     }
 }
 
@@ -132,19 +142,23 @@ impl<F: FixupKind> CodeBuffer<F> {
         &mut self,
         target: BufferRelocTarget,
         addend: i64,
-        reloc_instr_offset: u32,
         reloc_kind: RelocKind,
-        f: impl FnOnce(&mut InstrSink<'_>),
+        f: impl FnOnce(&mut InstrSink<'_>) -> InstrAnchor,
     ) {
-        let offset = self.offset() + reloc_instr_offset;
+        let start_offset = self.offset();
+
+        // This isn't a branch, so explicitly clear branch tracking.
+        self.clear_branch_tracking();
+        let anchor = self.instr_raw(f);
+
+        let offset = start_offset + anchor.0;
         self.relocs.push(BufferReloc {
             kind: reloc_kind,
             offset,
             target,
             addend,
         });
-        // This isn't a tracked branch, so use `instr` and not `instr_raw`.
-        self.instr(f);
+
         // We don't actually know when the reloc ends, but at the very least it shouldn't start
         // outside the emitted instruction.
         debug_assert!(offset <= self.offset());
@@ -153,15 +167,12 @@ impl<F: FixupKind> CodeBuffer<F> {
     pub fn cond_branch(
         &mut self,
         target: Label,
-        fixup_instr_offset: u32,
         fixup_kind: F,
-        emit_normal: impl FnOnce(&mut InstrSink<'_>),
+        emit_normal: impl FnOnce(&mut InstrSink<'_>) -> InstrAnchor,
         emit_reversed: impl FnOnce(&mut InstrSink<'_>),
     ) {
         let tmp_reversed_start = self.bytes.len();
-        emit_reversed(&mut InstrSink {
-            bytes: &mut self.bytes,
-        });
+        self.instr_raw(emit_reversed);
 
         // Stash the reversed form for when we need it.
         let reversed_start: u32 = self.reversed_cond_branch_bytes.len().try_into().unwrap();
@@ -174,7 +185,6 @@ impl<F: FixupKind> CodeBuffer<F> {
         self.branch_raw(
             LastBranchKind::Cond { reversed_start },
             target,
-            fixup_instr_offset,
             fixup_kind,
             emit_normal,
         );
@@ -188,9 +198,8 @@ impl<F: FixupKind> CodeBuffer<F> {
     pub fn uncond_branch(
         &mut self,
         target: Label,
-        fixup_instr_offset: u32,
         fixup_kind: F,
-        f: impl FnOnce(&mut InstrSink<'_>),
+        f: impl FnOnce(&mut InstrSink<'_>) -> InstrAnchor,
     ) {
         let last_branch_was_uncond = self
             .last_branches
@@ -208,13 +217,7 @@ impl<F: FixupKind> CodeBuffer<F> {
             return;
         }
 
-        self.branch_raw(
-            LastBranchKind::Uncond,
-            target,
-            fixup_instr_offset,
-            fixup_kind,
-            f,
-        );
+        self.branch_raw(LastBranchKind::Uncond, target, fixup_kind, f);
     }
 
     pub fn create_label(&mut self) -> Label {
@@ -290,27 +293,28 @@ impl<F: FixupKind> CodeBuffer<F> {
         }
     }
 
-    fn instr_raw(&mut self, f: impl FnOnce(&mut InstrSink<'_>)) {
+    fn instr_raw<T>(&mut self, f: impl FnOnce(&mut InstrSink<'_>) -> T) -> T {
         f(&mut InstrSink {
+            offset: 0,
             bytes: &mut self.bytes,
-        });
+        })
     }
 
     fn instr_with_fixup_raw(
         &mut self,
         label: Label,
-        fixup_instr_offset: u32,
         fixup_kind: F,
-        f: impl FnOnce(&mut InstrSink<'_>),
+        f: impl FnOnce(&mut InstrSink<'_>) -> InstrAnchor,
     ) {
-        let offset = self.offset() + fixup_instr_offset;
+        let start_offset = self.offset();
+        let anchor = self.instr_raw(f);
+        let offset = start_offset + anchor.0;
         self.fixups.push(Fixup {
             offset,
             label,
             kind: fixup_kind,
         });
         let fixup_end_offset = offset + u32::try_from(fixup_kind.byte_size()).unwrap();
-        self.instr_raw(f);
         debug_assert!(fixup_end_offset <= self.offset());
     }
 
@@ -318,14 +322,13 @@ impl<F: FixupKind> CodeBuffer<F> {
         &mut self,
         kind: LastBranchKind,
         target: Label,
-        fixup_instr_offset: u32,
         fixup_kind: F,
-        f: impl FnOnce(&mut InstrSink<'_>),
+        f: impl FnOnce(&mut InstrSink<'_>) -> InstrAnchor,
     ) {
         let start = self.offset();
 
         // Note: we're recording fixups and branches in lock step.
-        self.instr_with_fixup_raw(target, fixup_instr_offset, fixup_kind, f);
+        self.instr_with_fixup_raw(target, fixup_kind, f);
         let bound_label_end = self.last_bound_labels.len() as u32;
         let generation = self.next_branch_generation;
         self.next_branch_generation = generation + 1;

@@ -3,7 +3,7 @@ use ir::node::FunctionRef;
 
 use crate::{
     cfg::Block,
-    code_buffer::{BufferRelocTarget, CodeBuffer, FixupKind, InstrSink, Label},
+    code_buffer::{BufferRelocTarget, CodeBuffer, FixupKind, InstrAnchor, InstrSink, Label},
     emit::{EmitContext, EmitInstrData},
     frame::FrameLayout,
     lir::{Instr, PhysReg, PhysRegSet, StackSlot},
@@ -564,26 +564,29 @@ fn emit_mov_r_u32(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u32) {
 }
 
 fn emit_movabs_r_i(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
-    buffer.instr(|sink| emit_movabs_r_i_instr(sink, dest, imm));
+    buffer.instr(|sink| {
+        emit_movabs_r_i_instr(sink, dest, imm);
+    });
 }
 
 fn emit_movabs_r_i_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
     buffer.instr_with_reloc(
         BufferRelocTarget::Function(target),
         0,
-        2,
         RELOC_ABS64,
         |sink| emit_movabs_r_i_instr(sink, dest, 0),
     );
 }
 
-fn emit_movabs_r_i_instr(sink: &mut InstrSink<'_>, dest: PhysReg, imm: u64) {
+fn emit_movabs_r_i_instr(sink: &mut InstrSink<'_>, dest: PhysReg, imm: u64) -> InstrAnchor {
     let mut rex = RexPrefix::new();
     let dest = rex.encode_modrm_base(dest);
     rex.encode_operand_size(OperandSize::S64);
     rex.emit(sink);
     sink.emit(&[0xb8 + dest]);
+    let anchor = sink.anchor();
     sink.emit(&imm.to_le_bytes());
+    anchor
 }
 
 fn emit_movzx_r_rm(
@@ -635,7 +638,9 @@ fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: RawAd
             index: None,
             offset: 0,
         } => emit_mov_r_r(buffer, dest, base),
-        _ => buffer.instr(|sink| emit_lea_instr(sink, dest, addr)),
+        _ => buffer.instr(|sink| {
+            emit_lea_instr(sink, dest, addr);
+        }),
     }
 }
 
@@ -643,20 +648,19 @@ fn emit_lea_rip_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: 
     buffer.instr_with_reloc(
         BufferRelocTarget::Function(target),
         -4,
-        3,
         RELOC_PC32,
         |sink| emit_lea_instr(sink, dest, RawAddrMode::RipOff { offset: 0 }),
     );
 }
 
-fn emit_lea_instr(sink: &mut InstrSink<'_>, dest: PhysReg, addr: RawAddrMode) {
+fn emit_lea_instr(sink: &mut InstrSink<'_>, dest: PhysReg, addr: RawAddrMode) -> InstrAnchor {
     let (rex, modrm_sib) = encode_mem_parts(addr, |rex: &mut RexPrefix| {
         rex.encode_operand_size(OperandSize::S64);
         rex.encode_modrm_reg(dest)
     });
     rex.emit(sink);
     sink.emit(&[0x8d]);
-    modrm_sib.emit(sink);
+    modrm_sib.emit(sink)
 }
 
 fn emit_mov_rm_r(
@@ -857,11 +861,12 @@ fn emit_call_rel(buffer: &mut CodeBuffer<X64Fixup>, target: FunctionRef) {
     buffer.instr_with_reloc(
         BufferRelocTarget::Function(target),
         -4,
-        1,
         RELOC_PC32,
         |sink| {
             sink.emit(&[0xe8]);
+            let anchor = sink.anchor();
             sink.emit(&0u32.to_le_bytes());
+            anchor
         },
     );
 }
@@ -876,26 +881,31 @@ fn emit_call_rm(buffer: &mut CodeBuffer<X64Fixup>, target: RegMem) {
 }
 
 fn emit_jmp(buffer: &mut CodeBuffer<X64Fixup>, target: Label) {
-    buffer.uncond_branch(target, 1, X64Fixup::Rela4(-4), |sink| {
+    buffer.uncond_branch(target, X64Fixup::Rela4(-4), |sink| {
         sink.emit(&[0xe9]);
+        let anchor = sink.anchor();
         sink.emit(&0u32.to_le_bytes());
+        anchor
     });
 }
 
 fn emit_jcc(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, target: Label) {
     buffer.cond_branch(
         target,
-        2,
         X64Fixup::Rela4(-4),
         |sink| emit_jcc_instr(sink, code),
-        |sink| emit_jcc_instr(sink, code.negate()),
+        |sink| {
+            emit_jcc_instr(sink, code.negate());
+        },
     );
 }
 
-fn emit_jcc_instr(sink: &mut InstrSink<'_>, code: CondCode) {
+fn emit_jcc_instr(sink: &mut InstrSink<'_>, code: CondCode) -> InstrAnchor {
     let code = encode_cond_code(code);
     sink.emit(&[0xf, 0x80 + code]);
+    let anchor = sink.anchor();
     sink.emit(&0u32.to_le_bytes());
+    anchor
 }
 
 fn emit_ret(buffer: &mut CodeBuffer<X64Fixup>) {
@@ -1161,16 +1171,18 @@ struct ModRmSib {
 }
 
 impl ModRmSib {
-    fn emit(self, sink: &mut InstrSink<'_>) {
+    fn emit(self, sink: &mut InstrSink<'_>) -> InstrAnchor {
         sink.emit(&[self.modrm]);
         if let Some(sib) = self.sib {
             sink.emit(&[sib]);
         }
+        let anchor = sink.anchor();
         match self.mem_mode {
             MemMode::NoDisp => {}
             MemMode::Disp8 => sink.emit(&[self.disp as u8]),
             MemMode::Disp32 | MemMode::Disp32Special => sink.emit(&self.disp.to_le_bytes()),
         }
+        anchor
     }
 }
 

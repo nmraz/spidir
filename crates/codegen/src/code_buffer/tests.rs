@@ -30,15 +30,22 @@ fn emit_instr(buffer: &mut CodeBuffer<DummyFixup>, op: u8) {
 }
 
 fn emit_uncond_branch(buffer: &mut CodeBuffer<DummyFixup>, target: Label) {
-    buffer.uncond_branch(target, 0, DummyFixup, |sink| sink.emit(&[0xb0]));
+    buffer.uncond_branch(target, DummyFixup, |sink| {
+        let anchor = sink.anchor();
+        sink.emit(&[0xb0]);
+        anchor
+    });
 }
 
 fn emit_cond_branch(buffer: &mut CodeBuffer<DummyFixup>, target: Label) {
     buffer.cond_branch(
         target,
-        0,
         DummyFixup,
-        |sink| sink.emit(&[0xc0]),
+        |sink| {
+            let anchor = sink.anchor();
+            sink.emit(&[0xc0]);
+            anchor
+        },
         |sink| sink.emit(&[0xd0]),
     );
 }

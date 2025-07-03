@@ -334,6 +334,12 @@ impl MachineEmit for X64Machine {
                 RegMem::Mem(state.lower_addr_mode(addr_mode, &uses[1..])),
                 uses[0].as_reg().unwrap(),
             ),
+            X64Instr::MovsRM(prec, addr_mode) => emit_movs_r_rm(
+                buffer,
+                *prec,
+                defs[0].as_reg().unwrap(),
+                RegMem::Mem(state.lower_addr_mode(addr_mode, uses)),
+            ),
             X64Instr::MovsMR(prec, addr_mode) => emit_movs_rm_r(
                 buffer,
                 *prec,

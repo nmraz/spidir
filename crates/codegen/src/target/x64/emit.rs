@@ -296,6 +296,11 @@ impl MachineEmit for X64Machine {
                     BufferRelocTarget::Constant(src),
                 );
             }
+            &X64Instr::F64ConstAddrAbs(val) => {
+                let dest = defs[0].as_reg().unwrap();
+                let src = buffer.get_constant(8, &val.to_le_bytes());
+                emit_movabs_r_i_reloc(buffer, dest, BufferRelocTarget::Constant(src));
+            }
             &X64Instr::MovGprmXmm(op_size) => emit_mov_gprm_xmm(
                 buffer,
                 op_size,
@@ -368,7 +373,11 @@ impl MachineEmit for X64Machine {
                 emit_lea_rip_reloc(buffer, defs[0].as_reg().unwrap(), target);
             }
             &X64Instr::FuncAddrAbs(target) => {
-                emit_movabs_r_i_reloc(buffer, defs[0].as_reg().unwrap(), target);
+                emit_movabs_r_i_reloc(
+                    buffer,
+                    defs[0].as_reg().unwrap(),
+                    BufferRelocTarget::Function(target),
+                );
             }
             &X64Instr::CallRel(target) => {
                 emit_call_rel(buffer, target);
@@ -587,13 +596,14 @@ fn emit_movabs_r_i(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, imm: u64) {
     });
 }
 
-fn emit_movabs_r_i_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
-    buffer.instr_with_reloc(
-        BufferRelocTarget::Function(target),
-        0,
-        RELOC_ABS64,
-        |sink| emit_movabs_r_i_instr(sink, dest, 0),
-    );
+fn emit_movabs_r_i_reloc(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    dest: PhysReg,
+    target: BufferRelocTarget,
+) {
+    buffer.instr_with_reloc(target, 0, RELOC_ABS64, |sink| {
+        emit_movabs_r_i_instr(sink, dest, 0)
+    });
 }
 
 fn emit_movabs_r_i_instr(sink: &mut InstrSink<'_>, dest: PhysReg, imm: u64) -> InstrAnchor {

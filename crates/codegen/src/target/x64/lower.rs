@@ -191,7 +191,7 @@ impl MachineLower for X64Machine {
                 // `setcc` output register.
                 emit_setcc_sequence(ctx, output, |ctx| select_icmp(ctx, node, kind));
             }
-            &NodeKind::Fconst64(val) => select_fconst64(ctx, node, val)?,
+            &NodeKind::Fconst64(val) => select_fconst64(ctx, node, val),
             NodeKind::Fadd => emit_fpu_rr(ctx, node, SseFpuBinOp::Add),
             NodeKind::Fsub => emit_fpu_rr(ctx, node, SseFpuBinOp::Sub),
             NodeKind::Fmul => emit_fpu_rr(ctx, node, SseFpuBinOp::Mul),
@@ -402,20 +402,19 @@ fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: Icmp
     cond_code_for_icmp(kind)
 }
 
-fn select_fconst64(
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    node: Node,
-    val: BitwiseF64,
-) -> Result<(), MachineIselError> {
+fn select_fconst64(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, val: BitwiseF64) {
     let [output] = ctx.node_outputs_exact(node);
     let output = ctx.get_value_vreg(output);
 
     if val.bits() == 0 {
         ctx.emit_instr(X64Instr::SseMovRZ, &[DefOperand::any_reg(output)], &[]);
-        return Ok(());
+    } else {
+        ctx.emit_instr(
+            X64Instr::MovsdConstRel(val.0),
+            &[DefOperand::any_reg(output)],
+            &[],
+        );
     }
-
-    Err(MachineIselError)
 }
 
 fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: FcmpKind) {

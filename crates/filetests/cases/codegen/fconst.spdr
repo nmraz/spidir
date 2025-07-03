@@ -12,3 +12,18 @@ func @zero64:f64() {
     %0:f64 = fconst64 0x0
     return %c, %0
 }
+
+func @five64:f64() {
+    # check: function `five64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f 10 05 00 00 00 00         movsd xmm0, qword ptr [rip]  # RELOC_PC32 -> @<CP> + -4
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
+    # nextln: <CP>:
+    # nextln: 000000: 00 00 00 00 00 00 14 40
+
+    %c:ctrl = entry
+    %0:f64 = fconst64 0x5
+    return %c, %0
+}

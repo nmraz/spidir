@@ -25,7 +25,7 @@ func @large_caller(f64) {
     # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln: 0000:     AddSp(-16)
-    # nextln: 0001:     MovsdMR([rsp + 0]) $$xmm0
+    # nextln: 0001:     MovsMR(Double, [rsp + 0]) $$xmm0
     # nextln: 0002:     $$rax = FuncAddrAbs(External(extfunc2))
     # nextln:           $$xmm7 = $$xmm0
     # nextln:           $$xmm6 = $$xmm0
@@ -49,8 +49,8 @@ func @larger_caller(f64, f64) {
     # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln: 0000:     AddSp(-16)
-    # nextln: 0001:     MovsdMR([rsp + 0]) $$xmm0
-    # nextln: 0002:     MovsdMR([rsp + 8]) $$xmm1
+    # nextln: 0001:     MovsMR(Double, [rsp + 0]) $$xmm0
+    # nextln: 0002:     MovsMR(Double, [rsp + 8]) $$xmm1
     # nextln: 0003:     $$rax = FuncAddrAbs(External(extfunc3))
     # nextln:           $$xmm7 = $$xmm0
     # nextln:           $$xmm6 = $$xmm0

@@ -328,8 +328,9 @@ impl MachineEmit for X64Machine {
                 RegMem::Mem(state.lower_addr_mode(addr_mode, &uses[1..])),
                 uses[0].as_reg().unwrap(),
             ),
-            X64Instr::MovsdMR(addr_mode) => emit_movsd_rm_r(
+            X64Instr::MovsMR(prec, addr_mode) => emit_movs_rm_r(
                 buffer,
+                *prec,
                 RegMem::Mem(state.lower_addr_mode(addr_mode, &uses[1..])),
                 uses[0].as_reg().unwrap(),
             ),
@@ -950,8 +951,13 @@ fn emit_movsd_r_rm_rip_reloc(
     });
 }
 
-fn emit_movsd_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
-    emit_sse_fpu_with_mandatory_prefix(buffer, SseFpuPrecision::Double, 0x11, src, dest);
+fn emit_movs_rm_r(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    prec: SseFpuPrecision,
+    dest: RegMem,
+    src: PhysReg,
+) {
+    emit_sse_fpu_with_mandatory_prefix(buffer, prec, 0x11, src, dest);
 }
 
 fn emit_cmps(

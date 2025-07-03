@@ -801,7 +801,7 @@ fn emit_call_wrapper(
             let instr = match ty {
                 Type::I32 => X64Instr::MovMR(FullOperandSize::S32, addr_mode),
                 Type::I64 | Type::Ptr => X64Instr::MovMR(FullOperandSize::S64, addr_mode),
-                Type::F64 => X64Instr::MovsdMR(addr_mode),
+                Type::F64 => X64Instr::MovsMR(SseFpuPrecision::Double, addr_mode),
             };
 
             ctx.emit_instr(instr, &[], &[UseOperand::any_reg(stack_arg)]);

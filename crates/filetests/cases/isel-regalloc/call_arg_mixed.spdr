@@ -33,7 +33,7 @@ func @call_large_gpr_xmm(i32, i64, f64) {
     # nextln: 0000:     AddSp(-32)
     # nextln: 0001:     MovMR(S32, [rsp + 0]) $$rdi
     # nextln: 0002:     MovMR(S64, [rsp + 8]) $$rsi
-    # nextln: 0003:     MovsdMR([rsp + 16]) $$xmm0
+    # nextln: 0003:     MovsMR(Double, [rsp + 16]) $$xmm0
     # nextln: 0004:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln:           $$r9 = $$rsi
     # nextln:           $$r8 = $$rsi

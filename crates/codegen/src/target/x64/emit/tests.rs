@@ -488,7 +488,10 @@ fn rip_off_addr_mode() {
 #[test]
 fn movsd() {
     let check = |dest, src, expected| {
-        check_emit_instr(|buffer| emit_movsd_r_rm(buffer, dest, src), expected);
+        check_emit_instr(
+            |buffer| emit_movs_r_rm(buffer, SseFpuPrecision::Double, dest, src),
+            expected,
+        );
     };
 
     check(

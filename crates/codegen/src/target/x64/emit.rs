@@ -289,7 +289,12 @@ impl MachineEmit for X64Machine {
             &X64Instr::MovsdConstRel(val) => {
                 let dest = defs[0].as_reg().unwrap();
                 let src = buffer.get_constant(8, &val.to_le_bytes());
-                emit_movsd_r_rm_rip_reloc(buffer, dest, BufferRelocTarget::Constant(src));
+                emit_movs_r_rm_rip_reloc(
+                    buffer,
+                    SseFpuPrecision::Double,
+                    dest,
+                    BufferRelocTarget::Constant(src),
+                );
             }
             &X64Instr::MovGprmXmm(op_size) => emit_mov_gprm_xmm(
                 buffer,
@@ -307,8 +312,9 @@ impl MachineEmit for X64Machine {
                     offset,
                 }),
             ),
-            &X64Instr::MovsdRRbp { offset } => emit_movsd_r_rm(
+            &X64Instr::MovsRRbp { prec, offset } => emit_movs_r_rm(
                 buffer,
+                prec,
                 defs[0].as_reg().unwrap(),
                 RegMem::Mem(RawAddrMode::BaseIndexOff {
                     base: Some(REG_RBP),
@@ -930,12 +936,18 @@ fn emit_movaps_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysRe
     emit_sse_fpu_with_op_size(buffer, SseFpuPrecision::Single, 0x29, src, dest);
 }
 
-fn emit_movsd_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
-    emit_sse_fpu_with_mandatory_prefix(buffer, SseFpuPrecision::Double, 0x10, dest, src);
+fn emit_movs_r_rm(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    prec: SseFpuPrecision,
+    dest: PhysReg,
+    src: RegMem,
+) {
+    emit_sse_fpu_with_mandatory_prefix(buffer, prec, 0x10, dest, src);
 }
 
-fn emit_movsd_r_rm_rip_reloc(
+fn emit_movs_r_rm_rip_reloc(
     buffer: &mut CodeBuffer<X64Fixup>,
+    prec: SseFpuPrecision,
     dest: PhysReg,
     src: BufferRelocTarget,
 ) {
@@ -944,7 +956,7 @@ fn emit_movsd_r_rm_rip_reloc(
             rex.encode_modrm_reg(dest)
         });
     buffer.instr_with_reloc(src, -4, RELOC_PC32, |sink| {
-        sink.emit(&[sse_mandatory_prefix_for_prec(SseFpuPrecision::Double)]);
+        sink.emit(&[sse_mandatory_prefix_for_prec(prec)]);
         rex.emit(sink);
         sink.emit(&[0xf, 0x10]);
         modrm_sib.emit(sink)

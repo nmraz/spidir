@@ -28,8 +28,14 @@ void inner_builder_callback(spidir_builder_handle_t builder, void* ctx) {
     spidir_builder_set_entry_block(builder, block);
     spidir_builder_set_block(builder, block);
     spidir_value_t param = spidir_builder_build_param_ref(builder, 0);
-    spidir_value_t two =
-        spidir_builder_build_iconst(builder, SPIDIR_TYPE_I32, 2);
+    spidir_value_t stackslot = spidir_builder_build_stackslot(builder, 8, 8);
+    // The integer 2 interpreted as a float.
+    spidir_value_t twof =
+        spidir_builder_build_fconst64(builder, 0x0.0000000000002p-1022);
+    spidir_builder_build_store(builder, SPIDIR_MEM_SIZE_8, twof, stackslot);
+    spidir_value_t two64 = spidir_builder_build_load(
+        builder, SPIDIR_MEM_SIZE_8, SPIDIR_TYPE_I64, stackslot);
+    spidir_value_t two = spidir_builder_build_itrunc(builder, two64);
     spidir_value_t retval = spidir_builder_build_iadd(builder, param, two);
     spidir_builder_build_return(builder, retval);
 }

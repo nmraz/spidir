@@ -1,0 +1,23 @@
+# run: codegen
+
+func @fconst_multiple:f64(f64) {
+    # check: function `fconst_multiple`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f 10 0d 00 00 00 00         movsd xmm1, qword ptr [rip]  # RELOC_PC32 -> @<CP> + -4
+    # nextln: 00000c: f2 0f 58 c1                     addsd xmm0, xmm1
+    # nextln: 000010: f2 0f 10 0d 00 00 00 00         movsd xmm1, qword ptr [rip]  # RELOC_PC32 -> @<CP> + 4
+    # nextln: 000018: f2 0f 59 c1                     mulsd xmm0, xmm1
+    # nextln: 00001c: 5d                              pop rbp
+    # nextln: 00001d: c3                              ret
+    # nextln: <CP>:
+    # nextln: 000000: 00 00 00 00 00 00 14 40
+    # nextln: 000008: 00 00 00 00 00 00 1c 40
+
+    %0:ctrl, %1:f64 = entry
+    %2:f64 = fconst64 0x5
+    %3:f64 = fconst64 0x7
+    %4:f64 = fadd %1, %2
+    %5:f64 = fmul %4, %3
+    return %0, %5
+}

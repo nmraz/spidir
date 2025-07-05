@@ -89,7 +89,7 @@ impl ConstantPoolBuilder {
         });
 
         let mut size = 0;
-        let mut align = 0;
+        let mut align = 1;
         for &c in &constants {
             let data_offset = self.constants[c].offset as usize;
 

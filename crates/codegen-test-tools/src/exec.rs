@@ -35,18 +35,42 @@ pub unsafe fn codegen_and_exec(
     }
 
     let mut func_offsets = SecondaryMap::with_capacity(module.functions.len());
-    let mut buffer_size: u32 = 0;
+    let mut code_size = 0;
+    let mut const_align = 1;
+    let mut const_size = 0;
 
     for (func, code) in code_blobs.iter() {
-        // Padding *before* the function is important for break-at-entry support.
-        buffer_size = pad_offset(buffer_size).ok_or_else(|| anyhow!("code too large"))?;
-        func_offsets[func] = buffer_size;
-        buffer_size = buffer_size
+        code_size = pad_code_offset(code_size).ok_or_else(|| anyhow!("code too large"))?;
+        const_size = try_align_up(const_size, code.constant_pool_align)
+            .ok_or_else(|| anyhow!("constant pool too large"))?;
+
+        func_offsets[func] = FuncOffsets {
+            code_offset: code_size,
+            const_offset: const_size,
+        };
+
+        code_size = code_size
             .checked_add(code.code.len().try_into().context("code too large")?)
             .ok_or_else(|| anyhow!("code too large"))?;
+
+        const_size = const_size
+            .checked_add(
+                code.constant_pool
+                    .len()
+                    .try_into()
+                    .context("constant pool too large")?,
+            )
+            .ok_or_else(|| anyhow!("constant pool too large"))?;
+        const_align = const_align.max(code.constant_pool_align);
     }
 
-    let mut jit_buf = JitBuf::new(buffer_size as usize)?;
+    let const_off =
+        try_align_up(code_size, const_align).ok_or_else(|| anyhow!("code too large"))?;
+    let total_size = const_off
+        .checked_add(const_size)
+        .ok_or_else(|| anyhow!("final blob too large"))?;
+
+    let mut jit_buf = JitBuf::new(total_size as usize)?;
     let buf = unsafe { jit_buf.buf_mut() };
 
     // Fill everything with breakpoints, for two reasons:
@@ -55,24 +79,43 @@ pub unsafe fn codegen_and_exec(
     buf.fill(0xcc);
 
     for func in module.functions.keys() {
-        let code = &code_blobs[func].code;
-        let offset = func_offsets[func] as usize;
-        let len = code.len();
+        let blob = &code_blobs[func];
+        let offsets = &func_offsets[func];
 
-        buf[offset..offset + len].copy_from_slice(code);
+        let offset = offsets.code_offset as usize;
+        let len = blob.code.len();
+        buf[offset..offset + len].copy_from_slice(&blob.code);
+
+        let offset = const_off as usize + offsets.const_offset as usize;
+        let len = blob.constant_pool.len();
+        buf[offset..offset + len].copy_from_slice(&blob.constant_pool);
     }
 
     let builtins = populate_builtins(module);
-    relocate_buf(buf, module, &code_blobs, &func_offsets, &builtins)?;
+    relocate_buf(
+        buf,
+        module,
+        const_off,
+        &code_blobs,
+        &func_offsets,
+        &builtins,
+    )?;
 
     jit_buf.make_exec()?;
     unsafe {
-        let mut entry_func = jit_buf.base().as_ptr() as usize + func_offsets[entry_point] as usize;
+        let mut entry_func =
+            jit_buf.base().as_ptr() as usize + func_offsets[entry_point].code_offset as usize;
         if break_at_entry {
             entry_func -= 1;
         }
         call_func(entry_func, args)
     }
+}
+
+#[derive(Clone, Copy, Default)]
+struct FuncOffsets {
+    code_offset: u32,
+    const_offset: u32,
 }
 
 unsafe fn call_func(func: usize, args: &[isize]) -> Result<isize> {
@@ -128,18 +171,19 @@ unsafe fn call_func(func: usize, args: &[isize]) -> Result<isize> {
 fn relocate_buf(
     buf: &mut [u8],
     module: &Module,
+    const_off: u32,
     code_blobs: &SecondaryMap<Function, CodeBlob>,
-    func_offsets: &SecondaryMap<Function, u32>,
+    func_offsets: &SecondaryMap<Function, FuncOffsets>,
     builtins: &SecondaryMap<ExternFunction, Option<usize>>,
 ) -> Result<()> {
     for (func, code) in code_blobs.iter() {
-        let start = func_offsets[func] as usize;
+        let start = func_offsets[func].code_offset as usize;
         let end = start + code.code.len();
 
         for reloc in &code.relocs {
             let target_abs = match reloc.target {
                 RelocTarget::Function(FunctionRef::Internal(func)) => {
-                    buf.as_ptr() as u64 + func_offsets[func] as u64
+                    buf.as_ptr() as u64 + func_offsets[func].code_offset as u64
                 }
                 RelocTarget::Function(FunctionRef::External(extfunc)) => {
                     builtins[extfunc].ok_or_else(|| {
@@ -149,7 +193,9 @@ fn relocate_buf(
                         )
                     })? as u64
                 }
-                RelocTarget::ConstantPool => bail!("constant pools not yet supported"),
+                RelocTarget::ConstantPool => {
+                    buf.as_ptr() as u64 + const_off as u64 + func_offsets[func].const_offset as u64
+                }
             };
 
             apply_reloc(
@@ -239,10 +285,14 @@ fn populate_builtins(module: &Module) -> SecondaryMap<ExternFunction, Option<usi
     mapping
 }
 
-fn pad_offset(offset: u32) -> Option<u32> {
+fn pad_code_offset(offset: u32) -> Option<u32> {
     const FUNC_ALIGN: u32 = 0x10;
-    // Note: we add `FUNC_ALIGN` and not `FUNC_ALGIN - 1` so there is always at least one byte of
-    // padding between functions. This is important for break-at-entry support.
-    let bumped = offset.checked_add(FUNC_ALIGN)?;
-    Some(bumped & 0u32.wrapping_sub(FUNC_ALIGN))
+    // Note: we always want at least one byte of padding between functions. This is important for
+    // break-at-entry support.
+    try_align_up(offset + 1, FUNC_ALIGN)
+}
+
+fn try_align_up(offset: u32, align: u32) -> Option<u32> {
+    let bumped = offset.checked_add(align - 1)?;
+    Some(bumped & 0u32.wrapping_sub(align))
 }

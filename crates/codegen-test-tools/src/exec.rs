@@ -36,38 +36,38 @@ pub unsafe fn codegen_and_exec(
 
     let mut func_offsets = SecondaryMap::with_capacity(module.functions.len());
     let mut code_size = 0;
-    let mut const_align = 1;
-    let mut const_size = 0;
+    let mut constpool_align = 1;
+    let mut constpool_size = 0;
 
     for (func, code) in code_blobs.iter() {
         code_size = pad_code_offset(code_size).ok_or_else(|| anyhow!("code too large"))?;
-        const_size = try_align_up(const_size, code.constant_pool_align)
+        constpool_size = try_align_up(constpool_size, code.constpool_align)
             .ok_or_else(|| anyhow!("constant pool too large"))?;
 
         func_offsets[func] = FuncOffsets {
             code_offset: code_size,
-            const_offset: const_size,
+            constpool_offset: constpool_size,
         };
 
         code_size = code_size
             .checked_add(code.code.len().try_into().context("code too large")?)
             .ok_or_else(|| anyhow!("code too large"))?;
 
-        const_size = const_size
+        constpool_size = constpool_size
             .checked_add(
-                code.constant_pool
+                code.constpool
                     .len()
                     .try_into()
                     .context("constant pool too large")?,
             )
             .ok_or_else(|| anyhow!("constant pool too large"))?;
-        const_align = const_align.max(code.constant_pool_align);
+        constpool_align = constpool_align.max(code.constpool_align);
     }
 
-    let const_off =
-        try_align_up(code_size, const_align).ok_or_else(|| anyhow!("code too large"))?;
-    let total_size = const_off
-        .checked_add(const_size)
+    let constpool_off =
+        try_align_up(code_size, constpool_align).ok_or_else(|| anyhow!("code too large"))?;
+    let total_size = constpool_off
+        .checked_add(constpool_size)
         .ok_or_else(|| anyhow!("final blob too large"))?;
 
     let mut jit_buf = JitBuf::new(total_size as usize)?;
@@ -86,16 +86,16 @@ pub unsafe fn codegen_and_exec(
         let len = blob.code.len();
         buf[offset..offset + len].copy_from_slice(&blob.code);
 
-        let offset = const_off as usize + offsets.const_offset as usize;
-        let len = blob.constant_pool.len();
-        buf[offset..offset + len].copy_from_slice(&blob.constant_pool);
+        let offset = constpool_off as usize + offsets.constpool_offset as usize;
+        let len = blob.constpool.len();
+        buf[offset..offset + len].copy_from_slice(&blob.constpool);
     }
 
     let builtins = populate_builtins(module);
     relocate_buf(
         buf,
         module,
-        const_off,
+        constpool_off,
         &code_blobs,
         &func_offsets,
         &builtins,
@@ -115,7 +115,7 @@ pub unsafe fn codegen_and_exec(
 #[derive(Clone, Copy, Default)]
 struct FuncOffsets {
     code_offset: u32,
-    const_offset: u32,
+    constpool_offset: u32,
 }
 
 unsafe fn call_func(func: usize, args: &[isize]) -> Result<isize> {
@@ -171,7 +171,7 @@ unsafe fn call_func(func: usize, args: &[isize]) -> Result<isize> {
 fn relocate_buf(
     buf: &mut [u8],
     module: &Module,
-    const_off: u32,
+    constpool_off: u32,
     code_blobs: &SecondaryMap<Function, CodeBlob>,
     func_offsets: &SecondaryMap<Function, FuncOffsets>,
     builtins: &SecondaryMap<ExternFunction, Option<usize>>,
@@ -194,7 +194,9 @@ fn relocate_buf(
                     })? as u64
                 }
                 RelocTarget::ConstantPool => {
-                    buf.as_ptr() as u64 + const_off as u64 + func_offsets[func].const_offset as u64
+                    buf.as_ptr() as u64
+                        + constpool_off as u64
+                        + func_offsets[func].constpool_offset as u64
                 }
             };
 

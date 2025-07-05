@@ -77,9 +77,9 @@ pub fn disasm_code(
         }
     }
 
-    if !code.constant_pool.is_empty() {
+    if !code.constpool.is_empty() {
         writeln!(output, "<CP>:").unwrap();
-        for (i, chunk) in code.constant_pool.chunks(CP_CHUNK_SIZE).enumerate() {
+        for (i, chunk) in code.constpool.chunks(CP_CHUNK_SIZE).enumerate() {
             let byte_offset = i * CP_CHUNK_SIZE;
             write!(
                 output,

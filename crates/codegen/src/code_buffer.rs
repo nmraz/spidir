@@ -7,7 +7,7 @@ use fx_utils::FxHashMap;
 use ir::node::FunctionRef;
 use smallvec::SmallVec;
 
-use crate::constant_pool::{Constant, ConstantPoolBuilder};
+use crate::constpool::{Constant, ConstantPoolBuilder};
 
 // These types are intentionally completely machine-independent; we want the final `CodeBlob` to be
 // type-erased to enable trait objects in the high-level API.
@@ -42,8 +42,8 @@ pub type Reloc = RawReloc<RelocTarget>;
 pub struct CodeBlob {
     pub code: Vec<u8>,
     pub relocs: Vec<Reloc>,
-    pub constant_pool_align: u32,
-    pub constant_pool: Vec<u8>,
+    pub constpool_align: u32,
+    pub constpool: Vec<u8>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -106,7 +106,7 @@ pub struct CodeBuffer<F: FixupKind> {
     last_bound_label_branch_generations: FxHashMap<Label, u32>,
     first_unpinned_bound_label: usize,
     next_branch_generation: u32,
-    constant_pool: ConstantPoolBuilder,
+    constpool: ConstantPoolBuilder,
 }
 
 impl<F: FixupKind> CodeBuffer<F> {
@@ -123,12 +123,12 @@ impl<F: FixupKind> CodeBuffer<F> {
             last_bound_label_branch_generations: FxHashMap::default(),
             first_unpinned_bound_label: 0,
             next_branch_generation: 0,
-            constant_pool: ConstantPoolBuilder::new(),
+            constpool: ConstantPoolBuilder::new(),
         }
     }
 
     pub fn get_constant(&mut self, align: u32, data: &[u8]) -> Constant {
-        self.constant_pool.get_constant(align, data)
+        self.constpool.get_constant(align, data)
     }
 
     pub fn instr(&mut self, f: impl FnOnce(&mut InstrSink<'_>)) {
@@ -259,7 +259,7 @@ impl<F: FixupKind> CodeBuffer<F> {
         }
 
         // Lay out the constant pool.
-        let constant_pool = self.constant_pool.finish();
+        let constpool = self.constpool.finish();
 
         // Compute final relocations. Note that they are already sorted by instruction offset thanks
         // to limited public API.
@@ -274,7 +274,7 @@ impl<F: FixupKind> CodeBuffer<F> {
                     addend: reloc.addend,
                 },
                 BufferRelocTarget::Constant(constant) => {
-                    let offset = constant_pool.offsets[constant];
+                    let offset = constpool.offsets[constant];
                     Reloc {
                         kind: reloc.kind,
                         offset: reloc.offset,
@@ -288,8 +288,8 @@ impl<F: FixupKind> CodeBuffer<F> {
         CodeBlob {
             code: self.bytes,
             relocs,
-            constant_pool_align: constant_pool.align,
-            constant_pool: constant_pool.data,
+            constpool_align: constpool.align,
+            constpool: constpool.data,
         }
     }
 

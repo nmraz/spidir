@@ -15,6 +15,6 @@ pub mod regalloc;
 pub mod schedule;
 pub mod target;
 
-mod constant_pool;
+mod constpool;
 
 mod num_utils;

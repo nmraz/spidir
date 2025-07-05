@@ -87,3 +87,14 @@ func @store8_ptr(ptr, ptr) {
     %3:ctrl = store.8 %0, %1, %2
     return %3
 }
+
+func @store8_f64(f64, ptr) {
+    # check: function `store8_f64`:
+    # nextln:       block0[%0:xmm($$xmm0), %1:gpr($$rdi)]:
+    # nextln: 0000:      MovsMR(Double, [reg + 0]) %0(reg)[early], %1(reg)[early]
+    # nextln: 0001:      Ret
+
+    %0:ctrl, %1:f64, %2:ptr = entry
+    %3:ctrl = store.8 %0, %1, %2
+    return %3
+}

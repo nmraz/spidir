@@ -103,3 +103,16 @@ func @store8_ptr(ptr, ptr) {
     %3:ctrl = store.8 %0, %1, %2
     return %3
 }
+
+func @store8_f64(f64, ptr) {
+    # check: function `store8_f64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f 11 07                     movsd qword ptr [rdi], xmm0
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %0:ctrl, %1:f64, %2:ptr = entry
+    %3:ctrl = store.8 %0, %1, %2
+    return %3
+}

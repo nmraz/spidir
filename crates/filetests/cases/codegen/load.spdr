@@ -103,3 +103,16 @@ func @load8_ptr:ptr(ptr) {
     %2:ctrl, %3:ptr = load.8 %0, %1
     return %2, %3
 }
+
+func @load8_f64:f64(ptr) {
+    # check: function `load8_f64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f 10 07                     movsd xmm0, qword ptr [rdi]
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:f64 = load.8 %0, %1
+    return %2, %3
+}

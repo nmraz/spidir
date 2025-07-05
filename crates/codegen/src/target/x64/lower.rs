@@ -507,29 +507,53 @@ fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kin
 fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {
     let [addr] = ctx.node_inputs_exact(node);
     let [output] = ctx.node_outputs_exact(node);
+    let ty = ctx.value_type(output);
 
     let output = ctx.get_value_vreg(output);
-    let op_size = operand_size_for_mem_size(mem_size);
 
     let mut uses = SmallVec::new();
     let addr_mode = select_addr_mode(ctx, addr, &mut uses);
 
-    ctx.emit_instr(
-        X64Instr::MovRM(op_size, addr_mode),
-        &[DefOperand::any_reg(output)],
-        &uses,
-    );
+    match ty {
+        Type::I32 | Type::I64 | Type::Ptr => {
+            let op_size = operand_size_for_mem_size(mem_size);
+            ctx.emit_instr(
+                X64Instr::MovRM(op_size, addr_mode),
+                &[DefOperand::any_reg(output)],
+                &uses,
+            );
+        }
+        Type::F64 => {
+            ctx.emit_instr(
+                X64Instr::MovsRM(SseFpuPrecision::Double, addr_mode),
+                &[DefOperand::any_reg(output)],
+                &uses,
+            );
+        }
+    }
 }
 
 fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {
     let [value, addr] = ctx.node_inputs_exact(node);
+    let ty = ctx.value_type(value);
     let value = ctx.get_value_vreg(value);
-    let op_size = operand_size_for_mem_size(mem_size);
 
     let mut uses = smallvec![UseOperand::any_reg(value)];
     let addr_mode = select_addr_mode(ctx, addr, &mut uses);
 
-    ctx.emit_instr(X64Instr::MovMR(op_size, addr_mode), &[], &uses);
+    match ty {
+        Type::I32 | Type::I64 | Type::Ptr => {
+            let op_size = operand_size_for_mem_size(mem_size);
+            ctx.emit_instr(X64Instr::MovMR(op_size, addr_mode), &[], &uses);
+        }
+        Type::F64 => {
+            ctx.emit_instr(
+                X64Instr::MovsMR(SseFpuPrecision::Double, addr_mode),
+                &[],
+                &uses,
+            );
+        }
+    }
 }
 
 fn select_addr_mode(

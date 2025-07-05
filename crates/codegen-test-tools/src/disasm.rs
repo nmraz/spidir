@@ -81,7 +81,7 @@ pub fn disasm_code(
         writeln!(output, "<CP>:").unwrap();
         for (i, chunk) in code.constpool.chunks(CP_CHUNK_SIZE).enumerate() {
             let byte_offset = i * CP_CHUNK_SIZE;
-            write!(
+            writeln!(
                 output,
                 "{:indent$}{byte_offset:06x}: {}",
                 "",

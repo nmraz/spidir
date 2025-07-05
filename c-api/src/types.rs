@@ -1,9 +1,9 @@
+use alloc::{borrow::ToOwned, string::String};
 use core::{
     ffi::{CStr, c_char},
     slice,
 };
 
-use alloc::{borrow::ToOwned, string::String};
 use codegen::code_buffer::{Reloc, RelocTarget};
 use frontend::{Block, FunctionBuilder};
 use ir::{
@@ -12,6 +12,8 @@ use ir::{
     node::{FcmpKind, FunctionRef, IcmpKind, MemSize, Type},
     valgraph::DepValue,
 };
+
+use cranelift_entity::packed_option::ReservedValue;
 use smallvec::SmallVec;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,12 +35,20 @@ pub struct ApiValue(pub u32);
 #[repr(C)]
 pub struct ApiPhi(pub u32);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub union ApiRelocTarget {
+    internal: ApiFunction,
+    external: ApiExternFunction,
+}
+
+#[derive(Clone, Copy)]
 #[repr(C)]
 pub struct ApiReloc {
-    pub target: ApiFunctionRef,
     pub addend: i64,
+    pub target: ApiRelocTarget,
     pub offset: u32,
+    pub target_kind: u8,
     pub kind: u8,
 }
 
@@ -95,6 +105,10 @@ const SPIDIR_MEM_SIZE_1: u8 = 0;
 const SPIDIR_MEM_SIZE_2: u8 = 1;
 const SPIDIR_MEM_SIZE_4: u8 = 2;
 const SPIDIR_MEM_SIZE_8: u8 = 3;
+
+const SPIDIR_RELOC_TARGET_INTERNAL_FUNCTION: u8 = 0;
+const SPIDIR_RELOC_TARGET_EXTERNAL_FUNCTION: u8 = 1;
+const SPIDIR_RELOC_TARGET_CONSTPOOL: u8 = 2;
 
 pub unsafe fn value_list_from_api(
     arg_count: usize,
@@ -187,14 +201,6 @@ pub fn funcref_from_api(func: ApiFunctionRef) -> FunctionRef {
     }
 }
 
-pub fn funcref_to_api(func: FunctionRef) -> ApiFunctionRef {
-    let val = match func {
-        FunctionRef::Internal(func) => (SPIDIR_FUNCREF_INTERNAL << 32) | (func.as_u32() as u64),
-        FunctionRef::External(func) => (SPIDIR_FUNCREF_EXTERNAL << 32) | (func.as_u32() as u64),
-    };
-    ApiFunctionRef(val)
-}
-
 pub fn value_to_api(value: DepValue) -> ApiValue {
     ApiValue(value.as_u32())
 }
@@ -268,14 +274,31 @@ pub fn mem_size_from_api(api_size: ApiMemSize) -> MemSize {
 }
 
 pub fn reloc_to_api(reloc: &Reloc) -> ApiReloc {
-    let target = match reloc.target {
-        RelocTarget::Function(func) => func,
-        RelocTarget::ConstantPool => todo!("support constant pool in C API"),
+    let (target_kind, target) = match reloc.target {
+        RelocTarget::Function(FunctionRef::Internal(func)) => (
+            SPIDIR_RELOC_TARGET_INTERNAL_FUNCTION,
+            ApiRelocTarget {
+                internal: function_to_api(func),
+            },
+        ),
+        RelocTarget::Function(FunctionRef::External(func)) => (
+            SPIDIR_RELOC_TARGET_EXTERNAL_FUNCTION,
+            ApiRelocTarget {
+                external: extern_function_to_api(func),
+            },
+        ),
+        RelocTarget::ConstantPool => (
+            SPIDIR_RELOC_TARGET_CONSTPOOL,
+            ApiRelocTarget {
+                internal: function_to_api(Function::reserved_value()),
+            },
+        ),
     };
     ApiReloc {
-        target: funcref_to_api(target),
         addend: reloc.addend,
+        target,
         offset: reloc.offset,
+        target_kind,
         kind: reloc.kind.0,
     }
 }

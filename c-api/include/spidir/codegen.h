@@ -40,17 +40,38 @@ typedef struct spidir_codegen_config {
 /// See individual backend definitions for possible values.
 typedef uint8_t spidir_reloc_kind_t;
 
-/// Represents a relocation against another function (internal or external) in
-/// generated code.
+enum spidir_reloc_target_kind {
+    /// The relocation refers to an internal function, accessible via the
+    /// `target.internal` relocation field.
+    SPIDIR_RELOC_TARGET_INTERNAL_FUNCTION,
+    /// The relocation refers to an internal function, accessible via the
+    /// `target.external` relocation field.
+    SPIDIR_RELOC_TARGET_EXTERNAL_FUNCTION,
+    /// The relocation refers to the function's constant pool.
+    SPIDIR_RELOC_TARGET_CONSTPOOL,
+};
+
+/// Indicates what type of entity is referenced by a relocation.
+///
+/// See the `SPIDIR_RELOC_TARGET_` constants for possible values.
+typedef uint8_t spidir_reloc_target_kind_t;
+
+/// Represents a relocation in generated code. Relocations can refer either to
+/// other functions or to the function's constant pool.
 typedef struct spidir_codegen_reloc {
-    /// The target of this relocation (either internal or external).
-    spidir_funcref_t target;
     /// The addend for this relocation.
-    /// The exact meaning of this field depends on the target archtitecture and
+    /// The exact meaning of this field depends on the target architecture and
     /// the value of the `kind` field.
     int64_t addend;
+    /// The target function of this relocation, if it refers to a function.
+    union {
+        spidir_function_t internal;
+        spidir_extern_function_t external;
+    } target;
     /// The offset in the generated code to which the relocation applies.
     uint32_t offset;
+    /// The type of entity referred to by this relocation.
+    spidir_reloc_target_kind_t target_kind;
     /// The kind of relocation to apply.
     /// The meaning of this field depends on the target architecture.
     spidir_reloc_kind_t kind;
@@ -89,6 +110,29 @@ size_t spidir_codegen_blob_get_code_size(spidir_codegen_blob_handle_t blob);
 /// @return A pointer to the code stored in the blob. This buffer is owned by
 ///         the blob and should not be referenced after the blob is destroyed.
 const void* spidir_codegen_blob_get_code(spidir_codegen_blob_handle_t blob);
+
+/// Queries the size of the constant pool (in bytes) held in the code blob.
+///
+/// @param[in] blob The blob to query.
+/// @return The size of the contained constant pool.
+size_t
+spidir_codegen_blob_get_constpool_size(spidir_codegen_blob_handle_t blob);
+
+/// Queries the alignment of the constant pool (in bytes) held in the code blob.
+///
+/// @param[in] blob The blob to query.
+/// @return The alignment of the contained constant pool.
+size_t
+spidir_codegen_blob_get_constpool_align(spidir_codegen_blob_handle_t blob);
+
+/// Retrieves a pointer to the constant pool stored in the code blob.
+///
+/// @param[in] blob The blob to query.
+/// @return A pointer to the constant pool stored in the blob. This buffer is
+///         owned by the blob and should not be referenced after the blob is
+///         destroyed.
+const void*
+spidir_codegen_blob_get_constpool(spidir_codegen_blob_handle_t blob);
 
 /// Queries the number of relocations stored in the code blob.
 ///

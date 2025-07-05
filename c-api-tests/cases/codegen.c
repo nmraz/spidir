@@ -49,7 +49,8 @@ void outer_builder_callback(spidir_builder_handle_t builder, void* ctx) {
     spidir_builder_build_return(builder, retval);
 }
 
-void apply_relocs(uintptr_t base, spidir_funcref_t inner, uintptr_t inner_addr,
+void apply_relocs(uintptr_t base, uintptr_t constpool_base,
+                  spidir_funcref_t inner, uintptr_t inner_addr,
                   spidir_funcref_t outer, uintptr_t outer_addr,
                   const spidir_codegen_reloc_t* relocs, size_t reloc_count,
                   spidir_reloc_kind_t expected_reloc) {
@@ -58,11 +59,20 @@ void apply_relocs(uintptr_t base, spidir_funcref_t inner, uintptr_t inner_addr,
         uintptr_t patch_addr = base + reloc->offset;
         uint64_t target_value = 0;
 
-        if (reloc->target.id == inner.id) {
-            target_value = inner_addr;
-        } else if (reloc->target.id == outer.id) {
-            target_value = outer_addr;
-        } else {
+        switch (reloc->target_kind) {
+        case SPIDIR_RELOC_TARGET_INTERNAL_FUNCTION:
+            if (reloc->target.internal.id == inner.id) {
+                target_value = inner_addr;
+            } else if (reloc->target.internal.id == outer.id) {
+                target_value = outer_addr;
+            } else {
+                ASSERT(!"unknown relocation target");
+            }
+            break;
+        case SPIDIR_RELOC_TARGET_CONSTPOOL:
+            target_value = constpool_base;
+            break;
+        default:
             ASSERT(!"unknown relocation target");
         }
 
@@ -90,11 +100,23 @@ void map_and_run(spidir_funcref_t inner,
                  spidir_funcref_t outer,
                  spidir_codegen_blob_handle_t outer_code,
                  spidir_reloc_kind_t expected_reloc) {
-    size_t inner_size = spidir_codegen_blob_get_code_size(inner_code);
-    size_t outer_size = spidir_codegen_blob_get_code_size(outer_code);
+    size_t inner_code_size = spidir_codegen_blob_get_code_size(inner_code);
+    size_t outer_code_size = spidir_codegen_blob_get_code_size(outer_code);
+
+    size_t inner_constpool_size =
+        spidir_codegen_blob_get_constpool_size(inner_code);
+    size_t outer_constpool_size =
+        spidir_codegen_blob_get_constpool_size(outer_code);
+    size_t inner_constpool_align =
+        spidir_codegen_blob_get_constpool_align(inner_code);
+    size_t outer_constpool_align =
+        spidir_codegen_blob_get_constpool_align(outer_code);
 
     size_t map_size =
-        align_up(inner_size + outer_size + FUNCTION_ALIGN, PAGE_SIZE);
+        align_up(inner_code_size + outer_code_size + inner_constpool_size +
+                     outer_constpool_size + FUNCTION_ALIGN +
+                     inner_constpool_align + outer_constpool_align,
+                 PAGE_SIZE);
     uint8_t* map_base = mmap(NULL, map_size, PROT_READ | PROT_WRITE,
                              MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
     ASSERT(map_base != MAP_FAILED);
@@ -102,12 +124,21 @@ void map_and_run(spidir_funcref_t inner,
     memset(map_base, 0xcc, map_size);
 
     uintptr_t inner_base = (uintptr_t) map_base;
-    uintptr_t outer_base = align_up(inner_base + inner_size, FUNCTION_ALIGN);
+    uintptr_t outer_base =
+        align_up(inner_base + inner_code_size, FUNCTION_ALIGN);
+    uintptr_t inner_constpool_base =
+        align_up(outer_base + outer_code_size, inner_constpool_align);
+    uintptr_t outer_constpool_base = align_up(
+        inner_constpool_base + inner_constpool_align, outer_constpool_align);
 
     memcpy((void*) inner_base, spidir_codegen_blob_get_code(inner_code),
-           inner_size);
+           inner_code_size);
     memcpy((void*) outer_base, spidir_codegen_blob_get_code(outer_code),
-           outer_size);
+           outer_code_size);
+    memcpy((void*) inner_constpool_base,
+           spidir_codegen_blob_get_constpool(inner_code), inner_constpool_size);
+    memcpy((void*) outer_constpool_base,
+           spidir_codegen_blob_get_constpool(outer_code), outer_constpool_size);
 
     size_t inner_reloc_count = spidir_codegen_blob_get_reloc_count(inner_code);
     size_t outer_reloc_count = spidir_codegen_blob_get_reloc_count(outer_code);
@@ -115,12 +146,12 @@ void map_and_run(spidir_funcref_t inner,
     // Make sure we actually have some relocations in the emitted code.
     ASSERT(inner_reloc_count + outer_reloc_count > 0);
 
-    apply_relocs(inner_base, inner, inner_base, outer, outer_base,
-                 spidir_codegen_blob_get_relocs(inner_code), inner_reloc_count,
-                 expected_reloc);
-    apply_relocs(outer_base, inner, inner_base, outer, outer_base,
-                 spidir_codegen_blob_get_relocs(outer_code), outer_reloc_count,
-                 expected_reloc);
+    apply_relocs(inner_base, inner_constpool_base, inner, inner_base, outer,
+                 outer_base, spidir_codegen_blob_get_relocs(inner_code),
+                 inner_reloc_count, expected_reloc);
+    apply_relocs(outer_base, outer_constpool_base, inner, inner_base, outer,
+                 outer_base, spidir_codegen_blob_get_relocs(outer_code),
+                 outer_reloc_count, expected_reloc);
 
     ASSERT(mprotect((void*) map_base, map_size, PROT_READ | PROT_EXEC) == 0);
 

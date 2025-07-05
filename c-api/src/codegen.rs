@@ -37,6 +37,8 @@ struct ApiCodegenMachineInner<M> {
 struct ApiCodegenBlob {
     code: Vec<u8>,
     relocs: Vec<ApiReloc>,
+    constpool_align: u32,
+    constpool: Vec<u8>,
 }
 
 unsafe fn codegen_machine_drop<M>(codegen_machine: *mut ApiCodegenMachine) {
@@ -72,7 +74,12 @@ pub fn codegen_machine_to_api<M: Machine>(machine: M) -> *mut ApiCodegenMachine 
 fn codegen_blob_to_api(blob: CodeBlob) -> *mut ApiCodegenBlob {
     let code = blob.code;
     let relocs = blob.relocs.iter().map(reloc_to_api).collect();
-    Box::into_raw(Box::new(ApiCodegenBlob { code, relocs }))
+    Box::into_raw(Box::new(ApiCodegenBlob {
+        code,
+        relocs,
+        constpool_align: blob.constpool_align,
+        constpool: blob.constpool,
+    }))
 }
 
 #[unsafe(no_mangle)]
@@ -100,6 +107,24 @@ unsafe extern "C" fn spidir_codegen_blob_get_code_size(blob: *const ApiCodegenBl
 unsafe extern "C" fn spidir_codegen_blob_get_code(blob: *const ApiCodegenBlob) -> *const u8 {
     let blob = unsafe { &*blob };
     blob.code.as_ptr()
+}
+
+#[unsafe(no_mangle)]
+unsafe extern "C" fn spidir_codegen_blob_get_constpool_size(blob: *const ApiCodegenBlob) -> usize {
+    let blob = unsafe { &*blob };
+    blob.constpool.len()
+}
+
+#[unsafe(no_mangle)]
+unsafe extern "C" fn spidir_codegen_blob_get_constpool_align(blob: *const ApiCodegenBlob) -> usize {
+    let blob = unsafe { &*blob };
+    blob.constpool_align as usize
+}
+
+#[unsafe(no_mangle)]
+unsafe extern "C" fn spidir_codegen_blob_get_constpool(blob: *const ApiCodegenBlob) -> *const u8 {
+    let blob = unsafe { &*blob };
+    blob.constpool.as_ptr()
 }
 
 #[unsafe(no_mangle)]

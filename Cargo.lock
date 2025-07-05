@@ -86,6 +86,7 @@ name = "c-api"
 version = "0.1.0"
 dependencies = [
  "codegen",
+ "cranelift-entity",
  "frontend",
  "ir",
  "log",

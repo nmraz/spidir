@@ -1,0 +1,27 @@
+# run: codegen
+
+func @floattosint32:i32(f64) {
+    # check: function `floattosint32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f 2d c0                     cvtsd2si eax, xmm0
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %0:ctrl, %1:f64 = entry
+    %2:i32 = floattosint %1
+    return %0, %2
+}
+
+func @floattosint64:i64(f64) {
+    # check: function `floattosint64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 48 0f 2d c0                  cvtsd2si rax, xmm0
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
+
+    %0:ctrl, %1:f64 = entry
+    %2:i64 = floattosint %1
+    return %0, %2
+}

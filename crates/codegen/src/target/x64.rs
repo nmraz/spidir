@@ -251,6 +251,7 @@ pub enum X64Instr {
     MovsdConstRel(f64),
     F64ConstAddrAbs(f64),
     Cvtsi2s(OperandSize, SseFpuPrecision),
+    Cvts2si(OperandSize, SseFpuPrecision),
     MovGprmXmm(OperandSize),
     /// Load from [rbp + offset]
     MovRRbp {
@@ -303,6 +304,7 @@ impl X64Instr {
             X64Instr::MovsdConstRel(..) => false,
             X64Instr::F64ConstAddrAbs(..) => false,
             X64Instr::Cvtsi2s(..) => false,
+            X64Instr::Cvts2si(..) => false,
             X64Instr::MovGprmXmm(..) => false,
             X64Instr::MovRRbp { .. } => false,
             X64Instr::MovsRRbp { .. } => false,
@@ -347,6 +349,7 @@ impl X64Instr {
             X64Instr::MovsdConstRel(..) => false,
             X64Instr::F64ConstAddrAbs(..) => false,
             X64Instr::Cvtsi2s(..) => false,
+            X64Instr::Cvts2si(..) => false,
             X64Instr::MovGprmXmm(..) => false,
             X64Instr::Setcc(..) => false,
             X64Instr::MovRRbp { .. } => false,

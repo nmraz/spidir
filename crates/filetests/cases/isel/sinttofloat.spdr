@@ -1,0 +1,23 @@
+# run: isel
+
+func @sint32tofloat:f64(i32) {
+    # check: function `sint32tofloat`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:xmm(reg)[late] = Cvtsi2s(S32, Double) %1(any)[early]
+    # nextln: 0001:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:i32 = entry
+    %2:f64 = sinttofloat %1
+    return %0, %2
+}
+
+func @sint64tofloat:f64(i64) {
+    # check: function `sint64tofloat`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %0:xmm(reg)[late] = Cvtsi2s(S64, Double) %1(any)[early]
+    # nextln: 0001:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:i64 = entry
+    %2:f64 = sinttofloat %1
+    return %0, %2
+}

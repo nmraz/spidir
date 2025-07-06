@@ -945,11 +945,11 @@ fn emit_ud2(buffer: &mut CodeBuffer<X64Fixup>) {
 }
 
 fn emit_movaps_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
-    emit_sse_fpu_with_op_size(buffer, SseFpuPrecision::Single, 0x28, dest, src);
+    emit_sse_fpu_with_legacy_op_size(buffer, SseFpuPrecision::Single, 0x28, dest, src);
 }
 
 fn emit_movaps_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
-    emit_sse_fpu_with_op_size(buffer, SseFpuPrecision::Single, 0x29, src, dest);
+    emit_sse_fpu_with_legacy_op_size(buffer, SseFpuPrecision::Single, 0x29, src, dest);
 }
 
 fn emit_movs_r_rm(
@@ -1012,11 +1012,11 @@ fn emit_ucomi(
 ) {
     // For some reason, even though this opcode is scalar, it uses the operand-size encoding
     // typically used by the packed instructions.
-    emit_sse_fpu_with_op_size(buffer, prec, 0x2e, arg0, arg1);
+    emit_sse_fpu_with_legacy_op_size(buffer, prec, 0x2e, arg0, arg1);
 }
 
 fn emit_xorps(buffer: &mut CodeBuffer<X64Fixup>, arg0: PhysReg, arg1: RegMem) {
-    emit_sse_fpu_with_op_size(buffer, SseFpuPrecision::Single, 0x57, arg0, arg1);
+    emit_sse_fpu_with_legacy_op_size(buffer, SseFpuPrecision::Single, 0x57, arg0, arg1);
 }
 
 fn emit_mov_gprm_xmm(
@@ -1157,7 +1157,7 @@ fn emit_sse_fpu_r_rm(
     emit_sse_fpu_with_mandatory_prefix(buffer, prec, opcode, arg0, arg1);
 }
 
-fn emit_sse_fpu_with_op_size(
+fn emit_sse_fpu_with_legacy_op_size(
     buffer: &mut CodeBuffer<X64Fixup>,
     prec: SseFpuPrecision,
     opcode: u8,

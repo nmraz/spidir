@@ -301,6 +301,13 @@ impl MachineEmit for X64Machine {
                 let src = buffer.get_constant(8, &val.to_le_bytes());
                 emit_movabs_r_i_reloc(buffer, dest, BufferRelocTarget::Constant(src));
             }
+            &X64Instr::Cvtsi2s(op_size, prec) => emit_cvtsi2s(
+                buffer,
+                op_size,
+                prec,
+                defs[0].as_reg().unwrap(),
+                state.operand_reg_mem(uses[0]),
+            ),
             &X64Instr::MovGprmXmm(op_size) => emit_mov_gprm_xmm(
                 buffer,
                 op_size,
@@ -1019,6 +1026,16 @@ fn emit_xorps(buffer: &mut CodeBuffer<X64Fixup>, arg0: PhysReg, arg1: RegMem) {
     emit_sse_fpu_with_legacy_op_size(buffer, SseFpuPrecision::Single, 0x57, arg0, arg1);
 }
 
+fn emit_cvtsi2s(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op_size: OperandSize,
+    prec: SseFpuPrecision,
+    dest: PhysReg,
+    src: RegMem,
+) {
+    emit_sse_fpu_with_mandatory_prefix_and_op_size(buffer, prec, op_size, 0x2a, dest, src);
+}
+
 fn emit_mov_gprm_xmm(
     buffer: &mut CodeBuffer<X64Fixup>,
     op_size: OperandSize,
@@ -1182,7 +1199,28 @@ fn emit_sse_fpu_with_mandatory_prefix(
     reg: PhysReg,
     reg_mem: RegMem,
 ) {
-    let (rex, modrm_sib) = encode_reg_mem_parts(reg_mem, |rex| rex.encode_modrm_reg(reg));
+    emit_sse_fpu_with_mandatory_prefix_and_op_size(
+        buffer,
+        prec,
+        OperandSize::S32,
+        opcode,
+        reg,
+        reg_mem,
+    );
+}
+
+fn emit_sse_fpu_with_mandatory_prefix_and_op_size(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    prec: SseFpuPrecision,
+    op_size: OperandSize,
+    opcode: u8,
+    reg: PhysReg,
+    reg_mem: RegMem,
+) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(reg_mem, |rex| {
+        rex.encode_operand_size(op_size);
+        rex.encode_modrm_reg(reg)
+    });
     buffer.instr(|sink| {
         sink.emit(&[sse_mandatory_prefix_for_prec(prec)]);
         rex.emit(sink);

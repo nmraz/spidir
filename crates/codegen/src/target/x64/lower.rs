@@ -12,7 +12,10 @@ use valmatch::match_value;
 use crate::{
     cfg::Block,
     isel::{IselContext, MachineIselError, ParamLoc},
-    lir::{DefOperand, PhysReg, PhysRegSet, RegClass, UseOperand, VirtReg},
+    lir::{
+        DefOperand, DefOperandConstraint, OperandPos, PhysReg, PhysRegSet, RegClass, UseOperand,
+        VirtReg,
+    },
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
     target::x64::{CompoundCondCode, SseFpuBinOp, SseFpuCmpCode, SseFpuPrecision},
@@ -203,7 +206,7 @@ impl MachineLower for X64Machine {
             NodeKind::SintToFloat => emit_cvtsi2s(ctx, node),
             NodeKind::UintToFloat => select_uinttofloat(ctx, node),
             NodeKind::FloatToSint => emit_cvts2si(ctx, node),
-            NodeKind::FloatToUint => select_floattouint(ctx, node)?,
+            NodeKind::FloatToUint => select_floattouint(self, ctx, node)?,
             NodeKind::PtrOff => select_alu(ctx, node, AluBinOp::Add),
             &NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             &NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
@@ -550,6 +553,7 @@ fn select_uinttofloat(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
 }
 
 fn select_floattouint(
+    machine: &X64Machine,
     ctx: &mut IselContext<'_, '_, X64Machine>,
     node: Node,
 ) -> Result<(), MachineIselError> {
@@ -569,7 +573,24 @@ fn select_floattouint(
                 &[UseOperand::any(input)],
             );
         }
-        Type::I64 => return Err(MachineIselError),
+        Type::I64 => {
+            if machine.config.internal_code_model == CodeModel::SmallPic {
+                let tmp_xmm1 = ctx.create_temp_vreg(RC_XMM);
+                let tmp_xmm2 = ctx.create_temp_vreg(RC_XMM);
+
+                ctx.emit_instr(
+                    X64Instr::PseudoFloatToUint64Rel(SseFpuPrecision::Double),
+                    &[
+                        DefOperand::any_reg(output),
+                        DefOperand::new(tmp_xmm1, DefOperandConstraint::AnyReg, OperandPos::Early),
+                        DefOperand::any_reg(tmp_xmm2),
+                    ],
+                    &[UseOperand::any_reg(input)],
+                );
+            } else {
+                return Err(MachineIselError);
+            }
+        }
         _ => unreachable!(),
     }
 

@@ -4,6 +4,7 @@ use ir::node::FunctionRef;
 use crate::{
     cfg::Block,
     code_buffer::{BufferRelocTarget, CodeBuffer, FixupKind, InstrAnchor, InstrSink, Label},
+    constpool::Constant,
     emit::{EmitContext, EmitInstrData},
     frame::FrameLayout,
     lir::{Instr, PhysReg, PhysRegSet, StackSlot},
@@ -323,6 +324,14 @@ impl MachineEmit for X64Machine {
                 defs[1].as_reg().unwrap(),
                 defs[2].as_reg().unwrap(),
             ),
+            &X64Instr::PseudoFloatToUint64Rel(prec) => emit_float_to_uint64_rel(
+                buffer,
+                prec,
+                defs[0].as_reg().unwrap(),
+                uses[0].as_reg().unwrap(),
+                defs[1].as_reg().unwrap(),
+                defs[2].as_reg().unwrap(),
+            ),
             &X64Instr::MovGprmXmm(op_size) => emit_mov_gprm_xmm(
                 buffer,
                 op_size,
@@ -605,6 +614,63 @@ fn emit_uint64_to_float(
     emit_sse_fpu_r_rm(buffer, prec, SseFpuBinOp::Add, dest, RegMem::Reg(dest));
 
     buffer.bind_label(done);
+}
+
+fn emit_float_to_uint64_rel(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    prec: SseFpuPrecision,
+    dest: PhysReg,
+    src: PhysReg,
+    tmp_xmm1: PhysReg,
+    tmp_xmm2: PhysReg,
+) {
+    // Emit the following:
+    //
+    //         movsd tmp_xmm1, [rip + C_f_1p63]
+    //         ucomis[sd] src, tmp_xmm1
+    //         jae has_high_bit
+    //         cvts[sd]2si dest, src
+    //         jmp done
+    //     has_high_bit:
+    //         mov tmp_xmm2, src
+    //         subsd tmp_xmm2, tmp_xmm1
+    //         cvts[sd]2si dest, tmp_xmm2
+    //         btc dest
+    //     done:
+
+    let high_bit_set = buffer.create_label();
+    let done = buffer.create_label();
+
+    let f_1p63 = get_f_1p63(buffer, prec);
+    emit_movs_r_rm_rip_reloc(buffer, prec, tmp_xmm1, BufferRelocTarget::Constant(f_1p63));
+    emit_ucomi(buffer, prec, src, RegMem::Reg(tmp_xmm1));
+    emit_jcc(buffer, CondCode::Ae, high_bit_set);
+
+    emit_cvts2si(buffer, OperandSize::S64, prec, dest, RegMem::Reg(src));
+    emit_jmp(buffer, done);
+
+    buffer.bind_label(high_bit_set);
+    if tmp_xmm2 != src {
+        emit_movaps_r_rm(buffer, tmp_xmm2, RegMem::Reg(src));
+    }
+    emit_sse_fpu_r_rm(
+        buffer,
+        prec,
+        SseFpuBinOp::Sub,
+        tmp_xmm2,
+        RegMem::Reg(tmp_xmm1),
+    );
+    emit_cvts2si(buffer, OperandSize::S64, prec, dest, RegMem::Reg(tmp_xmm2));
+    emit_btc_rm_i(buffer, OperandSize::S64, RegMem::Reg(dest), 63);
+
+    buffer.bind_label(done);
+}
+
+fn get_f_1p63(buffer: &mut CodeBuffer<X64Fixup>, prec: SseFpuPrecision) -> Constant {
+    match prec {
+        SseFpuPrecision::Single => buffer.get_constant(4, &0x5f000000u32.to_le_bytes()),
+        SseFpuPrecision::Double => buffer.get_constant(8, &0x43e0000000000000u64.to_le_bytes()),
+    }
 }
 
 // Single-instruction emission helpers
@@ -957,6 +1023,19 @@ fn emit_setcc_r(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, dest: PhysReg
     buffer.instr(|sink| {
         rex.emit(sink);
         sink.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, dest)]);
+    });
+}
+
+fn emit_btc_rm_i(buffer: &mut CodeBuffer<X64Fixup>, op_size: OperandSize, arg: RegMem, imm: u8) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(arg, |rex| {
+        rex.encode_operand_size(op_size);
+        0x7
+    });
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0xf, 0xba]);
+        modrm_sib.emit(sink);
+        sink.emit(&[imm]);
     });
 }
 

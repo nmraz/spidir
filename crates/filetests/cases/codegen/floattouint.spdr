@@ -12,3 +12,25 @@ func @floattouint32:i32(f64) {
     %2:i32 = floattouint %1
     return %0, %2
 }
+
+func @floattouint64:i64(f64) {
+    # check: function `floattouint64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f 10 0d 00 00 00 00         movsd xmm1, qword ptr [rip]  # RELOC_PC32 -> @<CP> + -4
+    # nextln: 00000c: 66 0f 2e c1                     ucomisd xmm0, xmm1
+    # nextln: 000010: 0f 83 0a 00 00 00               jae 0x20
+    # nextln: 000016: f2 48 0f 2d c0                  cvtsd2si rax, xmm0
+    # nextln: 00001b: e9 0e 00 00 00                  jmp 0x2e
+    # nextln: 000020: f2 0f 5c c1                     subsd xmm0, xmm1
+    # nextln: 000024: f2 48 0f 2d c0                  cvtsd2si rax, xmm0
+    # nextln: 000029: 48 0f ba f8 3f                  btc rax, 0x3f
+    # nextln: 00002e: 5d                              pop rbp
+    # nextln: 00002f: c3                              ret
+    # nextln: <CP>:
+    # nextln: 000000: 00 00 00 00 00 00 e0 43
+
+    %0:ctrl, %1:f64 = entry
+    %2:i64 = floattouint %1
+    return %0, %2
+}

@@ -386,12 +386,18 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn lower_block_params(&mut self, builder: &mut LirBuilder<'ctx, M>, block: Block) {
-        if self.cfg_ctx.cfg.block_preds(block).len() == 1 {
+        if let &[pred] = self.cfg_ctx.cfg.block_preds(block) {
             // For single-predecessor blocks, just copy the values from the predecessor. This,
             // combined with critical edge splitting, means that we can always place parallel copies
             // for block param resolution in the predecessor later.
+
+            // If our predecessor came from the valgraph, make sure to take its actual index for the
+            // phi input - it might not be 0 if some of the valgraph predecessors are dead!
+            let valgraph_pred_idx = self.block_map.valgraph_pred_index(block, pred).unwrap_or(0);
+            let phi_input = valgraph_pred_idx as usize + 1;
+
             for &phi in self.schedule.block_phis(block) {
-                let input = self.get_value_vreg(builder, self.graph().node_inputs(phi)[1]);
+                let input = self.get_value_vreg(builder, self.graph().node_inputs(phi)[phi_input]);
                 let output = self.value_reg_map[self.graph().node_outputs(phi)[0]].unwrap();
                 builder.copy_vreg(output, input);
             }

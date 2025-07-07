@@ -1,0 +1,13 @@
+# run: isel
+
+func @uint32tofloat:f64(i32) {
+    # check: function `uint32tofloat`:
+    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln: 0000:      %2:gpr(reg)[late] = MovzxRRm(S32) %1(any)[early]
+    # nextln: 0001:      %0:xmm(reg)[late] = Cvtsi2s(S64, Double) %2(any)[early]
+    # nextln: 0002:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:i32 = entry
+    %2:f64 = uinttofloat %1
+    return %0, %2
+}

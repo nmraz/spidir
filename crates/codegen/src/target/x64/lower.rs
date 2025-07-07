@@ -201,7 +201,9 @@ impl MachineLower for X64Machine {
             NodeKind::Fdiv => emit_fpu_rr(ctx, node, SseFpuBinOp::Div),
             &NodeKind::Fcmp(kind) => select_direct_fcmp(ctx, node, kind),
             NodeKind::SintToFloat => emit_cvtsi2s(ctx, node),
+            NodeKind::UintToFloat => select_uinttofloat(ctx, node)?,
             NodeKind::FloatToSint => emit_cvts2si(ctx, node),
+            NodeKind::FloatToUint => select_floattouint(ctx, node)?,
             NodeKind::PtrOff => select_alu(ctx, node, AluBinOp::Add),
             &NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             &NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
@@ -504,6 +506,66 @@ fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kin
             emit_fpu_ucomi_sequence(ctx, CondCode::Be, output, op1, op2);
         }
     };
+}
+
+fn select_uinttofloat(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+) -> Result<(), MachineIselError> {
+    let [output] = ctx.node_outputs_exact(node);
+    let [input] = ctx.node_inputs_exact(node);
+
+    let input_ty = ctx.value_type(input);
+
+    let output = ctx.get_value_vreg(output);
+    let input = ctx.get_value_vreg(input);
+
+    match input_ty {
+        Type::I32 => {
+            let tmp = ctx.create_temp_vreg(RC_GPR);
+            ctx.emit_instr(
+                X64Instr::MovzxRRm(FullOperandSize::S32),
+                &[DefOperand::any_reg(tmp)],
+                &[UseOperand::any(input)],
+            );
+            ctx.emit_instr(
+                X64Instr::Cvtsi2s(OperandSize::S64, SseFpuPrecision::Double),
+                &[DefOperand::any_reg(output)],
+                &[UseOperand::any(tmp)],
+            );
+        }
+        Type::I64 => return Err(MachineIselError),
+        _ => unreachable!(),
+    }
+
+    Ok(())
+}
+
+fn select_floattouint(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+) -> Result<(), MachineIselError> {
+    let [output] = ctx.node_outputs_exact(node);
+    let [input] = ctx.node_inputs_exact(node);
+
+    let output_ty = ctx.value_type(output);
+
+    let output = ctx.get_value_vreg(output);
+    let input = ctx.get_value_vreg(input);
+
+    match output_ty {
+        Type::I32 => {
+            ctx.emit_instr(
+                X64Instr::Cvts2si(OperandSize::S64, SseFpuPrecision::Double),
+                &[DefOperand::any_reg(output)],
+                &[UseOperand::any(input)],
+            );
+        }
+        Type::I64 => return Err(MachineIselError),
+        _ => unreachable!(),
+    }
+
+    Ok(())
 }
 
 fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {

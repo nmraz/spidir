@@ -1,0 +1,15 @@
+# run: codegen
+
+func @uint32tofloat:f64(i32) {
+    # check: function `uint32tofloat`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 8b c7                           mov eax, edi
+    # nextln: 000006: f2 48 0f 2a c0                  cvtsi2sd xmm0, rax
+    # nextln: 00000b: 5d                              pop rbp
+    # nextln: 00000c: c3                              ret
+
+    %0:ctrl, %1:i32 = entry
+    %2:f64 = uinttofloat %1
+    return %0, %2
+}

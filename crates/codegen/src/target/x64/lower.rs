@@ -201,7 +201,7 @@ impl MachineLower for X64Machine {
             NodeKind::Fdiv => emit_fpu_rr(ctx, node, SseFpuBinOp::Div),
             &NodeKind::Fcmp(kind) => select_direct_fcmp(ctx, node, kind),
             NodeKind::SintToFloat => emit_cvtsi2s(ctx, node),
-            NodeKind::UintToFloat => select_uinttofloat(ctx, node)?,
+            NodeKind::UintToFloat => select_uinttofloat(ctx, node),
             NodeKind::FloatToSint => emit_cvts2si(ctx, node),
             NodeKind::FloatToUint => select_floattouint(ctx, node)?,
             NodeKind::PtrOff => select_alu(ctx, node, AluBinOp::Add),
@@ -508,10 +508,7 @@ fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kin
     };
 }
 
-fn select_uinttofloat(
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    node: Node,
-) -> Result<(), MachineIselError> {
+fn select_uinttofloat(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     let [output] = ctx.node_outputs_exact(node);
     let [input] = ctx.node_inputs_exact(node);
 
@@ -534,11 +531,22 @@ fn select_uinttofloat(
                 &[UseOperand::any(tmp)],
             );
         }
-        Type::I64 => return Err(MachineIselError),
+        Type::I64 => {
+            let tmp_gpr1 = ctx.create_temp_vreg(RC_GPR);
+            let tmp_gpr2 = ctx.create_temp_vreg(RC_GPR);
+
+            ctx.emit_instr(
+                X64Instr::PseudoUint64ToFloat(SseFpuPrecision::Double),
+                &[
+                    DefOperand::any_reg(output),
+                    DefOperand::any_reg(tmp_gpr1),
+                    DefOperand::any_reg(tmp_gpr2),
+                ],
+                &[UseOperand::any_reg(input)],
+            );
+        }
         _ => unreachable!(),
     }
-
-    Ok(())
 }
 
 fn select_floattouint(

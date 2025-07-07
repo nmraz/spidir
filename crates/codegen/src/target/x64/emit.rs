@@ -315,6 +315,14 @@ impl MachineEmit for X64Machine {
                 defs[0].as_reg().unwrap(),
                 state.operand_reg_mem(uses[0]),
             ),
+            &X64Instr::PseudoUint64ToFloat(prec) => emit_uint64_to_float(
+                buffer,
+                prec,
+                defs[0].as_reg().unwrap(),
+                uses[0].as_reg().unwrap(),
+                defs[1].as_reg().unwrap(),
+                defs[2].as_reg().unwrap(),
+            ),
             &X64Instr::MovGprmXmm(op_size) => emit_mov_gprm_xmm(
                 buffer,
                 op_size,
@@ -518,6 +526,85 @@ fn emit_compound_jcc(
         }
     }
     emit_jmp(buffer, true_target);
+}
+
+fn emit_uint64_to_float(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    prec: SseFpuPrecision,
+    dest: PhysReg,
+    src: PhysReg,
+    tmp_gpr1: PhysReg,
+    tmp_gpr2: PhysReg,
+) {
+    // Emit the following:
+    //
+    //         test src, src
+    //         js has_high_bit
+    //         cvtsi2s[sd] dest, src
+    //         jmp done
+    //     has_high_bit:
+    //         mov tmp_gpr1, src
+    //         mov tmp_gpr2, src
+    //         shr tmp_gpr1
+    //         and tmp_gpr2, 1
+    //         or tmp_gpr1, tmp_gpr2
+    //         cvtsi2s[sd] dest, tmp_gpr1
+    //         addsd dest, dest
+    //     done:
+
+    let has_high_bit = buffer.create_label();
+    let done = buffer.create_label();
+
+    emit_alu_r_rm(
+        buffer,
+        AluBinOp::Test,
+        OperandSize::S64,
+        src,
+        RegMem::Reg(src),
+    );
+    emit_jcc(buffer, CondCode::S, has_high_bit);
+
+    emit_cvtsi2s(buffer, OperandSize::S64, prec, dest, RegMem::Reg(src));
+    emit_jmp(buffer, done);
+
+    buffer.bind_label(has_high_bit);
+
+    if tmp_gpr1 != src {
+        emit_mov_r_r(buffer, tmp_gpr1, src);
+    }
+
+    if tmp_gpr2 != src {
+        emit_mov_r_r(buffer, tmp_gpr2, src);
+    }
+
+    emit_shift_rm_i(
+        buffer,
+        ShiftOp::Shr,
+        OperandSize::S64,
+        RegMem::Reg(tmp_gpr1),
+        1,
+    );
+
+    emit_alu_rm_i(
+        buffer,
+        AluBinOp::And,
+        OperandSize::S64,
+        RegMem::Reg(tmp_gpr2),
+        1,
+    );
+
+    emit_alu_r_rm(
+        buffer,
+        AluBinOp::Or,
+        OperandSize::S64,
+        tmp_gpr1,
+        RegMem::Reg(tmp_gpr2),
+    );
+
+    emit_cvtsi2s(buffer, OperandSize::S64, prec, dest, RegMem::Reg(tmp_gpr1));
+    emit_sse_fpu_r_rm(buffer, prec, SseFpuBinOp::Add, dest, RegMem::Reg(dest));
+
+    buffer.bind_label(done);
 }
 
 // Single-instruction emission helpers

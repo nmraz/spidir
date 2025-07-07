@@ -332,6 +332,14 @@ impl MachineEmit for X64Machine {
                 defs[1].as_reg().unwrap(),
                 defs[2].as_reg().unwrap(),
             ),
+            &X64Instr::PseudoFloatToUint64Abs(prec) => emit_float_to_uint64_abs(
+                buffer,
+                prec,
+                defs[0].as_reg().unwrap(),
+                uses[0].as_reg().unwrap(),
+                defs[1].as_reg().unwrap(),
+                defs[2].as_reg().unwrap(),
+            ),
             &X64Instr::MovGprmXmm(op_size) => emit_mov_gprm_xmm(
                 buffer,
                 op_size,
@@ -624,9 +632,47 @@ fn emit_float_to_uint64_rel(
     tmp_xmm1: PhysReg,
     tmp_xmm2: PhysReg,
 ) {
+    let f_1p63 = get_f_1p63(buffer, prec);
+    emit_movs_r_rm_rip_reloc(buffer, prec, tmp_xmm1, BufferRelocTarget::Constant(f_1p63));
+    emit_float_to_uint64_common(buffer, prec, dest, src, tmp_xmm1, tmp_xmm2);
+}
+
+fn emit_float_to_uint64_abs(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    prec: SseFpuPrecision,
+    dest: PhysReg,
+    src: PhysReg,
+    tmp_xmm1: PhysReg,
+    tmp_xmm2: PhysReg,
+) {
+    let f_1p63 = get_f_1p63(buffer, prec);
+
+    // Use `dest` as a temporary for the constant pool access first.
+    emit_movabs_r_i_reloc(buffer, dest, BufferRelocTarget::Constant(f_1p63));
+    emit_movs_r_rm(
+        buffer,
+        prec,
+        tmp_xmm1,
+        RegMem::Mem(RawAddrMode::BaseIndexOff {
+            base: Some(dest),
+            index: None,
+            offset: 0,
+        }),
+    );
+
+    emit_float_to_uint64_common(buffer, prec, dest, src, tmp_xmm1, tmp_xmm2);
+}
+
+fn emit_float_to_uint64_common(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    prec: SseFpuPrecision,
+    dest: PhysReg,
+    src: PhysReg,
+    tmp_xmm1: PhysReg,
+    tmp_xmm2: PhysReg,
+) {
     // Emit the following:
     //
-    //         movsd tmp_xmm1, [rip + C_f_1p63]
     //         ucomis[sd] src, tmp_xmm1
     //         jae has_high_bit
     //         cvts[sd]2si dest, src
@@ -637,12 +683,12 @@ fn emit_float_to_uint64_rel(
     //         cvts[sd]2si dest, tmp_xmm2
     //         btc dest
     //     done:
+    //
+    // assuming `tmp_xmm1` already contains the correct constant.
 
     let high_bit_set = buffer.create_label();
     let done = buffer.create_label();
 
-    let f_1p63 = get_f_1p63(buffer, prec);
-    emit_movs_r_rm_rip_reloc(buffer, prec, tmp_xmm1, BufferRelocTarget::Constant(f_1p63));
     emit_ucomi(buffer, prec, src, RegMem::Reg(tmp_xmm1));
     emit_jcc(buffer, CondCode::Ae, high_bit_set);
 

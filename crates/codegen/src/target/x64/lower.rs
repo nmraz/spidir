@@ -206,7 +206,7 @@ impl MachineLower for X64Machine {
             NodeKind::SintToFloat => emit_cvtsi2s(ctx, node),
             NodeKind::UintToFloat => select_uinttofloat(ctx, node),
             NodeKind::FloatToSint => emit_cvts2si(ctx, node),
-            NodeKind::FloatToUint => select_floattouint(self, ctx, node)?,
+            NodeKind::FloatToUint => select_floattouint(self, ctx, node),
             NodeKind::PtrOff => select_alu(ctx, node, AluBinOp::Add),
             &NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             &NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
@@ -552,11 +552,7 @@ fn select_uinttofloat(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     }
 }
 
-fn select_floattouint(
-    machine: &X64Machine,
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    node: Node,
-) -> Result<(), MachineIselError> {
+fn select_floattouint(machine: &X64Machine, ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     let [output] = ctx.node_outputs_exact(node);
     let [input] = ctx.node_inputs_exact(node);
 
@@ -574,27 +570,26 @@ fn select_floattouint(
             );
         }
         Type::I64 => {
-            if machine.config.internal_code_model == CodeModel::SmallPic {
-                let tmp_xmm1 = ctx.create_temp_vreg(RC_XMM);
-                let tmp_xmm2 = ctx.create_temp_vreg(RC_XMM);
+            let instr = match machine.config.internal_code_model {
+                CodeModel::SmallPic => X64Instr::PseudoFloatToUint64Rel(SseFpuPrecision::Double),
+                CodeModel::LargeAbs => X64Instr::PseudoFloatToUint64Abs(SseFpuPrecision::Double),
+            };
 
-                ctx.emit_instr(
-                    X64Instr::PseudoFloatToUint64Rel(SseFpuPrecision::Double),
-                    &[
-                        DefOperand::any_reg(output),
-                        DefOperand::new(tmp_xmm1, DefOperandConstraint::AnyReg, OperandPos::Early),
-                        DefOperand::any_reg(tmp_xmm2),
-                    ],
-                    &[UseOperand::any_reg(input)],
-                );
-            } else {
-                return Err(MachineIselError);
-            }
+            let tmp_xmm1 = ctx.create_temp_vreg(RC_XMM);
+            let tmp_xmm2 = ctx.create_temp_vreg(RC_XMM);
+
+            ctx.emit_instr(
+                instr,
+                &[
+                    DefOperand::any_reg(output),
+                    DefOperand::new(tmp_xmm1, DefOperandConstraint::AnyReg, OperandPos::Early),
+                    DefOperand::any_reg(tmp_xmm2),
+                ],
+                &[UseOperand::any_reg(input)],
+            );
         }
         _ => unreachable!(),
     }
-
-    Ok(())
 }
 
 fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {

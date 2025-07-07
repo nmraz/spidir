@@ -1,0 +1,24 @@
+# run: codegen[large-abs]
+
+func @floattouint64:i64(f64) {
+    # check: function `floattouint64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @<CP> + 0
+    # nextln: 00000e: f2 0f 10 08                     movsd xmm1, qword ptr [rax]
+    # nextln: 000012: 66 0f 2e c1                     ucomisd xmm0, xmm1
+    # nextln: 000016: 0f 83 0a 00 00 00               jae 0x26
+    # nextln: 00001c: f2 48 0f 2d c0                  cvtsd2si rax, xmm0
+    # nextln: 000021: e9 0e 00 00 00                  jmp 0x34
+    # nextln: 000026: f2 0f 5c c1                     subsd xmm0, xmm1
+    # nextln: 00002a: f2 48 0f 2d c0                  cvtsd2si rax, xmm0
+    # nextln: 00002f: 48 0f ba f8 3f                  btc rax, 0x3f
+    # nextln: 000034: 5d                              pop rbp
+    # nextln: 000035: c3                              ret
+    # nextln: <CP>:
+    # nextln: 000000: 00 00 00 00 00 00 e0 43
+
+    %0:ctrl, %1:f64 = entry
+    %2:i64 = floattouint %1
+    return %0, %2
+}

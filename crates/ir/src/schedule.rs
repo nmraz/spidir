@@ -33,11 +33,6 @@ impl<'a> ScheduleContext<'a> {
         &self.live_node_info.live_nodes
     }
 
-    #[inline]
-    pub fn is_live(&self, node: Node) -> bool {
-        self.live_nodes().contains(node)
-    }
-
     pub fn walk_pinned_nodes(&self) -> impl Iterator<Item = Node> + '_ {
         self.cfg_preorder
             .iter()
@@ -45,7 +40,7 @@ impl<'a> ScheduleContext<'a> {
     }
 
     pub fn get_attached_phis(&self, cfg_node: Node) -> impl Iterator<Item = Node> + '_ {
-        get_attached_phis(self.graph, cfg_node).filter(move |&phi| self.is_live(phi))
+        get_attached_phis(self.graph, cfg_node).filter(move |&phi| self.live_nodes().contains(phi))
     }
 }
 

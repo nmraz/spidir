@@ -1,17 +1,32 @@
+// The log levels aren't always all used, but it's cleaner to define them together.
+#![allow(unused)]
+
 use core::ffi::c_char;
 
 type ApiLevel = u8;
 type LogCallback = extern "C" fn(ApiLevel, *const c_char, usize, *const c_char, usize);
 
+const SPIDIR_LOG_LEVEL_NONE: ApiLevel = 0;
+const SPIDIR_LOG_LEVEL_ERROR: ApiLevel = 1;
+const SPIDIR_LOG_LEVEL_WARN: ApiLevel = 2;
+const SPIDIR_LOG_LEVEL_INFO: ApiLevel = 3;
+const SPIDIR_LOG_LEVEL_DEBUG: ApiLevel = 4;
+const SPIDIR_LOG_LEVEL_TRACE: ApiLevel = 5;
+
 #[cfg(feature = "no_logging")]
 mod imp {
-    use super::{ApiLevel, LogCallback};
+    use super::{ApiLevel, LogCallback, SPIDIR_LOG_LEVEL_NONE};
 
     #[unsafe(no_mangle)]
     unsafe extern "C" fn spidir_log_init(_callback: LogCallback) {}
 
     #[unsafe(no_mangle)]
     unsafe extern "C" fn spidir_log_set_max_level(_level: ApiLevel) {}
+
+    #[unsafe(no_mangle)]
+    unsafe extern "C" fn spidir_log_get_max_level() -> ApiLevel {
+        SPIDIR_LOG_LEVEL_NONE
+    }
 }
 
 #[cfg(not(feature = "no_logging"))]
@@ -25,14 +40,7 @@ mod imp {
 
     use log::{Level, LevelFilter, Log};
 
-    use super::{ApiLevel, LogCallback};
-
-    const SPIDIR_LOG_LEVEL_NONE: u8 = 0;
-    const SPIDIR_LOG_LEVEL_ERROR: u8 = 1;
-    const SPIDIR_LOG_LEVEL_WARN: u8 = 2;
-    const SPIDIR_LOG_LEVEL_INFO: u8 = 3;
-    const SPIDIR_LOG_LEVEL_DEBUG: u8 = 4;
-    const SPIDIR_LOG_LEVEL_TRACE: u8 = 5;
+    use super::*;
 
     fn log_level_to_api(level: Level) -> ApiLevel {
         match level {
@@ -44,7 +52,18 @@ mod imp {
         }
     }
 
-    fn log_level_from_api(level: ApiLevel) -> LevelFilter {
+    fn log_filter_to_api(level: LevelFilter) -> ApiLevel {
+        match level {
+            LevelFilter::Off => SPIDIR_LOG_LEVEL_NONE,
+            LevelFilter::Error => SPIDIR_LOG_LEVEL_ERROR,
+            LevelFilter::Warn => SPIDIR_LOG_LEVEL_WARN,
+            LevelFilter::Info => SPIDIR_LOG_LEVEL_INFO,
+            LevelFilter::Debug => SPIDIR_LOG_LEVEL_DEBUG,
+            LevelFilter::Trace => SPIDIR_LOG_LEVEL_TRACE,
+        }
+    }
+
+    fn log_filter_from_api(level: ApiLevel) -> LevelFilter {
         match level {
             SPIDIR_LOG_LEVEL_NONE => LevelFilter::Off,
             SPIDIR_LOG_LEVEL_ERROR => LevelFilter::Error,
@@ -94,6 +113,11 @@ mod imp {
 
     #[unsafe(no_mangle)]
     unsafe extern "C" fn spidir_log_set_max_level(level: ApiLevel) {
-        log::set_max_level(log_level_from_api(level));
+        log::set_max_level(log_filter_from_api(level));
+    }
+
+    #[unsafe(no_mangle)]
+    unsafe extern "C" fn spidir_log_get_max_level() -> ApiLevel {
+        log_filter_to_api(log::max_level())
     }
 }

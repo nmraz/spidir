@@ -56,4 +56,7 @@ void spidir_log_init(spidir_log_callback_t callback);
 /// should be overridden with this function if logs are to be received.
 void spidir_log_set_max_level(spidir_log_level_t level);
 
+/// Returns the current maximum level for logs to be delivered.
+spidir_log_level_t spidir_log_get_max_level(void);
+
 #endif

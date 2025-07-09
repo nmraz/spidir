@@ -255,6 +255,23 @@ pub fn cfg_preorder(graph: &ValGraph, entry: Node) -> CfgPreorder<'_> {
     CfgPreorder::new(ForwardCfg::new(graph), [entry])
 }
 
+pub struct CfgPreorderInfo {
+    pub preorder: Vec<Node>,
+    pub reachable_cfg_nodes: DenseEntitySet<Node>,
+}
+
+impl CfgPreorderInfo {
+    pub fn compute(graph: &ValGraph, entry: Node) -> Self {
+        let mut preorder = cfg_preorder(graph, entry);
+        let collected = preorder.by_ref().collect();
+
+        Self {
+            preorder: collected,
+            reachable_cfg_nodes: preorder.visited,
+        }
+    }
+}
+
 pub fn cfg_inputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = DepValue> + '_ {
     graph
         .node_inputs(node)

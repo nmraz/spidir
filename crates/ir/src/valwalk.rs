@@ -20,16 +20,7 @@ pub fn live_node_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Nod
         .map(move |input| graph.value_def(input).0)
         .chain(
             // For outputs, a control output indicates that the node receiving control is live.
-            graph
-                .node_outputs(node)
-                .into_iter()
-                .filter(move |&output| graph.value_kind(output).is_control())
-                .flat_map(move |output| {
-                    // Note: we explicitly cope with malformed unused/reused control values here as this
-                    // traversal is used in the verifier itself and the graph visualizer.
-                    graph.value_uses(output)
-                })
-                .map(|(node, _input_idx)| node),
+            cfg_succs(graph, node),
         )
 }
 

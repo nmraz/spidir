@@ -17,8 +17,8 @@ use ir::{
     schedule::{ScheduleContext, schedule_early, schedule_late},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{
-        GraphWalkInfo, dataflow_inputs, dataflow_preds, dataflow_succs, def_use_preds,
-        raw_dataflow_succs, raw_def_use_succs,
+        CfgPreorderInfo, GraphWalkInfo, dataflow_inputs, dataflow_preds, dataflow_succs,
+        def_use_preds, raw_dataflow_succs, raw_def_use_succs,
     },
 };
 use log::trace;
@@ -48,14 +48,14 @@ pub struct Schedule {
 impl Schedule {
     pub fn compute(
         graph: &ValGraph,
-        valgraph_cfg_preorder: &[Node],
+        valgraph_cfg_preorder: &CfgPreorderInfo,
         cfg_ctx: &CfgContext,
         block_map: &FunctionBlockMap,
     ) -> Self {
-        let entry = valgraph_cfg_preorder[0];
+        let entry = valgraph_cfg_preorder.preorder[0];
         let walk_info = GraphWalkInfo::compute_full(graph, entry);
 
-        let ctx = ScheduleContext::new(graph, &walk_info, valgraph_cfg_preorder);
+        let ctx = ScheduleContext::new(graph, &walk_info, &valgraph_cfg_preorder.preorder);
 
         let mut schedule = Self {
             block_data: SecondaryMap::new(),

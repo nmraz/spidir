@@ -1,12 +1,10 @@
 use core::fmt;
 
-use alloc::vec::Vec;
-
 use ir::{
     function::FunctionData,
     module::Module,
     valgraph::{Node, ValGraph},
-    valwalk::cfg_preorder,
+    valwalk::CfgPreorderInfo,
 };
 use log::{debug, info};
 
@@ -136,8 +134,8 @@ pub fn lower_func<M: MachineLower>(
 }
 
 pub fn schedule_graph(graph: &ValGraph, entry: Node) -> (CfgContext, FunctionBlockMap, Schedule) {
-    let cfg_preorder: Vec<_> = cfg_preorder(graph, entry).collect();
-    let (cfg_ctx, block_map) = CfgContext::compute_for_valgraph(graph, &cfg_preorder);
+    let cfg_preorder = CfgPreorderInfo::compute(graph, entry);
+    let (cfg_ctx, block_map) = CfgContext::compute_for_valgraph(graph, &cfg_preorder.preorder);
     let schedule = Schedule::compute(graph, &cfg_preorder, &cfg_ctx, &block_map);
     (cfg_ctx, block_map, schedule)
 }

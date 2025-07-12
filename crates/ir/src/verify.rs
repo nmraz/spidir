@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 
 use crate::{
     domtree::{DomTree, DomTreeNode},
-    function::FunctionData,
+    function::{FunctionBody, FunctionData},
     module::{Function, Module},
     node::{DepValueKind, NodeKind},
     schedule::{ScheduleContext, schedule_early},
@@ -295,7 +295,7 @@ pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<Funct
         return Err(errors);
     }
 
-    verify_dataflow(&body.graph, body.entry, &mut errors);
+    verify_dataflow(body, &mut errors);
 
     if errors.is_empty() {
         Ok(())
@@ -325,12 +325,12 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<Functio
 type InputLocScratch = SmallVec<[(DomTreeNode, u32); 4]>;
 type ByNodeSchedule = SecondaryMap<Node, PackedOption<DomTreeNode>>;
 
-fn verify_dataflow(graph: &ValGraph, entry: Node, errors: &mut Vec<FunctionVerifierError>) {
-    let walk_info = GraphWalkInfo::compute_full(graph, entry);
-    let cfg_preorder: Vec<_> = cfg_preorder(graph, entry).collect();
-    let ctx = ScheduleContext::new(graph, &walk_info, &cfg_preorder);
+fn verify_dataflow(body: &FunctionBody, errors: &mut Vec<FunctionVerifierError>) {
+    let walk_info = GraphWalkInfo::compute_full(&body.graph, body.entry);
+    let cfg_preorder: Vec<_> = cfg_preorder(&body.graph, body.entry).collect();
+    let ctx = ScheduleContext::new(&body.graph, &walk_info, &cfg_preorder);
 
-    let domtree = DomTree::compute(graph, entry);
+    let domtree = DomTree::compute(&body.graph, body.entry);
     let mut scheduler = VerifierScheduler {
         domtree: &domtree,
         errors,

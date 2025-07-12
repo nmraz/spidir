@@ -75,6 +75,10 @@ impl FunctionBody {
         GraphWalkInfo::compute_full(&self.graph, self.entry)
     }
 
+    pub fn compute_cfg_live_walk_info(&self, cfg_preorder: &CfgPreorderInfo) -> GraphWalkInfo {
+        GraphWalkInfo::compute_cfg_live(&self.graph, cfg_preorder)
+    }
+
     pub fn compute_cfg_preorder_info(&self) -> CfgPreorderInfo {
         CfgPreorderInfo::compute(&self.graph, self.entry)
     }

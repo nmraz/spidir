@@ -131,42 +131,6 @@ pub fn def_use_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node>
         .map(move |input| graph.value_def(input).0)
 }
 
-#[derive(Debug, Clone)]
-pub struct GraphWalkInfo {
-    pub roots: Vec<Node>,
-    pub live_nodes: DenseEntitySet<Node>,
-}
-
-impl GraphWalkInfo {
-    pub fn compute_full(graph: &ValGraph, entry: Node) -> Self {
-        let mut walk = walk_graph(graph, entry);
-        let mut roots = vec![];
-        for node in walk.by_ref() {
-            if graph.node_inputs(node).is_empty() {
-                roots.push(node);
-            }
-        }
-
-        Self {
-            roots,
-            live_nodes: walk.visited,
-        }
-    }
-
-    pub fn postorder<'a>(&'a self, graph: &'a ValGraph) -> DefUsePostorder<'a> {
-        PostOrder::new(
-            DefUseSuccs::new(graph, &self.live_nodes),
-            self.roots.iter().copied(),
-        )
-    }
-
-    pub fn reverse_postorder(&self, graph: &ValGraph) -> Vec<Node> {
-        let mut rpo: Vec<_> = self.postorder(graph).collect();
-        rpo.reverse();
-        rpo
-    }
-}
-
 pub fn dataflow_inputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = DepValue> + '_ {
     graph
         .node_inputs(node)
@@ -257,23 +221,6 @@ pub fn cfg_preorder(graph: &ValGraph, entry: Node) -> CfgPreorder<'_> {
     CfgPreorder::new(ForwardCfg::new(graph), [entry])
 }
 
-pub struct CfgPreorderInfo {
-    pub preorder: Vec<Node>,
-    pub reachable_cfg_nodes: DenseEntitySet<Node>,
-}
-
-impl CfgPreorderInfo {
-    pub fn compute(graph: &ValGraph, entry: Node) -> Self {
-        let mut preorder = cfg_preorder(graph, entry);
-        let collected = preorder.by_ref().collect();
-
-        Self {
-            preorder: collected,
-            reachable_cfg_nodes: preorder.visited,
-        }
-    }
-}
-
 pub fn cfg_inputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = DepValue> + '_ {
     graph
         .node_inputs(node)
@@ -292,6 +239,59 @@ pub fn get_attached_phis(graph: &ValGraph, node: Node) -> impl Iterator<Item = N
         .filter(|&output| graph.value_kind(output).is_phisel())
         .flat_map(|phisel| graph.value_uses(phisel))
         .map(|(phi, _)| phi)
+}
+
+pub struct CfgPreorderInfo {
+    pub preorder: Vec<Node>,
+    pub reachable_cfg_nodes: DenseEntitySet<Node>,
+}
+
+impl CfgPreorderInfo {
+    pub fn compute(graph: &ValGraph, entry: Node) -> Self {
+        let mut preorder = cfg_preorder(graph, entry);
+        let collected = preorder.by_ref().collect();
+
+        Self {
+            preorder: collected,
+            reachable_cfg_nodes: preorder.visited,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GraphWalkInfo {
+    pub roots: Vec<Node>,
+    pub live_nodes: DenseEntitySet<Node>,
+}
+
+impl GraphWalkInfo {
+    pub fn compute_full(graph: &ValGraph, entry: Node) -> Self {
+        let mut walk = walk_graph(graph, entry);
+        let mut roots = vec![];
+        for node in walk.by_ref() {
+            if graph.node_inputs(node).is_empty() {
+                roots.push(node);
+            }
+        }
+
+        Self {
+            roots,
+            live_nodes: walk.visited,
+        }
+    }
+
+    pub fn postorder<'a>(&'a self, graph: &'a ValGraph) -> DefUsePostorder<'a> {
+        PostOrder::new(
+            DefUseSuccs::new(graph, &self.live_nodes),
+            self.roots.iter().copied(),
+        )
+    }
+
+    pub fn reverse_postorder(&self, graph: &ValGraph) -> Vec<Node> {
+        let mut rpo: Vec<_> = self.postorder(graph).collect();
+        rpo.reverse();
+        rpo
+    }
 }
 
 #[cfg(test)]

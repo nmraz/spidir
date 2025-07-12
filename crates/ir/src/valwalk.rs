@@ -4,8 +4,12 @@ use alloc::{vec, vec::Vec};
 
 use dominators::IntoCfg;
 use entity_set::DenseEntitySet;
+use itertools::izip;
 
-use crate::valgraph::{DepValue, Node, ValGraph};
+use crate::{
+    node::NodeKind,
+    valgraph::{DepValue, Node, ValGraph},
+};
 
 pub type PreOrder<G> = graphwalk::PreOrder<G, DenseEntitySet<Node>>;
 pub type PostOrder<G> = graphwalk::PostOrder<G, DenseEntitySet<Node>>;
@@ -129,6 +133,51 @@ pub fn def_use_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node>
         .node_inputs(node)
         .into_iter()
         .map(move |input| graph.value_def(input).0)
+}
+
+pub struct CfgLiveDataflowPreds<'a> {
+    graph: &'a ValGraph,
+    reachable_cfg_nodes: &'a DenseEntitySet<Node>,
+}
+
+impl<'a> CfgLiveDataflowPreds<'a> {
+    pub fn new(graph: &'a ValGraph, reachable_cfg_nodes: &'a DenseEntitySet<Node>) -> Self {
+        Self {
+            graph,
+            reachable_cfg_nodes,
+        }
+    }
+}
+
+impl graphwalk::GraphRef for CfgLiveDataflowPreds<'_> {
+    type Node = Node;
+
+    fn try_successors(
+        &self,
+        node: Self::Node,
+        mut f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        if matches!(self.graph.node_kind(node), NodeKind::Phi) {
+            // For phi nodes, trace only the dataflow inputs corresponding to live control inputs.
+
+            let cfg_node = self.graph.value_def(self.graph.node_inputs(node)[0]).0;
+
+            // Note: we assume that the CFG node has only control inputs to avoid needing to check
+            // value kinds with `cfg_preds`.
+            let cfg_preds = def_use_preds(self.graph, cfg_node);
+            let phi_preds = dataflow_preds(self.graph, node);
+
+            for (phi_pred, cfg_pred) in izip!(phi_preds, cfg_preds) {
+                if self.reachable_cfg_nodes.contains(cfg_pred) {
+                    f(phi_pred)?;
+                }
+            }
+
+            ControlFlow::Continue(())
+        } else {
+            dataflow_preds(self.graph, node).try_for_each(f)
+        }
+    }
 }
 
 pub fn dataflow_inputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = DepValue> + '_ {

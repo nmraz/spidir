@@ -329,6 +329,25 @@ impl GraphWalkInfo {
         }
     }
 
+    pub fn compute_cfg_live(graph: &ValGraph, cfg_preorder: &CfgPreorderInfo) -> Self {
+        let mut walk = PreOrder::new(
+            CfgLiveDataflowPreds::new(graph, &cfg_preorder.reachable_cfg_nodes),
+            cfg_preorder.preorder.iter().copied(),
+        );
+
+        let mut roots = vec![];
+        for node in walk.by_ref() {
+            if graph.node_inputs(node).is_empty() {
+                roots.push(node);
+            }
+        }
+
+        Self {
+            roots,
+            live_nodes: walk.visited,
+        }
+    }
+
     pub fn postorder<'a>(&'a self, graph: &'a ValGraph) -> DefUsePostorder<'a> {
         PostOrder::new(
             DefUseSuccs::new(graph, &self.live_nodes),

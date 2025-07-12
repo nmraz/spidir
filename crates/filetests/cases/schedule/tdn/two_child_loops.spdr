@@ -6,101 +6,101 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln:     $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):i32, $(entry3=$val):i32, $(entry4=$val):i32 = entry
     # nextln: => block1
     # nextln: block1:
+    # nextln:     $(iconst0=$val):i32 = iconst 0
     # nextln:     $(stackslot0=$val):ptr = stackslot 4:4
     # nextln:     $(stackslot1=$val):ptr = stackslot 4:4
     # nextln:     $(stackslot2=$val):ptr = stackslot 4:4
-    # nextln:     $(iconst0=$val):i32 = iconst 0
-    # nextln:     $(store0=$val):ctrl = store.4 $(region0=$val), $iconst0, $stackslot2
     # nextln:     $(stackslot3=$val):ptr = stackslot 4:4
-    # nextln:     $(store1=$val):ctrl = store.4 $store0, $iconst0, $stackslot3
-    # nextln:     $(store2=$val):ctrl = store.4 $store1, $iconst0, $stackslot0
-    # nextln:     $(store3=$val):ctrl = store.4 $store2, $iconst0, $stackslot1
+    # nextln:     $(store0=$val):ctrl = store.4 $(region0=$val), $iconst0, $stackslot3
+    # nextln:     $(store1=$val):ctrl = store.4 $store0, $iconst0, $stackslot0
+    # nextln:     $(store2=$val):ctrl = store.4 $store1, $iconst0, $stackslot1
+    # nextln:     $(store3=$val):ctrl = store.4 $store2, $iconst0, $stackslot2
     # nextln: => block2
     # nextln: block2:
-    # nextln:     $(store4=$val):ctrl = store.4 $(region1=$val), $iconst0, $stackslot2
-    # nextln:     $(store5=$val):ctrl = store.4 $store4, $iconst0, $stackslot3
+    # nextln:     $(store4=$val):ctrl = store.4 $(region1=$val), $iconst0, $stackslot3
+    # nextln:     $(store5=$val):ctrl = store.4 $store4, $iconst0, $stackslot0
     # nextln:     $(iconst1=$val):i32 = iconst 4
     # nextln:     $(iconst2=$val):i32 = iconst 2
     # nextln:     $(iconst3=$val):i32 = iconst 3
     # nextln:     $(iconst4=$val):i32 = iconst 1
     # nextln: => block3
     # nextln: block3:
-    # nextln:     $(load0=$val):ctrl, $(load1=$val):i32 = load.4 $(region2=$val), $stackslot3
+    # nextln:     $(load0=$val):ctrl, $(load1=$val):i32 = load.4 $(region2=$val), $stackslot0
     # nextln:     $(icmp0=$val):i32 = icmp slt $load1, $entry2
     # nextln:     $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $load0, $icmp0
     # nextln: => block4, block5
     # nextln: block4:
-    # nextln:     $(load2=$val):ctrl, $(load3=$val):i32 = load.4 $(region3=$val), $stackslot3
+    # nextln:     $(load2=$val):ctrl, $(load3=$val):i32 = load.4 $(region3=$val), $stackslot0
     # nextln:     $(and0=$val):i32 = and $load3, $iconst2
     # nextln:     $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $load2, $and0
     # nextln: => block6, block7
     # nextln: block6:
-    # nextln:     $(store6=$val):ctrl = store.4 $(region4=$val), $iconst0, $stackslot0
+    # nextln:     $(store6=$val):ctrl = store.4 $(region4=$val), $iconst0, $stackslot1
     # nextln: => block9
     # nextln: block9:
-    # nextln:     $(load4=$val):ctrl, $(load5=$val):i32 = load.4 $(region5=$val), $stackslot0
+    # nextln:     $(load4=$val):ctrl, $(load5=$val):i32 = load.4 $(region5=$val), $stackslot1
     # nextln:     $(icmp1=$val):i32 = icmp slt $load5, $entry3
     # nextln:     $(brcond4=$val):ctrl, $(brcond5=$val):ctrl = brcond $load4, $icmp1
     # nextln: => block10, block11
     # nextln: block10:
-    # nextln:     $(load6=$val):ctrl, $(load7=$val):i32 = load.4 $(region6=$val), $stackslot3
+    # nextln:     $(load6=$val):ctrl, $(load7=$val):i32 = load.4 $(region6=$val), $stackslot0
     # nextln:     $(and1=$val):i32 = and $load7, $iconst3
     # nextln:     $(brcond6=$val):ctrl, $(brcond7=$val):ctrl = brcond $load6, $and1
     # nextln: => block19, block20
     # nextln: block19:
-    # nextln:     $(load8=$val):ctrl, $(load9=$val):i32 = load.4 $(region7=$val), $stackslot2
-    # nextln:     $(load10=$val):ctrl, $(load11=$val):i32 = load.4 $load8, $stackslot0
+    # nextln:     $(load8=$val):ctrl, $(load9=$val):i32 = load.4 $(region7=$val), $stackslot3
+    # nextln:     $(load10=$val):ctrl, $(load11=$val):i32 = load.4 $load8, $stackslot1
     # nextln:     $(iadd0=$val):i32 = iadd $load9, $load11
-    # nextln:     $(store7=$val):ctrl = store.4 $load10, $iadd0, $stackslot2
-    # nextln:     $(load12=$val):ctrl, $(load13=$val):i32 = load.4 $store7, $stackslot0
+    # nextln:     $(store7=$val):ctrl = store.4 $load10, $iadd0, $stackslot3
+    # nextln:     $(load12=$val):ctrl, $(load13=$val):i32 = load.4 $store7, $stackslot1
     # nextln:     $(iadd1=$val):i32 = iadd $load13, $iconst4
-    # nextln:     $(store8=$val):ctrl = store.4 $load12, $iadd1, $stackslot0
+    # nextln:     $(store8=$val):ctrl = store.4 $load12, $iadd1, $stackslot1
     # nextln: => block9
     # nextln: block20:
     # nextln: => block12
     # nextln: block11:
     # nextln: => block12
     # nextln: block12:
-    # nextln:     $(store9=$val):ctrl = store.4 $(region8=$val), $iconst0, $stackslot1
+    # nextln:     $(store9=$val):ctrl = store.4 $(region8=$val), $iconst0, $stackslot2
     # nextln: => block13
     # nextln: block13:
-    # nextln:     $(load14=$val):ctrl, $(load15=$val):i32 = load.4 $(region9=$val), $stackslot1
+    # nextln:     $(load14=$val):ctrl, $(load15=$val):i32 = load.4 $(region9=$val), $stackslot2
     # nextln:     $(icmp2=$val):i32 = icmp slt $load15, $entry4
     # nextln:     $(brcond8=$val):ctrl, $(brcond9=$val):ctrl = brcond $load14, $icmp2
     # nextln: => block14, block15
     # nextln: block14:
-    # nextln:     $(load16=$val):ctrl, $(load17=$val):i32 = load.4 $(region10=$val), $stackslot3
+    # nextln:     $(load16=$val):ctrl, $(load17=$val):i32 = load.4 $(region10=$val), $stackslot0
     # nextln:     $(and2=$val):i32 = and $load17, $iconst1
     # nextln:     $(brcond10=$val):ctrl, $(brcond11=$val):ctrl = brcond $load16, $and2
     # nextln: => block16, block17
     # nextln: block16:
-    # nextln:     $(load18=$val):ctrl, $(load19=$val):i32 = load.4 $(region11=$val), $stackslot2
-    # nextln:     $(load20=$val):ctrl, $(load21=$val):i32 = load.4 $load18, $stackslot1
+    # nextln:     $(load18=$val):ctrl, $(load19=$val):i32 = load.4 $(region11=$val), $stackslot3
+    # nextln:     $(load20=$val):ctrl, $(load21=$val):i32 = load.4 $load18, $stackslot2
     # nextln:     $(iadd2=$val):i32 = iadd $load19, $load21
-    # nextln:     $(store10=$val):ctrl = store.4 $load20, $iadd2, $stackslot2
+    # nextln:     $(store10=$val):ctrl = store.4 $load20, $iadd2, $stackslot3
     # nextln: => block18
     # nextln: block17:
     # nextln: => block18
     # nextln: block18:
-    # nextln:     $(load22=$val):ctrl, $(load23=$val):i32 = load.4 $(region12=$val), $stackslot1
+    # nextln:     $(load22=$val):ctrl, $(load23=$val):i32 = load.4 $(region12=$val), $stackslot2
     # nextln:     $(iadd3=$val):i32 = iadd $load23, $iconst4
-    # nextln:     $(store11=$val):ctrl = store.4 $load22, $iadd3, $stackslot1
+    # nextln:     $(store11=$val):ctrl = store.4 $load22, $iadd3, $stackslot2
     # nextln: => block13
     # nextln: block15:
-    # nextln:     $(load24=$val):ctrl, $(load25=$val):i32 = load.4 $(region13=$val), $stackslot2
-    # nextln:     $(load26=$val):ctrl, $(load27=$val):i32 = load.4 $load24, $stackslot3
+    # nextln:     $(load24=$val):ctrl, $(load25=$val):i32 = load.4 $(region13=$val), $stackslot3
+    # nextln:     $(load26=$val):ctrl, $(load27=$val):i32 = load.4 $load24, $stackslot0
     # nextln:     $(iadd4=$val):i32 = iadd $load25, $load27
-    # nextln:     $(store12=$val):ctrl = store.4 $load26, $iadd4, $stackslot2
+    # nextln:     $(store12=$val):ctrl = store.4 $load26, $iadd4, $stackslot3
     # nextln: => block8
     # nextln: block7:
     # nextln: => block8
     # nextln: block8:
-    # nextln:     $(load28=$val):ctrl, $(load29=$val):i32 = load.4 $(region14=$val), $stackslot3
+    # nextln:     $(load28=$val):ctrl, $(load29=$val):i32 = load.4 $(region14=$val), $stackslot0
     # nextln:     $(iadd5=$val):i32 = iadd $load29, $iconst4
-    # nextln:     $(store13=$val):ctrl = store.4 $load28, $iadd5, $stackslot3
+    # nextln:     $(store13=$val):ctrl = store.4 $load28, $iadd5, $stackslot0
     # nextln: => block3
     # nextln: block5:
-    # nextln:     $(load30=$val):ctrl, $(load31=$val):i32 = load.4 $(region15=$val), $stackslot2
+    # nextln:     $(load30=$val):ctrl, $(load31=$val):i32 = load.4 $(region15=$val), $stackslot3
     # nextln:     return $load30, $load31
 
     %0:ctrl, %1:ptr, %2:i32, %3:i32, %4:i32 = entry

@@ -4,7 +4,7 @@ extfunc @malloc:ptr(i64)
 
 func @gc_new:ptr(i32, i64) {
     # check: function `gc_new`:
-    # nextln: clobbers: rax, rcx, rdx, rdi, rsi, r8, r9, r10, r11
+    # nextln: clobbers: rax, rcx, rdx, rdi, rsi, r8, r9, r10, r11, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln:           $$rdi = $$rsi
@@ -30,7 +30,7 @@ func @throw_index_out_of_range_exception() {
 
 func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i32) {
     # check: function `System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)`:
-    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     # nextln: frame: size 24, align 8
     # nextln:     !0: 0
     # nextln:     spill0: 8
@@ -52,11 +52,11 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:           $$rcx = $$rdx
     # nextln:           $$rsi = MovRmS32(24)
     # nextln: 0014:     $$rsi = AluRRm(S64, Add) $$rsi, $$rax
-    # nextln: 0015:     $$r12 = MovRmS32(1)
     # nextln:           $$rbx = $$rcx
-    # nextln: 0016:     $$r13 = MovsxRRm(Ext32_64) $$r12
     # nextln:           $$rdi = MovRmS32(171)
-    # nextln: 0018:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
+    # nextln: 0016:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
+    # nextln: 0017:     $$r12 = MovRmS32(1)
+    # nextln: 0018:     $$r13 = MovsxRRm(Ext32_64) $$r12
     # nextln: 0019:     MovMR(S32, [reg + 16]) $$r14, $$rax
     # nextln: 0020:     MovMR(S64, [!0 + 0]) $$rax
     # nextln: 0021:     $$r15 = MovRM(S64, [!0 + 0])

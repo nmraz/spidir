@@ -8,10 +8,10 @@ func @func00000001:i64(i32) {
     # nextln: 000009: 85 ff                           test edi, edi
     # nextln: 00000b: 0f 8e cf 00 00 00               jle 0xe0
     # nextln: 000011: 83 c7 01                        add edi, 1
-    # nextln: 000014: 48 89 fa                        mov rdx, rdi
-    # nextln: 000017: 48 83 c2 fe                     add rdx, -2
-    # nextln: 00001b: 48 89 fe                        mov rsi, rdi
-    # nextln: 00001e: 48 83 c6 ff                     add rsi, -1
+    # nextln: 000014: 48 89 fe                        mov rsi, rdi
+    # nextln: 000017: 48 83 c6 ff                     add rsi, -1
+    # nextln: 00001b: 48 89 fa                        mov rdx, rdi
+    # nextln: 00001e: 48 83 c2 fe                     add rdx, -2
     # nextln: 000022: 48 89 f1                        mov rcx, rsi
     # nextln: 000025: 48 83 e1 07                     and rcx, 7
     # nextln: 000029: 48 83 fa 06                     cmp rdx, 6

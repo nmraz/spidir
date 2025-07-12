@@ -58,12 +58,12 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:     $(sfill0=$val):i64 = sfill 32 $iext0
     # nextln:     $(iext1=$val):i64 = iext $iconst10
     # nextln:     $(sfill1=$val):i64 = sfill 32 $iext1
-    # nextln:     $(iconst11=$val):i32 = iconst 4294967168
-    # nextln:     $(store10=$val):ctrl = store.1 $(region1=$val), $iconst11, $stackslot8
-    # nextln:     $(iconst12=$val):i32 = iconst 4294934528
+    # nextln:     $(iconst11=$val):i32 = iconst 4294934528
+    # nextln:     $(iconst12=$val):i32 = iconst 4294967168
+    # nextln:     $(store10=$val):ctrl = store.1 $(region1=$val), $iconst12, $stackslot8
     # nextln:     $(store11=$val):ctrl = store.1 $store10, $iconst4, $stackslot0
     # nextln:     $(store12=$val):ctrl = store.1 $store11, $iconst10, $stackslot9
-    # nextln:     $(store13=$val):ctrl = store.2 $store12, $iconst12, $stackslot7
+    # nextln:     $(store13=$val):ctrl = store.2 $store12, $iconst11, $stackslot7
     # nextln:     $(store14=$val):ctrl = store.2 $store13, $iconst4, $stackslot5
     # nextln:     $(store15=$val):ctrl = store.2 $store14, $iconst10, $stackslot1
     # nextln:     $(store16=$val):ctrl = store.4 $store15, $iconst4, $stackslot6

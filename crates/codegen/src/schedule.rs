@@ -52,9 +52,7 @@ impl Schedule {
         cfg_ctx: &CfgContext,
         block_map: &FunctionBlockMap,
     ) -> Self {
-        let entry = valgraph_cfg_preorder.preorder[0];
-        let walk_info = GraphWalkInfo::compute_full(graph, entry);
-
+        let walk_info = GraphWalkInfo::compute_cfg_live(graph, valgraph_cfg_preorder);
         let ctx = ScheduleContext::new(graph, &walk_info, &valgraph_cfg_preorder.preorder);
 
         let mut schedule = Self {

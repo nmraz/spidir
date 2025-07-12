@@ -13,7 +13,7 @@ extfunc @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32
 
 func @"System.Boolean Tests.BitTest::Run()":i32() {
     # check: function `System.Boolean Tests.BitTest::Run()`:
-    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     # nextln: frame: size 33, align 8
     # nextln:     !0: 30
     # nextln:     !1: 31
@@ -28,8 +28,8 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:       block0:
     # nextln: 0003:     $$rax = MovRmS32(1)
     # nextln: 0005:     $$rcx = MovRmS32(0)
-    # nextln: 0020:     $$rdi = MovRmS32(0)
-    # nextln: 0021:     $$rdx = MovRmS32(2)
+    # nextln: 0022:     $$rdx = MovRmS32(2)
+    # nextln: 0023:     $$rdi = MovRmS32(0)
     # nextln: 0024:     MovMR(S8, [!0 + 0]) $$rcx
     # nextln: 0025:     MovMR(S8, [!1 + 0]) $$rcx
     # nextln: 0026:     MovMR(S8, [!2 + 0]) $$rcx

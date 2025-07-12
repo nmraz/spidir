@@ -31,18 +31,18 @@ pub fn reduce_body(
 
     trace!("starting reduction");
 
-    let live_node_info = ctx.body.compute_live_nodes();
+    let walk_info = ctx.body.compute_full_walk_info();
 
     // Use a "raw" postorder here so we can cull any dead nodes as we walk instead of just skipping
     // them. This is important for maintaining correct use counts.
     let node_postorder: Vec<_> = PostOrder::new(
         RawDefUseSuccs::new(ctx.graph()),
-        live_node_info.roots.iter().copied(),
+        walk_info.roots.iter().copied(),
     )
     .collect();
 
     for &node in node_postorder.iter().rev() {
-        if live_node_info.live_nodes.contains(node) {
+        if walk_info.live_nodes.contains(node) {
             ctx.state.enqueue(node);
         } else {
             // Make sure none of `node`'s inputs show up as live uses if they really aren't used.

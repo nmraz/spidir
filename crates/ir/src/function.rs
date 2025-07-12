@@ -7,7 +7,7 @@ use crate::{
     cache::NodeCache,
     node::{DepValueKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::{CfgPreorder, LiveNodeInfo, cfg_preorder},
+    valwalk::{CfgPreorder, GraphWalkInfo, cfg_preorder},
     write::write_function_metadata,
 };
 
@@ -71,8 +71,8 @@ impl FunctionBody {
         self.graph.node_outputs(self.entry)[index as usize + 1]
     }
 
-    pub fn compute_live_nodes(&self) -> LiveNodeInfo {
-        LiveNodeInfo::compute(&self.graph, self.entry)
+    pub fn compute_full_walk_info(&self) -> GraphWalkInfo {
+        GraphWalkInfo::compute_full(&self.graph, self.entry)
     }
 
     pub fn cfg_preorder(&self) -> CfgPreorder<'_> {

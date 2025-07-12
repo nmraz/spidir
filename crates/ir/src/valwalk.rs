@@ -10,31 +10,31 @@ use crate::valgraph::{DepValue, Node, ValGraph};
 pub type PreOrder<G> = graphwalk::PreOrder<G, DenseEntitySet<Node>>;
 pub type PostOrder<G> = graphwalk::PostOrder<G, DenseEntitySet<Node>>;
 
-pub fn live_node_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
-    // Consider all inputs as "live" so we don't cause cases where uses are traversed without their
-    // corresponding defs. Users that want to treat regions with no control inputs as dead should do
-    // so themselves.
+pub fn graph_walk_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
+    // Visit all inputs so we don't cause cases where uses are traversed without their corresponding
+    // defs. Users that want to treat regions with no control inputs as dead should do so
+    // themselves.
     graph
         .node_inputs(node)
         .into_iter()
         .map(move |input| graph.value_def(input).0)
         .chain(
-            // For outputs, a control output indicates that the node receiving control is live.
+            // Walk forward only along control outputs.
             cfg_succs(graph, node),
         )
 }
 
 #[derive(Clone, Copy)]
-pub struct LiveNodeSuccs<'a>(&'a ValGraph);
+pub struct GraphWalkSuccs<'a>(&'a ValGraph);
 
-impl<'a> LiveNodeSuccs<'a> {
+impl<'a> GraphWalkSuccs<'a> {
     #[inline]
     pub fn new(graph: &'a ValGraph) -> Self {
         Self(graph)
     }
 }
 
-impl graphwalk::GraphRef for LiveNodeSuccs<'_> {
+impl graphwalk::GraphRef for GraphWalkSuccs<'_> {
     type Node = Node;
 
     fn try_successors(
@@ -42,18 +42,20 @@ impl graphwalk::GraphRef for LiveNodeSuccs<'_> {
         node: Node,
         f: impl FnMut(Node) -> ControlFlow<()>,
     ) -> ControlFlow<()> {
-        live_node_succs(self.0, node).try_for_each(f)
+        graph_walk_succs(self.0, node).try_for_each(f)
     }
 }
 
-pub type LiveNodeWalk<'a> = PreOrder<LiveNodeSuccs<'a>>;
+pub type GraphWalk<'a> = PreOrder<GraphWalkSuccs<'a>>;
 
-/// Walks the nodes currently live in `graph` given `entry` in an unspecified order.
+/// Walks all nodes reachable in `graph` from `entry` in an unspecified order.
+///
+/// Note that "reachable" nodes here include dead CFG inputs.
 ///
 /// `entry` is guaranteed to be the last node returned if it has no inputs (as should be the case
 /// with every well-formed graph).
-pub fn walk_live_nodes(graph: &ValGraph, entry: Node) -> LiveNodeWalk<'_> {
-    PreOrder::new(LiveNodeSuccs::new(graph), iter::once(entry))
+pub fn walk_graph(graph: &ValGraph, entry: Node) -> GraphWalk<'_> {
+    PreOrder::new(GraphWalkSuccs::new(graph), iter::once(entry))
 }
 
 pub fn raw_def_use_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = (Node, u32)> + '_ {
@@ -130,14 +132,14 @@ pub fn def_use_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node>
 }
 
 #[derive(Debug, Clone)]
-pub struct LiveNodeInfo {
+pub struct GraphWalkInfo {
     pub roots: Vec<Node>,
     pub live_nodes: DenseEntitySet<Node>,
 }
 
-impl LiveNodeInfo {
-    pub fn compute(graph: &ValGraph, entry: Node) -> Self {
-        let mut walk = walk_live_nodes(graph, entry);
+impl GraphWalkInfo {
+    pub fn compute_full(graph: &ValGraph, entry: Node) -> Self {
+        let mut walk = walk_graph(graph, entry);
         let mut roots = vec![];
         for node in walk.by_ref() {
             if graph.node_inputs(node).is_empty() {
@@ -304,16 +306,16 @@ mod tests {
     use super::*;
 
     #[track_caller]
-    fn check_live_info(
+    fn check_walk_info(
         graph: &ValGraph,
         entry: Node,
         expected_roots: &[Node],
         expected_live_nodes: &[Node],
     ) {
-        let live_info = LiveNodeInfo::compute(graph, entry);
-        assert_eq!(live_info.roots, expected_roots);
+        let walk_info = GraphWalkInfo::compute_full(graph, entry);
+        assert_eq!(walk_info.roots, expected_roots);
 
-        let live_node_set = &live_info.live_nodes;
+        let live_node_set = &walk_info.live_nodes;
         let expected_live_nodes: FxHashSet<_> = expected_live_nodes.iter().copied().collect();
         let actual_live_nodes: FxHashSet<_> = live_node_set.iter().collect();
 
@@ -322,14 +324,14 @@ mod tests {
 
     #[track_caller]
     fn check_postorder(graph: &ValGraph, entry: Node, expected: &[Node]) {
-        let postorder: Vec<_> = LiveNodeInfo::compute(graph, entry)
+        let postorder: Vec<_> = GraphWalkInfo::compute_full(graph, entry)
             .postorder(graph)
             .collect();
         assert_eq!(postorder, expected);
     }
 
     #[test]
-    fn live_info_add_params() {
+    fn walk_info_add_params() {
         let mut graph = ValGraph::new();
 
         let (entry, control_value, [param1, param2]) =
@@ -343,11 +345,11 @@ mod tests {
         let add_res = graph.node_outputs(add)[0];
         let ret = create_return(&mut graph, [control_value, add_res]);
 
-        check_live_info(&graph, entry, &[entry], &[entry, add, ret]);
+        check_walk_info(&graph, entry, &[entry], &[entry, add, ret]);
     }
 
     #[test]
-    fn live_info_add_const() {
+    fn walk_info_add_const() {
         let mut graph = ValGraph::new();
         let (entry, control_value, [param1]) = create_entry(&mut graph, [Type::I32]);
 
@@ -361,11 +363,11 @@ mod tests {
         let add_res = graph.node_outputs(add)[0];
         let ret = create_return(&mut graph, [control_value, add_res]);
 
-        check_live_info(&graph, entry, &[entry, five], &[entry, five, add, ret]);
+        check_walk_info(&graph, entry, &[entry, five], &[entry, five, add, ret]);
     }
 
     #[test]
-    fn live_info_add_consts() {
+    fn walk_info_add_consts() {
         let mut graph = ValGraph::new();
         let (entry, control_value, []) = create_entry(&mut graph, []);
         let five = graph.create_node(NodeKind::Iconst(5), [], [DepValueKind::Value(Type::I32)]);
@@ -380,7 +382,7 @@ mod tests {
         let add_res = graph.node_outputs(add)[0];
         let ret = create_return(&mut graph, [control_value, add_res]);
 
-        check_live_info(
+        check_walk_info(
             &graph,
             entry,
             &[entry, three, five],
@@ -389,17 +391,17 @@ mod tests {
     }
 
     #[test]
-    fn live_info_dead_value() {
+    fn walk_info_dead_value() {
         let mut graph = ValGraph::new();
         let (entry, control_value, [param1]) = create_entry(&mut graph, [Type::I32]);
         graph.create_node(NodeKind::Iconst(5), [], [DepValueKind::Value(Type::I32)]);
         let ret = create_return(&mut graph, [control_value, param1]);
 
-        check_live_info(&graph, entry, &[entry], &[entry, ret]);
+        check_walk_info(&graph, entry, &[entry], &[entry, ret]);
     }
 
     #[test]
-    fn live_info_dead_region() {
+    fn walk_info_dead_region() {
         let mut graph = ValGraph::new();
 
         let (entry, entry_control, [param1]) = create_entry(&mut graph, [Type::I32]);
@@ -419,7 +421,7 @@ mod tests {
         let exit_region_control = graph.node_outputs(exit_region)[0];
         let ret = create_return(&mut graph, [exit_region_control, param1]);
 
-        check_live_info(
+        check_walk_info(
             &graph,
             entry,
             &[entry, dead_region],
@@ -428,7 +430,7 @@ mod tests {
     }
 
     #[test]
-    fn live_info_detached_region() {
+    fn walk_info_detached_region() {
         let mut graph = ValGraph::new();
         let (entry, entry_control, [param1]) = create_entry(&mut graph, [Type::I32]);
 
@@ -453,11 +455,11 @@ mod tests {
         let exit_region_control = graph.node_outputs(exit_region)[0];
         let ret = create_return(&mut graph, [exit_region_control, param1]);
 
-        check_live_info(&graph, entry, &[entry], &[entry, exit_region, ret]);
+        check_walk_info(&graph, entry, &[entry], &[entry, exit_region, ret]);
     }
 
     #[test]
-    fn live_info_reused_const() {
+    fn walk_info_reused_const() {
         let mut graph = ValGraph::new();
 
         let (entry, control_value, []) = create_entry(&mut graph, []);
@@ -480,7 +482,7 @@ mod tests {
 
         let ret = create_return(&mut graph, [control_value, add_res]);
 
-        check_live_info(&graph, entry, &[entry, five], &[entry, five, add1, ret]);
+        check_walk_info(&graph, entry, &[entry, five], &[entry, five, add1, ret]);
     }
 
     #[test]

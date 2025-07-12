@@ -4,7 +4,7 @@ use ir::{
     function::{FunctionBody, FunctionMetadata},
     module::Module,
     node::{FunctionRef, NodeKind},
-    valwalk::walk_live_nodes,
+    valwalk::walk_graph,
 };
 
 use crate::utils::function_by_name;
@@ -34,7 +34,7 @@ pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> 
     let new_func_data = func_data.clone();
     let new_func = new_module.functions.push(new_func_data);
     let new_body = &mut new_module.functions[new_func].body;
-    let live_nodes: Vec<_> = walk_live_nodes(&new_body.graph, new_body.entry).collect();
+    let live_nodes: Vec<_> = walk_graph(&new_body.graph, new_body.entry).collect();
 
     for &node in &live_nodes {
         if let NodeKind::Call(funcref) = new_body.graph.node_kind_mut(node) {
@@ -55,7 +55,7 @@ pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> 
 fn collect_referenced_functions(body: &FunctionBody) -> FxHashSet<FunctionRef> {
     let mut functions = FxHashSet::default();
 
-    for node in walk_live_nodes(&body.graph, body.entry) {
+    for node in walk_graph(&body.graph, body.entry) {
         if let &NodeKind::Call(funcref) = body.graph.node_kind(node) {
             functions.insert(funcref);
         }

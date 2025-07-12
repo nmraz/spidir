@@ -17,7 +17,7 @@ use ir::{
     schedule::{ScheduleContext, schedule_early, schedule_late},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{
-        LiveNodeInfo, dataflow_inputs, dataflow_preds, dataflow_succs, def_use_preds,
+        GraphWalkInfo, dataflow_inputs, dataflow_preds, dataflow_succs, def_use_preds,
         raw_dataflow_succs, raw_def_use_succs,
     },
 };
@@ -53,9 +53,9 @@ impl Schedule {
         block_map: &FunctionBlockMap,
     ) -> Self {
         let entry = valgraph_cfg_preorder[0];
-        let live_node_info = LiveNodeInfo::compute(graph, entry);
+        let walk_info = GraphWalkInfo::compute_full(graph, entry);
 
-        let ctx = ScheduleContext::new(graph, &live_node_info, valgraph_cfg_preorder);
+        let ctx = ScheduleContext::new(graph, &walk_info, valgraph_cfg_preorder);
 
         let mut schedule = Self {
             block_data: SecondaryMap::new(),

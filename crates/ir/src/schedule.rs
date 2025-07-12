@@ -6,31 +6,31 @@ use graphwalk::PostOrderContext;
 use crate::{
     node::NodeKind,
     valgraph::{Node, ValGraph},
-    valwalk::{LiveNodeInfo, dataflow_preds, dataflow_succs, get_attached_phis},
+    valwalk::{GraphWalkInfo, dataflow_preds, dataflow_succs, get_attached_phis},
 };
 
 pub struct ScheduleContext<'a> {
     pub graph: &'a ValGraph,
     pub cfg_preorder: &'a [Node],
-    pub live_node_info: &'a LiveNodeInfo,
+    pub walk_info: &'a GraphWalkInfo,
 }
 
 impl<'a> ScheduleContext<'a> {
     pub fn new(
         graph: &'a ValGraph,
-        live_node_info: &'a LiveNodeInfo,
+        walk_info: &'a GraphWalkInfo,
         cfg_preorder: &'a [Node],
     ) -> Self {
         Self {
             graph,
             cfg_preorder,
-            live_node_info,
+            walk_info,
         }
     }
 
     #[inline]
     pub fn live_nodes(&self) -> &DenseEntitySet<Node> {
-        &self.live_node_info.live_nodes
+        &self.walk_info.live_nodes
     }
 
     pub fn walk_pinned_nodes(&self) -> impl Iterator<Item = Node> + '_ {
@@ -80,7 +80,7 @@ pub fn schedule_late(
         }
     }
 
-    for &root in &ctx.live_node_info.roots {
+    for &root in &ctx.walk_info.roots {
         // We want only floating data nodes here, not dead regions and the like.
         if !is_pinned_node(ctx.graph, root) {
             scratch_postorder.reset([root]);

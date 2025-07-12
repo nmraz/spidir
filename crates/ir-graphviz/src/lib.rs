@@ -20,7 +20,7 @@ pub fn write_graphviz(
     body: &FunctionBody,
 ) -> fmt::Result {
     let graph = &body.graph;
-    let live_info = body.compute_live_nodes();
+    let live_info = body.compute_full_walk_info();
     let rpo = live_info.reverse_postorder(graph);
 
     writeln!(w, "digraph {{")?;

@@ -250,7 +250,7 @@ pub fn update_transformed_module_output(
 }
 
 fn count_nodes_with_identity(body: &FunctionBody) -> usize {
-    body.compute_live_nodes()
+    body.compute_full_walk_info()
         .postorder(&body.graph)
         .filter(|&node| body.graph.node_kind(node).has_identity())
         .count()

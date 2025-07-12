@@ -7,18 +7,18 @@ use crate::{
     node::Type,
     test_utils::create_loop_body,
     valgraph::{Node, ValGraph},
-    valwalk::LiveNodeInfo,
+    valwalk::GraphWalkInfo,
 };
 
 use super::{ScheduleContext, is_pinned_node, schedule_early, schedule_late};
 
 fn check_live_scheduled(
     graph: &ValGraph,
-    live_node_info: &LiveNodeInfo,
+    walk_info: &GraphWalkInfo,
     scheduled: &DenseEntitySet<Node>,
     kind: &str,
 ) {
-    for node in live_node_info
+    for node in walk_info
         .live_nodes
         .iter()
         .filter(|&node| !is_pinned_node(graph, node))
@@ -28,22 +28,22 @@ fn check_live_scheduled(
 }
 
 fn check_graph_scheduling(body: &FunctionBody) {
-    let live_node_info = body.compute_live_nodes();
+    let walk_info = body.compute_full_walk_info();
     let cfg_preorder: Vec<_> = body.cfg_preorder().collect();
-    let ctx = ScheduleContext::new(&body.graph, &live_node_info, &cfg_preorder);
+    let ctx = ScheduleContext::new(&body.graph, &walk_info, &cfg_preorder);
     let mut scheduled = DenseEntitySet::new();
 
     let mut scratch_postorder = PostOrderContext::new();
     schedule_early(&ctx, &mut scratch_postorder, |_ctx, node| {
         scheduled.insert(node);
     });
-    check_live_scheduled(&body.graph, &live_node_info, &scheduled, "early");
+    check_live_scheduled(&body.graph, &walk_info, &scheduled, "early");
 
     scheduled.clear();
     schedule_late(&ctx, &mut scratch_postorder, |_ctx, node| {
         scheduled.insert(node);
     });
-    check_live_scheduled(&body.graph, &live_node_info, &scheduled, "late");
+    check_live_scheduled(&body.graph, &walk_info, &scheduled, "late");
 }
 
 #[test]

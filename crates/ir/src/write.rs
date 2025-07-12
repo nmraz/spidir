@@ -149,7 +149,7 @@ pub fn write_annotated_body<W: fmt::Write + ?Sized>(
     body: &FunctionBody,
     indentation: u32,
 ) -> fmt::Result {
-    let mut nodes = body.compute_live_nodes().reverse_postorder(&body.graph);
+    let mut nodes = body.compute_full_walk_info().reverse_postorder(&body.graph);
 
     // Split out all nodes with identity so we print them first, right after the entry. This both
     // makes the graph more readable (stack slots and such end up near the beginning) and makes

@@ -21,7 +21,7 @@ impl SimpleTestProvider for DomTreeProvider {
             let domtree = DomTree::compute(&body.graph, body.entry);
             let mut rpo_nums = SecondaryMap::new();
             for (i, &node) in body
-                .compute_live_nodes()
+                .compute_full_walk_info()
                 .reverse_postorder(&body.graph)
                 .iter()
                 .enumerate()

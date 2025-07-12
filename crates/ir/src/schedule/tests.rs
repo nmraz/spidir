@@ -29,8 +29,8 @@ fn check_live_scheduled(
 
 fn check_graph_scheduling(body: &FunctionBody) {
     let walk_info = body.compute_full_walk_info();
-    let cfg_preorder: Vec<_> = body.cfg_preorder().collect();
-    let ctx = ScheduleContext::new(&body.graph, &walk_info, &cfg_preorder);
+    let cfg_preorder = body.compute_cfg_preorder_info();
+    let ctx = ScheduleContext::new(&body.graph, &walk_info, &cfg_preorder.preorder);
     let mut scheduled = DenseEntitySet::new();
 
     let mut scratch_postorder = PostOrderContext::new();

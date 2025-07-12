@@ -7,7 +7,7 @@ use crate::{
     cache::NodeCache,
     node::{DepValueKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::{CfgPreorder, GraphWalkInfo, cfg_preorder},
+    valwalk::{CfgPreorderInfo, GraphWalkInfo},
     write::write_function_metadata,
 };
 
@@ -75,8 +75,8 @@ impl FunctionBody {
         GraphWalkInfo::compute_full(&self.graph, self.entry)
     }
 
-    pub fn cfg_preorder(&self) -> CfgPreorder<'_> {
-        cfg_preorder(&self.graph, self.entry)
+    pub fn compute_cfg_preorder_info(&self) -> CfgPreorderInfo {
+        CfgPreorderInfo::compute(&self.graph, self.entry)
     }
 }
 

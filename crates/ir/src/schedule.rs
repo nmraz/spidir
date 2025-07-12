@@ -50,10 +50,10 @@ pub fn schedule_early(
     mut schedule: impl FnMut(&ScheduleContext<'_>, Node),
 ) {
     let mut visited = DenseEntitySet::new();
-    let unpinned_data_preds = UnpinnedDataPreds::new(ctx.graph);
+    let unpinned_data_preds = UnpinnedDataPreds::new(ctx.graph, ctx.live_nodes());
 
     for pinned in ctx.walk_pinned_nodes() {
-        scratch_postorder.reset(unpinned_dataflow_preds(ctx.graph, pinned));
+        scratch_postorder.reset(unpinned_dataflow_preds(ctx.graph, ctx.live_nodes(), pinned));
         while let Some(pred) = scratch_postorder.next(&unpinned_data_preds, &mut visited) {
             debug_assert!(!is_pinned_node(ctx.graph, pred));
             schedule(ctx, pred);
@@ -97,17 +97,24 @@ fn is_pinned_node(graph: &ValGraph, node: Node) -> bool {
     kind.has_control_flow() || matches!(kind, NodeKind::Phi)
 }
 
-fn unpinned_dataflow_preds(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
-    dataflow_preds(graph, node).filter(move |&pred| !is_pinned_node(graph, pred))
+fn unpinned_dataflow_preds<'a>(
+    graph: &'a ValGraph,
+    live_nodes: &'a DenseEntitySet<Node>,
+    node: Node,
+) -> impl Iterator<Item = Node> + 'a {
+    dataflow_preds(graph, node)
+        .filter(|&pred| live_nodes.contains(pred))
+        .filter(move |&pred| !is_pinned_node(graph, pred))
 }
 
 struct UnpinnedDataPreds<'a> {
     graph: &'a ValGraph,
+    live_nodes: &'a DenseEntitySet<Node>,
 }
 
 impl<'a> UnpinnedDataPreds<'a> {
-    fn new(graph: &'a ValGraph) -> Self {
-        Self { graph }
+    fn new(graph: &'a ValGraph, live_nodes: &'a DenseEntitySet<Node>) -> Self {
+        Self { graph, live_nodes }
     }
 }
 
@@ -119,7 +126,7 @@ impl graphwalk::GraphRef for UnpinnedDataPreds<'_> {
         node: Node,
         f: impl FnMut(Node) -> ControlFlow<()>,
     ) -> ControlFlow<()> {
-        unpinned_dataflow_preds(self.graph, node).try_for_each(f)
+        unpinned_dataflow_preds(self.graph, self.live_nodes, node).try_for_each(f)
     }
 }
 

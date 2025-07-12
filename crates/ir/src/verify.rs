@@ -15,7 +15,7 @@ use crate::{
     node::{DepValueKind, NodeKind},
     schedule::{ScheduleContext, schedule_early},
     valgraph::{DepValue, Node, ValGraph},
-    valwalk::{GraphWalkInfo, cfg_preorder, walk_graph},
+    valwalk::walk_graph,
     write::display_node,
 };
 
@@ -326,9 +326,9 @@ type InputLocScratch = SmallVec<[(DomTreeNode, u32); 4]>;
 type ByNodeSchedule = SecondaryMap<Node, PackedOption<DomTreeNode>>;
 
 fn verify_dataflow(body: &FunctionBody, errors: &mut Vec<FunctionVerifierError>) {
-    let walk_info = GraphWalkInfo::compute_full(&body.graph, body.entry);
-    let cfg_preorder: Vec<_> = cfg_preorder(&body.graph, body.entry).collect();
-    let ctx = ScheduleContext::new(&body.graph, &walk_info, &cfg_preorder);
+    let cfg_preorder = body.compute_cfg_preorder_info();
+    let walk_info = body.compute_cfg_live_walk_info(&cfg_preorder);
+    let ctx = ScheduleContext::new(&body.graph, &walk_info, &cfg_preorder.preorder);
 
     let domtree = DomTree::compute(&body.graph, body.entry);
     let mut scheduler = VerifierScheduler {

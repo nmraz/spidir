@@ -53,14 +53,25 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         for &block in &self.cfg_ctx.block_order {
             for instr in self.lir.block_instrs(block) {
                 for &use_op in self.lir.instr_uses(instr) {
-                    if let UseOperandConstraint::TiedToDef(i) = use_op.constraint() {
-                        let def = self.lir.instr_defs(instr)[i as usize];
-                        candidates.push(CopyCandidate {
-                            instr,
-                            src: use_op.reg(),
-                            dest: def.reg(),
-                            weight: get_weight_at_instr(self.lir, self.cfg_ctx, instr),
-                        });
+                    let src = use_op.reg();
+
+                    match use_op.constraint() {
+                        UseOperandConstraint::TiedToDef(i) => {
+                            let def = self.lir.instr_defs(instr)[i as usize];
+                            candidates.push(CopyCandidate {
+                                instr,
+                                src,
+                                dest: def.reg(),
+                                weight: get_weight_at_instr(self.lir, self.cfg_ctx, instr),
+                            });
+                        }
+                        UseOperandConstraint::SoftTiedToDef(i) => {
+                            let def = self.lir.instr_defs(instr)[i as usize];
+                            let src_fragment = fragments_by_vreg[src].unwrap();
+                            let dest_fragment = fragments_by_vreg[def.reg()].unwrap();
+                            self.hint_fragment_copy(instr, src_fragment, dest_fragment, false);
+                        }
+                        _ => {}
                     }
                 }
             }

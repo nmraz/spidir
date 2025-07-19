@@ -964,25 +964,15 @@ fn emit_imul_r_rm_i(
     op1: RegMem,
     imm: i32,
 ) {
-    let is_imm8 = is_sint::<8>(imm as u64);
-    let opcode = if is_imm8 { 0x6b } else { 0x69 };
+    let use_imm8 = is_sint::<8>(imm as u64);
+    let opcode = if use_imm8 { 0x6b } else { 0x69 };
 
     let (rex, modrm_sib) = encode_reg_mem_parts(op1, |rex| {
         rex.encode_operand_size(op_size);
         rex.encode_modrm_reg(dest)
     });
 
-    buffer.instr(|sink| {
-        rex.emit(sink);
-        sink.emit(&[opcode]);
-        modrm_sib.emit(sink);
-
-        if is_imm8 {
-            sink.emit(&[imm as u8]);
-        } else {
-            sink.emit(&imm.to_le_bytes());
-        }
-    });
+    emit_rm_with_imm(buffer, rex, opcode, modrm_sib, imm, use_imm8);
 }
 
 fn emit_div_rm(buffer: &mut CodeBuffer<X64Fixup>, op: DivOp, op_size: OperandSize, arg: RegMem) {
@@ -1319,6 +1309,10 @@ fn emit_alu_r_rm(
     });
 }
 
+fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: AluBinOp, dest: PhysReg, imm: i32) {
+    emit_alu_rm_i(buffer, op, OperandSize::S64, RegMem::Reg(dest), imm);
+}
+
 fn emit_alu_rm_i(
     buffer: &mut CodeBuffer<X64Fixup>,
     op: AluBinOp,
@@ -1326,8 +1320,8 @@ fn emit_alu_rm_i(
     arg: RegMem,
     imm: i32,
 ) {
-    let mut is_imm8 = is_sint::<8>(imm as u64);
-    let mut opcode = if is_imm8 { 0x83 } else { 0x81 };
+    let mut use_imm8 = is_sint::<8>(imm as u64);
+    let mut opcode = if use_imm8 { 0x83 } else { 0x81 };
 
     let reg_opcode = match op {
         AluBinOp::Add => 0x0,
@@ -1338,7 +1332,7 @@ fn emit_alu_rm_i(
         AluBinOp::Test => {
             // `test` is special. Who knows why.
             opcode = 0xf7;
-            is_imm8 = false;
+            use_imm8 = false;
             0x0
         }
         AluBinOp::Xor => 0x6,
@@ -1349,12 +1343,23 @@ fn emit_alu_rm_i(
         reg_opcode
     });
 
+    emit_rm_with_imm(buffer, rex, opcode, modrm_sib, imm, use_imm8);
+}
+
+fn emit_rm_with_imm(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    rex: RexPrefix,
+    opcode: u8,
+    modrm_sib: ModRmSib,
+    imm: i32,
+    use_imm8: bool,
+) {
     buffer.instr(|sink| {
         rex.emit(sink);
         sink.emit(&[opcode]);
         modrm_sib.emit(sink);
 
-        if is_imm8 {
+        if use_imm8 {
             sink.emit(&[imm as u8]);
         } else {
             sink.emit(&imm.to_le_bytes());
@@ -1378,10 +1383,6 @@ fn emit_alu_rm(buffer: &mut CodeBuffer<X64Fixup>, op: AluUnOp, op_size: OperandS
         sink.emit(&[0xf7]);
         modrm_sib.emit(sink);
     });
-}
-
-fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: AluBinOp, dest: PhysReg, imm: i32) {
-    emit_alu_rm_i(buffer, op, OperandSize::S64, RegMem::Reg(dest), imm);
 }
 
 fn emit_sse_fpu_r_rm(

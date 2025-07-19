@@ -384,7 +384,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) -> Result<(), Option<ConflictBoundary>> {
         let cheaply_remattable = self.is_fragment_cheaply_remattable(fragment);
 
-        let mut saw_conflicts = false;
+        let mut saw_cheap_remat_conflicts = false;
         let mut earliest_conflict_boundary = None;
 
         for uncoalesced_copy in &self.uncoalesced_fragment_copy_hints[&fragment] {
@@ -410,7 +410,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         &mut earliest_conflict_boundary,
                         conflict_boundary(existing_range, conflicting_range),
                     );
-                    saw_conflicts = true;
+                    saw_cheap_remat_conflicts = true;
                 }
                 continue;
             }
@@ -421,7 +421,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // If none of a cheaply-rematerializable fragment's hints can be satisfied due to conflicts,
         // report that to the caller and let them split/spill appropriately. It's better to
         // rematerialize than to copy all over the place.
-        if cheaply_remattable && saw_conflicts && probe_order.is_empty() {
+        if saw_cheap_remat_conflicts && probe_order.is_empty() {
             return Err(earliest_conflict_boundary);
         }
 

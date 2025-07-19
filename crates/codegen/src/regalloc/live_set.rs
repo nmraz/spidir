@@ -154,7 +154,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         {
             // We couldn't coalesce these fragments now, but we might be able to later because of
             // splitting. Record a copy hint so we remember to do so.
-            self.hint_fragment_copy(instr, src_fragment, dest_fragment);
+            self.hint_fragment_copy(instr, src_fragment, dest_fragment, true);
             return;
         }
 
@@ -195,10 +195,16 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         fragments_by_vreg[src] = dest_fragment.into();
     }
 
-    fn hint_fragment_copy(&mut self, instr: Instr, a: LiveSetFragment, b: LiveSetFragment) {
+    fn hint_fragment_copy(
+        &mut self,
+        instr: Instr,
+        a: LiveSetFragment,
+        b: LiveSetFragment,
+        is_mandatory: bool,
+    ) {
         let hint = self
             .fragment_copy_hints
-            .push(FragmentCopyHintData::new(a, b));
+            .push(FragmentCopyHintData::new(a, b, is_mandatory));
 
         self.uncoalesced_fragment_copy_hints
             .entry(a)

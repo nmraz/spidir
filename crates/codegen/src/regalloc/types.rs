@@ -364,18 +364,31 @@ entity_impl!(FragmentCopyHint);
 
 #[derive(Clone, Copy)]
 pub struct FragmentCopyHintData {
-    delta: u32,
+    raw: u32,
 }
 
 impl FragmentCopyHintData {
-    pub fn new(a: LiveSetFragment, b: LiveSetFragment) -> Self {
-        Self {
-            delta: a.as_u32() ^ b.as_u32(),
+    pub fn new(a: LiveSetFragment, b: LiveSetFragment, is_mandatory: bool) -> Self {
+        let a = a.as_u32();
+        let b = b.as_u32();
+
+        debug_assert!(a & FRAGMENT_COPY_MANDATORY_HINT == 0);
+        debug_assert!(b & FRAGMENT_COPY_MANDATORY_HINT == 0);
+
+        let mut raw = a ^ b;
+        if is_mandatory {
+            raw |= FRAGMENT_COPY_MANDATORY_HINT;
         }
+
+        Self { raw }
     }
 
     pub fn get_other_fragment(self, fragment: LiveSetFragment) -> LiveSetFragment {
-        LiveSetFragment::from_u32(self.delta ^ fragment.as_u32())
+        LiveSetFragment::from_u32((self.raw ^ fragment.as_u32()) & !FRAGMENT_COPY_MANDATORY_HINT)
+    }
+
+    pub fn is_mandatory(self) -> bool {
+        self.raw & FRAGMENT_COPY_MANDATORY_HINT != 0
     }
 
     pub fn replace_fragment(
@@ -383,9 +396,12 @@ impl FragmentCopyHintData {
         old_fragment: LiveSetFragment,
         new_fragment: LiveSetFragment,
     ) {
-        self.delta ^= old_fragment.as_u32() ^ new_fragment.as_u32();
+        debug_assert!(new_fragment.as_u32() & FRAGMENT_COPY_MANDATORY_HINT == 0);
+        self.raw ^= old_fragment.as_u32() ^ new_fragment.as_u32();
     }
 }
+
+const FRAGMENT_COPY_MANDATORY_HINT: u32 = 1 << 31;
 
 #[derive(Clone, Copy)]
 pub struct TaggedFragmentCopyHint {

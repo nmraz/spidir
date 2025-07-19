@@ -388,8 +388,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let mut earliest_conflict_boundary = None;
 
         for uncoalesced_copy in &self.uncoalesced_fragment_copy_hints[&fragment] {
-            let hint_fragment =
-                self.fragment_copy_hints[uncoalesced_copy.hint].get_other_fragment(fragment);
+            let hint = self.fragment_copy_hints[uncoalesced_copy.hint];
+            let hint_fragment = hint.get_other_fragment(fragment);
 
             // If this fragment hasn't been assigned yet, it isn't interesting as a copy hint.
             let Some(hint_assignment) = self.live_set_fragments[hint_fragment].assignment.expand()
@@ -404,7 +404,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             {
                 // If the fragment is cheaply rematerializable, keep around the earliest
                 // conflict boundary in case we need it.
-                if cheaply_remattable {
+                if hint.is_mandatory() && cheaply_remattable {
                     self.update_earliest_conflict_boundary(
                         fragment,
                         &mut earliest_conflict_boundary,
@@ -418,9 +418,9 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             self.collect_hint_at_instr(uncoalesced_copy.instr, hint_assignment, probe_order);
         }
 
-        // If none of a cheaply-rematerializable fragment's hints can be satisfied due to conflicts,
-        // report that to the caller and let them split/spill appropriately. It's better to
-        // rematerialize than to copy all over the place.
+        // If none of a cheaply-rematerializable fragment's mandatory hints can be satisfied due to
+        // conflicts, report that to the caller and let them split/spill appropriately. It's better
+        // to rematerialize than to copy all over the place.
         if saw_cheap_remat_conflicts && probe_order.is_empty() {
             return Err(earliest_conflict_boundary);
         }

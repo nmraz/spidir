@@ -179,9 +179,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 self.get_real_split_point(fragment, high_split_point, boundary_instr);
 
             let split_kind = match (low_split_point, high_split_point) {
-                (Some(low_split_point), Some(high_split_point))
-                    if high_split_point != low_split_point =>
-                {
+                (Some(low_split_point), Some(high_split_point)) => {
                     SplitKind::Double(low_split_point, high_split_point)
                 }
                 (Some(low_split_point), _) => SplitKind::Single(low_split_point),
@@ -211,11 +209,18 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             }
             SplitKind::Double(instr1, instr2) => {
                 let mid = self.split_fragment(fragment, instr1);
-                let high = self.split_fragment(mid, instr2);
+
+                // Attempt to split again at `instr2`. This won't be possible, when, for example:
+                // * `instr1 == instr2`
+                // * `mid` starts at or above `instr2` because there was a hole in the original
+                //   fragment
+                if self.can_split_fragment_before(mid, instr2) {
+                    let high = self.split_fragment(mid, instr2);
+                    self.enqueue_fragment(high);
+                }
 
                 self.enqueue_fragment(fragment);
                 self.enqueue_fragment(mid);
-                self.enqueue_fragment(high);
             }
         }
     }

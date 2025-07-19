@@ -55,7 +55,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         trace!("computing precise live ranges");
 
-        let mut tied_defs = SmallVec::<[bool; 4]>::new();
+        let mut tied_defs = SmallVec::new();
 
         for &block in self.cfg_ctx.block_order.iter().rev() {
             trace!("  {block}");
@@ -209,7 +209,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         &mut self,
         block: Block,
         instr: Instr,
-        tied_defs: &mut SmallVec<[bool; 4]>,
+        tied_defs: &mut SmallVec<[DefTieKind; 4]>,
     ) {
         // Note: we assume an instruction never uses vregs it defines.
 
@@ -217,14 +217,29 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let uses = self.lir.instr_uses(instr);
 
         tied_defs.clear();
-        tied_defs.resize(defs.len(), false);
+        tied_defs.resize(defs.len(), DefTieKind::None);
 
         // Setup: find all uses tied to defs and mark those defs accordingly.
         for use_op in uses {
-            if let UseOperandConstraint::TiedToDef(i) = use_op.constraint() {
+            let constraint = use_op.constraint();
+            if let UseOperandConstraint::TiedToDef(i) | UseOperandConstraint::SoftTiedToDef(i) =
+                constraint
+            {
                 let i = i as usize;
+                let new_tie_kind = if matches!(constraint, UseOperandConstraint::TiedToDef(..)) {
+                    DefTieKind::Hard
+                } else {
+                    DefTieKind::Soft
+                };
+
+                // We allow multiple soft ties to the same definition but at most one hard tie.
+                let new_tie_allowed = matches!(
+                    (tied_defs[i], new_tie_kind),
+                    (DefTieKind::None, _) | (DefTieKind::Soft, DefTieKind::Soft)
+                );
+
                 assert!(
-                    !tied_defs[i],
+                    new_tie_allowed,
                     "multiple uses tied to same def in instr {instr}"
                 );
 
@@ -232,21 +247,25 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 assert!(use_op.pos() == OperandPos::Early);
                 assert!(tied_def.pos() == OperandPos::Late);
 
-                tied_defs[i] = true;
+                tied_defs[i] = new_tie_kind;
             }
         }
 
         // Process defs and clobbers first so our physical register reservations are always seen in
         // descending order.
         for (i, def_op) in defs.iter().enumerate() {
-            let (op_def_point, mut range_op_pos) = if tied_defs[i] {
-                (ProgramPoint::pre_copy(instr), Some(LiveRangeOpPos::PreCopy))
-            } else {
-                let lir_op_pos = def_op.pos();
-                (
-                    ProgramPoint::for_operand(instr, lir_op_pos),
-                    Some(LiveRangeOpPos::for_lir_op_pos(lir_op_pos)),
-                )
+            // Hard ties use the dedicated pre-copy slot so their copies don't interfere with
+            // user-level instruction semantics. Everything else (including soft ties) follows
+            // LIR instruction slot positions.
+            let (op_def_point, mut range_op_pos) = match tied_defs[i] {
+                DefTieKind::Hard => (ProgramPoint::pre_copy(instr), Some(LiveRangeOpPos::PreCopy)),
+                _ => {
+                    let lir_op_pos = def_op.pos();
+                    (
+                        ProgramPoint::for_operand(instr, lir_op_pos),
+                        Some(LiveRangeOpPos::for_lir_op_pos(lir_op_pos)),
+                    )
+                }
             };
 
             let def_point = if let DefOperandConstraint::Fixed(_) = def_op.constraint() {
@@ -325,7 +344,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
             let needs_reg = match use_op.constraint() {
                 UseOperandConstraint::AnyReg => true,
-                UseOperandConstraint::TiedToDef(i) => {
+                UseOperandConstraint::TiedToDef(i) | UseOperandConstraint::SoftTiedToDef(i) => {
                     let tied_def_constraint = defs[i as usize].constraint();
                     def_constraint_needs_reg(tied_def_constraint)
                 }
@@ -573,6 +592,13 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
         weight
     }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum DefTieKind {
+    None,
+    Soft,
+    Hard,
 }
 
 fn def_constraint_needs_reg(constraint: DefOperandConstraint) -> bool {

@@ -37,6 +37,7 @@ impl<M: MachineCore> fmt::Display for DisplayUseOperand<'_, M> {
             UseOperandConstraint::AnyReg => f.write_str("(reg)")?,
             UseOperandConstraint::Fixed(reg) => write!(f, "(${})", M::reg_name(reg))?,
             UseOperandConstraint::TiedToDef(def) => write!(f, "(tied:{def})")?,
+            UseOperandConstraint::SoftTiedToDef(def) => write!(f, "(soft-tied:{def})")?,
         }
         write!(f, "[{}]", self.operand.pos)
     }

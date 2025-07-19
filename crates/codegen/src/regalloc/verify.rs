@@ -347,7 +347,7 @@ fn verify_instr<M: MachineCore>(
     }
 
     for (i, &use_op, &use_assignment) in izip!(0.., use_ops, use_assignments) {
-        if !use_matches_constraint(use_op, use_assignment, def_assignments) {
+        if !assignment_matches_use(use_op, use_assignment, def_ops, def_assignments) {
             return Err(VerifierError::UseConstraintViolation { instr, op: i });
         }
         check_use_assignment(use_op, use_assignment, reg_state).map_err(|found_vregs| {
@@ -364,7 +364,7 @@ fn verify_instr<M: MachineCore>(
     }
 
     for (i, &def_op, &def_assignment) in izip!(0.., def_ops, def_assignments) {
-        if !def_matches_constraint(def_op, def_assignment) {
+        if !assignment_matches_def(def_op, def_assignment) {
             return Err(VerifierError::DefConstraintViolation { instr, op: i });
         }
         reg_state.insert(def_assignment, smallvec![def_op.reg()]);
@@ -398,24 +398,28 @@ fn check_assigned_vreg(
     }
 }
 
-fn use_matches_constraint(
+fn assignment_matches_use(
     use_op: UseOperand,
-    use_assignment: OperandAssignment,
+    assignment: OperandAssignment,
+    def_ops: &[DefOperand],
     def_assignments: &[OperandAssignment],
 ) -> bool {
     match use_op.constraint() {
         UseOperandConstraint::Any => true,
-        UseOperandConstraint::AnyReg => matches!(use_assignment, OperandAssignment::Reg(_)),
-        UseOperandConstraint::Fixed(preg) => use_assignment == OperandAssignment::Reg(preg),
-        UseOperandConstraint::TiedToDef(i) => use_assignment == def_assignments[i as usize],
+        UseOperandConstraint::AnyReg => matches!(assignment, OperandAssignment::Reg(_)),
+        UseOperandConstraint::Fixed(preg) => assignment == OperandAssignment::Reg(preg),
+        UseOperandConstraint::TiedToDef(i) => assignment == def_assignments[i as usize],
+        UseOperandConstraint::SoftTiedToDef(i) => {
+            assignment_matches_def(def_ops[i as usize], assignment)
+        }
     }
 }
 
-fn def_matches_constraint(def_op: DefOperand, def_assignment: OperandAssignment) -> bool {
+fn assignment_matches_def(def_op: DefOperand, assignment: OperandAssignment) -> bool {
     match def_op.constraint() {
         DefOperandConstraint::Any => true,
-        DefOperandConstraint::AnyReg => matches!(def_assignment, OperandAssignment::Reg(_)),
-        DefOperandConstraint::Fixed(preg) => def_assignment == OperandAssignment::Reg(preg),
+        DefOperandConstraint::AnyReg => matches!(assignment, OperandAssignment::Reg(_)),
+        DefOperandConstraint::Fixed(preg) => assignment == OperandAssignment::Reg(preg),
     }
 }
 

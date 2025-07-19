@@ -187,6 +187,7 @@ pub enum UseOperandConstraint {
     AnyReg,
     Fixed(PhysReg),
     TiedToDef(u8),
+    SoftTiedToDef(u8),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -228,6 +229,14 @@ impl UseOperand {
         Self::new(
             reg,
             UseOperandConstraint::TiedToDef(def_idx),
+            OperandPos::Early,
+        )
+    }
+
+    pub fn soft_tied(reg: VirtReg, def_idx: u8) -> Self {
+        Self::new(
+            reg,
+            UseOperandConstraint::SoftTiedToDef(def_idx),
             OperandPos::Early,
         )
     }

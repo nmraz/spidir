@@ -889,13 +889,18 @@ fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: RawAd
             index: None,
             offset: 0,
         } => emit_mov_r_r(buffer, dest, base),
-        _ => emit_lea(buffer, dest, addr),
+        _ => emit_lea(buffer, OperandSize::S64, dest, addr),
     }
 }
 
-fn emit_lea(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: RawAddrMode) {
+fn emit_lea(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op_size: OperandSize,
+    dest: PhysReg,
+    addr: RawAddrMode,
+) {
     buffer.instr(|sink| {
-        emit_lea_instr(sink, dest, addr);
+        emit_lea_instr(sink, op_size, dest, addr);
     });
 }
 
@@ -904,13 +909,25 @@ fn emit_lea_rip_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: 
         BufferRelocTarget::Function(target),
         -4,
         RELOC_PC32,
-        |sink| emit_lea_instr(sink, dest, RawAddrMode::RipOff { offset: 0 }),
+        |sink| {
+            emit_lea_instr(
+                sink,
+                OperandSize::S64,
+                dest,
+                RawAddrMode::RipOff { offset: 0 },
+            )
+        },
     );
 }
 
-fn emit_lea_instr(sink: &mut InstrSink<'_>, dest: PhysReg, addr: RawAddrMode) -> InstrAnchor {
+fn emit_lea_instr(
+    sink: &mut InstrSink<'_>,
+    op_size: OperandSize,
+    dest: PhysReg,
+    addr: RawAddrMode,
+) -> InstrAnchor {
     let (rex, modrm_sib) = encode_mem_parts(addr, |rex: &mut RexPrefix| {
-        rex.encode_operand_size(OperandSize::S64);
+        rex.encode_operand_size(op_size);
         rex.encode_modrm_reg(dest)
     });
     rex.emit(sink);

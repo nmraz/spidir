@@ -3,7 +3,7 @@
 func @offset_ptr:ptr(ptr, i64) {
     # check: function `offset_ptr`:
     # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = AluRRm(S64, Add) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0000:      %0:gpr(reg)[late] = AddRR(S64) %1(tied:0)[early], %2(reg)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr, %2:i64 = entry

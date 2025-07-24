@@ -208,6 +208,15 @@ impl MachineEmit for X64Machine {
         let uses = instr.uses;
 
         match instr.instr {
+            &X64Instr::AddRR(op_size) => {
+                let arg0 = uses[0].as_reg().unwrap();
+                let arg1 = uses[1].as_reg().unwrap();
+                emit_alu_r_rm(buffer, RawAluBinOp::Add, op_size, arg0, RegMem::Reg(arg1));
+            }
+            &X64Instr::AddRI(op_size, imm) => {
+                let arg = uses[0].as_reg().unwrap();
+                emit_alu_rm_i(buffer, RawAluBinOp::Add, op_size, RegMem::Reg(arg), imm);
+            }
             &X64Instr::AluRRm(op_size, op) => {
                 let arg0 = uses[0].as_reg().unwrap();
                 let arg1 = state.operand_reg_mem(uses[1]);
@@ -1290,7 +1299,6 @@ enum RawAluBinOp {
 impl RawAluBinOp {
     fn from_alu_op(op: AluBinOp) -> Self {
         match op {
-            AluBinOp::Add => Self::Add,
             AluBinOp::And => Self::And,
             AluBinOp::Cmp => Self::Cmp,
             AluBinOp::Or => Self::Or,

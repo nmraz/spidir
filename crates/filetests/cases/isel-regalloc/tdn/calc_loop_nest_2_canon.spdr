@@ -59,7 +59,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln:           $$rdi = $$r12
     # nextln: 0035:     Jump(block24)
     # nextln:       block24:
-    # nextln: 0036:     $$rax = AluRRm(S32, Add) $$rax, $$rcx
+    # nextln: 0036:     $$rax = AddRR(S32) $$rax, $$rcx
     # nextln: 0037:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0038:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
     # nextln: 0039:     AluRRm(S32, Test) $$rdx, $$rdx
@@ -79,24 +79,24 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0049:     $$rax = MovRM(S32, [!4 + 0])
     # nextln: 0050:     $$rcx = MovRM(S32, [!3 + 0])
     # nextln: 0051:     $$rdx = MovRM(S32, [!1 + 0])
-    # nextln: 0052:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0052:     $$rcx = AddRR(S32) $$rcx, $$rdx
     # nextln: 0053:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0054:     Jumpcc(G, block31, block32)
     # nextln:       block31:
     # nextln: 0055:     $$rcx = MovRM(S32, [!1 + 0])
     # nextln: 0056:     $$rdx = MovRM(S32, [!5 + 0])
-    # nextln: 0057:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0057:     $$rcx = AddRR(S32) $$rcx, $$rdx
     # nextln: 0058:     Jump(block33)
     # nextln:       block32:
     # nextln: 0059:     $$rcx = MovRM(S32, [!4 + 0])
     # nextln: 0060:     Jump(block33)
     # nextln:       block33:
-    # nextln: 0061:     $$rdi = AluRRm(S32, Add) $$rdi, $$rax
+    # nextln: 0061:     $$rdi = AddRR(S32) $$rdi, $$rax
     # nextln: 0062:     $$rdi = ImulRRm(S32) $$rdi, $$rcx
     # nextln: 0063:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln: 0064:     CallRm $$rax, $$rdi
     # nextln: 0065:     $$rax = MovRM(S32, [!1 + 0])
-    # nextln: 0066:     $$rax = AluRmI(S32, Add, 2) $$rax
+    # nextln: 0066:     $$rax = AddRI(S32, 2) $$rax
     # nextln: 0067:     MovMR(S32, [!1 + 0]) $$rax
     # nextln: 0068:     Jump(block28)
     # nextln:       block30:
@@ -114,7 +114,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln:       block19:
     # nextln: 0078:     $$rax = MovRM(S32, [!5 + 0])
     # nextln: 0079:     $$rcx = MovRM(S32, [!4 + 0])
-    # nextln: 0080:     $$rax = AluRRm(S32, Add) $$rax, $$rcx
+    # nextln: 0080:     $$rax = AddRR(S32) $$rax, $$rcx
     # nextln: 0081:     Jump(block21)
     # nextln:       block20:
     # nextln: 0082:     $$rax = MovRM(S32, [!5 + 0])
@@ -124,7 +124,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln:       block21:
     # nextln: 0086:     MovMR(S32, [!5 + 0]) $$rax
     # nextln: 0087:     $$rax = MovRM(S32, [!4 + 0])
-    # nextln: 0088:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0088:     $$rax = AddRI(S32, 1) $$rax
     # nextln: 0089:     MovMR(S32, [!4 + 0]) $$rax
     # nextln: 0090:     Jump(block1)
     # nextln:       block6:
@@ -151,7 +151,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0106:     $$rax = MovRM(S32, [!5 + 0])
     # nextln: 0107:     Jump(block12)
     # nextln:       block12:
-    # nextln: 0108:     $$rcx = AluRRm(S32, Add) $$rcx, $$rax
+    # nextln: 0108:     $$rcx = AddRR(S32) $$rcx, $$rax
     # nextln: 0109:     MovMR(S32, [!2 + 0]) $$rcx
     # nextln: 0110:     $$rax = MovRM(S32, [!2 + 0])
     # nextln: 0111:     AluRRm(S32, Test) $$rax, $$rax
@@ -168,7 +168,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0119:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln: 0120:     CallRm $$rax, $$rdi
     # nextln: 0121:     $$rax = MovRM(S32, [!0 + 0])
-    # nextln: 0122:     $$rax = AluRmI(S32, Add, 1) $$rax
+    # nextln: 0122:     $$rax = AddRI(S32, 1) $$rax
     # nextln: 0123:     MovMR(S32, [!0 + 0]) $$rax
     # nextln: 0124:     Jump(block7)
     # nextln:       block9:

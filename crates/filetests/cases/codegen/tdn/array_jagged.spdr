@@ -65,7 +65,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 000071: 44 89 70 10                     mov dword ptr [rax + 0x10], r14d
     # nextln: 000075: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
     # nextln: 000078: 4c 3b e9                        cmp r13, rcx
-    # nextln: 00007b: 0f 8d 0a 01 00 00               jge 0x18b
+    # nextln: 00007b: 0f 8d 0d 01 00 00               jge 0x18e
     # nextln: 000081: ba 04 00 00 00                  mov edx, 4
     # nextln: 000086: 49 0f af d5                     imul rdx, r13
     # nextln: 00008a: b9 14 00 00 00                  mov ecx, 0x14
@@ -78,7 +78,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0000a4: 33 d2                           xor edx, edx
     # nextln: 0000a6: 4c 63 e2                        movsxd r12, edx
     # nextln: 0000a9: 4c 3b e1                        cmp r12, rcx
-    # nextln: 0000ac: 0f 8d d9 00 00 00               jge 0x18b
+    # nextln: 0000ac: 0f 8d dc 00 00 00               jge 0x18e
     # nextln: 0000b2: ba 08 00 00 00                  mov edx, 8
     # nextln: 0000b7: 49 0f af d4                     imul rdx, r12
     # nextln: 0000bb: b9 18 00 00 00                  mov ecx, 0x18
@@ -91,7 +91,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0000d7: 44 89 70 10                     mov dword ptr [rax + 0x10], r14d
     # nextln: 0000db: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
     # nextln: 0000de: 4c 3b e1                        cmp r12, rcx
-    # nextln: 0000e1: 0f 8d a4 00 00 00               jge 0x18b
+    # nextln: 0000e1: 0f 8d a7 00 00 00               jge 0x18e
     # nextln: 0000e7: ba 04 00 00 00                  mov edx, 4
     # nextln: 0000ec: 48 89 d7                        mov rdi, rdx
     # nextln: 0000ef: 49 0f af fc                     imul rdi, r12
@@ -104,44 +104,45 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 000109: 89 37                           mov dword ptr [rdi], esi
     # nextln: 00010b: 8b 78 10                        mov edi, dword ptr [rax + 0x10]
     # nextln: 00010e: 4c 3b ef                        cmp r13, rdi
-    # nextln: 000111: 0f 8d 74 00 00 00               jge 0x18b
-    # nextln: 000117: 48 89 c7                        mov rdi, rax
-    # nextln: 00011a: 48 03 7c 24 10                  add rdi, qword ptr [rsp + 0x10]
-    # nextln: 00011f: be 03 00 00 00                  mov esi, 3
-    # nextln: 000124: 89 37                           mov dword ptr [rdi], esi
-    # nextln: 000126: 8b 7b 10                        mov edi, dword ptr [rbx + 0x10]
-    # nextln: 000129: 4c 3b ef                        cmp r13, rdi
-    # nextln: 00012c: 0f 8d 59 00 00 00               jge 0x18b
-    # nextln: 000132: be 08 00 00 00                  mov esi, 8
-    # nextln: 000137: 49 0f af f5                     imul rsi, r13
-    # nextln: 00013b: bf 18 00 00 00                  mov edi, 0x18
-    # nextln: 000140: 48 03 fe                        add rdi, rsi
-    # nextln: 000143: 48 03 df                        add rbx, rdi
-    # nextln: 000146: 48 89 03                        mov qword ptr [rbx], rax
-    # nextln: 000149: 48 8b 04 24                     mov rax, qword ptr [rsp]
-    # nextln: 00014d: 8b 70 10                        mov esi, dword ptr [rax + 0x10]
-    # nextln: 000150: 4c 3b ee                        cmp r13, rsi
-    # nextln: 000153: 0f 8d 32 00 00 00               jge 0x18b
-    # nextln: 000159: 48 03 c7                        add rax, rdi
-    # nextln: 00015c: 48 8b 00                        mov rax, qword ptr [rax]
-    # nextln: 00015f: 8b 70 10                        mov esi, dword ptr [rax + 0x10]
-    # nextln: 000162: 48 63 7c 24 08                  movsxd rdi, dword ptr [rsp + 8]
-    # nextln: 000167: 48 3b fe                        cmp rdi, rsi
-    # nextln: 00016a: 0f 8d 1b 00 00 00               jge 0x18b
-    # nextln: 000170: 48 0f af d7                     imul rdx, rdi
-    # nextln: 000174: 48 03 ca                        add rcx, rdx
-    # nextln: 000177: 48 03 c1                        add rax, rcx
-    # nextln: 00017a: 8b 00                           mov eax, dword ptr [rax]
-    # nextln: 00017c: 48 83 c4 28                     add rsp, 0x28
-    # nextln: 000180: 5b                              pop rbx
-    # nextln: 000181: 41 5c                           pop r12
-    # nextln: 000183: 41 5d                           pop r13
-    # nextln: 000185: 41 5e                           pop r14
-    # nextln: 000187: 41 5f                           pop r15
-    # nextln: 000189: 5d                              pop rbp
-    # nextln: 00018a: c3                              ret
-    # nextln: 00018b: e8 00 00 00 00                  call 0x190  # RELOC_PC32 -> @throw_index_out_of_range_exception + -4
-    # nextln: 000190: 0f 0b                           ud2
+    # nextln: 000111: 0f 8d 77 00 00 00               jge 0x18e
+    # nextln: 000117: 48 8b 74 24 10                  mov rsi, qword ptr [rsp + 0x10]
+    # nextln: 00011c: 48 89 c7                        mov rdi, rax
+    # nextln: 00011f: 48 03 fe                        add rdi, rsi
+    # nextln: 000122: be 03 00 00 00                  mov esi, 3
+    # nextln: 000127: 89 37                           mov dword ptr [rdi], esi
+    # nextln: 000129: 8b 7b 10                        mov edi, dword ptr [rbx + 0x10]
+    # nextln: 00012c: 4c 3b ef                        cmp r13, rdi
+    # nextln: 00012f: 0f 8d 59 00 00 00               jge 0x18e
+    # nextln: 000135: be 08 00 00 00                  mov esi, 8
+    # nextln: 00013a: 49 0f af f5                     imul rsi, r13
+    # nextln: 00013e: bf 18 00 00 00                  mov edi, 0x18
+    # nextln: 000143: 48 03 fe                        add rdi, rsi
+    # nextln: 000146: 48 03 df                        add rbx, rdi
+    # nextln: 000149: 48 89 03                        mov qword ptr [rbx], rax
+    # nextln: 00014c: 48 8b 04 24                     mov rax, qword ptr [rsp]
+    # nextln: 000150: 8b 70 10                        mov esi, dword ptr [rax + 0x10]
+    # nextln: 000153: 4c 3b ee                        cmp r13, rsi
+    # nextln: 000156: 0f 8d 32 00 00 00               jge 0x18e
+    # nextln: 00015c: 48 03 c7                        add rax, rdi
+    # nextln: 00015f: 48 8b 00                        mov rax, qword ptr [rax]
+    # nextln: 000162: 8b 70 10                        mov esi, dword ptr [rax + 0x10]
+    # nextln: 000165: 48 63 7c 24 08                  movsxd rdi, dword ptr [rsp + 8]
+    # nextln: 00016a: 48 3b fe                        cmp rdi, rsi
+    # nextln: 00016d: 0f 8d 1b 00 00 00               jge 0x18e
+    # nextln: 000173: 48 0f af d7                     imul rdx, rdi
+    # nextln: 000177: 48 03 ca                        add rcx, rdx
+    # nextln: 00017a: 48 03 c1                        add rax, rcx
+    # nextln: 00017d: 8b 00                           mov eax, dword ptr [rax]
+    # nextln: 00017f: 48 83 c4 28                     add rsp, 0x28
+    # nextln: 000183: 5b                              pop rbx
+    # nextln: 000184: 41 5c                           pop r12
+    # nextln: 000186: 41 5d                           pop r13
+    # nextln: 000188: 41 5e                           pop r14
+    # nextln: 00018a: 41 5f                           pop r15
+    # nextln: 00018c: 5d                              pop rbp
+    # nextln: 00018d: c3                              ret
+    # nextln: 00018e: e8 00 00 00 00                  call 0x193  # RELOC_PC32 -> @throw_index_out_of_range_exception + -4
+    # nextln: 000193: 0f 0b                           ud2
 
     %0:ctrl, %1:i32 = entry
     %2:ctrl, %3:phisel = region %0

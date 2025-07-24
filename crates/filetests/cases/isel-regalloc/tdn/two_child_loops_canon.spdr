@@ -41,10 +41,10 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln:       block17:
     # nextln: 0024:     $$rdi = MovRM(S32, [!0 + 0])
     # nextln: 0025:     $$r8 = MovRM(S32, [!3 + 0])
-    # nextln: 0026:     $$rdi = AluRRm(S32, Add) $$rdi, $$r8
+    # nextln: 0026:     $$rdi = AddRR(S32) $$rdi, $$r8
     # nextln: 0027:     MovMR(S32, [!0 + 0]) $$rdi
     # nextln: 0028:     $$rdi = MovRM(S32, [!3 + 0])
-    # nextln: 0029:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0029:     $$rdi = AddRI(S32, 1) $$rdi
     # nextln: 0030:     MovMR(S32, [!3 + 0]) $$rdi
     # nextln: 0031:     Jump(block7)
     # nextln:       block18:
@@ -66,27 +66,27 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln:       block14:
     # nextln: 0043:     $$rdi = MovRM(S32, [!0 + 0])
     # nextln: 0044:     $$r8 = MovRM(S32, [!1 + 0])
-    # nextln: 0045:     $$rdi = AluRRm(S32, Add) $$rdi, $$r8
+    # nextln: 0045:     $$rdi = AddRR(S32) $$rdi, $$r8
     # nextln: 0046:     MovMR(S32, [!0 + 0]) $$rdi
     # nextln: 0047:     Jump(block16)
     # nextln:       block15:
     # nextln: 0048:     Jump(block16)
     # nextln:       block16:
     # nextln: 0049:     $$rdi = MovRM(S32, [!1 + 0])
-    # nextln: 0050:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0050:     $$rdi = AddRI(S32, 1) $$rdi
     # nextln: 0051:     MovMR(S32, [!1 + 0]) $$rdi
     # nextln: 0052:     Jump(block11)
     # nextln:       block13:
     # nextln: 0053:     $$rdi = MovRM(S32, [!0 + 0])
     # nextln: 0054:     $$r8 = MovRM(S32, [!2 + 0])
-    # nextln: 0055:     $$rdi = AluRRm(S32, Add) $$rdi, $$r8
+    # nextln: 0055:     $$rdi = AddRR(S32) $$rdi, $$r8
     # nextln: 0056:     MovMR(S32, [!0 + 0]) $$rdi
     # nextln: 0057:     Jump(block6)
     # nextln:       block5:
     # nextln: 0058:     Jump(block6)
     # nextln:       block6:
     # nextln: 0059:     $$rdi = MovRM(S32, [!2 + 0])
-    # nextln: 0060:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0060:     $$rdi = AddRI(S32, 1) $$rdi
     # nextln: 0061:     MovMR(S32, [!2 + 0]) $$rdi
     # nextln: 0062:     Jump(block1)
     # nextln:       block3:

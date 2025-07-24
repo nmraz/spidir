@@ -93,8 +93,8 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0047:     Jumpcc(L, block14, block15)
     # nextln:       block14:
     # nextln: 0048:     $$rcx = ShiftRmI(S64, Shl, 2) $$rcx
-    # nextln: 0049:     $$rcx = AluRmI(S64, Add, 20) $$rcx
-    # nextln: 0050:     $$rax = AluRRm(S64, Add) $$rax, $$rcx
+    # nextln: 0049:     $$rcx = AddRI(S64, 20) $$rcx
+    # nextln: 0050:     $$rax = AddRR(S64) $$rax, $$rcx
     # nextln: 0051:     $$rax = MovRM(S32, [reg + 0]) $$rax
     # nextln: 0052:     Ret $$rax
     # nextln:       block15:

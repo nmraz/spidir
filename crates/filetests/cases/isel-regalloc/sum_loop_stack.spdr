@@ -22,7 +22,7 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln:           $$rax = $$rdx
     # nextln: 0009:     $$rax = AluRmI(S32, Sub, 1) $$rax
     # nextln: 0010:     $$rcx = MovRM(S32, [!1 + 0])
-    # nextln: 0011:     $$rcx = AluRRm(S32, Add) $$rcx, $$rdx
+    # nextln: 0011:     $$rcx = AddRR(S32) $$rcx, $$rdx
     # nextln: 0012:     MovMR(S32, [!0 + 0]) $$rax
     # nextln: 0013:     MovMR(S32, [!1 + 0]) $$rcx
     # nextln: 0014:     Jump(block2)

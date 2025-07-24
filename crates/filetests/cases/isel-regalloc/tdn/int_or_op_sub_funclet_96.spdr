@@ -6,7 +6,7 @@ extfunc @jit_newobj:ptr(ptr)
 
 func @"System.Int32 testout1::Sub_Funclet_96()":i32() {
     # check: function `System.Int32 testout1::Sub_Funclet_96()`:
-    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     # nextln: frame: size 32, align 8
     # nextln:     spill0: 0
     # nextln:     spill1: 8
@@ -433,25 +433,29 @@ func @"System.Int32 testout1::Sub_Funclet_96()":i32() {
     # nextln: 0257:     $$rdx = MovRM(S32, [reg + 0]) $$rdx
     # nextln: 0258:     Jump(block140)
     # nextln:       block140:
-    # nextln: 0259:     $$rax = AluRmI(S32, Add, 3) $$rax
-    # nextln: 0260:     $$rax = AluRRm(S32, Add) $$rax, $$spill0
-    # nextln: 0261:     $$rax = AluRRm(S32, Add) $$rax, $$spill1
-    # nextln: 0262:     $$rax = AluRRm(S32, Add) $$rax, $$r11
-    # nextln: 0263:     $$rax = AluRRm(S32, Add) $$rax, $$spill2
-    # nextln: 0264:     $$rax = AluRRm(S32, Add) $$rax, $$r14
-    # nextln: 0265:     $$rax = AluRRm(S32, Add) $$rax, $$r15
-    # nextln: 0266:     $$rax = AluRRm(S32, Add) $$rax, $$spill3
-    # nextln: 0267:     $$rax = AluRmI(S32, Add, -5) $$rax
-    # nextln: 0268:     $$rax = AluRmI(S32, Add, -5) $$rax
-    # nextln: 0269:     $$rax = AluRRm(S32, Add) $$rax, $$r13
-    # nextln: 0270:     $$rax = AluRRm(S32, Add) $$rax, $$r8
-    # nextln: 0271:     $$rax = AluRRm(S32, Add) $$rax, $$rdi
-    # nextln: 0272:     $$rax = AluRRm(S32, Add) $$rax, $$r10
-    # nextln: 0273:     $$rax = AluRRm(S32, Add) $$rax, $$rcx
-    # nextln: 0274:     $$rax = AluRRm(S32, Add) $$rax, $$rsi
-    # nextln: 0275:     $$rax = AluRmI(S32, Add, -5) $$rax
-    # nextln: 0276:     $$rax = AluRmI(S32, Add, -5) $$rax
-    # nextln: 0277:     $$rax = AluRRm(S32, Add) $$rax, $$rdx
+    # nextln: 0259:     $$rax = AddRI(S32, 3) $$rax
+    # nextln:           $$r9 = $$spill0
+    # nextln: 0260:     $$rax = AddRR(S32) $$rax, $$r9
+    # nextln:           $$r9 = $$spill1
+    # nextln: 0261:     $$rax = AddRR(S32) $$rax, $$r9
+    # nextln: 0262:     $$rax = AddRR(S32) $$rax, $$r11
+    # nextln:           $$r9 = $$spill2
+    # nextln: 0263:     $$rax = AddRR(S32) $$rax, $$r9
+    # nextln: 0264:     $$rax = AddRR(S32) $$rax, $$r14
+    # nextln: 0265:     $$rax = AddRR(S32) $$rax, $$r15
+    # nextln:           $$r9 = $$spill3
+    # nextln: 0266:     $$rax = AddRR(S32) $$rax, $$r9
+    # nextln: 0267:     $$rax = AddRI(S32, -5) $$rax
+    # nextln: 0268:     $$rax = AddRI(S32, -5) $$rax
+    # nextln: 0269:     $$rax = AddRR(S32) $$rax, $$r13
+    # nextln: 0270:     $$rax = AddRR(S32) $$rax, $$r8
+    # nextln: 0271:     $$rax = AddRR(S32) $$rax, $$rdi
+    # nextln: 0272:     $$rax = AddRR(S32) $$rax, $$r10
+    # nextln: 0273:     $$rax = AddRR(S32) $$rax, $$rcx
+    # nextln: 0274:     $$rax = AddRR(S32) $$rax, $$rsi
+    # nextln: 0275:     $$rax = AddRI(S32, -5) $$rax
+    # nextln: 0276:     $$rax = AddRI(S32, -5) $$rax
+    # nextln: 0277:     $$rax = AddRR(S32) $$rax, $$rdx
     # nextln: 0278:     Ret $$rax
     # nextln:       block115:
     # nextln: 0279:     $$rax = FuncAddrAbs(External(extfunc1))

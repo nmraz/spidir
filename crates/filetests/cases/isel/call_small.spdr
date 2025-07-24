@@ -66,7 +66,7 @@ func @caller:i32(ptr, i32) {
     # nextln: 0002:      %1:gpr($$rax)[late] = CallRel(External(extfunc1)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
     # nextln: 0003:      CallRel(Internal(func0)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
     # nextln: 0004:      %2:gpr($$rax)[late] = CallRel(Internal(func1)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
-    # nextln: 0005:      %0:gpr(reg)[late] = AluRRm(S32, Add) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0005:      %0:gpr(reg)[late] = AddRR(S32) %1(tied:0)[early], %2(reg)[early]
     # nextln: 0006:      CallRel(Internal(func2)) ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
     # nextln: 0007:      Ret %0($$rax)[early]
 

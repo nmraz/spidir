@@ -121,7 +121,7 @@ impl MachineLower for X64Machine {
         let _ = targets;
         match ctx.node_kind(node) {
             &NodeKind::Iconst(val) => select_iconst(ctx, node, val),
-            NodeKind::Iadd => select_alu(ctx, node, AluBinOp::Add),
+            NodeKind::Iadd => select_add(ctx, node),
             NodeKind::And => select_alu(ctx, node, AluBinOp::And),
             NodeKind::Or => select_alu(ctx, node, AluBinOp::Or),
             NodeKind::Isub => select_alu(ctx, node, AluBinOp::Sub),
@@ -207,7 +207,7 @@ impl MachineLower for X64Machine {
             NodeKind::UintToFloat => select_uinttofloat(ctx, node),
             NodeKind::FloatToSint => emit_cvts2si(ctx, node),
             NodeKind::FloatToUint => select_floattouint(self, ctx, node),
-            NodeKind::PtrOff => select_alu(ctx, node, AluBinOp::Add),
+            NodeKind::PtrOff => select_add(ctx, node),
             &NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             &NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
             NodeKind::StackSlot { .. } => {
@@ -337,6 +337,32 @@ fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluBinO
         &[DefOperand::any_reg(output)],
         &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
+}
+
+fn select_add(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
+    let [output] = ctx.node_outputs_exact(node);
+    let [op1, op2] = ctx.node_inputs_exact(node);
+
+    let ty = ctx.value_type(output);
+    let op_size = operand_size_for_ty(ty);
+    let output = ctx.get_value_vreg(output);
+
+    let op1 = ctx.get_value_vreg(op1);
+
+    if let Some(imm) = match_imm32(ctx, op2) {
+        ctx.emit_instr(
+            X64Instr::AddRI(op_size, imm),
+            &[DefOperand::any_reg(output)],
+            &[UseOperand::tied(op1, 0)],
+        );
+    } else {
+        let op2 = ctx.get_value_vreg(op2);
+        ctx.emit_instr(
+            X64Instr::AddRR(op_size),
+            &[DefOperand::any_reg(output)],
+            &[UseOperand::tied(op1, 0), UseOperand::any_reg(op2)],
+        );
+    }
 }
 
 fn select_shift(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: ShiftOp) {

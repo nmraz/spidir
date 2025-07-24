@@ -133,7 +133,6 @@ pub enum SseFpuPrecision {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AluBinOp {
-    Add,
     And,
     Cmp,
     Or,
@@ -229,6 +228,8 @@ impl fmt::Debug for AddrMode {
 
 #[derive(Debug, Clone, Copy)]
 pub enum X64Instr {
+    AddRR(OperandSize),
+    AddRI(OperandSize, i32),
     AluRRm(OperandSize, AluBinOp),
     AluRmI(OperandSize, AluBinOp, i32),
     AluRm(OperandSize, AluUnOp),
@@ -286,6 +287,8 @@ pub enum X64Instr {
 impl X64Instr {
     fn uses_flags(&self) -> bool {
         match self {
+            X64Instr::AddRR(..) => false,
+            X64Instr::AddRI(..) => false,
             X64Instr::AluRRm(..) => false,
             X64Instr::AluRmI(..) => false,
             X64Instr::AluRm(..) => false,
@@ -335,6 +338,8 @@ impl X64Instr {
 
     fn defines_flags(&self) -> bool {
         match self {
+            X64Instr::AddRR(..) => true,
+            X64Instr::AddRI(..) => true,
             X64Instr::AluRRm(..) => true,
             X64Instr::AluRmI(..) => true,
             X64Instr::AluRm(..) => true,

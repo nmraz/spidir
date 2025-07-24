@@ -90,9 +90,9 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0060:     Jumpcc(B, block32, block33)
     # nextln:       block32:
     # nextln: 0061:     $$rdx = ShiftRmI(S64, Shl, 3) $$rdx
-    # nextln: 0062:     $$rdx = AluRmI(S64, Add, 24) $$rdx
+    # nextln: 0062:     $$rdx = AddRI(S64, 24) $$rdx
     # nextln:           $$rsi = $$rdi
-    # nextln: 0063:     $$rsi = AluRRm(S64, Add) $$rsi, $$rdx
+    # nextln: 0063:     $$rsi = AddRR(S64) $$rsi, $$rdx
     # nextln: 0064:     $$rdx = MovRM(S64, [reg + 0]) $$rsi
     # nextln: 0065:     $$rsi = MovRmS32(0)
     # nextln: 0066:     AluRRm(S64, Test) $$rdx, $$rdx
@@ -103,12 +103,12 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln:       block34:
     # nextln: 0071:     $$rdx = MovRM(S32, [reg + 16]) $$rdx
     # nextln: 0072:     $$rdx = MovsxRRm(Ext32_64) $$rdx
-    # nextln: 0073:     $$r13 = AluRRm(S64, Add) $$r13, $$rdx
+    # nextln: 0073:     $$r13 = AddRR(S64) $$r13, $$rdx
     # nextln: 0074:     Jump(block36)
     # nextln:       block35:
     # nextln: 0075:     Jump(block36)
     # nextln:       block36:
-    # nextln: 0076:     $$rcx = AluRmI(S32, Add, 1) $$rcx
+    # nextln: 0076:     $$rcx = AddRI(S32, 1) $$rcx
     # nextln: 0077:     Jump(block6)
     # nextln:       block33:
     # nextln: 0078:     $$rax = FuncAddrAbs(External(extfunc1))
@@ -165,9 +165,9 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0115:     Jumpcc(B, block22, block23)
     # nextln:       block22:
     # nextln: 0116:     $$rax = ShiftRmI(S64, Shl, 3) $$rax
-    # nextln: 0117:     $$rax = AluRmI(S64, Add, 24) $$rax
+    # nextln: 0117:     $$rax = AddRI(S64, 24) $$rax
     # nextln:           $$rcx = $$r12
-    # nextln: 0118:     $$rcx = AluRRm(S64, Add) $$rcx, $$rax
+    # nextln: 0118:     $$rcx = AddRR(S64) $$rcx, $$rax
     # nextln:           $$spill0 = $$r12
     # nextln: 0119:     $$rdx = MovRM(S64, [reg + 0]) $$rcx
     # nextln: 0120:     AluRRm(S64, Test) $$rdx, $$rdx
@@ -204,7 +204,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln:           $$rdi = $$r14
     # nextln:           $$rsi = $$rbx
     # nextln: 0144:     CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0145:     $$rbx = AluRRm(S32, Add) $$rbx, $$r12
+    # nextln: 0145:     $$rbx = AddRR(S32) $$rbx, $$r12
     # nextln: 0146:     Jump(block29)
     # nextln:       block30:
     # nextln: 0147:     $$rbx = MovRU32(4294967295)
@@ -212,7 +212,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln:       block28:
     # nextln: 0149:     Jump(block29)
     # nextln:       block29:
-    # nextln: 0150:     $$r15 = AluRmI(S32, Add, 1) $$r15
+    # nextln: 0150:     $$r15 = AddRI(S32, 1) $$r15
     # nextln:           $$r12 = $$spill0
     # nextln: 0151:     Jump(block14)
     # nextln:       block23:

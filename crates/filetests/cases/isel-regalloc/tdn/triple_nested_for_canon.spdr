@@ -38,28 +38,28 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln:       block8:
     # nextln: 0021:     $$rdi = MovRM(S32, [!3 + 0])
     # nextln: 0022:     $$r8 = MovRM(S32, [!2 + 0])
-    # nextln: 0023:     $$rdi = AluRRm(S32, Add) $$rdi, $$r8
+    # nextln: 0023:     $$rdi = AddRR(S32) $$rdi, $$r8
     # nextln: 0024:     MovMR(S32, [!3 + 0]) $$rdi
     # nextln: 0025:     $$rdi = MovRM(S32, [!2 + 0])
-    # nextln: 0026:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0026:     $$rdi = AddRI(S32, 1) $$rdi
     # nextln: 0027:     MovMR(S32, [!2 + 0]) $$rdi
     # nextln: 0028:     Jump(block7)
     # nextln:       block9:
     # nextln: 0029:     $$rdi = MovRM(S32, [!3 + 0])
     # nextln: 0030:     $$r8 = MovRM(S32, [!1 + 0])
-    # nextln: 0031:     $$rdi = AluRRm(S32, Add) $$rdi, $$r8
+    # nextln: 0031:     $$rdi = AddRR(S32) $$rdi, $$r8
     # nextln: 0032:     MovMR(S32, [!3 + 0]) $$rdi
     # nextln: 0033:     $$rdi = MovRM(S32, [!1 + 0])
-    # nextln: 0034:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0034:     $$rdi = AddRI(S32, 1) $$rdi
     # nextln: 0035:     MovMR(S32, [!1 + 0]) $$rdi
     # nextln: 0036:     Jump(block4)
     # nextln:       block6:
     # nextln: 0037:     $$rdi = MovRM(S32, [!3 + 0])
     # nextln: 0038:     $$r8 = MovRM(S32, [!0 + 0])
-    # nextln: 0039:     $$rdi = AluRRm(S32, Add) $$rdi, $$r8
+    # nextln: 0039:     $$rdi = AddRR(S32) $$rdi, $$r8
     # nextln: 0040:     MovMR(S32, [!3 + 0]) $$rdi
     # nextln: 0041:     $$rdi = MovRM(S32, [!0 + 0])
-    # nextln: 0042:     $$rdi = AluRmI(S32, Add, 1) $$rdi
+    # nextln: 0042:     $$rdi = AddRI(S32, 1) $$rdi
     # nextln: 0043:     MovMR(S32, [!0 + 0]) $$rdi
     # nextln: 0044:     Jump(block1)
     # nextln:       block3:

@@ -8,13 +8,13 @@ func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
     # nextln:           $$rax = $$rdi
     # nextln: 0000:     $$rdi = MovRRbp { op_size: S64, offset: 24 }
     # nextln: 0001:     $$r10 = MovRRbp { op_size: S64, offset: 16 }
-    # nextln: 0002:     $$rax = AluRRm(S64, Add) $$rax, $$rsi
-    # nextln: 0003:     $$rax = AluRRm(S64, Add) $$rax, $$rdx
-    # nextln: 0004:     $$rax = AluRRm(S64, Add) $$rax, $$rcx
-    # nextln: 0005:     $$rax = AluRRm(S64, Add) $$rax, $$r8
-    # nextln: 0006:     $$rax = AluRRm(S64, Add) $$rax, $$r9
-    # nextln: 0007:     $$rax = AluRRm(S64, Add) $$rax, $$r10
-    # nextln: 0008:     $$rax = AluRRm(S64, Add) $$rax, $$rdi
+    # nextln: 0002:     $$rax = AddRR(S64) $$rax, $$rsi
+    # nextln: 0003:     $$rax = AddRR(S64) $$rax, $$rdx
+    # nextln: 0004:     $$rax = AddRR(S64) $$rax, $$rcx
+    # nextln: 0005:     $$rax = AddRR(S64) $$rax, $$r8
+    # nextln: 0006:     $$rax = AddRR(S64) $$rax, $$r9
+    # nextln: 0007:     $$rax = AddRR(S64) $$rax, $$r10
+    # nextln: 0008:     $$rax = AddRR(S64) $$rax, $$rdi
     # nextln: 0009:     Ret $$rax
 
     %c:ctrl, %1:i64, %2:i64, %3:i64, %4:i64, %5:i64, %6:i64, %7:i64, %8:i64 = entry
@@ -34,7 +34,7 @@ func @unused_param:i64(ptr, i64, i64) {
     # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln:           $$rax = $$rsi
-    # nextln: 0000:     $$rax = AluRRm(S64, Add) $$rax, $$rdx
+    # nextln: 0000:     $$rax = AddRR(S64) $$rax, $$rdx
     # nextln: 0001:     Ret $$rax
 
     %c:ctrl, %p:ptr, %a:i64, %b:i64 = entry

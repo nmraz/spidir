@@ -182,7 +182,7 @@ impl MachineEmit for X64Machine {
         emit_add_sp(buffer, -state.raw_frame_size);
 
         if let FrameRealign::AlignTo(align) = state.realign {
-            emit_alu_r64_i(buffer, AluBinOp::And, REG_RSP, -align);
+            emit_alu_r64_i(buffer, RawAluBinOp::And, REG_RSP, -align);
         }
     }
 
@@ -211,11 +211,12 @@ impl MachineEmit for X64Machine {
             &X64Instr::AluRRm(op_size, op) => {
                 let arg0 = uses[0].as_reg().unwrap();
                 let arg1 = state.operand_reg_mem(uses[1]);
-                emit_alu_r_rm(buffer, op, op_size, arg0, arg1);
+
+                emit_alu_r_rm(buffer, RawAluBinOp::from_alu_op(op), op_size, arg0, arg1);
             }
             &X64Instr::AluRmI(op_size, op, imm) => {
                 let arg = state.operand_reg_mem(uses[0]);
-                emit_alu_rm_i(buffer, op, op_size, arg, imm);
+                emit_alu_rm_i(buffer, RawAluBinOp::from_alu_op(op), op_size, arg, imm);
             }
             &X64Instr::AluRm(op_size, op) => {
                 let arg = state.operand_reg_mem(uses[0]);
@@ -516,9 +517,9 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Fixup>, offset: i32) {
         // This generates smaller code without penalizing performance.
         emit_push(buffer, REG_RAX);
     } else if offset < 0 {
-        emit_alu_r64_i(buffer, AluBinOp::Sub, REG_RSP, -offset);
+        emit_alu_r64_i(buffer, RawAluBinOp::Sub, REG_RSP, -offset);
     } else if offset > 0 {
-        emit_alu_r64_i(buffer, AluBinOp::Add, REG_RSP, offset);
+        emit_alu_r64_i(buffer, RawAluBinOp::Add, REG_RSP, offset);
     }
 }
 
@@ -574,7 +575,7 @@ fn emit_uint64_to_float(
 
     emit_alu_r_rm(
         buffer,
-        AluBinOp::Test,
+        RawAluBinOp::Test,
         OperandSize::S64,
         src,
         RegMem::Reg(src),
@@ -604,7 +605,7 @@ fn emit_uint64_to_float(
 
     emit_alu_rm_i(
         buffer,
-        AluBinOp::And,
+        RawAluBinOp::And,
         OperandSize::S64,
         RegMem::Reg(tmp_gpr2),
         1,
@@ -612,7 +613,7 @@ fn emit_uint64_to_float(
 
     emit_alu_r_rm(
         buffer,
-        AluBinOp::Or,
+        RawAluBinOp::Or,
         OperandSize::S64,
         tmp_gpr1,
         RegMem::Reg(tmp_gpr2),
@@ -764,7 +765,7 @@ fn emit_mov_rm_s32(
             // Note: some renamers recognize only the 32-bit instruction as a zeroing idiom.
             emit_alu_r_rm(
                 buffer,
-                AluBinOp::Xor,
+                RawAluBinOp::Xor,
                 OperandSize::S32,
                 dest,
                 RegMem::Reg(dest),
@@ -1276,25 +1277,49 @@ fn emit_mov_gprm_xmm(
 
 // Instruction group emission helpers
 
+enum RawAluBinOp {
+    Add,
+    And,
+    Cmp,
+    Or,
+    Sub,
+    Test,
+    Xor,
+}
+
+impl RawAluBinOp {
+    fn from_alu_op(op: AluBinOp) -> Self {
+        match op {
+            AluBinOp::Add => Self::Add,
+            AluBinOp::And => Self::And,
+            AluBinOp::Cmp => Self::Cmp,
+            AluBinOp::Or => Self::Or,
+            AluBinOp::Sub => Self::Sub,
+            AluBinOp::Test => Self::Test,
+            AluBinOp::Xor => Self::Xor,
+        }
+    }
+}
+
 fn emit_alu_r_rm(
     buffer: &mut CodeBuffer<X64Fixup>,
-    op: AluBinOp,
+    op: RawAluBinOp,
     op_size: OperandSize,
     arg0: PhysReg,
     arg1: RegMem,
 ) {
     let opcode = match op {
-        AluBinOp::Add => 0x3,
-        AluBinOp::And => 0x23,
-        AluBinOp::Cmp => 0x3b,
-        AluBinOp::Or => 0xb,
-        AluBinOp::Sub => 0x2b,
-        AluBinOp::Test => {
+        RawAluBinOp::Add => 0x3,
+        RawAluBinOp::And => 0x23,
+        RawAluBinOp::Cmp => 0x3b,
+        RawAluBinOp::Or => 0xb,
+        RawAluBinOp::Sub => 0x2b,
+        RawAluBinOp::Test => {
             // This encoding is actually backwards (`test r/m, r`), but it doesn't matter because
             // `test` is commutative and has no outputs other than flags.
             0x85
         }
-        AluBinOp::Xor => 0x33,
+        RawAluBinOp::Xor => 0x33,
     };
 
     let (rex, modrm_sib) = encode_reg_mem_parts(arg1, |rex| {
@@ -1309,13 +1334,13 @@ fn emit_alu_r_rm(
     });
 }
 
-fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: AluBinOp, dest: PhysReg, imm: i32) {
+fn emit_alu_r64_i(buffer: &mut CodeBuffer<X64Fixup>, op: RawAluBinOp, dest: PhysReg, imm: i32) {
     emit_alu_rm_i(buffer, op, OperandSize::S64, RegMem::Reg(dest), imm);
 }
 
 fn emit_alu_rm_i(
     buffer: &mut CodeBuffer<X64Fixup>,
-    op: AluBinOp,
+    op: RawAluBinOp,
     op_size: OperandSize,
     arg: RegMem,
     imm: i32,
@@ -1324,18 +1349,18 @@ fn emit_alu_rm_i(
     let mut opcode = if use_imm8 { 0x83 } else { 0x81 };
 
     let reg_opcode = match op {
-        AluBinOp::Add => 0x0,
-        AluBinOp::And => 0x4,
-        AluBinOp::Cmp => 0x7,
-        AluBinOp::Or => 0x1,
-        AluBinOp::Sub => 0x5,
-        AluBinOp::Test => {
+        RawAluBinOp::Add => 0x0,
+        RawAluBinOp::And => 0x4,
+        RawAluBinOp::Cmp => 0x7,
+        RawAluBinOp::Or => 0x1,
+        RawAluBinOp::Sub => 0x5,
+        RawAluBinOp::Test => {
             // `test` is special. Who knows why.
             opcode = 0xf7;
             use_imm8 = false;
             0x0
         }
-        AluBinOp::Xor => 0x6,
+        RawAluBinOp::Xor => 0x6,
     };
 
     let (rex, modrm_sib) = encode_reg_mem_parts(arg, |rex| {

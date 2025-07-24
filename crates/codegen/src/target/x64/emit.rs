@@ -889,10 +889,14 @@ fn emit_lea_or_mov(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: RawAd
             index: None,
             offset: 0,
         } => emit_mov_r_r(buffer, dest, base),
-        _ => buffer.instr(|sink| {
-            emit_lea_instr(sink, dest, addr);
-        }),
+        _ => emit_lea(buffer, dest, addr),
     }
+}
+
+fn emit_lea(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, addr: RawAddrMode) {
+    buffer.instr(|sink| {
+        emit_lea_instr(sink, dest, addr);
+    });
 }
 
 fn emit_lea_rip_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {

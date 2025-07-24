@@ -127,8 +127,8 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0085:     $$rbx = MovRM(S32, [!14 + 0])
     # nextln: 0086:     $$rdx = AddRR(S32) $$rdx, $$rbx
     # nextln: 0087:     $$rbx = MovRM(S32, [!1 + 0])
-    # nextln: 0088:     $$rdx = AddRR(S32) $$rdx, $$rbx
-    # nextln: 0089:     $$rax = AddRR(S32) $$rax, $$rdx
+    # nextln: 0088:     $$rbx = AddRR(S32) $$rdx, $$rbx
+    # nextln: 0089:     $$rax = AddRR(S32) $$rax, $$rbx
     # nextln: 0090:     MovMR(S32, [!3 + 0]) $$rax
     # nextln: 0091:     $$rax = MovRM(S32, [!13 + 0])
     # nextln: 0092:     $$rdx = MovRM(S32, [!15 + 0])
@@ -225,8 +225,8 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0177:     $$rbx = MovRM(S32, [!5 + 0])
     # nextln: 0178:     $$rdx = AddRR(S32) $$rdx, $$rbx
     # nextln: 0179:     $$rbx = MovRM(S32, [!4 + 0])
-    # nextln: 0180:     $$rdx = AddRR(S32) $$rdx, $$rbx
-    # nextln: 0181:     $$rax = AddRR(S32) $$rax, $$rdx
+    # nextln: 0180:     $$rbx = AddRR(S32) $$rdx, $$rbx
+    # nextln: 0181:     $$rax = AddRR(S32) $$rax, $$rbx
     # nextln: 0182:     MovMR(S32, [!3 + 0]) $$rax
     # nextln: 0183:     $$rax = MovRM(S32, [!2 + 0])
     # nextln: 0184:     $$rax = AddRI(S32, 1) $$rax
@@ -273,8 +273,8 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0219:     $$rax = MovRM(S32, [!3 + 0])
     # nextln: 0220:     $$rdx = MovRM(S32, [!18 + 0])
     # nextln: 0221:     $$rbx = MovRM(S32, [!17 + 0])
-    # nextln: 0222:     $$rdx = AddRR(S32) $$rdx, $$rbx
-    # nextln: 0223:     $$rax = AddRR(S32) $$rax, $$rdx
+    # nextln: 0222:     $$rbx = AddRR(S32) $$rdx, $$rbx
+    # nextln: 0223:     $$rax = AddRR(S32) $$rax, $$rbx
     # nextln: 0224:     MovMR(S32, [!3 + 0]) $$rax
     # nextln: 0225:     $$rax = MovRM(S32, [!16 + 0])
     # nextln: 0226:     $$rax = AddRI(S32, 1) $$rax
@@ -321,8 +321,8 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0263:     $$rbx = MovRM(S32, [!21 + 0])
     # nextln: 0264:     $$rdx = AddRR(S32) $$rdx, $$rbx
     # nextln: 0265:     $$rbx = MovRM(S32, [!20 + 0])
-    # nextln: 0266:     $$rdx = AddRR(S32) $$rdx, $$rbx
-    # nextln: 0267:     $$rax = AddRR(S32) $$rax, $$rdx
+    # nextln: 0266:     $$rbx = AddRR(S32) $$rdx, $$rbx
+    # nextln: 0267:     $$rax = AddRR(S32) $$rax, $$rbx
     # nextln: 0268:     MovMR(S32, [!3 + 0]) $$rax
     # nextln: 0269:     $$rax = MovRM(S32, [!19 + 0])
     # nextln: 0270:     $$rax = AddRI(S32, 1) $$rax

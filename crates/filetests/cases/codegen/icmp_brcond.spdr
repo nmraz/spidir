@@ -118,17 +118,16 @@ func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # check: function `select_slt_cond_reused`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 d0                        mov rax, rdx
-    # nextln: 000007: 33 d2                           xor edx, edx
-    # nextln: 000009: 3b fe                           cmp edi, esi
-    # nextln: 00000b: 0f 9c c2                        setl dl
-    # nextln: 00000e: 85 d2                           test edx, edx
-    # nextln: 000010: 0f 85 03 00 00 00               jne 0x19
-    # nextln: 000016: 48 89 c8                        mov rax, rcx
-    # nextln: 000019: 83 f2 05                        xor edx, 5
-    # nextln: 00001c: 03 c2                           add eax, edx
-    # nextln: 00001e: 5d                              pop rbp
-    # nextln: 00001f: c3                              ret
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 3b fe                           cmp edi, esi
+    # nextln: 000008: 0f 9c c0                        setl al
+    # nextln: 00000b: 85 c0                           test eax, eax
+    # nextln: 00000d: 0f 85 03 00 00 00               jne 0x16
+    # nextln: 000013: 48 89 ca                        mov rdx, rcx
+    # nextln: 000016: 83 f0 05                        xor eax, 5
+    # nextln: 000019: 03 c2                           add eax, edx
+    # nextln: 00001b: 5d                              pop rbp
+    # nextln: 00001c: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp slt %a, %b

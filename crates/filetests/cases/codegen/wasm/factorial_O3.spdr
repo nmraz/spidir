@@ -6,64 +6,53 @@ func @func00000001:i64(i32) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: b8 01 00 00 00                  mov eax, 1
     # nextln: 000009: 85 ff                           test edi, edi
-    # nextln: 00000b: 0f 8e cf 00 00 00               jle 0xe0
+    # nextln: 00000b: 0f 8e af 00 00 00               jle 0xc0
     # nextln: 000011: 83 c7 01                        add edi, 1
-    # nextln: 000014: 48 89 fe                        mov rsi, rdi
-    # nextln: 000017: 48 83 c6 ff                     add rsi, -1
-    # nextln: 00001b: 48 89 fa                        mov rdx, rdi
-    # nextln: 00001e: 48 83 c2 fe                     add rdx, -2
-    # nextln: 000022: 48 89 f1                        mov rcx, rsi
-    # nextln: 000025: 48 83 e1 07                     and rcx, 7
-    # nextln: 000029: 48 83 fa 06                     cmp rdx, 6
-    # nextln: 00002d: 0f 86 85 00 00 00               jbe 0xb8
-    # nextln: 000033: 48 83 c7 f7                     add rdi, -9
-    # nextln: 000037: 48 83 e6 f8                     and rsi, 0xfffffffffffffff8
-    # nextln: 00003b: 48 89 fa                        mov rdx, rdi
-    # nextln: 00003e: 48 83 e2 f8                     and rdx, 0xfffffffffffffff8
-    # nextln: 000042: 48 f7 de                        neg rsi
-    # nextln: 000045: bf 08 00 00 00                  mov edi, 8
-    # nextln: 00004a: 49 89 f8                        mov r8, rdi
-    # nextln: 00004d: 49 83 c0 f9                     add r8, -7
-    # nextln: 000051: 49 0f af c0                     imul rax, r8
-    # nextln: 000055: 49 89 f8                        mov r8, rdi
-    # nextln: 000058: 49 83 c0 fa                     add r8, -6
-    # nextln: 00005c: 49 0f af c0                     imul rax, r8
-    # nextln: 000060: 49 89 f8                        mov r8, rdi
-    # nextln: 000063: 49 83 c0 fb                     add r8, -5
-    # nextln: 000067: 49 0f af c0                     imul rax, r8
-    # nextln: 00006b: 49 89 f8                        mov r8, rdi
-    # nextln: 00006e: 49 83 c0 fc                     add r8, -4
-    # nextln: 000072: 49 0f af c0                     imul rax, r8
-    # nextln: 000076: 49 89 f8                        mov r8, rdi
-    # nextln: 000079: 49 83 c0 fd                     add r8, -3
-    # nextln: 00007d: 49 0f af c0                     imul rax, r8
-    # nextln: 000081: 49 89 f8                        mov r8, rdi
-    # nextln: 000084: 49 83 c0 fe                     add r8, -2
-    # nextln: 000088: 49 0f af c0                     imul rax, r8
-    # nextln: 00008c: 49 89 f8                        mov r8, rdi
-    # nextln: 00008f: 49 83 c0 ff                     add r8, -1
-    # nextln: 000093: 49 0f af c0                     imul rax, r8
-    # nextln: 000097: 48 0f af c7                     imul rax, rdi
-    # nextln: 00009b: 48 83 c7 08                     add rdi, 8
-    # nextln: 00009f: 49 89 f0                        mov r8, rsi
-    # nextln: 0000a2: 4c 03 c7                        add r8, rdi
-    # nextln: 0000a5: 49 83 f8 08                     cmp r8, 8
-    # nextln: 0000a9: 0f 85 9b ff ff ff               jne 0x4a
-    # nextln: 0000af: 48 83 c2 09                     add rdx, 9
-    # nextln: 0000b3: e9 03 00 00 00                  jmp 0xbb
-    # nextln: 0000b8: 48 89 c2                        mov rdx, rax
-    # nextln: 0000bb: 48 85 c9                        test rcx, rcx
-    # nextln: 0000be: 0f 84 1a 00 00 00               je 0xde
-    # nextln: 0000c4: 48 83 c1 ff                     add rcx, -1
-    # nextln: 0000c8: 48 0f af c2                     imul rax, rdx
-    # nextln: 0000cc: 48 85 c9                        test rcx, rcx
-    # nextln: 0000cf: 0f 84 09 00 00 00               je 0xde
-    # nextln: 0000d5: 48 83 c2 01                     add rdx, 1
-    # nextln: 0000d9: e9 e6 ff ff ff                  jmp 0xc4
-    # nextln: 0000de: 5d                              pop rbp
-    # nextln: 0000df: c3                              ret
-    # nextln: 0000e0: 5d                              pop rbp
-    # nextln: 0000e1: c3                              ret
+    # nextln: 000014: 48 8d 57 ff                     lea rdx, [rdi - 1]
+    # nextln: 000018: 48 8d 77 fe                     lea rsi, [rdi - 2]
+    # nextln: 00001c: 48 89 d1                        mov rcx, rdx
+    # nextln: 00001f: 48 83 e1 07                     and rcx, 7
+    # nextln: 000023: 48 83 fe 06                     cmp rsi, 6
+    # nextln: 000027: 0f 86 6b 00 00 00               jbe 0x98
+    # nextln: 00002d: 48 83 c7 f7                     add rdi, -9
+    # nextln: 000031: 48 83 e2 f8                     and rdx, 0xfffffffffffffff8
+    # nextln: 000035: 48 83 e7 f8                     and rdi, 0xfffffffffffffff8
+    # nextln: 000039: 48 f7 da                        neg rdx
+    # nextln: 00003c: be 08 00 00 00                  mov esi, 8
+    # nextln: 000041: 4c 8d 46 f9                     lea r8, [rsi - 7]
+    # nextln: 000045: 49 0f af c0                     imul rax, r8
+    # nextln: 000049: 4c 8d 46 fa                     lea r8, [rsi - 6]
+    # nextln: 00004d: 49 0f af c0                     imul rax, r8
+    # nextln: 000051: 4c 8d 46 fb                     lea r8, [rsi - 5]
+    # nextln: 000055: 49 0f af c0                     imul rax, r8
+    # nextln: 000059: 4c 8d 46 fc                     lea r8, [rsi - 4]
+    # nextln: 00005d: 49 0f af c0                     imul rax, r8
+    # nextln: 000061: 4c 8d 46 fd                     lea r8, [rsi - 3]
+    # nextln: 000065: 49 0f af c0                     imul rax, r8
+    # nextln: 000069: 4c 8d 46 fe                     lea r8, [rsi - 2]
+    # nextln: 00006d: 49 0f af c0                     imul rax, r8
+    # nextln: 000071: 4c 8d 46 ff                     lea r8, [rsi - 1]
+    # nextln: 000075: 49 0f af c0                     imul rax, r8
+    # nextln: 000079: 48 0f af c6                     imul rax, rsi
+    # nextln: 00007d: 48 83 c6 08                     add rsi, 8
+    # nextln: 000081: 4c 8d 04 32                     lea r8, [rdx + rsi]
+    # nextln: 000085: 49 83 f8 08                     cmp r8, 8
+    # nextln: 000089: 0f 85 b2 ff ff ff               jne 0x41
+    # nextln: 00008f: 48 83 c7 09                     add rdi, 9
+    # nextln: 000093: e9 03 00 00 00                  jmp 0x9b
+    # nextln: 000098: 48 89 c7                        mov rdi, rax
+    # nextln: 00009b: 48 85 c9                        test rcx, rcx
+    # nextln: 00009e: 0f 84 1a 00 00 00               je 0xbe
+    # nextln: 0000a4: 48 83 c1 ff                     add rcx, -1
+    # nextln: 0000a8: 48 0f af c7                     imul rax, rdi
+    # nextln: 0000ac: 48 85 c9                        test rcx, rcx
+    # nextln: 0000af: 0f 84 09 00 00 00               je 0xbe
+    # nextln: 0000b5: 48 83 c7 01                     add rdi, 1
+    # nextln: 0000b9: e9 e6 ff ff ff                  jmp 0xa4
+    # nextln: 0000be: 5d                              pop rbp
+    # nextln: 0000bf: c3                              ret
+    # nextln: 0000c0: 5d                              pop rbp
+    # nextln: 0000c1: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:i64 = iconst 1

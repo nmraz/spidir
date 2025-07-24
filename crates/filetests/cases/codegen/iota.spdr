@@ -6,20 +6,18 @@ func @iota(ptr, i64) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 33 c0                           xor eax, eax
     # nextln: 000006: 48 85 f6                        test rsi, rsi
-    # nextln: 000009: 0f 84 28 00 00 00               je 0x37
-    # nextln: 00000f: 48 89 c1                        mov rcx, rax
-    # nextln: 000012: 48 c1 e1 03                     shl rcx, 3
-    # nextln: 000016: 48 89 fa                        mov rdx, rdi
-    # nextln: 000019: 48 03 d1                        add rdx, rcx
-    # nextln: 00001c: 48 89 c1                        mov rcx, rax
-    # nextln: 00001f: 48 83 c1 01                     add rcx, 1
-    # nextln: 000023: 48 89 02                        mov qword ptr [rdx], rax
-    # nextln: 000026: 48 3b ce                        cmp rcx, rsi
-    # nextln: 000029: 0f 84 08 00 00 00               je 0x37
-    # nextln: 00002f: 48 89 c8                        mov rax, rcx
-    # nextln: 000032: e9 d8 ff ff ff                  jmp 0xf
-    # nextln: 000037: 5d                              pop rbp
-    # nextln: 000038: c3                              ret
+    # nextln: 000009: 0f 84 22 00 00 00               je 0x31
+    # nextln: 00000f: 48 89 c2                        mov rdx, rax
+    # nextln: 000012: 48 c1 e2 03                     shl rdx, 3
+    # nextln: 000016: 48 03 d7                        add rdx, rdi
+    # nextln: 000019: 48 8d 48 01                     lea rcx, [rax + 1]
+    # nextln: 00001d: 48 89 02                        mov qword ptr [rdx], rax
+    # nextln: 000020: 48 3b ce                        cmp rcx, rsi
+    # nextln: 000023: 0f 84 08 00 00 00               je 0x31
+    # nextln: 000029: 48 89 c8                        mov rax, rcx
+    # nextln: 00002c: e9 de ff ff ff                  jmp 0xf
+    # nextln: 000031: 5d                              pop rbp
+    # nextln: 000032: c3                              ret
 
     %entry_ctrl:ctrl, %arr:ptr, %n:i64 = entry
     %zero:i64 = iconst 0

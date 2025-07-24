@@ -68,7 +68,7 @@ func @caller:i32(ptr, i32) {
     # nextln: 0004:      CallRm %7(any)[early], %4($$rdi)[early], %5($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
     # nextln: 0005:      %6:gpr(reg)[late] = FuncAddrAbs(Internal(func1))
     # nextln: 0006:      %3:gpr($$rax)[late] = CallRm %6(any)[early], %4($$rdi)[early], %5($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
-    # nextln: 0007:      %0:gpr(reg)[late] = AddRR(S32) %2(tied:0)[early], %3(reg)[early]
+    # nextln: 0007:      %0:gpr(reg)[late] = AddRR(S32) %2(soft-tied:0)[early], %3(soft-tied:0)[early]
     # nextln: 0008:      %1:gpr(reg)[late] = FuncAddrAbs(Internal(func2))
     # nextln: 0009:      CallRm %1(any)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
     # nextln: 0010:      Ret %0($$rax)[early]

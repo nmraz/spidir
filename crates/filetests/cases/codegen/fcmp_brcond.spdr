@@ -158,17 +158,16 @@ func @select_olt_cond_reused:i32(f64, f64, i32, i32) {
     # check: function `select_olt_cond_reused`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: 33 c9                           xor ecx, ecx
-    # nextln: 000009: 66 0f 2e c8                     ucomisd xmm1, xmm0
-    # nextln: 00000d: 0f 97 c1                        seta cl
-    # nextln: 000010: 85 c9                           test ecx, ecx
-    # nextln: 000012: 0f 85 03 00 00 00               jne 0x1b
-    # nextln: 000018: 48 89 f0                        mov rax, rsi
-    # nextln: 00001b: 83 f1 05                        xor ecx, 5
-    # nextln: 00001e: 03 c1                           add eax, ecx
-    # nextln: 000020: 5d                              pop rbp
-    # nextln: 000021: c3                              ret
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 66 0f 2e c8                     ucomisd xmm1, xmm0
+    # nextln: 00000a: 0f 97 c0                        seta al
+    # nextln: 00000d: 85 c0                           test eax, eax
+    # nextln: 00000f: 0f 85 03 00 00 00               jne 0x18
+    # nextln: 000015: 48 89 f7                        mov rdi, rsi
+    # nextln: 000018: 83 f0 05                        xor eax, 5
+    # nextln: 00001b: 03 c7                           add eax, edi
+    # nextln: 00001d: 5d                              pop rbp
+    # nextln: 00001e: c3                              ret
 
     %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
     %1:i32 = fcmp olt %a, %b

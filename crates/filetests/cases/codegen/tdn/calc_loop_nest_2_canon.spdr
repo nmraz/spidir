@@ -107,8 +107,8 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 000175: f7 d8                           neg eax
     # nextln: 000177: e9 04 00 00 00                  jmp 0x180
     # nextln: 00017c: 8b 44 24 14                     mov eax, dword ptr [rsp + 0x14]
-    # nextln: 000180: 03 c8                           add ecx, eax
-    # nextln: 000182: 89 4c 24 08                     mov dword ptr [rsp + 8], ecx
+    # nextln: 000180: 03 c1                           add eax, ecx
+    # nextln: 000182: 89 44 24 08                     mov dword ptr [rsp + 8], eax
     # nextln: 000186: 8b 44 24 08                     mov eax, dword ptr [rsp + 8]
     # nextln: 00018a: 85 c0                           test eax, eax
     # nextln: 00018c: 0f 8e 10 00 00 00               jle 0x1a2

@@ -209,13 +209,45 @@ impl MachineEmit for X64Machine {
 
         match instr.instr {
             &X64Instr::AddRR(op_size) => {
+                let dest = defs[0].as_reg().unwrap();
                 let arg0 = uses[0].as_reg().unwrap();
                 let arg1 = uses[1].as_reg().unwrap();
-                emit_alu_r_rm(buffer, RawAluBinOp::Add, op_size, arg0, RegMem::Reg(arg1));
+
+                if dest == arg0 {
+                    emit_alu_r_rm(buffer, RawAluBinOp::Add, op_size, arg0, RegMem::Reg(arg1));
+                } else if dest == arg1 {
+                    emit_alu_r_rm(buffer, RawAluBinOp::Add, op_size, arg1, RegMem::Reg(arg0));
+                } else {
+                    emit_lea(
+                        buffer,
+                        op_size,
+                        dest,
+                        RawAddrMode::BaseIndexOff {
+                            base: Some(arg0),
+                            index: Some((IndexScale::One, arg1)),
+                            offset: 0,
+                        },
+                    );
+                }
             }
             &X64Instr::AddRI(op_size, imm) => {
+                let dest = defs[0].as_reg().unwrap();
                 let arg = uses[0].as_reg().unwrap();
-                emit_alu_rm_i(buffer, RawAluBinOp::Add, op_size, RegMem::Reg(arg), imm);
+
+                if dest == arg {
+                    emit_alu_rm_i(buffer, RawAluBinOp::Add, op_size, RegMem::Reg(arg), imm);
+                } else {
+                    emit_lea(
+                        buffer,
+                        op_size,
+                        dest,
+                        RawAddrMode::BaseIndexOff {
+                            base: Some(arg),
+                            index: None,
+                            offset: imm,
+                        },
+                    );
+                }
             }
             &X64Instr::AluRRm(op_size, op) => {
                 let arg0 = uses[0].as_reg().unwrap();

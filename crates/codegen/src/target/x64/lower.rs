@@ -353,14 +353,14 @@ fn select_add(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
         ctx.emit_instr(
             X64Instr::AddRI(op_size, imm),
             &[DefOperand::any_reg(output)],
-            &[UseOperand::tied(op1, 0)],
+            &[UseOperand::soft_tied(op1, 0)],
         );
     } else {
         let op2 = ctx.get_value_vreg(op2);
         ctx.emit_instr(
             X64Instr::AddRR(op_size),
             &[DefOperand::any_reg(output)],
-            &[UseOperand::tied(op1, 0), UseOperand::any_reg(op2)],
+            &[UseOperand::soft_tied(op1, 0), UseOperand::soft_tied(op2, 0)],
         );
     }
 }

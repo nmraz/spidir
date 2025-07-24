@@ -15,8 +15,8 @@ func @iota(ptr, i64) {
     # nextln:       => block4[%6:gpr]
     # nextln:       block4[%0:gpr]:
     # nextln: 0005:      %5:gpr(any)[late] = ShiftRmI(S64, Shl, 3) %0(tied:0)[early]
-    # nextln: 0006:      %3:gpr(reg)[late] = AddRR(S64) %4(tied:0)[early], %5(reg)[early]
-    # nextln: 0007:      %1:gpr(reg)[late] = AddRI(S64, 1) %0(tied:0)[early]
+    # nextln: 0006:      %3:gpr(reg)[late] = AddRR(S64) %4(soft-tied:0)[early], %5(soft-tied:0)[early]
+    # nextln: 0007:      %1:gpr(reg)[late] = AddRI(S64, 1) %0(soft-tied:0)[early]
     # nextln: 0008:      MovMR(S64, [reg + 0]) %0(reg)[early], %3(reg)[early]
     # nextln: 0009:      AluRRm(S64, Cmp) %1(reg)[early], %2(any)[early]
     # nextln: 0010:      Jumpcc(E, block5, block6)

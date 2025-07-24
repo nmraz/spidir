@@ -4,18 +4,17 @@ func @many_params:i64(i64, i64, i64, i64, i64, i64, i64, i64) {
     # check: function `many_params`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: 48 8b 7d 18                     mov rdi, qword ptr [rbp + 0x18]
-    # nextln: 00000b: 4c 8b 55 10                     mov r10, qword ptr [rbp + 0x10]
-    # nextln: 00000f: 48 03 c6                        add rax, rsi
-    # nextln: 000012: 48 03 c2                        add rax, rdx
-    # nextln: 000015: 48 03 c1                        add rax, rcx
-    # nextln: 000018: 49 03 c0                        add rax, r8
-    # nextln: 00001b: 49 03 c1                        add rax, r9
+    # nextln: 000004: 48 8b 45 18                     mov rax, qword ptr [rbp + 0x18]
+    # nextln: 000008: 4c 8b 55 10                     mov r10, qword ptr [rbp + 0x10]
+    # nextln: 00000c: 48 03 fe                        add rdi, rsi
+    # nextln: 00000f: 48 03 d7                        add rdx, rdi
+    # nextln: 000012: 48 03 ca                        add rcx, rdx
+    # nextln: 000015: 4c 03 c1                        add r8, rcx
+    # nextln: 000018: 4d 03 c1                        add r8, r9
+    # nextln: 00001b: 4d 03 d0                        add r10, r8
     # nextln: 00001e: 49 03 c2                        add rax, r10
-    # nextln: 000021: 48 03 c7                        add rax, rdi
-    # nextln: 000024: 5d                              pop rbp
-    # nextln: 000025: c3                              ret
+    # nextln: 000021: 5d                              pop rbp
+    # nextln: 000022: c3                              ret
 
     %c:ctrl, %1:i64, %2:i64, %3:i64, %4:i64, %5:i64, %6:i64, %7:i64, %8:i64 = entry
     %val:i64 = iadd %1, %2
@@ -32,18 +31,17 @@ func @stack_param32:i64(i64, i64, i64, i64, i64, i64, i32, i64) {
     # check: function `stack_param32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: 48 8b 7d 18                     mov rdi, qword ptr [rbp + 0x18]
-    # nextln: 00000b: 44 8b 55 10                     mov r10d, dword ptr [rbp + 0x10]
-    # nextln: 00000f: 48 03 c6                        add rax, rsi
-    # nextln: 000012: 48 03 c2                        add rax, rdx
-    # nextln: 000015: 48 03 c1                        add rax, rcx
-    # nextln: 000018: 49 03 c0                        add rax, r8
-    # nextln: 00001b: 49 03 c1                        add rax, r9
+    # nextln: 000004: 48 8b 45 18                     mov rax, qword ptr [rbp + 0x18]
+    # nextln: 000008: 44 8b 55 10                     mov r10d, dword ptr [rbp + 0x10]
+    # nextln: 00000c: 48 03 fe                        add rdi, rsi
+    # nextln: 00000f: 48 03 d7                        add rdx, rdi
+    # nextln: 000012: 48 03 ca                        add rcx, rdx
+    # nextln: 000015: 4c 03 c1                        add r8, rcx
+    # nextln: 000018: 4d 03 c1                        add r8, r9
+    # nextln: 00001b: 4d 03 d0                        add r10, r8
     # nextln: 00001e: 49 03 c2                        add rax, r10
-    # nextln: 000021: 48 03 c7                        add rax, rdi
-    # nextln: 000024: 5d                              pop rbp
-    # nextln: 000025: c3                              ret
+    # nextln: 000021: 5d                              pop rbp
+    # nextln: 000022: c3                              ret
 
     %c:ctrl, %1:i64, %2:i64, %3:i64, %4:i64, %5:i64, %6:i64, %7:i32, %8:i64 = entry
     %9:i64 = iext %7
@@ -61,10 +59,9 @@ func @unused_param:i64(ptr, i64, i64) {
     # check: function `unused_param`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f0                        mov rax, rsi
-    # nextln: 000007: 48 03 c2                        add rax, rdx
-    # nextln: 00000a: 5d                              pop rbp
-    # nextln: 00000b: c3                              ret
+    # nextln: 000004: 48 8d 04 16                     lea rax, [rsi + rdx]
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
 
     %c:ctrl, %p:ptr, %a:i64, %b:i64 = entry
     %val:i64 = iadd %a, %b

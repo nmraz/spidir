@@ -4,27 +4,27 @@ func @"System.Int32 testout1::Sub_Funclet_89()":i32() {
     # check: function `System.Int32 testout1::Sub_Funclet_89()`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: bf 01 00 00 00                  mov edi, 1
-    # nextln: 000009: 48 ba 90 a5 00 00 20 50 00 00   movabs rdx, 0x50200000a590
-    # nextln: 000013: b9 03 00 00 00                  mov ecx, 3
-    # nextln: 000018: 40 88 3a                        mov byte ptr [rdx], dil
-    # nextln: 00001b: 85 ff                           test edi, edi
-    # nextln: 00001d: 0f 85 0b 00 00 00               jne 0x2e
-    # nextln: 000023: 0f b6 02                        movzx eax, byte ptr [rdx]
-    # nextln: 000026: 85 c0                           test eax, eax
-    # nextln: 000028: 0f 84 08 00 00 00               je 0x36
-    # nextln: 00002e: 48 89 c8                        mov rax, rcx
-    # nextln: 000031: e9 05 00 00 00                  jmp 0x3b
-    # nextln: 000036: b8 fb ff ff ff                  mov eax, 0xfffffffb
-    # nextln: 00003b: 85 ff                           test edi, edi
-    # nextln: 00003d: 0f 85 10 00 00 00               jne 0x53
-    # nextln: 000043: 0f b6 12                        movzx edx, byte ptr [rdx]
-    # nextln: 000046: 85 d2                           test edx, edx
-    # nextln: 000048: 0f 85 05 00 00 00               jne 0x53
-    # nextln: 00004e: b9 fb ff ff ff                  mov ecx, 0xfffffffb
-    # nextln: 000053: 03 c1                           add eax, ecx
-    # nextln: 000055: 5d                              pop rbp
-    # nextln: 000056: c3                              ret
+    # nextln: 000004: ba 01 00 00 00                  mov edx, 1
+    # nextln: 000009: 48 b9 90 a5 00 00 20 50 00 00   movabs rcx, 0x50200000a590
+    # nextln: 000013: b8 03 00 00 00                  mov eax, 3
+    # nextln: 000018: 88 11                           mov byte ptr [rcx], dl
+    # nextln: 00001a: 85 d2                           test edx, edx
+    # nextln: 00001c: 0f 85 0b 00 00 00               jne 0x2d
+    # nextln: 000022: 0f b6 39                        movzx edi, byte ptr [rcx]
+    # nextln: 000025: 85 ff                           test edi, edi
+    # nextln: 000027: 0f 84 08 00 00 00               je 0x35
+    # nextln: 00002d: 48 89 c7                        mov rdi, rax
+    # nextln: 000030: e9 05 00 00 00                  jmp 0x3a
+    # nextln: 000035: bf fb ff ff ff                  mov edi, 0xfffffffb
+    # nextln: 00003a: 85 d2                           test edx, edx
+    # nextln: 00003c: 0f 85 10 00 00 00               jne 0x52
+    # nextln: 000042: 0f b6 09                        movzx ecx, byte ptr [rcx]
+    # nextln: 000045: 85 c9                           test ecx, ecx
+    # nextln: 000047: 0f 85 05 00 00 00               jne 0x52
+    # nextln: 00004d: b8 fb ff ff ff                  mov eax, 0xfffffffb
+    # nextln: 000052: 03 c7                           add eax, edi
+    # nextln: 000054: 5d                              pop rbp
+    # nextln: 000055: c3                              ret
 
     %0:ctrl = entry
     %60:i32 = iconst 3

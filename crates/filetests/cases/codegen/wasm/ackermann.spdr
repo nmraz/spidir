@@ -6,26 +6,27 @@ func @func00000001:i64(i32, i32) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 53                              push rbx
     # nextln: 000005: 50                              push rax
-    # nextln: 000006: 48 89 fb                        mov rbx, rdi
-    # nextln: 000009: 85 db                           test ebx, ebx
-    # nextln: 00000b: 0f 84 2b 00 00 00               je 0x3c
-    # nextln: 000011: 85 f6                           test esi, esi
-    # nextln: 000013: 0f 84 13 00 00 00               je 0x2c
-    # nextln: 000019: 83 c6 ff                        add esi, -1
-    # nextln: 00001c: 48 89 df                        mov rdi, rbx
-    # nextln: 00001f: e8 00 00 00 00                  call 0x24  # RELOC_PC32 -> @func00000001 + -4
-    # nextln: 000024: 48 89 c6                        mov rsi, rax
-    # nextln: 000027: e9 05 00 00 00                  jmp 0x31
-    # nextln: 00002c: be 01 00 00 00                  mov esi, 1
-    # nextln: 000031: 83 c3 ff                        add ebx, -1
-    # nextln: 000034: 85 db                           test ebx, ebx
-    # nextln: 000036: 0f 85 d5 ff ff ff               jne 0x11
-    # nextln: 00003c: 83 c6 01                        add esi, 1
-    # nextln: 00003f: 8b c6                           mov eax, esi
-    # nextln: 000041: 48 83 c4 08                     add rsp, 8
-    # nextln: 000045: 5b                              pop rbx
-    # nextln: 000046: 5d                              pop rbp
-    # nextln: 000047: c3                              ret
+    # nextln: 000006: 48 89 f0                        mov rax, rsi
+    # nextln: 000009: 48 89 fb                        mov rbx, rdi
+    # nextln: 00000c: 85 db                           test ebx, ebx
+    # nextln: 00000e: 0f 84 2b 00 00 00               je 0x3f
+    # nextln: 000014: 85 c0                           test eax, eax
+    # nextln: 000016: 0f 84 13 00 00 00               je 0x2f
+    # nextln: 00001c: 83 c0 ff                        add eax, -1
+    # nextln: 00001f: 48 89 c6                        mov rsi, rax
+    # nextln: 000022: 48 89 df                        mov rdi, rbx
+    # nextln: 000025: e8 00 00 00 00                  call 0x2a  # RELOC_PC32 -> @func00000001 + -4
+    # nextln: 00002a: e9 05 00 00 00                  jmp 0x34
+    # nextln: 00002f: b8 01 00 00 00                  mov eax, 1
+    # nextln: 000034: 83 c3 ff                        add ebx, -1
+    # nextln: 000037: 85 db                           test ebx, ebx
+    # nextln: 000039: 0f 85 d5 ff ff ff               jne 0x14
+    # nextln: 00003f: 83 c0 01                        add eax, 1
+    # nextln: 000042: 8b c0                           mov eax, eax
+    # nextln: 000044: 48 83 c4 08                     add rsp, 8
+    # nextln: 000048: 5b                              pop rbx
+    # nextln: 000049: 5d                              pop rbp
+    # nextln: 00004a: c3                              ret
 
     %0:ctrl, %1:i32, %2:i32 = entry
     %44:i64 = iconst 4294967295

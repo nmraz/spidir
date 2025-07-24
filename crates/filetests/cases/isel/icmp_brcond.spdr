@@ -155,7 +155,7 @@ func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # nextln:       => block2[%4:gpr]
     # nextln:       block2[%0:gpr]:
     # nextln: 0007:      %2:gpr(any)[late] = AluRmI(S32, Xor, 5) %3(tied:0)[early]
-    # nextln: 0008:      %1:gpr(reg)[late] = AddRR(S32) %0(tied:0)[early], %2(reg)[early]
+    # nextln: 0008:      %1:gpr(reg)[late] = AddRR(S32) %0(soft-tied:0)[early], %2(soft-tied:0)[early]
     # nextln: 0009:      Ret %1($$rax)[early]
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry

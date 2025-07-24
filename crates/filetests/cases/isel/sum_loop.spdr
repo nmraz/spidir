@@ -15,7 +15,7 @@ func @sum_to_n:i32(i32) {
     # nextln:       => block4[%5:gpr, %6:gpr]
     # nextln:       block4[%0:gpr, %1:gpr]:
     # nextln: 0005:      %4:gpr(any)[late] = AluRmI(S32, Sub, 1) %1(tied:0)[early]
-    # nextln: 0006:      %3:gpr(reg)[late] = AddRR(S32) %0(tied:0)[early], %1(reg)[early]
+    # nextln: 0006:      %3:gpr(reg)[late] = AddRR(S32) %0(soft-tied:0)[early], %1(soft-tied:0)[early]
     # nextln: 0007:      AluRRm(S32, Test) %4(reg)[early], %4(any)[early]
     # nextln: 0008:      Jumpcc(E, block5, block6)
     # nextln:       => block5, block6
@@ -67,7 +67,7 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 0008:      %4:gpr(reg)[late] = MovRM(S32, [!0 + 0])
     # nextln: 0009:      %2:gpr(any)[late] = AluRmI(S32, Sub, 1) %4(tied:0)[early]
     # nextln: 0010:      %3:gpr(reg)[late] = MovRM(S32, [!1 + 0])
-    # nextln: 0011:      %1:gpr(reg)[late] = AddRR(S32) %3(tied:0)[early], %4(reg)[early]
+    # nextln: 0011:      %1:gpr(reg)[late] = AddRR(S32) %3(soft-tied:0)[early], %4(soft-tied:0)[early]
     # nextln: 0012:      MovMR(S32, [!0 + 0]) %2(reg)[early]
     # nextln: 0013:      MovMR(S32, [!1 + 0]) %1(reg)[early]
     # nextln: 0014:      Jump(block2)

@@ -93,8 +93,8 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 00017e: 8b 5c 24 2c                     mov ebx, dword ptr [rsp + 0x2c]
     # nextln: 000182: 03 d3                           add edx, ebx
     # nextln: 000184: 8b 1c 24                        mov ebx, dword ptr [rsp]
-    # nextln: 000187: 03 d3                           add edx, ebx
-    # nextln: 000189: 03 c2                           add eax, edx
+    # nextln: 000187: 03 da                           add ebx, edx
+    # nextln: 000189: 03 c3                           add eax, ebx
     # nextln: 00018b: 89 44 24 08                     mov dword ptr [rsp + 8], eax
     # nextln: 00018f: 8b 44 24 28                     mov eax, dword ptr [rsp + 0x28]
     # nextln: 000193: 8b 54 24 30                     mov edx, dword ptr [rsp + 0x30]
@@ -185,8 +185,8 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 000294: 8b 5c 24 10                     mov ebx, dword ptr [rsp + 0x10]
     # nextln: 000298: 03 d3                           add edx, ebx
     # nextln: 00029a: 8b 5c 24 0c                     mov ebx, dword ptr [rsp + 0xc]
-    # nextln: 00029e: 03 d3                           add edx, ebx
-    # nextln: 0002a0: 03 c2                           add eax, edx
+    # nextln: 00029e: 03 da                           add ebx, edx
+    # nextln: 0002a0: 03 c3                           add eax, ebx
     # nextln: 0002a2: 89 44 24 08                     mov dword ptr [rsp + 8], eax
     # nextln: 0002a6: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
     # nextln: 0002aa: 83 c0 01                        add eax, 1
@@ -227,8 +227,8 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 000320: 8b 44 24 08                     mov eax, dword ptr [rsp + 8]
     # nextln: 000324: 8b 54 24 3c                     mov edx, dword ptr [rsp + 0x3c]
     # nextln: 000328: 8b 5c 24 38                     mov ebx, dword ptr [rsp + 0x38]
-    # nextln: 00032c: 03 d3                           add edx, ebx
-    # nextln: 00032e: 03 c2                           add eax, edx
+    # nextln: 00032c: 03 da                           add ebx, edx
+    # nextln: 00032e: 03 c3                           add eax, ebx
     # nextln: 000330: 89 44 24 08                     mov dword ptr [rsp + 8], eax
     # nextln: 000334: 8b 44 24 34                     mov eax, dword ptr [rsp + 0x34]
     # nextln: 000338: 83 c0 01                        add eax, 1
@@ -271,8 +271,8 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0003ad: 8b 5c 24 48                     mov ebx, dword ptr [rsp + 0x48]
     # nextln: 0003b1: 03 d3                           add edx, ebx
     # nextln: 0003b3: 8b 5c 24 44                     mov ebx, dword ptr [rsp + 0x44]
-    # nextln: 0003b7: 03 d3                           add edx, ebx
-    # nextln: 0003b9: 03 c2                           add eax, edx
+    # nextln: 0003b7: 03 da                           add ebx, edx
+    # nextln: 0003b9: 03 c3                           add eax, ebx
     # nextln: 0003bb: 89 44 24 08                     mov dword ptr [rsp + 8], eax
     # nextln: 0003bf: 8b 44 24 40                     mov eax, dword ptr [rsp + 0x40]
     # nextln: 0003c3: 83 c0 01                        add eax, 1

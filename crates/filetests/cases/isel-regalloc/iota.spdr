@@ -13,12 +13,10 @@ func @iota(ptr, i64) {
     # nextln:       block3:
     # nextln: 0004:     Jump(block4)
     # nextln:       block4:
-    # nextln:           $$rcx = $$rax
-    # nextln: 0005:     $$rcx = ShiftRmI(S64, Shl, 3) $$rcx
-    # nextln:           $$rdx = $$rdi
-    # nextln: 0006:     $$rdx = AddRR(S64) $$rdx, $$rcx
-    # nextln:           $$rcx = $$rax
-    # nextln: 0007:     $$rcx = AddRI(S64, 1) $$rcx
+    # nextln:           $$rdx = $$rax
+    # nextln: 0005:     $$rdx = ShiftRmI(S64, Shl, 3) $$rdx
+    # nextln: 0006:     $$rdx = AddRR(S64) $$rdi, $$rdx
+    # nextln: 0007:     $$rcx = AddRI(S64, 1) $$rax
     # nextln: 0008:     MovMR(S64, [reg + 0]) $$rax, $$rdx
     # nextln: 0009:     AluRRm(S64, Cmp) $$rcx, $$rsi
     # nextln: 0010:     Jumpcc(E, block5, block6)

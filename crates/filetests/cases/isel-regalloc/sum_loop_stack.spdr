@@ -18,11 +18,11 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 0006:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0007:     Jumpcc(E, block3, block4)
     # nextln:       block4:
-    # nextln: 0008:     $$rdx = MovRM(S32, [!0 + 0])
-    # nextln:           $$rax = $$rdx
+    # nextln: 0008:     $$rcx = MovRM(S32, [!0 + 0])
+    # nextln:           $$rax = $$rcx
     # nextln: 0009:     $$rax = AluRmI(S32, Sub, 1) $$rax
-    # nextln: 0010:     $$rcx = MovRM(S32, [!1 + 0])
-    # nextln: 0011:     $$rcx = AddRR(S32) $$rcx, $$rdx
+    # nextln: 0010:     $$rdx = MovRM(S32, [!1 + 0])
+    # nextln: 0011:     $$rcx = AddRR(S32) $$rdx, $$rcx
     # nextln: 0012:     MovMR(S32, [!0 + 0]) $$rax
     # nextln: 0013:     MovMR(S32, [!1 + 0]) $$rcx
     # nextln: 0014:     Jump(block2)

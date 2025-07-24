@@ -15,7 +15,7 @@ func @uint32tofloat:f64(i32) {
 func @uint64tofloat:f64(i64) {
     # check: function `uint64tofloat`:
     # nextln:       block0[%1:gpr($$rdi)]:
-    # nextln: 0000:      %0:xmm(reg)[late], %2:gpr(reg)[late], %3:gpr(reg)[late] = PseudoUint64ToFloat(Double) %1(reg)[early]
+    # nextln: 0000:      %0:xmm(reg)[late], %2:gpr(reg)[late], %3:gpr(reg)[late] = PseudoUint64ToFloat(Double) %1(soft-tied:1)[early]
     # nextln: 0001:      Ret %0($$xmm0)[early]
 
     %0:ctrl, %1:i64 = entry

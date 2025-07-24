@@ -21,16 +21,15 @@ func @uint64tofloat:f64(i64) {
     # nextln: 000004: 48 85 ff                        test rdi, rdi
     # nextln: 000007: 0f 88 0a 00 00 00               js 0x17
     # nextln: 00000d: f2 48 0f 2a c7                  cvtsi2sd xmm0, rdi
-    # nextln: 000012: e9 19 00 00 00                  jmp 0x30
-    # nextln: 000017: 48 89 f9                        mov rcx, rdi
-    # nextln: 00001a: 48 89 f8                        mov rax, rdi
-    # nextln: 00001d: 48 d1 e9                        shr rcx, 1
-    # nextln: 000020: 48 83 e0 01                     and rax, 1
-    # nextln: 000024: 48 0b c8                        or rcx, rax
-    # nextln: 000027: f2 48 0f 2a c1                  cvtsi2sd xmm0, rcx
-    # nextln: 00002c: f2 0f 58 c0                     addsd xmm0, xmm0
-    # nextln: 000030: 5d                              pop rbp
-    # nextln: 000031: c3                              ret
+    # nextln: 000012: e9 16 00 00 00                  jmp 0x2d
+    # nextln: 000017: 48 89 f8                        mov rax, rdi
+    # nextln: 00001a: 48 d1 ef                        shr rdi, 1
+    # nextln: 00001d: 48 83 e0 01                     and rax, 1
+    # nextln: 000021: 48 0b f8                        or rdi, rax
+    # nextln: 000024: f2 48 0f 2a c7                  cvtsi2sd xmm0, rdi
+    # nextln: 000029: f2 0f 58 c0                     addsd xmm0, xmm0
+    # nextln: 00002d: 5d                              pop rbp
+    # nextln: 00002e: c3                              ret
 
     %0:ctrl, %1:i64 = entry
     %2:f64 = uinttofloat %1

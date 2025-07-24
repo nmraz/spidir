@@ -7,24 +7,23 @@ func @uint64_float_uint64:i64(i64) {
     # nextln: 000004: 48 85 ff                        test rdi, rdi
     # nextln: 000007: 0f 88 0a 00 00 00               js 0x17
     # nextln: 00000d: f2 48 0f 2a c7                  cvtsi2sd xmm0, rdi
-    # nextln: 000012: e9 19 00 00 00                  jmp 0x30
+    # nextln: 000012: e9 16 00 00 00                  jmp 0x2d
     # nextln: 000017: 48 89 f8                        mov rax, rdi
-    # nextln: 00001a: 48 89 f9                        mov rcx, rdi
-    # nextln: 00001d: 48 d1 e8                        shr rax, 1
-    # nextln: 000020: 48 83 e1 01                     and rcx, 1
-    # nextln: 000024: 48 0b c1                        or rax, rcx
-    # nextln: 000027: f2 48 0f 2a c0                  cvtsi2sd xmm0, rax
-    # nextln: 00002c: f2 0f 58 c0                     addsd xmm0, xmm0
-    # nextln: 000030: f2 0f 10 0d 00 00 00 00         movsd xmm1, qword ptr [rip]  # RELOC_PC32 -> @<CP> + -4
-    # nextln: 000038: 66 0f 2e c1                     ucomisd xmm0, xmm1
-    # nextln: 00003c: 0f 83 0a 00 00 00               jae 0x4c
-    # nextln: 000042: f2 48 0f 2d c0                  cvtsd2si rax, xmm0
-    # nextln: 000047: e9 0e 00 00 00                  jmp 0x5a
-    # nextln: 00004c: f2 0f 5c c1                     subsd xmm0, xmm1
-    # nextln: 000050: f2 48 0f 2d c0                  cvtsd2si rax, xmm0
-    # nextln: 000055: 48 0f ba f8 3f                  btc rax, 0x3f
-    # nextln: 00005a: 5d                              pop rbp
-    # nextln: 00005b: c3                              ret
+    # nextln: 00001a: 48 d1 ef                        shr rdi, 1
+    # nextln: 00001d: 48 83 e0 01                     and rax, 1
+    # nextln: 000021: 48 0b f8                        or rdi, rax
+    # nextln: 000024: f2 48 0f 2a c7                  cvtsi2sd xmm0, rdi
+    # nextln: 000029: f2 0f 58 c0                     addsd xmm0, xmm0
+    # nextln: 00002d: f2 0f 10 0d 00 00 00 00         movsd xmm1, qword ptr [rip]  # RELOC_PC32 -> @<CP> + -4
+    # nextln: 000035: 66 0f 2e c1                     ucomisd xmm0, xmm1
+    # nextln: 000039: 0f 83 0a 00 00 00               jae 0x49
+    # nextln: 00003f: f2 48 0f 2d c0                  cvtsd2si rax, xmm0
+    # nextln: 000044: e9 0e 00 00 00                  jmp 0x57
+    # nextln: 000049: f2 0f 5c c1                     subsd xmm0, xmm1
+    # nextln: 00004d: f2 48 0f 2d c0                  cvtsd2si rax, xmm0
+    # nextln: 000052: 48 0f ba f8 3f                  btc rax, 0x3f
+    # nextln: 000057: 5d                              pop rbp
+    # nextln: 000058: c3                              ret
     # nextln: <CP>:
     # nextln: 000000: 00 00 00 00 00 00 e0 43
 

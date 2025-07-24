@@ -3,8 +3,8 @@
 func @uint64_float_uint64:i64(i64) {
     # check: function `uint64_float_uint64`:
     # nextln:       block0[%4:gpr($$rdi)]:
-    # nextln: 0000:      %1:xmm(reg)[late], %5:gpr(reg)[late], %6:gpr(reg)[late] = PseudoUint64ToFloat(Double) %4(reg)[early]
-    # nextln: 0001:      %0:gpr(reg)[late], %2:xmm(reg)[early], %3:xmm(reg)[late] = PseudoFloatToUint64Rel(Double) %1(reg)[early]
+    # nextln: 0000:      %1:xmm(reg)[late], %5:gpr(reg)[late], %6:gpr(reg)[late] = PseudoUint64ToFloat(Double) %4(soft-tied:1)[early]
+    # nextln: 0001:      %0:gpr(reg)[late], %2:xmm(reg)[early], %3:xmm(reg)[late] = PseudoFloatToUint64Rel(Double) %1(soft-tied:2)[early]
     # nextln: 0002:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i64 = entry

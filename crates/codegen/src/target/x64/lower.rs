@@ -571,7 +571,7 @@ fn select_uinttofloat(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
                     DefOperand::any_reg(tmp_gpr1),
                     DefOperand::any_reg(tmp_gpr2),
                 ],
-                &[UseOperand::any_reg(input)],
+                &[UseOperand::soft_tied(input, 1)],
             );
         }
         _ => unreachable!(),
@@ -611,7 +611,7 @@ fn select_floattouint(machine: &X64Machine, ctx: &mut IselContext<'_, '_, X64Mac
                     DefOperand::new(tmp_xmm1, DefOperandConstraint::AnyReg, OperandPos::Early),
                     DefOperand::any_reg(tmp_xmm2),
                 ],
-                &[UseOperand::any_reg(input)],
+                &[UseOperand::soft_tied(input, 2)],
             );
         }
         _ => unreachable!(),

@@ -1,16 +1,24 @@
 # Spidir
 
-WIP JIT library written in Rust with the following goals:
+A (WIP) JIT library written in Rust for use on freestanding targets.
+
+Design tenets:
 
 - Embeddability: Spidir is completely freestanding and requires only a memory allocator
-- Simple C API: The intended way to embed/consume Spidir, though the unstable internal Rust APIs can be used as well
+- Simple C API: The API should feel natural to use directly in C code and is the intended way to consume Spidir
 - Reasonable optimization quality: Higher-level language runtimes using Spidir as a backend should eventually be able to expect decent codegen
 
 Spidir was originally created for use in [TomatoDotNet](https://github.com/TomatOrg/TomatoDotNet/), so feature development is guided primarily by the needs of that project.
 
 ## Using Spidir
 
-See the `c-api-tests` directory for example programs embedding the C API.
+There are two ways to link against Spidir in C code:
+
+1. Using the `c-api` crate to build `libspidir.a` and implementing the platform API declared in `<spidir/platform.h>`. This method is most suitable for bare-metal users that don't want to link against any other Rust code.
+
+2. Creating a "glue" Rust crate that depends on the lower-level `bindings` crate and making sure the Rust allocation/panic hooks are implemented. This method is better for users that need to link against other Rust code or use the hosted Rust standard library.
+
+See the `c-api-tests` directory for programs using the former method.
 
 All important functionality is exposed via the CLI binary `spidirtool`, which can be used to:
 
@@ -53,6 +61,7 @@ These are abstracted away by the C construction API, which provides a simple blo
 - IR features:
 
   - Basic integer arithmetic/bitwise instructions
+  - 64-bit floating point arithmetic
   - Loads/stores
   - Basic control flow (conditional branches)
   - Internal/external/indirect calls
@@ -66,6 +75,7 @@ These are abstracted away by the C construction API, which provides a simple blo
     - Live range splitting
     - Rematerialization
     - Symbolic verifier
+    - Instruction commutation/3-address conversion
 
 - Optimization:
 
@@ -80,7 +90,7 @@ These are abstracted away by the C construction API, which provides a simple blo
   - Bit-counting operations
   - External globals
   - Cold block annotation
-  - Floating point support
+  - 32-bit floating point arithmetic
   - Unwinding support
   - Jump tables
   - Static branch/patchpoint support
@@ -89,13 +99,12 @@ These are abstracted away by the C construction API, which provides a simple blo
 
   - Improved x64 instruction selection
   - Minor register allocator improvements
-    - Use 3-address instructions instead of copies where possible
     - Spill slot coloring
     - Better stack access rewrites
     - Improved redundant copy elimination?
 
 - Optimization:
-  - Improved local block scheduling
+  - Improved global/local scheduling
   - SROA
   - SCCP
   - Jump threading

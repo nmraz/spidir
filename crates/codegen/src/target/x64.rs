@@ -30,6 +30,15 @@ pub enum FullOperandSize {
     S64,
 }
 
+impl From<OperandSize> for FullOperandSize {
+    fn from(value: OperandSize) -> Self {
+        match value {
+            OperandSize::S32 => Self::S32,
+            OperandSize::S64 => Self::S64,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExtWidth {
     Ext8_32,

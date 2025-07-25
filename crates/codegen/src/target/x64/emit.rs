@@ -11,7 +11,9 @@ use crate::{
     machine::MachineEmit,
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{OperandAssignment, SpillSlot},
-    target::x64::{CALLEE_SAVED_REGS, CompoundCondCode, SseFpuCmpCode, SseFpuPrecision},
+    target::x64::{
+        AluCommBinOp, CALLEE_SAVED_REGS, CompoundCondCode, SseFpuCmpCode, SseFpuPrecision,
+    },
 };
 
 use super::{
@@ -215,6 +217,16 @@ impl MachineEmit for X64Machine {
                 emit_alu_r_rm(buffer, op.into(), op_size, arg0, arg1);
             }
             &X64Instr::AluRmI(op_size, op, imm) => {
+                let arg = state.operand_reg_mem(uses[0]);
+                emit_alu_rm_i(buffer, op.into(), op_size, arg, imm);
+            }
+            &X64Instr::AluCommRR(op_size, op) => {
+                let arg0 = uses[0].as_reg().unwrap();
+                let arg1 = state.operand_reg_mem(uses[1]);
+
+                emit_alu_r_rm(buffer, op.into(), op_size, arg0, arg1);
+            }
+            &X64Instr::AluCommRmI(op_size, op, imm) => {
                 let arg = state.operand_reg_mem(uses[0]);
                 emit_alu_rm_i(buffer, op.into(), op_size, arg, imm);
             }
@@ -1360,12 +1372,19 @@ enum RawAluBinOp {
 impl From<AluBinOp> for RawAluBinOp {
     fn from(op: AluBinOp) -> Self {
         match op {
-            AluBinOp::And => Self::And,
             AluBinOp::Cmp => Self::Cmp,
-            AluBinOp::Or => Self::Or,
             AluBinOp::Sub => Self::Sub,
             AluBinOp::Test => Self::Test,
-            AluBinOp::Xor => Self::Xor,
+        }
+    }
+}
+
+impl From<AluCommBinOp> for RawAluBinOp {
+    fn from(op: AluCommBinOp) -> Self {
+        match op {
+            AluCommBinOp::And => Self::And,
+            AluCommBinOp::Or => Self::Or,
+            AluCommBinOp::Xor => Self::Xor,
         }
     }
 }

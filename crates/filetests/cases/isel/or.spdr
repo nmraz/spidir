@@ -3,7 +3,7 @@
 func @or64:i64(i64, i64) {
     # check: function `or64`:
     # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = AluRRm(S64, Or) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0000:      %0:gpr(reg)[late] = AluCommRR(S64, Or) %1(tied:0)[early], %2(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
@@ -14,7 +14,7 @@ func @or64:i64(i64, i64) {
 func @or32:i32(i32, i32) {
     # check: function `or32`:
     # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = AluRRm(S32, Or) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0000:      %0:gpr(reg)[late] = AluCommRR(S32, Or) %1(tied:0)[early], %2(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32, %b:i32 = entry

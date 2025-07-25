@@ -141,13 +141,17 @@ pub enum SseFpuPrecision {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AluBinOp {
+pub enum AluCommBinOp {
     And,
-    Cmp,
     Or,
+    Xor,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AluBinOp {
+    Cmp,
     Sub,
     Test,
-    Xor,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -239,6 +243,8 @@ impl fmt::Debug for AddrMode {
 pub enum X64Instr {
     AluRRm(OperandSize, AluBinOp),
     AluRmI(OperandSize, AluBinOp, i32),
+    AluCommRR(OperandSize, AluCommBinOp),
+    AluCommRmI(OperandSize, AluCommBinOp, i32),
     AluRm(OperandSize, AluUnOp),
     AddRR(OperandSize),
     AddRI(OperandSize, i32),
@@ -298,6 +304,8 @@ impl X64Instr {
         match self {
             X64Instr::AluRRm(..) => false,
             X64Instr::AluRmI(..) => false,
+            X64Instr::AluCommRR(..) => false,
+            X64Instr::AluCommRmI(..) => false,
             X64Instr::AluRm(..) => false,
             X64Instr::AddRR(..) => false,
             X64Instr::AddRI(..) => false,
@@ -349,6 +357,8 @@ impl X64Instr {
         match self {
             X64Instr::AluRRm(..) => true,
             X64Instr::AluRmI(..) => true,
+            X64Instr::AluCommRR(..) => true,
+            X64Instr::AluCommRmI(..) => true,
             X64Instr::AluRm(..) => true,
             X64Instr::AddRR(..) => true,
             X64Instr::AddRI(..) => true,

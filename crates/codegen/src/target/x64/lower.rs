@@ -18,7 +18,7 @@ use crate::{
     },
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
-    target::x64::{CompoundCondCode, SseFpuBinOp, SseFpuCmpCode, SseFpuPrecision},
+    target::x64::{AluCommBinOp, CompoundCondCode, SseFpuBinOp, SseFpuCmpCode, SseFpuPrecision},
 };
 
 use super::{
@@ -122,10 +122,10 @@ impl MachineLower for X64Machine {
         match ctx.node_kind(node) {
             &NodeKind::Iconst(val) => select_iconst(ctx, node, val),
             NodeKind::Iadd => select_add(ctx, node),
-            NodeKind::And => select_alu(ctx, node, AluBinOp::And),
-            NodeKind::Or => select_alu(ctx, node, AluBinOp::Or),
+            NodeKind::And => select_alu_comm(ctx, node, AluCommBinOp::And),
+            NodeKind::Or => select_alu_comm(ctx, node, AluCommBinOp::Or),
             NodeKind::Isub => select_alu(ctx, node, AluBinOp::Sub),
-            NodeKind::Xor => select_alu(ctx, node, AluBinOp::Xor),
+            NodeKind::Xor => select_alu_comm(ctx, node, AluCommBinOp::Xor),
             NodeKind::Shl => select_shift(ctx, node, ShiftOp::Shl),
             NodeKind::Lshr => select_shift(ctx, node, ShiftOp::Shr),
             NodeKind::Ashr => select_shift(ctx, node, ShiftOp::Sar),
@@ -293,15 +293,42 @@ fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluBinO
         return;
     }
 
+    let op1 = ctx.get_value_vreg(op1);
+
+    if let Some(imm) = match_imm32(ctx, op2) {
+        ctx.emit_instr(
+            X64Instr::AluRmI(op_size, op, imm),
+            &[DefOperand::any(output)],
+            &[UseOperand::tied(op1, 0)],
+        );
+        return;
+    }
+
+    let op2 = ctx.get_value_vreg(op2);
+    ctx.emit_instr(
+        X64Instr::AluRRm(op_size, op),
+        &[DefOperand::any_reg(output)],
+        &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
+    );
+}
+
+fn select_alu_comm(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluCommBinOp) {
+    let [output] = ctx.node_outputs_exact(node);
+    let [op1, op2] = ctx.node_inputs_exact(node);
+
+    let ty = ctx.value_type(output);
+    let op_size = operand_size_for_ty(ty);
+    let output = ctx.get_value_vreg(output);
+
     let c2 = match_iconst(ctx, op2);
 
-    if op == AluBinOp::Xor && c2 == Some(ty.all_ones_val()) {
+    if op == AluCommBinOp::Xor && c2 == Some(ty.all_ones_val()) {
         let op1 = ctx.get_value_vreg(op1);
         emit_alu_r(ctx, ty, op1, output, AluUnOp::Not);
         return;
     }
 
-    if let (AluBinOp::And, Some(c2)) = (op, c2) {
+    if let (AluCommBinOp::And, Some(c2)) = (op, c2) {
         let zext_size = match c2 {
             0xff => Some(FullOperandSize::S8),
             0xffff => Some(FullOperandSize::S16),
@@ -320,20 +347,20 @@ fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluBinO
         }
     }
 
+    let op1 = ctx.get_value_vreg(op1);
+
     if let Some(imm) = c2.and_then(|c2| as_imm32(ty, c2)) {
-        let op1 = ctx.get_value_vreg(op1);
         ctx.emit_instr(
-            X64Instr::AluRmI(op_size, op, imm),
+            X64Instr::AluCommRmI(op_size, op, imm),
             &[DefOperand::any(output)],
             &[UseOperand::tied(op1, 0)],
         );
         return;
     }
 
-    let op1 = ctx.get_value_vreg(op1);
     let op2 = ctx.get_value_vreg(op2);
     ctx.emit_instr(
-        X64Instr::AluRRm(op_size, op),
+        X64Instr::AluCommRR(op_size, op),
         &[DefOperand::any_reg(output)],
         &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
@@ -1183,7 +1210,7 @@ fn emit_fpu_cmp_sequence(
         &[UseOperand::any_reg(tmp_xmm_out)],
     );
     ctx.emit_instr(
-        X64Instr::AluRmI(OperandSize::S32, AluBinOp::And, 1),
+        X64Instr::AluCommRmI(OperandSize::S32, AluCommBinOp::And, 1),
         &[DefOperand::any(output)],
         &[UseOperand::tied(tmp_gpr_out, 0)],
     );

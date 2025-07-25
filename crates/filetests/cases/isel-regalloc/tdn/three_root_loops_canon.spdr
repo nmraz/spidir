@@ -23,7 +23,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: 0010:     Jumpcc(L, block2, block3)
     # nextln:       block2:
     # nextln: 0011:     $$rdi = MovRM(S32, [!2 + 0])
-    # nextln: 0012:     $$rdi = AluRmI(S32, And, 2) $$rdi
+    # nextln: 0012:     $$rdi = AluCommRmI(S32, And, 2) $$rdi
     # nextln: 0013:     AluRRm(S32, Test) $$rdi, $$rdi
     # nextln: 0014:     Jumpcc(Ne, block16, block17)
     # nextln:       block16:
@@ -48,7 +48,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: 0029:     Jumpcc(L, block5, block6)
     # nextln:       block5:
     # nextln: 0030:     $$rdi = MovRM(S32, [!0 + 0])
-    # nextln: 0031:     $$rdi = AluRmI(S32, And, 3) $$rdi
+    # nextln: 0031:     $$rdi = AluCommRmI(S32, And, 3) $$rdi
     # nextln: 0032:     AluRRm(S32, Test) $$rdi, $$rdi
     # nextln: 0033:     Jumpcc(Ne, block14, block15)
     # nextln:       block14:
@@ -73,7 +73,7 @@ func @"System.Int32 System.Test::Loop2(System.Int32, System.Int32, System.Int32)
     # nextln: 0048:     Jumpcc(L, block9, block10)
     # nextln:       block9:
     # nextln: 0049:     $$rax = MovRM(S32, [!3 + 0])
-    # nextln: 0050:     $$rax = AluRmI(S32, And, 4) $$rax
+    # nextln: 0050:     $$rax = AluCommRmI(S32, And, 4) $$rax
     # nextln: 0051:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0052:     Jumpcc(Ne, block11, block12)
     # nextln:       block11:

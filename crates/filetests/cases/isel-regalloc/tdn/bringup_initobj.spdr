@@ -5,7 +5,7 @@ extfunc @bzero(ptr, i64)
 
 func @"System.Boolean Tests.CodeGenBringUpTests::InitObj()":i32() {
     # check: function `System.Boolean Tests.CodeGenBringUpTests::InitObj()`:
-    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     # nextln: frame: size 24, align 4
     # nextln:     !0: 0
     # nextln:     !1: 12

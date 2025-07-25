@@ -64,7 +64,7 @@ mod tests {
             Builder as LirBuilder, DefOperand, OperandPos, UseOperandConstraint,
             test_utils::{RC_GPR, push_instr},
         },
-        target::x64::{AluBinOp, CondCode, OperandSize, REG_RAX, X64Instr},
+        target::x64::{AluBinOp, AluCommBinOp, CondCode, OperandSize, REG_RAX, X64Instr},
     };
 
     use super::*;
@@ -127,7 +127,7 @@ mod tests {
                 );
                 push_instr(
                     builder,
-                    X64Instr::AluRRm(OperandSize::S32, AluBinOp::Xor),
+                    X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
                         (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
@@ -173,7 +173,7 @@ mod tests {
                 );
                 push_instr(
                     builder,
-                    X64Instr::AluRRm(OperandSize::S32, AluBinOp::Xor),
+                    X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
                         (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
@@ -222,7 +222,7 @@ mod tests {
                 );
                 push_instr(
                     builder,
-                    X64Instr::AluRRm(OperandSize::S32, AluBinOp::Xor),
+                    X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
                         (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
@@ -268,7 +268,7 @@ mod tests {
                 );
                 push_instr(
                     builder,
-                    X64Instr::AluRRm(OperandSize::S32, AluBinOp::Xor),
+                    X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
                         (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
@@ -303,7 +303,7 @@ mod tests {
                 let a = builder.create_vreg(RC_GPR);
                 push_instr(
                     builder,
-                    X64Instr::AluRRm(OperandSize::S32, AluBinOp::Xor),
+                    X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
                         (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
@@ -322,7 +322,7 @@ mod tests {
                 );
                 push_instr(
                     builder,
-                    X64Instr::AluRRm(OperandSize::S32, AluBinOp::Xor),
+                    X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
                         (UseOperandConstraint::TiedToDef(0), OperandPos::Early),

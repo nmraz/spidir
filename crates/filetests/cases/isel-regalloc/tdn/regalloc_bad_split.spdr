@@ -3117,7 +3117,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$rcx = $$spill47
     # nextln: 0842:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0843:     $$rax = Setcc(Ne) $$rax
-    # nextln: 0844:     $$rax = AluRRm(S32, Or) $$rax, $$spill33
+    # nextln: 0844:     $$rax = AluCommRR(S32, Or) $$rax, $$spill33
     # nextln: 0845:     $$rax = MovzxRRm(S8) $$rax
     # nextln: 0846:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0847:     Jumpcc(Ne, block179, block180)

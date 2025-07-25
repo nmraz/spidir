@@ -5,7 +5,7 @@ func @fcmp_une_i32:i32(f64, f64) {
     # nextln:       block0[%1:xmm($$xmm0), %2:xmm($$xmm1)]:
     # nextln: 0000:      %3:xmm(reg)[late] = SseScalarFpuRRm(Double, Cmp(Neq)) %1(tied:0)[early], %2(any)[early]
     # nextln: 0001:      %4:gpr(any)[late] = MovGprmXmm(S64) %3(reg)[early]
-    # nextln: 0002:      %0:gpr(any)[late] = AluRmI(S32, And, 1) %4(tied:0)[early]
+    # nextln: 0002:      %0:gpr(any)[late] = AluCommRmI(S32, And, 1) %4(tied:0)[early]
     # nextln: 0003:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:f64, %2:f64 = entry
@@ -18,7 +18,7 @@ func @fcmp_une_i64:i64(f64, f64) {
     # nextln:       block0[%1:xmm($$xmm0), %2:xmm($$xmm1)]:
     # nextln: 0000:      %3:xmm(reg)[late] = SseScalarFpuRRm(Double, Cmp(Neq)) %1(tied:0)[early], %2(any)[early]
     # nextln: 0001:      %4:gpr(any)[late] = MovGprmXmm(S64) %3(reg)[early]
-    # nextln: 0002:      %0:gpr(any)[late] = AluRmI(S32, And, 1) %4(tied:0)[early]
+    # nextln: 0002:      %0:gpr(any)[late] = AluCommRmI(S32, And, 1) %4(tied:0)[early]
     # nextln: 0003:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:f64, %2:f64 = entry

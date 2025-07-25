@@ -208,6 +208,20 @@ impl MachineEmit for X64Machine {
         let uses = instr.uses;
 
         match instr.instr {
+            &X64Instr::AluRRm(op_size, op) => {
+                let arg0 = uses[0].as_reg().unwrap();
+                let arg1 = state.operand_reg_mem(uses[1]);
+
+                emit_alu_r_rm(buffer, RawAluBinOp::from_alu_op(op), op_size, arg0, arg1);
+            }
+            &X64Instr::AluRmI(op_size, op, imm) => {
+                let arg = state.operand_reg_mem(uses[0]);
+                emit_alu_rm_i(buffer, RawAluBinOp::from_alu_op(op), op_size, arg, imm);
+            }
+            &X64Instr::AluRm(op_size, op) => {
+                let arg = state.operand_reg_mem(uses[0]);
+                emit_alu_rm(buffer, op, op_size, arg);
+            }
             &X64Instr::AddRR(op_size) => {
                 let dest = defs[0].as_reg().unwrap();
                 let arg0 = uses[0].as_reg().unwrap();
@@ -248,20 +262,6 @@ impl MachineEmit for X64Machine {
                         },
                     );
                 }
-            }
-            &X64Instr::AluRRm(op_size, op) => {
-                let arg0 = uses[0].as_reg().unwrap();
-                let arg1 = state.operand_reg_mem(uses[1]);
-
-                emit_alu_r_rm(buffer, RawAluBinOp::from_alu_op(op), op_size, arg0, arg1);
-            }
-            &X64Instr::AluRmI(op_size, op, imm) => {
-                let arg = state.operand_reg_mem(uses[0]);
-                emit_alu_rm_i(buffer, RawAluBinOp::from_alu_op(op), op_size, arg, imm);
-            }
-            &X64Instr::AluRm(op_size, op) => {
-                let arg = state.operand_reg_mem(uses[0]);
-                emit_alu_rm(buffer, op, op_size, arg);
             }
             &X64Instr::ImulRR(op_size) => {
                 let dest = defs[0].as_reg().unwrap();

@@ -51,20 +51,20 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0000a1: 8b 4c 24 14                     mov ecx, dword ptr [rsp + 0x14]
     # nextln: 0000a5: 3b c1                           cmp eax, ecx
     # nextln: 0000a7: 0f 8d 4e 00 00 00               jge 0xfb
-    # nextln: 0000ad: 8b 7c 24 08                     mov edi, dword ptr [rsp + 8]
-    # nextln: 0000b1: 8b 44 24 10                     mov eax, dword ptr [rsp + 0x10]
-    # nextln: 0000b5: 8b 4c 24 0c                     mov ecx, dword ptr [rsp + 0xc]
-    # nextln: 0000b9: 8b 54 24 04                     mov edx, dword ptr [rsp + 4]
-    # nextln: 0000bd: 03 ca                           add ecx, edx
-    # nextln: 0000bf: 85 c9                           test ecx, ecx
+    # nextln: 0000ad: 8b 44 24 08                     mov eax, dword ptr [rsp + 8]
+    # nextln: 0000b1: 8b 4c 24 10                     mov ecx, dword ptr [rsp + 0x10]
+    # nextln: 0000b5: 8b 54 24 0c                     mov edx, dword ptr [rsp + 0xc]
+    # nextln: 0000b9: 8b 7c 24 04                     mov edi, dword ptr [rsp + 4]
+    # nextln: 0000bd: 03 d7                           add edx, edi
+    # nextln: 0000bf: 85 d2                           test edx, edx
     # nextln: 0000c1: 0f 8e 0f 00 00 00               jle 0xd6
-    # nextln: 0000c7: 8b 4c 24 04                     mov ecx, dword ptr [rsp + 4]
+    # nextln: 0000c7: 8b 7c 24 04                     mov edi, dword ptr [rsp + 4]
     # nextln: 0000cb: 8b 54 24 14                     mov edx, dword ptr [rsp + 0x14]
-    # nextln: 0000cf: 03 ca                           add ecx, edx
+    # nextln: 0000cf: 03 fa                           add edi, edx
     # nextln: 0000d1: e9 04 00 00 00                  jmp 0xda
-    # nextln: 0000d6: 8b 4c 24 10                     mov ecx, dword ptr [rsp + 0x10]
-    # nextln: 0000da: 03 f8                           add edi, eax
-    # nextln: 0000dc: 0f af f9                        imul edi, ecx
+    # nextln: 0000d6: 8b 7c 24 10                     mov edi, dword ptr [rsp + 0x10]
+    # nextln: 0000da: 03 c1                           add eax, ecx
+    # nextln: 0000dc: 0f af f8                        imul edi, eax
     # nextln: 0000df: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Void Tests.Program::WriteInt(System.Int32)" + 0
     # nextln: 0000e9: ff d0                           call rax
     # nextln: 0000eb: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]

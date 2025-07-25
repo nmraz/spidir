@@ -263,12 +263,20 @@ impl MachineEmit for X64Machine {
                 let arg = state.operand_reg_mem(uses[0]);
                 emit_alu_rm(buffer, op, op_size, arg);
             }
-            &X64Instr::ImulRRm(op_size) => emit_imul_r_rm(
-                buffer,
-                op_size,
-                uses[0].as_reg().unwrap(),
-                state.operand_reg_mem(uses[1]),
-            ),
+            &X64Instr::ImulRR(op_size) => {
+                let dest = defs[0].as_reg().unwrap();
+                let arg0 = uses[0].as_reg().unwrap();
+                let arg1 = uses[1].as_reg().unwrap();
+
+                if dest == arg0 {
+                    emit_imul_r_rm(buffer, op_size, arg0, RegMem::Reg(arg1));
+                } else if dest == arg1 {
+                    emit_imul_r_rm(buffer, op_size, arg1, RegMem::Reg(arg0));
+                } else {
+                    emit_mov_rm_r(buffer, op_size.into(), RegMem::Reg(dest), arg0);
+                    emit_imul_r_rm(buffer, op_size, dest, RegMem::Reg(arg1));
+                }
+            }
             &X64Instr::ImulRRmI(op_size, imm) => emit_imul_r_rm_i(
                 buffer,
                 op_size,

@@ -3,7 +3,7 @@
 func @mul64:i64(i64, i64) {
     # check: function `mul64`:
     # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = ImulRRm(S64) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0000:      %0:gpr(reg)[late] = ImulRR(S64) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i64, %b:i64 = entry
@@ -14,7 +14,7 @@ func @mul64:i64(i64, i64) {
 func @mul32:i32(i32, i32) {
     # check: function `mul32`:
     # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = ImulRRm(S32) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0000:      %0:gpr(reg)[late] = ImulRR(S32) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32, %b:i32 = entry

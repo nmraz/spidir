@@ -409,9 +409,9 @@ fn select_imul(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     } else {
         let op2 = ctx.get_value_vreg(op2);
         ctx.emit_instr(
-            X64Instr::ImulRRm(op_size),
+            X64Instr::ImulRR(op_size),
             &[DefOperand::any_reg(output)],
-            &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
+            &[UseOperand::soft_tied(op1, 0), UseOperand::soft_tied(op2, 0)],
         );
     }
 }

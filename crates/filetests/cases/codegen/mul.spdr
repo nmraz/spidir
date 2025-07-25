@@ -18,10 +18,10 @@ func @mul32:i32(i32, i32) {
     # check: function `mul32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: 0f af c6                        imul eax, esi
-    # nextln: 00000a: 5d                              pop rbp
-    # nextln: 00000b: c3                              ret
+    # nextln: 000004: 89 f8                           mov eax, edi
+    # nextln: 000006: 0f af c6                        imul eax, esi
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %c:ctrl, %a:i32, %b:i32 = entry
     %val:i32 = imul %a, %b

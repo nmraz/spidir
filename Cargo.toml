@@ -8,6 +8,7 @@ edition = "2024"
 rust-version = "1.85"
 
 [workspace.dependencies]
+bindings = { path = "crates/bindings" }
 codegen = { path = "crates/codegen" }
 codegen-test-tools = { path = "crates/codegen-test-tools" }
 graphmock = { path = "crates/graphmock" }

@@ -1,5 +1,8 @@
 /// @file platform.h
 /// Platform-specific wrappers that must be provided by users of the library.
+///
+/// @note These functions only need to be implemented when linking against the
+/// `c-api` crate as opposed to the raw `bindings` crate.
 
 #ifndef SPIDIR_PLATFORM_H
 #define SPIDIR_PLATFORM_H

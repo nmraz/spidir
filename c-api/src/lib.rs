@@ -2,13 +2,9 @@
 
 extern crate alloc;
 
-mod builder;
-mod codegen;
-mod log;
-mod module;
-mod opt;
-mod types;
-mod x64;
+// Make sure to explicitly import all defined symbols, because we don't actually use `bindings` in
+// any of the Rust code.
+extern crate bindings;
 
-#[cfg(not(test))]
+mod log;
 mod platform;

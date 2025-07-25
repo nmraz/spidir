@@ -6,21 +6,12 @@ rust-version.workspace = true
 
 [lib]
 name = "spidir"
-crate-type = ["staticlib", "lib"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+crate-type = ["staticlib"]
 
 [dependencies]
-frontend.workspace = true
-ir.workspace = true
-codegen.workspace = true
-opt.workspace = true
+bindings.workspace = true
 
-cranelift-entity.workspace = true
 log.workspace = true
-smallvec.workspace = true
-
-paste = "1.0.15"
 
 [features]
 # Unfortunately, this feature has to be subtractive because of the underlying `log` crate.

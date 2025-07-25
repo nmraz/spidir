@@ -1,0 +1,17 @@
+[package]
+name = "bindings"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+frontend.workspace = true
+ir.workspace = true
+codegen.workspace = true
+opt.workspace = true
+
+cranelift-entity.workspace = true
+log.workspace = true
+smallvec.workspace = true
+
+paste = "1.0.15"

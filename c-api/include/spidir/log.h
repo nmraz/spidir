@@ -1,6 +1,9 @@
 /// @file log.h
 /// APIs for capturing internal spidir logging. These APIs will still exist, but
 /// will silently do nothing, if logging has been disabled at compile-time.
+///
+/// @note This API is only available when linking against the `c-api` crate and
+/// not the raw `bindings` crate.
 
 #ifndef SPIDIR_LOG_H
 #define SPIDIR_LOG_H

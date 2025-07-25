@@ -18,10 +18,10 @@ func @or32:i32(i32, i32) {
     # check: function `or32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: 0b c6                           or eax, esi
-    # nextln: 000009: 5d                              pop rbp
-    # nextln: 00000a: c3                              ret
+    # nextln: 000004: 89 f8                           mov eax, edi
+    # nextln: 000006: 0b c6                           or eax, esi
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
 
     %c:ctrl, %a:i32, %b:i32 = entry
     %val:i32 = or %a, %b

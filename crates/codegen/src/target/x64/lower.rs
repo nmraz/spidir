@@ -362,7 +362,7 @@ fn select_alu_comm(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: Al
     ctx.emit_instr(
         X64Instr::AluCommRR(op_size, op),
         &[DefOperand::any_reg(output)],
-        &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
+        &[UseOperand::soft_tied(op1, 0), UseOperand::soft_tied(op2, 0)],
     );
 }
 

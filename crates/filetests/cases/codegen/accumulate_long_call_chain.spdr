@@ -27,12 +27,11 @@ func @func:i32() {
     # nextln: 00003f: e8 00 00 00 00                  call 0x44  # RELOC_PC32 -> @f + -4
     # nextln: 000044: 23 d8                           and ebx, eax
     # nextln: 000046: e8 00 00 00 00                  call 0x4b  # RELOC_PC32 -> @f + -4
-    # nextln: 00004b: 23 d8                           and ebx, eax
-    # nextln: 00004d: 48 89 d8                        mov rax, rbx
-    # nextln: 000050: 48 83 c4 08                     add rsp, 8
-    # nextln: 000054: 5b                              pop rbx
-    # nextln: 000055: 5d                              pop rbp
-    # nextln: 000056: c3                              ret
+    # nextln: 00004b: 23 c3                           and eax, ebx
+    # nextln: 00004d: 48 83 c4 08                     add rsp, 8
+    # nextln: 000051: 5b                              pop rbx
+    # nextln: 000052: 5d                              pop rbp
+    # nextln: 000053: c3                              ret
 
     %ent:ctrl = entry
     %c0:ctrl, %v0:i32 = call @f %ent

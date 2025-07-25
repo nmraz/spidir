@@ -34,11 +34,10 @@ func @xor_pos_large64:i64(i64) {
     # check: function `xor_pos_large64`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: b9 ff ff ff ff                  mov ecx, 0xffffffff
-    # nextln: 00000c: 48 33 c1                        xor rax, rcx
-    # nextln: 00000f: 5d                              pop rbp
-    # nextln: 000010: c3                              ret
+    # nextln: 000004: b8 ff ff ff ff                  mov eax, 0xffffffff
+    # nextln: 000009: 48 33 c7                        xor rax, rdi
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %c:ctrl, %a:i64 = entry
     %b:i64 = iconst 4294967295
@@ -50,11 +49,10 @@ func @xor_neg_large64:i64(i64) {
     # check: function `xor_neg_large64`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: 48 b9 01 00 00 00 ff ff ff ff   movabs rcx, 0xffffffff00000001
-    # nextln: 000011: 48 33 c1                        xor rax, rcx
-    # nextln: 000014: 5d                              pop rbp
-    # nextln: 000015: c3                              ret
+    # nextln: 000004: 48 b8 01 00 00 00 ff ff ff ff   movabs rax, 0xffffffff00000001
+    # nextln: 00000e: 48 33 c7                        xor rax, rdi
+    # nextln: 000011: 5d                              pop rbp
+    # nextln: 000012: c3                              ret
 
     %c:ctrl, %a:i64 = entry
     %b:i64 = iconst 18446744069414584321

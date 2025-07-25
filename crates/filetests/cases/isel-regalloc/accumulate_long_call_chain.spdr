@@ -26,8 +26,7 @@ func @func:i32() {
     # nextln: 0015:     $$rax = CallRel(External(extfunc0))
     # nextln: 0016:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
     # nextln: 0017:     $$rax = CallRel(External(extfunc0))
-    # nextln: 0018:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln:           $$rax = $$rbx
+    # nextln: 0018:     $$rax = AluCommRR(S32, And) $$rbx, $$rax
     # nextln: 0019:     Ret $$rax
 
     %ent:ctrl = entry

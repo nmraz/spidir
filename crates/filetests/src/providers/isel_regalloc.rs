@@ -48,13 +48,14 @@ impl SimpleTestProvider for IselRegallocProvider {
 
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let (cfg_ctx, lir) = lower_func(&module, func, &self.machine).map_err(|e| {
-                anyhow!(
-                    "isel failed for `{}`: {}",
-                    func.metadata.name,
-                    e.display(&module.metadata, func.body())
-                )
-            })?;
+            let (cfg_ctx, lir) =
+                lower_func(&module.metadata, func, &self.machine).map_err(|e| {
+                    anyhow!(
+                        "isel failed for `{}`: {}",
+                        func.metadata.name,
+                        e.display(&module.metadata, func.body())
+                    )
+                })?;
             let assignment = regalloc::run(&lir, &cfg_ctx, &self.machine)
                 .map_err(|err| anyhow!("regalloc failed for `{}`: {err}", func.metadata.name))?;
 

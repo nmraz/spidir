@@ -32,8 +32,13 @@ impl SimpleTestProvider for CodegenProvider {
 
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let code = codegen_func(&module, func, &self.machine, &CodegenOpts::default())
-                .map_err(|err| anyhow!("{}", err.display(&module, func)))?;
+            let code = codegen_func(
+                &module.metadata,
+                func,
+                &self.machine,
+                &CodegenOpts::default(),
+            )
+            .map_err(|err| anyhow!("{}", err.display(&module.metadata, func)))?;
             disasm_code(&module, &code, 0, &mut output)?;
         }
 

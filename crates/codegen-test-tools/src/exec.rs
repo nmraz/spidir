@@ -265,8 +265,8 @@ fn codegen_func_with_machine(
 ) -> Result<CodeBlob> {
     let func = module.borrow_function(func);
     machine
-        .codegen_func(module, func, &CodegenOpts::default())
-        .map_err(|err| anyhow!("codegen failed: {}", err.display(module, func)))
+        .codegen_func(&module.metadata, func, &CodegenOpts::default())
+        .map_err(|err| anyhow!("codegen failed: {}", err.display(&module.metadata, func)))
 }
 
 fn populate_builtins(module: &Module) -> SecondaryMap<ExternFunction, Option<usize>> {

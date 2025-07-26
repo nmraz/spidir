@@ -6,7 +6,12 @@ use codegen::{
     code_buffer::CodeBlob,
     machine::Machine,
 };
-use ir::{function::FunctionBorrow, module::Module, verify::verify_func, write::display_node};
+use ir::{
+    function::FunctionBorrow,
+    module::{Module, ModuleMetadata},
+    verify::verify_func,
+    write::display_node,
+};
 use log::error;
 
 use crate::types::{
@@ -18,7 +23,7 @@ struct ApiCodegenMachineVtable {
     drop: unsafe fn(*mut ApiCodegenMachine),
     codegen_func: unsafe fn(
         *const ApiCodegenMachine,
-        module: &Module,
+        module_metadata: &ModuleMetadata,
         func: FunctionBorrow<'_>,
         opts: &CodegenOpts,
     ) -> Result<CodeBlob, CodegenError>,
@@ -51,12 +56,12 @@ unsafe fn codegen_machine_drop<M>(codegen_machine: *mut ApiCodegenMachine) {
 
 unsafe fn codegen_machine_codegen_func<M: Machine>(
     codegen_machine: *const ApiCodegenMachine,
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
     opts: &CodegenOpts,
 ) -> Result<CodeBlob, CodegenError> {
     let inner = unsafe { &*(codegen_machine as *const ApiCodegenMachineInner<M>) };
-    codegen_func(module, func, &inner.machine, opts)
+    codegen_func(module_metadata, func, &inner.machine, opts)
 }
 
 pub fn codegen_machine_to_api<M: Machine>(machine: M) -> *mut ApiCodegenMachine {
@@ -166,13 +171,13 @@ unsafe extern "C" fn spidir_codegen_emit_function(
 
     let res = unsafe {
         let codegen_func = (*machine).vtable.codegen_func;
-        codegen_func(machine, module, func, &codegen_opts)
+        codegen_func(machine, &module.metadata, func, &codegen_opts)
     };
 
     let blob = match res {
         Ok(blob) => blob,
         Err(err) => {
-            error!("{}", err.display(module, func));
+            error!("{}", err.display(&module.metadata, func));
 
             let err = match err {
                 CodegenError::Isel(_) => SPIDIR_CODEGEN_ERROR_ISEL,

@@ -2,7 +2,7 @@ use core::fmt;
 
 use ir::{
     function::FunctionBorrow,
-    module::Module,
+    module::ModuleMetadata,
     valgraph::{Node, ValGraph},
     valwalk::CfgPreorderInfo,
 };
@@ -40,11 +40,11 @@ impl From<RegallocError> for CodegenError {
 impl CodegenError {
     pub fn display<'a>(
         &'a self,
-        module: &'a Module,
+        module_metadata: &'a ModuleMetadata,
         func: FunctionBorrow<'a>,
     ) -> DisplayCodegenError<'a> {
         DisplayCodegenError {
-            module,
+            module_metadata,
             func,
             error: self,
         }
@@ -52,7 +52,7 @@ impl CodegenError {
 }
 
 pub struct DisplayCodegenError<'a> {
-    module: &'a Module,
+    module_metadata: &'a ModuleMetadata,
     func: FunctionBorrow<'a>,
     error: &'a CodegenError,
 }
@@ -65,7 +65,7 @@ impl fmt::Display for DisplayCodegenError<'_> {
                 write!(
                     f,
                     "{}",
-                    isel.display(&self.module.metadata, self.func.body())
+                    isel.display(self.module_metadata, self.func.body())
                 )
             }
             CodegenError::Regalloc(regalloc) => write!(f, "{regalloc}"),
@@ -85,7 +85,7 @@ mod private {
 pub trait Codegen: private::Sealed {
     fn codegen_func(
         &self,
-        module: &Module,
+        module_metadata: &ModuleMetadata,
         func: FunctionBorrow<'_>,
         opts: &CodegenOpts,
     ) -> Result<CodeBlob, CodegenError>;
@@ -96,22 +96,22 @@ impl<M: Machine> private::Sealed for M {}
 impl<M: Machine> Codegen for M {
     fn codegen_func(
         &self,
-        module: &Module,
+        module_metadata: &ModuleMetadata,
         func: FunctionBorrow<'_>,
         opts: &CodegenOpts,
     ) -> Result<CodeBlob, CodegenError> {
-        codegen_func(module, func, self, opts)
+        codegen_func(module_metadata, func, self, opts)
     }
 }
 
 pub fn codegen_func<M: Machine>(
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
     machine: &M,
     opts: &CodegenOpts,
 ) -> Result<CodeBlob, CodegenError> {
     info!("generating code for: {}", func.metadata);
-    let (cfg_ctx, lir) = lower_func(module, func, machine)?;
+    let (cfg_ctx, lir) = lower_func(module_metadata, func, machine)?;
 
     let assignment = regalloc::run(&lir, &cfg_ctx, machine)?;
     if opts.verify_regalloc {
@@ -130,13 +130,13 @@ pub fn codegen_func<M: Machine>(
 }
 
 pub fn lower_func<M: MachineLower>(
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
     machine: &M,
 ) -> Result<(CfgContext, Lir<M>), IselError> {
     let (cfg_ctx, block_map, schedule) = schedule_graph(&func.body().graph, func.body().entry);
     let lir = select_instrs(
-        &module.metadata,
+        module_metadata,
         func,
         &schedule,
         &cfg_ctx,

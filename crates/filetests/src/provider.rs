@@ -8,8 +8,8 @@ use ir::{function::FunctionBody, module::Module, write::quote_ident};
 use parser::parse_module;
 
 use crate::utils::{
-    find_comment_start, generalize_module_value_names, parse_module_func_start,
-    parse_output_func_heading, parse_run_line, verify_module_with_err,
+    borrow_func_by_name, find_comment_start, generalize_module_value_names,
+    parse_module_func_start, parse_output_func_heading, parse_run_line, verify_module_with_err,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -227,7 +227,8 @@ pub fn update_transformed_module_output(
             // We want the entry node and all nodes with identity to be matched in order after the
             // opening brace, to avoid the matching getting confused by different nodes with the
             // same textual representation.
-            ordered_lines = count_nodes_with_identity(get_func_body(module, &new_func)) + 1;
+            ordered_lines =
+                count_nodes_with_identity(borrow_func_by_name(module, &new_func).body()) + 1;
             continue;
         } else if !in_func {
             continue;
@@ -254,15 +255,6 @@ fn count_nodes_with_identity(body: &FunctionBody) -> usize {
         .postorder(&body.graph)
         .filter(|&node| body.graph.node_kind(node).has_identity())
         .count()
-}
-
-fn get_func_body<'a>(module: &'a Module, name: &str) -> &'a FunctionBody {
-    &module
-        .functions
-        .values()
-        .find(|func| func.metadata.name == name)
-        .unwrap()
-        .body
 }
 
 struct HashMapEnv<'a>(FxHashMap<String, Value<'a>>);

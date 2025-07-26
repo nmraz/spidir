@@ -50,7 +50,9 @@ pub fn disasm_code(
         // Note: this assumes there is at most one reloc per instruction.
         if let Some(reloc) = relocs.first() {
             let target_name = match reloc.target {
-                RelocTarget::Function(func) => quote_ident(&module.resolve_funcref(func).name),
+                RelocTarget::Function(func) => {
+                    quote_ident(&module.metadata.resolve_funcref(func).name)
+                }
                 RelocTarget::ConstantPool => "<CP>".into(),
             };
 

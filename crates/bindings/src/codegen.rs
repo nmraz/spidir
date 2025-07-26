@@ -6,7 +6,7 @@ use codegen::{
     code_buffer::CodeBlob,
     machine::Machine,
 };
-use ir::{function::FunctionData, module::Module, verify::verify_func, write::display_node};
+use ir::{function::FunctionBorrow, module::Module, verify::verify_func, write::display_node};
 use log::error;
 
 use crate::types::{
@@ -19,7 +19,7 @@ struct ApiCodegenMachineVtable {
     codegen_func: unsafe fn(
         *const ApiCodegenMachine,
         module: &Module,
-        func: &FunctionData,
+        func: FunctionBorrow<'_>,
         opts: &CodegenOpts,
     ) -> Result<CodeBlob, CodegenError>,
 }
@@ -52,7 +52,7 @@ unsafe fn codegen_machine_drop<M>(codegen_machine: *mut ApiCodegenMachine) {
 unsafe fn codegen_machine_codegen_func<M: Machine>(
     codegen_machine: *const ApiCodegenMachine,
     module: &Module,
-    func: &FunctionData,
+    func: FunctionBorrow<'_>,
     opts: &CodegenOpts,
 ) -> Result<CodeBlob, CodegenError> {
     let inner = unsafe { &*(codegen_machine as *const ApiCodegenMachineInner<M>) };
@@ -154,7 +154,7 @@ unsafe extern "C" fn spidir_codegen_emit_function(
     let module = unsafe { &*module };
     let config = unsafe { &*config };
 
-    let func = &module.functions[func];
+    let func = module.borrow_function(func);
 
     if config.verify_ir {
         verify_ir_function(module, func);
@@ -194,14 +194,14 @@ unsafe extern "C" fn spidir_codegen_emit_function(
     SPIDIR_CODEGEN_OK
 }
 
-fn verify_ir_function(module: &Module, func: &FunctionData) {
+fn verify_ir_function(module: &Module, func: FunctionBorrow<'_>) {
     if let Err(errs) = verify_func(module, func) {
         error!("codegen verification of `{}` failed:", func.metadata.name);
         for err in errs {
             error!(
                 "    `{}`: {}",
-                display_node(module, &func.body, err.node(&func.body.graph)),
-                err.display(&func.body.graph)
+                display_node(module, func.body(), err.node(&func.body().graph)),
+                err.display(&func.body().graph)
             );
         }
         panic!("`{}` contained invalid IR", func.metadata.name);

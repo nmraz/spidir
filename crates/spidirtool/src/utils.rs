@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use anyhow::{Context, Result, anyhow, bail};
 use ir::{
-    function::FunctionData,
+    function::FunctionBorrow,
     module::{Function, Module},
     verify::verify_module,
 };
@@ -28,10 +28,12 @@ pub fn read_module(input_file: &Path) -> Result<Module> {
 pub fn function_by_name<'a>(
     module: &'a Module,
     name: &str,
-) -> Result<(Function, &'a FunctionData)> {
-    module
+) -> Result<(Function, FunctionBorrow<'a>)> {
+    let (func, _) = module
+        .metadata
         .functions
         .iter()
-        .find(|(_func, data)| data.metadata.name == name)
-        .ok_or_else(|| anyhow!("function `{}` not found in module", name))
+        .find(|(_func, metadata)| metadata.name == name)
+        .ok_or_else(|| anyhow!("function `{}` not found in module", name))?;
+    Ok((func, module.borrow_function(func)))
 }

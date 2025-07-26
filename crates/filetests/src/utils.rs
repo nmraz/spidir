@@ -12,7 +12,7 @@ use itertools::Itertools;
 use regex::{Captures, Regex};
 
 use ir::{
-    function::{FunctionBody, FunctionData},
+    function::{FunctionBody, FunctionBorrow},
     module::Module,
     valgraph::{DepValue, Node},
     verify::verify_module,
@@ -29,6 +29,16 @@ macro_rules! regex {
     }};
 }
 
+pub fn borrow_func_by_name<'a>(module: &'a Module, name: &str) -> FunctionBorrow<'a> {
+    let (func, _) = module
+        .metadata
+        .functions
+        .iter()
+        .find(|(_func, metadata)| metadata.name == name)
+        .unwrap();
+    module.borrow_function(func)
+}
+
 pub fn verify_module_with_err(module: &Module, err: &str) -> Result<()> {
     verify_module(module).map_err(|errs| {
         let message = errs
@@ -42,13 +52,13 @@ pub fn verify_module_with_err(module: &Module, err: &str) -> Result<()> {
 pub fn write_body_with_trailing_comments(
     output: &mut String,
     module: &Module,
-    func: &FunctionData,
+    func: FunctionBorrow<'_>,
     comment_fn: impl FnMut(&mut String, Node),
 ) {
     writeln!(output, "function `{}`:", func.metadata.name).unwrap();
     let mut comment_annotator = CommentAnnotator { comment_fn };
 
-    write_annotated_body(output, &mut comment_annotator, module, &func.body, 0).unwrap();
+    write_annotated_body(output, &mut comment_annotator, module, func.body(), 0).unwrap();
 }
 
 struct CommentAnnotator<F> {
@@ -152,10 +162,15 @@ pub fn generalize_value_names(
 
     for line in output_str.lines() {
         if let Some(new_func) = find_new_func(line) {
-            cur_func = module
+            if let Some((new_func, _)) = module
+                .metadata
                 .functions
-                .values()
-                .find(|func| func.metadata.name == new_func);
+                .iter()
+                .find(|(_func, metadata)| metadata.name == new_func)
+            {
+                cur_func = Some(module.borrow_function(new_func));
+            }
+
             name_counter.clear();
             val_names.clear();
             writeln!(new_output, "{line}").unwrap();
@@ -172,7 +187,8 @@ pub fn generalize_value_names(
             match val_names.entry(value) {
                 Entry::Occupied(existing_name) => format!("${}", existing_name.get()),
                 Entry::Vacant(vacant_entry) => {
-                    let name = get_value_var_name(module, &cur_func.body, &mut name_counter, value);
+                    let name =
+                        get_value_var_name(module, cur_func.body(), &mut name_counter, value);
                     let replacement = format!("$({name}=$val)");
                     vacant_entry.insert(name);
                     replacement

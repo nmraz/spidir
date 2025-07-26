@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 
 use crate::{
     domtree::{DomTree, DomTreeNode},
-    function::{FunctionBody, FunctionData},
+    function::{FunctionBody, FunctionBorrow, FunctionMetadata},
     module::{Function, Module},
     node::{DepValueKind, NodeKind},
     schedule::{ScheduleContext, schedule_early},
@@ -171,11 +171,15 @@ pub enum ModuleVerifierError {
 }
 
 impl ModuleVerifierError {
-    pub fn node<'a>(&self, module: &'a Module) -> Option<(&'a FunctionData, Node)> {
+    pub fn node<'a>(
+        &self,
+        module: &'a Module,
+    ) -> Option<(&'a FunctionMetadata, &'a FunctionBody, Node)> {
         match self {
             Self::Func { function, error } => {
-                let function = &module.functions[*function];
-                Some((function, error.node(&function.body.graph)))
+                let metadata = &module.metadata.functions[*function];
+                let body = &module.functions[*function].body;
+                Some((metadata, body, error.node(&body.graph)))
             }
             _ => None,
         }
@@ -223,12 +227,12 @@ pub struct DisplayErrorWithContext<'a> {
 
 impl fmt::Display for DisplayErrorWithContext<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some((function, node)) = self.error.node(self.module) {
+        if let Some((metadata, body, node)) = self.error.node(self.module) {
             write!(
                 f,
                 "in function `{}`: `{}`: {}",
-                function.metadata.name,
-                display_node(self.module, &function.body, node),
+                metadata.name,
+                display_node(self.module, body, node),
                 self.error.display(self.module)
             )
         } else {
@@ -253,13 +257,14 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
         }
     };
 
-    for extern_function_data in module.extern_functions.values() {
+    for extern_function_data in module.metadata.extern_functions.values() {
         check_name(&extern_function_data.name, &mut errors);
     }
 
-    for (function, function_data) in &module.functions {
-        check_name(&function_data.metadata.name, &mut errors);
-        if let Err(graph_errors) = verify_func(module, function_data) {
+    for function in module.metadata.functions.keys() {
+        let func_borrow = module.borrow_function(function);
+        check_name(&func_borrow.metadata.name, &mut errors);
+        if let Err(graph_errors) = verify_func(module, func_borrow) {
             errors.extend(
                 graph_errors
                     .into_iter()
@@ -275,8 +280,11 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
     }
 }
 
-pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<FunctionVerifierError>> {
-    let body = &func.body;
+pub fn verify_func(
+    module: &Module,
+    func: FunctionBorrow<'_>,
+) -> Result<(), Vec<FunctionVerifierError>> {
+    let body = func.body();
 
     let mut errors = Vec::new();
 
@@ -285,7 +293,7 @@ pub fn verify_func(module: &Module, func: &FunctionData) -> Result<(), Vec<Funct
     }
 
     for node in walk_graph(&body.graph, body.entry) {
-        verify_node_kind(module, func, node, &mut errors);
+        verify_node_kind(&module.metadata, func, node, &mut errors);
         verify_control_outputs(&body.graph, node, &mut errors);
     }
 

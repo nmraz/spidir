@@ -17,7 +17,7 @@ use codegen::{
 use codegen_test_tools::{disasm::disasm_code, exec::codegen_and_exec};
 use ir::{
     domtree::DomTree,
-    function::FunctionData,
+    function::{FunctionBody, FunctionBorrow},
     loops::LoopForest,
     module::Module,
     verify::verify_func,
@@ -339,15 +339,15 @@ fn output_dot_file(
     file: &mut File,
     annotator_opts: &AnnotatorOptions,
     module: &Module,
-    func: &FunctionData,
+    func: FunctionBorrow<'_>,
 ) -> Result<()> {
-    let graph = &func.body.graph;
+    let graph = &func.body().graph;
 
     let errors;
     let loop_forest;
 
     let domtree = if annotator_opts.domtree || annotator_opts.loops {
-        Some(DomTree::compute(graph, func.body.entry))
+        Some(DomTree::compute(graph, func.body().entry))
     } else {
         None
     };
@@ -372,7 +372,7 @@ fn output_dot_file(
         }
     };
 
-    let s = get_graphviz_str(&mut annotators, module, func)?;
+    let s = get_graphviz_str(&mut annotators, module, func.body())?;
 
     file.write_all(s.as_bytes())
         .context("failed to write dot file")?;
@@ -390,8 +390,10 @@ fn optimize_module(module: &mut Module) {
 fn get_module_schedule_str(module: &Module) -> String {
     let mut output = String::new();
 
-    for func in module.functions.values() {
-        write_function_metadata(&mut output, &func.metadata).unwrap();
+    for (func, metadata) in &module.metadata.functions {
+        let func = &module.functions[func];
+
+        write_function_metadata(&mut output, metadata).unwrap();
 
         let (cfg_ctx, _, schedule) = schedule_graph(&func.body.graph, func.body.entry);
 
@@ -416,13 +418,15 @@ fn get_module_lir_str(
 
     let machine = create_machine(machine_opts);
 
-    for func in module.functions.values() {
+    for func in module.metadata.functions.keys() {
+        let func = module.borrow_function(func);
+
         writeln!(output, "func @{} {{", quote_ident(&func.metadata.name)).unwrap();
         let (cfg_ctx, lir) = lower_func(module, func, &machine).map_err(|err| {
             anyhow!(
                 "failed to select `{}`: `{}`",
                 func.metadata.name,
-                display_node(module, &func.body, err.node)
+                display_node(module, func.body(), err.node)
             )
         })?;
 
@@ -458,7 +462,8 @@ fn get_module_lir_str(
 fn get_module_code_str(module: &Module, machine_opts: &MachineOptions) -> Result<String> {
     let mut output = String::new();
     let machine = create_machine(machine_opts);
-    for func in module.functions.values() {
+    for func in module.metadata.functions.keys() {
+        let func = module.borrow_function(func);
         let code = codegen_func(module, func, &machine, &CodegenOpts::default())
             .map_err(|err| anyhow!("{}", err.display(module, func)))?;
         writeln!(output, "{}:", quote_ident(&func.metadata.name)).unwrap();
@@ -471,10 +476,10 @@ fn get_module_code_str(module: &Module, machine_opts: &MachineOptions) -> Result
 fn get_graphviz_str(
     annotators: &mut [Box<dyn Annotate + '_>],
     module: &Module,
-    func: &FunctionData,
+    body: &FunctionBody,
 ) -> Result<String> {
     let mut s = String::new();
-    write_graphviz(&mut s, annotators, module, &func.body).context("failed to format dot graph")?;
+    write_graphviz(&mut s, annotators, module, body).context("failed to format dot graph")?;
     Ok(s)
 }
 

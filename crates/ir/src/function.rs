@@ -86,22 +86,36 @@ impl FunctionBody {
 
 #[derive(Clone)]
 pub struct FunctionData {
-    pub metadata: FunctionMetadata,
     pub body: FunctionBody,
     pub node_cache: NodeCache,
 }
 
 impl FunctionData {
-    pub fn new(name: String, sig: Signature) -> Self {
-        let body = FunctionBody::new(&sig.param_types);
-        Self::from_metadata_body(FunctionMetadata { name, sig }, body)
+    pub fn new_invalid() -> Self {
+        Self::from_body(FunctionBody::new_invalid())
     }
 
-    pub fn from_metadata_body(metadata: FunctionMetadata, body: FunctionBody) -> Self {
+    pub fn new(param_types: &[Type]) -> Self {
+        Self::from_body(FunctionBody::new(param_types))
+    }
+
+    pub fn from_body(body: FunctionBody) -> Self {
         Self {
-            metadata,
             body,
             node_cache: NodeCache::new(),
         }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct FunctionBorrow<'a> {
+    pub data: &'a FunctionData,
+    pub metadata: &'a FunctionMetadata,
+}
+
+impl<'a> FunctionBorrow<'a> {
+    #[inline]
+    pub fn body(&self) -> &'a FunctionBody {
+        &self.data.body
     }
 }

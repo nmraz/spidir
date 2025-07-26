@@ -10,9 +10,9 @@ use ir::{
 use crate::utils::function_by_name;
 
 pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> {
-    let (func, func_data) = function_by_name(module, function_name)?;
+    let (func, func_borrow) = function_by_name(module, function_name)?;
 
-    let referenced_functions = collect_referenced_functions(&func_data.body);
+    let referenced_functions = collect_referenced_functions(func_borrow.body());
 
     let mut new_module = Module::new();
     let mut function_map = FxHashMap::default();
@@ -23,16 +23,16 @@ pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> 
             continue;
         }
 
-        let metadata = module.resolve_funcref(funcref);
-        let new_funcref = new_module.extern_functions.push(FunctionMetadata {
+        let metadata = module.metadata.resolve_funcref(funcref);
+        let new_funcref = new_module.metadata.extern_functions.push(FunctionMetadata {
             name: metadata.name.to_owned(),
             sig: metadata.sig.clone(),
         });
         function_map.insert(funcref, new_funcref);
     }
 
-    let new_func_data = func_data.clone();
-    let new_func = new_module.functions.push(new_func_data);
+    let new_func = new_module
+        .create_function_from_data_metadata(func_borrow.data.clone(), func_borrow.metadata.clone());
     let new_body = &mut new_module.functions[new_func].body;
     let live_nodes: Vec<_> = walk_graph(&new_body.graph, new_body.entry).collect();
 

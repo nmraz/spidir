@@ -3,8 +3,8 @@ use core::array;
 use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::{
-    function::{FunctionBody, FunctionData, SignatureRef},
-    module::Module,
+    function::{FunctionBody, FunctionBorrow, SignatureRef},
+    module::ModuleMetadata,
     node::{DepValueKind, FunctionRef, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -12,12 +12,12 @@ use crate::{
 use super::FunctionVerifierError;
 
 pub fn verify_node_kind(
-    module: &Module,
-    func: &FunctionData,
+    module_metadata: &ModuleMetadata,
+    func: FunctionBorrow<'_>,
     node: Node,
     errors: &mut Vec<FunctionVerifierError>,
 ) {
-    let graph = &func.body.graph;
+    let graph = &func.body().graph;
     match graph.node_kind(node) {
         NodeKind::Entry => verify_entry(func, node, errors),
         NodeKind::Return => verify_return(func, node, errors),
@@ -60,14 +60,14 @@ pub fn verify_node_kind(
         NodeKind::StackSlot { align, .. } => verify_stack_slot(graph, node, *align, errors),
         NodeKind::BrCond => verify_brcond(graph, node, errors),
         NodeKind::FuncAddr(_) => verify_funcaddr(graph, node, errors),
-        NodeKind::Call(func) => verify_call(module, graph, node, *func, errors),
-        NodeKind::CallInd(sig) => verify_call_ind(&func.body, node, *sig, errors),
+        NodeKind::Call(func) => verify_call(module_metadata, graph, node, *func, errors),
+        NodeKind::CallInd(sig) => verify_call_ind(func.body(), node, *sig, errors),
     }
 }
 
-fn verify_entry(func: &FunctionData, node: Node, errors: &mut Vec<FunctionVerifierError>) {
-    let metadata = &func.metadata;
-    let body = &func.body;
+fn verify_entry(func: FunctionBorrow<'_>, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let body = func.body();
+    let metadata = func.metadata;
 
     if node != body.entry {
         errors.push(FunctionVerifierError::MisplacedEntry(node));
@@ -95,9 +95,9 @@ fn verify_entry(func: &FunctionData, node: Node, errors: &mut Vec<FunctionVerifi
     }
 }
 
-fn verify_return(func: &FunctionData, node: Node, errors: &mut Vec<FunctionVerifierError>) {
-    let metadata = &func.metadata;
-    let body = &func.body;
+fn verify_return(func: FunctionBorrow<'_>, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let body = func.body();
+    let metadata = func.metadata;
 
     match metadata.sig.ret_type {
         Some(ret_type) => {
@@ -463,13 +463,13 @@ fn verify_brcond(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifier
 }
 
 fn verify_call(
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     graph: &ValGraph,
     node: Node,
     func: FunctionRef,
     errors: &mut Vec<FunctionVerifierError>,
 ) {
-    let sig = &module.resolve_funcref(func).sig;
+    let sig = &module_metadata.resolve_funcref(func).sig;
     let expected_input_count = sig.param_types.len() as u32 + 1;
 
     if let Some(ret_type) = sig.ret_type {

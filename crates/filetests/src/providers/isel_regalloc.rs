@@ -43,14 +43,16 @@ impl SimpleTestProvider for IselRegallocProvider {
     fn output_for(&self, module: Module) -> Result<String> {
         let mut output = String::new();
 
-        for func in module.functions.values() {
+        for func in module.metadata.functions.keys() {
+            let func = module.borrow_function(func);
+
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
             let (cfg_ctx, lir) = lower_func(&module, func, &self.machine).map_err(|e| {
                 anyhow!(
                     "isel failed for `{}`: {}",
                     func.metadata.name,
-                    e.display(&module, &func.body)
+                    e.display(&module, func.body())
                 )
             })?;
             let assignment = regalloc::run(&lir, &cfg_ctx, &self.machine)

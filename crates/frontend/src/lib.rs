@@ -104,7 +104,7 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub fn build_call(&mut self, func: FunctionRef, args: &[DepValue]) -> Option<DepValue> {
-        let ret_ty = self.module.resolve_funcref(func).sig.ret_type;
+        let ret_ty = self.module.metadata.resolve_funcref(func).sig.ret_type;
         let ctrl = self.cur_block_ctrl();
         let built = self.builder().build_call(ret_ty, func, ctrl, args);
         self.advance_cur_block_ctrl(built.ctrl);
@@ -411,11 +411,7 @@ impl Builder for GraphBuilderWrapper<'_> {
 #[cfg(test)]
 mod tests {
     use expect_test::{Expect, expect};
-    use ir::{
-        function::{FunctionData, Signature},
-        module::Module,
-        node::Type,
-    };
+    use ir::{function::Signature, module::Module, node::Type};
 
     use super::*;
 
@@ -426,13 +422,13 @@ mod tests {
         expected: Expect,
     ) {
         let mut module = Module::new();
-        let func = module.functions.push(FunctionData::new(
+        let func = module.create_function(
             "func".to_owned(),
             Signature {
                 ret_type,
                 param_types: params.to_owned(),
             },
-        ));
+        );
         build(&mut FunctionBuilder::new(&mut module, func));
         expected.assert_eq(module.to_string().trim());
     }

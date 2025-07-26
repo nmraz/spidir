@@ -1,7 +1,7 @@
 use core::fmt;
 
 use ir::{
-    function::FunctionData,
+    function::FunctionBorrow,
     module::Module,
     valgraph::{Node, ValGraph},
     valwalk::CfgPreorderInfo,
@@ -41,7 +41,7 @@ impl CodegenError {
     pub fn display<'a>(
         &'a self,
         module: &'a Module,
-        func: &'a FunctionData,
+        func: FunctionBorrow<'a>,
     ) -> DisplayCodegenError<'a> {
         DisplayCodegenError {
             module,
@@ -53,7 +53,7 @@ impl CodegenError {
 
 pub struct DisplayCodegenError<'a> {
     module: &'a Module,
-    func: &'a FunctionData,
+    func: FunctionBorrow<'a>,
     error: &'a CodegenError,
 }
 
@@ -61,7 +61,9 @@ impl fmt::Display for DisplayCodegenError<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "codegen for `{}` failed: ", self.func.metadata.name)?;
         match self.error {
-            CodegenError::Isel(isel) => write!(f, "{}", isel.display(self.module, &self.func.body)),
+            CodegenError::Isel(isel) => {
+                write!(f, "{}", isel.display(self.module, self.func.body()))
+            }
             CodegenError::Regalloc(regalloc) => write!(f, "{regalloc}"),
         }
     }
@@ -80,7 +82,7 @@ pub trait Codegen: private::Sealed {
     fn codegen_func(
         &self,
         module: &Module,
-        func: &FunctionData,
+        func: FunctionBorrow<'_>,
         opts: &CodegenOpts,
     ) -> Result<CodeBlob, CodegenError>;
 }
@@ -91,7 +93,7 @@ impl<M: Machine> Codegen for M {
     fn codegen_func(
         &self,
         module: &Module,
-        func: &FunctionData,
+        func: FunctionBorrow<'_>,
         opts: &CodegenOpts,
     ) -> Result<CodeBlob, CodegenError> {
         codegen_func(module, func, self, opts)
@@ -100,7 +102,7 @@ impl<M: Machine> Codegen for M {
 
 pub fn codegen_func<M: Machine>(
     module: &Module,
-    func: &FunctionData,
+    func: FunctionBorrow<'_>,
     machine: &M,
     opts: &CodegenOpts,
 ) -> Result<CodeBlob, CodegenError> {
@@ -125,10 +127,10 @@ pub fn codegen_func<M: Machine>(
 
 pub fn lower_func<M: MachineLower>(
     module: &Module,
-    func: &FunctionData,
+    func: FunctionBorrow<'_>,
     machine: &M,
 ) -> Result<(CfgContext, Lir<M>), IselError> {
-    let (cfg_ctx, block_map, schedule) = schedule_graph(&func.body.graph, func.body.entry);
+    let (cfg_ctx, block_map, schedule) = schedule_graph(&func.body().graph, func.body().entry);
     let lir = select_instrs(module, func, &schedule, &cfg_ctx, &block_map, machine)?;
     Ok((cfg_ctx, lir))
 }

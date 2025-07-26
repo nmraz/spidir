@@ -1,9 +1,10 @@
+use alloc::string::String;
 use core::fmt;
 
-use cranelift_entity::{PrimaryMap, entity_impl};
+use cranelift_entity::{PrimaryMap, SecondaryMap, entity_impl};
 
 use crate::{
-    function::{FunctionData, FunctionMetadata},
+    function::{FunctionBody, FunctionBorrow, FunctionData, FunctionMetadata, Signature},
     node::FunctionRef,
     write::write_module,
 };
@@ -16,25 +17,74 @@ entity_impl!(Function, "func");
 pub struct ExternFunction(u32);
 entity_impl!(ExternFunction, "extfunc");
 
-#[derive(Clone)]
-pub struct Module {
-    pub functions: PrimaryMap<Function, FunctionData>,
+#[derive(Clone, Default)]
+pub struct ModuleMetadata {
+    pub functions: PrimaryMap<Function, FunctionMetadata>,
     pub extern_functions: PrimaryMap<ExternFunction, FunctionMetadata>,
 }
 
-impl Module {
-    #[inline]
+impl ModuleMetadata {
     pub fn new() -> Self {
-        Self {
-            functions: PrimaryMap::new(),
-            extern_functions: PrimaryMap::new(),
-        }
+        Default::default()
     }
 
     pub fn resolve_funcref(&self, funcref: FunctionRef) -> &FunctionMetadata {
         match funcref {
-            FunctionRef::Internal(func) => &self.functions[func].metadata,
+            FunctionRef::Internal(func) => &self.functions[func],
             FunctionRef::External(func) => &self.extern_functions[func],
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Module {
+    pub metadata: ModuleMetadata,
+    pub functions: SecondaryMap<Function, FunctionData>,
+}
+
+impl Module {
+    pub fn new() -> Self {
+        Self {
+            metadata: ModuleMetadata::new(),
+            functions: SecondaryMap::with_default(FunctionData::new_invalid()),
+        }
+    }
+
+    pub fn create_function(&mut self, name: String, sig: Signature) -> Function {
+        let body = FunctionBody::new(&sig.param_types);
+        self.create_function_with_body(name, sig, body)
+    }
+
+    pub fn create_invalid_function(&mut self, name: String, sig: Signature) -> Function {
+        self.create_function_with_body(name, sig, FunctionBody::new_invalid())
+    }
+
+    pub fn create_function_with_body(
+        &mut self,
+        name: String,
+        sig: Signature,
+        body: FunctionBody,
+    ) -> Function {
+        self.create_function_from_data_metadata(
+            FunctionData::from_body(body),
+            FunctionMetadata { name, sig },
+        )
+    }
+
+    pub fn create_function_from_data_metadata(
+        &mut self,
+        data: FunctionData,
+        metadata: FunctionMetadata,
+    ) -> Function {
+        let func = self.metadata.functions.push(metadata);
+        self.functions[func] = data;
+        func
+    }
+
+    pub fn borrow_function(&self, func: Function) -> FunctionBorrow<'_> {
+        FunctionBorrow {
+            data: &self.functions[func],
+            metadata: &self.metadata.functions[func],
         }
     }
 }

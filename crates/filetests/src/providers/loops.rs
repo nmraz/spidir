@@ -13,8 +13,10 @@ impl SimpleTestProvider for LoopForestProvider {
     fn output_for(&self, module: Module) -> Result<String> {
         let mut output = String::new();
 
-        for func in module.functions.values() {
-            let body = &func.body;
+        for func in module.metadata.functions.keys() {
+            let func = module.borrow_function(func);
+
+            let body = func.body();
             let domtree = DomTree::compute(&body.graph, body.entry);
             let loop_forest = LoopForest::compute(&body.graph, &domtree);
 

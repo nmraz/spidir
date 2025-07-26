@@ -4,7 +4,7 @@ use core::{array, fmt};
 use cranelift_entity::{SecondaryMap, packed_option::PackedOption};
 use fx_utils::FxHashMap;
 use ir::{
-    function::{FunctionBody, FunctionData},
+    function::{FunctionBody, FunctionBorrow},
     module::Module,
     node::{NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
@@ -169,7 +169,7 @@ impl fmt::Display for DisplayIselError<'_> {
 
 pub fn select_instrs<M: MachineLower>(
     module: &Module,
-    func: &FunctionData,
+    func: FunctionBorrow<'_>,
     schedule: &Schedule,
     cfg_ctx: &CfgContext,
     block_map: &FunctionBlockMap,
@@ -195,7 +195,7 @@ type NodeStackSlotMap = FxHashMap<Node, StackSlot>;
 
 struct IselState<'ctx, M: MachineLower> {
     module: &'ctx Module,
-    func: &'ctx FunctionData,
+    func: FunctionBorrow<'ctx>,
     schedule: &'ctx Schedule,
     cfg_ctx: &'ctx CfgContext,
     block_map: &'ctx FunctionBlockMap,
@@ -209,7 +209,7 @@ struct IselState<'ctx, M: MachineLower> {
 impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     fn new(
         module: &'ctx Module,
-        func: &'ctx FunctionData,
+        func: FunctionBorrow<'ctx>,
         schedule: &'ctx Schedule,
         cfg_ctx: &'ctx CfgContext,
         block_map: &'ctx FunctionBlockMap,
@@ -500,11 +500,11 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn graph(&self) -> &'ctx ValGraph {
-        &self.func.body.graph
+        &self.body().graph
     }
 
     fn body(&self) -> &'ctx FunctionBody {
-        &self.func.body
+        self.func.body()
     }
 }
 

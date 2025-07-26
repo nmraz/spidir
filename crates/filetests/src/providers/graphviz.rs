@@ -3,7 +3,7 @@ use std::fmt::Write;
 use anyhow::{Result, anyhow, bail};
 use ir::{
     domtree::DomTree,
-    function::FunctionData,
+    function::FunctionBorrow,
     loops::LoopForest,
     module::Module,
     verify::{FunctionVerifierError, verify_func},
@@ -57,10 +57,12 @@ impl SimpleTestProvider for GraphvizTestProvider {
 
     fn output_for(&self, module: Module) -> Result<String> {
         let mut output = String::new();
-        for func in module.functions.values() {
+        for func in module.metadata.functions.keys() {
+            let func = module.borrow_function(func);
+
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let body = &func.body;
+            let body = func.body();
 
             match self.kind {
                 AnnotatorKind::Plain => {
@@ -125,7 +127,10 @@ impl SimpleTestProvider for GraphvizTestProvider {
     }
 }
 
-fn get_verifier_errors(module: &Module, func: &FunctionData) -> Result<Vec<FunctionVerifierError>> {
+fn get_verifier_errors(
+    module: &Module,
+    func: FunctionBorrow<'_>,
+) -> Result<Vec<FunctionVerifierError>> {
     verify_func(module, func)
         .err()
         .ok_or_else(|| anyhow!("expected function to contain errors"))
@@ -135,7 +140,7 @@ fn write_graphviz_with_annotator(
     output: &mut String,
     annotators: &mut [Box<dyn Annotate + '_>],
     module: &Module,
-    func: &FunctionData,
+    func: FunctionBorrow<'_>,
 ) {
-    write_graphviz(output, annotators, module, &func.body).unwrap();
+    write_graphviz(output, annotators, module, func.body()).unwrap();
 }

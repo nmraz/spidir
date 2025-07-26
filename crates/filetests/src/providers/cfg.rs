@@ -16,8 +16,10 @@ impl SimpleTestProvider for CfgProvider {
     fn output_for(&self, module: Module) -> Result<String> {
         let mut output = String::new();
 
-        for func in module.functions.values() {
-            let body = &func.body;
+        for func in module.metadata.functions.keys() {
+            let func = module.borrow_function(func);
+
+            let body = func.body();
             let cfg_preorder = body.compute_cfg_preorder_info();
             let (cfg, block_map) = compute_block_cfg(&body.graph, &cfg_preorder.preorder);
             let mut seen_blocks = DenseEntitySet::new();

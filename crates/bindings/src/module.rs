@@ -5,10 +5,7 @@ use core::{
 
 use alloc::boxed::Box;
 use frontend::FunctionBuilder;
-use ir::{
-    function::{FunctionData, FunctionMetadata},
-    module::Module,
-};
+use ir::{function::FunctionMetadata, module::Module};
 
 use crate::types::{
     ApiExternFunction, ApiFunction, ApiType, BuildFunctionCallback, DumpCallback,
@@ -41,7 +38,7 @@ unsafe extern "C" fn spidir_module_create_function(
         let module = &mut *module;
 
         let (name, sig) = name_signature_from_api(name, ret_type, param_count, param_types);
-        let func = module.functions.push(FunctionData::new(name, sig));
+        let func = module.create_function(name, sig);
         function_to_api(func)
     }
 }
@@ -58,7 +55,10 @@ unsafe extern "C" fn spidir_module_create_extern_function(
         let module = &mut *module;
 
         let (name, sig) = name_signature_from_api(name, ret_type, param_count, param_types);
-        let func = module.extern_functions.push(FunctionMetadata { name, sig });
+        let func = module
+            .metadata
+            .extern_functions
+            .push(FunctionMetadata { name, sig });
         extern_function_to_api(func)
     }
 }

@@ -28,13 +28,13 @@ pub unsafe fn codegen_and_exec(
     args: &[isize],
     break_at_entry: bool,
 ) -> Result<isize> {
-    let mut code_blobs = SecondaryMap::with_capacity(module.functions.len());
+    let mut code_blobs = SecondaryMap::with_capacity(module.metadata.functions.len());
 
     for func in module.functions.keys() {
         code_blobs[func] = codegen_func(module, func)?;
     }
 
-    let mut func_offsets = SecondaryMap::with_capacity(module.functions.len());
+    let mut func_offsets = SecondaryMap::with_capacity(module.metadata.functions.len());
     let mut code_size = 0;
     let mut constpool_align = 1;
     let mut constpool_size = 0;
@@ -189,7 +189,7 @@ fn relocate_buf(
                     builtins[extfunc].ok_or_else(|| {
                         anyhow!(
                             "builtin `{}` not supported",
-                            module.extern_functions[extfunc].name
+                            module.metadata.extern_functions[extfunc].name
                         )
                     })? as u64
                 }
@@ -263,7 +263,7 @@ fn codegen_func_with_machine(
     module: &Module,
     func: Function,
 ) -> Result<CodeBlob> {
-    let func = &module.functions[func];
+    let func = module.borrow_function(func);
     machine
         .codegen_func(module, func, &CodegenOpts::default())
         .map_err(|err| anyhow!("codegen failed: {}", err.display(module, func)))
@@ -278,7 +278,7 @@ fn populate_builtins(module: &Module) -> SecondaryMap<ExternFunction, Option<usi
     ]);
 
     let mut mapping = SecondaryMap::new();
-    for (extfunc, metadata) in module.extern_functions.iter() {
+    for (extfunc, metadata) in module.metadata.extern_functions.iter() {
         if let Some(&builtin) = builtins.get(metadata.name.as_str()) {
             mapping[extfunc] = Some(builtin);
         }

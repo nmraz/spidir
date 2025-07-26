@@ -3,7 +3,7 @@ use core::{fmt, iter};
 use alloc::{borrow::Cow, format, vec::Vec};
 
 use crate::{
-    function::{FunctionBody, FunctionData, FunctionMetadata, Signature},
+    function::{FunctionBody, FunctionBorrow, FunctionMetadata, Signature},
     module::{ExternFunction, Function, Module},
     node::{FunctionRef, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
@@ -51,7 +51,7 @@ pub trait AnnotateGraph<W: fmt::Write + ?Sized> {
 
 pub trait AnnotateModule<W: fmt::Write + ?Sized>: AnnotateGraph<W> {
     fn write_function(&mut self, w: &mut W, module: &Module, func: Function) -> fmt::Result {
-        write_annotated_function(w, self, module, &module.functions[func])
+        write_annotated_function(w, self, module, module.borrow_function(func))
     }
 
     fn write_extern_function(
@@ -62,7 +62,7 @@ pub trait AnnotateModule<W: fmt::Write + ?Sized>: AnnotateGraph<W> {
     ) -> fmt::Result {
         // As above, we need the extra indirection to allow the type `W` to be unsized but allow
         // `write_extern_function` to operate on type-erased writers.
-        write_extern_function(&mut w, &module.extern_functions[func])
+        write_extern_function(&mut w, &module.metadata.extern_functions[func])
     }
 }
 
@@ -100,7 +100,7 @@ pub fn write_annotated_module<W: fmt::Write + ?Sized>(
     annotator: &mut (impl AnnotateModule<W> + ?Sized),
     module: &Module,
 ) -> fmt::Result {
-    for extern_func in module.extern_functions.keys() {
+    for extern_func in module.metadata.extern_functions.keys() {
         annotator.write_extern_function(w, module, extern_func)?;
     }
     w.write_str("\n")?;
@@ -117,7 +117,11 @@ pub fn write_annotated_module<W: fmt::Write + ?Sized>(
     Ok(())
 }
 
-pub fn write_function(w: &mut dyn fmt::Write, module: &Module, func: &FunctionData) -> fmt::Result {
+pub fn write_function(
+    w: &mut dyn fmt::Write,
+    module: &Module,
+    func: FunctionBorrow<'_>,
+) -> fmt::Result {
     write_annotated_function(w, &mut DefaultAnnotator, module, func)
 }
 
@@ -125,11 +129,11 @@ pub fn write_annotated_function<W: fmt::Write + ?Sized>(
     w: &mut W,
     annotator: &mut (impl AnnotateGraph<W> + ?Sized),
     module: &Module,
-    func: &FunctionData,
+    func: FunctionBorrow<'_>,
 ) -> fmt::Result {
     write!(w, "func {}", func.metadata)?;
     w.write_str(" {\n")?;
-    write_annotated_body(w, annotator, module, &func.body, 4)?;
+    write_annotated_body(w, annotator, module, func.body(), 4)?;
     w.write_str("}\n")
 }
 
@@ -349,7 +353,11 @@ fn write_signature(w: &mut dyn fmt::Write, sig: &Signature, after_name: bool) ->
 }
 
 fn write_func_ref(w: &mut dyn fmt::Write, module: &Module, func: FunctionRef) -> fmt::Result {
-    write!(w, "@{}", quote_ident(&module.resolve_funcref(func).name))
+    write!(
+        w,
+        "@{}",
+        quote_ident(&module.metadata.resolve_funcref(func).name)
+    )
 }
 
 fn is_unquoted_ident_char(c: char) -> bool {
@@ -363,11 +371,21 @@ mod tests {
 
     use crate::{
         builder::{BuilderExt, SimpleBuilder},
+        function::FunctionData,
         node::{BitwiseF64, FcmpKind, IcmpKind, MemSize, Type},
         test_utils::create_loop_body,
     };
 
     use super::*;
+
+    fn create_func_and_metadata(name: &str, sig: Signature) -> (FunctionData, FunctionMetadata) {
+        let function = FunctionData::new(&sig.param_types);
+        let metadata = FunctionMetadata {
+            name: name.to_owned(),
+            sig,
+        };
+        (function, metadata)
+    }
 
     fn check_write_body(body: &FunctionBody, expected: Expect) {
         let module = Module::new();
@@ -376,10 +394,22 @@ mod tests {
         expected.assert_eq(&output);
     }
 
-    fn check_write_function(function: &FunctionData, expected: Expect) {
+    fn check_write_function(
+        function: &FunctionData,
+        metadata: &FunctionMetadata,
+        expected: Expect,
+    ) {
         let module = Module::new();
         let mut output = String::new();
-        write_function(&mut output, &module, function).expect("failed to display function");
+        write_function(
+            &mut output,
+            &module,
+            FunctionBorrow {
+                data: function,
+                metadata,
+            },
+        )
+        .expect("failed to display function");
         expected.assert_eq(&output);
     }
 
@@ -391,15 +421,15 @@ mod tests {
     fn write_node_kinds() {
         let mut module = Module::new();
 
-        let func = module.functions.push(FunctionData::new(
+        let func = module.create_function(
             "my_func".to_owned(),
             Signature {
                 ret_type: Some(Type::I32),
                 param_types: vec![],
             },
-        ));
+        );
 
-        let extfunc = module.extern_functions.push(FunctionMetadata {
+        let extfunc = module.metadata.extern_functions.push(FunctionMetadata {
             name: "my_ext_func".to_owned(),
             sig: Signature {
                 ret_type: Some(Type::I32),
@@ -564,13 +594,14 @@ mod tests {
 
     #[test]
     fn write_add_params_func() {
-        let mut function = FunctionData::new(
-            "add_i32".to_owned(),
+        let (mut function, metadata) = create_func_and_metadata(
+            "add_i32",
             Signature {
                 ret_type: Some(Type::I32),
                 param_types: vec![Type::I32, Type::I32],
             },
         );
+
         let body = &mut function.body;
 
         let ctrl = body.entry_ctrl();
@@ -583,6 +614,7 @@ mod tests {
 
         check_write_function(
             &function,
+            &metadata,
             expect![[r#"
                 func @add_i32:i32(i32, i32) {
                     %0:ctrl, %1:i32, %2:i32 = entry
@@ -595,8 +627,8 @@ mod tests {
 
     #[test]
     fn write_void_func() {
-        let mut function = FunctionData::new(
-            "nop".to_owned(),
+        let (mut function, metadata) = create_func_and_metadata(
+            "nop",
             Signature {
                 ret_type: None,
                 param_types: vec![Type::I32],
@@ -608,6 +640,7 @@ mod tests {
 
         check_write_function(
             &function,
+            &metadata,
             expect![[r#"
                 func @nop(i32) {
                     %0:ctrl, %1:i32 = entry
@@ -619,8 +652,8 @@ mod tests {
 
     #[test]
     fn write_stack_slot_func() {
-        let mut function = FunctionData::new(
-            "with_slots".to_owned(),
+        let (mut function, metadata) = create_func_and_metadata(
+            "with_slots",
             Signature {
                 ret_type: None,
                 param_types: vec![Type::I32, Type::F64],
@@ -642,6 +675,7 @@ mod tests {
 
         check_write_function(
             &function,
+            &metadata,
             expect![[r#"
                 func @with_slots(i32, f64) {
                     %0:ctrl, %1:i32, %2:f64 = entry
@@ -658,14 +692,14 @@ mod tests {
     #[test]
     fn write_simple_module() {
         let mut module = Module::new();
-        let func = module.functions.push(FunctionData::new(
+        let func = module.create_function(
             "my_func".to_owned(),
             Signature {
                 ret_type: Some(Type::I32),
                 param_types: vec![Type::I64],
             },
-        ));
-        let extfunc = module.extern_functions.push(FunctionMetadata {
+        );
+        let extfunc = module.metadata.extern_functions.push(FunctionMetadata {
             name: "my_ext_func".to_owned(),
             sig: Signature {
                 ret_type: Some(Type::I32),
@@ -703,21 +737,21 @@ mod tests {
     #[test]
     fn write_multi_extfunc_module() {
         let mut module = Module::new();
-        module.extern_functions.push(FunctionMetadata {
+        module.metadata.extern_functions.push(FunctionMetadata {
             name: "func1".to_owned(),
             sig: Signature {
                 ret_type: Some(Type::I32),
                 param_types: vec![Type::I64],
             },
         });
-        module.extern_functions.push(FunctionMetadata {
+        module.metadata.extern_functions.push(FunctionMetadata {
             name: "func2".to_owned(),
             sig: Signature {
                 ret_type: None,
                 param_types: vec![Type::I64, Type::Ptr],
             },
         });
-        module.extern_functions.push(FunctionMetadata {
+        module.metadata.extern_functions.push(FunctionMetadata {
             name: "func3".to_owned(),
             sig: Signature {
                 ret_type: None,
@@ -740,15 +774,15 @@ mod tests {
     fn write_quoted_ident_module() {
         let mut module = Module::new();
 
-        module.functions.push(FunctionData::new(
+        module.create_function(
             "a function".to_owned(),
             Signature {
                 ret_type: None,
                 param_types: vec![],
             },
-        ));
+        );
 
-        module.extern_functions.push(FunctionMetadata {
+        module.metadata.extern_functions.push(FunctionMetadata {
             name: "System.Test+Lol System.Test::Do(Lol[])".to_owned(),
             sig: Signature {
                 ret_type: None,

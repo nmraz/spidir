@@ -15,8 +15,7 @@ impl SimpleTestProvider for DomTreeProvider {
     fn output_for(&self, module: Module) -> Result<String> {
         let mut output = String::new();
 
-        for func in module.metadata.functions().keys() {
-            let func = module.borrow_function(func);
+        for func in module.iter_function_borrows() {
             let body = func.body;
 
             let domtree = DomTree::compute(&body.graph, body.entry);

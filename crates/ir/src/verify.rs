@@ -261,8 +261,7 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
         check_name(&extern_function_data.name, &mut errors);
     }
 
-    for function in module.metadata.functions().keys() {
-        let func_borrow = module.borrow_function(function);
+    for (function, func_borrow) in module.iter_functions() {
         check_name(&func_borrow.metadata.name, &mut errors);
         if let Err(graph_errors) = verify_func(&module.metadata, func_borrow) {
             errors.extend(

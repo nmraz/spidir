@@ -100,6 +100,17 @@ impl Module {
             metadata: &self.metadata.functions[func],
         }
     }
+
+    pub fn iter_functions(&self) -> impl Iterator<Item = (Function, FunctionBorrow<'_>)> + '_ {
+        self.metadata
+            .functions
+            .keys()
+            .map(move |func| (func, self.borrow_function(func)))
+    }
+
+    pub fn iter_function_borrows(&self) -> impl Iterator<Item = FunctionBorrow<'_>> + '_ {
+        self.iter_functions().map(|(_, func)| func)
+    }
 }
 
 impl fmt::Display for Module {

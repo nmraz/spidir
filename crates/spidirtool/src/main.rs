@@ -423,9 +423,7 @@ fn get_module_lir_str(
 
     let machine = create_machine(machine_opts);
 
-    for func in module.metadata.functions().keys() {
-        let func = module.borrow_function(func);
-
+    for func in module.iter_function_borrows() {
         writeln!(output, "func @{} {{", quote_ident(&func.metadata.name)).unwrap();
         let (cfg_ctx, lir) = lower_func(&module.metadata, func, &machine).map_err(|err| {
             anyhow!(
@@ -467,8 +465,7 @@ fn get_module_lir_str(
 fn get_module_code_str(module: &Module, machine_opts: &MachineOptions) -> Result<String> {
     let mut output = String::new();
     let machine = create_machine(machine_opts);
-    for func in module.metadata.functions().keys() {
-        let func = module.borrow_function(func);
+    for func in module.iter_function_borrows() {
         let code = codegen_func(&module.metadata, func, &machine, &CodegenOpts::default())
             .map_err(|err| anyhow!("{}", err.display(&module.metadata, func)))?;
         writeln!(output, "{}:", quote_ident(&func.metadata.name)).unwrap();

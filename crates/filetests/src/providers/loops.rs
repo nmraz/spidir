@@ -20,7 +20,7 @@ impl SimpleTestProvider for LoopForestProvider {
             let domtree = DomTree::compute(&body.graph, body.entry);
             let loop_forest = LoopForest::compute(&body.graph, &domtree);
 
-            write_body_with_trailing_comments(&mut output, &module, func, |s, node| {
+            write_body_with_trailing_comments(&mut output, &module.metadata, func, |s, node| {
                 if let Some(domtree_node) = domtree.get_tree_node(node) {
                     if let Some(containing_loop) = loop_forest.containing_loop(domtree_node) {
                         write!(s, "loop {}; ", containing_loop.as_u32()).unwrap();

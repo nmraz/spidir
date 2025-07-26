@@ -23,7 +23,7 @@ impl SimpleTestProvider for CfgProvider {
             let cfg_preorder = body.compute_cfg_preorder_info();
             let (cfg, block_map) = compute_block_cfg(&body.graph, &cfg_preorder.preorder);
             let mut seen_blocks = DenseEntitySet::new();
-            write_body_with_trailing_comments(&mut output, &module, func, |s, node| {
+            write_body_with_trailing_comments(&mut output, &module.metadata, func, |s, node| {
                 if let Some(block) = block_map.containing_block(node) {
                     write!(s, "{block}; ").unwrap();
 

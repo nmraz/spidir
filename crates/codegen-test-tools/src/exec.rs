@@ -9,7 +9,7 @@ use codegen::{
 use cranelift_entity::SecondaryMap;
 use fx_utils::FxHashMap;
 use ir::{
-    module::{ExternFunction, Function, Module},
+    module::{ExternFunction, Function, Module, ModuleMetadata},
     node::FunctionRef,
 };
 
@@ -91,7 +91,7 @@ pub unsafe fn codegen_and_exec(
         buf[offset..offset + len].copy_from_slice(&blob.constpool);
     }
 
-    let builtins = populate_builtins(module);
+    let builtins = populate_builtins(&module.metadata);
     relocate_buf(
         buf,
         module,
@@ -269,7 +269,9 @@ fn codegen_func_with_machine(
         .map_err(|err| anyhow!("codegen failed: {}", err.display(&module.metadata, func)))
 }
 
-fn populate_builtins(module: &Module) -> SecondaryMap<ExternFunction, Option<usize>> {
+fn populate_builtins(
+    module_metadata: &ModuleMetadata,
+) -> SecondaryMap<ExternFunction, Option<usize>> {
     let builtins = FxHashMap::from_iter([
         ("malloc", libc::malloc as usize),
         ("free", libc::free as usize),
@@ -278,7 +280,7 @@ fn populate_builtins(module: &Module) -> SecondaryMap<ExternFunction, Option<usi
     ]);
 
     let mut mapping = SecondaryMap::new();
-    for (extfunc, metadata) in module.metadata.extern_functions().iter() {
+    for (extfunc, metadata) in module_metadata.extern_functions().iter() {
         if let Some(&builtin) = builtins.get(metadata.name.as_str()) {
             mapping[extfunc] = Some(builtin);
         }

@@ -51,7 +51,7 @@ pub fn verify_module_with_err(module: &Module, err: &str) -> Result<()> {
 
 pub fn write_body_with_trailing_comments(
     output: &mut String,
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
     comment_fn: impl FnMut(&mut String, Node),
 ) {
@@ -61,7 +61,7 @@ pub fn write_body_with_trailing_comments(
     write_annotated_body(
         output,
         &mut comment_annotator,
-        &module.metadata,
+        module_metadata,
         func.body(),
         0,
     )
@@ -194,8 +194,12 @@ pub fn generalize_value_names(
             match val_names.entry(value) {
                 Entry::Occupied(existing_name) => format!("${}", existing_name.get()),
                 Entry::Vacant(vacant_entry) => {
-                    let name =
-                        get_value_var_name(module, cur_func.body(), &mut name_counter, value);
+                    let name = get_value_var_name(
+                        &module.metadata,
+                        cur_func.body(),
+                        &mut name_counter,
+                        value,
+                    );
                     let replacement = format!("$({name}=$val)");
                     vacant_entry.insert(name);
                     replacement
@@ -210,14 +214,14 @@ pub fn generalize_value_names(
 }
 
 fn get_value_var_name(
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     body: &FunctionBody,
     name_counter: &mut FxHashMap<String, usize>,
     value: DepValue,
 ) -> String {
     let node_kind = body.graph.node_kind(body.graph.value_def(value).0);
     let mut node_string = String::new();
-    write_node_kind(&mut node_string, &module.metadata, body, node_kind).unwrap();
+    write_node_kind(&mut node_string, module_metadata, body, node_kind).unwrap();
     let name_prefix = node_string.split(&[' ', '.']).next().unwrap();
     let counter = name_counter.entry(name_prefix.to_owned()).or_default();
     let name = format!("{name_prefix}{counter}");

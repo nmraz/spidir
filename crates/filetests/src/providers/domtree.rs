@@ -30,7 +30,7 @@ impl SimpleTestProvider for DomTreeProvider {
                 rpo_nums[node] = i;
             }
 
-            write_body_with_trailing_comments(&mut output, &module, func, |s, node| {
+            write_body_with_trailing_comments(&mut output, &module.metadata, func, |s, node| {
                 let tree_node = domtree.get_tree_node(node);
                 let idom = tree_node.and_then(|tree_node| domtree.idom(tree_node));
                 let children =

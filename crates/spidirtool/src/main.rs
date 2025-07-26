@@ -224,12 +224,17 @@ fn main() -> Result<()> {
                 GraphFormat::Dot => {
                     let mut output_file =
                         File::create(&output_file).context("failed to create output file")?;
-                    output_dot_file(&mut output_file, &annotator_opts, &module, func)?;
+                    output_dot_file(&mut output_file, &annotator_opts, &module.metadata, func)?;
                 }
                 GraphFormat::Svg => {
                     let mut dotfile =
                         NamedTempFile::new().context("failed to create temporary dot file")?;
-                    output_dot_file(dotfile.as_file_mut(), &annotator_opts, &module, func)?;
+                    output_dot_file(
+                        dotfile.as_file_mut(),
+                        &annotator_opts,
+                        &module.metadata,
+                        func,
+                    )?;
 
                     run_command(
                         Command::new("dot")
@@ -338,7 +343,7 @@ fn run_command(command: &mut Command) -> Result<()> {
 fn output_dot_file(
     file: &mut File,
     annotator_opts: &AnnotatorOptions,
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
 ) -> Result<()> {
     let graph = &func.body().graph;
@@ -366,13 +371,13 @@ fn output_dot_file(
     }
 
     if !annotator_opts.no_verify {
-        if let Err(inner_errors) = verify_func(&module.metadata, func) {
+        if let Err(inner_errors) = verify_func(module_metadata, func) {
             errors = inner_errors;
             annotators.push(Box::new(ErrorAnnotator::new(graph, &errors)));
         }
     };
 
-    let s = get_graphviz_str(&mut annotators, &module.metadata, func.body())?;
+    let s = get_graphviz_str(&mut annotators, module_metadata, func.body())?;
 
     file.write_all(s.as_bytes())
         .context("failed to write dot file")?;

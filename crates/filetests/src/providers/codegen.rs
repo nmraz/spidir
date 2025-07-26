@@ -39,7 +39,7 @@ impl SimpleTestProvider for CodegenProvider {
                 &CodegenOpts::default(),
             )
             .map_err(|err| anyhow!("{}", err.display(&module.metadata, func)))?;
-            disasm_code(&module, &code, 0, &mut output)?;
+            disasm_code(&module.metadata, &code, 0, &mut output)?;
         }
 
         Ok(output)

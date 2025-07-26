@@ -467,7 +467,7 @@ fn get_module_code_str(module: &Module, machine_opts: &MachineOptions) -> Result
         let code = codegen_func(&module.metadata, func, &machine, &CodegenOpts::default())
             .map_err(|err| anyhow!("{}", err.display(&module.metadata, func)))?;
         writeln!(output, "{}:", quote_ident(&func.metadata.name)).unwrap();
-        disasm_code(module, &code, 4, &mut output)?;
+        disasm_code(&module.metadata, &code, 4, &mut output)?;
         writeln!(output).unwrap();
     }
     Ok(output)

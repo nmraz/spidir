@@ -12,11 +12,11 @@ use codegen::{
     code_buffer::{CodeBlob, RelocKind, RelocTarget},
     target::x64::{RELOC_ABS64, RELOC_PC32},
 };
-use ir::{module::Module, write::quote_ident};
+use ir::{module::ModuleMetadata, write::quote_ident};
 use itertools::Itertools;
 
 pub fn disasm_code(
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     code: &CodeBlob,
     indent: usize,
     output: &mut String,
@@ -51,7 +51,7 @@ pub fn disasm_code(
         if let Some(reloc) = relocs.first() {
             let target_name = match reloc.target {
                 RelocTarget::Function(func) => {
-                    quote_ident(&module.metadata.resolve_funcref(func).name)
+                    quote_ident(&module_metadata.resolve_funcref(func).name)
                 }
                 RelocTarget::ConstantPool => "<CP>".into(),
             };

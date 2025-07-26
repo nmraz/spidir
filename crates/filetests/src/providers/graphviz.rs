@@ -142,5 +142,5 @@ fn write_graphviz_with_annotator(
     module: &Module,
     func: FunctionBorrow<'_>,
 ) {
-    write_graphviz(output, annotators, module, func.body()).unwrap();
+    write_graphviz(output, annotators, &module.metadata, func.body()).unwrap();
 }

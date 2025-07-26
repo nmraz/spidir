@@ -7,7 +7,7 @@ use core::fmt;
 
 use itertools::Itertools;
 
-use ir::{function::FunctionBody, module::Module, node::NodeKind, write::write_node_kind};
+use ir::{function::FunctionBody, module::ModuleMetadata, node::NodeKind, write::write_node_kind};
 
 use crate::annotate::{Annotate, DotAttributes};
 
@@ -16,7 +16,7 @@ pub mod annotate;
 pub fn write_graphviz(
     w: &mut dyn fmt::Write,
     annotators: &mut [Box<dyn Annotate + '_>],
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     body: &FunctionBody,
 ) -> fmt::Result {
     let graph = &body.graph;
@@ -48,7 +48,7 @@ pub fn write_graphviz(
         write!(
             w,
             "{}",
-            stringify_dot_node_kind(module, body, graph.node_kind(node))
+            stringify_dot_node_kind(module_metadata, body, graph.node_kind(node))
         )?;
 
         if !outputs.is_empty() {
@@ -123,9 +123,13 @@ fn format_dot_attributes(attrs: &DotAttributes) -> impl fmt::Display + '_ {
     })
 }
 
-fn stringify_dot_node_kind(module: &Module, body: &FunctionBody, node_kind: &NodeKind) -> String {
+fn stringify_dot_node_kind(
+    module_metadata: &ModuleMetadata,
+    body: &FunctionBody,
+    node_kind: &NodeKind,
+) -> String {
     let mut s = String::new();
-    write_node_kind(&mut s, &module.metadata, body, node_kind).unwrap();
+    write_node_kind(&mut s, module_metadata, body, node_kind).unwrap();
     escape_dot_attr_value(&s)
 }
 

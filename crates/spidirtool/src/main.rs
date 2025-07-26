@@ -19,7 +19,7 @@ use ir::{
     domtree::DomTree,
     function::{FunctionBody, FunctionBorrow},
     loops::LoopForest,
-    module::Module,
+    module::{Module, ModuleMetadata},
     verify::verify_func,
     write::{display_node, quote_ident, write_function_metadata},
 };
@@ -372,7 +372,7 @@ fn output_dot_file(
         }
     };
 
-    let s = get_graphviz_str(&mut annotators, module, func.body())?;
+    let s = get_graphviz_str(&mut annotators, &module.metadata, func.body())?;
 
     file.write_all(s.as_bytes())
         .context("failed to write dot file")?;
@@ -475,11 +475,12 @@ fn get_module_code_str(module: &Module, machine_opts: &MachineOptions) -> Result
 
 fn get_graphviz_str(
     annotators: &mut [Box<dyn Annotate + '_>],
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     body: &FunctionBody,
 ) -> Result<String> {
     let mut s = String::new();
-    write_graphviz(&mut s, annotators, module, body).context("failed to format dot graph")?;
+    write_graphviz(&mut s, annotators, module_metadata, body)
+        .context("failed to format dot graph")?;
     Ok(s)
 }
 

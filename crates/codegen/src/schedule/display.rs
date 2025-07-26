@@ -1,6 +1,6 @@
 use core::fmt;
 
-use ir::{function::FunctionBody, module::Module, write::display_node};
+use ir::{function::FunctionBody, module::ModuleMetadata, write::display_node};
 use itertools::Itertools;
 
 use crate::cfg::{Block, BlockCfg};
@@ -8,7 +8,7 @@ use crate::cfg::{Block, BlockCfg};
 use super::Schedule;
 
 pub struct Display<'a> {
-    pub(super) module: &'a Module,
+    pub(super) module_metadata: &'a ModuleMetadata,
     pub(super) body: &'a FunctionBody,
     pub(super) cfg: &'a BlockCfg,
     pub(super) schedule: &'a Schedule,
@@ -23,14 +23,14 @@ impl fmt::Display for Display<'_> {
                 writeln!(
                     f,
                     "    {}",
-                    display_node(&self.module.metadata, self.body, phi)
+                    display_node(self.module_metadata, self.body, phi)
                 )?;
             }
             for &node in self.schedule.scheduled_nodes(block) {
                 writeln!(
                     f,
                     "    {}",
-                    display_node(&self.module.metadata, self.body, node)
+                    display_node(self.module_metadata, self.body, node)
                 )?;
             }
             let succs = self.cfg.block_succs(block);

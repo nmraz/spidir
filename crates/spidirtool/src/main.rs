@@ -400,7 +400,12 @@ fn get_module_schedule_str(module: &Module) -> String {
         writeln!(
             output,
             " {{\n{}}}\n",
-            schedule.display(module, &func.body, &cfg_ctx.cfg, &cfg_ctx.block_order)
+            schedule.display(
+                &module.metadata,
+                &func.body,
+                &cfg_ctx.cfg,
+                &cfg_ctx.block_order
+            )
         )
         .unwrap();
     }

@@ -12,7 +12,7 @@ use fx_utils::{FxHashMap, FxHashSet};
 use graphwalk::{GraphRef, PostOrderContext};
 use ir::{
     function::FunctionBody,
-    module::Module,
+    module::ModuleMetadata,
     node::NodeKind,
     schedule::{ScheduleContext, schedule_early, schedule_late},
     valgraph::{DepValue, Node, ValGraph},
@@ -94,13 +94,13 @@ impl Schedule {
 
     pub fn display<'a>(
         &'a self,
-        module: &'a Module,
+        module_metadata: &'a ModuleMetadata,
         body: &'a FunctionBody,
         cfg: &'a BlockCfg,
         block_order: &'a [Block],
     ) -> Display<'a> {
         Display {
-            module,
+            module_metadata,
             body,
             cfg,
             schedule: self,

@@ -36,7 +36,7 @@ impl TestProvider for ScheduleProvider {
             write!(
                 output,
                 "{}",
-                schedule.display(&module, body, &cfg_ctx.cfg, &cfg_ctx.block_order)
+                schedule.display(&module.metadata, body, &cfg_ctx.cfg, &cfg_ctx.block_order)
             )
             .unwrap();
         }

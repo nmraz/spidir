@@ -366,7 +366,7 @@ fn output_dot_file(
     }
 
     if !annotator_opts.no_verify {
-        if let Err(inner_errors) = verify_func(module, func) {
+        if let Err(inner_errors) = verify_func(&module.metadata, func) {
             errors = inner_errors;
             annotators.push(Box::new(ErrorAnnotator::new(graph, &errors)));
         }

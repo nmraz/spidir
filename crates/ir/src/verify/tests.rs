@@ -29,7 +29,7 @@ fn check_verify_func_errors(
         },
     );
     assert_eq!(
-        verify_func(&module, module.borrow_function(func)).unwrap_err(),
+        verify_func(&module.metadata, module.borrow_function(func)).unwrap_err(),
         expected_errors
     );
 }

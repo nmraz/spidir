@@ -11,7 +11,7 @@ use smallvec::SmallVec;
 use crate::{
     domtree::{DomTree, DomTreeNode},
     function::{FunctionBody, FunctionBorrow, FunctionMetadata},
-    module::{Function, Module},
+    module::{Function, Module, ModuleMetadata},
     node::{DepValueKind, NodeKind},
     schedule::{ScheduleContext, schedule_early},
     valgraph::{DepValue, Node, ValGraph},
@@ -264,7 +264,7 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
     for function in module.metadata.functions().keys() {
         let func_borrow = module.borrow_function(function);
         check_name(&func_borrow.metadata.name, &mut errors);
-        if let Err(graph_errors) = verify_func(module, func_borrow) {
+        if let Err(graph_errors) = verify_func(&module.metadata, func_borrow) {
             errors.extend(
                 graph_errors
                     .into_iter()
@@ -281,7 +281,7 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
 }
 
 pub fn verify_func(
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
 ) -> Result<(), Vec<FunctionVerifierError>> {
     let body = func.body();
@@ -293,7 +293,7 @@ pub fn verify_func(
     }
 
     for node in walk_graph(&body.graph, body.entry) {
-        verify_node_kind(&module.metadata, func, node, &mut errors);
+        verify_node_kind(module_metadata, func, node, &mut errors);
         verify_control_outputs(&body.graph, node, &mut errors);
     }
 

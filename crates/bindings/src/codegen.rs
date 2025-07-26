@@ -195,7 +195,7 @@ unsafe extern "C" fn spidir_codegen_emit_function(
 }
 
 fn verify_ir_function(module: &Module, func: FunctionBorrow<'_>) {
-    if let Err(errs) = verify_func(module, func) {
+    if let Err(errs) = verify_func(&module.metadata, func) {
         error!("codegen verification of `{}` failed:", func.metadata.name);
         for err in errs {
             error!(

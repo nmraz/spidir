@@ -5,7 +5,7 @@ use ir::{
     domtree::DomTree,
     function::FunctionBorrow,
     loops::LoopForest,
-    module::Module,
+    module::{Module, ModuleMetadata},
     verify::{FunctionVerifierError, verify_func},
 };
 use ir_graphviz::{
@@ -77,7 +77,7 @@ impl SimpleTestProvider for GraphvizTestProvider {
                     );
                 }
                 AnnotatorKind::Verify => {
-                    let errors = get_verifier_errors(&module, func)?;
+                    let errors = get_verifier_errors(&module.metadata, func)?;
                     write_graphviz_with_annotator(
                         &mut output,
                         &mut [Box::new(ErrorAnnotator::new(&body.graph, &errors))],
@@ -86,7 +86,7 @@ impl SimpleTestProvider for GraphvizTestProvider {
                     );
                 }
                 AnnotatorKind::VerifyColored => {
-                    let errors = get_verifier_errors(&module, func)?;
+                    let errors = get_verifier_errors(&module.metadata, func)?;
                     write_graphviz_with_annotator(
                         &mut output,
                         &mut [
@@ -128,10 +128,10 @@ impl SimpleTestProvider for GraphvizTestProvider {
 }
 
 fn get_verifier_errors(
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
 ) -> Result<Vec<FunctionVerifierError>> {
-    verify_func(module, func)
+    verify_func(module_metadata, func)
         .err()
         .ok_or_else(|| anyhow!("expected function to contain errors"))
 }

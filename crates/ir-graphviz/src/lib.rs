@@ -125,7 +125,7 @@ fn format_dot_attributes(attrs: &DotAttributes) -> impl fmt::Display + '_ {
 
 fn stringify_dot_node_kind(module: &Module, body: &FunctionBody, node_kind: &NodeKind) -> String {
     let mut s = String::new();
-    write_node_kind(&mut s, module, body, node_kind).unwrap();
+    write_node_kind(&mut s, &module.metadata, body, node_kind).unwrap();
     escape_dot_attr_value(&s)
 }
 

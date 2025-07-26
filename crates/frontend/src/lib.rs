@@ -334,7 +334,11 @@ impl<'a> FunctionBuilder<'a> {
         trace!(
             "terminating block {}, last control node `{}`",
             cur_block.as_u32(),
-            display_node(self.module, self.body(), self.graph().value_def(ctrl).0)
+            display_node(
+                &self.module.metadata,
+                self.body(),
+                self.graph().value_def(ctrl).0
+            )
         );
         ctrl
     }
@@ -394,7 +398,7 @@ impl Builder for GraphBuilderWrapper<'_> {
         let node = builder.create_node(kind, inputs, output_kinds);
         trace!(
             "built node: `{}`",
-            display_node(self.module, self.body(), node)
+            display_node(&self.module.metadata, self.body(), node)
         );
         node
     }

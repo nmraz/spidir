@@ -4,7 +4,7 @@ use alloc::{borrow::Cow, format, vec::Vec};
 
 use crate::{
     function::{FunctionBody, FunctionBorrow, FunctionMetadata, Signature},
-    module::{ExternFunction, Function, Module},
+    module::{ExternFunction, Function, Module, ModuleMetadata},
     node::{FunctionRef, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -13,11 +13,11 @@ pub trait AnnotateGraph<W: fmt::Write + ?Sized> {
     fn write_node(
         &mut self,
         w: &mut W,
-        module: &Module,
+        module_metadata: &ModuleMetadata,
         body: &FunctionBody,
         node: Node,
     ) -> fmt::Result {
-        write_annotated_node(w, self, module, body, node)
+        write_annotated_node(w, self, module_metadata, body, node)
     }
 
     fn write_node_output(&mut self, w: &mut W, graph: &ValGraph, output: DepValue) -> fmt::Result {
@@ -27,7 +27,7 @@ pub trait AnnotateGraph<W: fmt::Write + ?Sized> {
     fn write_node_kind(
         &mut self,
         mut w: &mut W,
-        module: &Module,
+        module_metadata: &ModuleMetadata,
         body: &FunctionBody,
         node_kind: &NodeKind,
     ) -> fmt::Result {
@@ -35,7 +35,7 @@ pub trait AnnotateGraph<W: fmt::Write + ?Sized> {
         // `dyn fmt::Write`, but there isn't a way to let this trait know the concrete type `W` (and
         // allow it to be unsized) and have `write_node_kind` accept type-erased writers without the
         // extra indirection.
-        write_node_kind(&mut w, module, body, node_kind)
+        write_node_kind(&mut w, module_metadata, body, node_kind)
     }
 
     fn write_node_input(
@@ -51,18 +51,18 @@ pub trait AnnotateGraph<W: fmt::Write + ?Sized> {
 
 pub trait AnnotateModule<W: fmt::Write + ?Sized>: AnnotateGraph<W> {
     fn write_function(&mut self, w: &mut W, module: &Module, func: Function) -> fmt::Result {
-        write_annotated_function(w, self, module, module.borrow_function(func))
+        write_annotated_function(w, self, &module.metadata, module.borrow_function(func))
     }
 
     fn write_extern_function(
         &mut self,
         mut w: &mut W,
-        module: &Module,
+        module_metadata: &ModuleMetadata,
         func: ExternFunction,
     ) -> fmt::Result {
         // As above, we need the extra indirection to allow the type `W` to be unsized but allow
         // `write_extern_function` to operate on type-erased writers.
-        write_extern_function(&mut w, &module.metadata.extern_functions()[func])
+        write_extern_function(&mut w, &module_metadata.extern_functions()[func])
     }
 }
 
@@ -72,22 +72,26 @@ impl AnnotateGraph<dyn fmt::Write + '_> for DefaultAnnotator {}
 impl AnnotateModule<dyn fmt::Write + '_> for DefaultAnnotator {}
 
 pub fn display_node<'a>(
-    module: &'a Module,
+    module_metadata: &'a ModuleMetadata,
     body: &'a FunctionBody,
     node: Node,
 ) -> impl fmt::Display + 'a {
-    DisplayNode { module, body, node }
+    DisplayNode {
+        module_metadata,
+        body,
+        node,
+    }
 }
 
 struct DisplayNode<'a> {
-    module: &'a Module,
+    module_metadata: &'a ModuleMetadata,
     body: &'a FunctionBody,
     node: Node,
 }
 
 impl fmt::Display for DisplayNode<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_node(f, self.module, self.body, self.node)
+        write_node(f, self.module_metadata, self.body, self.node)
     }
 }
 
@@ -101,7 +105,7 @@ pub fn write_annotated_module<W: fmt::Write + ?Sized>(
     module: &Module,
 ) -> fmt::Result {
     for extern_func in module.metadata.extern_functions().keys() {
-        annotator.write_extern_function(w, module, extern_func)?;
+        annotator.write_extern_function(w, &module.metadata, extern_func)?;
     }
     w.write_str("\n")?;
 
@@ -119,37 +123,37 @@ pub fn write_annotated_module<W: fmt::Write + ?Sized>(
 
 pub fn write_function(
     w: &mut dyn fmt::Write,
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
 ) -> fmt::Result {
-    write_annotated_function(w, &mut DefaultAnnotator, module, func)
+    write_annotated_function(w, &mut DefaultAnnotator, module_metadata, func)
 }
 
 pub fn write_annotated_function<W: fmt::Write + ?Sized>(
     w: &mut W,
     annotator: &mut (impl AnnotateGraph<W> + ?Sized),
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
 ) -> fmt::Result {
     write!(w, "func {}", func.metadata)?;
     w.write_str(" {\n")?;
-    write_annotated_body(w, annotator, module, func.body(), 4)?;
+    write_annotated_body(w, annotator, module_metadata, func.body(), 4)?;
     w.write_str("}\n")
 }
 
 pub fn write_body(
     w: &mut dyn fmt::Write,
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     body: &FunctionBody,
     indentation: u32,
 ) -> fmt::Result {
-    write_annotated_body(w, &mut DefaultAnnotator, module, body, indentation)
+    write_annotated_body(w, &mut DefaultAnnotator, module_metadata, body, indentation)
 }
 
 pub fn write_annotated_body<W: fmt::Write + ?Sized>(
     w: &mut W,
     annotator: &mut (impl AnnotateGraph<W> + ?Sized),
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     body: &FunctionBody,
     indentation: u32,
 ) -> fmt::Result {
@@ -181,7 +185,7 @@ pub fn write_annotated_body<W: fmt::Write + ?Sized>(
 
     for node in nodes {
         write_indendation(w, indentation)?;
-        annotator.write_node(w, module, body, node)?;
+        annotator.write_node(w, module_metadata, body, node)?;
         writeln!(w)?;
     }
 
@@ -190,17 +194,17 @@ pub fn write_annotated_body<W: fmt::Write + ?Sized>(
 
 pub fn write_node(
     w: &mut dyn fmt::Write,
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     body: &FunctionBody,
     node: Node,
 ) -> fmt::Result {
-    write_annotated_node(w, &mut DefaultAnnotator, module, body, node)
+    write_annotated_node(w, &mut DefaultAnnotator, module_metadata, body, node)
 }
 
 pub fn write_annotated_node<W: fmt::Write + ?Sized>(
     w: &mut W,
     annotator: &mut (impl AnnotateGraph<W> + ?Sized),
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     body: &FunctionBody,
     node: Node,
 ) -> fmt::Result {
@@ -219,7 +223,7 @@ pub fn write_annotated_node<W: fmt::Write + ?Sized>(
         w.write_str(" = ")?;
     }
 
-    annotator.write_node_kind(w, module, body, graph.node_kind(node))?;
+    annotator.write_node_kind(w, module_metadata, body, graph.node_kind(node))?;
 
     for input in 0..graph.node_inputs(node).len() {
         if input == 0 {
@@ -251,7 +255,7 @@ pub fn write_value_def(
 
 pub fn write_node_kind(
     w: &mut dyn fmt::Write,
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     body: &FunctionBody,
     node_kind: &NodeKind,
 ) -> fmt::Result {
@@ -298,11 +302,11 @@ pub fn write_node_kind(
         NodeKind::BrCond => w.write_str("brcond")?,
         NodeKind::FuncAddr(func) => {
             w.write_str("funcaddr ")?;
-            write_func_ref(w, module, *func)?;
+            write_func_ref(w, module_metadata, *func)?;
         }
         NodeKind::Call(func) => {
             w.write_str("call ")?;
-            write_func_ref(w, module, *func)?;
+            write_func_ref(w, module_metadata, *func)?;
         }
         NodeKind::CallInd(sig) => {
             w.write_str("callind ")?;
@@ -352,11 +356,15 @@ fn write_signature(w: &mut dyn fmt::Write, sig: &Signature, after_name: bool) ->
     w.write_str(")")
 }
 
-fn write_func_ref(w: &mut dyn fmt::Write, module: &Module, func: FunctionRef) -> fmt::Result {
+fn write_func_ref(
+    w: &mut dyn fmt::Write,
+    module_metadata: &ModuleMetadata,
+    func: FunctionRef,
+) -> fmt::Result {
     write!(
         w,
         "@{}",
-        quote_ident(&module.metadata.resolve_funcref(func).name)
+        quote_ident(&module_metadata.resolve_funcref(func).name)
     )
 }
 
@@ -390,7 +398,7 @@ mod tests {
     fn check_write_body(body: &FunctionBody, expected: Expect) {
         let module = Module::new();
         let mut output = String::new();
-        write_body(&mut output, &module, body, 0).expect("failed to display graph");
+        write_body(&mut output, &module.metadata, body, 0).expect("failed to display graph");
         expected.assert_eq(&output);
     }
 
@@ -403,7 +411,7 @@ mod tests {
         let mut output = String::new();
         write_function(
             &mut output,
-            &module,
+            &module.metadata,
             FunctionBorrow {
                 data: function,
                 metadata,
@@ -454,7 +462,7 @@ mod tests {
         let mut check = |kind: NodeKind, expected: &str| {
             let node = body.graph.create_node(kind, [], []);
             let mut output = String::new();
-            write_node(&mut output, &module, &body, node).expect("failed to write node");
+            write_node(&mut output, &module.metadata, &body, node).expect("failed to write node");
             assert_eq!(output, expected.to_owned());
         };
 

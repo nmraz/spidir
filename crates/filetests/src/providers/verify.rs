@@ -90,7 +90,7 @@ impl SimpleTestProvider for VerifyErrProvider {
                     writeln!(
                         output,
                         "`{}`: {}",
-                        display_node(&module, body, error.node(graph)),
+                        display_node(&module.metadata, body, error.node(graph)),
                         error.display(graph)
                     )
                     .unwrap();

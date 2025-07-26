@@ -13,7 +13,7 @@ use regex::{Captures, Regex};
 
 use ir::{
     function::{FunctionBody, FunctionBorrow},
-    module::Module,
+    module::{Module, ModuleMetadata},
     valgraph::{DepValue, Node},
     verify::verify_module,
     write::{AnnotateGraph, write_annotated_body, write_annotated_node, write_node_kind},
@@ -58,7 +58,14 @@ pub fn write_body_with_trailing_comments(
     writeln!(output, "function `{}`:", func.metadata.name).unwrap();
     let mut comment_annotator = CommentAnnotator { comment_fn };
 
-    write_annotated_body(output, &mut comment_annotator, module, func.body(), 0).unwrap();
+    write_annotated_body(
+        output,
+        &mut comment_annotator,
+        &module.metadata,
+        func.body(),
+        0,
+    )
+    .unwrap();
 }
 
 struct CommentAnnotator<F> {
@@ -69,7 +76,7 @@ impl<F: FnMut(&mut String, Node)> AnnotateGraph<String> for CommentAnnotator<F> 
     fn write_node(
         &mut self,
         s: &mut String,
-        module: &Module,
+        module_metadata: &ModuleMetadata,
         body: &FunctionBody,
         node: Node,
     ) -> fmt::Result {
@@ -77,7 +84,7 @@ impl<F: FnMut(&mut String, Node)> AnnotateGraph<String> for CommentAnnotator<F> 
         const TAB_WIDTH: usize = 8;
 
         let orig_len = s.len();
-        write_annotated_node(s, self, module, body, node).unwrap();
+        write_annotated_node(s, self, module_metadata, body, node).unwrap();
         let node_line_len = s.len() - orig_len;
         let comment_start = round_up(cmp::max(MIN_LINE_LIMIT, node_line_len + 2), TAB_WIDTH);
         let pad_len = comment_start - node_line_len;
@@ -210,7 +217,7 @@ fn get_value_var_name(
 ) -> String {
     let node_kind = body.graph.node_kind(body.graph.value_def(value).0);
     let mut node_string = String::new();
-    write_node_kind(&mut node_string, module, body, node_kind).unwrap();
+    write_node_kind(&mut node_string, &module.metadata, body, node_kind).unwrap();
     let name_prefix = node_string.split(&[' ', '.']).next().unwrap();
     let counter = name_counter.entry(name_prefix.to_owned()).or_default();
     let name = format!("{name_prefix}{counter}");

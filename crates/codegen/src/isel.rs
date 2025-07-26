@@ -162,7 +162,7 @@ impl fmt::Display for DisplayIselError<'_> {
         write!(
             f,
             "failed to select `{}`",
-            display_node(self.module, self.body, self.error.node)
+            display_node(&self.module.metadata, self.body, self.error.node)
         )
     }
 }
@@ -302,7 +302,10 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         }
 
         for &node in self.schedule.scheduled_nodes(block).iter().rev() {
-            trace!("  {}:", display_node(self.module, self.body(), node));
+            trace!(
+                "  {}:",
+                display_node(&self.module.metadata, self.body(), node)
+            );
 
             // Note: node inputs should be detached after selection so the selector sees correct use
             // counts for the current node's inputs.
@@ -405,7 +408,10 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             // Multiple predecessors - the phis are really necessary.
             builder.set_incoming_block_params(self.schedule.block_phis(block).iter().map(|&phi| {
                 let val = self.value_reg_map[self.graph().node_outputs(phi)[0]].unwrap();
-                trace!("  {}", display_node(self.module, self.body(), phi));
+                trace!(
+                    "  {}",
+                    display_node(&self.module.metadata, self.body(), phi)
+                );
                 val
             }));
         }

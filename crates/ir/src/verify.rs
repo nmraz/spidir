@@ -232,7 +232,7 @@ impl fmt::Display for DisplayErrorWithContext<'_> {
                 f,
                 "in function `{}`: `{}`: {}",
                 metadata.name,
-                display_node(self.module, body, node),
+                display_node(&self.module.metadata, body, node),
                 self.error.display(self.module)
             )
         } else {

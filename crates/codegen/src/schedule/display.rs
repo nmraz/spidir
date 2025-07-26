@@ -20,10 +20,18 @@ impl fmt::Display for Display<'_> {
         for &block in self.block_order {
             writeln!(f, "{block}:")?;
             for &phi in self.schedule.block_phis(block) {
-                writeln!(f, "    {}", display_node(self.module, self.body, phi))?;
+                writeln!(
+                    f,
+                    "    {}",
+                    display_node(&self.module.metadata, self.body, phi)
+                )?;
             }
             for &node in self.schedule.scheduled_nodes(block) {
-                writeln!(f, "    {}", display_node(self.module, self.body, node))?;
+                writeln!(
+                    f,
+                    "    {}",
+                    display_node(&self.module.metadata, self.body, node)
+                )?;
             }
             let succs = self.cfg.block_succs(block);
             if !succs.is_empty() {

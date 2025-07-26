@@ -426,7 +426,7 @@ fn get_module_lir_str(
             anyhow!(
                 "failed to select `{}`: `{}`",
                 func.metadata.name,
-                display_node(module, func.body(), err.node)
+                display_node(&module.metadata, func.body(), err.node)
             )
         })?;
 

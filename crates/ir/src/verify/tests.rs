@@ -102,7 +102,7 @@ fn verify_module_propagate_graph_error() {
             param_types: vec![],
         },
     );
-    let body = &module.functions[func].body;
+    let body = &module.function_bodies[func];
     let entry_ctrl = body.graph.node_outputs(body.entry)[0];
 
     check_verify_module_errors(
@@ -157,7 +157,7 @@ fn verify_module_duplicate_intern_extern_names() {
         },
     );
 
-    let body = &mut module.functions[f].body;
+    let body = &mut module.function_bodies[f];
     let entry_ctrl = body.entry_ctrl();
     SimpleBuilder(body).build_return(entry_ctrl, None);
 
@@ -179,7 +179,7 @@ fn verify_module_duplicate_intern_names() {
         },
     );
 
-    let body = &mut module.functions[f].body;
+    let body = &mut module.function_bodies[f];
     let entry_ctrl = body.entry_ctrl();
     SimpleBuilder(body).build_return(entry_ctrl, None);
 
@@ -191,7 +191,7 @@ fn verify_module_duplicate_intern_names() {
         },
     );
 
-    let body = &mut module.functions[f].body;
+    let body = &mut module.function_bodies[f];
     let entry_ctrl = body.entry_ctrl();
     SimpleBuilder(body).build_return(entry_ctrl, None);
 

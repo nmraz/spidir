@@ -4,7 +4,8 @@ use core::fmt;
 use cranelift_entity::{PrimaryMap, SecondaryMap, entity_impl};
 
 use crate::{
-    function::{FunctionBody, FunctionBorrow, FunctionData, FunctionMetadata, Signature},
+    cache::NodeCache,
+    function::{FunctionBody, FunctionBorrow, FunctionMetadata, Signature},
     node::FunctionRef,
     write::write_module,
 };
@@ -43,7 +44,8 @@ impl ModuleMetadata {
 #[derive(Clone)]
 pub struct Module {
     pub metadata: ModuleMetadata,
-    pub functions: SecondaryMap<Function, FunctionData>,
+    pub function_bodies: SecondaryMap<Function, FunctionBody>,
+    pub function_node_caches: SecondaryMap<Function, NodeCache>,
 }
 
 impl Module {
@@ -53,7 +55,8 @@ impl Module {
                 functions: PrimaryMap::new(),
                 extern_functions: PrimaryMap::new(),
             },
-            functions: SecondaryMap::with_default(FunctionData::new_invalid()),
+            function_bodies: SecondaryMap::with_default(FunctionBody::new_invalid()),
+            function_node_caches: SecondaryMap::new(),
         }
     }
 
@@ -78,25 +81,22 @@ impl Module {
         sig: Signature,
         body: FunctionBody,
     ) -> Function {
-        self.create_function_from_data_metadata(
-            FunctionData::from_body(body),
-            FunctionMetadata { name, sig },
-        )
+        self.create_function_from_metadata_body(FunctionMetadata { name, sig }, body)
     }
 
-    pub fn create_function_from_data_metadata(
+    pub fn create_function_from_metadata_body(
         &mut self,
-        data: FunctionData,
         metadata: FunctionMetadata,
+        body: FunctionBody,
     ) -> Function {
         let func = self.metadata.functions.push(metadata);
-        self.functions[func] = data;
+        self.function_bodies[func] = body;
         func
     }
 
     pub fn borrow_function(&self, func: Function) -> FunctionBorrow<'_> {
         FunctionBorrow {
-            data: &self.functions[func],
+            body: &self.function_bodies[func],
             metadata: &self.metadata.functions[func],
         }
     }

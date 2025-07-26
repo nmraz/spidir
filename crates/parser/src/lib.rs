@@ -120,8 +120,8 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
     }
 
     for func in pending_functions {
-        let func_data = &mut module.functions[func.id];
-        extract_body(func.graph_pair, &function_names, &mut func_data.body)?;
+        let body = &mut module.function_bodies[func.id];
+        extract_body(func.graph_pair, &function_names, body)?;
     }
 
     Ok(module)

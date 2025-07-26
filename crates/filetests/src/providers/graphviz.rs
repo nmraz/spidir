@@ -62,7 +62,7 @@ impl SimpleTestProvider for GraphvizTestProvider {
 
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();
 
-            let body = func.body();
+            let body = func.body;
 
             match self.kind {
                 AnnotatorKind::Plain => {
@@ -142,5 +142,5 @@ fn write_graphviz_with_annotator(
     module: &Module,
     func: FunctionBorrow<'_>,
 ) {
-    write_graphviz(output, annotators, &module.metadata, func.body()).unwrap();
+    write_graphviz(output, annotators, &module.metadata, func.body).unwrap();
 }

@@ -4,7 +4,6 @@ use core::{fmt, iter};
 use cranelift_entity::{PrimaryMap, entity_impl, packed_option::ReservedValue};
 
 use crate::{
-    cache::NodeCache,
     node::{DepValueKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{CfgPreorderInfo, GraphWalkInfo},
@@ -84,38 +83,8 @@ impl FunctionBody {
     }
 }
 
-#[derive(Clone)]
-pub struct FunctionData {
-    pub body: FunctionBody,
-    pub node_cache: NodeCache,
-}
-
-impl FunctionData {
-    pub fn new_invalid() -> Self {
-        Self::from_body(FunctionBody::new_invalid())
-    }
-
-    pub fn new(param_types: &[Type]) -> Self {
-        Self::from_body(FunctionBody::new(param_types))
-    }
-
-    pub fn from_body(body: FunctionBody) -> Self {
-        Self {
-            body,
-            node_cache: NodeCache::new(),
-        }
-    }
-}
-
 #[derive(Clone, Copy)]
 pub struct FunctionBorrow<'a> {
-    pub data: &'a FunctionData,
     pub metadata: &'a FunctionMetadata,
-}
-
-impl<'a> FunctionBorrow<'a> {
-    #[inline]
-    pub fn body(&self) -> &'a FunctionBody {
-        &self.data.body
-    }
+    pub body: &'a FunctionBody,
 }

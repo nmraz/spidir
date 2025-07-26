@@ -62,7 +62,7 @@ pub fn write_body_with_trailing_comments(
         output,
         &mut comment_annotator,
         module_metadata,
-        func.body(),
+        func.body,
         0,
     )
     .unwrap();
@@ -196,7 +196,7 @@ pub fn generalize_value_names(
                 Entry::Vacant(vacant_entry) => {
                     let name = get_value_var_name(
                         &module.metadata,
-                        cur_func.body(),
+                        cur_func.body,
                         &mut name_counter,
                         value,
                     );

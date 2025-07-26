@@ -53,7 +53,7 @@ impl SimpleTestProvider for IselRegallocProvider {
                     anyhow!(
                         "isel failed for `{}`: {}",
                         func.metadata.name,
-                        e.display(&module.metadata, func.body())
+                        e.display(&module.metadata, func.body)
                     )
                 })?;
             let assignment = regalloc::run(&lir, &cfg_ctx, &self.machine)

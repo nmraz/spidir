@@ -178,7 +178,7 @@ impl ModuleVerifierError {
         match self {
             Self::Func { function, error } => {
                 let metadata = &module.metadata.functions()[*function];
-                let body = &module.functions[*function].body;
+                let body = &module.function_bodies[*function];
                 Some((metadata, body, error.node(&body.graph)))
             }
             _ => None,
@@ -210,8 +210,8 @@ impl fmt::Display for DisplayError<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.error {
             ModuleVerifierError::Func { function, error } => {
-                let function = &self.module.functions[*function];
-                write!(f, "{}", error.display(&function.body.graph))
+                let body = &self.module.function_bodies[*function];
+                write!(f, "{}", error.display(&body.graph))
             }
             ModuleVerifierError::ReusedFunctionName(name) => {
                 write!(f, "function name `{name}` reused")
@@ -284,7 +284,7 @@ pub fn verify_func(
     module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
 ) -> Result<(), Vec<FunctionVerifierError>> {
-    let body = func.body();
+    let body = func.body;
 
     let mut errors = Vec::new();
 

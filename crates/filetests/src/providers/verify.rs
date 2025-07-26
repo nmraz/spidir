@@ -84,7 +84,7 @@ impl SimpleTestProvider for VerifyErrProvider {
 
             writeln!(output, "function `{}`:", func_borrow.metadata.name).unwrap();
             if let Some(errors) = errors_by_function.get(func) {
-                let body = func_borrow.body();
+                let body = func_borrow.body;
                 let graph = &body.graph;
                 for error in errors {
                     writeln!(

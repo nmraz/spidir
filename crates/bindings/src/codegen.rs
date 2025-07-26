@@ -205,8 +205,8 @@ fn verify_ir_function(module: &Module, func: FunctionBorrow<'_>) {
         for err in errs {
             error!(
                 "    `{}`: {}",
-                display_node(&module.metadata, func.body(), err.node(&func.body().graph)),
-                err.display(&func.body().graph)
+                display_node(&module.metadata, func.body, err.node(&func.body.graph)),
+                err.display(&func.body.graph)
             );
         }
         panic!("`{}` contained invalid IR", func.metadata.name);

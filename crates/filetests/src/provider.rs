@@ -228,7 +228,7 @@ pub fn update_transformed_module_output(
             // opening brace, to avoid the matching getting confused by different nodes with the
             // same textual representation.
             ordered_lines =
-                count_nodes_with_identity(borrow_func_by_name(module, &new_func).body()) + 1;
+                count_nodes_with_identity(borrow_func_by_name(module, &new_func).body) + 1;
             continue;
         } else if !in_func {
             continue;

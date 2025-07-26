@@ -4,7 +4,7 @@ use ir::module::Module;
 unsafe extern "C" fn spidir_opt_run(module: *mut Module) {
     let module = unsafe { &mut *module };
 
-    for func in module.functions.values_mut() {
-        opt::canonicalize::canonicalize(&mut func.body, &mut func.node_cache);
+    for (func, body) in module.function_bodies.iter_mut() {
+        opt::canonicalize::canonicalize(body, &mut module.function_node_caches[func]);
     }
 }

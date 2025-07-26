@@ -110,7 +110,7 @@ pub fn write_annotated_module<W: fmt::Write + ?Sized>(
     w.write_str("\n")?;
 
     let mut first_function = true;
-    for func in module.functions.keys() {
+    for func in module.function_bodies.keys() {
         if !first_function {
             w.write_str("\n")?;
         }
@@ -137,7 +137,7 @@ pub fn write_annotated_function<W: fmt::Write + ?Sized>(
 ) -> fmt::Result {
     write!(w, "func {}", func.metadata)?;
     w.write_str(" {\n")?;
-    write_annotated_body(w, annotator, module_metadata, func.body(), 4)?;
+    write_annotated_body(w, annotator, module_metadata, func.body, 4)?;
     w.write_str("}\n")
 }
 
@@ -379,15 +379,14 @@ mod tests {
 
     use crate::{
         builder::{BuilderExt, SimpleBuilder},
-        function::FunctionData,
         node::{BitwiseF64, FcmpKind, IcmpKind, MemSize, Type},
         test_utils::create_loop_body,
     };
 
     use super::*;
 
-    fn create_func_and_metadata(name: &str, sig: Signature) -> (FunctionData, FunctionMetadata) {
-        let function = FunctionData::new(&sig.param_types);
+    fn create_body_and_metadata(name: &str, sig: Signature) -> (FunctionBody, FunctionMetadata) {
+        let function = FunctionBody::new(&sig.param_types);
         let metadata = FunctionMetadata {
             name: name.to_owned(),
             sig,
@@ -402,20 +401,13 @@ mod tests {
         expected.assert_eq(&output);
     }
 
-    fn check_write_function(
-        function: &FunctionData,
-        metadata: &FunctionMetadata,
-        expected: Expect,
-    ) {
+    fn check_write_function(body: &FunctionBody, metadata: &FunctionMetadata, expected: Expect) {
         let module = Module::new();
         let mut output = String::new();
         write_function(
             &mut output,
             &module.metadata,
-            FunctionBorrow {
-                data: function,
-                metadata,
-            },
+            FunctionBorrow { body, metadata },
         )
         .expect("failed to display function");
         expected.assert_eq(&output);
@@ -602,7 +594,7 @@ mod tests {
 
     #[test]
     fn write_add_params_func() {
-        let (mut function, metadata) = create_func_and_metadata(
+        let (mut body, metadata) = create_body_and_metadata(
             "add_i32",
             Signature {
                 ret_type: Some(Type::I32),
@@ -610,18 +602,16 @@ mod tests {
             },
         );
 
-        let body = &mut function.body;
-
         let ctrl = body.entry_ctrl();
         let param1 = body.param_value(0);
         let param2 = body.param_value(1);
 
-        let mut builder = SimpleBuilder(body);
+        let mut builder = SimpleBuilder(&mut body);
         let add = builder.build_iadd(param1, param2);
         builder.build_return(ctrl, Some(add));
 
         check_write_function(
-            &function,
+            &body,
             &metadata,
             expect![[r#"
                 func @add_i32:i32(i32, i32) {
@@ -635,7 +625,7 @@ mod tests {
 
     #[test]
     fn write_void_func() {
-        let (mut function, metadata) = create_func_and_metadata(
+        let (mut body, metadata) = create_body_and_metadata(
             "nop",
             Signature {
                 ret_type: None,
@@ -643,11 +633,11 @@ mod tests {
             },
         );
 
-        let ctrl = function.body.entry_ctrl();
-        SimpleBuilder(&mut function.body).build_return(ctrl, None);
+        let ctrl = body.entry_ctrl();
+        SimpleBuilder(&mut body).build_return(ctrl, None);
 
         check_write_function(
-            &function,
+            &body,
             &metadata,
             expect![[r#"
                 func @nop(i32) {
@@ -660,7 +650,7 @@ mod tests {
 
     #[test]
     fn write_stack_slot_func() {
-        let (mut function, metadata) = create_func_and_metadata(
+        let (mut body, metadata) = create_body_and_metadata(
             "with_slots",
             Signature {
                 ret_type: None,
@@ -668,11 +658,11 @@ mod tests {
             },
         );
 
-        let entry_ctrl = function.body.entry_ctrl();
-        let param32 = function.body.param_value(0);
-        let param64 = function.body.param_value(1);
+        let entry_ctrl = body.entry_ctrl();
+        let param32 = body.param_value(0);
+        let param64 = body.param_value(1);
 
-        let mut builder = SimpleBuilder(&mut function.body);
+        let mut builder = SimpleBuilder(&mut body);
 
         let addr32 = builder.build_stackslot(4, 4);
         let addr64 = builder.build_stackslot(8, 8);
@@ -682,7 +672,7 @@ mod tests {
         builder.build_return(store64_ctrl, None);
 
         check_write_function(
-            &function,
+            &body,
             &metadata,
             expect![[r#"
                 func @with_slots(i32, f64) {
@@ -715,7 +705,7 @@ mod tests {
             },
         );
 
-        let body = &mut module.functions[func].body;
+        let body = &mut module.function_bodies[func];
         let entry_ctrl = body.entry_ctrl();
         let param1 = body.param_value(0);
 

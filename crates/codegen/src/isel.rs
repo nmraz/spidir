@@ -511,7 +511,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn body(&self) -> &'ctx FunctionBody {
-        self.func.body()
+        self.func.body
     }
 }
 

@@ -19,7 +19,7 @@ impl SimpleTestProvider for CfgProvider {
         for func in module.metadata.functions().keys() {
             let func = module.borrow_function(func);
 
-            let body = func.body();
+            let body = func.body;
             let cfg_preorder = body.compute_cfg_preorder_info();
             let (cfg, block_map) = compute_block_cfg(&body.graph, &cfg_preorder.preorder);
             let mut seen_blocks = DenseEntitySet::new();

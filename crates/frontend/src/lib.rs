@@ -373,11 +373,11 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn body(&self) -> &FunctionBody {
-        &self.module.functions[self.func].body
+        &self.module.function_bodies[self.func]
     }
 
     fn body_mut(&mut self) -> &mut FunctionBody {
-        &mut self.module.functions[self.func].body
+        &mut self.module.function_bodies[self.func]
     }
 }
 
@@ -393,8 +393,9 @@ impl Builder for GraphBuilderWrapper<'_> {
         inputs: impl IntoIterator<Item = DepValue>,
         output_kinds: impl IntoIterator<Item = DepValueKind>,
     ) -> Node {
-        let func = &mut self.module.functions[self.func];
-        let mut builder = CachingBuilder::new(&mut func.body, &mut func.node_cache);
+        let body = &mut self.module.function_bodies[self.func];
+        let node_cache = &mut self.module.function_node_caches[self.func];
+        let mut builder = CachingBuilder::new(body, node_cache);
         let node = builder.create_node(kind, inputs, output_kinds);
         trace!(
             "built node: `{}`",
@@ -404,11 +405,11 @@ impl Builder for GraphBuilderWrapper<'_> {
     }
 
     fn body(&self) -> &FunctionBody {
-        &self.module.functions[self.func].body
+        &self.module.function_bodies[self.func]
     }
 
     fn body_mut(&mut self) -> &mut FunctionBody {
-        &mut self.module.functions[self.func].body
+        &mut self.module.function_bodies[self.func]
     }
 }
 

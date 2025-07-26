@@ -346,13 +346,13 @@ fn output_dot_file(
     module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
 ) -> Result<()> {
-    let graph = &func.body().graph;
+    let graph = &func.body.graph;
 
     let errors;
     let loop_forest;
 
     let domtree = if annotator_opts.domtree || annotator_opts.loops {
-        Some(DomTree::compute(graph, func.body().entry))
+        Some(DomTree::compute(graph, func.body.entry))
     } else {
         None
     };
@@ -377,7 +377,7 @@ fn output_dot_file(
         }
     };
 
-    let s = get_graphviz_str(&mut annotators, module_metadata, func.body())?;
+    let s = get_graphviz_str(&mut annotators, module_metadata, func.body)?;
 
     file.write_all(s.as_bytes())
         .context("failed to write dot file")?;
@@ -387,8 +387,8 @@ fn output_dot_file(
 
 fn optimize_module(module: &mut Module) {
     // For now: just run the canonicalization pass on everything.
-    for func in module.functions.values_mut() {
-        opt::canonicalize::canonicalize(&mut func.body, &mut func.node_cache);
+    for (func, body) in module.function_bodies.iter_mut() {
+        opt::canonicalize::canonicalize(body, &mut module.function_node_caches[func]);
     }
 }
 
@@ -396,21 +396,16 @@ fn get_module_schedule_str(module: &Module) -> String {
     let mut output = String::new();
 
     for (func, metadata) in module.metadata.functions() {
-        let func = &module.functions[func];
+        let body = &module.function_bodies[func];
 
         write_function_metadata(&mut output, metadata).unwrap();
 
-        let (cfg_ctx, _, schedule) = schedule_graph(&func.body.graph, func.body.entry);
+        let (cfg_ctx, _, schedule) = schedule_graph(&body.graph, body.entry);
 
         writeln!(
             output,
             " {{\n{}}}\n",
-            schedule.display(
-                &module.metadata,
-                &func.body,
-                &cfg_ctx.cfg,
-                &cfg_ctx.block_order
-            )
+            schedule.display(&module.metadata, body, &cfg_ctx.cfg, &cfg_ctx.block_order)
         )
         .unwrap();
     }
@@ -436,7 +431,7 @@ fn get_module_lir_str(
             anyhow!(
                 "failed to select `{}`: `{}`",
                 func.metadata.name,
-                display_node(&module.metadata, func.body(), err.node)
+                display_node(&module.metadata, func.body, err.node)
             )
         })?;
 

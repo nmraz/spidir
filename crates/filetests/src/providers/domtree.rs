@@ -17,7 +17,7 @@ impl SimpleTestProvider for DomTreeProvider {
 
         for func in module.metadata.functions().keys() {
             let func = module.borrow_function(func);
-            let body = func.body();
+            let body = func.body;
 
             let domtree = DomTree::compute(&body.graph, body.entry);
             let mut rpo_nums = SecondaryMap::new();

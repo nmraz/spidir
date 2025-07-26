@@ -30,7 +30,7 @@ pub unsafe fn codegen_and_exec(
 ) -> Result<isize> {
     let mut code_blobs = SecondaryMap::with_capacity(module.metadata.functions().len());
 
-    for func in module.functions.keys() {
+    for func in module.function_bodies.keys() {
         code_blobs[func] = codegen_func(module, func)?;
     }
 
@@ -78,7 +78,7 @@ pub unsafe fn codegen_and_exec(
     // * Break-at-entry can be implemented by moving the call target one byte back.
     buf.fill(0xcc);
 
-    for func in module.functions.keys() {
+    for func in module.function_bodies.keys() {
         let blob = &code_blobs[func];
         let offsets = &func_offsets[func];
 

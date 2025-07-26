@@ -12,7 +12,7 @@ use crate::utils::function_by_name;
 pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> {
     let (func, func_borrow) = function_by_name(module, function_name)?;
 
-    let referenced_functions = collect_referenced_functions(func_borrow.body());
+    let referenced_functions = collect_referenced_functions(func_borrow.body);
 
     let mut new_module = Module::new();
     let mut function_map = FxHashMap::default();
@@ -30,8 +30,8 @@ pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> 
     }
 
     let new_func = new_module
-        .create_function_from_data_metadata(func_borrow.data.clone(), func_borrow.metadata.clone());
-    let new_body = &mut new_module.functions[new_func].body;
+        .create_function_from_metadata_body(func_borrow.metadata.clone(), func_borrow.body.clone());
+    let new_body = &mut new_module.function_bodies[new_func];
     let live_nodes: Vec<_> = walk_graph(&new_body.graph, new_body.entry).collect();
 
     for &node in &live_nodes {

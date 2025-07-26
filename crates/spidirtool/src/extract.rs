@@ -1,7 +1,7 @@
 use anyhow::Result;
 use fx_utils::{FxHashMap, FxHashSet};
 use ir::{
-    function::{FunctionBody, FunctionMetadata},
+    function::FunctionBody,
     module::Module,
     node::{FunctionRef, NodeKind},
     valwalk::walk_graph,
@@ -24,10 +24,8 @@ pub fn extract_function(module: &Module, function_name: &str) -> Result<Module> 
         }
 
         let metadata = module.metadata.resolve_funcref(funcref);
-        let new_funcref = new_module.metadata.extern_functions.push(FunctionMetadata {
-            name: metadata.name.to_owned(),
-            sig: metadata.sig.clone(),
-        });
+        let new_funcref =
+            new_module.create_extern_function(metadata.name.to_owned(), metadata.sig.clone());
         function_map.insert(funcref, new_funcref);
     }
 

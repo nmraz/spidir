@@ -13,7 +13,7 @@ use alloc::{
 use fx_utils::FxHashMap;
 use hexfloat2::HexFloat64;
 use ir::{
-    function::{FunctionBody, FunctionMetadata, Signature},
+    function::{FunctionBody, Signature},
     module::{Function, Module},
     node::{BitwiseF64, DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::DepValue,
@@ -90,10 +90,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                     )));
                 }
 
-                let function = module.metadata.extern_functions.push(FunctionMetadata {
-                    name: name.clone().into_owned(),
-                    sig,
-                });
+                let function = module.create_extern_function(name.clone().into_owned(), sig);
                 function_names.insert(name, FunctionRef::External(function));
             }
             Rule::func => {

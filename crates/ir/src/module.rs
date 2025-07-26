@@ -50,6 +50,12 @@ impl Module {
         }
     }
 
+    pub fn create_extern_function(&mut self, name: String, sig: Signature) -> ExternFunction {
+        self.metadata
+            .extern_functions
+            .push(FunctionMetadata { name, sig })
+    }
+
     pub fn create_function(&mut self, name: String, sig: Signature) -> Function {
         let body = FunctionBody::new(&sig.param_types);
         self.create_function_with_body(name, sig, body)

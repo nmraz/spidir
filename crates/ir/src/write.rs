@@ -429,12 +429,9 @@ mod tests {
             },
         );
 
-        let extfunc = module.metadata.extern_functions.push(FunctionMetadata {
-            name: "my_ext_func".to_owned(),
-            sig: Signature {
-                ret_type: Some(Type::I32),
-                param_types: vec![],
-            },
+        let extfunc = module.create_extern_function("my_ext_func".to_owned(), Signature {
+            ret_type: Some(Type::I32),
+            param_types: vec![],
         });
 
         let mut body = FunctionBody::new_invalid();
@@ -699,12 +696,9 @@ mod tests {
                 param_types: vec![Type::I64],
             },
         );
-        let extfunc = module.metadata.extern_functions.push(FunctionMetadata {
-            name: "my_ext_func".to_owned(),
-            sig: Signature {
-                ret_type: Some(Type::I32),
-                param_types: vec![Type::I64],
-            },
+        let extfunc = module.create_extern_function("my_ext_func".to_owned(), Signature {
+            ret_type: Some(Type::I32),
+            param_types: vec![Type::I64],
         });
 
         let body = &mut module.functions[func].body;
@@ -737,26 +731,17 @@ mod tests {
     #[test]
     fn write_multi_extfunc_module() {
         let mut module = Module::new();
-        module.metadata.extern_functions.push(FunctionMetadata {
-            name: "func1".to_owned(),
-            sig: Signature {
-                ret_type: Some(Type::I32),
-                param_types: vec![Type::I64],
-            },
+        module.create_extern_function("func1".to_owned(), Signature {
+            ret_type: Some(Type::I32),
+            param_types: vec![Type::I64],
         });
-        module.metadata.extern_functions.push(FunctionMetadata {
-            name: "func2".to_owned(),
-            sig: Signature {
-                ret_type: None,
-                param_types: vec![Type::I64, Type::Ptr],
-            },
+        module.create_extern_function("func2".to_owned(), Signature {
+            ret_type: None,
+            param_types: vec![Type::I64, Type::Ptr],
         });
-        module.metadata.extern_functions.push(FunctionMetadata {
-            name: "func3".to_owned(),
-            sig: Signature {
-                ret_type: None,
-                param_types: vec![],
-            },
+        module.create_extern_function("func3".to_owned(), Signature {
+            ret_type: None,
+            param_types: vec![],
         });
 
         check_write_module(
@@ -782,12 +767,9 @@ mod tests {
             },
         );
 
-        module.metadata.extern_functions.push(FunctionMetadata {
-            name: "System.Test+Lol System.Test::Do(Lol[])".to_owned(),
-            sig: Signature {
-                ret_type: None,
-                param_types: vec![],
-            },
+        module.create_extern_function("System.Test+Lol System.Test::Do(Lol[])".to_owned(), Signature {
+            ret_type: None,
+            param_types: vec![],
         });
 
         check_write_module(

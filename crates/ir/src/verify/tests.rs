@@ -2,7 +2,7 @@ use cranelift_entity::PrimaryMap;
 
 use crate::{
     builder::{BuilderExt, SimpleBuilder},
-    function::{FunctionBody, FunctionMetadata, Signature},
+    function::{FunctionBody, Signature},
     node::Type,
     test_utils::{create_const32, create_entry, create_region, create_return},
 };
@@ -117,20 +117,20 @@ fn verify_module_propagate_graph_error() {
 #[test]
 fn verify_module_duplicate_extern_names() {
     let mut module = Module::new();
-    module.metadata.extern_functions.push(FunctionMetadata {
-        name: "func".to_owned(),
-        sig: Signature {
+    module.create_extern_function(
+        "func".to_owned(),
+        Signature {
             ret_type: None,
             param_types: vec![],
         },
-    });
-    module.metadata.extern_functions.push(FunctionMetadata {
-        name: "func".to_owned(),
-        sig: Signature {
+    );
+    module.create_extern_function(
+        "func".to_owned(),
+        Signature {
             ret_type: Some(Type::I32),
             param_types: vec![],
         },
-    });
+    );
 
     check_verify_module_errors(
         &module,
@@ -141,13 +141,13 @@ fn verify_module_duplicate_extern_names() {
 #[test]
 fn verify_module_duplicate_intern_extern_names() {
     let mut module = Module::new();
-    module.metadata.extern_functions.push(FunctionMetadata {
-        name: "func".to_owned(),
-        sig: Signature {
+    module.create_extern_function(
+        "func".to_owned(),
+        Signature {
             ret_type: None,
             param_types: vec![],
         },
-    });
+    );
 
     let f = module.create_function(
         "func".to_owned(),
@@ -204,27 +204,27 @@ fn verify_module_duplicate_intern_names() {
 #[test]
 fn verify_module_many_duplicate_names() {
     let mut module = Module::new();
-    module.metadata.extern_functions.push(FunctionMetadata {
-        name: "func".to_owned(),
-        sig: Signature {
+    module.create_extern_function(
+        "func".to_owned(),
+        Signature {
             ret_type: None,
             param_types: vec![],
         },
-    });
-    module.metadata.extern_functions.push(FunctionMetadata {
-        name: "func".to_owned(),
-        sig: Signature {
+    );
+    module.create_extern_function(
+        "func".to_owned(),
+        Signature {
             ret_type: Some(Type::I32),
             param_types: vec![],
         },
-    });
-    module.metadata.extern_functions.push(FunctionMetadata {
-        name: "func".to_owned(),
-        sig: Signature {
+    );
+    module.create_extern_function(
+        "func".to_owned(),
+        Signature {
             ret_type: Some(Type::I32),
             param_types: vec![],
         },
-    });
+    );
 
     check_verify_module_errors(
         &module,

@@ -23,7 +23,7 @@ impl SimpleTestProvider for IselProvider {
     fn output_for(&self, module: Module) -> Result<String> {
         let mut output = String::new();
 
-        for func in module.metadata.functions.keys() {
+        for func in module.metadata.functions().keys() {
             let func = module.borrow_function(func);
 
             writeln!(output, "function `{}`:", func.metadata.name).unwrap();

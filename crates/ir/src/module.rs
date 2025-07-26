@@ -17,15 +17,19 @@ entity_impl!(Function, "func");
 pub struct ExternFunction(u32);
 entity_impl!(ExternFunction, "extfunc");
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct ModuleMetadata {
-    pub functions: PrimaryMap<Function, FunctionMetadata>,
-    pub extern_functions: PrimaryMap<ExternFunction, FunctionMetadata>,
+    functions: PrimaryMap<Function, FunctionMetadata>,
+    extern_functions: PrimaryMap<ExternFunction, FunctionMetadata>,
 }
 
 impl ModuleMetadata {
-    pub fn new() -> Self {
-        Default::default()
+    pub fn functions(&self) -> &PrimaryMap<Function, FunctionMetadata> {
+        &self.functions
+    }
+
+    pub fn extern_functions(&self) -> &PrimaryMap<ExternFunction, FunctionMetadata> {
+        &self.extern_functions
     }
 
     pub fn resolve_funcref(&self, funcref: FunctionRef) -> &FunctionMetadata {
@@ -45,7 +49,10 @@ pub struct Module {
 impl Module {
     pub fn new() -> Self {
         Self {
-            metadata: ModuleMetadata::new(),
+            metadata: ModuleMetadata {
+                functions: PrimaryMap::new(),
+                extern_functions: PrimaryMap::new(),
+            },
             functions: SecondaryMap::with_default(FunctionData::new_invalid()),
         }
     }

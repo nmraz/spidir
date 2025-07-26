@@ -32,7 +32,7 @@ macro_rules! regex {
 pub fn borrow_func_by_name<'a>(module: &'a Module, name: &str) -> FunctionBorrow<'a> {
     let (func, _) = module
         .metadata
-        .functions
+        .functions()
         .iter()
         .find(|(_func, metadata)| metadata.name == name)
         .unwrap();
@@ -164,7 +164,7 @@ pub fn generalize_value_names(
         if let Some(new_func) = find_new_func(line) {
             if let Some((new_func, _)) = module
                 .metadata
-                .functions
+                .functions()
                 .iter()
                 .find(|(_func, metadata)| metadata.name == new_func)
             {

@@ -62,7 +62,7 @@ pub trait AnnotateModule<W: fmt::Write + ?Sized>: AnnotateGraph<W> {
     ) -> fmt::Result {
         // As above, we need the extra indirection to allow the type `W` to be unsized but allow
         // `write_extern_function` to operate on type-erased writers.
-        write_extern_function(&mut w, &module.metadata.extern_functions[func])
+        write_extern_function(&mut w, &module.metadata.extern_functions()[func])
     }
 }
 
@@ -100,7 +100,7 @@ pub fn write_annotated_module<W: fmt::Write + ?Sized>(
     annotator: &mut (impl AnnotateModule<W> + ?Sized),
     module: &Module,
 ) -> fmt::Result {
-    for extern_func in module.metadata.extern_functions.keys() {
+    for extern_func in module.metadata.extern_functions().keys() {
         annotator.write_extern_function(w, module, extern_func)?;
     }
     w.write_str("\n")?;
@@ -429,10 +429,13 @@ mod tests {
             },
         );
 
-        let extfunc = module.create_extern_function("my_ext_func".to_owned(), Signature {
-            ret_type: Some(Type::I32),
-            param_types: vec![],
-        });
+        let extfunc = module.create_extern_function(
+            "my_ext_func".to_owned(),
+            Signature {
+                ret_type: Some(Type::I32),
+                param_types: vec![],
+            },
+        );
 
         let mut body = FunctionBody::new_invalid();
         let sig1 = body.call_ind_sigs.push(Signature {
@@ -696,10 +699,13 @@ mod tests {
                 param_types: vec![Type::I64],
             },
         );
-        let extfunc = module.create_extern_function("my_ext_func".to_owned(), Signature {
-            ret_type: Some(Type::I32),
-            param_types: vec![Type::I64],
-        });
+        let extfunc = module.create_extern_function(
+            "my_ext_func".to_owned(),
+            Signature {
+                ret_type: Some(Type::I32),
+                param_types: vec![Type::I64],
+            },
+        );
 
         let body = &mut module.functions[func].body;
         let entry_ctrl = body.entry_ctrl();
@@ -731,18 +737,27 @@ mod tests {
     #[test]
     fn write_multi_extfunc_module() {
         let mut module = Module::new();
-        module.create_extern_function("func1".to_owned(), Signature {
-            ret_type: Some(Type::I32),
-            param_types: vec![Type::I64],
-        });
-        module.create_extern_function("func2".to_owned(), Signature {
-            ret_type: None,
-            param_types: vec![Type::I64, Type::Ptr],
-        });
-        module.create_extern_function("func3".to_owned(), Signature {
-            ret_type: None,
-            param_types: vec![],
-        });
+        module.create_extern_function(
+            "func1".to_owned(),
+            Signature {
+                ret_type: Some(Type::I32),
+                param_types: vec![Type::I64],
+            },
+        );
+        module.create_extern_function(
+            "func2".to_owned(),
+            Signature {
+                ret_type: None,
+                param_types: vec![Type::I64, Type::Ptr],
+            },
+        );
+        module.create_extern_function(
+            "func3".to_owned(),
+            Signature {
+                ret_type: None,
+                param_types: vec![],
+            },
+        );
 
         check_write_module(
             &module,
@@ -767,10 +782,13 @@ mod tests {
             },
         );
 
-        module.create_extern_function("System.Test+Lol System.Test::Do(Lol[])".to_owned(), Signature {
-            ret_type: None,
-            param_types: vec![],
-        });
+        module.create_extern_function(
+            "System.Test+Lol System.Test::Do(Lol[])".to_owned(),
+            Signature {
+                ret_type: None,
+                param_types: vec![],
+            },
+        );
 
         check_write_module(
             &module,

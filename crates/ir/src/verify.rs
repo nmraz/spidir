@@ -177,7 +177,7 @@ impl ModuleVerifierError {
     ) -> Option<(&'a FunctionMetadata, &'a FunctionBody, Node)> {
         match self {
             Self::Func { function, error } => {
-                let metadata = &module.metadata.functions[*function];
+                let metadata = &module.metadata.functions()[*function];
                 let body = &module.functions[*function].body;
                 Some((metadata, body, error.node(&body.graph)))
             }
@@ -257,11 +257,11 @@ pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierErr
         }
     };
 
-    for extern_function_data in module.metadata.extern_functions.values() {
+    for extern_function_data in module.metadata.extern_functions().values() {
         check_name(&extern_function_data.name, &mut errors);
     }
 
-    for function in module.metadata.functions.keys() {
+    for function in module.metadata.functions().keys() {
         let func_borrow = module.borrow_function(function);
         check_name(&func_borrow.metadata.name, &mut errors);
         if let Err(graph_errors) = verify_func(module, func_borrow) {

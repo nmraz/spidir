@@ -390,7 +390,7 @@ fn optimize_module(module: &mut Module) {
 fn get_module_schedule_str(module: &Module) -> String {
     let mut output = String::new();
 
-    for (func, metadata) in &module.metadata.functions {
+    for (func, metadata) in module.metadata.functions() {
         let func = &module.functions[func];
 
         write_function_metadata(&mut output, metadata).unwrap();
@@ -418,7 +418,7 @@ fn get_module_lir_str(
 
     let machine = create_machine(machine_opts);
 
-    for func in module.metadata.functions.keys() {
+    for func in module.metadata.functions().keys() {
         let func = module.borrow_function(func);
 
         writeln!(output, "func @{} {{", quote_ident(&func.metadata.name)).unwrap();
@@ -462,7 +462,7 @@ fn get_module_lir_str(
 fn get_module_code_str(module: &Module, machine_opts: &MachineOptions) -> Result<String> {
     let mut output = String::new();
     let machine = create_machine(machine_opts);
-    for func in module.metadata.functions.keys() {
+    for func in module.metadata.functions().keys() {
         let func = module.borrow_function(func);
         let code = codegen_func(module, func, &machine, &CodegenOpts::default())
             .map_err(|err| anyhow!("{}", err.display(module, func)))?;

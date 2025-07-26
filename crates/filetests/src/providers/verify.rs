@@ -79,7 +79,7 @@ impl SimpleTestProvider for VerifyErrProvider {
         }
         writeln!(output).unwrap();
 
-        for func in module.metadata.functions.keys() {
+        for func in module.metadata.functions().keys() {
             let func_borrow = module.borrow_function(func);
 
             writeln!(output, "function `{}`:", func_borrow.metadata.name).unwrap();

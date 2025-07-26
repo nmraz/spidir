@@ -25,7 +25,7 @@ impl TestProvider for ScheduleProvider {
     fn output_for(&self, module: Module) -> Result<(String, Module)> {
         let mut output = String::new();
 
-        for func in module.metadata.functions.keys() {
+        for func in module.metadata.functions().keys() {
             let func = module.borrow_function(func);
             let body = func.body();
 

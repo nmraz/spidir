@@ -32,7 +32,7 @@ impl SimpleTestProvider for IselProvider {
                 anyhow!(
                     "isel failed for `{}`: {}",
                     func.metadata.name,
-                    e.display(&module, func.body())
+                    e.display(&module.metadata, func.body())
                 )
             })?;
 

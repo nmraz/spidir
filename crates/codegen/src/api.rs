@@ -62,7 +62,11 @@ impl fmt::Display for DisplayCodegenError<'_> {
         write!(f, "codegen for `{}` failed: ", self.func.metadata.name)?;
         match self.error {
             CodegenError::Isel(isel) => {
-                write!(f, "{}", isel.display(self.module, self.func.body()))
+                write!(
+                    f,
+                    "{}",
+                    isel.display(&self.module.metadata, self.func.body())
+                )
             }
             CodegenError::Regalloc(regalloc) => write!(f, "{regalloc}"),
         }
@@ -131,7 +135,14 @@ pub fn lower_func<M: MachineLower>(
     machine: &M,
 ) -> Result<(CfgContext, Lir<M>), IselError> {
     let (cfg_ctx, block_map, schedule) = schedule_graph(&func.body().graph, func.body().entry);
-    let lir = select_instrs(module, func, &schedule, &cfg_ctx, &block_map, machine)?;
+    let lir = select_instrs(
+        &module.metadata,
+        func,
+        &schedule,
+        &cfg_ctx,
+        &block_map,
+        machine,
+    )?;
     Ok((cfg_ctx, lir))
 }
 

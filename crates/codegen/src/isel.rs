@@ -5,7 +5,7 @@ use cranelift_entity::{SecondaryMap, packed_option::PackedOption};
 use fx_utils::FxHashMap;
 use ir::{
     function::{FunctionBody, FunctionBorrow},
-    module::Module,
+    module::ModuleMetadata,
     node::{NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{dataflow_inputs, dataflow_outputs},
@@ -37,8 +37,8 @@ pub struct IselContext<'ctx, 's, M: MachineLower> {
 }
 
 impl<'ctx, M: MachineLower> IselContext<'ctx, '_, M> {
-    pub fn module(&self) -> &'ctx Module {
-        self.state.module
+    pub fn module_metadata(&self) -> &'ctx ModuleMetadata {
+        self.state.module_metadata
     }
 
     pub fn value_type(&self, value: DepValue) -> Type {
@@ -142,9 +142,13 @@ pub struct IselError {
 }
 
 impl IselError {
-    pub fn display<'a>(self, module: &'a Module, body: &'a FunctionBody) -> DisplayIselError<'a> {
+    pub fn display<'a>(
+        self,
+        module_metadata: &'a ModuleMetadata,
+        body: &'a FunctionBody,
+    ) -> DisplayIselError<'a> {
         DisplayIselError {
-            module,
+            module_metadata,
             body,
             error: self,
         }
@@ -152,7 +156,7 @@ impl IselError {
 }
 
 pub struct DisplayIselError<'a> {
-    module: &'a Module,
+    module_metadata: &'a ModuleMetadata,
     body: &'a FunctionBody,
     error: IselError,
 }
@@ -162,13 +166,13 @@ impl fmt::Display for DisplayIselError<'_> {
         write!(
             f,
             "failed to select `{}`",
-            display_node(&self.module.metadata, self.body, self.error.node)
+            display_node(self.module_metadata, self.body, self.error.node)
         )
     }
 }
 
 pub fn select_instrs<M: MachineLower>(
-    module: &Module,
+    module_metadata: &ModuleMetadata,
     func: FunctionBorrow<'_>,
     schedule: &Schedule,
     cfg_ctx: &CfgContext,
@@ -177,7 +181,7 @@ pub fn select_instrs<M: MachineLower>(
 ) -> Result<Lir<M>, IselError> {
     debug!("selecting instructions for: {}", func.metadata);
 
-    let mut state = IselState::new(module, func, schedule, cfg_ctx, block_map, machine);
+    let mut state = IselState::new(module_metadata, func, schedule, cfg_ctx, block_map, machine);
     let mut builder = LirBuilder::new(&cfg_ctx.block_order);
     state.prepare_for_isel(&mut builder);
 
@@ -194,7 +198,7 @@ type ValueUseCounts = SecondaryMap<DepValue, u32>;
 type NodeStackSlotMap = FxHashMap<Node, StackSlot>;
 
 struct IselState<'ctx, M: MachineLower> {
-    module: &'ctx Module,
+    module_metadata: &'ctx ModuleMetadata,
     func: FunctionBorrow<'ctx>,
     schedule: &'ctx Schedule,
     cfg_ctx: &'ctx CfgContext,
@@ -208,7 +212,7 @@ struct IselState<'ctx, M: MachineLower> {
 
 impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     fn new(
-        module: &'ctx Module,
+        module_metadata: &'ctx ModuleMetadata,
         func: FunctionBorrow<'ctx>,
         schedule: &'ctx Schedule,
         cfg_ctx: &'ctx CfgContext,
@@ -216,7 +220,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         machine: &'ctx M,
     ) -> Self {
         Self {
-            module,
+            module_metadata,
             func,
             schedule,
             cfg_ctx,
@@ -304,7 +308,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
         for &node in self.schedule.scheduled_nodes(block).iter().rev() {
             trace!(
                 "  {}:",
-                display_node(&self.module.metadata, self.body(), node)
+                display_node(self.module_metadata, self.body(), node)
             );
 
             // Note: node inputs should be detached after selection so the selector sees correct use
@@ -408,10 +412,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
             // Multiple predecessors - the phis are really necessary.
             builder.set_incoming_block_params(self.schedule.block_phis(block).iter().map(|&phi| {
                 let val = self.value_reg_map[self.graph().node_outputs(phi)[0]].unwrap();
-                trace!(
-                    "  {}",
-                    display_node(&self.module.metadata, self.body(), phi)
-                );
+                trace!("  {}", display_node(self.module_metadata, self.body(), phi));
                 val
             }));
         }

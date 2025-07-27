@@ -1,52 +1,45 @@
 # Spidir
 
-A (WIP) JIT library written in Rust for use on freestanding targets.
+A JIT library written in Rust for use on freestanding targets.
 
-Design tenets:
+Spidir is an immature hobby project and shouldn't be taken too seriously, but hey, it can generate (occasionally dumb) x64 code!
 
-- Embeddability: Spidir is completely freestanding and requires only a memory allocator
-- Simple C API: The API should feel natural to use directly in C code and is the intended way to consume Spidir
-- Reasonable optimization quality: Higher-level language runtimes using Spidir as a backend should eventually be able to expect decent codegen
+## Why?
 
-Spidir was originally created for use in [TomatoDotNet](https://github.com/TomatOrg/TomatoDotNet/), so feature development is guided primarily by the needs of that project.
+Spidir was originally created for use in the [TomatoDotNet](https://github.com/TomatOrg/TomatoDotNet/) runtime, which needs a freestanding, optimizing JIT compiler with a simple C API. There still isn't much in the way of optimization, but Spidir does export a fairly clean C API and builds given only an allocator and panic hook.
 
 ## Using Spidir
 
-There are two ways to link against Spidir in C code:
+If you just want to play around with the JIT, all important functionality is exposed via the CLI binary `spidirtool`. It can be used to:
 
-1. Using the `c-api` crate to build `libspidir.a` and implementing the platform API declared in `<spidir/platform.h>`. This method is most suitable for bare-metal users that don't want to link against any other Rust code.
+- Display a function's IR using graphviz
+- Validate a module's IR
+- View internal pass output
+- Generate code for and execute a given IR module
 
-2. Creating a "glue" Rust crate that depends on the lower-level `bindings` crate and making sure the Rust allocation/panic hooks are implemented. This method is better for users that need to link against other Rust code or use the hosted Rust standard library.
+Although not much is documented, you can get a quick taste of what Spidir can do by running:
 
-See the `c-api-tests` directory for programs using the former method.
+```sh
+# Dump disassembled code
+cargo run -p spidirtool compile crates/filetests/cases/codegen/wasm/factorial_O3.spdr
 
-All important functionality is exposed via the CLI binary `spidirtool`, which can be used to:
-
-- Graph the IR using graphviz
-- Inspect internal state
-- Generate/execute code for a given IR module
-
-See
-
+# Run it!
+cargo run -p spidirtool codegen-exec crates/filetests/cases/codegen/wasm/factorial_O3.spdr func00000001 6
 ```
+
+For more information about the CLI tool, see:
+
+```sh
 cargo run -p spidirtool help
 ```
 
-for more information.
+### Linking against Spidir
 
-## IR
+The C API is the intended way to consume Spidir and will probably remain the most stable over time. The internal Rust crates can be used as well, but they tend to experience more churn as none of them are considered public API boundaries.
 
-Spidir uses two intermediate representations internally:
+The simplest way to use the C API on a bare-metal target is to build `libspidir.a` from the `c-api` crate and implement the functions declared in `<spidir/platform.h>`; see the `c-api-tests` for an example of this setup.
 
-- Spidir: target-independent IR for high-level optimizations
-  - SSA-based sea-of-nodes representation
-  - Uses phi nodes to model dataflow merges (easier to integrate in a sea-of-nodes setup)
-- LIR (linear IR): target-dependent IR used after instruction selection
-  - Flat list of instructions with CFG information stored separately
-  - Still in SSA form, but uses block parameters instead of phi nodes (more elegant for block-based IRs)
-  - Used by register allocator and final code emission
-
-These are abstracted away by the C construction API, which provides a simple block-based facade over the sea-of-nodes graph.
+If you're building for a hosted Rust target platform or need to link against other Rust code in your project, you'll probably want a "glue" Rust crate that depends directly on the internal `bindings` crate.
 
 ## Implementation Status
 
@@ -84,6 +77,8 @@ These are abstracted away by the C construction API, which provides a simple blo
 
 ### Planned
 
+Spidir's roadmap is most accurately described as "whatever TomatoDotNet needs next", but here's some stuff we'll probably want eventually (in no particular order):
+
 - IR:
 
   - Memory operations (`memset`, `memcpy`, etc.)
@@ -114,3 +109,19 @@ These are abstracted away by the C construction API, which provides a simple blo
 
 - [TomatoDotNet](https://github.com/TomatOrg/TomatoDotNet/), a freestanding C# runtime (original project motivation)
 - [spidir-wasm](https://github.com/Itay2805/spidir-wasm/), a small WASM implementation showcasing the C API
+
+## Implementation Details
+
+### IR
+
+Spidir uses two intermediate representations internally:
+
+- Spidir: target-independent IR for high-level optimizations
+  - SSA-based sea-of-nodes representation
+  - Uses phi nodes to model dataflow merges (easier to integrate in a sea-of-nodes setup)
+- LIR (linear IR): target-dependent IR used after instruction selection
+  - Flat list of instructions with CFG information stored separately
+  - Still in SSA form, but uses block parameters instead of phi nodes (more elegant for block-based IRs)
+  - Used by register allocator and final code emission
+
+These are abstracted away by the C construction API, which provides a simple block-based facade over the sea-of-nodes graph.

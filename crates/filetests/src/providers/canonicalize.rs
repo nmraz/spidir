@@ -24,7 +24,11 @@ impl TestProvider for CanonicalizeProvider {
 
     fn output_for(&self, mut module: Module) -> Result<(String, Module)> {
         for (func, body) in module.function_bodies.iter_mut() {
-            canonicalize(body, &mut module.function_node_caches[func]);
+            canonicalize(
+                &module.metadata,
+                body,
+                &mut module.function_node_caches[func],
+            );
         }
         verify_module_with_err(&module, "transformed module invalid")?;
         Ok((module.to_string(), module))

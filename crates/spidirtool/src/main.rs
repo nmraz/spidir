@@ -388,7 +388,11 @@ fn output_dot_file(
 fn optimize_module(module: &mut Module) {
     // For now: just run the canonicalization pass on everything.
     for (func, body) in module.function_bodies.iter_mut() {
-        opt::canonicalize::canonicalize(body, &mut module.function_node_caches[func]);
+        opt::canonicalize::canonicalize(
+            &module.metadata,
+            body,
+            &mut module.function_node_caches[func],
+        );
     }
 }
 

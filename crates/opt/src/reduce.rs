@@ -10,6 +10,7 @@ use ir::{
     builder::Builder,
     cache::{CachingBuilder, Entry, NodeCache},
     function::FunctionBody,
+    module::ModuleMetadata,
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{PostOrder, RawDefUseSuccs},
@@ -72,19 +73,23 @@ pub fn reduce(ctx: &mut ReduceContext<'_>, mut f: impl FnMut(&mut ReduceContext<
     trace!("finished");
 }
 
-pub struct ReduceContext<'f> {
-    body: &'f mut FunctionBody,
-    node_cache: &'f mut NodeCache,
-    state: &'f mut ReduceState,
+#[allow(unused)]
+pub struct ReduceContext<'m> {
+    module_metadata: &'m ModuleMetadata,
+    body: &'m mut FunctionBody,
+    node_cache: &'m mut NodeCache,
+    state: &'m mut ReduceState,
 }
 
-impl<'f> ReduceContext<'f> {
+impl<'m> ReduceContext<'m> {
     pub fn new(
-        body: &'f mut FunctionBody,
-        node_cache: &'f mut NodeCache,
-        state: &'f mut ReduceState,
+        module_metadata: &'m ModuleMetadata,
+        body: &'m mut FunctionBody,
+        node_cache: &'m mut NodeCache,
+        state: &'m mut ReduceState,
     ) -> Self {
         Self {
+            module_metadata,
             body,
             node_cache,
             state,

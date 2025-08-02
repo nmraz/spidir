@@ -7,6 +7,7 @@ use ir::{
     builder::BuilderExt,
     cache::NodeCache,
     function::FunctionBody,
+    module::ModuleMetadata,
     node::{IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -14,9 +15,13 @@ use valmatch::match_value;
 
 use crate::reduce::{ReduceContext, ReduceState, init_reduce_state, reduce};
 
-pub fn canonicalize(body: &mut FunctionBody, node_cache: &mut NodeCache) {
+pub fn canonicalize(
+    module_metadata: &ModuleMetadata,
+    body: &mut FunctionBody,
+    node_cache: &mut NodeCache,
+) {
     let mut state = ReduceState::new();
-    let mut ctx = ReduceContext::new(body, node_cache, &mut state);
+    let mut ctx = ReduceContext::new(module_metadata, body, node_cache, &mut state);
     init_reduce_state(&mut ctx);
     reduce(&mut ctx, canonicalize_node);
 }

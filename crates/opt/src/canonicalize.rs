@@ -12,10 +12,13 @@ use ir::{
 };
 use valmatch::match_value;
 
-use crate::reduce::{ReduceContext, reduce_body};
+use crate::reduce::{ReduceContext, ReduceState, init_reduce_state, reduce};
 
 pub fn canonicalize(body: &mut FunctionBody, node_cache: &mut NodeCache) {
-    reduce_body(body, node_cache, canonicalize_node);
+    let mut state = ReduceState::new();
+    let mut ctx = ReduceContext::new(body, node_cache, &mut state);
+    init_reduce_state(&mut ctx);
+    reduce(&mut ctx, canonicalize_node);
 }
 
 macro_rules! fold_constant {

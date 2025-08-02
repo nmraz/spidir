@@ -15,21 +15,8 @@ use ir::{
     valwalk::{PostOrder, RawDefUseSuccs},
 };
 
-pub fn reduce_body(
-    body: &mut FunctionBody,
-    node_cache: &mut NodeCache,
-    mut f: impl FnMut(&mut ReduceContext<'_>, Node),
-) {
-    let mut ctx = ReduceContext {
-        body,
-        node_cache,
-        state: &mut ReduceState {
-            queue: VecDeque::new(),
-            node_flags: SecondaryMap::new(),
-        },
-    };
-
-    trace!("starting reduction");
+pub fn init_reduce_state(ctx: &mut ReduceContext<'_>) {
+    trace!("preparing reduction state");
 
     let walk_info = ctx.body.compute_full_walk_info();
 
@@ -49,6 +36,12 @@ pub fn reduce_body(
             ctx.kill_node(node);
         }
     }
+
+    trace!("state prepared");
+}
+
+pub fn reduce(ctx: &mut ReduceContext<'_>, mut f: impl FnMut(&mut ReduceContext<'_>, Node)) {
+    trace!("starting reduction");
 
     while let Some(node) = ctx.state.dequeue() {
         // A previous value update may have killed one of this node's outputs. Check if that has
@@ -73,7 +66,7 @@ pub fn reduce_body(
         // Assume the node is now reduced. If `f` ends up replacing any of its outputs, it will be
         // marked as non-reduced once more.
         ctx.state.mark_reduced(node);
-        f(&mut ctx, node);
+        f(ctx, node);
     }
 
     trace!("finished");
@@ -85,7 +78,19 @@ pub struct ReduceContext<'f> {
     state: &'f mut ReduceState,
 }
 
-impl ReduceContext<'_> {
+impl<'f> ReduceContext<'f> {
+    pub fn new(
+        body: &'f mut FunctionBody,
+        node_cache: &'f mut NodeCache,
+        state: &'f mut ReduceState,
+    ) -> Self {
+        Self {
+            body,
+            node_cache,
+            state,
+        }
+    }
+
     pub fn graph(&self) -> &ValGraph {
         &self.body.graph
     }
@@ -218,12 +223,19 @@ bitflags! {
     }
 }
 
-struct ReduceState {
+pub struct ReduceState {
     queue: VecDeque<Node>,
     node_flags: SecondaryMap<Node, NodeFlags>,
 }
 
 impl ReduceState {
+    pub fn new() -> Self {
+        Self {
+            queue: VecDeque::new(),
+            node_flags: SecondaryMap::new(),
+        }
+    }
+
     fn value_detached(&mut self, graph: &ValGraph, value: DepValue) {
         if graph.value_uses(value).next().is_none() {
             let def_node = graph.value_def(value).0;

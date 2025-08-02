@@ -1,3 +1,5 @@
+use core::fmt;
+
 use alloc::{collections::VecDeque, vec::Vec};
 
 use bitflags::bitflags;
@@ -14,6 +16,7 @@ use ir::{
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{PostOrder, RawDefUseSuccs},
+    write::display_node,
 };
 
 pub fn init_reduce_state(ctx: &mut ReduceContext<'_>) {
@@ -48,7 +51,7 @@ pub fn reduce(ctx: &mut ReduceContext<'_>, mut f: impl FnMut(&mut ReduceContext<
         // A previous value update may have killed one of this node's outputs. Check if that has
         // made the node completely dead and deal with it now.
         if ctx.state.test_and_clear_output_killed(node) && is_node_dead(&ctx.body.graph, node) {
-            trace!("dead: {node}");
+            trace!("dead: {node} ({})", ctx.display_node(node));
             // No need to keep processing at this point, just remove the node completely. Once
             // again, we want to make sure that the use counts of any incoming values are correct.
             ctx.kill_node(node);
@@ -62,7 +65,7 @@ pub fn reduce(ctx: &mut ReduceContext<'_>, mut f: impl FnMut(&mut ReduceContext<
             continue;
         }
 
-        trace!("reduce: {node}");
+        trace!("reduce: {node} ({})", ctx.display_node(node));
 
         // Assume the node is now reduced. If `f` ends up replacing any of its outputs, it will be
         // marked as non-reduced once more.
@@ -73,7 +76,6 @@ pub fn reduce(ctx: &mut ReduceContext<'_>, mut f: impl FnMut(&mut ReduceContext<
     trace!("finished");
 }
 
-#[allow(unused)]
 pub struct ReduceContext<'m> {
     module_metadata: &'m ModuleMetadata,
     body: &'m mut FunctionBody,
@@ -150,7 +152,10 @@ impl<'m> ReduceContext<'m> {
                 Entry::Occupied(existing_node) => {
                     // This node has become equivalent to another node: replace it.
 
-                    trace!("hash: {node} -> {existing_node}");
+                    trace!(
+                        "hash: {node} -> {existing_node} ({})",
+                        self.display_node(existing_node)
+                    );
 
                     // Kill the node now that we're redirecting all its uses.
                     self.kill_node(node);
@@ -190,6 +195,10 @@ impl<'m> ReduceContext<'m> {
             cursor.replace_current_with(new_value);
         }
     }
+
+    fn display_node(&self, node: Node) -> impl fmt::Display + '_ {
+        display_node(self.module_metadata, self.body, node)
+    }
 }
 
 impl Builder for ReduceContext<'_> {
@@ -201,7 +210,7 @@ impl Builder for ReduceContext<'_> {
     ) -> Node {
         let node =
             CachingBuilder::new(self.body, self.node_cache).create_node(kind, inputs, output_kinds);
-        trace!("    create: {node}");
+        trace!("    create: {node} ({})", self.display_node(node));
         // We may have reused an existing, reduced node here. No need to revisit in that case.
         if !self.state.is_reduced(node) {
             self.state.enqueue(node);

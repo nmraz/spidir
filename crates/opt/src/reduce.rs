@@ -85,7 +85,7 @@ pub struct ReduceContext<'f> {
     state: &'f mut ReduceState,
 }
 
-impl<'f> ReduceContext<'f> {
+impl ReduceContext<'_> {
     pub fn graph(&self) -> &ValGraph {
         &self.body.graph
     }

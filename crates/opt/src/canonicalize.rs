@@ -204,8 +204,8 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
 
                 (_, Some(c)) if c.is_power_of_two() => {
                     let shift = c.trailing_zeros();
-                    let shift = ctx.builder().build_iconst(Type::I32, shift as u64);
-                    let new_output = ctx.builder().build_shl(a, shift);
+                    let shift = ctx.build_iconst(Type::I32, shift as u64);
+                    let new_output = ctx.build_shl(a, shift);
                     ctx.replace_value(output, new_output);
                 }
 
@@ -223,7 +223,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 (a, Some(0)) => {
                     // Replace all divisions by 0 with 0/0.
                     if a != Some(0) {
-                        let zero = ctx.builder().build_iconst(ty, 0);
+                        let zero = ctx.build_iconst(ty, 0);
                         ctx.set_node_input(node, 1, zero);
                     }
                 }
@@ -255,7 +255,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 (a, Some(0)) => {
                     // Replace all divisions by 0 with 0/0.
                     if a != Some(0) {
-                        let zero = ctx.builder().build_iconst(ty, 0);
+                        let zero = ctx.build_iconst(ty, 0);
                         ctx.set_node_input(node, 1, zero);
                     }
                 }
@@ -281,7 +281,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 (a, Some(0)) => {
                     // Replace all divisions by 0 with 0/0.
                     if a != Some(0) {
-                        let zero = ctx.builder().build_iconst(ty, 0);
+                        let zero = ctx.build_iconst(ty, 0);
                         ctx.set_node_input(node, 1, zero);
                     }
                 }
@@ -313,7 +313,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
                 (a, Some(0)) => {
                     // Replace all divisions by 0 with 0/0.
                     if a != Some(0) {
-                        let zero = ctx.builder().build_iconst(ty, 0);
+                        let zero = ctx.build_iconst(ty, 0);
                         ctx.set_node_input(node, 1, zero);
                     }
                 }
@@ -431,14 +431,14 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
             // Convert weak inequalities to strong inequalities/constants.
             IcmpKind::Sle => match checked_op_signed!(input_ty, a_val, 1, checked_sub) {
                 Some(new_a_val) => {
-                    let new_a = ctx.builder().build_iconst(input_ty, new_a_val);
+                    let new_a = ctx.build_iconst(input_ty, new_a_val);
                     replace_with_icmp(ctx, output, IcmpKind::Slt, new_a, b);
                 }
                 None => replace_with_iconst(ctx, output, 1),
             },
             IcmpKind::Ule => match checked_op_unsigned!(input_ty, a_val, 1, checked_sub) {
                 Some(new_a_val) => {
-                    let new_a = ctx.builder().build_iconst(input_ty, new_a_val);
+                    let new_a = ctx.build_iconst(input_ty, new_a_val);
                     replace_with_icmp(ctx, output, IcmpKind::Ult, new_a, b);
                 }
                 None => replace_with_iconst(ctx, output, 1),
@@ -471,14 +471,14 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
             // Convert weak inequalities to strong inequalities/constants.
             IcmpKind::Sle => match checked_op_signed!(input_ty, b_val, 1, checked_add) {
                 Some(new_b_val) => {
-                    let new_b = ctx.builder().build_iconst(input_ty, new_b_val);
+                    let new_b = ctx.build_iconst(input_ty, new_b_val);
                     replace_with_icmp(ctx, output, IcmpKind::Slt, a, new_b);
                 }
                 None => replace_with_iconst(ctx, output, 1),
             },
             IcmpKind::Ule => match checked_op_unsigned!(input_ty, b_val, 1, checked_add) {
                 Some(new_b_val) => {
-                    let new_b = ctx.builder().build_iconst(input_ty, new_b_val);
+                    let new_b = ctx.build_iconst(input_ty, new_b_val);
                     replace_with_icmp(ctx, output, IcmpKind::Ult, a, new_b);
                 }
                 None => replace_with_iconst(ctx, output, 1),
@@ -524,7 +524,7 @@ fn simplify_icmp_gt_const_boundary(
         replace_with_icmp(ctx, output, IcmpKind::Ne, b, a);
     } else if a_val == max - 1 {
         let ty = ctx.graph().value_kind(a).as_value().unwrap();
-        let new_a = ctx.builder().build_iconst(ty, max);
+        let new_a = ctx.build_iconst(ty, max);
         // Move the constant to the right now to avoid extra work later.
         replace_with_icmp(ctx, output, IcmpKind::Eq, b, new_a);
     } else if a_val == max {
@@ -545,7 +545,7 @@ fn simplify_icmp_lt_const_boundary(
         replace_with_icmp(ctx, output, IcmpKind::Ne, a, b);
     } else if b_val == min + 1 {
         let ty = ctx.graph().value_kind(a).as_value().unwrap();
-        let new_b = ctx.builder().build_iconst(ty, min);
+        let new_b = ctx.build_iconst(ty, min);
         replace_with_icmp(ctx, output, IcmpKind::Eq, a, new_b);
     } else if b_val == min {
         replace_with_iconst(ctx, output, 0);
@@ -560,13 +560,13 @@ fn replace_with_icmp(
     b: DepValue,
 ) {
     let output_ty = ctx.graph().value_kind(output).as_value().unwrap();
-    let new_output = ctx.builder().build_icmp(kind, output_ty, a, b);
+    let new_output = ctx.build_icmp(kind, output_ty, a, b);
     ctx.replace_value(output, new_output);
 }
 
 fn replace_with_iconst(ctx: &mut ReduceContext<'_>, value: DepValue, iconst: u64) {
     let ty = ctx.graph().value_kind(value).as_value().unwrap();
-    let iconst = ctx.builder().build_iconst(ty, iconst);
+    let iconst = ctx.build_iconst(ty, iconst);
     ctx.replace_value(value, iconst);
 }
 

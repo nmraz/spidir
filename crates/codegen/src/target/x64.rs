@@ -5,7 +5,7 @@ use ir::node::FunctionRef;
 use crate::{
     cfg::Block,
     code_buffer::RelocKind,
-    lir::{MemLayout, PhysReg, RegClass, StackSlot},
+    lir::{MemLayout, PhysReg, RegBank, StackSlot},
     machine::{MachineCore, MachineRegalloc},
     regalloc::RematCost,
 };
@@ -449,11 +449,11 @@ impl X64Machine {
 impl MachineCore for X64Machine {
     type Instr = X64Instr;
 
-    fn reg_class_name(class: RegClass) -> &'static str {
-        match class {
-            RC_GPR => "gpr",
-            RC_XMM => "xmm",
-            _ => panic!("unknown register class"),
+    fn reg_bank_name(bank: RegBank) -> &'static str {
+        match bank {
+            RB_GPR => "gpr",
+            RB_XMM => "xmm",
+            _ => panic!("unknown register bank"),
         }
     }
 
@@ -499,22 +499,22 @@ impl MachineRegalloc for X64Machine {
         32
     }
 
-    fn usable_regs(&self, class: RegClass) -> &[PhysReg] {
-        match class {
-            RC_GPR => &GPR_ORDER,
-            RC_XMM => &XMM_ORDER,
-            _ => panic!("unknown register class"),
+    fn usable_regs(&self, bank: RegBank) -> &[PhysReg] {
+        match bank {
+            RB_GPR => &GPR_ORDER,
+            RB_XMM => &XMM_ORDER,
+            _ => panic!("unknown register bank"),
         }
     }
 
-    fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout {
-        match class {
-            RC_GPR => MemLayout { size: 8, align: 8 },
-            RC_XMM => MemLayout {
+    fn reg_bank_spill_layout(&self, bank: RegBank) -> MemLayout {
+        match bank {
+            RB_GPR => MemLayout { size: 8, align: 8 },
+            RB_XMM => MemLayout {
                 size: 16,
                 align: 16,
             },
-            _ => panic!("unknown register class"),
+            _ => panic!("unknown register bank"),
         }
     }
 
@@ -535,8 +535,8 @@ impl MachineRegalloc for X64Machine {
     }
 }
 
-const RC_GPR: RegClass = RegClass::new(0);
-const RC_XMM: RegClass = RegClass::new(1);
+const RB_GPR: RegBank = RegBank::new(0);
+const RB_XMM: RegBank = RegBank::new(1);
 
 const REG_RAX: PhysReg = PhysReg::new(0);
 const REG_RBX: PhysReg = PhysReg::new(1);

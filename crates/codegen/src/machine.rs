@@ -8,7 +8,7 @@ use crate::{
     code_buffer::{CodeBuffer, FixupKind},
     emit::{EmitContext, EmitInstrData},
     isel::{IselContext, MachineIselError, ParamLoc},
-    lir::{Instr, MemLayout, PhysReg, RegClass},
+    lir::{Instr, MemLayout, PhysReg, RegBank},
     regalloc::{OperandAssignment, RematCost},
 };
 
@@ -18,12 +18,12 @@ impl<M: MachineCore + MachineLower + MachineRegalloc + MachineEmit> Machine for 
 pub trait MachineCore {
     type Instr: Copy + Debug;
 
-    fn reg_class_name(class: RegClass) -> &'static str;
+    fn reg_bank_name(bank: RegBank) -> &'static str;
     fn reg_name(reg: PhysReg) -> &'static str;
 }
 
 pub trait MachineLower: MachineCore {
-    fn reg_class_for_type(&self, ty: Type) -> RegClass;
+    fn reg_bank_for_type(&self, ty: Type) -> RegBank;
     fn param_locs(&self, param_types: &[Type]) -> Vec<ParamLoc>;
 
     fn make_jump(&self, block: Block) -> Self::Instr;
@@ -41,8 +41,8 @@ pub trait MachineLower: MachineCore {
 
 pub trait MachineRegalloc: MachineCore {
     fn phys_reg_count() -> u32;
-    fn usable_regs(&self, class: RegClass) -> &[PhysReg];
-    fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout;
+    fn usable_regs(&self, bank: RegBank) -> &[PhysReg];
+    fn reg_bank_spill_layout(&self, bank: RegBank) -> MemLayout;
 
     fn remat_cost(&self, instr: &Self::Instr) -> Option<RematCost> {
         let _ = instr;

@@ -3,8 +3,8 @@ use expect_test::{Expect, expect};
 use crate::{
     cfg::{BlockCfg, CfgContext},
     lir::{
-        Builder as LirBuilder, MemLayout, OperandPos, PhysReg, RegClass, UseOperandConstraint,
-        test_utils::{DummyInstr, DummyMachine, RC_GPR, REG_R0, REG_R1, REG_R2, push_instr},
+        Builder as LirBuilder, MemLayout, OperandPos, PhysReg, RegBank, UseOperandConstraint,
+        test_utils::{DummyInstr, DummyMachine, RB_GPR, REG_R0, REG_R1, REG_R2, push_instr},
     },
     machine::MachineRegalloc,
 };
@@ -14,16 +14,16 @@ impl MachineRegalloc for DummyMachine {
         3
     }
 
-    fn usable_regs(&self, class: RegClass) -> &[PhysReg] {
-        match class {
-            RC_GPR => &[REG_R0, REG_R1, REG_R2],
+    fn usable_regs(&self, bank: RegBank) -> &[PhysReg] {
+        match bank {
+            RB_GPR => &[REG_R0, REG_R1, REG_R2],
             _ => unreachable!(),
         }
     }
 
-    fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout {
-        match class {
-            RC_GPR => MemLayout { size: 4, align: 4 },
+    fn reg_bank_spill_layout(&self, bank: RegBank) -> MemLayout {
+        match bank {
+            RB_GPR => MemLayout { size: 4, align: 4 },
             _ => unreachable!(),
         }
     }

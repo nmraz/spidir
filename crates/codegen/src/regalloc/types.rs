@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 
 use crate::{
     cfg::Block,
-    lir::{Instr, Lir, MemLayout, OperandPos, PhysReg, RegClass, VirtReg},
+    lir::{Instr, Lir, MemLayout, OperandPos, PhysReg, RegBank, VirtReg},
     machine::MachineCore,
 };
 
@@ -323,7 +323,7 @@ pub struct LiveSet(u32);
 entity_impl!(LiveSet, "ls");
 
 pub struct LiveSetData {
-    pub class: RegClass,
+    pub bank: RegBank,
     pub spill_hull: Option<ProgramRange>,
     pub spill_slot: PackedOption<SpillSlot>,
 }
@@ -686,7 +686,7 @@ pub struct InstrAssignmentData {
 pub struct ParallelCopy {
     pub instr: Instr,
     pub phase: ParallelCopyPhase,
-    pub class: RegClass,
+    pub bank: RegBank,
     pub from: CopySourceAssignment,
     pub to: OperandAssignment,
 }

@@ -3,7 +3,7 @@ use cranelift_entity::packed_option::ReservedValue;
 use crate::{cfg::Block, machine::MachineCore};
 
 use super::{
-    Builder, DefOperand, OperandPos, PhysReg, PhysRegSet, RegClass, UseOperand,
+    Builder, DefOperand, OperandPos, PhysReg, PhysRegSet, RegBank, UseOperand,
     UseOperandConstraint, VirtReg,
 };
 
@@ -22,7 +22,7 @@ pub enum DummyInstr {
     JmpEq(Block, Block),
 }
 
-pub const RC_GPR: RegClass = RegClass::new(0);
+pub const RB_GPR: RegBank = RegBank::new(0);
 
 pub const REG_R0: PhysReg = PhysReg::new(0);
 pub const REG_R1: PhysReg = PhysReg::new(1);
@@ -32,9 +32,9 @@ pub struct DummyMachine;
 impl MachineCore for DummyMachine {
     type Instr = DummyInstr;
 
-    fn reg_class_name(class: RegClass) -> &'static str {
-        match class {
-            RC_GPR => "gpr",
+    fn reg_bank_name(bank: RegBank) -> &'static str {
+        match bank {
+            RB_GPR => "gpr",
             _ => unreachable!(),
         }
     }
@@ -59,7 +59,7 @@ pub fn push_instr_with_clobbers<M: MachineCore, const U: usize>(
     let mut use_regs = [VirtReg::reserved_value(); U];
     builder.build_instrs(|mut b| {
         for use_reg in &mut use_regs {
-            *use_reg = b.create_vreg(RC_GPR);
+            *use_reg = b.create_vreg(RB_GPR);
         }
         b.push_instr(
             instr,

@@ -62,7 +62,7 @@ mod tests {
         cfg::{Block, BlockCfg},
         lir::{
             Builder as LirBuilder, DefOperand, OperandPos, UseOperandConstraint,
-            test_utils::{RC_GPR, push_instr},
+            test_utils::{RB_GPR, push_instr},
         },
         target::x64::{AluBinOp, AluCommBinOp, CondCode, OperandSize, REG_RAX, X64Instr},
     };
@@ -204,7 +204,7 @@ mod tests {
                     [],
                     [],
                 );
-                let a = builder.create_vreg(RC_GPR);
+                let a = builder.create_vreg(RB_GPR);
                 push_instr(
                     builder,
                     X64Instr::Setcc(CondCode::E),
@@ -254,7 +254,7 @@ mod tests {
                     [],
                 );
 
-                let a = builder.create_vreg(RC_GPR);
+                let a = builder.create_vreg(RB_GPR);
                 push_instr(builder, X64Instr::MovRmS32(12), [DefOperand::any(a)], []);
 
                 let [a, _] = push_instr(
@@ -300,7 +300,7 @@ mod tests {
                     [],
                 );
 
-                let a = builder.create_vreg(RC_GPR);
+                let a = builder.create_vreg(RB_GPR);
                 push_instr(
                     builder,
                     X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),

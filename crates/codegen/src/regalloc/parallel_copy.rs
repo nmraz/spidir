@@ -348,7 +348,7 @@ mod tests {
     use expect_test::{Expect, expect};
 
     use crate::{
-        lir::{Instr, PhysReg, RegClass},
+        lir::{Instr, PhysReg, RegBank},
         regalloc::{
             SpillSlot,
             test_utils::{
@@ -399,7 +399,7 @@ mod tests {
             let from = parts.next().unwrap();
             parallel_copies.push(ParallelCopy {
                 instr: Instr::new(0),
-                class: RegClass::new(0),
+                bank: RegBank::new(0),
                 phase: ParallelCopyPhase::InterInstr,
                 from: parse_copy_source(from.trim()),
                 to: parse_operand(to.trim()),

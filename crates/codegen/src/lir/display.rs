@@ -8,19 +8,19 @@ use crate::{
 };
 
 use super::{
-    DefOperand, DefOperandConstraint, Instr, Lir, PhysRegSet, RegClass, UseOperand,
+    DefOperand, DefOperandConstraint, Instr, Lir, PhysRegSet, RegBank, UseOperand,
     UseOperandConstraint, VirtReg,
 };
 
-pub struct DisplayVirtRegWithClass<M> {
+pub struct DisplayVirtRegWithBank<M> {
     pub(super) reg: VirtReg,
-    pub(super) class: RegClass,
+    pub(super) bank: RegBank,
     pub(super) _marker: PhantomData<M>,
 }
 
-impl<M: MachineCore> fmt::Display for DisplayVirtRegWithClass<M> {
+impl<M: MachineCore> fmt::Display for DisplayVirtRegWithBank<M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.reg, M::reg_class_name(self.class))
+        write!(f, "{}:{}", self.reg, M::reg_bank_name(self.bank))
     }
 }
 
@@ -52,7 +52,7 @@ pub struct DisplayDefOperand<'a, M: MachineCore> {
 impl<M: MachineCore> fmt::Display for DisplayDefOperand<'_, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let vreg = self.operand.reg();
-        write!(f, "{}", self.lir.display_vreg_with_class(vreg))?;
+        write!(f, "{}", self.lir.display_vreg_with_bank(vreg))?;
         match self.operand.constraint {
             DefOperandConstraint::Any => f.write_str("(any)")?,
             DefOperandConstraint::AnyReg => f.write_str("(reg)")?,
@@ -137,7 +137,7 @@ impl<M: MachineCore> fmt::Display for DisplayBlockParams<'_, M> {
                 f,
                 "[{}]",
                 self.block_params.iter().format_with(", ", |&param, f| {
-                    f(&self.lir.display_vreg_with_class(param))
+                    f(&self.lir.display_vreg_with_bank(param))
                 })
             )?;
         }
@@ -201,7 +201,7 @@ impl<M: MachineCore> fmt::Display for Display<'_, M> {
                         .format_with(", ", |(&param, reg), f| {
                             f(&format_args!(
                                 "{}(${})",
-                                self.lir.display_vreg_with_class(param),
+                                self.lir.display_vreg_with_bank(param),
                                 M::reg_name(*reg)
                             ))
                         }),

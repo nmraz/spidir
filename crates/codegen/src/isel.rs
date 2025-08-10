@@ -18,7 +18,7 @@ use crate::{
     cfg::{Block, CfgContext, FunctionBlockMap},
     lir::{
         Builder as LirBuilder, DefOperand, InstrBuilder, Lir, MemLayout, PhysReg, PhysRegSet,
-        RegClass, StackSlot, UseOperand, VirtReg,
+        RegBank, StackSlot, UseOperand, VirtReg,
     },
     machine::MachineLower,
     schedule::Schedule,
@@ -94,8 +94,8 @@ impl<'ctx, M: MachineLower> IselContext<'ctx, '_, M> {
     pub fn get_value_vreg(&mut self, value: DepValue) -> VirtReg {
         let graph = self.state.graph();
         get_value_vreg_helper(
-            |value, class| {
-                let vreg = self.builder.create_vreg(class);
+            |value, bank| {
+                let vreg = self.builder.create_vreg(bank);
                 self.state.reg_value_map[vreg] = value.into();
                 vreg
             },
@@ -106,8 +106,8 @@ impl<'ctx, M: MachineLower> IselContext<'ctx, '_, M> {
         )
     }
 
-    pub fn create_temp_vreg(&mut self, class: RegClass) -> VirtReg {
-        self.builder.create_vreg(class)
+    pub fn create_temp_vreg(&mut self, bank: RegBank) -> VirtReg {
+        self.builder.create_vreg(bank)
     }
 
     pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
@@ -465,8 +465,8 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     fn get_value_vreg(&mut self, builder: &mut LirBuilder<'ctx, M>, value: DepValue) -> VirtReg {
         let graph = self.graph();
         get_value_vreg_helper(
-            |value, class| {
-                let vreg = builder.create_vreg(class);
+            |value, bank| {
+                let vreg = builder.create_vreg(bank);
                 self.reg_value_map[vreg] = value.into();
                 vreg
             },
@@ -478,10 +478,10 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
     }
 
     fn create_phi_vreg(&mut self, builder: &mut LirBuilder<'ctx, M>, value: DepValue) -> VirtReg {
-        let class = self
+        let bank = self
             .machine
-            .reg_class_for_type(self.graph().value_kind(value).as_value().unwrap());
-        let vreg = builder.create_vreg(class);
+            .reg_bank_for_type(self.graph().value_kind(value).as_value().unwrap());
+        let vreg = builder.create_vreg(bank);
         self.value_reg_map[value] = vreg.into();
         vreg
     }
@@ -532,17 +532,17 @@ fn emit_instr<M: MachineLower>(
 }
 
 fn get_value_vreg_helper<M: MachineLower>(
-    builder: impl FnOnce(DepValue, RegClass) -> VirtReg,
+    builder: impl FnOnce(DepValue, RegBank) -> VirtReg,
     value_reg_map: &mut ValueRegMap,
     machine: &M,
     valgraph: &ValGraph,
     value: DepValue,
 ) -> VirtReg {
-    let class = machine.reg_class_for_type(valgraph.value_kind(value).as_value().unwrap());
+    let bank = machine.reg_bank_for_type(valgraph.value_kind(value).as_value().unwrap());
     match value_reg_map[value].expand() {
         Some(vreg) => vreg,
         None => {
-            let vreg = builder(value, class);
+            let vreg = builder(value, bank);
             value_reg_map[value] = vreg.into();
             vreg
         }

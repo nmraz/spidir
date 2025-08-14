@@ -259,7 +259,7 @@ fn count_nodes_with_identity(body: &FunctionBody) -> usize {
 
 struct HashMapEnv<'a>(FxHashMap<String, Value<'a>>);
 impl VariableMap for HashMapEnv<'_> {
-    fn lookup(&self, varname: &str) -> Option<Value> {
+    fn lookup(&self, varname: &str) -> Option<Value<'_>> {
         self.0.get(varname).cloned()
     }
 }

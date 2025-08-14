@@ -72,7 +72,7 @@ where
     }
 }
 
-pub fn iter_slice_ranges<R, F, V>(slice: &[R], key_func: F) -> SliceRangeIter<R, F>
+pub fn iter_slice_ranges<R, F, V>(slice: &[R], key_func: F) -> SliceRangeIter<'_, R, F>
 where
     F: FnMut(&R) -> (ProgramRange, &V),
 {

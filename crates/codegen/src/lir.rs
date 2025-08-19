@@ -27,15 +27,58 @@ pub mod display;
 #[cfg(test)]
 pub(crate) mod test_utils;
 
+const REG_BANK_BITS: usize = 4;
+const REG_WIDTH_BITS: usize = 8 - REG_BANK_BITS;
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RegBank(u8);
 
 impl RegBank {
     pub const fn new(bank: u8) -> Self {
+        assert!(bank < 1 << REG_BANK_BITS);
         Self(bank)
     }
 
-    pub fn as_u8(self) -> u8 {
+    pub const fn as_u8(self) -> u8 {
+        self.0
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RegWidth(u8);
+
+impl RegWidth {
+    pub const fn new(width: u8) -> Self {
+        assert!(width < 1 << REG_WIDTH_BITS);
+        Self(width)
+    }
+
+    pub const fn as_u8(self) -> u8 {
+        self.0
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct RegClass(u8);
+
+impl RegClass {
+    pub const fn new(bank: RegBank, width: RegWidth) -> Self {
+        Self((bank.as_u8() << REG_WIDTH_BITS) | width.as_u8())
+    }
+
+    pub fn bank(self) -> RegBank {
+        RegBank(self.0 >> REG_WIDTH_BITS)
+    }
+
+    pub fn width(self) -> RegWidth {
+        RegWidth(self.0 & ((1 << REG_WIDTH_BITS) - 1))
+    }
+
+    pub fn with_width(self, new_width: RegWidth) -> Self {
+        Self::new(self.bank(), new_width)
+    }
+
+    pub const fn as_u8(self) -> u8 {
         self.0
     }
 }

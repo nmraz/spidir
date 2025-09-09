@@ -281,7 +281,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     record_parallel_copy(
                         copies,
                         instr.next(),
-                        ParallelCopyPhase::Before,
+                        ParallelCopyPhase::Spill,
                         class,
                         range_assignment.into(),
                         OperandAssignment::Spill(spill),

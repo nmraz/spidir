@@ -493,16 +493,21 @@ impl ConflictBoundary {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ParallelCopyPhase {
     /// Corresponds to the `Before` instruction slot:
+    /// * Spills into spill slots for def operands that have been spilled
+    ///
+    /// This is a dedicated phase so that spill -> {reload,copy} sequences between adjacent
+    /// instructions work correctly.
+    Spill,
+    /// Corresponds to the `Before` instruction slot:
     /// * Copies out of fixed def operands
     /// * Intra-block copies between fragments belonging to the same vreg
     /// * Copies for block live-ins when there is a unique predecessor
-    /// * Copies into spill slots for def operands that have been spilled
     Before,
     /// Corresponds to the `Before` instruction slot:
     /// * Reloads from spill slots for use operands that have been spilled
     ///
-    /// This is a dedicated phase so that spill -> reload sequences between adjacent instructions
-    /// work correctly.
+    /// This is a dedicated phase so that {copy,spill} -> reload sequences between adjacent
+    /// instructions work correctly.
     Reload,
     /// Corresponds to the `PreCopy` instruction slot:
     /// * Copies into fixed use operands
@@ -515,7 +520,9 @@ pub enum ParallelCopyPhase {
 impl ParallelCopyPhase {
     pub fn slot(self) -> InstrSlot {
         match self {
-            ParallelCopyPhase::Before | ParallelCopyPhase::Reload => InstrSlot::Before,
+            ParallelCopyPhase::Spill | ParallelCopyPhase::Before | ParallelCopyPhase::Reload => {
+                InstrSlot::Before
+            }
             ParallelCopyPhase::PreCopy => InstrSlot::PreCopy,
         }
     }

@@ -153,7 +153,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             record_parallel_copy(
                 copies,
                 Instr::new(0),
-                ParallelCopyPhase::Before,
+                ParallelCopyPhase::InterInstr,
                 self.lir.vreg_class(block_param),
                 OperandAssignment::Reg(preg).into(),
                 assignment,
@@ -235,7 +235,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                 record_parallel_copy(
                                     copies,
                                     instr,
-                                    ParallelCopyPhase::Before,
+                                    ParallelCopyPhase::InterInstr,
                                     class,
                                     last_assignment,
                                     range_assignment,
@@ -451,7 +451,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 let (instr, phase) = if single_pred {
                     (
                         self.lir.block_instrs(block).start,
-                        ParallelCopyPhase::Before,
+                        ParallelCopyPhase::InterInstr,
                     )
                 } else {
                     debug_assert!(
@@ -459,7 +459,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         "critical edge not split"
                     );
                     let pred_terminator = self.lir.block_terminator(pred);
-                    (pred_terminator, ParallelCopyPhase::PreCopy)
+                    (pred_terminator, ParallelCopyPhase::InstrSetup)
                 };
 
                 trace!("  {pred} -> {block} at {instr}");
@@ -501,7 +501,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 record_parallel_copy(
                     copies,
                     pred_terminator,
-                    ParallelCopyPhase::PreCopy,
+                    ParallelCopyPhase::InstrSetup,
                     class,
                     from_assignment,
                     incoming.assignment,
@@ -559,7 +559,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         record_parallel_copy(
                             copies,
                             instr.next(),
-                            ParallelCopyPhase::Before,
+                            ParallelCopyPhase::InterInstr,
                             self.lir.vreg_class(vreg),
                             OperandAssignment::Reg(preg).into(),
                             range_assignment,
@@ -602,7 +602,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                 record_parallel_copy(
                                     copies,
                                     instr,
-                                    ParallelCopyPhase::PreCopy,
+                                    ParallelCopyPhase::InstrSetup,
                                     self.lir.vreg_class(vreg),
                                     range_assignment.into(),
                                     OperandAssignment::Reg(preg),
@@ -615,7 +615,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                 record_parallel_copy(
                                     copies,
                                     instr,
-                                    ParallelCopyPhase::PreCopy,
+                                    ParallelCopyPhase::InstrSetup,
                                     self.lir.vreg_class(vreg),
                                     range_assignment.into(),
                                     def_assignment,

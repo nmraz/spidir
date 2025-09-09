@@ -334,7 +334,7 @@ mod tests {
             parallel_copies.push(ParallelCopy {
                 instr: Instr::new(0),
                 class: RegClass::new(0),
-                phase: ParallelCopyPhase::Before,
+                phase: ParallelCopyPhase::InterInstr,
                 from: parse_copy_source(from.trim()),
                 to: parse_operand(to.trim()),
             });

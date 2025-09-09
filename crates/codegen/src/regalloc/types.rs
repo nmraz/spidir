@@ -492,38 +492,47 @@ impl ConflictBoundary {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ParallelCopyPhase {
-    /// Corresponds to the `Before` instruction slot:
+    /// Contains:
     /// * Spills into spill slots for def operands that have been spilled
     ///
     /// This is a dedicated phase so that spill -> {reload,copy} sequences between adjacent
     /// instructions work correctly.
+    ///
+    /// Corresponds to the `Before` instruction slot, but logically "belongs" to the previous
+    /// instruction.
     Spill,
-    /// Corresponds to the `Before` instruction slot:
+    /// Contains:
     /// * Copies out of fixed def operands
     /// * Intra-block copies between fragments belonging to the same vreg
     /// * Copies for block live-ins when there is a unique predecessor
-    Before,
-    /// Corresponds to the `Before` instruction slot:
+    ///
+    /// Corresponds to the `Before` instruction slot.
+    InterInstr,
+    /// Contains:
     /// * Reloads from spill slots for use operands that have been spilled
     ///
     /// This is a dedicated phase so that {copy,spill} -> reload sequences between adjacent
     /// instructions work correctly.
+    ///
+    /// Corresponds to the `Before` instruction slot.
     Reload,
-    /// Corresponds to the `PreCopy` instruction slot:
+    /// Contains:
     /// * Copies into fixed use operands
     /// * Copies into tied def operands
     /// * Copies for block live-outs when there is a unique successor
     /// * Copies for outgoing block params
-    PreCopy,
+    ///
+    /// Corresponds to the `PreCopy` instruction slot.
+    InstrSetup,
 }
 
 impl ParallelCopyPhase {
     pub fn slot(self) -> InstrSlot {
         match self {
-            ParallelCopyPhase::Spill | ParallelCopyPhase::Before | ParallelCopyPhase::Reload => {
-                InstrSlot::Before
-            }
-            ParallelCopyPhase::PreCopy => InstrSlot::PreCopy,
+            ParallelCopyPhase::Spill
+            | ParallelCopyPhase::InterInstr
+            | ParallelCopyPhase::Reload => InstrSlot::Before,
+            ParallelCopyPhase::InstrSetup => InstrSlot::PreCopy,
         }
     }
 }

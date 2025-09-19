@@ -19,7 +19,7 @@ use crate::{
 
 use display::{
     Display, DisplayBlockParams, DisplayDefOperand, DisplayInstrData, DisplayUseOperand,
-    DisplayVirtRegWithBank, display_block_params,
+    DisplayVirtRegWithClass, display_block_params,
 };
 
 pub mod display;
@@ -88,10 +88,10 @@ pub struct VirtReg(u32);
 entity_impl!(VirtReg, "%");
 
 impl VirtReg {
-    pub fn display_with_bank<M: MachineCore>(self, bank: RegBank) -> DisplayVirtRegWithBank<M> {
-        DisplayVirtRegWithBank {
+    pub fn display_with_class<M: MachineCore>(self, class: RegClass) -> DisplayVirtRegWithClass<M> {
+        DisplayVirtRegWithClass {
             reg: self,
-            bank,
+            class,
             _marker: PhantomData,
         }
     }
@@ -458,7 +458,7 @@ pub struct Lir<M: MachineCore> {
     use_pool: Vec<UseOperand>,
     clobbers: PrimaryMap<ClobberIndex, PhysRegSet>,
     stack_slots: PrimaryMap<StackSlot, MemLayout>,
-    vreg_banks: PrimaryMap<VirtReg, RegBank>,
+    vreg_classes: PrimaryMap<VirtReg, RegClass>,
 }
 
 impl<M: MachineCore> Lir<M> {
@@ -527,18 +527,18 @@ impl<M: MachineCore> Lir<M> {
         self.stack_slots[slot]
     }
 
-    pub fn vreg_bank(&self, vreg: VirtReg) -> RegBank {
-        self.vreg_banks[vreg]
+    pub fn vreg_class(&self, vreg: VirtReg) -> RegClass {
+        self.vreg_classes[vreg]
     }
 
     pub fn vreg_count(&self) -> u32 {
-        self.vreg_banks.len() as u32
+        self.vreg_classes.len() as u32
     }
 }
 
 impl<M: MachineCore> Lir<M> {
-    pub fn display_vreg_with_bank(&self, vreg: VirtReg) -> DisplayVirtRegWithBank<M> {
-        vreg.display_with_bank(self.vreg_bank(vreg))
+    pub fn display_vreg_with_class(&self, vreg: VirtReg) -> DisplayVirtRegWithClass<M> {
+        vreg.display_with_class(self.vreg_class(vreg))
     }
 
     pub fn display_instr(&self, instr: Instr) -> DisplayInstrData<'_, M> {
@@ -569,8 +569,8 @@ impl<'o, M: MachineCore> InstrBuilder<'o, '_, M> {
         self.builder
     }
 
-    pub fn create_vreg(&mut self, bank: RegBank) -> VirtReg {
-        self.builder.create_vreg(bank)
+    pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
+        self.builder.create_vreg(class)
     }
 
     pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
@@ -656,7 +656,7 @@ impl<'o, M: MachineCore> Builder<'o, M> {
                 use_pool: Vec::new(),
                 clobbers: PrimaryMap::new(),
                 stack_slots: PrimaryMap::new(),
-                vreg_banks: PrimaryMap::new(),
+                vreg_classes: PrimaryMap::new(),
             },
             block_order,
             vreg_copies: FxHashMap::default(),
@@ -690,20 +690,24 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         }
     }
 
-    pub fn create_vreg(&mut self, bank: RegBank) -> VirtReg {
-        self.lir.vreg_banks.push(bank)
+    pub fn create_vreg(&mut self, class: RegClass) -> VirtReg {
+        self.lir.vreg_classes.push(class)
     }
 
     pub fn copy_vreg(&mut self, dest: VirtReg, src: VirtReg) {
         let src = resolve_vreg_copy(&mut self.vreg_copies, src).unwrap_or(src);
         assert!(dest != src, "vreg copy cycle on register {dest}");
-        let src_bank = self.lir.vreg_bank(src);
-        let dest_bank = self.lir.vreg_bank(dest);
+
+        let src_class = self.lir.vreg_class(src);
+        let dest_class = self.lir.vreg_class(dest);
+
+        // We intentionally compare only banks, because extension/truncation instructions might want
+        // to copy across different widths.
         assert!(
-            src_bank == dest_bank,
-            "attempted to copy vreg of bank {} into vreg of bank {}",
-            src_bank.as_u8(),
-            dest_bank.as_u8()
+            src_class.bank() == dest_class.bank(),
+            "attempted to copy vreg of class '{}' into vreg of class '{}'",
+            M::reg_class_name(src_class),
+            M::reg_class_name(dest_class),
         );
 
         let prev = self.vreg_copies.insert(dest, src);

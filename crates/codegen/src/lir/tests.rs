@@ -5,7 +5,7 @@ use crate::cfg::{Block, BlockCfg};
 use super::{
     Builder, DefOperand, Lir, MemLayout, OperandPos, PhysRegSet, UseOperandConstraint,
     test_utils::{
-        DummyInstr, DummyMachine, RB_GPR, REG_R0, REG_R1, REG_R2, push_instr,
+        DummyInstr, DummyMachine, RC_GPR, REG_R0, REG_R1, REG_R2, push_instr,
         push_instr_with_clobbers,
     },
 };
@@ -144,7 +144,7 @@ fn multi_block() {
     builder.advance_block();
 
     // `right`
-    let add5 = builder.create_vreg(RB_GPR);
+    let add5 = builder.create_vreg(RC_GPR);
     builder.set_outgoing_block_params([add5]);
     push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
     let [right_param2, five] = push_instr(
@@ -165,7 +165,7 @@ fn multi_block() {
     builder.advance_block();
 
     // `left`
-    let add_params = builder.create_vreg(RB_GPR);
+    let add_params = builder.create_vreg(RC_GPR);
     builder.set_outgoing_block_params([add_params]);
     push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
     let [left_param2, left_param3] = push_instr(
@@ -243,12 +243,12 @@ fn block_param_vreg_copies() {
     builder.set_incoming_block_params([retval]);
     builder.advance_block();
 
-    let outgoing_param = builder.create_vreg(RB_GPR);
+    let outgoing_param = builder.create_vreg(RC_GPR);
     builder.set_outgoing_block_params([outgoing_param]);
 
     push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
 
-    let five = builder.create_vreg(RB_GPR);
+    let five = builder.create_vreg(RC_GPR);
     push_instr(
         &mut builder,
         DummyInstr::MovI(5),

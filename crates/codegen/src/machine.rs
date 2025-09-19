@@ -8,7 +8,7 @@ use crate::{
     code_buffer::{CodeBuffer, FixupKind},
     emit::{EmitContext, EmitInstrData},
     isel::{IselContext, MachineIselError, ParamLoc},
-    lir::{Instr, MemLayout, PhysReg, RegBank},
+    lir::{Instr, MemLayout, PhysReg, RegBank, RegClass},
     regalloc::{OperandAssignment, RematCost},
 };
 
@@ -18,12 +18,12 @@ impl<M: MachineCore + MachineLower + MachineRegalloc + MachineEmit> Machine for 
 pub trait MachineCore {
     type Instr: Copy + Debug;
 
-    fn reg_bank_name(bank: RegBank) -> &'static str;
+    fn reg_class_name(class: RegClass) -> &'static str;
     fn reg_name(reg: PhysReg) -> &'static str;
 }
 
 pub trait MachineLower: MachineCore {
-    fn reg_bank_for_type(&self, ty: Type) -> RegBank;
+    fn reg_class_for_type(&self, ty: Type) -> RegClass;
     fn param_locs(&self, param_types: &[Type]) -> Vec<ParamLoc>;
 
     fn make_jump(&self, block: Block) -> Self::Instr;

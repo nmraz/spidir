@@ -158,7 +158,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 copies,
                 Instr::new(0),
                 ParallelCopyPhase::InterInstr,
-                self.lir.vreg_bank(block_param),
+                self.lir.vreg_class(block_param).bank(),
                 OperandAssignment::Reg(preg).into(),
                 assignment,
             );
@@ -204,7 +204,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) {
         trace!("collecting intra-block copies: {vreg}");
 
-        let bank = self.lir.vreg_bank(vreg);
+        let bank = self.lir.vreg_class(vreg).bank();
 
         let mut last_canonical_range: Option<(LiveRange, CopySourceAssignment)> = None;
         for &range in ranges {
@@ -470,7 +470,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 copies.push(ParallelCopy {
                     instr,
                     phase,
-                    bank: self.lir.vreg_bank(vreg),
+                    bank: self.lir.vreg_class(vreg).bank(),
                     from: pred_assignment,
                     to: assignment,
                 });
@@ -489,7 +489,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         for incoming in block_param_ins {
             trace!("  -> {} ({})", incoming.vreg, incoming.block);
-            let bank = self.lir.vreg_bank(incoming.vreg);
+            let bank = self.lir.vreg_class(incoming.vreg).bank();
             for &pred in self.cfg_ctx.cfg.block_preds(incoming.block) {
                 trace!("    {pred}");
                 let (from_vreg, from_assignment) = *block_param_outs
@@ -564,7 +564,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             copies,
                             instr.next(),
                             ParallelCopyPhase::InterInstr,
-                            self.lir.vreg_bank(vreg),
+                            self.lir.vreg_class(vreg).bank(),
                             OperandAssignment::Reg(preg).into(),
                             range_assignment,
                         );
@@ -607,7 +607,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     copies,
                                     instr,
                                     ParallelCopyPhase::InstrSetup,
-                                    self.lir.vreg_bank(vreg),
+                                    self.lir.vreg_class(vreg).bank(),
                                     range_assignment.into(),
                                     OperandAssignment::Reg(preg),
                                 );
@@ -620,7 +620,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     copies,
                                     instr,
                                     ParallelCopyPhase::InstrSetup,
-                                    self.lir.vreg_bank(vreg),
+                                    self.lir.vreg_class(vreg).bank(),
                                     range_assignment.into(),
                                     def_assignment,
                                 );

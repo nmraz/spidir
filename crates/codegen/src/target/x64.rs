@@ -5,7 +5,7 @@ use ir::node::FunctionRef;
 use crate::{
     cfg::Block,
     code_buffer::RelocKind,
-    lir::{MemLayout, PhysReg, RegBank, StackSlot},
+    lir::{MemLayout, PhysReg, RegBank, RegClass, RegWidth, StackSlot},
     machine::{MachineCore, MachineRegalloc},
     regalloc::RematCost,
 };
@@ -449,11 +449,11 @@ impl X64Machine {
 impl MachineCore for X64Machine {
     type Instr = X64Instr;
 
-    fn reg_bank_name(bank: RegBank) -> &'static str {
-        match bank {
-            RB_GPR => "gpr",
-            RB_XMM => "xmm",
-            _ => panic!("unknown register bank"),
+    fn reg_class_name(class: RegClass) -> &'static str {
+        match class {
+            RC_GPR => "gpr",
+            RC_XMM => "xmm",
+            _ => panic!("unknown register class"),
         }
     }
 
@@ -535,8 +535,13 @@ impl MachineRegalloc for X64Machine {
     }
 }
 
+const RW_FULL: RegWidth = RegWidth::new(0);
+
 const RB_GPR: RegBank = RegBank::new(0);
 const RB_XMM: RegBank = RegBank::new(1);
+
+const RC_GPR: RegClass = RegClass::new(RB_GPR, RW_FULL);
+const RC_XMM: RegClass = RegClass::new(RB_XMM, RW_FULL);
 
 const REG_RAX: PhysReg = PhysReg::new(0);
 const REG_RBX: PhysReg = PhysReg::new(1);

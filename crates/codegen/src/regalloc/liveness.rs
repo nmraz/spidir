@@ -8,7 +8,7 @@ use crate::{
     cfg::{Block, CfgContext},
     lir::{DefOperandConstraint, Instr, Lir, OperandPos, PhysReg, UseOperandConstraint, VirtReg},
     machine::MachineRegalloc,
-    regalloc::types::InstrWithRematCost,
+    regalloc::types::{InstrSlot, InstrWithRematCost},
 };
 
 use super::{
@@ -375,6 +375,20 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         copied_live_range: Option<LiveRange>,
         allow_identical_range: bool,
     ) {
+        // Register scavenging (used for parallel copy temporaries during reification) depends on
+        // the fact that reservations can never be live across `Before` and `PreCopy` slots to
+        // simplify some of its checks. We know that must be the case because every reservation:
+        // (a) can never cover (more than) an entire instruction, and (b) either starts at the
+        // `PreCopy` slot (for use operands) or ends at the following `Before` slot (for def
+        // operands).
+        //
+        // See `scavenge_free_reg_at` for the matching assertion at the use site.
+        debug_assert!(prog_range.len() < 4);
+        debug_assert!(
+            prog_range.start.slot() == InstrSlot::PreCopy
+                || prog_range.end.slot() == InstrSlot::Before
+        );
+
         let reservations = &mut self.phys_reg_reservations[preg.as_u8() as usize];
 
         // We're adding reservations in reverse order, so the last reservation should be either

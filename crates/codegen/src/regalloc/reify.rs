@@ -20,7 +20,7 @@ use crate::{
 
 use super::{
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot, SpillSlotData,
-    conflict::{RangeKeyIter, iter_btree_ranges, iter_slice_ranges},
+    conflict::{RangeKeyIter, iter_btree_ranges},
     context::RegAllocContext,
     parallel_copy::{self, RegScavenger},
     redundant_copy::{RedundantCopyTracker, RedundantCopyVerdict},
@@ -702,30 +702,29 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         pos: ProgramPoint,
         used: &mut PhysRegSet,
     ) -> Option<PhysReg> {
+        // We can get away with checking just the assignment tree, and completely avoid checking
+        // against reservations, because we know by construction that parallel copies can never be
+        // inserted where reserved registers are live: copies occur only in the `Before` and
+        // `PreCopy` slots, but a reservation can never be live across either of them.
+        //
+        // Make sure the invariant is enforced both here and in `reserve_phys_reg`:
+        debug_assert!(matches!(pos.slot(), InstrSlot::Before | InstrSlot::PreCopy));
+
         let reg = *self
             .machine
             .usable_regs(class)
             .iter()
-            .find(|&&reg| !used.contains(reg) && self.is_reg_free_at(reg, pos))?;
+            .find(|&&reg| !used.contains(reg) && !self.is_reg_assigned_at(reg, pos))?;
         used.insert(reg);
         Some(reg)
     }
 
-    fn is_reg_free_at(&self, reg: PhysReg, pos: ProgramPoint) -> bool {
-        !self.is_reg_reserved_at(reg, pos) && !self.is_reg_assigned_at(reg, pos)
-    }
-
     fn is_reg_assigned_at(&self, reg: PhysReg, pos: ProgramPoint) -> bool {
-        let assignments = iter_btree_ranges(&self.phys_reg_assignments[reg.as_u8() as usize]);
-        has_containing_range(assignments, pos)
-    }
-
-    fn is_reg_reserved_at(&self, reg: PhysReg, pos: ProgramPoint) -> bool {
-        let reservations = iter_slice_ranges(
-            &self.phys_reg_reservations[reg.as_u8() as usize],
-            |reservation| (reservation.prog_range, &()),
-        );
-        has_containing_range(reservations, pos)
+        let mut assignments = iter_btree_ranges(&self.phys_reg_assignments[reg.as_u8() as usize]);
+        assignments.skip_to_endpoint_above(pos);
+        assignments
+            .current()
+            .is_some_and(|(cur_range, _)| pos >= cur_range.start)
     }
 }
 
@@ -940,12 +939,6 @@ fn parallel_copy_key(copy: &ParallelCopy) -> u64 {
     let class = (copy.class.as_u8() as u64) << 8;
     let phase = copy.phase as u64;
     instr | class | phase
-}
-
-fn has_containing_range(mut iter: impl RangeKeyIter, pos: ProgramPoint) -> bool {
-    iter.skip_to_endpoint_above(pos);
-    iter.current()
-        .is_some_and(|(cur_range, _)| pos >= cur_range.start)
 }
 
 fn is_block_header<M: MachineCore>(lir: &Lir<M>, cfg_ctx: &CfgContext, instr: Instr) -> bool {

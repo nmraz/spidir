@@ -204,7 +204,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         probe_order: &mut ProbeOrder,
     ) -> ProbeResult {
         let live_set = self.live_set_fragments[fragment].live_set;
-        let bank = self.live_sets[live_set].bank;
+        let bank = self.live_sets[live_set].class.bank();
 
         // Probe order: start with hinted registers in order of decreasing weight, then move on to
         // the default allocation order requested by the machine backend. The backend's allocation

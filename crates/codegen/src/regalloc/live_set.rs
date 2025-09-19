@@ -134,7 +134,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             let vreg = self.live_ranges[first_range.live_range].vreg;
 
             let live_set = self.live_sets.push(LiveSetData {
-                bank: self.lir.vreg_class(vreg).bank(),
+                class: self.lir.vreg_class(vreg),
                 spill_hull: None,
                 spill_slot: None.into(),
             });

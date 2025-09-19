@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 
 use crate::{
     cfg::Block,
-    lir::{Instr, Lir, MemLayout, OperandPos, PhysReg, RegBank, VirtReg},
+    lir::{Instr, Lir, MemLayout, OperandPos, PhysReg, RegBank, RegClass, VirtReg},
     machine::MachineCore,
 };
 
@@ -323,7 +323,7 @@ pub struct LiveSet(u32);
 entity_impl!(LiveSet, "ls");
 
 pub struct LiveSetData {
-    pub bank: RegBank,
+    pub class: RegClass,
     pub spill_hull: Option<ProgramRange>,
     pub spill_slot: PackedOption<SpillSlot>,
 }

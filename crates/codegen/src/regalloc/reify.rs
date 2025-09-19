@@ -656,8 +656,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         for live_set_data in self.live_sets.values_mut() {
             // TODO: Use the hulls to share spill slots where possible.
             if live_set_data.spill_hull.is_some() {
-                let spill_slot = assignment
-                    .create_spill_slot(self.machine.reg_bank_spill_layout(live_set_data.bank));
+                let spill_slot = assignment.create_spill_slot(
+                    self.machine
+                        .reg_bank_spill_layout(live_set_data.class.bank()),
+                );
                 live_set_data.spill_slot = spill_slot.into();
             }
         }

@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 
 use crate::{
     cfg::Block,
-    lir::{Instr, Lir, MemLayout, OperandPos, PhysReg, RegBank, RegClass, VirtReg},
+    lir::{Instr, Lir, MemLayout, OperandPos, PhysReg, RegClass, VirtReg},
     machine::MachineCore,
 };
 
@@ -686,7 +686,7 @@ pub struct InstrAssignmentData {
 pub struct ParallelCopy {
     pub instr: Instr,
     pub phase: ParallelCopyPhase,
-    pub bank: RegBank,
+    pub class: RegClass,
     pub from: CopySourceAssignment,
     pub to: OperandAssignment,
 }

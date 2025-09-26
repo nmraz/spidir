@@ -10,7 +10,7 @@ use log::trace;
 use crate::{
     cfg::{Block, CfgContext},
     lir::{
-        DefOperandConstraint, Instr, InstrRange, Lir, MemLayout, PhysReg, RegBank,
+        DefOperandConstraint, Instr, InstrRange, Lir, MemLayout, PhysReg, RegBank, RegClass,
         UseOperandConstraint, VirtReg,
     },
     machine::{MachineCore, MachineRegalloc},
@@ -53,7 +53,7 @@ fn record_parallel_copy(
     copies: &mut ParallelCopies,
     instr: Instr,
     phase: ParallelCopyPhase,
-    bank: RegBank,
+    class: RegClass,
     from: CopySourceAssignment,
     to: OperandAssignment,
 ) {
@@ -61,7 +61,7 @@ fn record_parallel_copy(
         copies.push(ParallelCopy {
             instr,
             phase,
-            bank,
+            class,
             from,
             to,
         });
@@ -158,7 +158,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 copies,
                 Instr::new(0),
                 ParallelCopyPhase::InterInstr,
-                self.lir.vreg_class(block_param).bank(),
+                self.lir.vreg_class(block_param),
                 OperandAssignment::Reg(preg).into(),
                 assignment,
             );
@@ -204,7 +204,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
     ) {
         trace!("collecting intra-block copies: {vreg}");
 
-        let bank = self.lir.vreg_class(vreg).bank();
+        let class = self.lir.vreg_class(vreg);
 
         let mut last_canonical_range: Option<(LiveRange, CopySourceAssignment)> = None;
         for &range in ranges {
@@ -240,7 +240,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     copies,
                                     instr,
                                     ParallelCopyPhase::InterInstr,
-                                    bank,
+                                    class,
                                     last_assignment,
                                     range_assignment,
                                 );
@@ -286,7 +286,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         copies,
                         instr.next(),
                         ParallelCopyPhase::Spill,
-                        bank,
+                        class,
                         range_assignment.into(),
                         OperandAssignment::Spill(spill),
                     );
@@ -296,7 +296,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         copies,
                         instr,
                         ParallelCopyPhase::Reload,
-                        bank,
+                        class,
                         source,
                         range_assignment,
                     );
@@ -470,7 +470,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 copies.push(ParallelCopy {
                     instr,
                     phase,
-                    bank: self.lir.vreg_class(vreg).bank(),
+                    class: self.lir.vreg_class(vreg),
                     from: pred_assignment,
                     to: assignment,
                 });
@@ -489,7 +489,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         for incoming in block_param_ins {
             trace!("  -> {} ({})", incoming.vreg, incoming.block);
-            let bank = self.lir.vreg_class(incoming.vreg).bank();
+            let class = self.lir.vreg_class(incoming.vreg);
             for &pred in self.cfg_ctx.cfg.block_preds(incoming.block) {
                 trace!("    {pred}");
                 let (from_vreg, from_assignment) = *block_param_outs
@@ -506,7 +506,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                     copies,
                     pred_terminator,
                     ParallelCopyPhase::InstrSetup,
-                    bank,
+                    class,
                     from_assignment,
                     incoming.assignment,
                 );
@@ -564,7 +564,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                             copies,
                             instr.next(),
                             ParallelCopyPhase::InterInstr,
-                            self.lir.vreg_class(vreg).bank(),
+                            self.lir.vreg_class(vreg),
                             OperandAssignment::Reg(preg).into(),
                             range_assignment,
                         );
@@ -607,7 +607,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     copies,
                                     instr,
                                     ParallelCopyPhase::InstrSetup,
-                                    self.lir.vreg_class(vreg).bank(),
+                                    self.lir.vreg_class(vreg),
                                     range_assignment.into(),
                                     OperandAssignment::Reg(preg),
                                 );
@@ -620,7 +620,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                                     copies,
                                     instr,
                                     ParallelCopyPhase::InstrSetup,
-                                    self.lir.vreg_class(vreg).bank(),
+                                    self.lir.vreg_class(vreg),
                                     range_assignment.into(),
                                     def_assignment,
                                 );
@@ -860,7 +860,7 @@ fn next_copy_chunk<'a>(
 
     Some((
         ProgramPoint::new(first.instr, first.phase.slot()),
-        first.bank,
+        first.class.bank(),
         cur_copies,
     ))
 }
@@ -893,7 +893,7 @@ fn advance_redundant_copy_tracker<M: MachineCore>(
 
 fn parallel_copy_key(copy: &ParallelCopy) -> u64 {
     let instr = (copy.instr.as_u32() as u64) << 16;
-    let bank = (copy.bank.as_u8() as u64) << 8;
+    let bank = (copy.class.bank().as_u8() as u64) << 8;
     let phase = copy.phase as u64;
     instr | bank | phase
 }

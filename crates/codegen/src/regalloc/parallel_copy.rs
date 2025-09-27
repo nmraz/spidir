@@ -327,9 +327,7 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
     }
 
     fn emit_raw(&mut self, class: RegClass, from: CopySourceAssignment, to: OperandAssignment) {
-        // TODO: Use this.
-        let _ = class;
-        self.copies.push(AssignmentCopy { from, to });
+        self.copies.push(AssignmentCopy { class, from, to });
     }
 
     fn alloc_tmp_op(&mut self, class: RegClass) -> OperandAssignment {

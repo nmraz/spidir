@@ -695,6 +695,7 @@ pub type ParallelCopies = Vec<ParallelCopy>;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct AssignmentCopy {
+    pub class: RegClass,
     pub from: CopySourceAssignment,
     pub to: OperandAssignment,
 }

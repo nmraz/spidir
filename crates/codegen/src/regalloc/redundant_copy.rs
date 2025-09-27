@@ -71,7 +71,10 @@ mod tests {
 
     use expect_test::{Expect, expect};
 
-    use crate::regalloc::test_utils::{parse_copy_source, parse_operand};
+    use crate::{
+        lir::{RegBank, RegClass, RegWidth},
+        regalloc::test_utils::{parse_copy_source, parse_operand},
+    };
 
     use super::*;
 
@@ -102,8 +105,11 @@ mod tests {
                 let to = parse_operand(parts.next().unwrap().trim());
                 let from = parse_copy_source(parts.next().unwrap().trim());
 
-                if tracker.process_copy(&AssignmentCopy { from, to })
-                    == RedundantCopyVerdict::Necessary
+                if tracker.process_copy(&AssignmentCopy {
+                    class: RegClass::new(RegBank::new(0), RegWidth::new(0)),
+                    from,
+                    to,
+                }) == RedundantCopyVerdict::Necessary
                 {
                     writeln!(result, "{line}").unwrap();
                 }

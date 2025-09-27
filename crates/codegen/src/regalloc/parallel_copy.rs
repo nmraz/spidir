@@ -1,6 +1,6 @@
 use smallvec::{SmallVec, smallvec};
 
-use crate::lir::{Instr, PhysReg, PhysRegSet};
+use crate::lir::{Instr, PhysReg, PhysRegSet, RegClass};
 
 use super::{
     OperandAssignment, SpillSlot,
@@ -46,7 +46,7 @@ pub fn resolve(
     operands.sort_unstable_by_key(operand_assignment_sort_key);
     operands.dedup();
 
-    let mut copy_sources: SmallVec<[Option<TrackedCopySource>; 8]> =
+    let mut copies_by_dest: SmallVec<[Option<TrackedCopyInfo>; 8]> =
         smallvec![None; operands.len()];
 
     let mut ctx = ResolvedCopyContext::prepare(state, scavenger);
@@ -80,11 +80,14 @@ pub fn resolve(
         let to = find_operand(&operands, copy.to);
 
         debug_assert!(
-            copy_sources[to].is_none(),
+            copies_by_dest[to].is_none(),
             "multiple parallel copies into same destination"
         );
 
-        copy_sources[to] = Some(from);
+        copies_by_dest[to] = Some(TrackedCopyInfo {
+            class: copy.class,
+            from,
+        });
     }
 
     // We now view the set of parallel copies as a directed graph, with edges running from copy
@@ -122,7 +125,11 @@ pub fn resolve(
                     // Only copies out of other operands can extend the chain (if those operands
                     // themselves need to be copied into); remats don't depend on any other operand
                     // values.
-                    if let Some(TrackedCopySource::Operand(src)) = copy_sources[operand] {
+                    if let Some(TrackedCopyInfo {
+                        from: TrackedCopySource::Operand(src),
+                        ..
+                    }) = copies_by_dest[operand]
+                    {
                         stack.push(src as usize);
                         continue;
                     }
@@ -154,11 +161,11 @@ pub fn resolve(
             visit_states[to] = VisitState::Visited;
 
             // If this operand isn't actually copied out of another one, we have nothing more to do.
-            let Some(from) = copy_sources[to] else {
+            let Some(copy) = copies_by_dest[to] else {
                 continue;
             };
 
-            match from {
+            match copy.from {
                 TrackedCopySource::Operand(from) => {
                     let from = from as usize;
 
@@ -168,7 +175,7 @@ pub fn resolve(
                             // a direct copy without being worried about cycles.
                             let from = operands[from];
                             let to = operands[to];
-                            ctx.emit(from.into(), to);
+                            ctx.emit(copy.class, from.into(), to);
                         }
                         VisitState::Visiting => {
                             // `from` is itself somewhere lower on the destination stack (i.e.,
@@ -176,26 +183,34 @@ pub fn resolve(
                             // before it is overwritten and copy out of the temporary instead.
 
                             let tmp_op = ctx.alloc_tmp_op();
-                            copy_cycle_break = Some((from, tmp_op));
+                            copy_cycle_break = Some(CopyCycleBreak {
+                                cycle_operand: from,
+                                tmp_operand: tmp_op,
+                                class: copy.class,
+                            });
 
                             // Insert the final copy out of the temporary here (resolved
                             // assignments are in reverse order).
-                            ctx.emit(tmp_op.into(), operands[to]);
+                            ctx.emit(copy.class, tmp_op.into(), operands[to]);
                         }
                     }
                 }
                 TrackedCopySource::Remat(instr) => {
-                    ctx.emit(CopySourceAssignment::Remat(instr), operands[to]);
+                    ctx.emit(copy.class, CopySourceAssignment::Remat(instr), operands[to]);
                 }
             }
 
-            match copy_cycle_break {
-                Some((cycle_operand, tmp_op)) if cycle_operand == to => {
+            match &copy_cycle_break {
+                Some(copy_cycle_break) if copy_cycle_break.cycle_operand == to => {
                     // We've found the start of a broken parallel copy cycle - make sure the
                     // original value of `operand` is saved before it is overwritten by the copy
                     // inserted above.
-                    ctx.emit(operands[to].into(), tmp_op);
-                    ctx.free_tmp_op(tmp_op);
+                    ctx.emit(
+                        copy_cycle_break.class,
+                        operands[to].into(),
+                        copy_cycle_break.tmp_operand,
+                    );
+                    ctx.free_tmp_op(copy_cycle_break.tmp_operand);
                 }
                 _ => {}
             }
@@ -208,11 +223,23 @@ pub fn resolve(
     }
 }
 
+struct CopyCycleBreak {
+    cycle_operand: usize,
+    tmp_operand: OperandAssignment,
+    class: RegClass,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum VisitState {
     Unvisited,
     Visiting,
     Visited,
+}
+
+#[derive(Clone, Copy)]
+struct TrackedCopyInfo {
+    class: RegClass,
+    from: TrackedCopySource,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -255,10 +282,10 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         }
     }
 
-    fn emit(&mut self, from: CopySourceAssignment, to: OperandAssignment) {
+    fn emit(&mut self, class: RegClass, from: CopySourceAssignment, to: OperandAssignment) {
         if from.is_reg() || to.is_reg() {
             // Copies involving at least one register can be performed directly.
-            self.emit_raw(from, to);
+            self.emit_raw(class, from, to);
         } else {
             // Stack-to-stack copies and remat-to-stack need to go through a temporary register.
 
@@ -269,7 +296,9 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
                     let emergency_spill = self.alloc_tmp_spill();
 
                     // Restore the original value of `tmp_reg` from the emergency spill.
+                    // TODO: This register class may not have the correct width.
                     self.emit_raw(
+                        class,
                         OperandAssignment::Spill(emergency_spill).into(),
                         OperandAssignment::Reg(tmp_reg),
                     );
@@ -278,13 +307,15 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
                 }
             };
 
-            self.emit_raw(OperandAssignment::Reg(tmp_reg).into(), to);
-            self.emit_raw(from, OperandAssignment::Reg(tmp_reg));
+            self.emit_raw(class, OperandAssignment::Reg(tmp_reg).into(), to);
+            self.emit_raw(class, from, OperandAssignment::Reg(tmp_reg));
 
             match tmp_op {
                 OperandAssignment::Spill(emergency_spill) => {
                     // Back up `tmp_reg` into the emergency spill before it is used above.
+                    // TODO: This register class may not have the correct width.
                     self.emit_raw(
+                        class,
                         OperandAssignment::Reg(tmp_reg).into(),
                         OperandAssignment::Spill(emergency_spill),
                     );
@@ -295,7 +326,9 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         }
     }
 
-    fn emit_raw(&mut self, from: CopySourceAssignment, to: OperandAssignment) {
+    fn emit_raw(&mut self, class: RegClass, from: CopySourceAssignment, to: OperandAssignment) {
+        // TODO: Use this.
+        let _ = class;
         self.copies.push(AssignmentCopy { from, to });
     }
 

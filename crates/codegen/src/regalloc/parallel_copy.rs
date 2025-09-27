@@ -53,10 +53,20 @@ pub fn resolve(
 
     let mut ctx = ResolvedCopyContext::new(scavenger);
 
+    // We now view the set of parallel copies as a directed graph, with edges running from copy
+    // destinations to their respective sources. If this graph is acyclic, sorting it topologically
+    // (i.e., taking an RPO) will give us a valid order in which the copies can be performed.
+    //
+    // If the graph does contain cycles, we take advantage of the fact that every node has at most
+    // one outgoing edge. That property means that every disjoint subgraph contains at most one
+    // simple cycle, which we can easily break apart by introducing a temporary.
+    //
+    // Perform a modified DFS of the graph to find the RPO we want (modulo discovered cycles, which
+    // require a bit of special handling):
+
     let mut stack = SmallVec::<[usize; 8]>::new();
     let mut visit_states: SmallVec<[_; 8]> = smallvec![VisitState::Unvisited; operands.len()];
 
-    // Perform a post-order DFS of the assignment graph and collect copies to perform.
     for copy in parallel_copies {
         debug_assert!(stack.is_empty());
 
@@ -67,10 +77,7 @@ pub fn resolve(
 
         stack.push(to);
 
-        let mut last_copy_src = None;
-        let mut copy_cycle_break = None;
-
-        // Step 1: Follow the newly-discovered copy chain as far in as possible.
+        // Step 1: Follow the newly-discovered `to -> from` copy "chain" as far in as possible.
         loop {
             let operand = *stack.last().unwrap();
 
@@ -78,72 +85,83 @@ pub fn resolve(
                 VisitState::Unvisited => {
                     visit_states[operand] = VisitState::Visiting;
 
-                    if let Some(src) = copy_sources[operand] {
-                        match src {
-                            TrackedCopySource::Operand(src) => stack.push(src as usize),
-                            TrackedCopySource::Remat(instr) => {
-                                // Remats always terminate the current chain as they can never be
-                                // copied out of a different assignment.
-                                ctx.emit(CopySourceAssignment::Remat(instr), operands[operand]);
-                                break;
-                            }
-                        }
-                    } else {
-                        // No more copies, terminate our current chain.
-                        break;
+                    // Only copies out of other operands can extend the chain (if those operands
+                    // themselves need to be copied into); remats don't depend on any other operand
+                    // values.
+                    if let Some(TrackedCopySource::Operand(src)) = copy_sources[operand] {
+                        stack.push(src as usize);
+                        continue;
                     }
                 }
                 VisitState::Visiting => {
-                    // We've encountered a copy cycle `r -> ... -> s -> r`; break it up by
-                    // introducing a temporary `t`, saving `r` into it before the cyclic copies, and
-                    // copying from `t` into `s` (instead of from `r`).
+                    // We've encountered a copy cycle `r -> ... -> s -> r`; we'll break it up below
+                    // by introducing a temporary `t`, saving `r` into it before the cyclic copies,
+                    // and copying from `t` into `s` (instead of from `r`).
 
-                    // Remove the duplicate `r` from the top of the stack.
+                    // Remove the duplicate `r` from the top of the stack, and let the logic below
+                    // deal with breaking the cycle.
                     stack.pop();
-
-                    // We should always have a previous copy destination on the stack.
-                    let prev = *stack.last().unwrap();
-
-                    let tmp_op = ctx.get_cycle_break_op();
-                    copy_cycle_break = Some((operand, tmp_op));
-
-                    // Insert the final copy out of the temporary here (resolved assignments are in
-                    // reverse order).
-                    ctx.emit(tmp_op.into(), operands[prev]);
-
-                    break;
                 }
                 VisitState::Visited => {
                     // We've hit something in a previously-resolved copy chain, so back up out of
                     // it and terminate our current chain.
                     stack.pop();
-                    last_copy_src = Some(operand);
-                    break;
                 }
             }
+
+            // If we haven't found more unvisited operands copied out of, terminate this chain now.
+            break;
         }
 
-        // Step 2: Walk back out of the chain and record copies as we go.
-        while let Some(operand) = stack.pop() {
-            visit_states[operand] = VisitState::Visited;
+        let mut copy_cycle_break = None;
 
-            if let Some(src) = last_copy_src {
-                let from = operands[src];
-                let to = operands[operand];
-                ctx.emit(from.into(), to);
-            }
+        // Step 2: Walk back out of the chain and record copies (in reverse order!) as we go.
+        while let Some(to) = stack.pop() {
+            visit_states[to] = VisitState::Visited;
 
-            match copy_cycle_break {
-                Some((cycle_operand, tmp_op)) if cycle_operand == operand => {
-                    // We've found the start of a broken parallel copy cycle - make sure the
-                    // original value of `operand` is saved before it is overwritten by the copy
-                    // inserted above.
-                    ctx.emit(operands[operand].into(), tmp_op);
+            // If this operand is copied out of another one, emit the copy now.
+            if let Some(from) = copy_sources[to] {
+                match from {
+                    TrackedCopySource::Operand(from) => {
+                        let from = from as usize;
+
+                        match visit_states[from] {
+                            VisitState::Unvisited | VisitState::Visited => {
+                                // `from` isn't currently on the stack anywhere, so we can just emit
+                                // a direct copy without being worried about cycles.
+                                let from = operands[from];
+                                let to = operands[to];
+                                ctx.emit(from.into(), to);
+                            }
+                            VisitState::Visiting => {
+                                // `from` is itself somewhere lower on the destination stack (i.e.,
+                                // there is a copy cycle), so we need to back it up into a temporary
+                                // before it is overwritten and copy out of the temporary instead.
+
+                                let tmp_op = ctx.get_cycle_break_op();
+                                copy_cycle_break = Some((from, tmp_op));
+
+                                // Insert the final copy out of the temporary here (resolved
+                                // assignments are in reverse order).
+                                ctx.emit(tmp_op.into(), operands[to]);
+                            }
+                        }
+                    }
+                    TrackedCopySource::Remat(instr) => {
+                        ctx.emit(CopySourceAssignment::Remat(instr), operands[to]);
+                    }
                 }
-                _ => {}
-            }
 
-            last_copy_src = Some(operand);
+                match copy_cycle_break {
+                    Some((cycle_operand, tmp_op)) if cycle_operand == to => {
+                        // We've found the start of a broken parallel copy cycle - make sure the
+                        // original value of `operand` is saved before it is overwritten by the copy
+                        // inserted above.
+                        ctx.emit(operands[to].into(), tmp_op);
+                    }
+                    _ => {}
+                }
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-use crate::lir::{Instr, PhysReg};
+use crate::lir::{Instr, PhysReg, RegWidth};
 
 use super::{OperandAssignment, SpillSlot, types::CopySourceAssignment};
 
@@ -24,6 +24,17 @@ pub fn parse_copy_source(s: &str) -> CopySourceAssignment {
         }
         _ => parse_operand(s).into(),
     }
+}
+
+pub fn parse_copy_dest(s: &str) -> (OperandAssignment, RegWidth) {
+    let mut parts = s.split(':');
+    let operand = parse_operand(parts.next().unwrap());
+
+    let width_val = parts.next().map_or(0, |width_str| {
+        width_str.strip_prefix("w").unwrap().parse().unwrap()
+    });
+
+    (operand, RegWidth::new(width_val))
 }
 
 pub fn operand_to_string(operand: OperandAssignment) -> String {

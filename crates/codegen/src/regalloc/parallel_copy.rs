@@ -379,11 +379,11 @@ mod tests {
     use expect_test::{Expect, expect};
 
     use crate::{
-        lir::{Instr, PhysReg, RegBank, RegClass, RegWidth},
+        lir::{Instr, PhysReg, RegBank, RegClass},
         regalloc::{
             SpillSlot,
             test_utils::{
-                copy_source_to_string, operand_to_string, parse_copy_source, parse_operand,
+                copy_source_to_string, operand_to_string, parse_copy_dest, parse_copy_source,
             },
             types::ParallelCopyPhase,
         },
@@ -426,14 +426,15 @@ mod tests {
             }
 
             let mut parts = line.split('=');
-            let to = parts.next().unwrap();
-            let from = parts.next().unwrap();
+            let (to, width) = parse_copy_dest(parts.next().unwrap().trim());
+            let from = parse_copy_source(parts.next().unwrap().trim());
+
             parallel_copies.push(ParallelCopy {
                 instr: Instr::new(0),
-                class: RegClass::new(RegBank::new(0), RegWidth::new(0)),
+                class: RegClass::new(RegBank::new(0), width),
                 phase: ParallelCopyPhase::InterInstr,
-                from: parse_copy_source(from.trim()),
-                to: parse_operand(to.trim()),
+                from,
+                to,
             });
         }
 

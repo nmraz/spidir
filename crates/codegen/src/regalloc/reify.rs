@@ -866,12 +866,12 @@ impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
         self.ctx.machine.usable_regs(self.class)[0]
     }
 
-    fn get_fresh_tmp_reg(&mut self) -> Option<PhysReg> {
+    fn alloc_tmp_reg(&mut self) -> Option<PhysReg> {
         self.ctx
             .scavenge_free_reg_at(self.class, self.pos, &mut self.used_tmp_regs)
     }
 
-    fn get_fresh_tmp_spill(&mut self) -> SpillSlot {
+    fn alloc_tmp_spill(&mut self) -> SpillSlot {
         let spill_idx = self.tmp_spill_idx;
         let new_layout = self.ctx.machine.reg_class_spill_layout(self.class);
 

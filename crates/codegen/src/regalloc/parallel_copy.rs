@@ -9,8 +9,8 @@ use super::{
 
 pub trait RegScavenger {
     fn emergency_reg(&self) -> PhysReg;
-    fn get_fresh_tmp_reg(&mut self) -> Option<PhysReg>;
-    fn get_fresh_tmp_spill(&mut self) -> SpillSlot;
+    fn alloc_tmp_reg(&mut self) -> Option<PhysReg>;
+    fn alloc_tmp_spill(&mut self) -> SpillSlot;
 }
 
 pub fn resolve(
@@ -280,7 +280,7 @@ fn get_tmp_reg(
     cached_tmp_reg: &mut Option<PhysReg>,
     scavenger: &mut impl RegScavenger,
 ) -> Option<PhysReg> {
-    *cached_tmp_reg = cached_tmp_reg.or_else(|| scavenger.get_fresh_tmp_reg());
+    *cached_tmp_reg = cached_tmp_reg.or_else(|| scavenger.alloc_tmp_reg());
     *cached_tmp_reg
 }
 
@@ -288,7 +288,7 @@ fn get_tmp_spill(
     cached_tmp_spill: &mut Option<SpillSlot>,
     scavenger: &mut impl RegScavenger,
 ) -> SpillSlot {
-    *cached_tmp_spill.get_or_insert_with(|| scavenger.get_fresh_tmp_spill())
+    *cached_tmp_spill.get_or_insert_with(|| scavenger.alloc_tmp_spill())
 }
 
 #[cfg(test)]
@@ -322,7 +322,7 @@ mod tests {
             PhysReg::new(0)
         }
 
-        fn get_fresh_tmp_reg(&mut self) -> Option<PhysReg> {
+        fn alloc_tmp_reg(&mut self) -> Option<PhysReg> {
             let reg = (0..self.reg_count)
                 .map(PhysReg::new)
                 .find(|&reg| !self.used_regs.contains(reg))?;
@@ -330,7 +330,7 @@ mod tests {
             Some(reg)
         }
 
-        fn get_fresh_tmp_spill(&mut self) -> SpillSlot {
+        fn alloc_tmp_spill(&mut self) -> SpillSlot {
             let spill = SpillSlot::from_u32(self.tmp_spill);
             self.tmp_spill += 1;
             spill

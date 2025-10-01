@@ -824,7 +824,6 @@ struct AssignedRegScavenger<'a, M: MachineRegalloc> {
     // Per-resolution state
     class: RegClass,
     pos: ProgramPoint,
-    tmp_spill_idx: usize,
     used_tmp_regs: PhysRegSet,
 }
 
@@ -836,7 +835,6 @@ impl<'a, M: MachineRegalloc> AssignedRegScavenger<'a, M> {
             tmp_spills: SmallVec::new(),
             class: RegClass::new(0),
             pos: ProgramPoint::before(Instr::new(0)),
-            tmp_spill_idx: 0,
             used_tmp_regs: PhysRegSet::empty(),
         }
     }
@@ -844,7 +842,6 @@ impl<'a, M: MachineRegalloc> AssignedRegScavenger<'a, M> {
     fn reset(&mut self, class: RegClass, pos: ProgramPoint, copies: &[ParallelCopy]) {
         self.class = class;
         self.pos = pos;
-        self.tmp_spill_idx = 0;
         self.used_tmp_regs = PhysRegSet::empty();
 
         // All copy sources need to be marked as used, because their live ranges could end just
@@ -871,21 +868,24 @@ impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
             .scavenge_free_reg_at(self.class, self.pos, &mut self.used_tmp_regs)
     }
 
+    fn free_tmp_reg(&mut self, reg: PhysReg) {
+        debug_assert!(self.used_tmp_regs.contains(reg));
+        self.used_tmp_regs.remove(reg);
+    }
+
     fn alloc_tmp_spill(&mut self) -> SpillSlot {
-        let spill_idx = self.tmp_spill_idx;
         let new_layout = self.ctx.machine.reg_class_spill_layout(self.class);
 
-        self.tmp_spill_idx += 1;
-
-        if let Some(&spill) = self.tmp_spills.get(spill_idx) {
+        if let Some(spill) = self.tmp_spills.pop() {
             self.assignment.expand_spill_slot(spill, new_layout);
             return spill;
         }
 
-        debug_assert_eq!(spill_idx, self.tmp_spills.len());
-        let spill = self.assignment.create_spill_slot(new_layout);
+        self.assignment.create_spill_slot(new_layout)
+    }
+
+    fn free_tmp_spill(&mut self, spill: SpillSlot) {
         self.tmp_spills.push(spill);
-        spill
     }
 }
 

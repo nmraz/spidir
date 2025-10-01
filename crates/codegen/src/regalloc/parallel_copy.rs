@@ -9,8 +9,12 @@ use super::{
 
 pub trait RegScavenger {
     fn emergency_reg(&self) -> PhysReg;
+
     fn alloc_tmp_reg(&mut self) -> Option<PhysReg>;
+    fn free_tmp_reg(&mut self, reg: PhysReg);
+
     fn alloc_tmp_spill(&mut self) -> SpillSlot;
+    fn free_tmp_spill(&mut self, spill: SpillSlot);
 }
 
 pub fn resolve(
@@ -138,7 +142,7 @@ pub fn resolve(
                                 // there is a copy cycle), so we need to back it up into a temporary
                                 // before it is overwritten and copy out of the temporary instead.
 
-                                let tmp_op = ctx.get_cycle_break_op();
+                                let tmp_op = ctx.alloc_tmp_op();
                                 copy_cycle_break = Some((from, tmp_op));
 
                                 // Insert the final copy out of the temporary here (resolved
@@ -158,6 +162,7 @@ pub fn resolve(
                         // original value of `operand` is saved before it is overwritten by the copy
                         // inserted above.
                         ctx.emit(operands[to].into(), tmp_op);
+                        ctx.free_tmp_op(tmp_op);
                     }
                     _ => {}
                 }
@@ -203,10 +208,6 @@ fn operand_assignment_sort_key(op: &OperandAssignment) -> u32 {
 
 struct ResolvedCopyContext<'s, S> {
     copies: SmallVec<[AssignmentCopy; 8]>,
-    stack_copy_reg: Option<PhysReg>,
-    stack_copy_spill: Option<SpillSlot>,
-    cycle_break_reg: Option<PhysReg>,
-    cycle_break_spill: Option<SpillSlot>,
     scavenger: &'s mut S,
 }
 
@@ -214,21 +215,21 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
     fn new(scavenger: &'s mut S) -> Self {
         Self {
             copies: SmallVec::new(),
-            stack_copy_reg: None,
-            stack_copy_spill: None,
-            cycle_break_reg: None,
-            cycle_break_spill: None,
             scavenger,
         }
     }
 
-    fn get_cycle_break_op(&mut self) -> OperandAssignment {
-        let reg = get_tmp_reg(&mut self.cycle_break_reg, self.scavenger);
-        match reg {
+    fn alloc_tmp_op(&mut self) -> OperandAssignment {
+        match self.scavenger.alloc_tmp_reg() {
             Some(reg) => OperandAssignment::Reg(reg),
-            None => {
-                OperandAssignment::Spill(get_tmp_spill(&mut self.cycle_break_spill, self.scavenger))
-            }
+            None => OperandAssignment::Spill(self.scavenger.alloc_tmp_spill()),
+        }
+    }
+
+    fn free_tmp_op(&mut self, op: OperandAssignment) {
+        match op {
+            OperandAssignment::Reg(reg) => self.scavenger.free_tmp_reg(reg),
+            OperandAssignment::Spill(spill) => self.scavenger.free_tmp_spill(spill),
         }
     }
 
@@ -239,34 +240,35 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         } else {
             // Stack-to-stack copies and remat-to-stack need to go through a temporary register.
 
-            let (tmp_reg, emergency_spill) =
-                match get_tmp_reg(&mut self.stack_copy_reg, self.scavenger) {
-                    Some(tmp_reg) => (tmp_reg, None),
-                    None => {
-                        let tmp_reg = self.scavenger.emergency_reg();
-                        let emergency_spill =
-                            get_tmp_spill(&mut self.stack_copy_spill, self.scavenger);
+            let (tmp_reg, tmp_op) = match self.scavenger.alloc_tmp_reg() {
+                Some(tmp_reg) => (tmp_reg, OperandAssignment::Reg(tmp_reg)),
+                None => {
+                    let tmp_reg = self.scavenger.emergency_reg();
+                    let emergency_spill = self.scavenger.alloc_tmp_spill();
 
-                        // Restore the original value of `tmp_reg` from the emergency spill.
-                        self.emit_raw(
-                            OperandAssignment::Spill(emergency_spill).into(),
-                            OperandAssignment::Reg(tmp_reg),
-                        );
+                    // Restore the original value of `tmp_reg` from the emergency spill.
+                    self.emit_raw(
+                        OperandAssignment::Spill(emergency_spill).into(),
+                        OperandAssignment::Reg(tmp_reg),
+                    );
 
-                        (tmp_reg, Some(emergency_spill))
-                    }
-                };
+                    (tmp_reg, OperandAssignment::Spill(emergency_spill))
+                }
+            };
 
             self.emit_raw(OperandAssignment::Reg(tmp_reg).into(), to);
             self.emit_raw(from, OperandAssignment::Reg(tmp_reg));
 
-            if let Some(emergency_spill) = emergency_spill {
-                // If we're using an emergency spill, back up the original value of `tmp_reg` before
-                // using it.
-                self.emit_raw(
-                    OperandAssignment::Reg(tmp_reg).into(),
-                    OperandAssignment::Spill(emergency_spill),
-                );
+            match tmp_op {
+                OperandAssignment::Spill(emergency_spill) => {
+                    // Back up `tmp_reg` into the emergency spill before it is used above.
+                    self.emit_raw(
+                        OperandAssignment::Reg(tmp_reg).into(),
+                        OperandAssignment::Spill(emergency_spill),
+                    );
+                    self.scavenger.free_tmp_spill(emergency_spill);
+                }
+                OperandAssignment::Reg(reg) => self.scavenger.free_tmp_reg(reg),
             }
         }
     }
@@ -274,21 +276,6 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
     fn emit_raw(&mut self, from: CopySourceAssignment, to: OperandAssignment) {
         self.copies.push(AssignmentCopy { from, to });
     }
-}
-
-fn get_tmp_reg(
-    cached_tmp_reg: &mut Option<PhysReg>,
-    scavenger: &mut impl RegScavenger,
-) -> Option<PhysReg> {
-    *cached_tmp_reg = cached_tmp_reg.or_else(|| scavenger.alloc_tmp_reg());
-    *cached_tmp_reg
-}
-
-fn get_tmp_spill(
-    cached_tmp_spill: &mut Option<SpillSlot>,
-    scavenger: &mut impl RegScavenger,
-) -> SpillSlot {
-    *cached_tmp_spill.get_or_insert_with(|| scavenger.alloc_tmp_spill())
 }
 
 #[cfg(test)]
@@ -313,8 +300,9 @@ mod tests {
 
     struct DummyRegScavenger {
         reg_count: u8,
-        tmp_spill: u32,
+        next_spill: u32,
         used_regs: PhysRegSet,
+        available_spills: Vec<SpillSlot>,
     }
 
     impl RegScavenger for DummyRegScavenger {
@@ -330,10 +318,22 @@ mod tests {
             Some(reg)
         }
 
+        fn free_tmp_reg(&mut self, reg: PhysReg) {
+            assert!(self.used_regs.contains(reg));
+            self.used_regs.remove(reg);
+        }
+
         fn alloc_tmp_spill(&mut self) -> SpillSlot {
-            let spill = SpillSlot::from_u32(self.tmp_spill);
-            self.tmp_spill += 1;
+            if let Some(spill) = self.available_spills.pop() {
+                return spill;
+            }
+            let spill = SpillSlot::from_u32(self.next_spill);
+            self.next_spill += 1;
             spill
+        }
+
+        fn free_tmp_spill(&mut self, spill: SpillSlot) {
+            self.available_spills.push(spill);
         }
     }
 
@@ -360,8 +360,9 @@ mod tests {
 
         let mut scavenger = DummyRegScavenger {
             reg_count,
-            tmp_spill: 1234,
+            next_spill: 1234,
             used_regs: PhysRegSet::empty(),
+            available_spills: Vec::new(),
         };
 
         for copy in &parallel_copies {

@@ -36,7 +36,7 @@ extfunc @"System.ReadOnlySpan`1[System.Byte] System.Globalization.NumberFormatIn
 func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Collections.Generic.ValueListBuilder`1&, NumberBuffer&, System.ReadOnlySpan`1[System.Char], System.Globalization.NumberFormatInfo)"(ptr, ptr, ptr, ptr) {
     # check: function `System.Void System.Number::NumberToStringFormat[System.Byte](System.Collections.Generic.ValueListBuilder`1&, NumberBuffer&, System.ReadOnlySpan`1[System.Char], System.Globalization.NumberFormatInfo)`:
     # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
-    # nextln: frame: size 800, align 16
+    # nextln: frame: size 792, align 16
     # nextln:     !0: 16
     # nextln:     !1: 560
     # nextln:     !2: 288
@@ -91,7 +91,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:     spill30: 536
     # nextln:     spill31: 544
     # nextln:     spill32: 552
-    # nextln:     spill33: 792
+    # nextln:     spill33: 784
     # nextln:     spill34: 568
     # nextln:     spill35: 576
     # nextln:     spill36: 584
@@ -119,7 +119,6 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:     spill58: 760
     # nextln:     spill59: 768
     # nextln:     spill60: 776
-    # nextln:     spill61: 784
     # nextln:       block0:
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:
@@ -1536,14 +1535,13 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$r11 = MovRmS32(0)
     # nextln:           $$r9 = MovRU32(4294967295)
     # nextln:           $$r9 = $$rdi
-    # nextln:           $$spill61 = $$rax
+    # nextln:           $$spill60 = $$rax
     # nextln:           $$rax = MovRU32(4294967295)
     # nextln:           $$spill34 = $$rax
-    # nextln:           $$rax = $$spill61
+    # nextln:           $$rax = $$spill60
     # nextln:           $$rax = MovRmS32(0)
     # nextln:           $$spill23 = $$rax
-    # nextln:           $$rax = $$spill61
-    # nextln:           $$spill60 = $$rax
+    # nextln:           $$rax = $$spill60
     # nextln:           $$rax = $$rdi
     # nextln:           $$rdi = $$rcx
     # nextln:           $$rcx = $$rdx
@@ -1572,11 +1570,11 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$r13 = MovRmS32(0)
     # nextln:           $$r9 = MovRU32(4294967295)
     # nextln:           $$r9 = $$rdi
-    # nextln:           $$spill60 = $$rdx
+    # nextln:           $$r13 = $$rdx
     # nextln:           $$rdx = $$rax
     # nextln:           $$rax = $$rdi
     # nextln:           $$rdi = $$rcx
-    # nextln:           $$rcx = $$spill60
+    # nextln:           $$rcx = $$r13
     # nextln:           $$r13 = MovRU32(4294967295)
     # nextln:           $$spill34 = $$r13
     # nextln:           $$r13 = MovRmS32(0)
@@ -3280,14 +3278,14 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$r13 = $$rcx
     # nextln:           $$rcx = $$r11
     # nextln:           $$r11 = $$rbx
-    # nextln:           $$spill61 = $$rdi
+    # nextln:           $$spill60 = $$rdi
     # nextln:           $$rdi = $$r15
     # nextln:           $$r15 = $$r14
-    # nextln:           $$r14 = $$spill61
-    # nextln:           $$spill61 = $$r9
+    # nextln:           $$r14 = $$spill60
+    # nextln:           $$spill60 = $$r9
     # nextln:           $$r9 = $$r10
     # nextln:           $$r10 = $$rsi
-    # nextln:           $$rsi = $$spill61
+    # nextln:           $$rsi = $$spill60
     # nextln:           $$spill60 = $$rax
     # nextln:           $$rax = $$spill53
     # nextln:           $$spill52 = $$rax
@@ -3435,7 +3433,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$rsi = $$r12
     # nextln:           $$r12 = $$spill42
     # nextln:           $$rax = MovRmS32(10)
-    # nextln:           $$spill61 = $$rax
+    # nextln:           $$spill60 = $$rax
     # nextln:           $$spill54 = $$rax
     # nextln:           $$spill60 = $$rcx
     # nextln:           $$rcx = $$rdi
@@ -3516,10 +3514,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$rax = $$spill34
     # nextln:           $$r8 = $$spill36
     # nextln:           $$r13 = $$spill33
-    # nextln:           $$spill61 = $$rax
+    # nextln:           $$spill60 = $$rax
     # nextln:           $$rax = $$spill57
     # nextln:           $$spill44 = $$rax
-    # nextln:           $$rax = $$spill61
+    # nextln:           $$rax = $$spill60
     # nextln:           $$r14 = $$r9
     # nextln:           $$r9 = $$r13
     # nextln:           $$r13 = $$r8

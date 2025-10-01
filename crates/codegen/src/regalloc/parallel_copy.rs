@@ -34,21 +34,21 @@ pub fn resolve(
         smallvec![None; operands.len()];
 
     for copy in parallel_copies {
-        let to = find_operand(&operands, copy.to);
-        match copy.from {
+        let from = match copy.from {
             CopySourceAssignment::Operand(from) => {
-                let from = find_operand(&operands, from);
-                debug_assert!(
-                    copy_sources[to].is_none(),
-                    "multiple parallel copies into same destination"
-                );
+                TrackedCopySource::Operand(find_operand(&operands, from) as u32)
+            }
+            CopySourceAssignment::Remat(instr) => TrackedCopySource::Remat(instr),
+        };
 
-                copy_sources[to] = Some(TrackedCopySource::Operand(from as u32));
-            }
-            CopySourceAssignment::Remat(instr) => {
-                copy_sources[to] = Some(TrackedCopySource::Remat(instr));
-            }
-        }
+        let to = find_operand(&operands, copy.to);
+
+        debug_assert!(
+            copy_sources[to].is_none(),
+            "multiple parallel copies into same destination"
+        );
+
+        copy_sources[to] = Some(from);
     }
 
     let mut ctx = ResolvedCopyContext::new(scavenger);

@@ -123,49 +123,51 @@ pub fn resolve(
         while let Some(to) = stack.pop() {
             visit_states[to] = VisitState::Visited;
 
-            // If this operand is copied out of another one, emit the copy now.
-            if let Some(from) = copy_sources[to] {
-                match from {
-                    TrackedCopySource::Operand(from) => {
-                        let from = from as usize;
+            // If this operand isn't actually copied out of another one, we have nothing more to do.
+            let Some(from) = copy_sources[to] else {
+                continue;
+            };
 
-                        match visit_states[from] {
-                            VisitState::Unvisited | VisitState::Visited => {
-                                // `from` isn't currently on the stack anywhere, so we can just emit
-                                // a direct copy without being worried about cycles.
-                                let from = operands[from];
-                                let to = operands[to];
-                                ctx.emit(from.into(), to);
-                            }
-                            VisitState::Visiting => {
-                                // `from` is itself somewhere lower on the destination stack (i.e.,
-                                // there is a copy cycle), so we need to back it up into a temporary
-                                // before it is overwritten and copy out of the temporary instead.
+            match from {
+                TrackedCopySource::Operand(from) => {
+                    let from = from as usize;
 
-                                let tmp_op = ctx.alloc_tmp_op();
-                                copy_cycle_break = Some((from, tmp_op));
+                    match visit_states[from] {
+                        VisitState::Unvisited | VisitState::Visited => {
+                            // `from` isn't currently on the stack anywhere, so we can just emit
+                            // a direct copy without being worried about cycles.
+                            let from = operands[from];
+                            let to = operands[to];
+                            ctx.emit(from.into(), to);
+                        }
+                        VisitState::Visiting => {
+                            // `from` is itself somewhere lower on the destination stack (i.e.,
+                            // there is a copy cycle), so we need to back it up into a temporary
+                            // before it is overwritten and copy out of the temporary instead.
 
-                                // Insert the final copy out of the temporary here (resolved
-                                // assignments are in reverse order).
-                                ctx.emit(tmp_op.into(), operands[to]);
-                            }
+                            let tmp_op = ctx.alloc_tmp_op();
+                            copy_cycle_break = Some((from, tmp_op));
+
+                            // Insert the final copy out of the temporary here (resolved
+                            // assignments are in reverse order).
+                            ctx.emit(tmp_op.into(), operands[to]);
                         }
                     }
-                    TrackedCopySource::Remat(instr) => {
-                        ctx.emit(CopySourceAssignment::Remat(instr), operands[to]);
-                    }
                 }
+                TrackedCopySource::Remat(instr) => {
+                    ctx.emit(CopySourceAssignment::Remat(instr), operands[to]);
+                }
+            }
 
-                match copy_cycle_break {
-                    Some((cycle_operand, tmp_op)) if cycle_operand == to => {
-                        // We've found the start of a broken parallel copy cycle - make sure the
-                        // original value of `operand` is saved before it is overwritten by the copy
-                        // inserted above.
-                        ctx.emit(operands[to].into(), tmp_op);
-                        ctx.free_tmp_op(tmp_op);
-                    }
-                    _ => {}
+            match copy_cycle_break {
+                Some((cycle_operand, tmp_op)) if cycle_operand == to => {
+                    // We've found the start of a broken parallel copy cycle - make sure the
+                    // original value of `operand` is saved before it is overwritten by the copy
+                    // inserted above.
+                    ctx.emit(operands[to].into(), tmp_op);
+                    ctx.free_tmp_op(tmp_op);
                 }
+                _ => {}
             }
         }
     }

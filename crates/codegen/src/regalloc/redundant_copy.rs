@@ -12,7 +12,7 @@ pub enum RedundantCopyVerdict {
 #[derive(Default)]
 pub struct RedundantCopyTracker {
     copy_sources: FxHashMap<OperandAssignment, CopySourceAssignment>,
-    copy_targets: FxHashMap<CopySourceAssignment, SmallVec<[OperandAssignment; 4]>>,
+    copy_targets: FxHashMap<OperandAssignment, SmallVec<[OperandAssignment; 4]>>,
 }
 
 impl RedundantCopyTracker {
@@ -37,7 +37,9 @@ impl RedundantCopyTracker {
         } else {
             self.remove_copies_from(copy.to);
             self.copy_sources.insert(copy.to, from);
-            self.copy_targets.entry(from).or_default().push(copy.to);
+            if let CopySourceAssignment::Operand(from) = from {
+                self.copy_targets.entry(from).or_default().push(copy.to);
+            }
             RedundantCopyVerdict::Necessary
         }
     }
@@ -48,10 +50,7 @@ impl RedundantCopyTracker {
     }
 
     fn remove_copies_from(&mut self, assignment: OperandAssignment) {
-        if let Some(targets) = self
-            .copy_targets
-            .remove(&CopySourceAssignment::Operand(assignment))
-        {
+        if let Some(targets) = self.copy_targets.remove(&assignment) {
             for target in targets {
                 self.copy_sources.remove(&target);
             }

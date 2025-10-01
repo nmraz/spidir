@@ -1046,4 +1046,137 @@ mod tests {
             "#]],
         )
     }
+
+    #[test]
+    fn disjoint_copies_mixed_widths() {
+        check_resolution(
+            "
+            r0:w1 = r1
+            r2:w0 = r3
+            r4:w2 = r5
+            r6:w1 = r7
+            ",
+            expect![[r#"
+                r6:w1 = r7
+                r4:w2 = r5
+                r2:w0 = r3
+                r0:w1 = r1
+            "#]],
+        )
+    }
+
+    #[test]
+    fn overlapping_copy_chain_mixed_widths() {
+        check_resolution(
+            "
+            r0:w1 = r1
+            r1:w2 = r2
+            r2:w3 = r3
+            r3:w4 = r4
+            ",
+            expect![[r#"
+                r0:w1 = r1
+                r1:w2 = r2
+                r2:w3 = r3
+                r3:w4 = r4
+            "#]],
+        )
+    }
+
+    #[test]
+    fn swap_regs_mixed_widths() {
+        check_resolution(
+            "
+            r0:w1 = r1
+            r1:w2 = r0
+            ",
+            expect![[r#"
+                r2:w2 = r0
+                r0:w1 = r1
+                r1:w2 = r2
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_copy_cycle_mixed_widths() {
+        check_resolution(
+            "
+            r0:w1 = r1
+            r1:w2 = r2
+            r2:w3 = r3
+            r3:w4 = r4
+            r4:w5 = r5
+            r5:w6 = r0
+            ",
+            expect![[r#"
+                r6:w6 = r0
+                r0:w1 = r1
+                r1:w2 = r2
+                r2:w3 = r3
+                r3:w4 = r4
+                r4:w5 = r5
+                r5:w6 = r6
+            "#]],
+        )
+    }
+
+    #[test]
+    fn disjoint_stack_copies_mixed_widths() {
+        check_resolution(
+            "
+            s1:w1 = s0
+            s3:w2 = s2
+            ",
+            expect![[r#"
+                r0:w2 = s2
+                s3:w2 = r0
+                r0:w1 = s0
+                s1:w1 = r0
+            "#]],
+        )
+    }
+
+    #[test]
+    fn copy_stack_to_stack_different_width() {
+        check_resolution(
+            "
+            s1:w3 = s0
+            ",
+            expect![[r#"
+                r0:w3 = s0
+                s1:w3 = r0
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_stack_copy_cycle_mixed_widths() {
+        check_resolution(
+            "
+            s0:w1 = s1
+            s1:w2 = s2
+            s2:w3 = s3
+            s3:w4 = s4
+            s4:w5 = s5
+            s5:w6 = s0
+            ",
+            expect![[r#"
+                r0:w6 = s0
+                r1:w1 = s1
+                s0:w1 = r1
+                r1:w2 = s2
+                s1:w2 = r1
+                r1:w3 = s3
+                s2:w3 = r1
+                r1:w4 = s4
+                s3:w4 = r1
+                r1:w5 = s5
+                s4:w5 = r1
+                s5:w6 = r0
+            "#]],
+        )
+    }
+
+    // TODO: `no_regs` tests with different reservation width.
 }

@@ -450,9 +450,10 @@ mod tests {
 
         let mut output = String::new();
         for copy in &resolved {
+            let width = copy.class.width().as_u8();
             writeln!(
                 output,
-                "{} = {}",
+                "{}:w{width} = {}",
                 operand_to_string(copy.to),
                 copy_source_to_string(copy.from),
             )
@@ -473,7 +474,7 @@ mod tests {
             r0 = r1
             ",
             expect![[r#"
-                r0 = r1
+                r0:w0 = r1
             "#]],
         )
     }
@@ -485,7 +486,7 @@ mod tests {
             r0 = i7
             ",
             expect![[r#"
-                r0 = i7
+                r0:w0 = i7
             "#]],
         );
     }
@@ -500,10 +501,10 @@ mod tests {
             r6 = r7
             ",
             expect![[r#"
-                r6 = r7
-                r4 = r5
-                r2 = r3
-                r0 = r1
+                r6:w0 = r7
+                r4:w0 = r5
+                r2:w0 = r3
+                r0:w0 = r1
             "#]],
         )
     }
@@ -518,10 +519,10 @@ mod tests {
             r6 = r7
             ",
             expect![[r#"
-                r6 = r7
-                r4 = r5
-                r2 = i9
-                r0 = r1
+                r6:w0 = r7
+                r4:w0 = r5
+                r2:w0 = i9
+                r0:w0 = r1
             "#]],
         )
     }
@@ -536,10 +537,10 @@ mod tests {
             r3 = r4
             ",
             expect![[r#"
-                r0 = r1
-                r1 = r2
-                r2 = r3
-                r3 = r4
+                r0:w0 = r1
+                r1:w0 = r2
+                r2:w0 = r3
+                r3:w0 = r4
             "#]],
         )
     }
@@ -554,10 +555,10 @@ mod tests {
             r0 = r1
             ",
             expect![[r#"
-                r0 = r1
-                r1 = r2
-                r2 = r3
-                r3 = r4
+                r0:w0 = r1
+                r1:w0 = r2
+                r2:w0 = r3
+                r3:w0 = r4
             "#]],
         )
     }
@@ -572,10 +573,10 @@ mod tests {
             r3 = i0
             ",
             expect![[r#"
-                r0 = r1
-                r1 = r2
-                r2 = r3
-                r3 = i0
+                r0:w0 = r1
+                r1:w0 = r2
+                r2:w0 = r3
+                r3:w0 = i0
             "#]],
         )
     }
@@ -590,10 +591,10 @@ mod tests {
             r0 = r1
             ",
             expect![[r#"
-                r0 = r1
-                r1 = r2
-                r2 = r3
-                r3 = i0
+                r0:w0 = r1
+                r1:w0 = r2
+                r2:w0 = r3
+                r3:w0 = i0
             "#]],
         )
     }
@@ -610,12 +611,12 @@ mod tests {
             r5 = r6
             ",
             expect![[r#"
-                r4 = r5
-                r5 = r6
-                r6 = r7
-                r0 = r1
-                r1 = r2
-                r2 = r3
+                r4:w0 = r5
+                r5:w0 = r6
+                r6:w0 = r7
+                r0:w0 = r1
+                r1:w0 = r2
+                r2:w0 = r3
             "#]],
         )
     }
@@ -634,14 +635,14 @@ mod tests {
             r5 = r3
             ",
             expect![[r#"
-                r7 = r6
-                r4 = r5
-                r5 = r3
-                r0 = r1
-                r1 = r2
-                r2 = r3
-                r3 = r6
-                r6 = r8
+                r7:w0 = r6
+                r4:w0 = r5
+                r5:w0 = r3
+                r0:w0 = r1
+                r1:w0 = r2
+                r2:w0 = r3
+                r3:w0 = r6
+                r6:w0 = r8
             "#]],
         )
     }
@@ -660,14 +661,14 @@ mod tests {
             r5 = r3
             ",
             expect![[r#"
-                r7 = r6
-                r4 = r5
-                r5 = r3
-                r0 = r1
-                r1 = r2
-                r2 = r3
-                r3 = r6
-                r6 = i8
+                r7:w0 = r6
+                r4:w0 = r5
+                r5:w0 = r3
+                r0:w0 = r1
+                r1:w0 = r2
+                r2:w0 = r3
+                r3:w0 = r6
+                r6:w0 = i8
             "#]],
         )
     }
@@ -680,9 +681,9 @@ mod tests {
             r1 = r0
             ",
             expect![[r#"
-                r2 = r0
-                r0 = r1
-                r1 = r2
+                r2:w0 = r0
+                r0:w0 = r1
+                r1:w0 = r2
             "#]],
         )
     }
@@ -698,12 +699,12 @@ mod tests {
             r3 = r1
             ",
             expect![[r#"
-                r3 = r1
-                r4 = r2
-                r2 = r0
-                r5 = r0
-                r0 = r1
-                r1 = r5
+                r3:w0 = r1
+                r4:w0 = r2
+                r2:w0 = r0
+                r5:w0 = r0
+                r0:w0 = r1
+                r1:w0 = r5
             "#]],
         )
     }
@@ -718,12 +719,12 @@ mod tests {
             r3 = r2
             ",
             expect![[r#"
-                r4 = r2
-                r2 = r3
-                r3 = r4
-                r4 = r0
-                r0 = r1
-                r1 = r4
+                r4:w0 = r2
+                r2:w0 = r3
+                r3:w0 = r4
+                r4:w0 = r0
+                r0:w0 = r1
+                r1:w0 = r4
             "#]],
         )
     }
@@ -740,13 +741,13 @@ mod tests {
             r5 = r0
             ",
             expect![[r#"
-                r6 = r0
-                r0 = r1
-                r1 = r2
-                r2 = r3
-                r3 = r4
-                r4 = r5
-                r5 = r6
+                r6:w0 = r0
+                r0:w0 = r1
+                r1:w0 = r2
+                r2:w0 = r3
+                r3:w0 = r4
+                r4:w0 = r5
+                r5:w0 = r6
             "#]],
         )
     }
@@ -769,20 +770,20 @@ mod tests {
             r11 = r8
             ",
             expect![[r#"
-                r5 = r4
-                r6 = r4
-                r4 = r1
-                r12 = r8
-                r7 = r10
-                r10 = r11
-                r11 = r8
-                r8 = r9
-                r9 = r7
-                r7 = r1
-                r1 = r2
-                r2 = r3
-                r3 = r0
-                r0 = r7
+                r5:w0 = r4
+                r6:w0 = r4
+                r4:w0 = r1
+                r12:w0 = r8
+                r7:w0 = r10
+                r10:w0 = r11
+                r11:w0 = r8
+                r8:w0 = r9
+                r9:w0 = r7
+                r7:w0 = r1
+                r1:w0 = r2
+                r2:w0 = r3
+                r3:w0 = r0
+                r0:w0 = r7
             "#]],
         )
     }
@@ -794,7 +795,7 @@ mod tests {
             r0 = s0
             ",
             expect![[r#"
-                r0 = s0
+                r0:w0 = s0
             "#]],
         )
     }
@@ -806,7 +807,7 @@ mod tests {
             s0 = r0
             ",
             expect![[r#"
-                s0 = r0
+                s0:w0 = r0
             "#]],
         )
     }
@@ -818,8 +819,8 @@ mod tests {
             s1 = s0
             ",
             expect![[r#"
-                r0 = s0
-                s1 = r0
+                r0:w0 = s0
+                s1:w0 = r0
             "#]],
         )
     }
@@ -831,8 +832,8 @@ mod tests {
             s1 = i0
             ",
             expect![[r#"
-                r0 = i0
-                s1 = r0
+                r0:w0 = i0
+                s1:w0 = r0
             "#]],
         )
     }
@@ -845,10 +846,10 @@ mod tests {
             s3 = s2
             ",
             expect![[r#"
-                r0 = s2
-                s3 = r0
-                r0 = s0
-                s1 = r0
+                r0:w0 = s2
+                s3:w0 = r0
+                r0:w0 = s0
+                s1:w0 = r0
             "#]],
         )
     }
@@ -862,12 +863,12 @@ mod tests {
             s2 = s1
             ",
             expect![[r#"
-                r0 = s2
-                s3 = r0
-                r0 = s1
-                s2 = r0
-                r0 = s0
-                s1 = r0
+                r0:w0 = s2
+                s3:w0 = r0
+                r0:w0 = s1
+                s2:w0 = r0
+                r0:w0 = s0
+                s1:w0 = r0
             "#]],
         )
     }
@@ -884,18 +885,18 @@ mod tests {
             s5 = s0
             ",
             expect![[r#"
-                r0 = s0
-                r1 = s1
-                s0 = r1
-                r1 = s2
-                s1 = r1
-                r1 = s3
-                s2 = r1
-                r1 = s4
-                s3 = r1
-                r1 = s5
-                s4 = r1
-                s5 = r0
+                r0:w0 = s0
+                r1:w0 = s1
+                s0:w0 = r1
+                r1:w0 = s2
+                s1:w0 = r1
+                r1:w0 = s3
+                s2:w0 = r1
+                r1:w0 = s4
+                s3:w0 = r1
+                r1:w0 = s5
+                s4:w0 = r1
+                s5:w0 = r0
             "#]],
         )
     }
@@ -908,10 +909,10 @@ mod tests {
             s0 = s1
             ",
             expect![[r#"
-                s1234 = r0
-                r0 = s1
-                s0 = r0
-                r0 = s1234
+                s1234:w0 = r0
+                r0:w0 = s1
+                s0:w0 = r0
+                r0:w0 = s1234
             "#]],
         )
     }
@@ -925,14 +926,14 @@ mod tests {
             s0 = s1
             ",
             expect![[r#"
-                s1234 = r0
-                r0 = s1
-                s0 = r0
-                r0 = s1234
-                s1234 = r0
-                r0 = s2
-                s1 = r0
-                r0 = s1234
+                s1234:w0 = r0
+                r0:w0 = s1
+                s0:w0 = r0
+                r0:w0 = s1234
+                s1234:w0 = r0
+                r0:w0 = s2
+                s1:w0 = r0
+                r0:w0 = s1234
             "#]],
         )
     }
@@ -950,13 +951,13 @@ mod tests {
             r5 = r0
             ",
             expect![[r#"
-                s1234 = r0
-                r0 = r1
-                r1 = r2
-                r2 = r3
-                r3 = r4
-                r4 = r5
-                r5 = s1234
+                s1234:w0 = r0
+                r0:w0 = r1
+                r1:w0 = r2
+                r2:w0 = r3
+                r3:w0 = r4
+                r4:w0 = r5
+                r5:w0 = s1234
             "#]],
         )
     }
@@ -974,28 +975,28 @@ mod tests {
             s5 = s0
             ",
             expect![[r#"
-                r0 = s0
-                s1234 = r0
-                r0 = s1
-                s0 = r0
-                r0 = s1234
-                s1234 = r0
-                r0 = s2
-                s1 = r0
-                r0 = s1234
-                s1234 = r0
-                r0 = s3
-                s2 = r0
-                r0 = s1234
-                s1234 = r0
-                r0 = s4
-                s3 = r0
-                r0 = s1234
-                s1234 = r0
-                r0 = s5
-                s4 = r0
-                r0 = s1234
-                s5 = r0
+                r0:w0 = s0
+                s1234:w0 = r0
+                r0:w0 = s1
+                s0:w0 = r0
+                r0:w0 = s1234
+                s1234:w0 = r0
+                r0:w0 = s2
+                s1:w0 = r0
+                r0:w0 = s1234
+                s1234:w0 = r0
+                r0:w0 = s3
+                s2:w0 = r0
+                r0:w0 = s1234
+                s1234:w0 = r0
+                r0:w0 = s4
+                s3:w0 = r0
+                r0:w0 = s1234
+                s1234:w0 = r0
+                r0:w0 = s5
+                s4:w0 = r0
+                r0:w0 = s1234
+                s5:w0 = r0
             "#]],
         )
     }
@@ -1013,34 +1014,34 @@ mod tests {
             s5 = s0
             ",
             expect![[r#"
-                s1235 = r0
-                r0 = s0
-                s1234 = r0
-                r0 = s1235
-                s1235 = r0
-                r0 = s1
-                s0 = r0
-                r0 = s1235
-                s1235 = r0
-                r0 = s2
-                s1 = r0
-                r0 = s1235
-                s1235 = r0
-                r0 = s3
-                s2 = r0
-                r0 = s1235
-                s1235 = r0
-                r0 = s4
-                s3 = r0
-                r0 = s1235
-                s1235 = r0
-                r0 = s5
-                s4 = r0
-                r0 = s1235
-                s1235 = r0
-                r0 = s1234
-                s5 = r0
-                r0 = s1235
+                s1235:w0 = r0
+                r0:w0 = s0
+                s1234:w0 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w0 = s1
+                s0:w0 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w0 = s2
+                s1:w0 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w0 = s3
+                s2:w0 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w0 = s4
+                s3:w0 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w0 = s5
+                s4:w0 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w0 = s1234
+                s5:w0 = r0
+                r0:w0 = s1235
             "#]],
         )
     }

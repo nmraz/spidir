@@ -655,10 +655,8 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         for live_set_data in self.live_sets.values_mut() {
             // TODO: Use the hulls to share spill slots where possible.
             if live_set_data.spill_hull.is_some() {
-                let spill_slot = assignment.create_spill_slot(
-                    self.machine
-                        .reg_bank_spill_layout(live_set_data.class.bank()),
-                );
+                let spill_slot = assignment
+                    .create_spill_slot(self.machine.reg_class_spill_layout(live_set_data.class));
                 live_set_data.spill_slot = spill_slot.into();
             }
         }
@@ -838,12 +836,12 @@ impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
 
     fn alloc_tmp_spill(&mut self, class: RegClass) -> SpillSlot {
         self.assignment
-            .create_spill_slot(self.ctx.machine.reg_bank_spill_layout(class.bank()))
+            .create_spill_slot(self.ctx.machine.reg_class_spill_layout(class))
     }
 
     fn expand_tmp_spill(&mut self, spill: SpillSlot, class: RegClass) {
         self.assignment
-            .expand_spill_slot(spill, self.ctx.machine.reg_bank_spill_layout(class.bank()));
+            .expand_spill_slot(spill, self.ctx.machine.reg_class_spill_layout(class));
     }
 }
 

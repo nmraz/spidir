@@ -2,17 +2,17 @@
 
 func @select_eqz:i32(i32, i32, i32) {
     # check: function `select_eqz`:
-    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
+    # nextln:       block0[%3:gpr32($$rdi), %2:gpr32($$rsi), %1:gpr32($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(E, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -26,17 +26,17 @@ func @select_eqz:i32(i32, i32, i32) {
 
 func @select_nez:i32(i32, i32, i32) {
     # check: function `select_nez`:
-    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
+    # nextln:       block0[%3:gpr32($$rdi), %2:gpr32($$rsi), %1:gpr32($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -50,17 +50,17 @@ func @select_nez:i32(i32, i32, i32) {
 
 func @select_sltz:i32(i32, i32, i32) {
     # check: function `select_sltz`:
-    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
+    # nextln:       block0[%3:gpr32($$rdi), %2:gpr32($$rsi), %1:gpr32($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(S, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -74,17 +74,17 @@ func @select_sltz:i32(i32, i32, i32) {
 
 func @select_slez:i32(i32, i32, i32) {
     # check: function `select_slez`:
-    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
+    # nextln:       block0[%3:gpr32($$rdi), %2:gpr32($$rsi), %1:gpr32($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(Le, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -98,18 +98,18 @@ func @select_slez:i32(i32, i32, i32) {
 
 func @select_ultz:i32(i32, i32, i32) {
     # check: function `select_ultz`:
-    # nextln:       block0[%2:gpr64($$rsi), %1:gpr64($$rdx)]:
-    # nextln: 0000:      %3:gpr64(any)[late] = MovRmS32(0)
+    # nextln:       block0[%2:gpr32($$rsi), %1:gpr32($$rdx)]:
+    # nextln: 0000:      %3:gpr32(any)[late] = MovRmS32(0)
     # nextln: 0001:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0002:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0004:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0005:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -122,17 +122,17 @@ func @select_ultz:i32(i32, i32, i32) {
 
 func @select_ulez:i32(i32, i32, i32) {
     # check: function `select_ulez`:
-    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
+    # nextln:       block0[%3:gpr32($$rdi), %2:gpr32($$rsi), %1:gpr32($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(E, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -146,17 +146,17 @@ func @select_ulez:i32(i32, i32, i32) {
 
 func @select_zeq:i32(i32, i32, i32) {
     # check: function `select_zeq`:
-    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
+    # nextln:       block0[%3:gpr32($$rdi), %2:gpr32($$rsi), %1:gpr32($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(E, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -170,17 +170,17 @@ func @select_zeq:i32(i32, i32, i32) {
 
 func @select_zne:i32(i32, i32, i32) {
     # check: function `select_zne`:
-    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
+    # nextln:       block0[%3:gpr32($$rdi), %2:gpr32($$rsi), %1:gpr32($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -194,17 +194,17 @@ func @select_zne:i32(i32, i32, i32) {
 
 func @select_zslt:i32(i32, i32, i32) {
     # check: function `select_zslt`:
-    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
+    # nextln:       block0[%3:gpr32($$rdi), %2:gpr32($$rsi), %1:gpr32($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(G, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -218,17 +218,17 @@ func @select_zslt:i32(i32, i32, i32) {
 
 func @select_zsle:i32(i32, i32, i32) {
     # check: function `select_zsle`:
-    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
+    # nextln:       block0[%3:gpr32($$rdi), %2:gpr32($$rsi), %1:gpr32($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(Ns, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -242,17 +242,17 @@ func @select_zsle:i32(i32, i32, i32) {
 
 func @select_zult:i32(i32, i32, i32) {
     # check: function `select_zult`:
-    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
+    # nextln:       block0[%3:gpr32($$rdi), %2:gpr32($$rsi), %1:gpr32($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
@@ -266,18 +266,18 @@ func @select_zult:i32(i32, i32, i32) {
 
 func @select_zule:i32(i32, i32, i32) {
     # check: function `select_zule`:
-    # nextln:       block0[%2:gpr64($$rsi), %1:gpr64($$rdx)]:
-    # nextln: 0000:      %3:gpr64(any)[late] = MovRmS32(1)
+    # nextln:       block0[%2:gpr32($$rsi), %1:gpr32($$rdx)]:
+    # nextln: 0000:      %3:gpr32(any)[late] = MovRmS32(1)
     # nextln: 0001:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0002:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%2:gpr64]
+    # nextln:       => block2[%2:gpr32]
     # nextln:       block3:
     # nextln: 0004:      Jump(block2)
-    # nextln:       => block2[%1:gpr64]
-    # nextln:       block2[%0:gpr64]:
+    # nextln:       => block2[%1:gpr32]
+    # nextln:       block2[%0:gpr32]:
     # nextln: 0005:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry

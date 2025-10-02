@@ -56,7 +56,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0033:     $$rdi = MovRM(S32, [!2 + 0])
     # nextln: 0034:     Jump(block24)
     # nextln:       block23:
-    # nextln:           $$rdi:gpr64 = $$r12
+    # nextln:           $$rdi:gpr32 = $$r12
     # nextln: 0035:     Jump(block24)
     # nextln:       block24:
     # nextln: 0036:     $$rax = AddRR(S32) $$rax, $$rcx

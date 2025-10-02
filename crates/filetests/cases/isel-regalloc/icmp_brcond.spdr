@@ -5,13 +5,13 @@ func @select_eq:i32(i32, i32, i32, i32) {
     # nextln: clobbers: rax
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln:           $$rax:gpr64 = $$rdx
+    # nextln:           $$rax:gpr32 = $$rdx
     # nextln: 0000:     AluRRm(S32, Cmp) $$rdi, $$rsi
     # nextln: 0001:     Jumpcc(E, block1, block3)
     # nextln:       block1:
     # nextln: 0002:     Jump(block2)
     # nextln:       block3:
-    # nextln:           $$rax:gpr64 = $$rcx
+    # nextln:           $$rax:gpr32 = $$rcx
     # nextln: 0003:     Jump(block2)
     # nextln:       block2:
     # nextln: 0004:     Ret $$rax
@@ -29,13 +29,13 @@ func @select_ne:i32(i32, i32, i32, i32) {
     # nextln: clobbers: rax
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln:           $$rax:gpr64 = $$rdx
+    # nextln:           $$rax:gpr32 = $$rdx
     # nextln: 0000:     AluRRm(S32, Cmp) $$rdi, $$rsi
     # nextln: 0001:     Jumpcc(Ne, block1, block3)
     # nextln:       block1:
     # nextln: 0002:     Jump(block2)
     # nextln:       block3:
-    # nextln:           $$rax:gpr64 = $$rcx
+    # nextln:           $$rax:gpr32 = $$rcx
     # nextln: 0003:     Jump(block2)
     # nextln:       block2:
     # nextln: 0004:     Ret $$rax
@@ -53,13 +53,13 @@ func @select_slt:i32(i32, i32, i32, i32) {
     # nextln: clobbers: rax
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln:           $$rax:gpr64 = $$rdx
+    # nextln:           $$rax:gpr32 = $$rdx
     # nextln: 0000:     AluRRm(S32, Cmp) $$rdi, $$rsi
     # nextln: 0001:     Jumpcc(L, block1, block3)
     # nextln:       block1:
     # nextln: 0002:     Jump(block2)
     # nextln:       block3:
-    # nextln:           $$rax:gpr64 = $$rcx
+    # nextln:           $$rax:gpr32 = $$rcx
     # nextln: 0003:     Jump(block2)
     # nextln:       block2:
     # nextln: 0004:     Ret $$rax
@@ -77,13 +77,13 @@ func @select_sle:i32(i32, i32, i32, i32) {
     # nextln: clobbers: rax
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln:           $$rax:gpr64 = $$rdx
+    # nextln:           $$rax:gpr32 = $$rdx
     # nextln: 0000:     AluRRm(S32, Cmp) $$rdi, $$rsi
     # nextln: 0001:     Jumpcc(Le, block1, block3)
     # nextln:       block1:
     # nextln: 0002:     Jump(block2)
     # nextln:       block3:
-    # nextln:           $$rax:gpr64 = $$rcx
+    # nextln:           $$rax:gpr32 = $$rcx
     # nextln: 0003:     Jump(block2)
     # nextln:       block2:
     # nextln: 0004:     Ret $$rax
@@ -101,13 +101,13 @@ func @select_ult:i32(i32, i32, i32, i32) {
     # nextln: clobbers: rax
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln:           $$rax:gpr64 = $$rdx
+    # nextln:           $$rax:gpr32 = $$rdx
     # nextln: 0000:     AluRRm(S32, Cmp) $$rdi, $$rsi
     # nextln: 0001:     Jumpcc(B, block1, block3)
     # nextln:       block1:
     # nextln: 0002:     Jump(block2)
     # nextln:       block3:
-    # nextln:           $$rax:gpr64 = $$rcx
+    # nextln:           $$rax:gpr32 = $$rcx
     # nextln: 0003:     Jump(block2)
     # nextln:       block2:
     # nextln: 0004:     Ret $$rax
@@ -125,13 +125,13 @@ func @select_ule:i32(i32, i32, i32, i32) {
     # nextln: clobbers: rax
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln:           $$rax:gpr64 = $$rdx
+    # nextln:           $$rax:gpr32 = $$rdx
     # nextln: 0000:     AluRRm(S32, Cmp) $$rdi, $$rsi
     # nextln: 0001:     Jumpcc(Be, block1, block3)
     # nextln:       block1:
     # nextln: 0002:     Jump(block2)
     # nextln:       block3:
-    # nextln:           $$rax:gpr64 = $$rcx
+    # nextln:           $$rax:gpr32 = $$rcx
     # nextln: 0003:     Jump(block2)
     # nextln:       block2:
     # nextln: 0004:     Ret $$rax
@@ -157,7 +157,7 @@ func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # nextln:       block1:
     # nextln: 0005:     Jump(block2)
     # nextln:       block3:
-    # nextln:           $$rdx:gpr64 = $$rcx
+    # nextln:           $$rdx:gpr32 = $$rcx
     # nextln: 0006:     Jump(block2)
     # nextln:       block2:
     # nextln: 0007:     $$rax = AluCommRmI(S32, Xor, 5) $$rax

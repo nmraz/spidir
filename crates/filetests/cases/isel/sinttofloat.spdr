@@ -2,7 +2,7 @@
 
 func @sint32tofloat:f64(i32) {
     # check: function `sint32tofloat`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln:       block0[%1:gpr32($$rdi)]:
     # nextln: 0000:      %0:xmm64(reg)[late] = Cvtsi2s(S32, Double) %1(any)[early]
     # nextln: 0001:      Ret %0($$xmm0)[early]
 

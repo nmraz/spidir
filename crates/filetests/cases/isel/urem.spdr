@@ -14,7 +14,7 @@ func @urem64:i64(i64, i64) {
 
 func @urem32:i32(i32, i32) {
     # check: function `urem32`:
-    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln:       block0[%1:gpr32($$rdi), %2:gpr32($$rsi)]:
     # nextln: 0000:      %3:gpr64(any)[late] = MovRmS32(0)
     # nextln: 0001:      %4:gpr64($$rax)[late], %5:gpr64($$rdx)[late] = Div(S32, Div) %1($$rax)[early], %3($$rdx)[early], %2(any)[early]
     # nextln: 0002:      Ret %5($$rax)[early]

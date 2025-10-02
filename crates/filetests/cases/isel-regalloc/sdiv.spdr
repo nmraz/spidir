@@ -24,7 +24,7 @@ func @sdiv32:i32(i32, i32) {
     # nextln: clobbers: rax, rdx
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln:           $$rax:gpr64 = $$rdi
+    # nextln:           $$rax:gpr32 = $$rdi
     # nextln: 0000:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0001:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rsi
     # nextln: 0002:     Ret $$rax

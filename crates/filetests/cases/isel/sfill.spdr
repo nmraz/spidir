@@ -2,8 +2,8 @@
 
 func @sfill_8_32:i32(i32) {
     # check: function `sfill_8_32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(reg)[late] = MovsxRRm(Ext8_32) %1(any)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(reg)[late] = MovsxRRm(Ext8_32) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32 = entry
@@ -13,8 +13,8 @@ func @sfill_8_32:i32(i32) {
 
 func @sfill_16_32:i32(i32) {
     # check: function `sfill_16_32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(reg)[late] = MovsxRRm(Ext16_32) %1(any)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(reg)[late] = MovsxRRm(Ext16_32) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32 = entry
@@ -57,9 +57,9 @@ func @sfill_32_64:i64(i64) {
 
 func @sfill_weird_width_32:i32(i32) {
     # check: function `sfill_weird_width_32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln:       block0[%1:gpr32($$rdi)]:
     # nextln: 0000:      %2:gpr64(any)[late] = ShiftRmI(S32, Shl, 15) %1(tied:0)[early]
-    # nextln: 0001:      %0:gpr64(any)[late] = ShiftRmI(S32, Sar, 15) %2(tied:0)[early]
+    # nextln: 0001:      %0:gpr32(any)[late] = ShiftRmI(S32, Sar, 15) %2(tied:0)[early]
     # nextln: 0002:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32 = entry
@@ -81,9 +81,9 @@ func @sfill_weird_width_64:i64(i64) {
 
 func @sfill_min_width:i32(i32) {
     # check: function `sfill_min_width`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln:       block0[%1:gpr32($$rdi)]:
     # nextln: 0000:      %2:gpr64(any)[late] = ShiftRmI(S32, Shl, 31) %1(tied:0)[early]
-    # nextln: 0001:      %0:gpr64(any)[late] = ShiftRmI(S32, Sar, 31) %2(tied:0)[early]
+    # nextln: 0001:      %0:gpr32(any)[late] = ShiftRmI(S32, Sar, 31) %2(tied:0)[early]
     # nextln: 0002:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32 = entry
@@ -93,9 +93,9 @@ func @sfill_min_width:i32(i32) {
 
 func @sfill_max_width_32:i32(i32) {
     # check: function `sfill_max_width_32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln:       block0[%1:gpr32($$rdi)]:
     # nextln: 0000:      %2:gpr64(any)[late] = ShiftRmI(S32, Shl, 1) %1(tied:0)[early]
-    # nextln: 0001:      %0:gpr64(any)[late] = ShiftRmI(S32, Sar, 1) %2(tied:0)[early]
+    # nextln: 0001:      %0:gpr32(any)[late] = ShiftRmI(S32, Sar, 1) %2(tied:0)[early]
     # nextln: 0002:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32 = entry

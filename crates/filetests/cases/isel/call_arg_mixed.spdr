@@ -5,7 +5,7 @@ extfunc @large_gpr_xmm(i64, i64, i64, i64, i64, i64, f64, f64, f64, f64, f64, f6
 
 func @call_large_gpr(i32, i64, f64) {
     # check: function `call_large_gpr`:
-    # nextln:       block0[%1:gpr64($$rdi), %0:gpr64($$rsi), %2:xmm64($$xmm0)]:
+    # nextln:       block0[%1:gpr32($$rdi), %0:gpr64($$rsi), %2:xmm64($$xmm0)]:
     # nextln: 0000:      AddSp(-8)
     # nextln: 0001:      Push %1(reg)[early]
     # nextln: 0002:      %3:gpr64(reg)[late] = FuncAddrAbs(External(extfunc0))
@@ -20,7 +20,7 @@ func @call_large_gpr(i32, i64, f64) {
 
 func @call_large_gpr_xmm(i32, i64, f64) {
     # check: function `call_large_gpr_xmm`:
-    # nextln:       block0[%2:gpr64($$rdi), %0:gpr64($$rsi), %1:xmm64($$xmm0)]:
+    # nextln:       block0[%2:gpr32($$rdi), %0:gpr64($$rsi), %1:xmm64($$xmm0)]:
     # nextln: 0000:      AddSp(-32)
     # nextln: 0001:      MovMR(S32, [rsp + 0]) %2(reg)[early]
     # nextln: 0002:      MovMR(S64, [rsp + 8]) %0(reg)[early]

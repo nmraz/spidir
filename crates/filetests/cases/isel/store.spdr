@@ -2,7 +2,7 @@
 
 func @store1_i32(i32, ptr) {
     # check: function `store1_i32`:
-    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
+    # nextln:       block0[%0:gpr32($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S8, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 
@@ -13,7 +13,7 @@ func @store1_i32(i32, ptr) {
 
 func @store2_i32(i32, ptr) {
     # check: function `store2_i32`:
-    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
+    # nextln:       block0[%0:gpr32($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S16, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 
@@ -24,7 +24,7 @@ func @store2_i32(i32, ptr) {
 
 func @store4_i32(i32, ptr) {
     # check: function `store4_i32`:
-    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
+    # nextln:       block0[%0:gpr32($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S32, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 

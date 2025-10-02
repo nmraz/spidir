@@ -51,8 +51,8 @@ func @and_neg_large64:i64(i64) {
 
 func @and_pos32:i32(i32) {
     # check: function `and_pos32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(any)[late] = AluCommRmI(S32, And, 5) %1(tied:0)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(any)[late] = AluCommRmI(S32, And, 5) %1(tied:0)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32 = entry
@@ -63,8 +63,8 @@ func @and_pos32:i32(i32) {
 
 func @and_neg32:i32(i32) {
     # check: function `and_neg32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(any)[late] = AluCommRmI(S32, And, -5) %1(tied:0)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(any)[late] = AluCommRmI(S32, And, -5) %1(tied:0)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32 = entry
@@ -75,8 +75,8 @@ func @and_neg32:i32(i32) {
 
 func @and_max32:i32(i32) {
     # check: function `and_max32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(any)[late] = AluCommRmI(S32, And, 2147483647) %1(tied:0)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(any)[late] = AluCommRmI(S32, And, 2147483647) %1(tied:0)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32 = entry

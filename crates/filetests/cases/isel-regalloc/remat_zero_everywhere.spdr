@@ -91,7 +91,7 @@ func @"System.Int32 testout1::Sub_Funclet_148()":i32() {
     # nextln: 0051:     Jump(block12)
     # nextln:       block13:
     # nextln:           $$rdi = MovRmS32(0)
-    # nextln:           $$rdi:gpr64 = $$rax
+    # nextln:           $$rdi:gpr32 = $$rax
     # nextln:           $$rax = MovRmS32(0)
     # nextln: 0052:     Jump(block12)
     # nextln:       block12:

@@ -35,7 +35,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:     !0: 0
     # nextln:     spill0: 8
     # nextln:       block0:
-    # nextln:           $$spill0:gpr64 = $$rdi
+    # nextln:           $$spill0:gpr32 = $$rdi
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:
     # nextln:           $$rax = MovRmS32(0)

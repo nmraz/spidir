@@ -111,7 +111,7 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0072:     Jump(block4)
     # nextln:       block4:
     # nextln: 0073:     $$rbx = MovRM(S32, [!11 + 0])
-    # nextln:           $$rax:gpr64 = $$rdi
+    # nextln:           $$rax:gpr32 = $$rdi
     # nextln: 0074:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0075:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$r9
     # nextln: 0076:     $$rdx = MovRmS32(0)
@@ -154,7 +154,7 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0112:     Jump(block13)
     # nextln:       block13:
     # nextln: 0113:     $$rbx = MovRM(S32, [!7 + 0])
-    # nextln:           $$rax:gpr64 = $$rdi
+    # nextln:           $$rax:gpr32 = $$rdi
     # nextln: 0114:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0115:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rcx
     # nextln: 0116:     $$rdx = MovRmS32(0)
@@ -187,7 +187,7 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0142:     Jump(block16)
     # nextln:       block16:
     # nextln: 0143:     $$rbx = MovRM(S32, [!2 + 0])
-    # nextln:           $$rax:gpr64 = $$rdi
+    # nextln:           $$rax:gpr32 = $$rdi
     # nextln: 0144:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0145:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rsi
     # nextln: 0146:     $$rdx = MovRmS32(0)
@@ -247,7 +247,7 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0196:     Jump(block7)
     # nextln:       block7:
     # nextln: 0197:     $$rbx = MovRM(S32, [!16 + 0])
-    # nextln:           $$rax:gpr64 = $$rdi
+    # nextln:           $$rax:gpr32 = $$rdi
     # nextln: 0198:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0199:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$r11
     # nextln: 0200:     $$rdx = MovRmS32(0)
@@ -285,7 +285,7 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0230:     Jump(block10)
     # nextln:       block10:
     # nextln: 0231:     $$rbx = MovRM(S32, [!19 + 0])
-    # nextln:           $$rax:gpr64 = $$rdi
+    # nextln:           $$rax:gpr32 = $$rdi
     # nextln: 0232:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0233:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$r10
     # nextln: 0234:     $$rdx = MovRmS32(0)

@@ -29,7 +29,7 @@ func @stack_param32:i64(i64, i64, i64, i64, i64, i64, i32, i64) {
     # check: function `stack_param32`:
     # nextln:       block0[%14:gpr64($$rdi), %15:gpr64($$rsi), %13:gpr64($$rdx), %11:gpr64($$rcx), %9:gpr64($$r8), %7:gpr64($$r9)]:
     # nextln: 0000:      %2:gpr64(reg)[late] = MovRRbp { op_size: S64, offset: 24 }
-    # nextln: 0001:      %5:gpr64(reg)[late] = MovRRbp { op_size: S32, offset: 16 }
+    # nextln: 0001:      %5:gpr32(reg)[late] = MovRRbp { op_size: S32, offset: 16 }
     # nextln: 0002:      %12:gpr64(reg)[late] = AddRR(S64) %14(soft-tied:0)[early], %15(soft-tied:0)[early]
     # nextln: 0003:      %10:gpr64(reg)[late] = AddRR(S64) %12(soft-tied:0)[early], %13(soft-tied:0)[early]
     # nextln: 0004:      %8:gpr64(reg)[late] = AddRR(S64) %10(soft-tied:0)[early], %11(soft-tied:0)[early]

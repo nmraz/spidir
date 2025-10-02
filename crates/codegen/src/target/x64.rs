@@ -451,6 +451,7 @@ impl MachineCore for X64Machine {
 
     fn reg_class_name(class: RegClass) -> &'static str {
         match class {
+            RC_GPR32 => "gpr32",
             RC_GPR64 => "gpr64",
             RC_XMM64 => "xmm64",
             _ => panic!("unknown register class"),
@@ -508,9 +509,9 @@ impl MachineRegalloc for X64Machine {
     }
 
     fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout {
-        match class {
-            RC_GPR64 => MemLayout { size: 8, align: 8 },
-            RC_XMM64 => MemLayout {
+        match class.bank() {
+            RB_GPR => MemLayout { size: 8, align: 8 },
+            RB_XMM => MemLayout {
                 size: 16,
                 align: 16,
             },
@@ -535,13 +536,17 @@ impl MachineRegalloc for X64Machine {
     }
 }
 
-const RW_FULL: RegWidth = RegWidth::new(0);
+// Note: the numerical order of these values is important because it must respect the actual order
+// of the register widths.
+const RW_32: RegWidth = RegWidth::new(0);
+const RW_64: RegWidth = RegWidth::new(1);
 
 const RB_GPR: RegBank = RegBank::new(0);
 const RB_XMM: RegBank = RegBank::new(1);
 
-const RC_GPR64: RegClass = RegClass::new(RB_GPR, RW_FULL);
-const RC_XMM64: RegClass = RegClass::new(RB_XMM, RW_FULL);
+const RC_GPR32: RegClass = RegClass::new(RB_GPR, RW_32);
+const RC_GPR64: RegClass = RegClass::new(RB_GPR, RW_64);
+const RC_XMM64: RegClass = RegClass::new(RB_XMM, RW_64);
 
 const REG_RAX: PhysReg = PhysReg::new(0);
 const REG_RBX: PhysReg = PhysReg::new(1);

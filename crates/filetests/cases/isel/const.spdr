@@ -3,7 +3,7 @@
 func @iconst32_small:i32() {
     # check: function `iconst32_small`:
     # nextln:       block0[]:
-    # nextln: 0000:      %0:gpr64(any)[late] = MovRmS32(3)
+    # nextln: 0000:      %0:gpr32(any)[late] = MovRmS32(3)
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl = entry
@@ -14,7 +14,7 @@ func @iconst32_small:i32() {
 func @iconst32_neg:i32() {
     # check: function `iconst32_neg`:
     # nextln:       block0[]:
-    # nextln: 0000:      %0:gpr64(reg)[late] = MovRU32(4294967293)
+    # nextln: 0000:      %0:gpr32(reg)[late] = MovRU32(4294967293)
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl = entry
@@ -25,7 +25,7 @@ func @iconst32_neg:i32() {
 func @iconst32_smin:i32() {
     # check: function `iconst32_smin`:
     # nextln:       block0[]:
-    # nextln: 0000:      %0:gpr64(reg)[late] = MovRU32(2147483648)
+    # nextln: 0000:      %0:gpr32(reg)[late] = MovRU32(2147483648)
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl = entry

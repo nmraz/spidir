@@ -2,7 +2,7 @@
 
 func @uint32tofloat:f64(i32) {
     # check: function `uint32tofloat`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln:       block0[%1:gpr32($$rdi)]:
     # nextln: 0000:      %2:gpr64(reg)[late] = MovzxRRm(S32) %1(any)[early]
     # nextln: 0001:      %0:xmm64(reg)[late] = Cvtsi2s(S64, Double) %2(any)[early]
     # nextln: 0002:      Ret %0($$xmm0)[early]

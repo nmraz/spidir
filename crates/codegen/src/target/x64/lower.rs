@@ -22,10 +22,10 @@ use crate::{
 
 use super::{
     AddrBase, AddrMode, AluBinOp, AluCommBinOp, AluUnOp, CALLER_SAVED_REGS, CodeModel,
-    CompoundCondCode, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, RC_GPR64, RC_XMM64,
-    REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_XMM0, REG_XMM1, REG_XMM2,
-    REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, ShiftOp, SseFpuBinOp, SseFpuCmpCode,
-    SseFpuPrecision, X64Instr, X64Machine,
+    CompoundCondCode, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, RC_GPR32, RC_GPR64,
+    RC_XMM64, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_XMM0, REG_XMM1,
+    REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, ShiftOp, SseFpuBinOp,
+    SseFpuCmpCode, SseFpuPrecision, X64Instr, X64Machine,
 };
 
 const FIXED_ARG_GPR_COUNT: usize = 6;
@@ -42,7 +42,8 @@ const FIXED_ARG_REG_COUNT: usize = FIXED_ARG_GPR_COUNT + FIXED_ARG_XMM_COUNT;
 impl MachineLower for X64Machine {
     fn reg_class_for_type(&self, ty: Type) -> RegClass {
         match ty {
-            Type::I32 | Type::I64 | Type::Ptr => RC_GPR64,
+            Type::I32 => RC_GPR32,
+            Type::I64 | Type::Ptr => RC_GPR64,
             Type::F64 => RC_XMM64,
         }
     }

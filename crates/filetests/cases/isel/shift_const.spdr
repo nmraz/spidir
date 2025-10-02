@@ -2,8 +2,8 @@
 
 func @shl_const32:i32(i32) {
     # check: function `shl_const32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmI(S32, Shl, 5) %1(tied:0)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(any)[late] = ShiftRmI(S32, Shl, 5) %1(tied:0)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %value:i32 = entry
@@ -26,8 +26,8 @@ func @shl_const64:i64(i64) {
 
 func @lshr_const32:i32(i32) {
     # check: function `lshr_const32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmI(S32, Shr, 5) %1(tied:0)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(any)[late] = ShiftRmI(S32, Shr, 5) %1(tied:0)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %value:i32 = entry
@@ -50,8 +50,8 @@ func @lshr_const64:i64(i64) {
 
 func @ashr_const32:i32(i32) {
     # check: function `ashr_const32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmI(S32, Sar, 5) %1(tied:0)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(any)[late] = ShiftRmI(S32, Sar, 5) %1(tied:0)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %value:i32 = entry

@@ -148,7 +148,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0103:     $$rax = CallRm $$rax, $$rdi
     # nextln:           $$r14:gpr64 = $$rax
     # nextln:           $$rax:gpr64 = $$r12
-    # nextln:           $$r15:gpr64 = $$rbx
+    # nextln:           $$r15:gpr32 = $$rbx
     # nextln: 0104:     Jump(block14)
     # nextln:       block14:
     # nextln: 0105:     $$rdx = MovRM(S32, [reg + 16]) $$rax
@@ -189,7 +189,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0133:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0134:     Jumpcc(Ne, block27, block28)
     # nextln:       block27:
-    # nextln:           $$rax:gpr64 = $$r13
+    # nextln:           $$rax:gpr32 = $$r13
     # nextln: 0135:     $$rax = AluRRm(S32, Sub) $$rax, $$rbx
     # nextln: 0136:     $$r12 = MovRM(S32, [reg + 16]) $$rdx
     # nextln: 0137:     $$rcx = MovRmS32(0)
@@ -201,7 +201,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln:       block31:
     # nextln: 0143:     $$rax = FuncAddrAbs(External(extfunc3))
     # nextln:           $$rdi:gpr64 = $$r14
-    # nextln:           $$rsi:gpr64 = $$rbx
+    # nextln:           $$rsi:gpr32 = $$rbx
     # nextln: 0144:     CallRm $$rax, $$rdi, $$rsi, $$rdx
     # nextln: 0145:     $$rbx = AddRR(S32) $$rbx, $$r12
     # nextln: 0146:     Jump(block29)

@@ -69,7 +69,7 @@ func @"System.Int32 Tests.Program::Main(System.String[])":i32(ptr) {
     # nextln:       block9:
     # nextln: 0041:     Jump(block8)
     # nextln:       block8:
-    # nextln:           $$rax:gpr64 = $$rbx
+    # nextln:           $$rax:gpr32 = $$rbx
     # nextln: 0042:     Ret $$rax
     # nextln:       block5:
     # nextln: 0043:     $$rdi = MovRI64(137395481522496)

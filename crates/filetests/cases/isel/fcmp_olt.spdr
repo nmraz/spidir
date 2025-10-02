@@ -5,7 +5,7 @@ func @fcmp_olt_i32:i32(f64, f64) {
     # nextln:       block0[%1:xmm64($$xmm0), %2:xmm64($$xmm1)]:
     # nextln: 0000:      %3:gpr64(any)[late] = MovRmS32(0)
     # nextln: 0001:      Ucomi(Double) %2(reg)[early], %1(any)[early]
-    # nextln: 0002:      %0:gpr64(reg)[late] = Setcc(A) %3(tied:0)[early]
+    # nextln: 0002:      %0:gpr32(reg)[late] = Setcc(A) %3(tied:0)[early]
     # nextln: 0003:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:f64, %2:f64 = entry

@@ -52,8 +52,8 @@ func @mul_neg_large64:i64(i64) {
 
 func @mul_pos32:i32(i32) {
     # check: function `mul_pos32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(reg)[late] = ImulRRmI(S32, 5) %1(any)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(reg)[late] = ImulRRmI(S32, 5) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32 = entry
@@ -64,8 +64,8 @@ func @mul_pos32:i32(i32) {
 
 func @mul_neg32:i32(i32) {
     # check: function `mul_neg32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(reg)[late] = ImulRRmI(S32, -5) %1(any)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(reg)[late] = ImulRRmI(S32, -5) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32 = entry
@@ -76,8 +76,8 @@ func @mul_neg32:i32(i32) {
 
 func @mul_max32:i32(i32) {
     # check: function `mul_max32`:
-    # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:gpr64(reg)[late] = ImulRRmI(S32, 2147483647) %1(any)[early]
+    # nextln:       block0[%1:gpr32($$rdi)]:
+    # nextln: 0000:      %0:gpr32(reg)[late] = ImulRRmI(S32, 2147483647) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32 = entry

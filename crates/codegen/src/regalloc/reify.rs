@@ -109,7 +109,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let mut last_instr = self.lir.all_instrs().start;
 
-        while let Some((pos, bank, chunk)) = next_copy_chunk(&mut parallel_copies) {
+        while let Some((pos, _bank, chunk)) = next_copy_chunk(&mut parallel_copies) {
             let instr = pos.instr();
 
             advance_redundant_copy_tracker(
@@ -123,7 +123,6 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             let mut scavenger = AssignedRegScavenger {
                 ctx: self,
                 assignment,
-                bank,
                 pos,
             };
             parallel_copy::resolve(chunk, &mut resolver_state, &mut scavenger, |copy| {
@@ -822,27 +821,26 @@ impl Assignment {
 struct AssignedRegScavenger<'a, M: MachineRegalloc> {
     ctx: &'a RegAllocContext<'a, M>,
     assignment: &'a mut Assignment,
-    bank: RegBank,
     pos: ProgramPoint,
 }
 
 impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
-    fn emergency_reg(&self) -> PhysReg {
-        self.ctx.machine.usable_regs(self.bank)[0]
+    fn emergency_reg(&self, bank: RegBank) -> PhysReg {
+        self.ctx.machine.usable_regs(bank)[0]
     }
 
-    fn available_regs(&self) -> impl Iterator<Item = PhysReg> {
-        self.ctx.scavenge_available_regs_at(self.bank, self.pos)
+    fn available_regs(&self, bank: RegBank) -> impl Iterator<Item = PhysReg> {
+        self.ctx.scavenge_available_regs_at(bank, self.pos)
     }
 
-    fn alloc_tmp_spill(&mut self) -> SpillSlot {
+    fn alloc_tmp_spill(&mut self, class: RegClass) -> SpillSlot {
         self.assignment
-            .create_spill_slot(self.ctx.machine.reg_bank_spill_layout(self.bank))
+            .create_spill_slot(self.ctx.machine.reg_bank_spill_layout(class.bank()))
     }
 
-    fn expand_tmp_spill(&mut self, spill: SpillSlot) {
+    fn expand_tmp_spill(&mut self, spill: SpillSlot, class: RegClass) {
         self.assignment
-            .expand_spill_slot(spill, self.ctx.machine.reg_bank_spill_layout(self.bank));
+            .expand_spill_slot(spill, self.ctx.machine.reg_bank_spill_layout(class.bank()));
     }
 }
 

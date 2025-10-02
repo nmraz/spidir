@@ -42,19 +42,19 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0017:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rsi = MovRmS32(40)
     # nextln: 0018:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln:           $$r12 = $$rax
+    # nextln:           $$r12:gpr = $$rax
     # nextln: 0019:     $$rax = FuncAddrAbs(External(extfunc1))
-    # nextln:           $$rdi = $$r12
+    # nextln:           $$rdi:gpr = $$r12
     # nextln: 0020:     CallRm $$rax, $$rdi
     # nextln: 0021:     MovMR(S64, [!2 + 0]) $$r12
     # nextln: 0022:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rsi = MovRmS32(51)
-    # nextln:           $$rdi = $$rbx
+    # nextln:           $$rdi:gpr = $$rbx
     # nextln: 0023:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0024:     MovMR(S32, [reg + 32]) $$r15, $$rax
     # nextln: 0025:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rsi = MovRmS32(51)
-    # nextln:           $$rdi = $$rbx
+    # nextln:           $$rdi:gpr = $$rbx
     # nextln: 0026:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0027:     MovMR(S32, [reg + 32]) $$r15, $$rax
     # nextln: 0028:     $$rcx = MovRM(S32, [reg + 32]) $$rax
@@ -104,7 +104,7 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0068:     MovMR(S32, [reg + 48]) $$rsi, $$rax
     # nextln:           $$rax = MovRmS32(7)
     # nextln: 0069:     MovMR(S32, [reg + 0]) $$rax, $$rcx
-    # nextln:           $$rax = $$rcx
+    # nextln:           $$rax:gpr = $$rcx
     # nextln: 0070:     MovMR(S8, [reg + 0]) $$r14, $$rdi
     # nextln: 0071:     MovMR(S8, [reg + 0]) $$r13, $$rdx
     # nextln: 0072:     $$rcx = MovRM(S64, [!2 + 0])
@@ -119,12 +119,12 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0081:     Jumpcc(Ne, block13, block15)
     # nextln:       block13:
     # nextln:           $$r12 = MovRU32(4294967291)
-    # nextln:           $$spill0 = $$r12
+    # nextln:           $$spill0:gpr = $$r12
     # nextln: 0082:     Jump(block14)
     # nextln:       block15:
     # nextln:           $$r12 = MovRU32(4294967291)
     # nextln:           $$rcx = MovRmS32(3)
-    # nextln:           $$spill0 = $$rcx
+    # nextln:           $$spill0:gpr = $$rcx
     # nextln: 0083:     Jump(block14)
     # nextln:       block14:
     # nextln: 0084:     $$rcx = MovRM(S8, [!3 + 0])
@@ -139,56 +139,56 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0090:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0091:     Jumpcc(Ne, block19, block21)
     # nextln:       block19:
-    # nextln:           $$spill1 = $$r12
+    # nextln:           $$spill1:gpr = $$r12
     # nextln: 0092:     Jump(block20)
     # nextln:       block21:
     # nextln: 0093:     $$rcx = MovRM(S32, [!1 + 0])
-    # nextln:           $$spill1 = $$rcx
+    # nextln:           $$spill1:gpr = $$rcx
     # nextln: 0094:     Jump(block20)
     # nextln:       block20:
     # nextln: 0095:     $$rcx = MovRM(S8, [!3 + 0])
     # nextln: 0096:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0097:     Jumpcc(Ne, block22, block24)
     # nextln:       block22:
-    # nextln:           $$spill2 = $$r12
+    # nextln:           $$spill2:gpr = $$r12
     # nextln: 0098:     Jump(block23)
     # nextln:       block24:
     # nextln: 0099:     $$rcx = MovRM(S32, [reg + 0]) $$rax
-    # nextln:           $$spill2 = $$rcx
+    # nextln:           $$spill2:gpr = $$rcx
     # nextln: 0100:     Jump(block23)
     # nextln:       block23:
     # nextln: 0101:     $$rcx = MovRM(S8, [!3 + 0])
     # nextln: 0102:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0103:     Jumpcc(Ne, block25, block27)
     # nextln:       block25:
-    # nextln:           $$spill3 = $$r12
+    # nextln:           $$spill3:gpr = $$r12
     # nextln: 0104:     Jump(block26)
     # nextln:       block27:
     # nextln: 0105:     $$rcx = MovRM(S64, [!2 + 0])
     # nextln: 0106:     $$rcx = MovRM(S32, [reg + 32]) $$rcx
-    # nextln:           $$spill3 = $$rcx
+    # nextln:           $$spill3:gpr = $$rcx
     # nextln: 0107:     Jump(block26)
     # nextln:       block26:
     # nextln: 0108:     $$rcx = MovRM(S8, [!3 + 0])
     # nextln: 0109:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0110:     Jumpcc(Ne, block28, block30)
     # nextln:       block28:
-    # nextln:           $$spill4 = $$r12
-    # nextln:           $$rbx = $$rax
+    # nextln:           $$spill4:gpr = $$r12
+    # nextln:           $$rbx:gpr = $$rax
     # nextln: 0111:     Jump(block29)
     # nextln:       block30:
     # nextln: 0112:     $$rcx = FuncAddrAbs(External(extfunc3))
-    # nextln:           $$rbx = $$rax
+    # nextln:           $$rbx:gpr = $$rax
     # nextln: 0113:     $$rax = CallRm $$rcx
-    # nextln:           $$spill4 = $$rax
+    # nextln:           $$spill4:gpr = $$rax
     # nextln: 0114:     Jump(block29)
     # nextln:       block29:
     # nextln: 0115:     $$rax = MovRM(S8, [!3 + 0])
     # nextln: 0116:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0117:     Jumpcc(Ne, block31, block33)
     # nextln:       block31:
-    # nextln:           $$spill5 = $$r12
-    # nextln:           $$rax = $$rbx
+    # nextln:           $$spill5:gpr = $$r12
+    # nextln:           $$rax:gpr = $$rbx
     # nextln: 0118:     Jump(block32)
     # nextln:       block33:
     # nextln: 0119:     $$rax = MovRM(S64, [!4 + 0])
@@ -201,16 +201,16 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0125:     $$rcx = ShiftRmI(S64, Shl, 2) $$rcx
     # nextln: 0126:     $$rcx = AddRI(S64, 40) $$rcx
     # nextln: 0127:     $$rcx = AddRR(S64) $$rax, $$rcx
-    # nextln:           $$rax = $$rbx
+    # nextln:           $$rax:gpr = $$rbx
     # nextln: 0128:     $$rcx = MovRM(S32, [reg + 0]) $$rcx
-    # nextln:           $$spill5 = $$rcx
+    # nextln:           $$spill5:gpr = $$rcx
     # nextln: 0129:     Jump(block32)
     # nextln:       block32:
     # nextln: 0130:     $$rcx = MovRM(S8, [!3 + 0])
     # nextln: 0131:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0132:     Jumpcc(Ne, block36, block38)
     # nextln:       block36:
-    # nextln:           $$spill6 = $$r12
+    # nextln:           $$spill6:gpr = $$r12
     # nextln: 0133:     Jump(block37)
     # nextln:       block38:
     # nextln: 0134:     $$rcx = MovRM(S64, [!4 + 0])
@@ -225,7 +225,7 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0142:     $$rdx = AddRI(S64, 40) $$rdx
     # nextln: 0143:     $$rcx = AddRR(S64) $$rcx, $$rdx
     # nextln: 0144:     $$rcx = MovRM(S32, [reg + 0]) $$rcx
-    # nextln:           $$spill6 = $$rcx
+    # nextln:           $$spill6:gpr = $$rcx
     # nextln: 0145:     Jump(block37)
     # nextln:       block37:
     # nextln: 0146:     $$rcx = MovRM(S8, [!3 + 0])
@@ -233,11 +233,11 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0148:     Jumpcc(Ne, block41, block42)
     # nextln:       block41:
     # nextln: 0149:     $$rcx = MovRM(S32, [!1 + 0])
-    # nextln:           $$spill7 = $$rcx
+    # nextln:           $$spill7:gpr = $$rcx
     # nextln: 0150:     Jump(block43)
     # nextln:       block42:
     # nextln:           $$rcx = MovRmS32(3)
-    # nextln:           $$spill7 = $$rcx
+    # nextln:           $$spill7:gpr = $$rcx
     # nextln: 0151:     Jump(block43)
     # nextln:       block43:
     # nextln: 0152:     $$rcx = MovRM(S8, [!3 + 0])
@@ -245,10 +245,10 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0154:     Jumpcc(Ne, block44, block45)
     # nextln:       block44:
     # nextln: 0155:     $$rcx = MovRM(S32, [!1 + 0])
-    # nextln:           $$spill8 = $$rcx
+    # nextln:           $$spill8:gpr = $$rcx
     # nextln: 0156:     Jump(block46)
     # nextln:       block45:
-    # nextln:           $$spill8 = $$r12
+    # nextln:           $$spill8:gpr = $$r12
     # nextln: 0157:     Jump(block46)
     # nextln:       block46:
     # nextln: 0158:     $$rcx = MovRM(S8, [!3 + 0])
@@ -265,11 +265,11 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0166:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0167:     Jumpcc(Ne, block50, block51)
     # nextln:       block50:
-    # nextln:           $$r15 = $$rax
+    # nextln:           $$r15:gpr = $$rax
     # nextln: 0168:     $$rbx = MovRM(S32, [!1 + 0])
     # nextln: 0169:     Jump(block52)
     # nextln:       block51:
-    # nextln:           $$r15 = $$rax
+    # nextln:           $$r15:gpr = $$rax
     # nextln: 0170:     $$rbx = MovRM(S32, [reg + 0]) $$r15
     # nextln: 0171:     Jump(block52)
     # nextln:       block52:
@@ -375,23 +375,23 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0245:     $$r8 = MovRM(S32, [reg + 0]) $$r15
     # nextln: 0246:     Jump(block80)
     # nextln:       block80:
-    # nextln:           $$r9 = $$spill0
+    # nextln:           $$r9:gpr = $$spill0
     # nextln: 0247:     $$r9 = AddRI(S32, -5) $$r9
-    # nextln:           $$r10 = $$spill1
+    # nextln:           $$r10:gpr = $$spill1
     # nextln: 0248:     $$r9 = AddRR(S32) $$r9, $$r10
-    # nextln:           $$r10 = $$spill2
+    # nextln:           $$r10:gpr = $$spill2
     # nextln: 0249:     $$r9 = AddRR(S32) $$r9, $$r10
-    # nextln:           $$r10 = $$spill3
+    # nextln:           $$r10:gpr = $$spill3
     # nextln: 0250:     $$r9 = AddRR(S32) $$r9, $$r10
-    # nextln:           $$r10 = $$spill4
+    # nextln:           $$r10:gpr = $$spill4
     # nextln: 0251:     $$r9 = AddRR(S32) $$r9, $$r10
-    # nextln:           $$r10 = $$spill5
+    # nextln:           $$r10:gpr = $$spill5
     # nextln: 0252:     $$r9 = AddRR(S32) $$r9, $$r10
-    # nextln:           $$r10 = $$spill6
+    # nextln:           $$r10:gpr = $$spill6
     # nextln: 0253:     $$r9 = AddRR(S32) $$r9, $$r10
-    # nextln:           $$r10 = $$spill7
+    # nextln:           $$r10:gpr = $$spill7
     # nextln: 0254:     $$r9 = AddRR(S32) $$r9, $$r10
-    # nextln:           $$r10 = $$spill8
+    # nextln:           $$r10:gpr = $$spill8
     # nextln: 0255:     $$r9 = AddRR(S32) $$r9, $$r10
     # nextln: 0256:     $$r9 = AddRR(S32) $$r9, $$r14
     # nextln: 0257:     $$rbx = AddRR(S32) $$r9, $$rbx

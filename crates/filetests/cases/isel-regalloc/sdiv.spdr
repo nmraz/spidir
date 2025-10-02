@@ -9,7 +9,7 @@ func @sdiv64:i64(i64, i64) {
     # nextln: clobbers: rax, rdx
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln:           $$rax = $$rdi
+    # nextln:           $$rax:gpr = $$rdi
     # nextln: 0000:     $$rdx = ConvertWord(S64) $$rax
     # nextln: 0001:     $$rax, $$rdx = Div(S64, Idiv) $$rax, $$rdx, $$rsi
     # nextln: 0002:     Ret $$rax
@@ -24,7 +24,7 @@ func @sdiv32:i32(i32, i32) {
     # nextln: clobbers: rax, rdx
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln:           $$rax = $$rdi
+    # nextln:           $$rax:gpr = $$rdi
     # nextln: 0000:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0001:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rsi
     # nextln: 0002:     Ret $$rax

@@ -28,7 +28,7 @@ func @"System.Int32 Tests.Program::Main(System.String[])":i32(ptr) {
     # nextln: 0008:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln: 0009:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0010:     $$rcx = FuncAddrAbs(External(extfunc3))
-    # nextln:           $$rdi = $$rax
+    # nextln:           $$rdi:gpr = $$rax
     # nextln: 0011:     CallRm $$rcx, $$rdi
     # nextln: 0012:     Ud2
     # nextln:       block2:
@@ -69,14 +69,14 @@ func @"System.Int32 Tests.Program::Main(System.String[])":i32(ptr) {
     # nextln:       block9:
     # nextln: 0041:     Jump(block8)
     # nextln:       block8:
-    # nextln:           $$rax = $$rbx
+    # nextln:           $$rax:gpr = $$rbx
     # nextln: 0042:     Ret $$rax
     # nextln:       block5:
     # nextln: 0043:     $$rdi = MovRI64(137395481522496)
     # nextln: 0044:     $$rax = FuncAddrAbs(External(extfunc1))
     # nextln: 0045:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0046:     $$rcx = FuncAddrAbs(External(extfunc3))
-    # nextln:           $$rdi = $$rax
+    # nextln:           $$rdi:gpr = $$rax
     # nextln: 0047:     CallRm $$rcx, $$rdi
     # nextln: 0048:     Ud2
 

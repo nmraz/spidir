@@ -1294,5 +1294,227 @@ mod tests {
         )
     }
 
-    // TODO: `no_regs` tests with different reservation width.
+    #[test]
+    fn copy_stack_to_stack_no_regs_different_width() {
+        check_resolution_with_reg_count(
+            0,
+            "
+            s0:w3 = s1
+            ",
+            expect![[r#"
+                s1234: w0
+
+                s1234:w0 = r0
+                r0:w3 = s1
+                s0:w3 = r0
+                r0:w0 = s1234
+            "#]],
+        )
+    }
+
+    #[test]
+    fn copy_stack_to_stack_no_regs_different_width_used_reg_width() {
+        check_resolution_with_reg_count_and_used_reg_width(
+            0,
+            RegWidth::new(2),
+            "
+            s0:w3 = s1
+            ",
+            expect![[r#"
+                s1234: w2
+
+                s1234:w2 = r0
+                r0:w3 = s1
+                s0:w3 = r0
+                r0:w2 = s1234
+            "#]],
+        )
+    }
+
+    #[test]
+    fn disjoint_swaps_no_regs_mixed_widths() {
+        check_resolution_with_reg_count(
+            4,
+            "
+            r0:w3 = r1
+            r2:w4 = r3
+            r1:w5 = r0
+            r3:w6 = r2
+            ",
+            expect![[r#"
+                s1234: w6
+
+                s1234:w6 = r2
+                r2:w4 = r3
+                r3:w6 = s1234
+                s1234:w5 = r0
+                r0:w3 = r1
+                r1:w5 = s1234
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_copy_cycle_no_regs_mixed_widths() {
+        check_resolution_with_reg_count(
+            6,
+            "
+            r0:w1 = r1
+            r1:w2 = r2
+            r2:w3 = r3
+            r3:w4 = r4
+            r4:w5 = r5
+            r5:w6 = r0
+            ",
+            expect![[r#"
+                s1234: w6
+
+                s1234:w6 = r0
+                r0:w1 = r1
+                r1:w2 = r2
+                r2:w3 = r3
+                r3:w4 = r4
+                r4:w5 = r5
+                r5:w6 = s1234
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_stack_copy_cycle_single_reg_mixed_widths() {
+        check_resolution_with_reg_count(
+            1,
+            "
+            s0:w2 = s1
+            s1:w3 = s2
+            s2:w4 = s3
+            s3:w5 = s4
+            s4:w6 = s5
+            s5:w7 = s0
+            ",
+            expect![[r#"
+                s1234: w7
+
+                r0:w7 = s0
+                s1234:w7 = r0
+                r0:w2 = s1
+                s0:w2 = r0
+                r0:w7 = s1234
+                s1234:w7 = r0
+                r0:w3 = s2
+                s1:w3 = r0
+                r0:w7 = s1234
+                s1234:w7 = r0
+                r0:w4 = s3
+                s2:w4 = r0
+                r0:w7 = s1234
+                s1234:w7 = r0
+                r0:w5 = s4
+                s3:w5 = r0
+                r0:w7 = s1234
+                s1234:w7 = r0
+                r0:w6 = s5
+                s4:w6 = r0
+                r0:w7 = s1234
+                s5:w7 = r0
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_stack_copy_cycle_no_regs_mixed_widths() {
+        check_resolution_with_reg_count(
+            0,
+            "
+            s0:w2 = s1
+            s1:w3 = s2
+            s2:w4 = s3
+            s3:w5 = s4
+            s4:w6 = s5
+            s5:w7 = s0
+            ",
+            expect![[r#"
+                s1235: w0
+                s1234: w7
+
+                s1235:w0 = r0
+                r0:w7 = s0
+                s1234:w7 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w2 = s1
+                s0:w2 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w3 = s2
+                s1:w3 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w4 = s3
+                s2:w4 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w5 = s4
+                s3:w5 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w6 = s5
+                s4:w6 = r0
+                r0:w0 = s1235
+                s1235:w0 = r0
+                r0:w7 = s1234
+                s5:w7 = r0
+                r0:w0 = s1235
+            "#]],
+        )
+    }
+
+    #[test]
+    fn large_stack_copy_cycle_no_regs_mixed_widths_used_reg_width() {
+        check_resolution_with_reg_count_and_used_reg_width(
+            0,
+            RegWidth::new(1),
+            "
+            s0:w2 = s1
+            s1:w3 = s2
+            s2:w4 = s3
+            s3:w5 = s4
+            s4:w6 = s5
+            s5:w7 = s0
+            ",
+            expect![[r#"
+                s1235: w1
+                s1234: w7
+
+                s1235:w1 = r0
+                r0:w7 = s0
+                s1234:w7 = r0
+                r0:w1 = s1235
+                s1235:w1 = r0
+                r0:w2 = s1
+                s0:w2 = r0
+                r0:w1 = s1235
+                s1235:w1 = r0
+                r0:w3 = s2
+                s1:w3 = r0
+                r0:w1 = s1235
+                s1235:w1 = r0
+                r0:w4 = s3
+                s2:w4 = r0
+                r0:w1 = s1235
+                s1235:w1 = r0
+                r0:w5 = s4
+                s3:w5 = r0
+                r0:w1 = s1235
+                s1235:w1 = r0
+                r0:w6 = s5
+                s4:w6 = r0
+                r0:w1 = s1235
+                s1235:w1 = r0
+                r0:w7 = s1234
+                s5:w7 = r0
+                r0:w1 = s1235
+            "#]],
+        )
+    }
 }

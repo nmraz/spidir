@@ -2,7 +2,7 @@
 
 func @inttoptr:ptr(i64) {
     # check: function `inttoptr`:
-    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln:       block0[%1:gpr64($$rdi)]:
     # nextln: 0000:      Ret %1($$rax)[early]
 
     %0:ctrl, %1:i64 = entry
@@ -12,7 +12,7 @@ func @inttoptr:ptr(i64) {
 
 func @ptrtoint:i64(ptr) {
     # check: function `ptrtoint`:
-    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln:       block0[%1:gpr64($$rdi)]:
     # nextln: 0000:      Ret %1($$rax)[early]
 
     %0:ctrl, %1:ptr = entry

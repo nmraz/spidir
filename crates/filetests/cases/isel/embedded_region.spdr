@@ -2,7 +2,7 @@
 
 func @embedded_region:i32(i32) {
     # check: function `embedded_region`:
-    # nextln:       block0[%0:gpr($$rdi)]:
+    # nextln:       block0[%0:gpr64($$rdi)]:
     # nextln: 0000:      Jump(block1)
     # nextln:       => block1
     # nextln:       block1:
@@ -23,7 +23,7 @@ func @embedded_region:i32(i32) {
 
 func @embedded_region_phi:i32(i32) {
     # check: function `embedded_region_phi`:
-    # nextln:       block0[%1:gpr($$rdi)]:
+    # nextln:       block0[%1:gpr64($$rdi)]:
     # nextln: 0000:      Jump(block1)
     # nextln:       => block1
     # nextln:       block1:
@@ -45,7 +45,7 @@ func @embedded_region_phi:i32(i32) {
 
 func @embedded_region_phi_multi_succ:i32(i32, i32) {
     # check: function `embedded_region_phi_multi_succ`:
-    # nextln:       block0[%3:gpr($$rdi), %2:gpr($$rsi)]:
+    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi)]:
     # nextln: 0000:      AluRRm(S32, Test) %2(reg)[early], %2(any)[early]
     # nextln: 0001:      Jumpcc(Ne, block1, block2)
     # nextln:       => block1, block2

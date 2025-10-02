@@ -3,7 +3,7 @@
 func @zero64:f64() {
     # check: function `zero64`:
     # nextln:       block0[]:
-    # nextln: 0000:      %0:xmm(reg)[late] = SseMovRZ
+    # nextln: 0000:      %0:xmm64(reg)[late] = SseMovRZ
     # nextln: 0001:      Ret %0($$xmm0)[early]
 
     %c:ctrl = entry
@@ -14,7 +14,7 @@ func @zero64:f64() {
 func @five64:f64() {
     # check: function `five64`:
     # nextln:       block0[]:
-    # nextln: 0000:      %0:xmm(reg)[late] = MovsdConstRel(5.0)
+    # nextln: 0000:      %0:xmm64(reg)[late] = MovsdConstRel(5.0)
     # nextln: 0001:      Ret %0($$xmm0)[early]
 
     %c:ctrl = entry

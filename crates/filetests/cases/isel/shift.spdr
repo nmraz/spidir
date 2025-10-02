@@ -2,8 +2,8 @@
 
 func @shl_i32_i32:i32(i32, i32) {
     # check: function `shl_i32_i32`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S32, Shl) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S32, Shl) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32 = entry
@@ -13,8 +13,8 @@ func @shl_i32_i32:i32(i32, i32) {
 
 func @shl_i64_i64:i64(i64, i64) {
     # check: function `shl_i64_i64`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S64, Shl) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S64, Shl) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i64, %2:i64 = entry
@@ -24,8 +24,8 @@ func @shl_i64_i64:i64(i64, i64) {
 
 func @shl_i32_i64:i32(i32, i64) {
     # check: function `shl_i32_i64`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S32, Shl) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S32, Shl) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i64 = entry
@@ -35,8 +35,8 @@ func @shl_i32_i64:i32(i32, i64) {
 
 func @shl_i64_i32:i64(i64, i32) {
     # check: function `shl_i64_i32`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S64, Shl) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S64, Shl) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i64, %2:i32 = entry
@@ -46,8 +46,8 @@ func @shl_i64_i32:i64(i64, i32) {
 
 func @lshr_i32_i32:i32(i32, i32) {
     # check: function `lshr_i32_i32`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S32, Shr) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S32, Shr) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32 = entry
@@ -57,8 +57,8 @@ func @lshr_i32_i32:i32(i32, i32) {
 
 func @lshr_i64_i64:i64(i64, i64) {
     # check: function `lshr_i64_i64`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S64, Shr) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S64, Shr) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i64, %2:i64 = entry
@@ -68,8 +68,8 @@ func @lshr_i64_i64:i64(i64, i64) {
 
 func @lshr_i32_i64:i32(i32, i64) {
     # check: function `lshr_i32_i64`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S32, Shr) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S32, Shr) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i64 = entry
@@ -79,8 +79,8 @@ func @lshr_i32_i64:i32(i32, i64) {
 
 func @lshr_i64_i32:i64(i64, i32) {
     # check: function `lshr_i64_i32`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S64, Shr) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S64, Shr) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i64, %2:i32 = entry
@@ -90,8 +90,8 @@ func @lshr_i64_i32:i64(i64, i32) {
 
 func @ashr_i32_i32:i32(i32, i32) {
     # check: function `ashr_i32_i32`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S32, Sar) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S32, Sar) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32 = entry
@@ -101,8 +101,8 @@ func @ashr_i32_i32:i32(i32, i32) {
 
 func @ashr_i64_i64:i64(i64, i64) {
     # check: function `ashr_i64_i64`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S64, Sar) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S64, Sar) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i64, %2:i64 = entry
@@ -112,8 +112,8 @@ func @ashr_i64_i64:i64(i64, i64) {
 
 func @ashr_i32_i64:i32(i32, i64) {
     # check: function `ashr_i32_i64`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S32, Sar) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S32, Sar) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i64 = entry
@@ -123,8 +123,8 @@ func @ashr_i32_i64:i32(i32, i64) {
 
 func @ashr_i64_i32:i64(i64, i32) {
     # check: function `ashr_i64_i32`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = ShiftRmR(S64, Sar) %1(tied:0)[early], %2($$rcx)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = ShiftRmR(S64, Sar) %1(tied:0)[early], %2($$rcx)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i64, %2:i32 = entry

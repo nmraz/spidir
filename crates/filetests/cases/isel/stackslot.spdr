@@ -3,7 +3,7 @@
 func @use_simple_stackslot(i32) {
     # check: function `use_simple_stackslot`:
     # nextln: !0 = stackslot 4:4
-    # nextln:       block0[%0:gpr($$rdi)]:
+    # nextln:       block0[%0:gpr64($$rdi)]:
     # nextln: 0000:      MovMR(S32, [!0 + 0]) %0(reg)[early]
     # nextln: 0001:      Ret
 

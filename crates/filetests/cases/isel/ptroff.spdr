@@ -2,8 +2,8 @@
 
 func @offset_ptr:ptr(ptr, i64) {
     # check: function `offset_ptr`:
-    # nextln:       block0[%1:gpr($$rdi), %2:gpr($$rsi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = AddRR(S64) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln:       block0[%1:gpr64($$rdi), %2:gpr64($$rsi)]:
+    # nextln: 0000:      %0:gpr64(reg)[late] = AddRR(S64) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:ptr, %2:i64 = entry

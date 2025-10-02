@@ -4,7 +4,7 @@ extfunc @noreturn()
 
 func @might_not_return(i32) {
     # check: function `might_not_return`:
-    # nextln:       block0[%0:gpr($$rdi)]:
+    # nextln:       block0[%0:gpr64($$rdi)]:
     # nextln: 0000:      AluRRm(S32, Test) %0(reg)[early], %0(any)[early]
     # nextln: 0001:      Jumpcc(Ne, block1, block2)
     # nextln:       => block1, block2

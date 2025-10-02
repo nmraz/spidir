@@ -2,7 +2,7 @@
 
 func @store1_i32(i32, ptr) {
     # check: function `store1_i32`:
-    # nextln:       block0[%0:gpr($$rdi), %1:gpr($$rsi)]:
+    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S8, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 
@@ -13,7 +13,7 @@ func @store1_i32(i32, ptr) {
 
 func @store2_i32(i32, ptr) {
     # check: function `store2_i32`:
-    # nextln:       block0[%0:gpr($$rdi), %1:gpr($$rsi)]:
+    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S16, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 
@@ -24,7 +24,7 @@ func @store2_i32(i32, ptr) {
 
 func @store4_i32(i32, ptr) {
     # check: function `store4_i32`:
-    # nextln:       block0[%0:gpr($$rdi), %1:gpr($$rsi)]:
+    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S32, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 
@@ -35,7 +35,7 @@ func @store4_i32(i32, ptr) {
 
 func @store1_i64(i64, ptr) {
     # check: function `store1_i64`:
-    # nextln:       block0[%0:gpr($$rdi), %1:gpr($$rsi)]:
+    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S8, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 
@@ -46,7 +46,7 @@ func @store1_i64(i64, ptr) {
 
 func @store2_i64(i64, ptr) {
     # check: function `store2_i64`:
-    # nextln:       block0[%0:gpr($$rdi), %1:gpr($$rsi)]:
+    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S16, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 
@@ -57,7 +57,7 @@ func @store2_i64(i64, ptr) {
 
 func @store4_i64(i64, ptr) {
     # check: function `store4_i64`:
-    # nextln:       block0[%0:gpr($$rdi), %1:gpr($$rsi)]:
+    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S32, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 
@@ -68,7 +68,7 @@ func @store4_i64(i64, ptr) {
 
 func @store8_i64(i64, ptr) {
     # check: function `store8_i64`:
-    # nextln:       block0[%0:gpr($$rdi), %1:gpr($$rsi)]:
+    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S64, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 
@@ -79,7 +79,7 @@ func @store8_i64(i64, ptr) {
 
 func @store8_ptr(ptr, ptr) {
     # check: function `store8_ptr`:
-    # nextln:       block0[%0:gpr($$rdi), %1:gpr($$rsi)]:
+    # nextln:       block0[%0:gpr64($$rdi), %1:gpr64($$rsi)]:
     # nextln: 0000:      MovMR(S64, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 
@@ -90,7 +90,7 @@ func @store8_ptr(ptr, ptr) {
 
 func @store8_f64(f64, ptr) {
     # check: function `store8_f64`:
-    # nextln:       block0[%0:xmm($$xmm0), %1:gpr($$rdi)]:
+    # nextln:       block0[%0:xmm64($$xmm0), %1:gpr64($$rdi)]:
     # nextln: 0000:      MovsMR(Double, [reg + 0]) %0(reg)[early], %1(reg)[early]
     # nextln: 0001:      Ret
 

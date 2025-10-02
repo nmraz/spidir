@@ -507,14 +507,14 @@ impl MachineRegalloc for X64Machine {
         }
     }
 
-    fn reg_bank_spill_layout(&self, bank: RegBank) -> MemLayout {
-        match bank {
-            RB_GPR => MemLayout { size: 8, align: 8 },
-            RB_XMM => MemLayout {
+    fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout {
+        match class {
+            RC_GPR => MemLayout { size: 8, align: 8 },
+            RC_XMM => MemLayout {
                 size: 16,
                 align: 16,
             },
-            _ => panic!("unknown register bank"),
+            _ => panic!("unknown register class"),
         }
     }
 

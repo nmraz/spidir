@@ -42,7 +42,7 @@ pub trait MachineLower: MachineCore {
 pub trait MachineRegalloc: MachineCore {
     fn phys_reg_count() -> u32;
     fn usable_regs(&self, bank: RegBank) -> &[PhysReg];
-    fn reg_bank_spill_layout(&self, bank: RegBank) -> MemLayout;
+    fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout;
 
     fn remat_cost(&self, instr: &Self::Instr) -> Option<RematCost> {
         let _ = instr;

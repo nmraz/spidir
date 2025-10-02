@@ -1,29 +1,37 @@
+use itertools::Itertools;
 use smallvec::{SmallVec, smallvec};
 
-use crate::lir::{Instr, PhysReg, PhysRegSet, RegBank, RegClass};
+use crate::lir::{Instr, PhysReg, RegBank, RegClass, RegWidth};
 
 use super::{
     OperandAssignment, SpillSlot,
     types::{AssignmentCopy, CopySourceAssignment, ParallelCopy},
 };
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ScavengedRegState {
+    Available,
+    InUse(RegWidth),
+}
+
 pub trait RegScavenger {
-    fn emergency_reg(&self, bank: RegBank) -> PhysReg;
-    fn available_regs(&self, bank: RegBank) -> impl Iterator<Item = PhysReg>;
+    fn scavenge_regs(&self, bank: RegBank) -> impl Iterator<Item = (PhysReg, ScavengedRegState)>;
     fn alloc_tmp_spill(&mut self, class: RegClass) -> SpillSlot;
     fn expand_tmp_spill(&mut self, spill: SpillSlot, class: RegClass);
 }
 
 pub struct ResolverState {
     available_spills: SmallVec<[SpillSlot; 2]>,
-    used_regs: PhysRegSet,
+    // This is actually a map keyed by register, but it is expected to be so small that a fancier
+    // data structure probably wouldn't be worth it.
+    used_regs: SmallVec<[(PhysReg, RegWidth); 16]>,
 }
 
 impl ResolverState {
     pub fn new() -> Self {
         Self {
             available_spills: SmallVec::new(),
-            used_regs: PhysRegSet::empty(),
+            used_regs: SmallVec::new(),
         }
     }
 }
@@ -64,10 +72,10 @@ pub fn resolve(
         //   the destination might not be marked as live in the source block (where the copies
         //   occur).
         if let CopySourceAssignment::Operand(OperandAssignment::Reg(from)) = copy.from {
-            ctx.state.used_regs.insert(from);
+            ctx.mark_reg_used(from, copy.class.width());
         }
         if let OperandAssignment::Reg(to) = copy.to {
-            ctx.state.used_regs.insert(to);
+            ctx.mark_reg_used(to, copy.class.width());
         }
 
         let from = match copy.from {
@@ -273,7 +281,7 @@ struct ResolvedCopyContext<'s, S> {
 
 impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
     fn prepare(state: &'s mut ResolverState, scavenger: &'s mut S) -> Self {
-        state.used_regs = PhysRegSet::empty();
+        state.used_regs.clear();
 
         Self {
             copies: SmallVec::new(),
@@ -289,39 +297,38 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         } else {
             // Stack-to-stack copies and remat-to-stack need to go through a temporary register.
 
-            let (tmp_reg, tmp_op) = match self.alloc_tmp_reg(class.bank()) {
-                Some(tmp_reg) => (tmp_reg, OperandAssignment::Reg(tmp_reg)),
-                None => {
-                    let tmp_reg = self.scavenger.emergency_reg(class.bank());
-                    let emergency_spill = self.alloc_tmp_spill(class);
+            let (tmp_reg, tmp_reg_state) = self.scavenge_reg(class);
+            let emergency_spill = match tmp_reg_state {
+                ScavengedRegState::Available => None,
+                ScavengedRegState::InUse(width) => {
+                    let spill_class = class.with_width(width);
+                    let emergency_spill = self.alloc_tmp_spill(spill_class);
 
                     // Restore the original value of `tmp_reg` from the emergency spill.
-                    // TODO: This register class may not have the correct width.
                     self.emit_raw(
-                        class,
+                        spill_class,
                         OperandAssignment::Spill(emergency_spill).into(),
                         OperandAssignment::Reg(tmp_reg),
                     );
 
-                    (tmp_reg, OperandAssignment::Spill(emergency_spill))
+                    Some((emergency_spill, spill_class))
                 }
             };
 
             self.emit_raw(class, OperandAssignment::Reg(tmp_reg).into(), to);
             self.emit_raw(class, from, OperandAssignment::Reg(tmp_reg));
 
-            match tmp_op {
-                OperandAssignment::Spill(emergency_spill) => {
+            match emergency_spill {
+                Some((emergency_spill, spill_class)) => {
                     // Back up `tmp_reg` into the emergency spill before it is used above.
-                    // TODO: This register class may not have the correct width.
                     self.emit_raw(
-                        class,
+                        spill_class,
                         OperandAssignment::Reg(tmp_reg).into(),
                         OperandAssignment::Spill(emergency_spill),
                     );
                     self.free_tmp_spill(emergency_spill);
                 }
-                OperandAssignment::Reg(reg) => self.free_tmp_reg(reg),
+                None => self.free_tmp_reg(tmp_reg),
             }
         }
     }
@@ -331,9 +338,10 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
     }
 
     fn alloc_tmp_op(&mut self, class: RegClass) -> OperandAssignment {
-        match self.alloc_tmp_reg(class.bank()) {
-            Some(reg) => OperandAssignment::Reg(reg),
-            None => OperandAssignment::Spill(self.alloc_tmp_spill(class)),
+        let (reg, state) = self.scavenge_reg(class);
+        match state {
+            ScavengedRegState::Available => OperandAssignment::Reg(reg),
+            ScavengedRegState::InUse(_) => OperandAssignment::Spill(self.alloc_tmp_spill(class)),
         }
     }
 
@@ -344,18 +352,34 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         }
     }
 
-    fn alloc_tmp_reg(&mut self, bank: RegBank) -> Option<PhysReg> {
-        let reg = self
+    fn scavenge_reg(&mut self, class: RegClass) -> (PhysReg, ScavengedRegState) {
+        let (reg, state) = self
             .scavenger
-            .available_regs(bank)
-            .find(|&reg| !self.state.used_regs.contains(reg))?;
-        self.state.used_regs.insert(reg);
-        Some(reg)
+            .scavenge_regs(class.bank())
+            .map(|(reg, state)| {
+                let state = match state {
+                    ScavengedRegState::Available => match self.tmp_reg_usage(reg) {
+                        Some(width) => ScavengedRegState::InUse(width),
+                        None => ScavengedRegState::Available,
+                    },
+                    state => state,
+                };
+                (reg, state)
+            })
+            .find_or_first(|(_reg, state)| *state == ScavengedRegState::Available)
+            .expect("no registers to scavenge");
+
+        if state == ScavengedRegState::Available {
+            self.state.used_regs.push((reg, class.width()));
+        }
+
+        (reg, state)
     }
 
     fn free_tmp_reg(&mut self, reg: PhysReg) {
-        debug_assert!(self.state.used_regs.contains(reg));
-        self.state.used_regs.remove(reg);
+        self.state
+            .used_regs
+            .retain(|(entry_reg, _width)| *entry_reg != reg);
     }
 
     fn alloc_tmp_spill(&mut self, class: RegClass) -> SpillSlot {
@@ -368,6 +392,28 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
 
     fn free_tmp_spill(&mut self, spill: SpillSlot) {
         self.state.available_spills.push(spill);
+    }
+
+    fn tmp_reg_usage(&self, reg: PhysReg) -> Option<RegWidth> {
+        self.state
+            .used_regs
+            .iter()
+            .find(|(entry_reg, _)| *entry_reg == reg)
+            .map(|(_reg, width)| *width)
+    }
+
+    fn mark_reg_used(&mut self, reg: PhysReg, width: RegWidth) {
+        if let Some((_reg, existing_width)) = self
+            .state
+            .used_regs
+            .iter_mut()
+            .find(|(entry_reg, _width)| *entry_reg == reg)
+        {
+            *existing_width = (*existing_width).max(width);
+            return;
+        }
+
+        self.state.used_regs.push((reg, width));
     }
 }
 
@@ -397,12 +443,19 @@ mod tests {
     }
 
     impl RegScavenger for DummyRegScavenger {
-        fn emergency_reg(&self, _bank: RegBank) -> PhysReg {
-            PhysReg::new(0)
-        }
-
-        fn available_regs(&self, _bank: RegBank) -> impl Iterator<Item = PhysReg> {
-            (0..self.reg_count).map(PhysReg::new)
+        fn scavenge_regs(
+            &self,
+            _bank: RegBank,
+        ) -> impl Iterator<Item = (PhysReg, ScavengedRegState)> {
+            let count = self.reg_count.max(1);
+            (0..count).map(|i| {
+                let state = if i >= self.reg_count {
+                    ScavengedRegState::InUse(RegWidth::new(0))
+                } else {
+                    ScavengedRegState::Available
+                };
+                (PhysReg::new(i), state)
+            })
         }
 
         fn alloc_tmp_spill(&mut self, _class: RegClass) -> SpillSlot {

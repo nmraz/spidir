@@ -1,6 +1,6 @@
 use smallvec::{SmallVec, smallvec};
 
-use crate::lir::{Instr, PhysReg};
+use crate::lir::{Instr, PhysReg, PhysRegSet};
 
 use super::{
     OperandAssignment, SpillSlot,
@@ -9,16 +9,28 @@ use super::{
 
 pub trait RegScavenger {
     fn emergency_reg(&self) -> PhysReg;
-
-    fn alloc_tmp_reg(&mut self) -> Option<PhysReg>;
-    fn free_tmp_reg(&mut self, reg: PhysReg);
-
+    fn available_regs(&self) -> impl Iterator<Item = PhysReg>;
     fn alloc_tmp_spill(&mut self) -> SpillSlot;
-    fn free_tmp_spill(&mut self, spill: SpillSlot);
+    fn expand_tmp_spill(&mut self, spill: SpillSlot);
+}
+
+pub struct ResolverState {
+    available_spills: SmallVec<[SpillSlot; 2]>,
+    used_regs: PhysRegSet,
+}
+
+impl ResolverState {
+    pub fn new() -> Self {
+        Self {
+            available_spills: SmallVec::new(),
+            used_regs: PhysRegSet::empty(),
+        }
+    }
 }
 
 pub fn resolve(
     parallel_copies: &[ParallelCopy],
+    state: &mut ResolverState,
     scavenger: &mut impl RegScavenger,
     mut collect: impl FnMut(&AssignmentCopy),
 ) {
@@ -37,7 +49,27 @@ pub fn resolve(
     let mut copy_sources: SmallVec<[Option<TrackedCopySource>; 8]> =
         smallvec![None; operands.len()];
 
+    let mut ctx = ResolvedCopyContext::prepare(state, scavenger);
+
     for copy in parallel_copies {
+        // To keep complexity (somewhat) tame, we let the scavenger model copy sources/destinations
+        // as "available" during resolution and manually ignore them ourselves. This lets scavengers
+        // that actually probe live-range/allocation structures avoid doing extra work to deal with
+        // annoying special cases, such as:
+        //
+        // * Copies at the end of live ranges, where the source might not be marked as live _at_ the
+        //   copy point.
+        //
+        // * Copies across CFG edges, where the complexities of tracking liveness along edges mean
+        //   the destination might not be marked as live in the source block (where the copies
+        //   occur).
+        if let CopySourceAssignment::Operand(OperandAssignment::Reg(from)) = copy.from {
+            ctx.state.used_regs.insert(from);
+        }
+        if let OperandAssignment::Reg(to) = copy.to {
+            ctx.state.used_regs.insert(to);
+        }
+
         let from = match copy.from {
             CopySourceAssignment::Operand(from) => {
                 TrackedCopySource::Operand(find_operand(&operands, from) as u32)
@@ -54,8 +86,6 @@ pub fn resolve(
 
         copy_sources[to] = Some(from);
     }
-
-    let mut ctx = ResolvedCopyContext::new(scavenger);
 
     // We now view the set of parallel copies as a directed graph, with edges running from copy
     // destinations to their respective sources. If this graph is acyclic, sorting it topologically
@@ -210,28 +240,18 @@ fn operand_assignment_sort_key(op: &OperandAssignment) -> u32 {
 
 struct ResolvedCopyContext<'s, S> {
     copies: SmallVec<[AssignmentCopy; 8]>,
+    state: &'s mut ResolverState,
     scavenger: &'s mut S,
 }
 
 impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
-    fn new(scavenger: &'s mut S) -> Self {
+    fn prepare(state: &'s mut ResolverState, scavenger: &'s mut S) -> Self {
+        state.used_regs = PhysRegSet::empty();
+
         Self {
             copies: SmallVec::new(),
+            state,
             scavenger,
-        }
-    }
-
-    fn alloc_tmp_op(&mut self) -> OperandAssignment {
-        match self.scavenger.alloc_tmp_reg() {
-            Some(reg) => OperandAssignment::Reg(reg),
-            None => OperandAssignment::Spill(self.scavenger.alloc_tmp_spill()),
-        }
-    }
-
-    fn free_tmp_op(&mut self, op: OperandAssignment) {
-        match op {
-            OperandAssignment::Reg(reg) => self.scavenger.free_tmp_reg(reg),
-            OperandAssignment::Spill(spill) => self.scavenger.free_tmp_spill(spill),
         }
     }
 
@@ -242,11 +262,11 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         } else {
             // Stack-to-stack copies and remat-to-stack need to go through a temporary register.
 
-            let (tmp_reg, tmp_op) = match self.scavenger.alloc_tmp_reg() {
+            let (tmp_reg, tmp_op) = match self.alloc_tmp_reg() {
                 Some(tmp_reg) => (tmp_reg, OperandAssignment::Reg(tmp_reg)),
                 None => {
                     let tmp_reg = self.scavenger.emergency_reg();
-                    let emergency_spill = self.scavenger.alloc_tmp_spill();
+                    let emergency_spill = self.alloc_tmp_spill();
 
                     // Restore the original value of `tmp_reg` from the emergency spill.
                     self.emit_raw(
@@ -268,15 +288,55 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
                         OperandAssignment::Reg(tmp_reg).into(),
                         OperandAssignment::Spill(emergency_spill),
                     );
-                    self.scavenger.free_tmp_spill(emergency_spill);
+                    self.free_tmp_spill(emergency_spill);
                 }
-                OperandAssignment::Reg(reg) => self.scavenger.free_tmp_reg(reg),
+                OperandAssignment::Reg(reg) => self.free_tmp_reg(reg),
             }
         }
     }
 
     fn emit_raw(&mut self, from: CopySourceAssignment, to: OperandAssignment) {
         self.copies.push(AssignmentCopy { from, to });
+    }
+
+    fn alloc_tmp_op(&mut self) -> OperandAssignment {
+        match self.alloc_tmp_reg() {
+            Some(reg) => OperandAssignment::Reg(reg),
+            None => OperandAssignment::Spill(self.alloc_tmp_spill()),
+        }
+    }
+
+    fn free_tmp_op(&mut self, op: OperandAssignment) {
+        match op {
+            OperandAssignment::Reg(reg) => self.free_tmp_reg(reg),
+            OperandAssignment::Spill(spill) => self.free_tmp_spill(spill),
+        }
+    }
+
+    fn alloc_tmp_reg(&mut self) -> Option<PhysReg> {
+        let reg = self
+            .scavenger
+            .available_regs()
+            .find(|&reg| !self.state.used_regs.contains(reg))?;
+        self.state.used_regs.insert(reg);
+        Some(reg)
+    }
+
+    fn free_tmp_reg(&mut self, reg: PhysReg) {
+        debug_assert!(self.state.used_regs.contains(reg));
+        self.state.used_regs.remove(reg);
+    }
+
+    fn alloc_tmp_spill(&mut self) -> SpillSlot {
+        if let Some(spill) = self.state.available_spills.pop() {
+            self.scavenger.expand_tmp_spill(spill);
+            return spill;
+        }
+        self.scavenger.alloc_tmp_spill()
+    }
+
+    fn free_tmp_spill(&mut self, spill: SpillSlot) {
+        self.state.available_spills.push(spill);
     }
 }
 
@@ -288,7 +348,7 @@ mod tests {
     use expect_test::{Expect, expect};
 
     use crate::{
-        lir::{Instr, PhysReg, PhysRegSet, RegClass},
+        lir::{Instr, PhysReg, RegClass},
         regalloc::{
             SpillSlot,
             test_utils::{
@@ -303,8 +363,6 @@ mod tests {
     struct DummyRegScavenger {
         reg_count: u8,
         next_spill: u32,
-        used_regs: PhysRegSet,
-        available_spills: Vec<SpillSlot>,
     }
 
     impl RegScavenger for DummyRegScavenger {
@@ -312,30 +370,18 @@ mod tests {
             PhysReg::new(0)
         }
 
-        fn alloc_tmp_reg(&mut self) -> Option<PhysReg> {
-            let reg = (0..self.reg_count)
-                .map(PhysReg::new)
-                .find(|&reg| !self.used_regs.contains(reg))?;
-            self.used_regs.insert(reg);
-            Some(reg)
-        }
-
-        fn free_tmp_reg(&mut self, reg: PhysReg) {
-            assert!(self.used_regs.contains(reg));
-            self.used_regs.remove(reg);
+        fn available_regs(&self) -> impl Iterator<Item = PhysReg> {
+            (0..self.reg_count).map(PhysReg::new)
         }
 
         fn alloc_tmp_spill(&mut self) -> SpillSlot {
-            if let Some(spill) = self.available_spills.pop() {
-                return spill;
-            }
             let spill = SpillSlot::from_u32(self.next_spill);
             self.next_spill += 1;
             spill
         }
 
-        fn free_tmp_spill(&mut self, spill: SpillSlot) {
-            self.available_spills.push(spill);
+        fn expand_tmp_spill(&mut self, _spill: SpillSlot) {
+            // We don't actually reuse the spill slots across multiple distinct resolutions here.
         }
     }
 
@@ -363,21 +409,11 @@ mod tests {
         let mut scavenger = DummyRegScavenger {
             reg_count,
             next_spill: 1234,
-            used_regs: PhysRegSet::empty(),
-            available_spills: Vec::new(),
         };
 
-        for copy in &parallel_copies {
-            if let CopySourceAssignment::Operand(OperandAssignment::Reg(from)) = copy.from {
-                scavenger.used_regs.insert(from);
-            }
-            if let OperandAssignment::Reg(to) = copy.to {
-                scavenger.used_regs.insert(to);
-            }
-        }
-
         let mut resolved = Vec::new();
-        resolve(&parallel_copies, &mut scavenger, |copy| {
+        let mut state = ResolverState::new();
+        resolve(&parallel_copies, &mut state, &mut scavenger, |copy| {
             resolved.push(*copy)
         });
 

@@ -6,12 +6,11 @@ use cranelift_entity::{EntityRef, PrimaryMap, SecondaryMap, packed_option::Reser
 use entity_set::DenseEntitySet;
 use fx_utils::FxHashMap;
 use log::trace;
-use smallvec::SmallVec;
 
 use crate::{
     cfg::{Block, CfgContext},
     lir::{
-        DefOperandConstraint, Instr, InstrRange, Lir, MemLayout, PhysReg, PhysRegSet, RegClass,
+        DefOperandConstraint, Instr, InstrRange, Lir, MemLayout, PhysReg, RegClass,
         UseOperandConstraint, VirtReg,
     },
     machine::{MachineCore, MachineRegalloc},
@@ -22,7 +21,7 @@ use super::{
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot, SpillSlotData,
     conflict::{RangeKeyIter, iter_btree_ranges},
     context::RegAllocContext,
-    parallel_copy::{self, RegScavenger},
+    parallel_copy::{self, RegScavenger, ResolverState},
     redundant_copy::{RedundantCopyTracker, RedundantCopyVerdict},
     types::{
         BlockExitGhostCopy, CopySourceAssignment, InstrSlot, LiveRange, ParallelCopies,
@@ -105,7 +104,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let mut parallel_copies = &parallel_copies[..];
 
         let mut resolved = Vec::new();
-        let mut scavenger = AssignedRegScavenger::new(self, assignment);
+        let mut resolver_state = ResolverState::new();
         let mut redundant_copy_tracker = RedundantCopyTracker::new();
 
         let mut last_instr = self.lir.all_instrs().start;
@@ -113,16 +112,21 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         while let Some((pos, class, chunk)) = next_copy_chunk(&mut parallel_copies) {
             let instr = pos.instr();
 
-            scavenger.reset(class, pos, chunk);
             advance_redundant_copy_tracker(
                 self.lir,
-                scavenger.assignment,
+                assignment,
                 last_instr,
                 instr,
                 &mut redundant_copy_tracker,
             );
 
-            parallel_copy::resolve(chunk, &mut scavenger, |copy| {
+            let mut scavenger = AssignedRegScavenger {
+                ctx: self,
+                assignment,
+                class,
+                pos,
+            };
+            parallel_copy::resolve(chunk, &mut resolver_state, &mut scavenger, |copy| {
                 if redundant_copy_tracker.process_copy(copy) == RedundantCopyVerdict::Necessary {
                     resolved.push(TaggedAssignmentCopy {
                         instr: pos.instr(),
@@ -696,12 +700,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
-    fn scavenge_free_reg_at(
+    fn scavenge_available_regs_at(
         &self,
         class: RegClass,
         pos: ProgramPoint,
-        used: &mut PhysRegSet,
-    ) -> Option<PhysReg> {
+    ) -> impl Iterator<Item = PhysReg> {
         // We can get away with checking just the assignment tree, and completely avoid checking
         // against reservations, because we know by construction that parallel copies can never be
         // inserted where reserved registers are live: copies occur only in the `Before` and
@@ -710,13 +713,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         // Make sure the invariant is enforced both here and in `reserve_phys_reg`:
         debug_assert!(matches!(pos.slot(), InstrSlot::Before | InstrSlot::PreCopy));
 
-        let reg = *self
-            .machine
+        self.machine
             .usable_regs(class)
             .iter()
-            .find(|&&reg| !used.contains(reg) && !self.is_reg_assigned_at(reg, pos))?;
-        used.insert(reg);
-        Some(reg)
+            .copied()
+            .filter(move |&reg| !self.is_reg_assigned_at(reg, pos))
     }
 
     fn is_reg_assigned_at(&self, reg: PhysReg, pos: ProgramPoint) -> bool {
@@ -819,43 +820,8 @@ impl Assignment {
 struct AssignedRegScavenger<'a, M: MachineRegalloc> {
     ctx: &'a RegAllocContext<'a, M>,
     assignment: &'a mut Assignment,
-    tmp_spills: SmallVec<[SpillSlot; 2]>,
-
-    // Per-resolution state
     class: RegClass,
     pos: ProgramPoint,
-    used_tmp_regs: PhysRegSet,
-}
-
-impl<'a, M: MachineRegalloc> AssignedRegScavenger<'a, M> {
-    fn new(ctx: &'a RegAllocContext<'a, M>, assignment: &'a mut Assignment) -> Self {
-        Self {
-            ctx,
-            assignment,
-            tmp_spills: SmallVec::new(),
-            class: RegClass::new(0),
-            pos: ProgramPoint::before(Instr::new(0)),
-            used_tmp_regs: PhysRegSet::empty(),
-        }
-    }
-
-    fn reset(&mut self, class: RegClass, pos: ProgramPoint, copies: &[ParallelCopy]) {
-        self.class = class;
-        self.pos = pos;
-        self.used_tmp_regs = PhysRegSet::empty();
-
-        // All copy sources need to be marked as used, because their live ranges could end just
-        // before `pos`. Destinations need to be marked as used for correct behavior with block
-        // live-outs and outgoing params, which might not be live at all at `pos`.
-        for copy in copies {
-            if let CopySourceAssignment::Operand(OperandAssignment::Reg(from)) = copy.from {
-                self.used_tmp_regs.insert(from);
-            }
-            if let OperandAssignment::Reg(to) = copy.to {
-                self.used_tmp_regs.insert(to);
-            }
-        }
-    }
 }
 
 impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
@@ -863,29 +829,18 @@ impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
         self.ctx.machine.usable_regs(self.class)[0]
     }
 
-    fn alloc_tmp_reg(&mut self) -> Option<PhysReg> {
-        self.ctx
-            .scavenge_free_reg_at(self.class, self.pos, &mut self.used_tmp_regs)
-    }
-
-    fn free_tmp_reg(&mut self, reg: PhysReg) {
-        debug_assert!(self.used_tmp_regs.contains(reg));
-        self.used_tmp_regs.remove(reg);
+    fn available_regs(&self) -> impl Iterator<Item = PhysReg> {
+        self.ctx.scavenge_available_regs_at(self.class, self.pos)
     }
 
     fn alloc_tmp_spill(&mut self) -> SpillSlot {
-        let new_layout = self.ctx.machine.reg_class_spill_layout(self.class);
-
-        if let Some(spill) = self.tmp_spills.pop() {
-            self.assignment.expand_spill_slot(spill, new_layout);
-            return spill;
-        }
-
-        self.assignment.create_spill_slot(new_layout)
+        self.assignment
+            .create_spill_slot(self.ctx.machine.reg_class_spill_layout(self.class))
     }
 
-    fn free_tmp_spill(&mut self, spill: SpillSlot) {
-        self.tmp_spills.push(spill);
+    fn expand_tmp_spill(&mut self, spill: SpillSlot) {
+        self.assignment
+            .expand_spill_slot(spill, self.ctx.machine.reg_class_spill_layout(self.class));
     }
 }
 

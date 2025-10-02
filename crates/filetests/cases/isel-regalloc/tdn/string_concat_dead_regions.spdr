@@ -26,7 +26,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0010:     $$rcx = MovRI64(136234271001616)
     # nextln: 0011:     MovMR(S64, [reg + 16]) $$rcx, $$rax
     # nextln: 0012:     $$rcx = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi:gpr = $$rax
+    # nextln:           $$rdi:gpr64 = $$rax
     # nextln: 0013:     CallRm $$rcx, $$rdi
     # nextln: 0014:     Ud2
     # nextln:       block2:
@@ -115,7 +115,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0080:     Ud2
     # nextln:       block8:
     # nextln:           $$rbx = MovRmS32(0)
-    # nextln:           $$r12:gpr = $$rdi
+    # nextln:           $$r12:gpr64 = $$rdi
     # nextln: 0081:     $$rcx = MovRmS32(0)
     # nextln: 0082:     AluRmI(S64, Cmp, 2147483647) $$r13
     # nextln: 0083:     $$rcx = Setcc(G) $$rcx
@@ -127,7 +127,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0088:     $$rax = FuncAddrAbs(External(extfunc5))
     # nextln: 0089:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0090:     $$rcx = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi:gpr = $$rax
+    # nextln:           $$rdi:gpr64 = $$rax
     # nextln: 0091:     CallRm $$rcx, $$rdi
     # nextln: 0092:     Ud2
     # nextln:       block10:
@@ -144,11 +144,11 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0101:     Jump(block21)
     # nextln:       block13:
     # nextln: 0102:     $$rax = FuncAddrAbs(External(extfunc4))
-    # nextln:           $$rdi:gpr = $$r13
+    # nextln:           $$rdi:gpr64 = $$r13
     # nextln: 0103:     $$rax = CallRm $$rax, $$rdi
-    # nextln:           $$r14:gpr = $$rax
-    # nextln:           $$rax:gpr = $$r12
-    # nextln:           $$r15:gpr = $$rbx
+    # nextln:           $$r14:gpr64 = $$rax
+    # nextln:           $$rax:gpr64 = $$r12
+    # nextln:           $$r15:gpr64 = $$rbx
     # nextln: 0104:     Jump(block14)
     # nextln:       block14:
     # nextln: 0105:     $$rdx = MovRM(S32, [reg + 16]) $$rax
@@ -167,7 +167,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0116:     $$rcx = ShiftRmI(S64, Shl, 3) $$rcx
     # nextln: 0117:     $$rcx = AddRI(S64, 24) $$rcx
     # nextln: 0118:     $$rcx = AddRR(S64) $$rax, $$rcx
-    # nextln:           $$spill0:gpr = $$rax
+    # nextln:           $$spill0:gpr64 = $$rax
     # nextln: 0119:     $$rdx = MovRM(S64, [reg + 0]) $$rcx
     # nextln: 0120:     AluRRm(S64, Test) $$rdx, $$rdx
     # nextln: 0121:     Jumpcc(E, block24, block26)
@@ -189,7 +189,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0133:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0134:     Jumpcc(Ne, block27, block28)
     # nextln:       block27:
-    # nextln:           $$rax:gpr = $$r13
+    # nextln:           $$rax:gpr64 = $$r13
     # nextln: 0135:     $$rax = AluRRm(S32, Sub) $$rax, $$rbx
     # nextln: 0136:     $$r12 = MovRM(S32, [reg + 16]) $$rdx
     # nextln: 0137:     $$rcx = MovRmS32(0)
@@ -200,8 +200,8 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0142:     Jumpcc(Ne, block30, block31)
     # nextln:       block31:
     # nextln: 0143:     $$rax = FuncAddrAbs(External(extfunc3))
-    # nextln:           $$rdi:gpr = $$r14
-    # nextln:           $$rsi:gpr = $$rbx
+    # nextln:           $$rdi:gpr64 = $$r14
+    # nextln:           $$rsi:gpr64 = $$rbx
     # nextln: 0144:     CallRm $$rax, $$rdi, $$rsi, $$rdx
     # nextln: 0145:     $$rbx = AddRR(S32) $$rbx, $$r12
     # nextln: 0146:     Jump(block29)
@@ -212,7 +212,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0149:     Jump(block29)
     # nextln:       block29:
     # nextln: 0150:     $$r15 = AddRI(S32, 1) $$r15
-    # nextln:           $$rax:gpr = $$spill0
+    # nextln:           $$rax:gpr64 = $$spill0
     # nextln: 0151:     Jump(block14)
     # nextln:       block23:
     # nextln: 0152:     $$rax = FuncAddrAbs(External(extfunc1))
@@ -228,7 +228,7 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln:       block19:
     # nextln: 0159:     Jump(block21)
     # nextln:       block21:
-    # nextln:           $$rax:gpr = $$r14
+    # nextln:           $$rax:gpr64 = $$r14
     # nextln: 0160:     Ret $$rax
     # nextln:       block20:
     # nextln: 0161:     $$rax = FuncAddrAbs(External(extfunc0))

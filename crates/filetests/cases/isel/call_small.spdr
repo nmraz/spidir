@@ -18,7 +18,7 @@ func @infunc(ptr, i32) {
 
 func @infunc2:i32(ptr, i32) {
     # check: function `infunc2`:
-    # nextln:       block0[%0:gpr($$rsi)]:
+    # nextln:       block0[%0:gpr64($$rsi)]:
     # nextln: 0000:      Jump(block1)
     # nextln:       => block1
     # nextln:       block1:
@@ -58,15 +58,15 @@ func @many_params(i32, i64, ptr, i64, i32, i32, i64, ptr, i32, i64) {
 
 func @caller:i32(ptr, i32) {
     # check: function `caller`:
-    # nextln:       block0[%3:gpr($$rdi), %4:gpr($$rsi)]:
+    # nextln:       block0[%3:gpr64($$rdi), %4:gpr64($$rsi)]:
     # nextln: 0000:      Jump(block1)
     # nextln:       => block1
     # nextln:       block1:
     # nextln: 0001:      CallRel(External(extfunc0)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
-    # nextln: 0002:      %1:gpr($$rax)[late] = CallRel(External(extfunc1)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
+    # nextln: 0002:      %1:gpr64($$rax)[late] = CallRel(External(extfunc1)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
     # nextln: 0003:      CallRel(Internal(func0)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
-    # nextln: 0004:      %2:gpr($$rax)[late] = CallRel(Internal(func1)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
-    # nextln: 0005:      %0:gpr(reg)[late] = AddRR(S32) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0004:      %2:gpr64($$rax)[late] = CallRel(Internal(func1)) %3($$rdi)[early], %4($$rsi)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
+    # nextln: 0005:      %0:gpr64(reg)[late] = AddRR(S32) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
     # nextln: 0006:      CallRel(Internal(func2)) ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
     # nextln: 0007:      Ret %0($$rax)[early]
 
@@ -87,7 +87,7 @@ func @caller:i32(ptr, i32) {
 func @call_single_stack_arg() {
     # check: function `call_single_stack_arg`:
     # nextln:       block0[]:
-    # nextln: 0000:      %0:gpr(any)[late] = MovRmS32(7)
+    # nextln: 0000:      %0:gpr64(any)[late] = MovRmS32(7)
     # nextln: 0001:      AddSp(-8)
     # nextln: 0002:      Push %0(reg)[early]
     # nextln: 0003:      CallRel(Internal(func3)) %0($$rdi)[early], %0($$rsi)[early], %0($$rdx)[early], %0($$rcx)[early], %0($$r8)[early], %0($$r9)[early] ^($$rax, $$rcx, $$rdx, $$rdi, $$rsi, $$r8, $$r9, $$r10, $$r11, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7, $$xmm8, $$xmm9, $$xmm10, $$xmm11, $$xmm12, $$xmm13, $$xmm14, $$xmm15)
@@ -102,9 +102,9 @@ func @call_single_stack_arg() {
 
 func @call_many_params(ptr) {
     # check: function `call_many_params`:
-    # nextln:       block0[%2:gpr($$rdi)]:
-    # nextln: 0000:      %0:gpr(any)[late] = MovRmS32(0)
-    # nextln: 0001:      %1:gpr(any)[late] = MovRmS32(0)
+    # nextln:       block0[%2:gpr64($$rdi)]:
+    # nextln: 0000:      %0:gpr64(any)[late] = MovRmS32(0)
+    # nextln: 0001:      %1:gpr64(any)[late] = MovRmS32(0)
     # nextln: 0002:      Push %1(reg)[early]
     # nextln: 0003:      Push %0(reg)[early]
     # nextln: 0004:      Push %2(reg)[early]

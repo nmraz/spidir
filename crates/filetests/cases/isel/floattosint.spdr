@@ -2,8 +2,8 @@
 
 func @floattosint32:i32(f64) {
     # check: function `floattosint32`:
-    # nextln:       block0[%1:xmm($$xmm0)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = Cvts2si(S32, Double) %1(any)[early]
+    # nextln:       block0[%1:xmm64($$xmm0)]:
+    # nextln: 0000:      %0:gpr64(reg)[late] = Cvts2si(S32, Double) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:f64 = entry
@@ -13,8 +13,8 @@ func @floattosint32:i32(f64) {
 
 func @floattosint64:i64(f64) {
     # check: function `floattosint64`:
-    # nextln:       block0[%1:xmm($$xmm0)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = Cvts2si(S64, Double) %1(any)[early]
+    # nextln:       block0[%1:xmm64($$xmm0)]:
+    # nextln: 0000:      %0:gpr64(reg)[late] = Cvts2si(S64, Double) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:f64 = entry

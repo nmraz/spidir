@@ -18,7 +18,7 @@ func @infunc(ptr, i32) {
 func @get_extfunc:ptr() {
     # check: function `get_extfunc`:
     # nextln:       block0[]:
-    # nextln: 0000:      %0:gpr(reg)[late] = FuncAddrAbs(External(extfunc0))
+    # nextln: 0000:      %0:gpr64(reg)[late] = FuncAddrAbs(External(extfunc0))
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl = entry
@@ -29,7 +29,7 @@ func @get_extfunc:ptr() {
 func @get_infunc:ptr() {
     # check: function `get_infunc`:
     # nextln:       block0[]:
-    # nextln: 0000:      %0:gpr(reg)[late] = FuncAddrAbs(Internal(func0))
+    # nextln: 0000:      %0:gpr64(reg)[late] = FuncAddrAbs(Internal(func0))
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl = entry

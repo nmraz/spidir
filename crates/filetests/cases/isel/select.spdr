@@ -2,17 +2,17 @@
 
 func @select:i32(i32, i32, i32) {
     # check: function `select`:
-    # nextln:       block0[%3:gpr($$rdi), %2:gpr($$rsi), %1:gpr($$rdx)]:
+    # nextln:       block0[%3:gpr64($$rdi), %2:gpr64($$rsi), %1:gpr64($$rdx)]:
     # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0001:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
     # nextln: 0002:      Jump(block2)
-    # nextln:       => block2[%2:gpr]
+    # nextln:       => block2[%2:gpr64]
     # nextln:       block3:
     # nextln: 0003:      Jump(block2)
-    # nextln:       => block2[%1:gpr]
-    # nextln:       block2[%0:gpr]:
+    # nextln:       => block2[%1:gpr64]
+    # nextln:       block2[%0:gpr64]:
     # nextln: 0004:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:i32, %2:i32, %3:i32 = entry

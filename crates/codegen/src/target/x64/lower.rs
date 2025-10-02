@@ -22,7 +22,7 @@ use crate::{
 
 use super::{
     AddrBase, AddrMode, AluBinOp, AluCommBinOp, AluUnOp, CALLER_SAVED_REGS, CodeModel,
-    CompoundCondCode, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, RC_GPR, RC_XMM,
+    CompoundCondCode, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, RC_GPR64, RC_XMM64,
     REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_XMM0, REG_XMM1, REG_XMM2,
     REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, ShiftOp, SseFpuBinOp, SseFpuCmpCode,
     SseFpuPrecision, X64Instr, X64Machine,
@@ -42,8 +42,8 @@ const FIXED_ARG_REG_COUNT: usize = FIXED_ARG_GPR_COUNT + FIXED_ARG_XMM_COUNT;
 impl MachineLower for X64Machine {
     fn reg_class_for_type(&self, ty: Type) -> RegClass {
         match ty {
-            Type::I32 | Type::I64 | Type::Ptr => RC_GPR,
-            Type::F64 => RC_XMM,
+            Type::I32 | Type::I64 | Type::Ptr => RC_GPR64,
+            Type::F64 => RC_XMM64,
         }
     }
 
@@ -181,7 +181,7 @@ impl MachineLower for X64Machine {
                         let shift_width = full_width - width;
                         let input = ctx.get_value_vreg(input);
                         let output = ctx.get_value_vreg(output);
-                        let temp = ctx.create_temp_vreg(RC_GPR);
+                        let temp = ctx.create_temp_vreg(RC_GPR64);
                         emit_shift_ri(ctx, ty, input, shift_width, temp, ShiftOp::Shl);
                         emit_shift_ri(ctx, ty, temp, shift_width, output, ShiftOp::Sar);
                     }
@@ -486,7 +486,7 @@ fn select_fconst64(
                 );
             }
             CodeModel::LargeAbs => {
-                let addr = ctx.create_temp_vreg(RC_GPR);
+                let addr = ctx.create_temp_vreg(RC_GPR64);
                 ctx.emit_instr(
                     X64Instr::F64ConstAddrAbs(val.0),
                     &[DefOperand::any_reg(addr)],
@@ -575,7 +575,7 @@ fn select_uinttofloat(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
 
     match input_ty {
         Type::I32 => {
-            let tmp = ctx.create_temp_vreg(RC_GPR);
+            let tmp = ctx.create_temp_vreg(RC_GPR64);
             ctx.emit_instr(
                 X64Instr::MovzxRRm(FullOperandSize::S32),
                 &[DefOperand::any_reg(tmp)],
@@ -588,8 +588,8 @@ fn select_uinttofloat(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
             );
         }
         Type::I64 => {
-            let tmp_gpr1 = ctx.create_temp_vreg(RC_GPR);
-            let tmp_gpr2 = ctx.create_temp_vreg(RC_GPR);
+            let tmp_gpr1 = ctx.create_temp_vreg(RC_GPR64);
+            let tmp_gpr2 = ctx.create_temp_vreg(RC_GPR64);
 
             ctx.emit_instr(
                 X64Instr::PseudoUint64ToFloat(SseFpuPrecision::Double),
@@ -628,8 +628,8 @@ fn select_floattouint(machine: &X64Machine, ctx: &mut IselContext<'_, '_, X64Mac
                 CodeModel::LargeAbs => X64Instr::PseudoFloatToUint64Abs(SseFpuPrecision::Double),
             };
 
-            let tmp_xmm1 = ctx.create_temp_vreg(RC_XMM);
-            let tmp_xmm2 = ctx.create_temp_vreg(RC_XMM);
+            let tmp_xmm1 = ctx.create_temp_vreg(RC_XMM64);
+            let tmp_xmm2 = ctx.create_temp_vreg(RC_XMM64);
 
             ctx.emit_instr(
                 instr,
@@ -888,7 +888,7 @@ fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Fu
 
 fn emit_call_abs(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
     emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
-        let target = ctx.create_temp_vreg(RC_GPR);
+        let target = ctx.create_temp_vreg(RC_GPR64);
         ctx.emit_instr(
             X64Instr::FuncAddrAbs(func),
             &[DefOperand::any_reg(target)],
@@ -1033,11 +1033,11 @@ fn emit_udiv(
     let op1 = ctx.get_value_vreg(op1);
     let op2 = ctx.get_value_vreg(op2);
 
-    let rdx_in = ctx.create_temp_vreg(RC_GPR);
+    let rdx_in = ctx.create_temp_vreg(RC_GPR64);
     emit_mov_rz(ctx, rdx_in);
 
-    let rax_out = ctx.create_temp_vreg(RC_GPR);
-    let rdx_out = ctx.create_temp_vreg(RC_GPR);
+    let rax_out = ctx.create_temp_vreg(RC_GPR64);
+    let rdx_out = ctx.create_temp_vreg(RC_GPR64);
     ctx.emit_instr(
         X64Instr::Div(operand_size_for_ty(ty), DivOp::Div),
         &[
@@ -1063,15 +1063,15 @@ fn emit_sdiv(
     let op1 = ctx.get_value_vreg(op1);
     let op2 = ctx.get_value_vreg(op2);
 
-    let rdx_in = ctx.create_temp_vreg(RC_GPR);
+    let rdx_in = ctx.create_temp_vreg(RC_GPR64);
     ctx.emit_instr(
         X64Instr::ConvertWord(operand_size_for_ty(ty)),
         &[DefOperand::fixed(rdx_in, REG_RDX)],
         &[UseOperand::fixed(op1, REG_RAX)],
     );
 
-    let rax_out = ctx.create_temp_vreg(RC_GPR);
-    let rdx_out = ctx.create_temp_vreg(RC_GPR);
+    let rax_out = ctx.create_temp_vreg(RC_GPR64);
+    let rdx_out = ctx.create_temp_vreg(RC_GPR64);
     ctx.emit_instr(
         X64Instr::Div(operand_size_for_ty(ty), DivOp::Idiv),
         &[
@@ -1159,7 +1159,7 @@ fn emit_setcc_sequence(
     output: VirtReg,
     f: impl FnOnce(&mut IselContext<'_, '_, X64Machine>) -> CondCode,
 ) {
-    let temp = ctx.create_temp_vreg(RC_GPR);
+    let temp = ctx.create_temp_vreg(RC_GPR64);
 
     // Note: put the move of 0 above so flags aren't live and it can be turned into an `xor`.
     emit_mov_rz(ctx, temp);
@@ -1197,8 +1197,8 @@ fn emit_fpu_cmp_sequence(
     op1: VirtReg,
     op2: VirtReg,
 ) {
-    let tmp_xmm_out = ctx.create_temp_vreg(RC_XMM);
-    let tmp_gpr_out = ctx.create_temp_vreg(RC_GPR);
+    let tmp_xmm_out = ctx.create_temp_vreg(RC_XMM64);
+    let tmp_gpr_out = ctx.create_temp_vreg(RC_GPR64);
     ctx.emit_instr(
         X64Instr::SseScalarFpuRRm(SseFpuPrecision::Double, SseFpuBinOp::Cmp(code)),
         &[DefOperand::any_reg(tmp_xmm_out)],

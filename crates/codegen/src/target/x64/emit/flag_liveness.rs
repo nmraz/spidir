@@ -64,7 +64,7 @@ mod tests {
             Builder as LirBuilder, DefOperand, OperandPos, UseOperandConstraint,
             test_utils::push_instr,
         },
-        target::x64::{AluBinOp, AluCommBinOp, CondCode, OperandSize, RC_GPR, REG_RAX, X64Instr},
+        target::x64::{AluBinOp, AluCommBinOp, CondCode, OperandSize, RC_GPR64, REG_RAX, X64Instr},
     };
 
     use super::*;
@@ -121,8 +121,8 @@ mod tests {
                     X64Instr::AluRRm(OperandSize::S32, AluBinOp::Cmp),
                     [],
                     [
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
                 push_instr(
@@ -131,11 +131,11 @@ mod tests {
                     [DefOperand::any(a)],
                     [
                         (
-                            RC_GPR,
+                            RC_GPR64,
                             UseOperandConstraint::TiedToDef(0),
                             OperandPos::Early,
                         ),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
             },
@@ -159,7 +159,7 @@ mod tests {
                     X64Instr::Ret,
                     [],
                     [(
-                        RC_GPR,
+                        RC_GPR64,
                         UseOperandConstraint::Fixed(REG_RAX),
                         OperandPos::Early,
                     )],
@@ -169,7 +169,7 @@ mod tests {
                     X64Instr::Setcc(CondCode::E),
                     [DefOperand::any_reg(a)],
                     [(
-                        RC_GPR,
+                        RC_GPR64,
                         UseOperandConstraint::TiedToDef(0),
                         OperandPos::Early,
                     )],
@@ -179,8 +179,8 @@ mod tests {
                     X64Instr::AluRRm(OperandSize::S32, AluBinOp::Cmp),
                     [],
                     [
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
                 push_instr(
@@ -189,11 +189,11 @@ mod tests {
                     [DefOperand::any(a)],
                     [
                         (
-                            RC_GPR,
+                            RC_GPR64,
                             UseOperandConstraint::TiedToDef(0),
                             OperandPos::Early,
                         ),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
             },
@@ -220,13 +220,13 @@ mod tests {
                     [],
                     [],
                 );
-                let a = builder.create_vreg(RC_GPR);
+                let a = builder.create_vreg(RC_GPR64);
                 push_instr(
                     builder,
                     X64Instr::Setcc(CondCode::E),
                     [DefOperand::any_reg(a)],
                     [(
-                        RC_GPR,
+                        RC_GPR64,
                         UseOperandConstraint::TiedToDef(0),
                         OperandPos::Early,
                     )],
@@ -236,8 +236,8 @@ mod tests {
                     X64Instr::AluRRm(OperandSize::S32, AluBinOp::Cmp),
                     [],
                     [
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
                 push_instr(
@@ -246,11 +246,11 @@ mod tests {
                     [DefOperand::any(a)],
                     [
                         (
-                            RC_GPR,
+                            RC_GPR64,
                             UseOperandConstraint::TiedToDef(0),
                             OperandPos::Early,
                         ),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
             },
@@ -278,7 +278,7 @@ mod tests {
                     [],
                 );
 
-                let a = builder.create_vreg(RC_GPR);
+                let a = builder.create_vreg(RC_GPR64);
                 push_instr(builder, X64Instr::MovRmS32(12), [DefOperand::any(a)], []);
 
                 let [a, _] = push_instr(
@@ -286,8 +286,8 @@ mod tests {
                     X64Instr::AluRRm(OperandSize::S32, AluBinOp::Cmp),
                     [],
                     [
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
                 push_instr(
@@ -296,11 +296,11 @@ mod tests {
                     [DefOperand::any(a)],
                     [
                         (
-                            RC_GPR,
+                            RC_GPR64,
                             UseOperandConstraint::TiedToDef(0),
                             OperandPos::Early,
                         ),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
             },
@@ -328,18 +328,18 @@ mod tests {
                     [],
                 );
 
-                let a = builder.create_vreg(RC_GPR);
+                let a = builder.create_vreg(RC_GPR64);
                 push_instr(
                     builder,
                     X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
                         (
-                            RC_GPR,
+                            RC_GPR64,
                             UseOperandConstraint::TiedToDef(0),
                             OperandPos::Early,
                         ),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
 
@@ -348,8 +348,8 @@ mod tests {
                     X64Instr::AluRRm(OperandSize::S32, AluBinOp::Cmp),
                     [],
                     [
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
                 push_instr(
@@ -358,11 +358,11 @@ mod tests {
                     [DefOperand::any(a)],
                     [
                         (
-                            RC_GPR,
+                            RC_GPR64,
                             UseOperandConstraint::TiedToDef(0),
                             OperandPos::Early,
                         ),
-                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR64, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
             },

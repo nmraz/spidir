@@ -19,7 +19,7 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 0007:     Jumpcc(E, block3, block4)
     # nextln:       block4:
     # nextln: 0008:     $$rcx = MovRM(S32, [!0 + 0])
-    # nextln:           $$rax:gpr = $$rcx
+    # nextln:           $$rax:gpr64 = $$rcx
     # nextln: 0009:     $$rax = AluRmI(S32, Sub, 1) $$rax
     # nextln: 0010:     $$rdx = MovRM(S32, [!1 + 0])
     # nextln: 0011:     $$rcx = AddRR(S32) $$rdx, $$rcx

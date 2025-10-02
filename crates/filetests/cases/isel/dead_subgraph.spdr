@@ -18,7 +18,7 @@ func @dead_subgraph(i32) {
 
 func @dead_subgraph_input_mid(i32) {
     # check: function `dead_subgraph_input_mid`:
-    # nextln:       block0[%0:gpr($$rdi)]:
+    # nextln:       block0[%0:gpr64($$rdi)]:
     # nextln: 0000:      AluRRm(S32, Test) %0(reg)[early], %0(any)[early]
     # nextln: 0001:      Jumpcc(Ne, block1, block3)
     # nextln:       => block1, block3

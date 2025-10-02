@@ -2,8 +2,8 @@
 
 func @mul_pos64:i64(i64) {
     # check: function `mul_pos64`:
-    # nextln:       block0[%1:gpr($$rdi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = ImulRRmI(S64, 5) %1(any)[early]
+    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln: 0000:      %0:gpr64(reg)[late] = ImulRRmI(S64, 5) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i64 = entry
@@ -14,8 +14,8 @@ func @mul_pos64:i64(i64) {
 
 func @mul_neg64:i64(i64) {
     # check: function `mul_neg64`:
-    # nextln:       block0[%1:gpr($$rdi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = ImulRRmI(S64, -5) %1(any)[early]
+    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln: 0000:      %0:gpr64(reg)[late] = ImulRRmI(S64, -5) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i64 = entry
@@ -26,9 +26,9 @@ func @mul_neg64:i64(i64) {
 
 func @mul_pos_large64:i64(i64) {
     # check: function `mul_pos_large64`:
-    # nextln:       block0[%1:gpr($$rdi)]:
-    # nextln: 0000:      %2:gpr(reg)[late] = MovRU32(4294967295)
-    # nextln: 0001:      %0:gpr(reg)[late] = ImulRR(S64) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln: 0000:      %2:gpr64(reg)[late] = MovRU32(4294967295)
+    # nextln: 0001:      %0:gpr64(reg)[late] = ImulRR(S64) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
     # nextln: 0002:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i64 = entry
@@ -39,9 +39,9 @@ func @mul_pos_large64:i64(i64) {
 
 func @mul_neg_large64:i64(i64) {
     # check: function `mul_neg_large64`:
-    # nextln:       block0[%1:gpr($$rdi)]:
-    # nextln: 0000:      %2:gpr(reg)[late] = MovRI64(18446744069414584321)
-    # nextln: 0001:      %0:gpr(reg)[late] = ImulRR(S64) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln: 0000:      %2:gpr64(reg)[late] = MovRI64(18446744069414584321)
+    # nextln: 0001:      %0:gpr64(reg)[late] = ImulRR(S64) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
     # nextln: 0002:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i64 = entry
@@ -52,8 +52,8 @@ func @mul_neg_large64:i64(i64) {
 
 func @mul_pos32:i32(i32) {
     # check: function `mul_pos32`:
-    # nextln:       block0[%1:gpr($$rdi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = ImulRRmI(S32, 5) %1(any)[early]
+    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln: 0000:      %0:gpr64(reg)[late] = ImulRRmI(S32, 5) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32 = entry
@@ -64,8 +64,8 @@ func @mul_pos32:i32(i32) {
 
 func @mul_neg32:i32(i32) {
     # check: function `mul_neg32`:
-    # nextln:       block0[%1:gpr($$rdi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = ImulRRmI(S32, -5) %1(any)[early]
+    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln: 0000:      %0:gpr64(reg)[late] = ImulRRmI(S32, -5) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32 = entry
@@ -76,8 +76,8 @@ func @mul_neg32:i32(i32) {
 
 func @mul_max32:i32(i32) {
     # check: function `mul_max32`:
-    # nextln:       block0[%1:gpr($$rdi)]:
-    # nextln: 0000:      %0:gpr(reg)[late] = ImulRRmI(S32, 2147483647) %1(any)[early]
+    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln: 0000:      %0:gpr64(reg)[late] = ImulRRmI(S32, 2147483647) %1(any)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %c:ctrl, %a:i32 = entry

@@ -27,13 +27,13 @@ func @large_caller(f64) {
     # nextln: 0000:     AddSp(-16)
     # nextln: 0001:     MovsMR(Double, [rsp + 0]) $$xmm0
     # nextln: 0002:     $$rax = FuncAddrAbs(External(extfunc2))
-    # nextln:           $$xmm7:xmm = $$xmm0
-    # nextln:           $$xmm6:xmm = $$xmm0
-    # nextln:           $$xmm5:xmm = $$xmm0
-    # nextln:           $$xmm4:xmm = $$xmm0
-    # nextln:           $$xmm3:xmm = $$xmm0
-    # nextln:           $$xmm2:xmm = $$xmm0
-    # nextln:           $$xmm1:xmm = $$xmm0
+    # nextln:           $$xmm7:xmm64 = $$xmm0
+    # nextln:           $$xmm6:xmm64 = $$xmm0
+    # nextln:           $$xmm5:xmm64 = $$xmm0
+    # nextln:           $$xmm4:xmm64 = $$xmm0
+    # nextln:           $$xmm3:xmm64 = $$xmm0
+    # nextln:           $$xmm2:xmm64 = $$xmm0
+    # nextln:           $$xmm1:xmm64 = $$xmm0
     # nextln: 0003:     CallRm $$rax, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7
     # nextln: 0004:     AddSp(16)
     # nextln: 0005:     Ret
@@ -52,13 +52,13 @@ func @larger_caller(f64, f64) {
     # nextln: 0001:     MovsMR(Double, [rsp + 0]) $$xmm0
     # nextln: 0002:     MovsMR(Double, [rsp + 8]) $$xmm1
     # nextln: 0003:     $$rax = FuncAddrAbs(External(extfunc3))
-    # nextln:           $$xmm7:xmm = $$xmm0
-    # nextln:           $$xmm6:xmm = $$xmm0
-    # nextln:           $$xmm5:xmm = $$xmm0
-    # nextln:           $$xmm4:xmm = $$xmm0
-    # nextln:           $$xmm3:xmm = $$xmm0
-    # nextln:           $$xmm2:xmm = $$xmm0
-    # nextln:           $$xmm1:xmm = $$xmm0
+    # nextln:           $$xmm7:xmm64 = $$xmm0
+    # nextln:           $$xmm6:xmm64 = $$xmm0
+    # nextln:           $$xmm5:xmm64 = $$xmm0
+    # nextln:           $$xmm4:xmm64 = $$xmm0
+    # nextln:           $$xmm3:xmm64 = $$xmm0
+    # nextln:           $$xmm2:xmm64 = $$xmm0
+    # nextln:           $$xmm1:xmm64 = $$xmm0
     # nextln: 0004:     CallRm $$rax, $$xmm0, $$xmm1, $$xmm2, $$xmm3, $$xmm4, $$xmm5, $$xmm6, $$xmm7
     # nextln: 0005:     AddSp(16)
     # nextln: 0006:     Ret

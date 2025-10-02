@@ -423,6 +423,7 @@ mod tests {
 
     use cranelift_entity::EntityRef;
     use expect_test::{Expect, expect};
+    use fx_utils::FxHashMap;
 
     use crate::{
         lir::{Instr, PhysReg, RegBank, RegClass},
@@ -440,6 +441,7 @@ mod tests {
     struct DummyRegScavenger {
         reg_count: u8,
         next_spill: u32,
+        tmp_spill_widths: FxHashMap<SpillSlot, RegWidth>,
     }
 
     impl RegScavenger for DummyRegScavenger {
@@ -458,14 +460,16 @@ mod tests {
             })
         }
 
-        fn alloc_tmp_spill(&mut self, _class: RegClass) -> SpillSlot {
+        fn alloc_tmp_spill(&mut self, class: RegClass) -> SpillSlot {
             let spill = SpillSlot::from_u32(self.next_spill);
             self.next_spill += 1;
+            self.tmp_spill_widths.insert(spill, class.width());
             spill
         }
 
-        fn expand_tmp_spill(&mut self, _spill: SpillSlot, _class: RegClass) {
-            // We don't actually reuse the spill slots across multiple distinct resolutions here.
+        fn expand_tmp_spill(&mut self, spill: SpillSlot, class: RegClass) {
+            let width = self.tmp_spill_widths.get_mut(&spill).unwrap();
+            *width = (*width).max(class.width());
         }
     }
 
@@ -494,6 +498,7 @@ mod tests {
         let mut scavenger = DummyRegScavenger {
             reg_count,
             next_spill: 1234,
+            tmp_spill_widths: Default::default(),
         };
 
         let mut resolved = Vec::new();
@@ -503,6 +508,14 @@ mod tests {
         });
 
         let mut output = String::new();
+
+        if !scavenger.tmp_spill_widths.is_empty() {
+            for (&spill, &width) in &scavenger.tmp_spill_widths {
+                writeln!(output, "s{}: w{}", spill.as_u32(), width.as_u8()).unwrap();
+            }
+            writeln!(output).unwrap();
+        }
+
         for copy in &resolved {
             let width = copy.class.width().as_u8();
             writeln!(
@@ -963,6 +976,8 @@ mod tests {
             s0 = s1
             ",
             expect![[r#"
+                s1234: w0
+
                 s1234:w0 = r0
                 r0:w0 = s1
                 s0:w0 = r0
@@ -980,6 +995,8 @@ mod tests {
             s0 = s1
             ",
             expect![[r#"
+                s1234: w0
+
                 s1234:w0 = r0
                 r0:w0 = s1
                 s0:w0 = r0
@@ -1005,6 +1022,8 @@ mod tests {
             r5 = r0
             ",
             expect![[r#"
+                s1234: w0
+
                 s1234:w0 = r0
                 r0:w0 = r1
                 r1:w0 = r2
@@ -1029,6 +1048,8 @@ mod tests {
             s5 = s0
             ",
             expect![[r#"
+                s1234: w0
+
                 r0:w0 = s0
                 s1234:w0 = r0
                 r0:w0 = s1
@@ -1068,6 +1089,9 @@ mod tests {
             s5 = s0
             ",
             expect![[r#"
+                s1235: w0
+                s1234: w0
+
                 s1235:w0 = r0
                 r0:w0 = s0
                 s1234:w0 = r0

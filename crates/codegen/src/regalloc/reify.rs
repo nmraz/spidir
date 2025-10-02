@@ -109,7 +109,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
 
         let mut last_instr = self.lir.all_instrs().start;
 
-        while let Some((pos, _bank, chunk)) = next_copy_chunk(&mut parallel_copies) {
+        while let Some((pos, chunk)) = next_copy_chunk(&mut parallel_copies) {
             let instr = pos.instr();
 
             advance_redundant_copy_tracker(
@@ -846,7 +846,7 @@ impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
 
 fn next_copy_chunk<'a>(
     parallel_copies: &mut &'a [ParallelCopy],
-) -> Option<(ProgramPoint, RegBank, &'a [ParallelCopy])> {
+) -> Option<(ProgramPoint, &'a [ParallelCopy])> {
     let first = parallel_copies.first()?;
     let len = parallel_copies
         .iter()
@@ -858,7 +858,6 @@ fn next_copy_chunk<'a>(
 
     Some((
         ProgramPoint::new(first.instr, first.phase.slot()),
-        first.class.bank(),
         cur_copies,
     ))
 }

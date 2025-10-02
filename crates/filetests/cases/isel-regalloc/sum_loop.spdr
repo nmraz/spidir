@@ -13,13 +13,13 @@ func @sum_to_n:i32(i32) {
     # nextln:       block3:
     # nextln: 0004:     Jump(block4)
     # nextln:       block4:
-    # nextln:           $$rcx = $$rdi
+    # nextln:           $$rcx:gpr = $$rdi
     # nextln: 0005:     $$rcx = AluRmI(S32, Sub, 1) $$rcx
     # nextln: 0006:     $$rax = AddRR(S32) $$rax, $$rdi
     # nextln: 0007:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0008:     Jumpcc(E, block5, block6)
     # nextln:       block6:
-    # nextln:           $$rdi = $$rcx
+    # nextln:           $$rdi:gpr = $$rcx
     # nextln: 0009:     Jump(block4)
     # nextln:       block5:
     # nextln: 0010:     Jump(block2)

@@ -12,8 +12,8 @@ func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # nextln:     spill2: 16
     # nextln:     spill3: 24
     # nextln:       block0:
-    # nextln:           $$rax = $$r8
-    # nextln:           $$r8 = $$r9
+    # nextln:           $$rax:gpr = $$r8
+    # nextln:           $$r8:gpr = $$r9
     # nextln: 0000:     $$r9 = MovRRbp { op_size: S64, offset: 16 }
     # nextln: 0001:     $$r14 = MovRM(S32, [reg + 0]) $$r9
     # nextln: 0002:     $$r13 = MovRM(S32, [reg + 0]) $$r9
@@ -21,46 +21,46 @@ func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # nextln: 0004:     $$rbx = MovRM(S32, [reg + 0]) $$r9
     # nextln: 0005:     $$r15 = MovRM(S32, [reg + 0]) $$r9
     # nextln: 0006:     $$r10 = MovRM(S32, [reg + 0]) $$r9
-    # nextln:           $$spill3 = $$r10
+    # nextln:           $$spill3:gpr = $$r10
     # nextln: 0007:     $$r10 = MovRM(S32, [reg + 0]) $$r9
-    # nextln:           $$spill2 = $$r10
+    # nextln:           $$spill2:gpr = $$r10
     # nextln: 0008:     $$r10 = MovRM(S32, [reg + 0]) $$r9
-    # nextln:           $$spill1 = $$r10
+    # nextln:           $$spill1:gpr = $$r10
     # nextln: 0009:     $$r9 = MovRM(S32, [reg + 0]) $$r9
-    # nextln:           $$spill0 = $$r9
+    # nextln:           $$spill0:gpr = $$r9
     # nextln: 0010:     $$r10 = FuncAddrAbs(External(extfunc1))
-    # nextln:           $$r9 = $$rdi
-    # nextln:           $$rdi = $$rsi
-    # nextln:           $$rsi = $$rdx
-    # nextln:           $$rdx = $$rcx
-    # nextln:           $$rcx = $$rax
+    # nextln:           $$r9:gpr = $$rdi
+    # nextln:           $$rdi:gpr = $$rsi
+    # nextln:           $$rsi:gpr = $$rdx
+    # nextln:           $$rdx:gpr = $$rcx
+    # nextln:           $$rcx:gpr = $$rax
     # nextln: 0011:     CallRm $$r10, $$rdi, $$rsi, $$rdx, $$rcx, $$r8, $$r9
     # nextln: 0012:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$r14
+    # nextln:           $$rdi:gpr = $$r14
     # nextln: 0013:     CallRm $$rax, $$rdi
     # nextln: 0014:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$r13
+    # nextln:           $$rdi:gpr = $$r13
     # nextln: 0015:     CallRm $$rax, $$rdi
     # nextln: 0016:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$r12
+    # nextln:           $$rdi:gpr = $$r12
     # nextln: 0017:     CallRm $$rax, $$rdi
     # nextln: 0018:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$rbx
+    # nextln:           $$rdi:gpr = $$rbx
     # nextln: 0019:     CallRm $$rax, $$rdi
     # nextln: 0020:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$r15
+    # nextln:           $$rdi:gpr = $$r15
     # nextln: 0021:     CallRm $$rax, $$rdi
     # nextln: 0022:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$spill3
+    # nextln:           $$rdi:gpr = $$spill3
     # nextln: 0023:     CallRm $$rax, $$rdi
     # nextln: 0024:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$spill2
+    # nextln:           $$rdi:gpr = $$spill2
     # nextln: 0025:     CallRm $$rax, $$rdi
     # nextln: 0026:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$spill1
+    # nextln:           $$rdi:gpr = $$spill1
     # nextln: 0027:     CallRm $$rax, $$rdi
     # nextln: 0028:     $$rax = FuncAddrAbs(External(extfunc0))
-    # nextln:           $$rdi = $$spill0
+    # nextln:           $$rdi:gpr = $$spill0
     # nextln: 0029:     CallRm $$rax, $$rdi
     # nextln: 0030:     Ret
 

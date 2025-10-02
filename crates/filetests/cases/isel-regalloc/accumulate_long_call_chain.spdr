@@ -8,7 +8,7 @@ func @func:i32() {
     # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln: 0000:     $$rax = CallRel(External(extfunc0))
-    # nextln:           $$rbx = $$rax
+    # nextln:           $$rbx:gpr = $$rax
     # nextln: 0001:     $$rax = CallRel(External(extfunc0))
     # nextln: 0002:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
     # nextln: 0003:     $$rax = CallRel(External(extfunc0))

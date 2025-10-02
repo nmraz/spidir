@@ -76,12 +76,22 @@ impl<M: MachineCore> fmt::Display for DisplayAssignment<'_, M> {
                     }
                     InstrOrCopy::Copy(TaggedAssignmentCopy { copy, .. }) => {
                         write!(f, "{}    ", display_instr_gutter_padding())?;
-                        write!(
-                            f,
-                            "{} = {}",
-                            copy.to.display::<M>(),
-                            copy.from.display(self.lir)
-                        )?;
+
+                        match copy.from {
+                            CopySourceAssignment::Operand(op) => write!(
+                                f,
+                                "{}:{} = {}",
+                                copy.to.display::<M>(),
+                                M::reg_class_name(copy.class),
+                                op.display::<M>()
+                            )?,
+                            CopySourceAssignment::Remat(instr) => write!(
+                                f,
+                                "{} = {:?}",
+                                copy.to.display::<M>(),
+                                self.lir.instr_data(instr)
+                            )?,
+                        }
                     }
                 }
                 writeln!(f)?;

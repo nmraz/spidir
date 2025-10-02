@@ -7,7 +7,7 @@ func @gc_new:ptr(i32, i64) {
     # nextln: clobbers: rax, rcx, rdx, rdi, rsi, r8, r9, r10, r11, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln:           $$rdi = $$rsi
+    # nextln:           $$rdi:gpr = $$rsi
     # nextln: 0000:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln: 0001:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0002:     Ret $$rax
@@ -35,7 +35,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:     !0: 0
     # nextln:     spill0: 8
     # nextln:       block0:
-    # nextln:           $$spill0 = $$rdi
+    # nextln:           $$spill0:gpr = $$rdi
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:
     # nextln:           $$rax = MovRmS32(0)
@@ -50,20 +50,20 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0011:     $$rax = AddRR(S64) $$rcx, $$rax
     # nextln:           $$rcx = MovRmS32(24)
     # nextln: 0014:     $$rsi = AddRR(S64) $$rcx, $$rsi
-    # nextln:           $$rbx = $$rax
+    # nextln:           $$rbx:gpr = $$rax
     # nextln:           $$rdi = MovRmS32(171)
     # nextln: 0016:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
-    # nextln:           $$rcx = $$rbx
+    # nextln:           $$rcx:gpr = $$rbx
     # nextln:           $$rdx = MovRmS32(1)
     # nextln: 0018:     $$rbx = MovsxRRm(Ext32_64) $$rdx
     # nextln: 0019:     MovMR(S32, [reg + 16]) $$r13, $$rax
     # nextln: 0020:     MovMR(S64, [!0 + 0]) $$rax
     # nextln: 0021:     $$r15 = MovRM(S64, [!0 + 0])
-    # nextln:           $$r12 = $$rcx
+    # nextln:           $$r12:gpr = $$rcx
     # nextln:           $$rdi = MovRmS32(170)
-    # nextln:           $$rsi = $$r12
+    # nextln:           $$rsi:gpr = $$r12
     # nextln: 0022:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
-    # nextln:           $$rsi = $$r12
+    # nextln:           $$rsi:gpr = $$r12
     # nextln: 0023:     MovMR(S32, [reg + 16]) $$r13, $$rax
     # nextln: 0024:     $$rcx = MovRM(S32, [reg + 16]) $$rax
     # nextln: 0025:     AluRRm(S64, Cmp) $$rbx, $$rcx

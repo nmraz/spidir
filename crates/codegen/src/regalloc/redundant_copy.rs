@@ -1,5 +1,9 @@
+use core::cmp;
+
 use fx_utils::FxHashMap;
 use smallvec::SmallVec;
+
+use crate::lir::RegWidth;
 
 use super::{AssignmentCopy, OperandAssignment, types::CopySourceAssignment};
 
@@ -11,7 +15,7 @@ pub enum RedundantCopyVerdict {
 
 #[derive(Default)]
 pub struct RedundantCopyTracker {
-    copy_sources: FxHashMap<OperandAssignment, CopySourceAssignment>,
+    copy_sources: FxHashMap<OperandAssignment, (CopySourceAssignment, RegWidth)>,
     copy_targets: FxHashMap<OperandAssignment, SmallVec<[OperandAssignment; 4]>>,
 }
 
@@ -26,20 +30,44 @@ impl RedundantCopyTracker {
     }
 
     pub fn process_copy(&mut self, copy: &AssignmentCopy) -> RedundantCopyVerdict {
-        let from = match copy.from {
-            CopySourceAssignment::Operand(from) => self.assignment_source(from),
-            from => from,
-        };
-        let to = self.assignment_source(copy.to);
+        let cur_width = copy.class.width();
 
-        if from == to {
+        let (from, from_width) = match copy.from {
+            CopySourceAssignment::Operand(from) => self.assignment_source(from, cur_width),
+            from => (from, cur_width),
+        };
+        let (to, to_width) = self.assignment_source(copy.to, cur_width);
+
+        // We now have the following:
+        //
+        //    # Older copies (possibly degenerate):
+        //    from:from_width = x1
+        //    to:to_width = x2
+        //
+        //    # Current copy
+        //    to:cur_width = from
+        //
+        // Even given that `x1` and `x2` resolve to the same register, the copy is only redundant
+        // if it isn't wider than the original copy into `to`, i.e., when
+        //
+        //     min(cur_width, from_width) <= to_width.
+        //
+        // Make sure that is the case before declaring the copy redundant.
+
+        if from == to && cmp::min(cur_width, from_width) <= to_width {
             RedundantCopyVerdict::Redundant
         } else {
+            // Things previously copied out of `to` will no longer be.
             self.remove_copies_from(copy.to);
-            self.copy_sources.insert(copy.to, from);
+
+            // `to` is now copied out of from, with the provided width.
+            self.copy_sources.insert(copy.to, (from, cur_width));
+
+            // Remember we've copied out of `from` in case it gets overwritten later.
             if let CopySourceAssignment::Operand(from) = from {
                 self.copy_targets.entry(from).or_default().push(copy.to);
             }
+
             RedundantCopyVerdict::Necessary
         }
     }
@@ -57,11 +85,15 @@ impl RedundantCopyTracker {
         }
     }
 
-    fn assignment_source(&self, assignment: OperandAssignment) -> CopySourceAssignment {
+    fn assignment_source(
+        &self,
+        assignment: OperandAssignment,
+        cur_width: RegWidth,
+    ) -> (CopySourceAssignment, RegWidth) {
         self.copy_sources
             .get(&assignment)
             .copied()
-            .unwrap_or(assignment.into())
+            .unwrap_or((assignment.into(), cur_width))
     }
 }
 
@@ -447,7 +479,6 @@ mod tests {
 
     #[test]
     fn copy_again_wider() {
-        // TODO: The second copy should not be eliminated.
         check_copy_elim(
             "
             r1:w0 = r0
@@ -455,6 +486,7 @@ mod tests {
             ",
             expect![[r#"
                 r1:w0 = r0
+                r1:w1 = r0
             "#]],
         );
     }
@@ -547,7 +579,6 @@ mod tests {
 
     #[test]
     fn copy_again_chain_wider1() {
-        // TODO: The final copy should not be eliminated.
         check_copy_elim(
             "
             r1:w0 = r0
@@ -557,13 +588,13 @@ mod tests {
             expect![[r#"
                 r1:w0 = r0
                 r2:w1 = r1
+                r1:w2 = r2
             "#]],
         );
     }
 
     #[test]
     fn copy_again_chain_wider2() {
-        // TODO: The final copy should not be eliminated.
         check_copy_elim(
             "
             r1:w0 = r0
@@ -573,6 +604,7 @@ mod tests {
             expect![[r#"
                 r1:w0 = r0
                 r2:w2 = r1
+                r1:w1 = r2
             "#]],
         );
     }

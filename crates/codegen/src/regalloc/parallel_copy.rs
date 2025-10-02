@@ -1010,6 +1010,29 @@ mod tests {
     }
 
     #[test]
+    fn disjoint_swaps_no_regs() {
+        check_resolution_with_reg_count(
+            4,
+            "
+            r0 = r1
+            r2 = r3
+            r1 = r0
+            r3 = r2
+            ",
+            expect![[r#"
+                s1234: w0
+
+                s1234:w0 = r2
+                r2:w0 = r3
+                r3:w0 = s1234
+                s1234:w0 = r0
+                r0:w0 = r1
+                r1:w0 = s1234
+            "#]],
+        )
+    }
+
+    #[test]
     fn large_copy_cycle_no_regs() {
         check_resolution_with_reg_count(
             6,

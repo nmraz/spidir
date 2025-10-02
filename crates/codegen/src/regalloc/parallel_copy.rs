@@ -441,6 +441,7 @@ mod tests {
     struct DummyRegScavenger {
         reg_count: u8,
         next_spill: u32,
+        used_reg_width: RegWidth,
         tmp_spill_widths: FxHashMap<SpillSlot, RegWidth>,
     }
 
@@ -452,7 +453,7 @@ mod tests {
             let count = self.reg_count.max(1);
             (0..count).map(|i| {
                 let state = if i >= self.reg_count {
-                    ScavengedRegState::InUse(RegWidth::new(0))
+                    ScavengedRegState::InUse(self.used_reg_width)
                 } else {
                     ScavengedRegState::Available
                 };
@@ -473,7 +474,12 @@ mod tests {
         }
     }
 
-    fn check_resolution_with_reg_count(reg_count: u8, input: &str, expected: Expect) {
+    fn check_resolution_with_reg_count_and_used_reg_width(
+        reg_count: u8,
+        used_reg_width: RegWidth,
+        input: &str,
+        expected: Expect,
+    ) {
         let mut parallel_copies = Vec::new();
 
         for line in input.lines() {
@@ -498,6 +504,7 @@ mod tests {
         let mut scavenger = DummyRegScavenger {
             reg_count,
             next_spill: 1234,
+            used_reg_width,
             tmp_spill_widths: Default::default(),
         };
 
@@ -528,6 +535,15 @@ mod tests {
         }
 
         expected.assert_eq(&output);
+    }
+
+    fn check_resolution_with_reg_count(reg_count: u8, input: &str, expected: Expect) {
+        check_resolution_with_reg_count_and_used_reg_width(
+            reg_count,
+            RegWidth::new(0),
+            input,
+            expected,
+        );
     }
 
     fn check_resolution(input: &str, expected: Expect) {

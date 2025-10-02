@@ -21,7 +21,7 @@ use super::{
     Assignment, InstrAssignmentData, OperandAssignment, SpillSlot, SpillSlotData,
     conflict::{RangeKeyIter, iter_btree_ranges},
     context::RegAllocContext,
-    parallel_copy::{self, RegScavenger, ResolverState},
+    parallel_copy::{self, RegScavenger, ResolverState, ScavengedRegState},
     redundant_copy::{RedundantCopyTracker, RedundantCopyVerdict},
     types::{
         BlockExitGhostCopy, CopySourceAssignment, InstrSlot, LiveRange, ParallelCopies,
@@ -701,11 +701,11 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         }
     }
 
-    fn scavenge_available_regs_at(
+    fn scavenge_regs_at(
         &self,
         bank: RegBank,
         pos: ProgramPoint,
-    ) -> impl Iterator<Item = PhysReg> {
+    ) -> impl Iterator<Item = (PhysReg, ScavengedRegState)> {
         // We can get away with checking just the assignment tree, and completely avoid checking
         // against reservations, because we know by construction that parallel copies can never be
         // inserted where reserved registers are live: copies occur only in the `Before` and
@@ -717,16 +717,23 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         self.machine
             .usable_regs(bank)
             .iter()
-            .copied()
-            .filter(move |&reg| !self.is_reg_assigned_at(reg, pos))
+            .map(move |&reg| (reg, self.scavenged_reg_state_at(reg, pos)))
     }
 
-    fn is_reg_assigned_at(&self, reg: PhysReg, pos: ProgramPoint) -> bool {
+    fn scavenged_reg_state_at(&self, reg: PhysReg, pos: ProgramPoint) -> ScavengedRegState {
         let mut assignments = iter_btree_ranges(&self.phys_reg_assignments[reg.as_u8() as usize]);
         assignments.skip_to_endpoint_above(pos);
-        assignments
+
+        match assignments
             .current()
-            .is_some_and(|(cur_range, _)| pos >= cur_range.start)
+            .filter(|(cur_range, _)| pos >= cur_range.start)
+        {
+            None => ScavengedRegState::Available,
+            Some((_prog_range, &live_range)) => {
+                let vreg = self.live_ranges[live_range].vreg;
+                ScavengedRegState::InUse(self.lir.vreg_class(vreg).width())
+            }
+        }
     }
 }
 
@@ -825,12 +832,8 @@ struct AssignedRegScavenger<'a, M: MachineRegalloc> {
 }
 
 impl<M: MachineRegalloc> RegScavenger for AssignedRegScavenger<'_, M> {
-    fn emergency_reg(&self, bank: RegBank) -> PhysReg {
-        self.ctx.machine.usable_regs(bank)[0]
-    }
-
-    fn available_regs(&self, bank: RegBank) -> impl Iterator<Item = PhysReg> {
-        self.ctx.scavenge_available_regs_at(bank, self.pos)
+    fn scavenge_regs(&self, bank: RegBank) -> impl Iterator<Item = (PhysReg, ScavengedRegState)> {
+        self.ctx.scavenge_regs_at(bank, self.pos)
     }
 
     fn alloc_tmp_spill(&mut self, class: RegClass) -> SpillSlot {

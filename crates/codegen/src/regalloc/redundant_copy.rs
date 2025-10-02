@@ -431,4 +431,239 @@ mod tests {
             "#]],
         );
     }
+
+    #[test]
+    fn copy_again_narrower() {
+        check_copy_elim(
+            "
+            r1:w1 = r0
+            r1:w0 = r0
+            ",
+            expect![[r#"
+                r1:w1 = r0
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_again_wider() {
+        // TODO: The second copy should not be eliminated.
+        check_copy_elim(
+            "
+            r1:w0 = r0
+            r1:w1 = r0
+            ",
+            expect![[r#"
+                r1:w0 = r0
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_back_narrower() {
+        check_copy_elim(
+            "
+            r1:w1 = r0
+            r0:w0 = r1
+            ",
+            expect![[r#"
+                r1:w1 = r0
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_back_wider() {
+        check_copy_elim(
+            "
+            r1:w0 = r0
+            r0:w1 = r1
+            ",
+            expect![[r#"
+                r1:w0 = r0
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_again_chain_narrower1() {
+        check_copy_elim(
+            "
+            r1:w1 = r0
+            r2:w2 = r1
+            r1:w0 = r2
+            ",
+            expect![[r#"
+                r1:w1 = r0
+                r2:w2 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_again_chain_narrower2() {
+        check_copy_elim(
+            "
+            r1:w1 = r0
+            r2:w0 = r1
+            r1:w2 = r2
+            ",
+            expect![[r#"
+                r1:w1 = r0
+                r2:w0 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_again_chain_narrower3() {
+        check_copy_elim(
+            "
+            r1:w2 = r0
+            r2:w0 = r1
+            r1:w1 = r2
+            ",
+            expect![[r#"
+                r1:w2 = r0
+                r2:w0 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_again_chain_same_width() {
+        check_copy_elim(
+            "
+            r1:w1 = r0
+            r2:w2 = r1
+            r1:w1 = r2
+            ",
+            expect![[r#"
+                r1:w1 = r0
+                r2:w2 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_again_chain_wider1() {
+        // TODO: The final copy should not be eliminated.
+        check_copy_elim(
+            "
+            r1:w0 = r0
+            r2:w1 = r1
+            r1:w2 = r2
+            ",
+            expect![[r#"
+                r1:w0 = r0
+                r2:w1 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_again_chain_wider2() {
+        // TODO: The final copy should not be eliminated.
+        check_copy_elim(
+            "
+            r1:w0 = r0
+            r2:w2 = r1
+            r1:w1 = r2
+            ",
+            expect![[r#"
+                r1:w0 = r0
+                r2:w2 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_back_chain_narrower1() {
+        check_copy_elim(
+            "
+            r1:w2 = r0
+            r2:w1 = r1
+            r0:w0 = r2
+            ",
+            expect![[r#"
+                r1:w2 = r0
+                r2:w1 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_back_chain_narrower2() {
+        check_copy_elim(
+            "
+            r1:w1 = r0
+            r2:w2 = r1
+            r0:w0 = r2
+            ",
+            expect![[r#"
+                r1:w1 = r0
+                r2:w2 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_back_chain_same_width() {
+        check_copy_elim(
+            "
+            r1:w1 = r0
+            r2:w2 = r1
+            r0:w1 = r2
+            ",
+            expect![[r#"
+                r1:w1 = r0
+                r2:w2 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_back_chain_wider1() {
+        check_copy_elim(
+            "
+            r1:w0 = r0
+            r2:w1 = r1
+            r0:w2 = r2
+            ",
+            expect![[r#"
+                r1:w0 = r0
+                r2:w1 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_back_chain_wider2() {
+        check_copy_elim(
+            "
+            r1:w1 = r0
+            r2:w0 = r1
+            r0:w2 = r2
+            ",
+            expect![[r#"
+                r1:w1 = r0
+                r2:w0 = r1
+            "#]],
+        );
+    }
+
+    #[test]
+    fn copy_back_chain_wider3() {
+        check_copy_elim(
+            "
+            r1:w2 = r0
+            r2:w0 = r1
+            r0:w1 = r2
+            ",
+            expect![[r#"
+                r1:w2 = r0
+                r2:w0 = r1
+            "#]],
+        );
+    }
 }

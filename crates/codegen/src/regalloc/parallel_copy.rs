@@ -1,6 +1,6 @@
 use smallvec::{SmallVec, smallvec};
 
-use crate::lir::{Instr, PhysReg, PhysRegSet, RegClass};
+use crate::lir::{Instr, PhysReg, PhysRegSet, RegBank, RegClass};
 
 use super::{
     OperandAssignment, SpillSlot,
@@ -8,10 +8,10 @@ use super::{
 };
 
 pub trait RegScavenger {
-    fn emergency_reg(&self) -> PhysReg;
-    fn available_regs(&self) -> impl Iterator<Item = PhysReg>;
-    fn alloc_tmp_spill(&mut self) -> SpillSlot;
-    fn expand_tmp_spill(&mut self, spill: SpillSlot);
+    fn emergency_reg(&self, bank: RegBank) -> PhysReg;
+    fn available_regs(&self, bank: RegBank) -> impl Iterator<Item = PhysReg>;
+    fn alloc_tmp_spill(&mut self, class: RegClass) -> SpillSlot;
+    fn expand_tmp_spill(&mut self, spill: SpillSlot, class: RegClass);
 }
 
 pub struct ResolverState {
@@ -182,7 +182,7 @@ pub fn resolve(
                             // there is a copy cycle), so we need to back it up into a temporary
                             // before it is overwritten and copy out of the temporary instead.
 
-                            let tmp_op = ctx.alloc_tmp_op();
+                            let tmp_op = ctx.alloc_tmp_op(copy.class);
                             copy_cycle_break = Some(CopyCycleBreak {
                                 cycle_operand: from,
                                 tmp_operand: tmp_op,
@@ -289,11 +289,11 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         } else {
             // Stack-to-stack copies and remat-to-stack need to go through a temporary register.
 
-            let (tmp_reg, tmp_op) = match self.alloc_tmp_reg() {
+            let (tmp_reg, tmp_op) = match self.alloc_tmp_reg(class.bank()) {
                 Some(tmp_reg) => (tmp_reg, OperandAssignment::Reg(tmp_reg)),
                 None => {
-                    let tmp_reg = self.scavenger.emergency_reg();
-                    let emergency_spill = self.alloc_tmp_spill();
+                    let tmp_reg = self.scavenger.emergency_reg(class.bank());
+                    let emergency_spill = self.alloc_tmp_spill(class);
 
                     // Restore the original value of `tmp_reg` from the emergency spill.
                     // TODO: This register class may not have the correct width.
@@ -332,10 +332,10 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         self.copies.push(AssignmentCopy { from, to });
     }
 
-    fn alloc_tmp_op(&mut self) -> OperandAssignment {
-        match self.alloc_tmp_reg() {
+    fn alloc_tmp_op(&mut self, class: RegClass) -> OperandAssignment {
+        match self.alloc_tmp_reg(class.bank()) {
             Some(reg) => OperandAssignment::Reg(reg),
-            None => OperandAssignment::Spill(self.alloc_tmp_spill()),
+            None => OperandAssignment::Spill(self.alloc_tmp_spill(class)),
         }
     }
 
@@ -346,10 +346,10 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         }
     }
 
-    fn alloc_tmp_reg(&mut self) -> Option<PhysReg> {
+    fn alloc_tmp_reg(&mut self, bank: RegBank) -> Option<PhysReg> {
         let reg = self
             .scavenger
-            .available_regs()
+            .available_regs(bank)
             .find(|&reg| !self.state.used_regs.contains(reg))?;
         self.state.used_regs.insert(reg);
         Some(reg)
@@ -360,12 +360,12 @@ impl<'s, S: RegScavenger> ResolvedCopyContext<'s, S> {
         self.state.used_regs.remove(reg);
     }
 
-    fn alloc_tmp_spill(&mut self) -> SpillSlot {
+    fn alloc_tmp_spill(&mut self, class: RegClass) -> SpillSlot {
         if let Some(spill) = self.state.available_spills.pop() {
-            self.scavenger.expand_tmp_spill(spill);
+            self.scavenger.expand_tmp_spill(spill, class);
             return spill;
         }
-        self.scavenger.alloc_tmp_spill()
+        self.scavenger.alloc_tmp_spill(class)
     }
 
     fn free_tmp_spill(&mut self, spill: SpillSlot) {
@@ -399,21 +399,21 @@ mod tests {
     }
 
     impl RegScavenger for DummyRegScavenger {
-        fn emergency_reg(&self) -> PhysReg {
+        fn emergency_reg(&self, _bank: RegBank) -> PhysReg {
             PhysReg::new(0)
         }
 
-        fn available_regs(&self) -> impl Iterator<Item = PhysReg> {
+        fn available_regs(&self, _bank: RegBank) -> impl Iterator<Item = PhysReg> {
             (0..self.reg_count).map(PhysReg::new)
         }
 
-        fn alloc_tmp_spill(&mut self) -> SpillSlot {
+        fn alloc_tmp_spill(&mut self, _class: RegClass) -> SpillSlot {
             let spill = SpillSlot::from_u32(self.next_spill);
             self.next_spill += 1;
             spill
         }
 
-        fn expand_tmp_spill(&mut self, _spill: SpillSlot) {
+        fn expand_tmp_spill(&mut self, _spill: SpillSlot, _class: RegClass) {
             // We don't actually reuse the spill slots across multiple distinct resolutions here.
         }
     }

@@ -48,6 +48,10 @@ pub enum VerifierError {
     UndefCopySource {
         copy_idx: u32,
     },
+    TruncatedCopy {
+        copy_idx: u32,
+        source_vregs: Box<[VirtReg]>,
+    },
     BadRematOperands {
         copy_idx: u32,
     },
@@ -143,6 +147,21 @@ impl<M: MachineCore> fmt::Display for DisplayVerifierError<'_, M> {
                     copy.copy.to.display::<M>(),
                     copy.copy.from.display(self.lir),
                     copy.instr
+                )
+            }
+            VerifierError::TruncatedCopy {
+                copy_idx,
+                ref source_vregs,
+            } => {
+                let copy = &self.assignment.copies[copy_idx as usize];
+                write!(
+                    f,
+                    "copy `{} = {}` of class '{}' before {} truncates source: {}",
+                    copy.copy.to.display::<M>(),
+                    copy.copy.from.display(self.lir),
+                    M::reg_class_name(copy.copy.class),
+                    copy.instr,
+                    display_found_vregs(Some(source_vregs))
                 )
             }
             VerifierError::BadRematOperands { copy_idx } => {
@@ -254,6 +273,10 @@ fn verify_block_ghost_copies(
             }
         })?;
 
+        // Note that we explicitly don't compare the widths of the source and target vregs;
+        // truncation/extension through ghost copies is an explicitly supported scenario and can
+        // often arise when `itrunc`/`iext` nodes are combined with phis.
+
         // Ghost copies are special in that they copy between vregs in the same physical assignment
         // rather than between physical assignments in the same vreg. That means the same physical
         // assignment may now simultaneously house an additional vreg.
@@ -302,8 +325,28 @@ fn verify_copy<M: MachineCore>(
         CopySourceAssignment::Operand(from) => {
             let from = reg_state
                 .get(&from)
-                .ok_or(VerifierError::UndefCopySource { copy_idx })?;
-            reg_state.insert(copy.to, from.clone());
+                .ok_or(VerifierError::UndefCopySource { copy_idx })?
+                .clone();
+
+            // All copies inserted by the allocator carry the value of a specific vreg, which means
+            // the copies should be wide enough to grab at least the value. If ghost copies across
+            // classes left vregs too wide to be copied, prune them now.
+            let filtered: SmallVec<[VirtReg; 2]> = from
+                .iter()
+                .copied()
+                .filter(|&vreg| lir.vreg_class(vreg).width() <= copy.class.width())
+                .collect();
+
+            // If this copy wouldn't actually have copied any of our tracked vregs, we can
+            // confidently report that as an error.
+            if filtered.is_empty() {
+                return Err(VerifierError::TruncatedCopy {
+                    copy_idx,
+                    source_vregs: from.into_boxed_slice(),
+                });
+            }
+
+            reg_state.insert(copy.to, filtered);
         }
         CopySourceAssignment::Remat(instr) => {
             if !lir.instr_uses(instr).is_empty() {

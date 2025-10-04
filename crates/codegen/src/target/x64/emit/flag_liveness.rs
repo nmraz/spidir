@@ -62,9 +62,9 @@ mod tests {
         cfg::{Block, BlockCfg},
         lir::{
             Builder as LirBuilder, DefOperand, OperandPos, UseOperandConstraint,
-            test_utils::{RC_GPR, push_instr},
+            test_utils::push_instr,
         },
-        target::x64::{AluBinOp, AluCommBinOp, CondCode, OperandSize, REG_RAX, X64Instr},
+        target::x64::{AluBinOp, AluCommBinOp, CondCode, OperandSize, RC_GPR, REG_RAX, X64Instr},
     };
 
     use super::*;

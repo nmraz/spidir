@@ -6,7 +6,8 @@ use crate::{
         Builder as LirBuilder, MemLayout, OperandPos, PhysReg, RegBank, RegClass,
         UseOperandConstraint,
         test_utils::{
-            DummyInstr, DummyMachine, RB_GPR, RC_GPR, REG_R0, REG_R1, REG_R2, push_instr,
+            DummyInstr, DummyMachine, RB_GPR, RC_GPR_F, RC_GPR_H, REG_R0, REG_R1, REG_R2,
+            push_instr,
         },
     },
     machine::MachineRegalloc,
@@ -26,7 +27,8 @@ impl MachineRegalloc for DummyMachine {
 
     fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout {
         match class {
-            RC_GPR => MemLayout { size: 4, align: 4 },
+            RC_GPR_H => MemLayout { size: 4, align: 4 },
+            RC_GPR_F => MemLayout { size: 8, align: 8 },
             _ => unreachable!(),
         }
     }
@@ -75,10 +77,10 @@ fn copy_cycle_all_regs() {
         },
         expect![[r#"
                   block0:
-                      $spill0:gpr = $r2
-                      $r2:gpr = $r0
-                      $r0:gpr = $r1
-                      $r1:gpr = $spill0
+                      $spill0:gprf = $r2
+                      $r2:gprf = $r0
+                      $r0:gprf = $r1
+                      $r1:gprf = $spill0
             0000:     Call $r0, $r1, $r2
         "#]],
     );
@@ -121,15 +123,15 @@ fn copy_cycle_all_regs_twice() {
         },
         expect![[r#"
                   block0:
-                      $spill0:gpr = $r2
-                      $r2:gpr = $r0
-                      $r0:gpr = $r1
-                      $r1:gpr = $spill0
+                      $spill0:gprf = $r2
+                      $r2:gprf = $r0
+                      $r0:gprf = $r1
+                      $r1:gprf = $spill0
             0000:     Call $r0, $r1, $r2
-                      $spill0:gpr = $r0
-                      $r0:gpr = $r2
-                      $r2:gpr = $r1
-                      $r1:gpr = $spill0
+                      $spill0:gprf = $r0
+                      $r0:gprf = $r2
+                      $r2:gprf = $r1
+                      $r1:gprf = $spill0
             0001:     Call $r0, $r1, $r2
         "#]],
     );
@@ -163,9 +165,9 @@ fn copy_cycle_no_free_reg() {
         },
         expect![[r#"
                   block0:
-                      $spill0:gpr = $r1
-                      $r1:gpr = $r0
-                      $r0:gpr = $spill0
+                      $spill0:gprf = $r1
+                      $r1:gprf = $r0
+                      $r0:gprf = $spill0
             0000:     Call $r0, $r1
             0001:     Ret $r2
         "#]],

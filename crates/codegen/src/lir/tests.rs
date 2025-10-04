@@ -5,7 +5,7 @@ use crate::cfg::{Block, BlockCfg};
 use super::{
     Builder, DefOperand, Lir, MemLayout, OperandPos, PhysRegSet, UseOperandConstraint,
     test_utils::{
-        DummyInstr, DummyMachine, RC_GPR, REG_R0, REG_R1, REG_R2, push_instr,
+        DummyInstr, DummyMachine, RC_GPR_F, REG_R0, REG_R1, REG_R2, push_instr,
         push_instr_with_clobbers,
     },
 };
@@ -68,8 +68,8 @@ fn build_simple_tied() {
         &cfg,
         &block_order,
         expect![[r#"
-                  block0[%1:gpr($r0), %2:gpr($r1)]:
-            0000:      %0:gpr(any)[late] = Add %1(tied:0)[early], %2(reg)[early]
+                  block0[%1:gprf($r0), %2:gprf($r1)]:
+            0000:      %0:gprf(any)[late] = Add %1(tied:0)[early], %2(reg)[early]
             0001:      Ret %0($r0)[early]
         "#]],
     );
@@ -109,8 +109,8 @@ fn build_simple_3addr() {
         &cfg,
         &block_order,
         expect![[r#"
-                  block0[%1:gpr($r0), %2:gpr($r1)]:
-            0000:      %0:gpr(reg)[late] = Lea %1(reg)[early], %2(reg)[early]
+                  block0[%1:gprf($r0), %2:gprf($r1)]:
+            0000:      %0:gprf(reg)[late] = Lea %1(reg)[early], %2(reg)[early]
             0001:      Ret %0($r0)[early]
         "#]],
     );
@@ -144,7 +144,7 @@ fn multi_block() {
     builder.advance_block();
 
     // `right`
-    let add5 = builder.create_vreg(RC_GPR);
+    let add5 = builder.create_vreg(RC_GPR_F);
     builder.set_outgoing_block_params([add5]);
     push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
     let [right_param2, five] = push_instr(
@@ -165,7 +165,7 @@ fn multi_block() {
     builder.advance_block();
 
     // `left`
-    let add_params = builder.create_vreg(RC_GPR);
+    let add_params = builder.create_vreg(RC_GPR_F);
     builder.set_outgoing_block_params([add_params]);
     push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
     let [left_param2, left_param3] = push_instr(
@@ -203,20 +203,20 @@ fn multi_block() {
         &cfg,
         &block_order,
         expect![[r#"
-                  block0[%7:gpr($r0), %8:gpr($r1), %6:gpr($r2)]:
+                  block0[%7:gprf($r0), %8:gprf($r1), %6:gprf($r2)]:
             0000:      Cmp %7(any)[early], %8(reg)[early]
             0001:      JmpEq(block1, block2)
                   => block1, block2
                   block1:
-            0002:      %4:gpr(any)[late] = Add %8(tied:0)[early], %6(reg)[early]
+            0002:      %4:gprf(any)[late] = Add %8(tied:0)[early], %6(reg)[early]
             0003:      Jump(block3)
-                  => block3[%4:gpr]
+                  => block3[%4:gprf]
                   block2:
-            0004:      %3:gpr(reg)[late] = MovI(5)
-            0005:      %1:gpr(any)[late] = Add %8(tied:0)[early], %3(reg)[early]
+            0004:      %3:gprf(reg)[late] = MovI(5)
+            0005:      %1:gprf(any)[late] = Add %8(tied:0)[early], %3(reg)[early]
             0006:      Jump(block3)
-                  => block3[%1:gpr]
-                  block3[%0:gpr]:
+                  => block3[%1:gprf]
+                  block3[%0:gprf]:
             0007:      Ret %0($r0)[early]
         "#]],
     );
@@ -243,12 +243,12 @@ fn block_param_vreg_copies() {
     builder.set_incoming_block_params([retval]);
     builder.advance_block();
 
-    let outgoing_param = builder.create_vreg(RC_GPR);
+    let outgoing_param = builder.create_vreg(RC_GPR_F);
     builder.set_outgoing_block_params([outgoing_param]);
 
     push_instr(&mut builder, DummyInstr::Jump(exit), [], []);
 
-    let five = builder.create_vreg(RC_GPR);
+    let five = builder.create_vreg(RC_GPR_F);
     push_instr(
         &mut builder,
         DummyInstr::MovI(5),
@@ -267,10 +267,10 @@ fn block_param_vreg_copies() {
         &block_order,
         expect![[r#"
                   block0[]:
-            0000:      %2:gpr(reg)[late] = MovI(5)
+            0000:      %2:gprf(reg)[late] = MovI(5)
             0001:      Jump(block1)
-                  => block1[%2:gpr]
-                  block1[%0:gpr]:
+                  => block1[%2:gprf]
+                  block1[%0:gprf]:
             0002:      Ret %0($r0)[early]
         "#]],
     );
@@ -307,7 +307,7 @@ fn stack_slots() {
         expect![[r#"
             !0 = stackslot 4:4
             !1 = stackslot 16:8
-                  block0[%0:gpr($r0)]:
+                  block0[%0:gprf($r0)]:
             0000:      Ret %0($r0)[early]
         "#]],
     );
@@ -346,8 +346,8 @@ fn clobbers() {
         &cfg,
         &block_order,
         expect![[r#"
-                  block0[%1:gpr($r0)]:
-            0000:      %0:gpr($r0)[late] = Call %1($r0)[early] ^($r1, $r2)
+                  block0[%1:gprf($r0)]:
+            0000:      %0:gprf($r0)[late] = Call %1($r0)[early] ^($r1, $r2)
             0001:      Ret %0($r0)[early]
         "#]],
     );

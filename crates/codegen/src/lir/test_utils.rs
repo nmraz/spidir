@@ -26,10 +26,13 @@ pub enum DummyInstr {
     JmpEq(Block, Block),
 }
 
-pub const RW_FULL: RegWidth = RegWidth::new(0);
-
 pub const RB_GPR: RegBank = RegBank::new(0);
-pub const RC_GPR: RegClass = RegClass::new(RB_GPR, RW_FULL);
+
+pub const RW_HALF: RegWidth = RegWidth::new(0);
+pub const RW_FULL: RegWidth = RegWidth::new(1);
+
+pub const RC_GPR_H: RegClass = RegClass::new(RB_GPR, RW_HALF);
+pub const RC_GPR_F: RegClass = RegClass::new(RB_GPR, RW_FULL);
 
 pub const REG_R0: PhysReg = PhysReg::new(0);
 pub const REG_R1: PhysReg = PhysReg::new(1);
@@ -41,7 +44,8 @@ impl MachineCore for DummyMachine {
 
     fn reg_class_name(class: RegClass) -> &'static str {
         match class {
-            RC_GPR => "gpr",
+            RC_GPR_H => "gprh",
+            RC_GPR_F => "gprf",
             _ => unreachable!(),
         }
     }
@@ -66,7 +70,7 @@ pub fn push_instr_with_clobbers<M: MachineCore, const U: usize>(
     let mut use_regs = [VirtReg::reserved_value(); U];
     builder.build_instrs(|mut b| {
         for use_reg in &mut use_regs {
-            *use_reg = b.create_vreg(RC_GPR);
+            *use_reg = b.create_vreg(RC_GPR_F);
         }
         b.push_instr(
             instr,

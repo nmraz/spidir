@@ -221,3 +221,101 @@ fn copy_cycle_no_free_reg() {
         "#]],
     );
 }
+
+#[test]
+fn copy_cycle_no_free_reg_mixed_width1() {
+    check_regalloc_block(
+        |builder| {
+            // Keep r2 live across our call.
+            let [a3] = push_instr(
+                builder,
+                DummyInstr::Ret,
+                [],
+                [(
+                    RC_GPR_F,
+                    UseOperandConstraint::Fixed(REG_R2),
+                    OperandPos::Early,
+                )],
+            );
+
+            // Call something with all available registers permuted.
+            let [a2, a1] = push_instr(
+                builder,
+                DummyInstr::Call,
+                [],
+                [
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R0),
+                        OperandPos::Early,
+                    ),
+                    (
+                        RC_GPR_H,
+                        UseOperandConstraint::Fixed(REG_R1),
+                        OperandPos::Early,
+                    ),
+                ],
+            );
+
+            builder.set_incoming_block_params([a1, a2, a3]);
+            builder.set_live_in_regs(vec![REG_R0, REG_R1, REG_R2]);
+        },
+        expect![[r#"
+                  block0:
+                      $spill0:gprf = $r1
+                      $r1:gprh = $r0
+                      $r0:gprf = $spill0
+            0000:     Call $r0, $r1
+            0001:     Ret $r2
+        "#]],
+    );
+}
+
+#[test]
+fn copy_cycle_no_free_reg_mixed_width2() {
+    check_regalloc_block(
+        |builder| {
+            // Keep r2 live across our call.
+            let [a3] = push_instr(
+                builder,
+                DummyInstr::Ret,
+                [],
+                [(
+                    RC_GPR_F,
+                    UseOperandConstraint::Fixed(REG_R2),
+                    OperandPos::Early,
+                )],
+            );
+
+            // Call something with all available registers permuted.
+            let [a2, a1] = push_instr(
+                builder,
+                DummyInstr::Call,
+                [],
+                [
+                    (
+                        RC_GPR_H,
+                        UseOperandConstraint::Fixed(REG_R0),
+                        OperandPos::Early,
+                    ),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R1),
+                        OperandPos::Early,
+                    ),
+                ],
+            );
+
+            builder.set_incoming_block_params([a1, a2, a3]);
+            builder.set_live_in_regs(vec![REG_R0, REG_R1, REG_R2]);
+        },
+        expect![[r#"
+                  block0:
+                      $spill0:gprh = $r1
+                      $r1:gprf = $r0
+                      $r0:gprh = $spill0
+            0000:     Call $r0, $r1
+            0001:     Ret $r2
+        "#]],
+    );
+}

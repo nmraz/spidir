@@ -66,9 +66,21 @@ fn copy_cycle_all_regs() {
                 DummyInstr::Call,
                 [],
                 [
-                    (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
-                    (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
-                    (UseOperandConstraint::Fixed(REG_R2), OperandPos::Early),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R0),
+                        OperandPos::Early,
+                    ),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R1),
+                        OperandPos::Early,
+                    ),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R2),
+                        OperandPos::Early,
+                    ),
                 ],
             );
 
@@ -96,9 +108,21 @@ fn copy_cycle_all_regs_twice() {
                 DummyInstr::Call,
                 [],
                 [
-                    (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
-                    (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
-                    (UseOperandConstraint::Fixed(REG_R2), OperandPos::Early),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R0),
+                        OperandPos::Early,
+                    ),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R1),
+                        OperandPos::Early,
+                    ),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R2),
+                        OperandPos::Early,
+                    ),
                 ],
             );
 
@@ -108,9 +132,21 @@ fn copy_cycle_all_regs_twice() {
                 DummyInstr::Call,
                 [],
                 [
-                    (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
-                    (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
-                    (UseOperandConstraint::Fixed(REG_R2), OperandPos::Early),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R0),
+                        OperandPos::Early,
+                    ),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R1),
+                        OperandPos::Early,
+                    ),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R2),
+                        OperandPos::Early,
+                    ),
                 ],
             );
 
@@ -146,7 +182,11 @@ fn copy_cycle_no_free_reg() {
                 builder,
                 DummyInstr::Ret,
                 [],
-                [(UseOperandConstraint::Fixed(REG_R2), OperandPos::Early)],
+                [(
+                    RC_GPR_F,
+                    UseOperandConstraint::Fixed(REG_R2),
+                    OperandPos::Early,
+                )],
             );
 
             // Call something with all available registers permuted.
@@ -155,8 +195,16 @@ fn copy_cycle_no_free_reg() {
                 DummyInstr::Call,
                 [],
                 [
-                    (UseOperandConstraint::Fixed(REG_R0), OperandPos::Early),
-                    (UseOperandConstraint::Fixed(REG_R1), OperandPos::Early),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R0),
+                        OperandPos::Early,
+                    ),
+                    (
+                        RC_GPR_F,
+                        UseOperandConstraint::Fixed(REG_R1),
+                        OperandPos::Early,
+                    ),
                 ],
             );
 

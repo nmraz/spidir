@@ -47,15 +47,23 @@ fn build_simple_tied() {
         &mut builder,
         DummyInstr::Ret,
         [],
-        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+        [(
+            RC_GPR_F,
+            UseOperandConstraint::Fixed(REG_R0),
+            OperandPos::Early,
+        )],
     );
     let [a, b] = push_instr(
         &mut builder,
         DummyInstr::Add,
         [DefOperand::any(retval)],
         [
-            (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-            (UseOperandConstraint::AnyReg, OperandPos::Early),
+            (
+                RC_GPR_F,
+                UseOperandConstraint::TiedToDef(0),
+                OperandPos::Early,
+            ),
+            (RC_GPR_F, UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
     builder.set_incoming_block_params([a, b]);
@@ -88,15 +96,19 @@ fn build_simple_3addr() {
         &mut builder,
         DummyInstr::Ret,
         [],
-        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+        [(
+            RC_GPR_F,
+            UseOperandConstraint::Fixed(REG_R0),
+            OperandPos::Early,
+        )],
     );
     let [a, b] = push_instr(
         &mut builder,
         DummyInstr::Lea,
         [DefOperand::any_reg(retval)],
         [
-            (UseOperandConstraint::AnyReg, OperandPos::Early),
-            (UseOperandConstraint::AnyReg, OperandPos::Early),
+            (RC_GPR_F, UseOperandConstraint::AnyReg, OperandPos::Early),
+            (RC_GPR_F, UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
     builder.set_incoming_block_params([a, b]);
@@ -138,7 +150,11 @@ fn multi_block() {
         &mut builder,
         DummyInstr::Ret,
         [],
-        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+        [(
+            RC_GPR_F,
+            UseOperandConstraint::Fixed(REG_R0),
+            OperandPos::Early,
+        )],
     );
     builder.set_incoming_block_params([retval]);
     builder.advance_block();
@@ -152,8 +168,12 @@ fn multi_block() {
         DummyInstr::Add,
         [DefOperand::any(add5)],
         [
-            (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-            (UseOperandConstraint::AnyReg, OperandPos::Early),
+            (
+                RC_GPR_F,
+                UseOperandConstraint::TiedToDef(0),
+                OperandPos::Early,
+            ),
+            (RC_GPR_F, UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
     push_instr(
@@ -173,8 +193,12 @@ fn multi_block() {
         DummyInstr::Add,
         [DefOperand::any(add_params)],
         [
-            (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-            (UseOperandConstraint::AnyReg, OperandPos::Early),
+            (
+                RC_GPR_F,
+                UseOperandConstraint::TiedToDef(0),
+                OperandPos::Early,
+            ),
+            (RC_GPR_F, UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
     builder.advance_block();
@@ -186,8 +210,8 @@ fn multi_block() {
         DummyInstr::Cmp,
         [],
         [
-            (UseOperandConstraint::Any, OperandPos::Early),
-            (UseOperandConstraint::AnyReg, OperandPos::Early),
+            (RC_GPR_F, UseOperandConstraint::Any, OperandPos::Early),
+            (RC_GPR_F, UseOperandConstraint::AnyReg, OperandPos::Early),
         ],
     );
     builder.copy_vreg(right_param2, param2);
@@ -238,7 +262,11 @@ fn block_param_vreg_copies() {
         &mut builder,
         DummyInstr::Ret,
         [],
-        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+        [(
+            RC_GPR_F,
+            UseOperandConstraint::Fixed(REG_R0),
+            OperandPos::Early,
+        )],
     );
     builder.set_incoming_block_params([retval]);
     builder.advance_block();
@@ -293,7 +321,11 @@ fn stack_slots() {
         &mut builder,
         DummyInstr::Ret,
         [],
-        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+        [(
+            RC_GPR_F,
+            UseOperandConstraint::Fixed(REG_R0),
+            OperandPos::Early,
+        )],
     );
     builder.set_incoming_block_params([retval]);
     builder.advance_block();
@@ -327,13 +359,21 @@ fn clobbers() {
         &mut builder,
         DummyInstr::Ret,
         [],
-        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+        [(
+            RC_GPR_F,
+            UseOperandConstraint::Fixed(REG_R0),
+            OperandPos::Early,
+        )],
     );
     let [param] = push_instr_with_clobbers(
         &mut builder,
         DummyInstr::Call,
         [DefOperand::fixed(retval, REG_R0)],
-        [(UseOperandConstraint::Fixed(REG_R0), OperandPos::Early)],
+        [(
+            RC_GPR_F,
+            UseOperandConstraint::Fixed(REG_R0),
+            OperandPos::Early,
+        )],
         PhysRegSet::from_iter([REG_R1, REG_R2]),
     );
     builder.set_incoming_block_params([param]);

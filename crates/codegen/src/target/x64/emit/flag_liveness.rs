@@ -121,8 +121,8 @@ mod tests {
                     X64Instr::AluRRm(OperandSize::S32, AluBinOp::Cmp),
                     [],
                     [
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
                 push_instr(
@@ -130,8 +130,12 @@ mod tests {
                     X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
-                        (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (
+                            RC_GPR,
+                            UseOperandConstraint::TiedToDef(0),
+                            OperandPos::Early,
+                        ),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
             },
@@ -154,21 +158,29 @@ mod tests {
                     builder,
                     X64Instr::Ret,
                     [],
-                    [(UseOperandConstraint::Fixed(REG_RAX), OperandPos::Early)],
+                    [(
+                        RC_GPR,
+                        UseOperandConstraint::Fixed(REG_RAX),
+                        OperandPos::Early,
+                    )],
                 );
                 push_instr(
                     builder,
                     X64Instr::Setcc(CondCode::E),
                     [DefOperand::any_reg(a)],
-                    [(UseOperandConstraint::TiedToDef(0), OperandPos::Early)],
+                    [(
+                        RC_GPR,
+                        UseOperandConstraint::TiedToDef(0),
+                        OperandPos::Early,
+                    )],
                 );
                 let [a, _] = push_instr(
                     builder,
                     X64Instr::AluRRm(OperandSize::S32, AluBinOp::Cmp),
                     [],
                     [
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
                 push_instr(
@@ -176,8 +188,12 @@ mod tests {
                     X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
-                        (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (
+                            RC_GPR,
+                            UseOperandConstraint::TiedToDef(0),
+                            OperandPos::Early,
+                        ),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
             },
@@ -209,15 +225,19 @@ mod tests {
                     builder,
                     X64Instr::Setcc(CondCode::E),
                     [DefOperand::any_reg(a)],
-                    [(UseOperandConstraint::TiedToDef(0), OperandPos::Early)],
+                    [(
+                        RC_GPR,
+                        UseOperandConstraint::TiedToDef(0),
+                        OperandPos::Early,
+                    )],
                 );
                 let [a, _] = push_instr(
                     builder,
                     X64Instr::AluRRm(OperandSize::S32, AluBinOp::Cmp),
                     [],
                     [
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
                 push_instr(
@@ -225,8 +245,12 @@ mod tests {
                     X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
-                        (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (
+                            RC_GPR,
+                            UseOperandConstraint::TiedToDef(0),
+                            OperandPos::Early,
+                        ),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
             },
@@ -262,8 +286,8 @@ mod tests {
                     X64Instr::AluRRm(OperandSize::S32, AluBinOp::Cmp),
                     [],
                     [
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
                 push_instr(
@@ -271,8 +295,12 @@ mod tests {
                     X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
-                        (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (
+                            RC_GPR,
+                            UseOperandConstraint::TiedToDef(0),
+                            OperandPos::Early,
+                        ),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
             },
@@ -306,8 +334,12 @@ mod tests {
                     X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
-                        (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (
+                            RC_GPR,
+                            UseOperandConstraint::TiedToDef(0),
+                            OperandPos::Early,
+                        ),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
 
@@ -316,8 +348,8 @@ mod tests {
                     X64Instr::AluRRm(OperandSize::S32, AluBinOp::Cmp),
                     [],
                     [
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
                 push_instr(
@@ -325,8 +357,12 @@ mod tests {
                     X64Instr::AluCommRR(OperandSize::S32, AluCommBinOp::Xor),
                     [DefOperand::any(a)],
                     [
-                        (UseOperandConstraint::TiedToDef(0), OperandPos::Early),
-                        (UseOperandConstraint::AnyReg, OperandPos::Early),
+                        (
+                            RC_GPR,
+                            UseOperandConstraint::TiedToDef(0),
+                            OperandPos::Early,
+                        ),
+                        (RC_GPR, UseOperandConstraint::AnyReg, OperandPos::Early),
                     ],
                 );
             },

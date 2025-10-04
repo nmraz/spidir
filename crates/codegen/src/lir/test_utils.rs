@@ -1,4 +1,5 @@
 use cranelift_entity::packed_option::ReservedValue;
+use itertools::izip;
 
 use crate::{
     cfg::Block,
@@ -64,20 +65,22 @@ pub fn push_instr_with_clobbers<M: MachineCore, const U: usize>(
     builder: &mut Builder<'_, M>,
     instr: M::Instr,
     defs: impl IntoIterator<Item = DefOperand>,
-    uses: [(UseOperandConstraint, OperandPos); U],
+    uses: [(RegClass, UseOperandConstraint, OperandPos); U],
     clobbers: PhysRegSet,
 ) -> [VirtReg; U] {
     let mut use_regs = [VirtReg::reserved_value(); U];
     builder.build_instrs(|mut b| {
-        for use_reg in &mut use_regs {
-            *use_reg = b.create_vreg(RC_GPR_F);
+        for (use_reg, (class, ..)) in izip!(&mut use_regs, &uses) {
+            *use_reg = b.create_vreg(*class);
         }
         b.push_instr(
             instr,
             defs,
             uses.iter()
                 .enumerate()
-                .map(|(i, &(constraint, pos))| UseOperand::new(use_regs[i], constraint, pos)),
+                .map(|(i, &(_class, constraint, pos))| {
+                    UseOperand::new(use_regs[i], constraint, pos)
+                }),
             clobbers,
         );
     });
@@ -88,7 +91,7 @@ pub fn push_instr<M: MachineCore, const U: usize>(
     builder: &mut Builder<M>,
     instr: M::Instr,
     defs: impl IntoIterator<Item = DefOperand>,
-    uses: [(UseOperandConstraint, OperandPos); U],
+    uses: [(RegClass, UseOperandConstraint, OperandPos); U],
 ) -> [VirtReg; U] {
     push_instr_with_clobbers(builder, instr, defs, uses, PhysRegSet::empty())
 }

@@ -1,6 +1,7 @@
 # run: codegen
 
 extfunc @ext()
+extfunc @ext2(f64, f64)
 
 func @spill_arg:f64(f64) {
     # check: function `spill_arg`:
@@ -18,4 +19,27 @@ func @spill_arg:f64(f64) {
     %0:ctrl, %1:f64 = entry
     %2:ctrl = call @ext %0
     return %2, %1
+}
+
+func @spill_two_args(f64, f64) {
+    # check: function `spill_two_args`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 83 ec 20                     sub rsp, 0x20
+    # nextln: 000008: f2 0f 11 4c 24 10               movsd qword ptr [rsp + 0x10], xmm1
+    # nextln: 00000e: f2 0f 11 04 24                  movsd qword ptr [rsp], xmm0
+    # nextln: 000013: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @ext + 0
+    # nextln: 00001d: ff d0                           call rax
+    # nextln: 00001f: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @ext2 + 0
+    # nextln: 000029: f2 0f 10 4c 24 10               movsd xmm1, qword ptr [rsp + 0x10]
+    # nextln: 00002f: f2 0f 10 04 24                  movsd xmm0, qword ptr [rsp]
+    # nextln: 000034: ff d0                           call rax
+    # nextln: 000036: 48 83 c4 20                     add rsp, 0x20
+    # nextln: 00003a: 5d                              pop rbp
+    # nextln: 00003b: c3                              ret
+
+    %0:ctrl, %1:f64, %2:f64 = entry
+    %3:ctrl = call @ext %0
+    %4:ctrl = call @ext2 %3, %1, %2
+    return %4
 }

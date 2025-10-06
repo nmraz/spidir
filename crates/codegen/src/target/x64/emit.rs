@@ -5,7 +5,7 @@ use crate::{
     cfg::Block,
     code_buffer::{BufferRelocTarget, CodeBuffer, FixupKind, InstrAnchor, InstrSink, Label},
     constpool::Constant,
-    emit::{EmitContext, EmitInstrData},
+    emit::{EmitContext, EmitCopyData, EmitInstrData},
     frame::FrameLayout,
     lir::{Instr, PhysReg, PhysRegSet, StackSlot},
     machine::MachineEmit,
@@ -509,12 +509,11 @@ impl MachineEmit for X64Machine {
         &self,
         _ctx: &EmitContext<'_, Self>,
         _pos: Instr,
-        from: OperandAssignment,
-        to: OperandAssignment,
+        copy: &EmitCopyData,
         state: &mut X64EmitState,
         buffer: &mut CodeBuffer<X64Fixup>,
     ) {
-        match (from, to) {
+        match (copy.from, copy.to) {
             (OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
                 if is_gpr(from) {
                     debug_assert!(is_gpr(to));

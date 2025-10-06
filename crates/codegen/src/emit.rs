@@ -25,6 +25,11 @@ pub struct EmitInstrData<'a, M: MachineEmit> {
     pub uses: &'a [OperandAssignment],
 }
 
+pub struct EmitCopyData {
+    pub from: OperandAssignment,
+    pub to: OperandAssignment,
+}
+
 pub fn emit_code<M: MachineEmit>(
     lir: &Lir<M>,
     cfg_ctx: &CfgContext,
@@ -77,9 +82,13 @@ pub fn emit_code<M: MachineEmit>(
                     );
                 }
                 InstrOrCopy::Copy(TaggedAssignmentCopy { copy, instr }) => match copy.from {
-                    CopySourceAssignment::Operand(from) => {
-                        machine.emit_copy(&ctx, instr, from, copy.to, &mut state, &mut buffer)
-                    }
+                    CopySourceAssignment::Operand(from) => machine.emit_copy(
+                        &ctx,
+                        instr,
+                        &EmitCopyData { from, to: copy.to },
+                        &mut state,
+                        &mut buffer,
+                    ),
                     CopySourceAssignment::Remat(instr) => machine.emit_instr(
                         &ctx,
                         instr,

@@ -518,9 +518,6 @@ impl MachineEmit for X64Machine {
             (RB_GPR, OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
                 emit_mov_r_r(buffer, to, from);
             }
-            (RB_XMM, OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
-                emit_movaps_r_rm(buffer, to, RegMem::Reg(from));
-            }
             (RB_GPR, OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
                 emit_movzx_r_rm(
                     buffer,
@@ -528,9 +525,6 @@ impl MachineEmit for X64Machine {
                     to,
                     RegMem::Mem(state.spill_slot_addr(from)),
                 );
-            }
-            (RB_XMM, OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
-                emit_movaps_r_rm(buffer, to, RegMem::Mem(state.spill_slot_addr(from)))
             }
             (RB_GPR, OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => {
                 emit_mov_rm_r(
@@ -540,12 +534,21 @@ impl MachineEmit for X64Machine {
                     from,
                 );
             }
+
+            (RB_XMM, OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
+                emit_movaps_r_rm(buffer, to, RegMem::Reg(from));
+            }
+            (RB_XMM, OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
+                emit_movaps_r_rm(buffer, to, RegMem::Mem(state.spill_slot_addr(from)))
+            }
             (RB_XMM, OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => {
                 emit_movaps_rm_r(buffer, RegMem::Mem(state.spill_slot_addr(to)), from);
             }
+
             (_, OperandAssignment::Spill(_), OperandAssignment::Spill(_)) => {
                 unreachable!("mem-to-mem copy")
             }
+
             _ => unreachable!("unknown register bank"),
         }
     }

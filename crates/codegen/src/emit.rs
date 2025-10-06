@@ -3,7 +3,7 @@ use cranelift_entity::{SecondaryMap, packed_option::ReservedValue};
 use crate::{
     cfg::{Block, CfgContext},
     code_buffer::{CodeBlob, CodeBuffer, Label},
-    lir::Lir,
+    lir::{Lir, RegClass},
     machine::MachineEmit,
     regalloc::{
         Assignment, CopySourceAssignment, InstrOrCopy, OperandAssignment, TaggedAssignmentCopy,
@@ -26,6 +26,7 @@ pub struct EmitInstrData<'a, M: MachineEmit> {
 }
 
 pub struct EmitCopyData {
+    pub class: RegClass,
     pub from: OperandAssignment,
     pub to: OperandAssignment,
 }
@@ -85,7 +86,11 @@ pub fn emit_code<M: MachineEmit>(
                     CopySourceAssignment::Operand(from) => machine.emit_copy(
                         &ctx,
                         instr,
-                        &EmitCopyData { from, to: copy.to },
+                        &EmitCopyData {
+                            class: copy.class,
+                            from,
+                            to: copy.to,
+                        },
                         &mut state,
                         &mut buffer,
                     ),

@@ -1,0 +1,21 @@
+# run: codegen
+
+extfunc @ext()
+
+func @spill_arg:f64(f64) {
+    # check: function `spill_arg`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 83 ec 10                     sub rsp, 0x10
+    # nextln: 000008: f2 0f 11 04 24                  movsd qword ptr [rsp], xmm0
+    # nextln: 00000d: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @ext + 0
+    # nextln: 000017: ff d0                           call rax
+    # nextln: 000019: f2 0f 10 04 24                  movsd xmm0, qword ptr [rsp]
+    # nextln: 00001e: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 000022: 5d                              pop rbp
+    # nextln: 000023: c3                              ret
+
+    %0:ctrl, %1:f64 = entry
+    %2:ctrl = call @ext %0
+    return %2, %1
+}

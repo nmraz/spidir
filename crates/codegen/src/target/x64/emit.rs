@@ -1665,7 +1665,6 @@ impl RexPrefix {
     }
 
     fn encode_sib_index(&mut self, index: PhysReg) -> u8 {
-        debug_assert!(is_gpr(index));
         let index = encode_reg(index);
         self.x = index & 0b1000 != 0;
         index & 0b111
@@ -1737,7 +1736,6 @@ fn encode_base_index_off_mem_parts(
     // These values can have special meanings when placed in the R/M slot.
     let (base_bp, base_sp) = match base {
         Some(base) => {
-            debug_assert!(is_gpr(base));
             let base_rm = encode_reg(base) & 0b111;
             (
                 base_rm == encode_reg(REG_RBP),
@@ -1879,28 +1877,6 @@ fn encode_reg(reg: PhysReg) -> u8 {
 
         _ => unreachable!("unknown register"),
     }
-}
-
-fn is_gpr(reg: PhysReg) -> bool {
-    matches!(
-        reg,
-        REG_RAX
-            | REG_RBX
-            | REG_RCX
-            | REG_RDX
-            | REG_RDI
-            | REG_RSI
-            | REG_RBP
-            | REG_RSP
-            | REG_R8
-            | REG_R9
-            | REG_R10
-            | REG_R11
-            | REG_R12
-            | REG_R13
-            | REG_R14
-            | REG_R15
-    )
 }
 
 fn encode_cond_code(code: CondCode) -> u8 {

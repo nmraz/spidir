@@ -36,11 +36,11 @@ extfunc @"System.ReadOnlySpan`1[System.Byte] System.Globalization.NumberFormatIn
 func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Collections.Generic.ValueListBuilder`1&, NumberBuffer&, System.ReadOnlySpan`1[System.Char], System.Globalization.NumberFormatInfo)"(ptr, ptr, ptr, ptr) {
     # check: function `System.Void System.Number::NumberToStringFormat[System.Byte](System.Collections.Generic.ValueListBuilder`1&, NumberBuffer&, System.ReadOnlySpan`1[System.Char], System.Globalization.NumberFormatInfo)`:
     # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
-    # nextln: frame: size 792, align 16
+    # nextln: frame: size 628, align 16
     # nextln:     !0: 16
-    # nextln:     !1: 560
+    # nextln:     !1: 440
     # nextln:     !2: 288
-    # nextln:     !3: 720
+    # nextln:     !3: 416
     # nextln:     !4: 280
     # nextln:     !5: 32
     # nextln:     !6: 48
@@ -58,67 +58,67 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:     !18: 224
     # nextln:     !19: 240
     # nextln:     !20: 256
-    # nextln:     spill0: 296
-    # nextln:     spill1: 304
-    # nextln:     spill2: 312
-    # nextln:     spill3: 320
-    # nextln:     spill4: 328
-    # nextln:     spill5: 336
-    # nextln:     spill6: 344
-    # nextln:     spill7: 352
-    # nextln:     spill8: 360
-    # nextln:     spill9: 368
-    # nextln:     spill10: 376
-    # nextln:     spill11: 384
-    # nextln:     spill12: 392
-    # nextln:     spill13: 400
-    # nextln:     spill14: 408
-    # nextln:     spill15: 416
-    # nextln:     spill16: 424
-    # nextln:     spill17: 432
-    # nextln:     spill18: 440
-    # nextln:     spill19: 448
-    # nextln:     spill20: 456
-    # nextln:     spill21: 464
-    # nextln:     spill22: 472
-    # nextln:     spill23: 480
-    # nextln:     spill24: 488
-    # nextln:     spill25: 496
-    # nextln:     spill26: 504
-    # nextln:     spill27: 512
-    # nextln:     spill28: 520
-    # nextln:     spill29: 528
-    # nextln:     spill30: 536
-    # nextln:     spill31: 544
-    # nextln:     spill32: 552
-    # nextln:     spill33: 784
-    # nextln:     spill34: 568
-    # nextln:     spill35: 576
-    # nextln:     spill36: 584
-    # nextln:     spill37: 592
-    # nextln:     spill38: 600
-    # nextln:     spill39: 608
-    # nextln:     spill40: 616
-    # nextln:     spill41: 624
-    # nextln:     spill42: 632
-    # nextln:     spill43: 640
-    # nextln:     spill44: 648
-    # nextln:     spill45: 656
-    # nextln:     spill46: 664
-    # nextln:     spill47: 672
-    # nextln:     spill48: 680
-    # nextln:     spill49: 688
-    # nextln:     spill50: 696
-    # nextln:     spill51: 704
-    # nextln:     spill52: 712
-    # nextln:     spill53: 272
-    # nextln:     spill54: 728
-    # nextln:     spill55: 736
-    # nextln:     spill56: 744
-    # nextln:     spill57: 752
-    # nextln:     spill58: 760
-    # nextln:     spill59: 768
-    # nextln:     spill60: 776
+    # nextln:     spill0: 512
+    # nextln:     spill1: 520
+    # nextln:     spill2: 580
+    # nextln:     spill3: 604
+    # nextln:     spill4: 608
+    # nextln:     spill5: 620
+    # nextln:     spill6: 484
+    # nextln:     spill7: 488
+    # nextln:     spill8: 496
+    # nextln:     spill9: 296
+    # nextln:     spill10: 304
+    # nextln:     spill11: 524
+    # nextln:     spill12: 528
+    # nextln:     spill13: 536
+    # nextln:     spill14: 624
+    # nextln:     spill15: 576
+    # nextln:     spill16: 312
+    # nextln:     spill17: 320
+    # nextln:     spill18: 328
+    # nextln:     spill19: 612
+    # nextln:     spill20: 336
+    # nextln:     spill21: 544
+    # nextln:     spill22: 468
+    # nextln:     spill23: 472
+    # nextln:     spill24: 476
+    # nextln:     spill25: 480
+    # nextln:     spill26: 344
+    # nextln:     spill27: 352
+    # nextln:     spill28: 492
+    # nextln:     spill29: 360
+    # nextln:     spill30: 500
+    # nextln:     spill31: 504
+    # nextln:     spill32: 508
+    # nextln:     spill33: 368
+    # nextln:     spill34: 516
+    # nextln:     spill35: 376
+    # nextln:     spill36: 384
+    # nextln:     spill37: 392
+    # nextln:     spill38: 532
+    # nextln:     spill39: 400
+    # nextln:     spill40: 540
+    # nextln:     spill41: 408
+    # nextln:     spill42: 548
+    # nextln:     spill43: 552
+    # nextln:     spill44: 556
+    # nextln:     spill45: 560
+    # nextln:     spill46: 564
+    # nextln:     spill47: 568
+    # nextln:     spill48: 572
+    # nextln:     spill49: 272
+    # nextln:     spill50: 424
+    # nextln:     spill51: 584
+    # nextln:     spill52: 588
+    # nextln:     spill53: 592
+    # nextln:     spill54: 596
+    # nextln:     spill55: 600
+    # nextln:     spill56: 432
+    # nextln:     spill57: 464
+    # nextln:     spill58: 448
+    # nextln:     spill59: 616
+    # nextln:     spill60: 456
     # nextln:       block0:
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:

@@ -509,12 +509,10 @@ impl MachineRegalloc for X64Machine {
     }
 
     fn reg_class_spill_layout(&self, class: RegClass) -> MemLayout {
-        match class.bank() {
-            RB_GPR => MemLayout { size: 8, align: 8 },
-            RB_XMM => MemLayout {
-                size: 16,
-                align: 16,
-            },
+        // Our current register widths have the same layout no matter which bank they store.
+        match class.width() {
+            RW_32 => MemLayout { size: 4, align: 4 },
+            RW_64 => MemLayout { size: 8, align: 8 },
             _ => panic!("unknown register class"),
         }
     }

@@ -17,18 +17,18 @@ extfunc @sink(i32, i32)
 func @spill_connector_hint() {
     # check: function `spill_connector_hint`:
     # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
-    # nextln: frame: size 88, align 8
+    # nextln: frame: size 44, align 4
     # nextln:     spill0: 0
-    # nextln:     spill1: 8
-    # nextln:     spill2: 16
-    # nextln:     spill3: 24
-    # nextln:     spill4: 32
-    # nextln:     spill5: 40
-    # nextln:     spill6: 48
-    # nextln:     spill7: 56
-    # nextln:     spill8: 64
-    # nextln:     spill9: 72
-    # nextln:     spill10: 80
+    # nextln:     spill1: 4
+    # nextln:     spill2: 8
+    # nextln:     spill3: 12
+    # nextln:     spill4: 16
+    # nextln:     spill5: 20
+    # nextln:     spill6: 24
+    # nextln:     spill7: 28
+    # nextln:     spill8: 32
+    # nextln:     spill9: 36
+    # nextln:     spill10: 40
     # nextln:       block0:
     # nextln: 0000:     $$rax = CallRel(External(extfunc0))
     # nextln:           $$spill10:gpr32 = $$rax

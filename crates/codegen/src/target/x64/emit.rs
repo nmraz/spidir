@@ -7,13 +7,13 @@ use crate::{
     constpool::Constant,
     emit::{EmitContext, EmitCopyData, EmitInstrData},
     frame::FrameLayout,
-    lir::{Instr, PhysReg, PhysRegSet, StackSlot},
+    lir::{Instr, PhysReg, PhysRegSet, RegWidth, StackSlot},
     machine::MachineEmit,
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{OperandAssignment, SpillSlot},
     target::x64::{
-        AluCommBinOp, CALLEE_SAVED_REGS, CompoundCondCode, RB_GPR, RB_XMM, SseFpuCmpCode,
-        SseFpuPrecision,
+        AluCommBinOp, CALLEE_SAVED_REGS, CompoundCondCode, RB_GPR, RB_XMM, RW_32, RW_64,
+        SseFpuCmpCode, SseFpuPrecision,
     },
 };
 
@@ -516,12 +516,17 @@ impl MachineEmit for X64Machine {
     ) {
         match (copy.class.bank(), copy.from, copy.to) {
             (RB_GPR, OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
-                emit_mov_r_r(buffer, to, from);
+                emit_mov_rm_r(
+                    buffer,
+                    op_size_for_reg_width(copy.class.width()),
+                    RegMem::Reg(to),
+                    from,
+                );
             }
             (RB_GPR, OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
                 emit_movzx_r_rm(
                     buffer,
-                    FullOperandSize::S64,
+                    op_size_for_reg_width(copy.class.width()),
                     to,
                     RegMem::Mem(state.spill_slot_addr(from)),
                 );
@@ -529,7 +534,7 @@ impl MachineEmit for X64Machine {
             (RB_GPR, OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => {
                 emit_mov_rm_r(
                     buffer,
-                    FullOperandSize::S64,
+                    op_size_for_reg_width(copy.class.width()),
                     RegMem::Mem(state.spill_slot_addr(to)),
                     from,
                 );
@@ -551,6 +556,14 @@ impl MachineEmit for X64Machine {
 
             _ => unreachable!("unknown register bank"),
         }
+    }
+}
+
+fn op_size_for_reg_width(width: RegWidth) -> FullOperandSize {
+    match width {
+        RW_32 => FullOperandSize::S32,
+        RW_64 => FullOperandSize::S64,
+        _ => unreachable!(),
     }
 }
 

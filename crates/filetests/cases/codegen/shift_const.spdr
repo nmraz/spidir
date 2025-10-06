@@ -4,10 +4,10 @@ func @shl_const32:i32(i32) {
     # check: function `shl_const32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: c1 e0 05                        shl eax, 5
-    # nextln: 00000a: 5d                              pop rbp
-    # nextln: 00000b: c3                              ret
+    # nextln: 000004: 89 f8                           mov eax, edi
+    # nextln: 000006: c1 e0 05                        shl eax, 5
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %c:ctrl, %value:i32 = entry
     %amount:i32 = iconst 5
@@ -34,10 +34,10 @@ func @lshr_const32:i32(i32) {
     # check: function `lshr_const32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: c1 e8 05                        shr eax, 5
-    # nextln: 00000a: 5d                              pop rbp
-    # nextln: 00000b: c3                              ret
+    # nextln: 000004: 89 f8                           mov eax, edi
+    # nextln: 000006: c1 e8 05                        shr eax, 5
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %c:ctrl, %value:i32 = entry
     %amount:i32 = iconst 5
@@ -64,10 +64,10 @@ func @ashr_const32:i32(i32) {
     # check: function `ashr_const32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: c1 f8 05                        sar eax, 5
-    # nextln: 00000a: 5d                              pop rbp
-    # nextln: 00000b: c3                              ret
+    # nextln: 000004: 89 f8                           mov eax, edi
+    # nextln: 000006: c1 f8 05                        sar eax, 5
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %c:ctrl, %value:i32 = entry
     %amount:i32 = iconst 5

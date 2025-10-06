@@ -4,12 +4,12 @@ func @select_eq:i32(i32, i32, i32, i32) {
     # check: function `select_eq`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 d0                        mov rax, rdx
-    # nextln: 000007: 3b fe                           cmp edi, esi
-    # nextln: 000009: 0f 84 03 00 00 00               je 0x12
-    # nextln: 00000f: 48 89 c8                        mov rax, rcx
-    # nextln: 000012: 5d                              pop rbp
-    # nextln: 000013: c3                              ret
+    # nextln: 000004: 89 d0                           mov eax, edx
+    # nextln: 000006: 3b fe                           cmp edi, esi
+    # nextln: 000008: 0f 84 02 00 00 00               je 0x10
+    # nextln: 00000e: 89 c8                           mov eax, ecx
+    # nextln: 000010: 5d                              pop rbp
+    # nextln: 000011: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp eq %a, %b
@@ -23,12 +23,12 @@ func @select_ne:i32(i32, i32, i32, i32) {
     # check: function `select_ne`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 d0                        mov rax, rdx
-    # nextln: 000007: 3b fe                           cmp edi, esi
-    # nextln: 000009: 0f 85 03 00 00 00               jne 0x12
-    # nextln: 00000f: 48 89 c8                        mov rax, rcx
-    # nextln: 000012: 5d                              pop rbp
-    # nextln: 000013: c3                              ret
+    # nextln: 000004: 89 d0                           mov eax, edx
+    # nextln: 000006: 3b fe                           cmp edi, esi
+    # nextln: 000008: 0f 85 02 00 00 00               jne 0x10
+    # nextln: 00000e: 89 c8                           mov eax, ecx
+    # nextln: 000010: 5d                              pop rbp
+    # nextln: 000011: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp ne %a, %b
@@ -42,12 +42,12 @@ func @select_slt:i32(i32, i32, i32, i32) {
     # check: function `select_slt`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 d0                        mov rax, rdx
-    # nextln: 000007: 3b fe                           cmp edi, esi
-    # nextln: 000009: 0f 8c 03 00 00 00               jl 0x12
-    # nextln: 00000f: 48 89 c8                        mov rax, rcx
-    # nextln: 000012: 5d                              pop rbp
-    # nextln: 000013: c3                              ret
+    # nextln: 000004: 89 d0                           mov eax, edx
+    # nextln: 000006: 3b fe                           cmp edi, esi
+    # nextln: 000008: 0f 8c 02 00 00 00               jl 0x10
+    # nextln: 00000e: 89 c8                           mov eax, ecx
+    # nextln: 000010: 5d                              pop rbp
+    # nextln: 000011: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp slt %a, %b
@@ -61,12 +61,12 @@ func @select_sle:i32(i32, i32, i32, i32) {
     # check: function `select_sle`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 d0                        mov rax, rdx
-    # nextln: 000007: 3b fe                           cmp edi, esi
-    # nextln: 000009: 0f 8e 03 00 00 00               jle 0x12
-    # nextln: 00000f: 48 89 c8                        mov rax, rcx
-    # nextln: 000012: 5d                              pop rbp
-    # nextln: 000013: c3                              ret
+    # nextln: 000004: 89 d0                           mov eax, edx
+    # nextln: 000006: 3b fe                           cmp edi, esi
+    # nextln: 000008: 0f 8e 02 00 00 00               jle 0x10
+    # nextln: 00000e: 89 c8                           mov eax, ecx
+    # nextln: 000010: 5d                              pop rbp
+    # nextln: 000011: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp sle %a, %b
@@ -80,12 +80,12 @@ func @select_ult:i32(i32, i32, i32, i32) {
     # check: function `select_ult`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 d0                        mov rax, rdx
-    # nextln: 000007: 3b fe                           cmp edi, esi
-    # nextln: 000009: 0f 82 03 00 00 00               jb 0x12
-    # nextln: 00000f: 48 89 c8                        mov rax, rcx
-    # nextln: 000012: 5d                              pop rbp
-    # nextln: 000013: c3                              ret
+    # nextln: 000004: 89 d0                           mov eax, edx
+    # nextln: 000006: 3b fe                           cmp edi, esi
+    # nextln: 000008: 0f 82 02 00 00 00               jb 0x10
+    # nextln: 00000e: 89 c8                           mov eax, ecx
+    # nextln: 000010: 5d                              pop rbp
+    # nextln: 000011: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp ult %a, %b
@@ -99,12 +99,12 @@ func @select_ule:i32(i32, i32, i32, i32) {
     # check: function `select_ule`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 d0                        mov rax, rdx
-    # nextln: 000007: 3b fe                           cmp edi, esi
-    # nextln: 000009: 0f 86 03 00 00 00               jbe 0x12
-    # nextln: 00000f: 48 89 c8                        mov rax, rcx
-    # nextln: 000012: 5d                              pop rbp
-    # nextln: 000013: c3                              ret
+    # nextln: 000004: 89 d0                           mov eax, edx
+    # nextln: 000006: 3b fe                           cmp edi, esi
+    # nextln: 000008: 0f 86 02 00 00 00               jbe 0x10
+    # nextln: 00000e: 89 c8                           mov eax, ecx
+    # nextln: 000010: 5d                              pop rbp
+    # nextln: 000011: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp ule %a, %b
@@ -122,12 +122,12 @@ func @select_slt_cond_reused:i32(i32, i32, i32, i32) {
     # nextln: 000006: 3b fe                           cmp edi, esi
     # nextln: 000008: 0f 9c c0                        setl al
     # nextln: 00000b: 85 c0                           test eax, eax
-    # nextln: 00000d: 0f 85 03 00 00 00               jne 0x16
-    # nextln: 000013: 48 89 ca                        mov rdx, rcx
-    # nextln: 000016: 83 f0 05                        xor eax, 5
-    # nextln: 000019: 03 c2                           add eax, edx
-    # nextln: 00001b: 5d                              pop rbp
-    # nextln: 00001c: c3                              ret
+    # nextln: 00000d: 0f 85 02 00 00 00               jne 0x15
+    # nextln: 000013: 89 ca                           mov edx, ecx
+    # nextln: 000015: 83 f0 05                        xor eax, 5
+    # nextln: 000018: 03 c2                           add eax, edx
+    # nextln: 00001a: 5d                              pop rbp
+    # nextln: 00001b: c3                              ret
 
     %0:ctrl, %a:i32, %b:i32, %2:i32, %3:i32 = entry
     %1:i32 = icmp slt %a, %b

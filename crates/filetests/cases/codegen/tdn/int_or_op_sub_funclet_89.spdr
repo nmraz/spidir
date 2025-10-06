@@ -12,19 +12,19 @@ func @"System.Int32 testout1::Sub_Funclet_89()":i32() {
     # nextln: 00001c: 0f 85 0b 00 00 00               jne 0x2d
     # nextln: 000022: 0f b6 39                        movzx edi, byte ptr [rcx]
     # nextln: 000025: 85 ff                           test edi, edi
-    # nextln: 000027: 0f 84 08 00 00 00               je 0x35
-    # nextln: 00002d: 48 89 c7                        mov rdi, rax
-    # nextln: 000030: e9 05 00 00 00                  jmp 0x3a
-    # nextln: 000035: bf fb ff ff ff                  mov edi, 0xfffffffb
-    # nextln: 00003a: 85 d2                           test edx, edx
-    # nextln: 00003c: 0f 85 10 00 00 00               jne 0x52
-    # nextln: 000042: 0f b6 09                        movzx ecx, byte ptr [rcx]
-    # nextln: 000045: 85 c9                           test ecx, ecx
-    # nextln: 000047: 0f 85 05 00 00 00               jne 0x52
-    # nextln: 00004d: b8 fb ff ff ff                  mov eax, 0xfffffffb
-    # nextln: 000052: 03 c7                           add eax, edi
-    # nextln: 000054: 5d                              pop rbp
-    # nextln: 000055: c3                              ret
+    # nextln: 000027: 0f 84 07 00 00 00               je 0x34
+    # nextln: 00002d: 89 c7                           mov edi, eax
+    # nextln: 00002f: e9 05 00 00 00                  jmp 0x39
+    # nextln: 000034: bf fb ff ff ff                  mov edi, 0xfffffffb
+    # nextln: 000039: 85 d2                           test edx, edx
+    # nextln: 00003b: 0f 85 10 00 00 00               jne 0x51
+    # nextln: 000041: 0f b6 09                        movzx ecx, byte ptr [rcx]
+    # nextln: 000044: 85 c9                           test ecx, ecx
+    # nextln: 000046: 0f 85 05 00 00 00               jne 0x51
+    # nextln: 00004c: b8 fb ff ff ff                  mov eax, 0xfffffffb
+    # nextln: 000051: 03 c7                           add eax, edi
+    # nextln: 000053: 5d                              pop rbp
+    # nextln: 000054: c3                              ret
 
     %0:ctrl = entry
     %60:i32 = iconst 3

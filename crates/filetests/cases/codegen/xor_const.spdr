@@ -64,10 +64,10 @@ func @xor_pos32:i32(i32) {
     # check: function `xor_pos32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: 83 f0 05                        xor eax, 5
-    # nextln: 00000a: 5d                              pop rbp
-    # nextln: 00000b: c3                              ret
+    # nextln: 000004: 89 f8                           mov eax, edi
+    # nextln: 000006: 83 f0 05                        xor eax, 5
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %c:ctrl, %a:i32 = entry
     %b:i32 = iconst 5
@@ -79,10 +79,10 @@ func @xor_neg32:i32(i32) {
     # check: function `xor_neg32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: 83 f0 fb                        xor eax, 0xfffffffb
-    # nextln: 00000a: 5d                              pop rbp
-    # nextln: 00000b: c3                              ret
+    # nextln: 000004: 89 f8                           mov eax, edi
+    # nextln: 000006: 83 f0 fb                        xor eax, 0xfffffffb
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
 
     %c:ctrl, %a:i32 = entry
     %b:i32 = iconst 4294967291
@@ -94,10 +94,10 @@ func @xor_max32:i32(i32) {
     # check: function `xor_max32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: 81 f0 ff ff ff 7f               xor eax, 0x7fffffff
-    # nextln: 00000d: 5d                              pop rbp
-    # nextln: 00000e: c3                              ret
+    # nextln: 000004: 89 f8                           mov eax, edi
+    # nextln: 000006: 81 f0 ff ff ff 7f               xor eax, 0x7fffffff
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
 
     %c:ctrl, %a:i32 = entry
     %b:i32 = iconst 2147483647

@@ -320,39 +320,39 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0004c6: 48 8d 7c 24 08                  lea rdi, [rsp + 8]
     # nextln: 0004cb: be 20 00 00 00                  mov esi, 0x20
     # nextln: 0004d0: ff d0                           call rax
-    # nextln: 0004d2: 48 89 c3                        mov rbx, rax
-    # nextln: 0004d5: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
-    # nextln: 0004df: be 40 00 00 00                  mov esi, 0x40
-    # nextln: 0004e4: 48 8d 7c 24 08                  lea rdi, [rsp + 8]
-    # nextln: 0004e9: ff d0                           call rax
-    # nextln: 0004eb: 33 c9                           xor ecx, ecx
-    # nextln: 0004ed: 85 db                           test ebx, ebx
-    # nextln: 0004ef: 0f 94 c1                        sete cl
-    # nextln: 0004f2: 44 89 e3                        mov ebx, r12d
-    # nextln: 0004f5: 23 d9                           and ebx, ecx
-    # nextln: 0004f7: 23 d8                           and ebx, eax
-    # nextln: 0004f9: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
-    # nextln: 000503: 48 89 e7                        mov rdi, rsp
-    # nextln: 000506: 33 f6                           xor esi, esi
-    # nextln: 000508: ff d0                           call rax
-    # nextln: 00050a: 33 c9                           xor ecx, ecx
-    # nextln: 00050c: 85 c0                           test eax, eax
-    # nextln: 00050e: 0f 94 c1                        sete cl
-    # nextln: 000511: 23 d9                           and ebx, ecx
-    # nextln: 000513: 85 db                           test ebx, ebx
-    # nextln: 000515: 0f 84 0e 00 00 00               je 0x529
-    # nextln: 00051b: b8 01 00 00 00                  mov eax, 1
-    # nextln: 000520: 48 83 c4 30                     add rsp, 0x30
-    # nextln: 000524: 5b                              pop rbx
-    # nextln: 000525: 41 5c                           pop r12
-    # nextln: 000527: 5d                              pop rbp
-    # nextln: 000528: c3                              ret
-    # nextln: 000529: 33 c0                           xor eax, eax
-    # nextln: 00052b: 48 83 c4 30                     add rsp, 0x30
-    # nextln: 00052f: 5b                              pop rbx
-    # nextln: 000530: 41 5c                           pop r12
-    # nextln: 000532: 5d                              pop rbp
-    # nextln: 000533: c3                              ret
+    # nextln: 0004d2: 89 c3                           mov ebx, eax
+    # nextln: 0004d4: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
+    # nextln: 0004de: be 40 00 00 00                  mov esi, 0x40
+    # nextln: 0004e3: 48 8d 7c 24 08                  lea rdi, [rsp + 8]
+    # nextln: 0004e8: ff d0                           call rax
+    # nextln: 0004ea: 33 c9                           xor ecx, ecx
+    # nextln: 0004ec: 85 db                           test ebx, ebx
+    # nextln: 0004ee: 0f 94 c1                        sete cl
+    # nextln: 0004f1: 44 89 e3                        mov ebx, r12d
+    # nextln: 0004f4: 23 d9                           and ebx, ecx
+    # nextln: 0004f6: 23 d8                           and ebx, eax
+    # nextln: 0004f8: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Boolean Tests.BitTest::I8_BT_mem_reg(System.Int64&, System.Int32)" + 0
+    # nextln: 000502: 48 89 e7                        mov rdi, rsp
+    # nextln: 000505: 33 f6                           xor esi, esi
+    # nextln: 000507: ff d0                           call rax
+    # nextln: 000509: 33 c9                           xor ecx, ecx
+    # nextln: 00050b: 85 c0                           test eax, eax
+    # nextln: 00050d: 0f 94 c1                        sete cl
+    # nextln: 000510: 23 d9                           and ebx, ecx
+    # nextln: 000512: 85 db                           test ebx, ebx
+    # nextln: 000514: 0f 84 0e 00 00 00               je 0x528
+    # nextln: 00051a: b8 01 00 00 00                  mov eax, 1
+    # nextln: 00051f: 48 83 c4 30                     add rsp, 0x30
+    # nextln: 000523: 5b                              pop rbx
+    # nextln: 000524: 41 5c                           pop r12
+    # nextln: 000526: 5d                              pop rbp
+    # nextln: 000527: c3                              ret
+    # nextln: 000528: 33 c0                           xor eax, eax
+    # nextln: 00052a: 48 83 c4 30                     add rsp, 0x30
+    # nextln: 00052e: 5b                              pop rbx
+    # nextln: 00052f: 41 5c                           pop r12
+    # nextln: 000531: 5d                              pop rbp
+    # nextln: 000532: c3                              ret
 
     %0:ctrl = entry
     %1:ctrl, %2:phisel = region %0

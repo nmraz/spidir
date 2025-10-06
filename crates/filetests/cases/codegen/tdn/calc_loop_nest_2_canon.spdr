@@ -40,7 +40,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 000079: 0f 8e 09 00 00 00               jle 0x88
     # nextln: 00007f: 8b 7c 24 08                     mov edi, dword ptr [rsp + 8]
     # nextln: 000083: e9 03 00 00 00                  jmp 0x8b
-    # nextln: 000088: 4c 89 e7                        mov rdi, r12
+    # nextln: 000088: 44 89 e7                        mov edi, r12d
     # nextln: 00008b: 03 c1                           add eax, ecx
     # nextln: 00008d: 99                              cdq
     # nextln: 00008e: f7 ff                           idiv edi

@@ -18,10 +18,10 @@ func @call_virt_no_ret(ptr, i32) {
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 48 89 f8                        mov rax, rdi
-    # nextln: 000007: 48 89 f7                        mov rdi, rsi
-    # nextln: 00000a: ff d0                           call rax
-    # nextln: 00000c: 5d                              pop rbp
-    # nextln: 00000d: c3                              ret
+    # nextln: 000007: 89 f7                           mov edi, esi
+    # nextln: 000009: ff d0                           call rax
+    # nextln: 00000b: 5d                              pop rbp
+    # nextln: 00000c: c3                              ret
 
     %0:ctrl, %1:ptr, %v:i32 = entry
     %2:ctrl = callind (i32) %0, %1, %v
@@ -41,8 +41,8 @@ func @call_virt_many_params(ptr, ptr) {
     # nextln: 000010: 52                              push rdx
     # nextln: 000011: 51                              push rcx
     # nextln: 000012: 48 89 ce                        mov rsi, rcx
-    # nextln: 000015: 49 89 f9                        mov r9, rdi
-    # nextln: 000018: 49 89 f8                        mov r8, rdi
+    # nextln: 000015: 41 89 f9                        mov r9d, edi
+    # nextln: 000018: 41 89 f8                        mov r8d, edi
     # nextln: 00001b: ff d0                           call rax
     # nextln: 00001d: 48 83 c4 20                     add rsp, 0x20
     # nextln: 000021: 5d                              pop rbp

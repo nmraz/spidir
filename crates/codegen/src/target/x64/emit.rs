@@ -12,7 +12,8 @@ use crate::{
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{OperandAssignment, SpillSlot},
     target::x64::{
-        AluCommBinOp, CALLEE_SAVED_REGS, CompoundCondCode, SseFpuCmpCode, SseFpuPrecision,
+        AluCommBinOp, CALLEE_SAVED_REGS, CompoundCondCode, RB_GPR, RB_XMM, SseFpuCmpCode,
+        SseFpuPrecision,
     },
 };
 
@@ -513,43 +514,39 @@ impl MachineEmit for X64Machine {
         state: &mut X64EmitState,
         buffer: &mut CodeBuffer<X64Fixup>,
     ) {
-        match (copy.from, copy.to) {
-            (OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
-                if is_gpr(from) {
-                    debug_assert!(is_gpr(to));
-                    emit_mov_r_r(buffer, to, from);
-                } else {
-                    debug_assert!(!is_gpr(to));
-                    emit_movaps_r_rm(buffer, to, RegMem::Reg(from));
-                }
+        match (copy.class.bank(), copy.from, copy.to) {
+            (RB_GPR, OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
+                emit_mov_r_r(buffer, to, from);
             }
-            (OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
-                if is_gpr(to) {
-                    emit_movzx_r_rm(
-                        buffer,
-                        FullOperandSize::S64,
-                        to,
-                        RegMem::Mem(state.spill_slot_addr(from)),
-                    );
-                } else {
-                    emit_movaps_r_rm(buffer, to, RegMem::Mem(state.spill_slot_addr(from)));
-                }
+            (RB_XMM, OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
+                emit_movaps_r_rm(buffer, to, RegMem::Reg(from));
             }
-            (OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => {
-                if is_gpr(from) {
-                    emit_mov_rm_r(
-                        buffer,
-                        FullOperandSize::S64,
-                        RegMem::Mem(state.spill_slot_addr(to)),
-                        from,
-                    );
-                } else {
-                    emit_movaps_rm_r(buffer, RegMem::Mem(state.spill_slot_addr(to)), from);
-                }
+            (RB_GPR, OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
+                emit_movzx_r_rm(
+                    buffer,
+                    FullOperandSize::S64,
+                    to,
+                    RegMem::Mem(state.spill_slot_addr(from)),
+                );
             }
-            (OperandAssignment::Spill(_), OperandAssignment::Spill(_)) => {
+            (RB_XMM, OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
+                emit_movaps_r_rm(buffer, to, RegMem::Mem(state.spill_slot_addr(from)))
+            }
+            (RB_GPR, OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => {
+                emit_mov_rm_r(
+                    buffer,
+                    FullOperandSize::S64,
+                    RegMem::Mem(state.spill_slot_addr(to)),
+                    from,
+                );
+            }
+            (RB_XMM, OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => {
+                emit_movaps_rm_r(buffer, RegMem::Mem(state.spill_slot_addr(to)), from);
+            }
+            (_, OperandAssignment::Spill(_), OperandAssignment::Spill(_)) => {
                 unreachable!("mem-to-mem copy")
             }
+            _ => unreachable!("unknown register bank"),
         }
     }
 }

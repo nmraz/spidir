@@ -544,10 +544,22 @@ impl MachineEmit for X64Machine {
                 emit_movaps_r_rm(buffer, to, RegMem::Reg(from));
             }
             (RB_XMM, OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
-                emit_movaps_r_rm(buffer, to, RegMem::Mem(state.spill_slot_addr(from)))
+                debug_assert!(copy.class.width() == RW_64);
+                emit_movs_r_rm(
+                    buffer,
+                    SseFpuPrecision::Double,
+                    to,
+                    RegMem::Mem(state.spill_slot_addr(from)),
+                )
             }
             (RB_XMM, OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => {
-                emit_movaps_rm_r(buffer, RegMem::Mem(state.spill_slot_addr(to)), from);
+                debug_assert!(copy.class.width() == RW_64);
+                emit_movs_rm_r(
+                    buffer,
+                    SseFpuPrecision::Double,
+                    RegMem::Mem(state.spill_slot_addr(to)),
+                    from,
+                );
             }
 
             (_, OperandAssignment::Spill(_), OperandAssignment::Spill(_)) => {
@@ -1265,10 +1277,6 @@ fn emit_ud2(buffer: &mut CodeBuffer<X64Fixup>) {
 
 fn emit_movaps_r_rm(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
     emit_sse_fpu_with_legacy_op_size(buffer, SseFpuPrecision::Single, 0x28, dest, src);
-}
-
-fn emit_movaps_rm_r(buffer: &mut CodeBuffer<X64Fixup>, dest: RegMem, src: PhysReg) {
-    emit_sse_fpu_with_legacy_op_size(buffer, SseFpuPrecision::Single, 0x29, src, dest);
 }
 
 fn emit_movs_r_rm(

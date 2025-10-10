@@ -208,19 +208,17 @@ pub fn resolve(
                 }
             }
 
-            match &copy_cycle_break {
-                Some(copy_cycle_break) if copy_cycle_break.cycle_operand == to => {
-                    // We've found the start of a broken parallel copy cycle - make sure the
-                    // original value of `operand` is saved before it is overwritten by the copy
-                    // inserted above.
-                    ctx.emit(
-                        copy_cycle_break.class,
-                        operands[to].into(),
-                        copy_cycle_break.tmp_operand,
-                    );
-                    ctx.free_tmp_op(copy_cycle_break.tmp_operand);
-                }
-                _ => {}
+            if let Some(copy_cycle_break) = &copy_cycle_break
+                && copy_cycle_break.cycle_operand == to
+            {
+                // We've found the start of a broken parallel copy cycle - make sure the original
+                // value of `operand` is saved before it is overwritten by the copy inserted above.
+                ctx.emit(
+                    copy_cycle_break.class,
+                    operands[to].into(),
+                    copy_cycle_break.tmp_operand,
+                );
+                ctx.free_tmp_op(copy_cycle_break.tmp_operand);
             }
         }
     }

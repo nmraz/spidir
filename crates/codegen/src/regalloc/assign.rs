@@ -168,10 +168,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 Ok(())
             }
             ProbeResult::HardConflict { boundary } => {
-                if let Some(boundary) = boundary {
-                    if self.try_split_fragment_for_conflict(fragment, boundary) {
-                        return Ok(());
-                    }
+                if let Some(boundary) = boundary
+                    && self.try_split_fragment_for_conflict(fragment, boundary)
+                {
+                    return Ok(());
                 }
 
                 if !self.is_fragment_atomic(fragment) {

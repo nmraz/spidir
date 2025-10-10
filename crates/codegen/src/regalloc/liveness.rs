@@ -499,26 +499,26 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
         let live_range = self.open_use_range(vreg, use_point, block);
         let range_instrs = &mut self.live_ranges[live_range].instrs;
 
-        if let Some(last_instr) = range_instrs.last_mut() {
-            if last_instr.instr() == instr {
-                // This should be completely impossible because instructions can't use vregs they
-                // define.
-                assert!(!last_instr.is_def());
-                let prev_op_pos = last_instr
-                    .op_pos()
-                    .expect("uses must always have an operand pos");
+        if let Some(last_instr) = range_instrs.last_mut()
+            && last_instr.instr() == instr
+        {
+            // This should be completely impossible because instructions can't use vregs they
+            // define.
+            assert!(!last_instr.is_def());
+            let prev_op_pos = last_instr
+                .op_pos()
+                .expect("uses must always have an operand pos");
 
-                // Avoid recording the same instruction multiple times if it uses this vreg in
-                // several operands - just make sure to update the fields we'll need in case we want
-                // to spill later:
-                // * `op_pos` should always point to the latest use point in the instruction so
-                //   ranges for reloaded spills are correct.
-                // * `needs_reg` should be true so we avoid reloading things more than once.
-                last_instr.set_op_pos(prev_op_pos.max(op_pos));
-                last_instr.set_needs_reg(true);
+            // Avoid recording the same instruction multiple times if it uses this vreg in several
+            // operands - just make sure to update the fields we'll need in case we want to spill
+            // later:
+            // * `op_pos` should always point to the latest use point in the instruction so
+            //   ranges for reloaded spills are correct.
+            // * `needs_reg` should be true so we avoid reloading things more than once.
+            last_instr.set_op_pos(prev_op_pos.max(op_pos));
+            last_instr.set_needs_reg(true);
 
-                return live_range;
-            }
+            return live_range;
         }
 
         range_instrs.push(LiveRangeInstr::new(

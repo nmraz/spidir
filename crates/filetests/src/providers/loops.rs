@@ -19,29 +19,28 @@ impl SimpleTestProvider for LoopForestProvider {
             let loop_forest = LoopForest::compute(&body.graph, &domtree);
 
             write_body_with_trailing_comments(&mut output, &module.metadata, func, |s, node| {
-                if let Some(domtree_node) = domtree.get_tree_node(node) {
-                    if let Some(containing_loop) = loop_forest.containing_loop(domtree_node) {
-                        write!(s, "loop {}; ", containing_loop.as_u32()).unwrap();
-                        if domtree_node == loop_forest.loop_header(containing_loop) {
-                            let root_loop = loop_forest.root_loop(containing_loop);
-                            write!(
-                                s,
-                                "header; depth {}; root {}; ",
-                                loop_forest.loop_depth(containing_loop),
-                                loop_forest.root_loop(containing_loop).as_u32()
-                            )
-                            .unwrap();
-                            if let Some(parent_loop) = loop_forest.loop_parent(containing_loop) {
-                                assert_eq!(loop_forest.root_loop(parent_loop), root_loop);
-                                write!(s, "parent {}; ", parent_loop.as_u32()).unwrap();
-                            }
+                if let Some(domtree_node) = domtree.get_tree_node(node)
+                    && let Some(containing_loop) = loop_forest.containing_loop(domtree_node)
+                {
+                    write!(s, "loop {}; ", containing_loop.as_u32()).unwrap();
+                    if domtree_node == loop_forest.loop_header(containing_loop) {
+                        let root_loop = loop_forest.root_loop(containing_loop);
+                        write!(
+                            s,
+                            "header; depth {}; root {}; ",
+                            loop_forest.loop_depth(containing_loop),
+                            loop_forest.root_loop(containing_loop).as_u32()
+                        )
+                        .unwrap();
+                        if let Some(parent_loop) = loop_forest.loop_parent(containing_loop) {
+                            assert_eq!(loop_forest.root_loop(parent_loop), root_loop);
+                            write!(s, "parent {}; ", parent_loop.as_u32()).unwrap();
                         }
+                    }
 
-                        for loop_node in loop_forest.loop_ancestors(containing_loop) {
-                            if loop_forest.is_latch(&body.graph, &domtree, loop_node, domtree_node)
-                            {
-                                write!(s, "latch {}; ", loop_node.as_u32()).unwrap();
-                            }
+                    for loop_node in loop_forest.loop_ancestors(containing_loop) {
+                        if loop_forest.is_latch(&body.graph, &domtree, loop_node, domtree_node) {
+                            write!(s, "latch {}; ", loop_node.as_u32()).unwrap();
                         }
                     }
                 }

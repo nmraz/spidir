@@ -104,10 +104,10 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             self.uncoalesced_fragment_copy_hints.contains_key(&fragment),
         );
 
-        if cfg!(debug_assertions) {
-            if let Some(copy_hints) = self.uncoalesced_fragment_copy_hints.get(&fragment) {
-                debug_assert!(!copy_hints.is_empty());
-            }
+        if cfg!(debug_assertions)
+            && let Some(copy_hints) = self.uncoalesced_fragment_copy_hints.get(&fragment)
+        {
+            debug_assert!(!copy_hints.is_empty());
         }
 
         fragment_data.spill_weight = if is_atomic {

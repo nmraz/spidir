@@ -217,33 +217,33 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                 // Ordinary (canonical), non-remat ranges: stitch together live ranges with touching
                 // endpoints.
 
-                if let Some(range_assignment) = range_assignment.as_operand() {
-                    if let Some((last_range, last_assignment)) = last_canonical_range {
-                        let last_range_data = &self.live_ranges[last_range];
-                        let last_prog_range = last_range_data.prog_range;
-                        if last_prog_range.end == prog_range.start {
-                            let boundary = prog_range.start;
-                            let instr = boundary.instr();
+                if let Some(range_assignment) = range_assignment.as_operand()
+                    && let Some((last_range, last_assignment)) = last_canonical_range
+                {
+                    let last_range_data = &self.live_ranges[last_range];
+                    let last_prog_range = last_range_data.prog_range;
+                    if last_prog_range.end == prog_range.start {
+                        let boundary = prog_range.start;
+                        let instr = boundary.instr();
 
-                            // Adjacent ranges belonging to the same vreg should only happen because of
-                            // basic block boundaries or splits, and both those cases use the `Before`
-                            // slot.
-                            debug_assert!(boundary.slot() == InstrSlot::Before);
+                        // Adjacent ranges belonging to the same vreg should only happen because of
+                        // basic block boundaries or splits, and both those cases use the `Before`
+                        // slot.
+                        debug_assert!(boundary.slot() == InstrSlot::Before);
 
-                            // Inter-block copies need to be handled more delicately, so we do them
-                            // separately.
-                            if !is_block_header(self.lir, self.cfg_ctx, instr) {
-                                trace!("        copy: {instr}");
+                        // Inter-block copies need to be handled more delicately, so we do them
+                        // separately.
+                        if !is_block_header(self.lir, self.cfg_ctx, instr) {
+                            trace!("        copy: {instr}");
 
-                                record_parallel_copy(
-                                    copies,
-                                    instr,
-                                    ParallelCopyPhase::InterInstr,
-                                    class,
-                                    last_assignment,
-                                    range_assignment,
-                                );
-                            }
+                            record_parallel_copy(
+                                copies,
+                                instr,
+                                ParallelCopyPhase::InterInstr,
+                                class,
+                                last_assignment,
+                                range_assignment,
+                            );
                         }
                     }
                 }

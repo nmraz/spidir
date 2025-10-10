@@ -141,7 +141,7 @@ impl MachineEmit for X64Machine {
         let realign = if full_frame_layout.align > DEFAULT_FRAME_ALIGN {
             FrameRealign::AlignTo(full_frame_layout.align.try_into().unwrap())
         } else {
-            if saved_regs.len() % 2 != 0 {
+            if !saved_regs.len().is_multiple_of(2) {
                 // The stack will be 8 bytes off from 16 after all registers are saved, so fix it as
                 // part of the frame.
                 raw_frame_size += 8;
@@ -951,10 +951,10 @@ fn emit_movzx_r_rm(
 
     let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| {
         rex.encode_operand_size(op_size);
-        if full_op_size == FullOperandSize::S8 {
-            if let RegMem::Reg(src) = src {
-                rex.use_reg8(src);
-            }
+        if full_op_size == FullOperandSize::S8
+            && let RegMem::Reg(src) = src
+        {
+            rex.use_reg8(src);
         }
         rex.encode_modrm_reg(dest)
     });
@@ -1201,10 +1201,10 @@ fn emit_movsx_r_rm(buffer: &mut CodeBuffer<X64Fixup>, width: ExtWidth, dest: Phy
 
     let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| {
         rex.encode_operand_size(op_size);
-        if matches!(width, ExtWidth::Ext8_32 | ExtWidth::Ext8_64) {
-            if let RegMem::Reg(src) = src {
-                rex.use_reg8(src);
-            }
+        if matches!(width, ExtWidth::Ext8_32 | ExtWidth::Ext8_64)
+            && let RegMem::Reg(src) = src
+        {
+            rex.use_reg8(src);
         }
         rex.encode_modrm_reg(dest)
     });

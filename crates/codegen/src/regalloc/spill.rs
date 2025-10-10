@@ -76,12 +76,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             return false;
         }
 
-        if let Some(instr) = self.fragment_only_instr(prev_neighbor) {
-            if instr.is_def() {
-                let end = self.fragment_hull(prev_neighbor).end.instr();
-                return get_weight_at_instr(self.lir, self.cfg_ctx, instr.instr())
-                    <= get_weight_at_instr(self.lir, self.cfg_ctx, end);
-            }
+        if let Some(instr) = self.fragment_only_instr(prev_neighbor)
+            && instr.is_def()
+        {
+            let end = self.fragment_hull(prev_neighbor).end.instr();
+            return get_weight_at_instr(self.lir, self.cfg_ctx, instr.instr())
+                <= get_weight_at_instr(self.lir, self.cfg_ctx, end);
         }
 
         false
@@ -110,12 +110,12 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             return false;
         }
 
-        if let Some(instr) = self.fragment_only_instr(next_neighbor) {
-            if !instr.is_def() {
-                let start = self.fragment_hull(next_neighbor).start.instr();
-                return get_weight_at_instr(self.lir, self.cfg_ctx, instr.instr())
-                    <= get_weight_at_instr(self.lir, self.cfg_ctx, start);
-            }
+        if let Some(instr) = self.fragment_only_instr(next_neighbor)
+            && !instr.is_def()
+        {
+            let start = self.fragment_hull(next_neighbor).start.instr();
+            return get_weight_at_instr(self.lir, self.cfg_ctx, instr.instr())
+                <= get_weight_at_instr(self.lir, self.cfg_ctx, start);
         }
 
         false

@@ -370,11 +370,11 @@ fn output_dot_file(
         annotators.push(Box::new(LoopAnnotator::new(domtree, &loop_forest)));
     }
 
-    if !annotator_opts.no_verify {
-        if let Err(inner_errors) = verify_func(module_metadata, func) {
-            errors = inner_errors;
-            annotators.push(Box::new(ErrorAnnotator::new(graph, &errors)));
-        }
+    if !annotator_opts.no_verify
+        && let Err(inner_errors) = verify_func(module_metadata, func)
+    {
+        errors = inner_errors;
+        annotators.push(Box::new(ErrorAnnotator::new(graph, &errors)));
     };
 
     let s = get_graphviz_str(&mut annotators, module_metadata, func.body)?;

@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly-2025-08-13
+          toolchain: nightly-2025-10-09
           components: rust-src
       - run: c-api-tests/run.sh
 
@@ -65,7 +65,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly-2025-08-13
+          toolchain: nightly-2025-10-09
           components: rust-src, clippy
       - run: cargo clippy -p c-api -Zbuild-std=core,alloc --features no_logging --target x86_64-unknown-linux-none -- -D warnings
 
@@ -76,6 +76,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly-2025-08-13
+          toolchain: nightly-2025-10-09
           components: rust-src, clippy
       - run: cargo clippy -p c-api -Zbuild-std=core,alloc --target x86_64-unknown-linux-none -- -D warnings

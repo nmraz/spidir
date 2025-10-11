@@ -14,7 +14,7 @@ use crate::utils::{
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UpdateMode {
-    Never,
+    Never { explain_failures: bool },
     IfFailed,
     Always,
 }
@@ -91,8 +91,8 @@ impl<P: TestProvider> DynTestProvider for P {
         let (output, aux) = self.output_for(module)?;
 
         match update_mode {
-            UpdateMode::Never => {
-                run_test_checks(self.env(), input, &output, true)?;
+            UpdateMode::Never { explain_failures } => {
+                run_test_checks(self.env(), input, &output, explain_failures)?;
                 Ok(TestOutcome::Ok)
             }
             UpdateMode::IfFailed => {

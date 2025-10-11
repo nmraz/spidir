@@ -32,9 +32,9 @@ enum CliUpdateMode {
 }
 
 impl CliUpdateMode {
-    fn to_update_mode(self) -> UpdateMode {
+    fn to_update_mode(self, explain_failures: bool) -> UpdateMode {
         match self {
-            CliUpdateMode::Never => UpdateMode::Never,
+            CliUpdateMode::Never => UpdateMode::Never { explain_failures },
             CliUpdateMode::Failed => UpdateMode::IfFailed,
             CliUpdateMode::Always => UpdateMode::Always,
         }
@@ -90,6 +90,12 @@ struct Cli {
     #[arg(short, long)]
     logs: Option<Option<CliLogLevel>>,
 
+    /// Enables display of detailed explanations when filecheck fails
+    ///
+    /// This option will have no effect if test cases are being updated.
+    #[arg(short, long)]
+    explain: bool,
+
     /// One or more glob patterns indicating which tests to run
     ///
     /// If no patterns are specified, all tests will be run.
@@ -98,9 +104,10 @@ struct Cli {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let update_mode = cli
-        .update_mode
-        .map_or_else(update_mode_from_env, CliUpdateMode::to_update_mode);
+    let update_mode = match cli.update_mode {
+        Some(t) => CliUpdateMode::to_update_mode(t, cli.explain),
+        None => update_mode_from_env(cli.explain),
+    };
 
     let case_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("cases");
     let (cases, filtered) = collect_test_cases(&case_dir, cli.cases)?;
@@ -179,11 +186,11 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn update_mode_from_env() -> UpdateMode {
+fn update_mode_from_env(explain_failures: bool) -> UpdateMode {
     if env::var("UPDATE_EXPECT").is_ok() {
         UpdateMode::IfFailed
     } else {
-        UpdateMode::Never
+        UpdateMode::Never { explain_failures }
     }
 }
 

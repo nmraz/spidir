@@ -34,6 +34,7 @@ pub fn init_reduce_state(ctx: &mut ReduceContext<'_>) {
 
     for &node in node_postorder.iter().rev() {
         if walk_info.live_nodes.contains(node) {
+            ctx.state.mark_node_live(node);
             ctx.state.enqueue(node);
         } else {
             // Make sure none of `node`'s inputs show up as live uses if they really aren't used.
@@ -213,6 +214,9 @@ impl Builder for ReduceContext<'_> {
         trace!("    create: {node} ({})", self.display_node(node));
         // We may have reused an existing, reduced node here. No need to revisit in that case.
         if !self.state.is_reduced(node) {
+            // Assume we never construct dead nodes and just mark the node as live right now. If
+            // some constructed nodes do end up being dead, we can set `OUTPUT_KILLED` here as well.
+            self.state.mark_node_live(node);
             self.state.enqueue(node);
         }
         node
@@ -233,7 +237,7 @@ bitflags! {
         const ENQUEUED = 0b01;
         const OUTPUT_KILLED = 0b10;
         const REDUCED = 0b100;
-        const DEAD = 0b1000;
+        const LIVE = 0b1000;
     }
 }
 
@@ -269,7 +273,8 @@ impl ReduceState {
     fn enqueue(&mut self, node: Node) {
         // Avoid re-enqueueing nodes that are already waiting in the queue, and don't bother at all
         // with things that are already dead.
-        if !self.node_flags[node].intersects(NodeFlags::ENQUEUED | NodeFlags::DEAD) {
+        let flags = self.node_flags[node];
+        if flags.contains(NodeFlags::LIVE) && !flags.contains(NodeFlags::ENQUEUED) {
             trace!("    enqueue: {node}");
             self.node_flags[node].insert(NodeFlags::ENQUEUED);
             self.queue.push_back(node);
@@ -282,7 +287,7 @@ impl ReduceState {
             self.node_flags[node].remove(NodeFlags::ENQUEUED);
 
             // A node in the queue may have been killed while it was waiting - skip it.
-            if !self.node_flags[node].contains(NodeFlags::DEAD) {
+            if self.node_flags[node].contains(NodeFlags::LIVE) {
                 return Some(node);
             }
         }
@@ -306,8 +311,12 @@ impl ReduceState {
         self.node_flags[node].remove(NodeFlags::REDUCED);
     }
 
+    fn mark_node_live(&mut self, node: Node) {
+        self.node_flags[node].insert(NodeFlags::LIVE);
+    }
+
     fn mark_node_dead(&mut self, node: Node) {
-        self.node_flags[node].insert(NodeFlags::DEAD);
+        self.node_flags[node].remove(NodeFlags::LIVE);
     }
 }
 

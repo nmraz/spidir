@@ -280,9 +280,9 @@ fn run_test_checks(
             let (_, explanation) = checker
                 .explain(output, &env)
                 .context("filecheck explain failed")?;
-            bail!("filecheck failed:\n{explanation}");
+            bail!("checks failed:\n{explanation}");
         } else {
-            bail!("filecheck failed");
+            bail!("checks failed");
         }
     }
 

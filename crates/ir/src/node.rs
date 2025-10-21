@@ -14,6 +14,7 @@ use crate::{
 pub enum Type {
     I32,
     I64,
+    F32,
     F64,
     Ptr,
 }
@@ -24,6 +25,7 @@ impl Type {
         match self {
             Type::I32 => "i32",
             Type::I64 => "i64",
+            Type::F32 => "f32",
             Type::F64 => "f64",
             Type::Ptr => "ptr",
         }
@@ -42,7 +44,7 @@ impl Type {
     #[inline]
     pub fn byte_size(self) -> usize {
         match self {
-            Type::I32 => 4,
+            Type::I32 | Type::F32 => 4,
             Type::I64 | Type::F64 | Type::Ptr => 8,
         }
     }

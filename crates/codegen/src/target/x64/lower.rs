@@ -44,6 +44,7 @@ impl MachineLower for X64Machine {
         match ty {
             Type::I32 => RC_GPR32,
             Type::I64 | Type::Ptr => RC_GPR64,
+            Type::F32 => todo!(),
             Type::F64 => RC_XMM64,
         }
     }
@@ -59,6 +60,7 @@ impl MachineLower for X64Machine {
         for &param_type in param_types {
             let reg = match param_type {
                 Type::I32 | Type::I64 | Type::Ptr => fixed_gpr_iter.next(),
+                Type::F32 => todo!(),
                 Type::F64 => fixed_xmm_iter.next(),
             };
 
@@ -103,6 +105,7 @@ impl MachineLower for X64Machine {
                 op_size: FullOperandSize::S64,
                 offset,
             },
+            Type::F32 => todo!(),
             Type::F64 => X64Instr::MovsRRbp {
                 prec: SseFpuPrecision::Double,
                 offset,
@@ -228,6 +231,7 @@ impl MachineLower for X64Machine {
                     let retval_vreg = ctx.get_value_vreg(retval);
                     let retval_reg = match ctx.value_type(retval) {
                         Type::I32 | Type::I64 | Type::Ptr => REG_RAX,
+                        Type::F32 => todo!(),
                         Type::F64 => REG_XMM0,
                     };
                     ctx.emit_instr(
@@ -665,6 +669,7 @@ fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: 
                 &uses,
             );
         }
+        Type::F32 => todo!(),
         Type::F64 => {
             ctx.emit_instr(
                 X64Instr::MovsRM(SseFpuPrecision::Double, addr_mode),
@@ -688,6 +693,7 @@ fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size:
             let op_size = operand_size_for_mem_size(mem_size);
             ctx.emit_instr(X64Instr::MovMR(op_size, addr_mode), &[], &uses);
         }
+        Type::F32 => todo!(),
         Type::F64 => {
             ctx.emit_instr(
                 X64Instr::MovsMR(SseFpuPrecision::Double, addr_mode),
@@ -946,6 +952,7 @@ fn emit_call_wrapper(
 
         let is_xmm = match ty {
             Type::I32 | Type::I64 | Type::Ptr => false,
+            Type::F32 => todo!(),
             Type::F64 => true,
         };
 
@@ -999,6 +1006,7 @@ fn emit_call_wrapper(
             let instr = match ty {
                 Type::I32 => X64Instr::MovMR(FullOperandSize::S32, addr_mode),
                 Type::I64 | Type::Ptr => X64Instr::MovMR(FullOperandSize::S64, addr_mode),
+                Type::F32 => todo!(),
                 Type::F64 => X64Instr::MovsMR(SseFpuPrecision::Double, addr_mode),
             };
 
@@ -1011,6 +1019,7 @@ fn emit_call_wrapper(
     let retval = ctx.node_outputs(node).next().map(|retval: DepValue| {
         let reg = match ctx.value_type(retval) {
             Type::I32 | Type::I64 | Type::Ptr => REG_RAX,
+            Type::F32 => todo!(),
             Type::F64 => REG_XMM0,
         };
         let retval = ctx.get_value_vreg(retval);

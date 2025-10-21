@@ -471,6 +471,7 @@ fn extract_type(type_pair: Pair<'_, Rule>) -> Type {
     match type_pair.as_str() {
         "i32" => Type::I32,
         "i64" => Type::I64,
+        "f32" => Type::F32,
         "f64" => Type::F64,
         "ptr" => Type::Ptr,
         _ => unreachable!("unexpected type name"),
@@ -514,7 +515,7 @@ mod tests {
         let module = parse_module(
             "
             extfunc @func1:i32(i64)
-            extfunc @func2(i64, ptr, f64)
+            extfunc @func2(i64, ptr, f32, f64)
             extfunc @func3()
             extfunc @func4:ptr()
             extfunc @func5:i32(i32, i64)",
@@ -525,7 +526,7 @@ mod tests {
             &module,
             expect![[r#"
                 extfunc @func1:i32(i64)
-                extfunc @func2(i64, ptr, f64)
+                extfunc @func2(i64, ptr, f32, f64)
                 extfunc @func3()
                 extfunc @func4:ptr()
                 extfunc @func5:i32(i32, i64)

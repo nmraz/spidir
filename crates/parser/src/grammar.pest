@@ -20,7 +20,7 @@ float         = _{ hexfloat | special_float }
 valname  = @{ "%" ~ ident }
 funcname = @{ "@" ~ ident }
 
-type = { "i32" | "i64" | "f64" | "ptr" }
+type = { "i32" | "i64" | "f32" | "f64" | "ptr" }
 
 param_types       = { (type ~ ("," ~ type)*)? }
 signature         = { funcname ~ (":" ~ type)? ~ "(" ~ param_types ~ ")" }

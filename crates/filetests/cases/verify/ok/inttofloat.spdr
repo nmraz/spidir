@@ -2,25 +2,49 @@
 
 # check: $()
 
-func @sint32tofloat:f64(i32) {
+func @s32tof32:f32(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:f32 = sinttofloat %1
+    return %0, %2
+}
+
+func @s64tof32:f32(i64) {
+    %0:ctrl, %1:i64 = entry
+    %2:f32 = sinttofloat %1
+    return %0, %2
+}
+
+func @u32tof32:f32(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:f32 = uinttofloat %1
+    return %0, %2
+}
+
+func @u64tof32:f32(i64) {
+    %0:ctrl, %1:i64 = entry
+    %2:f32 = uinttofloat %1
+    return %0, %2
+}
+
+func @s32tof64:f64(i32) {
     %0:ctrl, %1:i32 = entry
     %2:f64 = sinttofloat %1
     return %0, %2
 }
 
-func @sint64tofloat:f64(i64) {
+func @s64tof64:f64(i64) {
     %0:ctrl, %1:i64 = entry
     %2:f64 = sinttofloat %1
     return %0, %2
 }
 
-func @uint32tofloat:f64(i32) {
+func @u32tof64:f64(i32) {
     %0:ctrl, %1:i32 = entry
     %2:f64 = uinttofloat %1
     return %0, %2
 }
 
-func @uint64tofloat:f64(i64) {
+func @u64tof64:f64(i64) {
     %0:ctrl, %1:i64 = entry
     %2:f64 = uinttofloat %1
     return %0, %2

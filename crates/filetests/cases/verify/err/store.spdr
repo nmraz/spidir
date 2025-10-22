@@ -31,7 +31,7 @@ func @store_bad_output_kind(i32, ptr) {
 
 func @store_bad_input_kinds(i32, ptr) {
     # check: function `store_bad_input_kinds`:
-    # unordered: `$val:ctrl = store.4 $val, $val, $val`: bad value kind for input 1, expected one of `i32`, `i64`, got `ptr`
+    # unordered: `$val:ctrl = store.4 $val, $val, $val`: bad value kind for input 1, expected one of `i32`, `i64`, `f32`, got `ptr`
     # unordered: `$val:ctrl = store.4 $val, $val, $val`: bad value kind for input 2, expected one of `ptr`, got `i32`
 
     %0:ctrl, %1:i32, %2:ptr = entry
@@ -44,6 +44,33 @@ func @store8_i32(i32, ptr) {
     # unordered: `$val:ctrl = store.8 $val, $val, $val`: bad value kind for input 1, expected one of `i64`, `f64`, `ptr`, got `i32`
 
     %0:ctrl, %1:i32, %2:ptr = entry
+    %3:ctrl = store.8 %0, %1, %2
+    return %3
+}
+
+func @store1_f32(f32, ptr) {
+    # check: function `store1_f32`:
+    # unordered: `$val:ctrl = store.1 $val, $val, $val`: bad value kind for input 1, expected one of `i32`, `i64`, got `f32`
+
+    %0:ctrl, %1:f32, %2:ptr = entry
+    %3:ctrl = store.1 %0, %1, %2
+    return %3
+}
+
+func @store2_f32(f32, ptr) {
+    # check: function `store2_f32`:
+    # unordered: `$val:ctrl = store.2 $val, $val, $val`: bad value kind for input 1, expected one of `i32`, `i64`, got `f32`
+
+    %0:ctrl, %1:f32, %2:ptr = entry
+    %3:ctrl = store.2 %0, %1, %2
+    return %3
+}
+
+func @store8_f32(f32, ptr) {
+    # check: function `store8_f32`:
+    # unordered: `$val:ctrl = store.8 $val, $val, $val`: bad value kind for input 1, expected one of `i64`, `f64`, `ptr`, got `f32`
+
+    %0:ctrl, %1:f32, %2:ptr = entry
     %3:ctrl = store.8 %0, %1, %2
     return %3
 }
@@ -68,7 +95,7 @@ func @store2_f64(f64, ptr) {
 
 func @store4_f64(f64, ptr) {
     # check: function `store4_f64`:
-    # unordered: `$val:ctrl = store.4 $val, $val, $val`: bad value kind for input 1, expected one of `i32`, `i64`, got `f64`
+    # unordered: `$val:ctrl = store.4 $val, $val, $val`: bad value kind for input 1, expected one of `i32`, `i64`, `f32`, got `f64`
 
     %0:ctrl, %1:f64, %2:ptr = entry
     %3:ctrl = store.4 %0, %1, %2

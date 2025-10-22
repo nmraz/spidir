@@ -22,7 +22,7 @@ func @sinttofloat_bad_output_count:f64(i64) {
 
 func @sinttofloat_bad_output_kind:ptr(i64) {
     # check: function `sinttofloat_bad_output_kind`:
-    # unordered: `$val:ptr = sinttofloat $val`: bad value kind for output 0, expected one of `f64`, got `ptr`
+    # unordered: `$val:ptr = sinttofloat $val`: bad value kind for output 0, expected one of `f32`, `f64`, got `ptr`
 
     %0:ctrl, %1:i64 = entry
     %2:ptr = sinttofloat %1

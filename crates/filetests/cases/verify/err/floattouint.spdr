@@ -31,7 +31,7 @@ func @floattouint_bad_output_kind:ptr(f64) {
 
 func @floattouint_bad_input_kind:i64(i64) {
     # check: function `floattouint_bad_input_kind`:
-    # unordered: `$val:i64 = floattouint $val`: bad value kind for input 0, expected one of `f64`, got `i64`
+    # unordered: `$val:i64 = floattouint $val`: bad value kind for input 0, expected one of `f32`, `f64`, got `i64`
 
     %0:ctrl, %1:i64 = entry
     %2:i64 = floattouint %1

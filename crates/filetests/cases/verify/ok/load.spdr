@@ -44,6 +44,12 @@ func @load8_i64:i64(ptr) {
     return %2, %3
 }
 
+func @load4_f32:f32(ptr) {
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:f32 = load.4 %0, %1
+    return %2, %3
+}
+
 func @load8_f64:f64(ptr) {
     %0:ctrl, %1:ptr = entry
     %2:ctrl, %3:f64 = load.8 %0, %1

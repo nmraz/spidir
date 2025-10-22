@@ -2,7 +2,16 @@
 
 # check: $()
 
-func @float_stuff:f64(f64) {
+func @float_stuff32:f32(f32) {
+    %0:ctrl, %1:f32 = entry
+    %2:f32 = fadd %1, %1
+    %3:f32 = fsub %2, %1
+    %4:f32 = fmul %3, %1
+    %5:f32 = fdiv %4, %1
+    return %0, %5
+}
+
+func @float_stuff64:f64(f64) {
     %0:ctrl, %1:f64 = entry
     %2:f64 = fadd %1, %1
     %3:f64 = fsub %2, %1

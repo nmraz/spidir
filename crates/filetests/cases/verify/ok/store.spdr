@@ -44,6 +44,12 @@ func @store8_i64(i64, ptr) {
     return %3
 }
 
+func @store4_f32(f32, ptr) {
+    %0:ctrl, %1:f32, %2:ptr = entry
+    %3:ctrl = store.4 %0, %1, %2
+    return %3
+}
+
 func @store8_f64(f64, ptr) {
     %0:ctrl, %1:f64, %2:ptr = entry
     %3:ctrl = store.8 %0, %1, %2

@@ -428,6 +428,7 @@ fn allowed_kinds_for_mem_size(size: MemSize) -> &'static [DepValueKind] {
         MemSize::S4 => &[
             DepValueKind::Value(Type::I32),
             DepValueKind::Value(Type::I64),
+            DepValueKind::Value(Type::F32),
         ],
         MemSize::S8 => &[
             DepValueKind::Value(Type::I64),
@@ -636,13 +637,7 @@ fn verify_float_input_kind(
     input: u32,
     errors: &mut Vec<FunctionVerifierError>,
 ) -> Result<(), ()> {
-    verify_input_kind(
-        graph,
-        node,
-        input,
-        &[DepValueKind::Value(Type::F64)],
-        errors,
-    )
+    verify_input_kind(graph, node, input, ALL_FLOAT_TYPES, errors)
 }
 
 fn verify_float_output_kind(
@@ -650,7 +645,7 @@ fn verify_float_output_kind(
     value: DepValue,
     errors: &mut Vec<FunctionVerifierError>,
 ) -> Result<(), ()> {
-    verify_output_kind(graph, value, &[DepValueKind::Value(Type::F64)], errors)
+    verify_output_kind(graph, value, ALL_FLOAT_TYPES, errors)
 }
 
 fn verify_value_output_kind(
@@ -712,4 +707,9 @@ const ALL_INTLIKE_TYPES: &[DepValueKind] = &[
 const ALL_INTEGER_TYPES: &[DepValueKind] = &[
     DepValueKind::Value(Type::I32),
     DepValueKind::Value(Type::I64),
+];
+
+const ALL_FLOAT_TYPES: &[DepValueKind] = &[
+    DepValueKind::Value(Type::F32),
+    DepValueKind::Value(Type::F64),
 ];

@@ -514,19 +514,16 @@ impl MachineEmit for X64Machine {
         state: &mut X64EmitState,
         buffer: &mut CodeBuffer<X64Fixup>,
     ) {
+        let width = copy.class.width();
+
         match (copy.class.bank(), copy.from, copy.to) {
             (RB_GPR, OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
-                emit_mov_rm_r(
-                    buffer,
-                    op_size_for_reg_width(copy.class.width()),
-                    RegMem::Reg(to),
-                    from,
-                );
+                emit_mov_rm_r(buffer, op_size_for_reg_width(width), RegMem::Reg(to), from);
             }
             (RB_GPR, OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
                 emit_movzx_r_rm(
                     buffer,
-                    op_size_for_reg_width(copy.class.width()),
+                    op_size_for_reg_width(width),
                     to,
                     RegMem::Mem(state.spill_slot_addr(from)),
                 );
@@ -534,7 +531,7 @@ impl MachineEmit for X64Machine {
             (RB_GPR, OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => {
                 emit_mov_rm_r(
                     buffer,
-                    op_size_for_reg_width(copy.class.width()),
+                    op_size_for_reg_width(width),
                     RegMem::Mem(state.spill_slot_addr(to)),
                     from,
                 );
@@ -543,20 +540,16 @@ impl MachineEmit for X64Machine {
             (RB_XMM, OperandAssignment::Reg(from), OperandAssignment::Reg(to)) => {
                 emit_movaps_r_rm(buffer, to, RegMem::Reg(from));
             }
-            (RB_XMM, OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => {
-                debug_assert!(copy.class.width() == RW_64);
-                emit_movs_r_rm(
-                    buffer,
-                    SseFpuPrecision::Double,
-                    to,
-                    RegMem::Mem(state.spill_slot_addr(from)),
-                )
-            }
+            (RB_XMM, OperandAssignment::Spill(from), OperandAssignment::Reg(to)) => emit_movs_r_rm(
+                buffer,
+                fpu_precision_for_reg_width(width),
+                to,
+                RegMem::Mem(state.spill_slot_addr(from)),
+            ),
             (RB_XMM, OperandAssignment::Reg(from), OperandAssignment::Spill(to)) => {
-                debug_assert!(copy.class.width() == RW_64);
                 emit_movs_rm_r(
                     buffer,
-                    SseFpuPrecision::Double,
+                    fpu_precision_for_reg_width(width),
                     RegMem::Mem(state.spill_slot_addr(to)),
                     from,
                 );
@@ -575,6 +568,14 @@ fn op_size_for_reg_width(width: RegWidth) -> FullOperandSize {
     match width {
         RW_32 => FullOperandSize::S32,
         RW_64 => FullOperandSize::S64,
+        _ => unreachable!(),
+    }
+}
+
+fn fpu_precision_for_reg_width(width: RegWidth) -> SseFpuPrecision {
+    match width {
+        RW_32 => SseFpuPrecision::Single,
+        RW_64 => SseFpuPrecision::Double,
         _ => unreachable!(),
     }
 }

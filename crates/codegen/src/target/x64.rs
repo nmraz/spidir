@@ -453,6 +453,7 @@ impl MachineCore for X64Machine {
         match class {
             RC_GPR32 => "gpr32",
             RC_GPR64 => "gpr64",
+            RC_XMM32 => "xmm32",
             RC_XMM64 => "xmm64",
             _ => panic!("unknown register class"),
         }
@@ -544,6 +545,7 @@ const RB_XMM: RegBank = RegBank::new(1);
 
 const RC_GPR32: RegClass = RegClass::new(RB_GPR, RW_32);
 const RC_GPR64: RegClass = RegClass::new(RB_GPR, RW_64);
+const RC_XMM32: RegClass = RegClass::new(RB_XMM, RW_32);
 const RC_XMM64: RegClass = RegClass::new(RB_XMM, RW_64);
 
 const REG_RAX: PhysReg = PhysReg::new(0);

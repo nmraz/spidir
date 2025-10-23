@@ -285,7 +285,7 @@ fn select_alu(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: AluBinO
     let [op1, op2] = ctx.node_inputs_exact(node);
 
     let ty = ctx.value_type(output);
-    let op_size = operand_size_for_ty(ty);
+    let op_size = operand_size_for_int_ty(ty);
     let output = ctx.get_value_vreg(output);
 
     if op == AluBinOp::Sub && match_iconst(ctx, op1) == Some(0) {
@@ -318,7 +318,7 @@ fn select_alu_comm(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: Al
     let [op1, op2] = ctx.node_inputs_exact(node);
 
     let ty = ctx.value_type(output);
-    let op_size = operand_size_for_ty(ty);
+    let op_size = operand_size_for_int_ty(ty);
     let output = ctx.get_value_vreg(output);
 
     let c2 = match_iconst(ctx, op2);
@@ -372,7 +372,7 @@ fn select_add(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     let [op1, op2] = ctx.node_inputs_exact(node);
 
     let ty = ctx.value_type(output);
-    let op_size = operand_size_for_ty(ty);
+    let op_size = operand_size_for_int_ty(ty);
     let output = ctx.get_value_vreg(output);
 
     let op1 = ctx.get_value_vreg(op1);
@@ -408,7 +408,7 @@ fn select_shift(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: Shift
     } else {
         let amount = ctx.get_value_vreg(amount);
         ctx.emit_instr(
-            X64Instr::ShiftRmR(operand_size_for_ty(ty), op),
+            X64Instr::ShiftRmR(operand_size_for_int_ty(ty), op),
             &[DefOperand::any(output)],
             &[
                 UseOperand::tied(value, 0),
@@ -423,7 +423,7 @@ fn select_imul(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     let [op1, op2] = ctx.node_inputs_exact(node);
 
     let ty = ctx.value_type(output);
-    let op_size = operand_size_for_ty(ty);
+    let op_size = operand_size_for_int_ty(ty);
 
     let output = ctx.get_value_vreg(output);
     let op1 = ctx.get_value_vreg(op1);
@@ -451,7 +451,7 @@ fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: Icmp
         if imm == 0 {
             emit_alu_rr_discarded(ctx, op, op, AluBinOp::Test);
         } else {
-            let op_size = operand_size_for_ty(ctx.value_type(op));
+            let op_size = operand_size_for_int_ty(ctx.value_type(op));
             let op = ctx.get_value_vreg(op);
             ctx.emit_instr(
                 X64Instr::AluRmI(op_size, AluBinOp::Cmp, imm),
@@ -1040,7 +1040,7 @@ fn emit_udiv(
     let rax_out = ctx.create_temp_vreg(RC_GPR64);
     let rdx_out = ctx.create_temp_vreg(RC_GPR64);
     ctx.emit_instr(
-        X64Instr::Div(operand_size_for_ty(ty), DivOp::Div),
+        X64Instr::Div(operand_size_for_int_ty(ty), DivOp::Div),
         &[
             DefOperand::fixed(rax_out, REG_RAX),
             DefOperand::fixed(rdx_out, REG_RDX),
@@ -1066,7 +1066,7 @@ fn emit_sdiv(
 
     let rdx_in = ctx.create_temp_vreg(RC_GPR64);
     ctx.emit_instr(
-        X64Instr::ConvertWord(operand_size_for_ty(ty)),
+        X64Instr::ConvertWord(operand_size_for_int_ty(ty)),
         &[DefOperand::fixed(rdx_in, REG_RDX)],
         &[UseOperand::fixed(op1, REG_RAX)],
     );
@@ -1074,7 +1074,7 @@ fn emit_sdiv(
     let rax_out = ctx.create_temp_vreg(RC_GPR64);
     let rdx_out = ctx.create_temp_vreg(RC_GPR64);
     ctx.emit_instr(
-        X64Instr::Div(operand_size_for_ty(ty), DivOp::Idiv),
+        X64Instr::Div(operand_size_for_int_ty(ty), DivOp::Idiv),
         &[
             DefOperand::fixed(rax_out, REG_RAX),
             DefOperand::fixed(rdx_out, REG_RDX),
@@ -1117,7 +1117,7 @@ fn emit_shift_ri(
     op: ShiftOp,
 ) {
     ctx.emit_instr(
-        X64Instr::ShiftRmI(operand_size_for_ty(ty), op, amount),
+        X64Instr::ShiftRmI(operand_size_for_int_ty(ty), op, amount),
         &[DefOperand::any(output)],
         &[UseOperand::tied(input, 0)],
     );
@@ -1135,7 +1135,7 @@ fn emit_alu_rr_discarded(
     let op2 = ctx.get_value_vreg(op2);
 
     ctx.emit_instr(
-        X64Instr::AluRRm(operand_size_for_ty(ty), op),
+        X64Instr::AluRRm(operand_size_for_int_ty(ty), op),
         &[],
         &[UseOperand::any_reg(op1), UseOperand::any(op2)],
     );
@@ -1149,7 +1149,7 @@ fn emit_alu_r(
     op: AluUnOp,
 ) {
     ctx.emit_instr(
-        X64Instr::AluRm(operand_size_for_ty(ty), op),
+        X64Instr::AluRm(operand_size_for_int_ty(ty), op),
         &[DefOperand::any(output)],
         &[UseOperand::tied(input, 0)],
     );
@@ -1244,7 +1244,7 @@ fn emit_cvtsi2s(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     let output = ctx.get_value_vreg(output);
 
     ctx.emit_instr(
-        X64Instr::Cvtsi2s(operand_size_for_ty(input_ty), SseFpuPrecision::Double),
+        X64Instr::Cvtsi2s(operand_size_for_int_ty(input_ty), SseFpuPrecision::Double),
         &[DefOperand::any_reg(output)],
         &[UseOperand::any(input)],
     );
@@ -1260,7 +1260,7 @@ fn emit_cvts2si(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     let output = ctx.get_value_vreg(output);
 
     ctx.emit_instr(
-        X64Instr::Cvts2si(operand_size_for_ty(output_ty), SseFpuPrecision::Double),
+        X64Instr::Cvts2si(operand_size_for_int_ty(output_ty), SseFpuPrecision::Double),
         &[DefOperand::any_reg(output)],
         &[UseOperand::any(input)],
     );
@@ -1378,12 +1378,12 @@ fn cond_code_for_flipped_icmp(kind: IcmpKind) -> CondCode {
     }
 }
 
-fn operand_size_for_ty(ty: Type) -> OperandSize {
+fn operand_size_for_int_ty(ty: Type) -> OperandSize {
     match ty {
         Type::I32 => OperandSize::S32,
         Type::I64 => OperandSize::S64,
-        Type::F64 => OperandSize::S64,
         Type::Ptr => OperandSize::S64,
+        _ => unreachable!(),
     }
 }
 

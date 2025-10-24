@@ -22,3 +22,26 @@ func @five64:f64() {
     %0:f64 = fconst64 0x5
     return %c, %0
 }
+
+func @zero32:f32() {
+    # check: function `zero32`:
+    # nextln:       block0[]:
+    # nextln: 0000:      %0:xmm32(reg)[late] = SseMovRZ
+    # nextln: 0001:      Ret %0($$xmm0)[early]
+
+    %c:ctrl = entry
+    %0:f32 = fconst32 0x0
+    return %c, %0
+}
+
+func @five32:f32() {
+    # check: function `five32`:
+    # nextln:       block0[]:
+    # nextln: 0000:      %1:gpr64(reg)[late] = F32ConstAddrAbs(5.0)
+    # nextln: 0001:      %0:xmm32(reg)[late] = MovsRM(Single, [reg + 0]) %1(reg)[early]
+    # nextln: 0002:      Ret %0($$xmm0)[early]
+
+    %c:ctrl = entry
+    %0:f32 = fconst32 0x5
+    return %c, %0
+}

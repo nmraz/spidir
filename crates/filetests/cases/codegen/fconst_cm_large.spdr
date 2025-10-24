@@ -28,3 +28,32 @@ func @five64:f64() {
     %0:f64 = fconst64 0x5
     return %c, %0
 }
+
+func @zero32:f32() {
+    # check: function `zero32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 0f 57 c0                        xorps xmm0, xmm0
+    # nextln: 000007: 5d                              pop rbp
+    # nextln: 000008: c3                              ret
+
+    %c:ctrl = entry
+    %0:f32 = fconst32 0x0
+    return %c, %0
+}
+
+func @five32:f32() {
+    # check: function `five32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @<CP> + 0
+    # nextln: 00000e: f3 0f 10 00                     movss xmm0, dword ptr [rax]
+    # nextln: 000012: 5d                              pop rbp
+    # nextln: 000013: c3                              ret
+    # nextln: <CP>:
+    # nextln: 000000: 00 00 a0 40
+
+    %c:ctrl = entry
+    %0:f32 = fconst32 0x5
+    return %c, %0
+}

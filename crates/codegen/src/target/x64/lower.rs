@@ -3,7 +3,7 @@ use core::mem;
 use alloc::vec::Vec;
 
 use ir::{
-    node::{BitwiseF64, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
+    node::{BitwiseF32, BitwiseF64, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node},
 };
 use smallvec::{SmallVec, smallvec};
@@ -203,6 +203,7 @@ impl MachineLower for X64Machine {
                 // `setcc` output register.
                 emit_setcc_sequence(ctx, output, |ctx| select_icmp(ctx, node, kind));
             }
+            &NodeKind::Fconst32(val) => select_fconst32(self, ctx, node, val),
             &NodeKind::Fconst64(val) => select_fconst64(self, ctx, node, val),
             NodeKind::Fadd => emit_fpu_rr(ctx, node, SseFpuBinOp::Add),
             NodeKind::Fsub => emit_fpu_rr(ctx, node, SseFpuBinOp::Sub),
@@ -469,6 +470,50 @@ fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: Icmp
 
     emit_alu_rr_discarded(ctx, op1, op2, AluBinOp::Cmp);
     cond_code_for_icmp(kind)
+}
+
+fn select_fconst32(
+    machine: &X64Machine,
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+    val: BitwiseF32,
+) {
+    let [output] = ctx.node_outputs_exact(node);
+    let output = ctx.get_value_vreg(output);
+
+    if val.bits() == 0 {
+        ctx.emit_instr(X64Instr::SseMovRZ, &[DefOperand::any_reg(output)], &[]);
+    } else {
+        match machine.config.internal_code_model {
+            CodeModel::SmallPic => {
+                ctx.emit_instr(
+                    X64Instr::MovssConstRel(val.0),
+                    &[DefOperand::any_reg(output)],
+                    &[],
+                );
+            }
+            CodeModel::LargeAbs => {
+                let addr = ctx.create_temp_vreg(RC_GPR64);
+                ctx.emit_instr(
+                    X64Instr::F32ConstAddrAbs(val.0),
+                    &[DefOperand::any_reg(addr)],
+                    &[],
+                );
+                ctx.emit_instr(
+                    X64Instr::MovsRM(
+                        SseFpuPrecision::Single,
+                        AddrMode {
+                            base: Some(AddrBase::Reg),
+                            index: None,
+                            offset: 0,
+                        },
+                    ),
+                    &[DefOperand::any_reg(output)],
+                    &[UseOperand::any_reg(addr)],
+                );
+            }
+        }
+    }
 }
 
 fn select_fconst64(

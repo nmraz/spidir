@@ -358,6 +358,21 @@ impl MachineEmit for X64Machine {
                 let dest = defs[0].as_reg().unwrap();
                 emit_xorps(buffer, dest, RegMem::Reg(dest))
             }
+            &X64Instr::MovssConstRel(val) => {
+                let dest = defs[0].as_reg().unwrap();
+                let src = buffer.get_constant(4, &val.to_le_bytes());
+                emit_movs_r_rm_rip_reloc(
+                    buffer,
+                    SseFpuPrecision::Single,
+                    dest,
+                    BufferRelocTarget::Constant(src),
+                );
+            }
+            &X64Instr::F32ConstAddrAbs(val) => {
+                let dest = defs[0].as_reg().unwrap();
+                let src = buffer.get_constant(4, &val.to_le_bytes());
+                emit_movabs_r_i_reloc(buffer, dest, BufferRelocTarget::Constant(src));
+            }
             &X64Instr::MovsdConstRel(val) => {
                 let dest = defs[0].as_reg().unwrap();
                 let src = buffer.get_constant(8, &val.to_le_bytes());

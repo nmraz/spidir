@@ -205,6 +205,7 @@ macro_rules! bitwise_float {
     };
 }
 
+bitwise_float! { BitwiseF32, f32, u32 }
 bitwise_float! { BitwiseF64, f64, u64 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -232,6 +233,7 @@ pub enum NodeKind {
     Itrunc,
     Sfill(u8),
     Icmp(IcmpKind),
+    Fconst32(BitwiseF32),
     Fconst64(BitwiseF64),
     Fadd,
     Fsub,

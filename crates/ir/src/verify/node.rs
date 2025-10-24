@@ -43,6 +43,7 @@ pub fn verify_node_kind(
         NodeKind::Sfill(width) => verify_sfill(graph, node, *width, errors),
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
         NodeKind::Fcmp(_) => verify_fcmp(graph, node, errors),
+        NodeKind::Fconst32(_) => verify_fconst32(graph, node, errors),
         NodeKind::Fconst64(_) => verify_fconst64(graph, node, errors),
         NodeKind::Fadd => verify_float_binop(graph, node, errors),
         NodeKind::Fsub => verify_float_binop(graph, node, errors),
@@ -200,6 +201,13 @@ fn verify_iconst(graph: &ValGraph, node: Node, val: u64, errors: &mut Vec<Functi
         }
         _ => panic!("type should have been verified here"),
     }
+}
+
+fn verify_fconst32(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 0, errors) else {
+        return;
+    };
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::F32)], errors);
 }
 
 fn verify_fconst64(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {

@@ -35,6 +35,7 @@ fcmpkind = { "oeq" | "one" | "olt" | "ole" | "ueq" | "une" | "ult" | "ule" }
 memsize  = { "1" | "2" | "4" | "8" }
 
 iconst_nodekind    =  { "iconst" ~ integer }
+fconst32_nodekind  =  { "fconst32" ~ float }
 fconst64_nodekind  =  { "fconst64" ~ float }
 sfill_nodekind     =  { "sfill" ~ integer }
 icmp_nodekind      =  { "icmp" ~ icmpkind }
@@ -69,6 +70,7 @@ nodekind           =  {
   | "itrunc"
   | sfill_nodekind
   | icmp_nodekind
+  | fconst32_nodekind
   | fconst64_nodekind
   | "fadd"
   | "fsub"

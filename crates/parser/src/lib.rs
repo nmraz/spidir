@@ -11,11 +11,14 @@ use alloc::{
 };
 
 use fx_utils::FxHashMap;
-use hexfloat2::HexFloat64;
+use hexfloat2::{HexFloat32, HexFloat64};
 use ir::{
     function::{FunctionBody, Signature},
     module::{Function, Module},
-    node::{BitwiseF64, DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
+    node::{
+        BitwiseF32, BitwiseF64, DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind,
+        Type,
+    },
     valgraph::DepValue,
 };
 use itertools::Itertools;
@@ -304,6 +307,10 @@ fn extract_special_node_kind(
             &inner.next().unwrap(),
             "invalid integer literal",
         )?),
+        Rule::fconst32_nodekind => NodeKind::Fconst32(BitwiseF32(
+            parse_from_str::<HexFloat32>(&inner.next().unwrap(), "invalid floating-point literal")?
+                .0,
+        )),
         Rule::fconst64_nodekind => NodeKind::Fconst64(BitwiseF64(
             parse_from_str::<HexFloat64>(&inner.next().unwrap(), "invalid floating-point literal")?
                 .0,
@@ -683,6 +690,10 @@ mod tests {
             "icmp sle",
             "icmp ult",
             "icmp ule",
+            "fconst32 0x1.5ae148p1",
+            "fconst32 0x1.000000p0",
+            "fconst32 -0x1.000000p0",
+            "fconst32 0x1.000000p-5",
             "fconst64 0x1.5ae147ae147aep1",
             "fconst64 0x1.0000000000000p0",
             "fconst64 -0x1.0000000000000p0",

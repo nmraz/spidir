@@ -283,6 +283,7 @@ pub fn write_node_kind(
         NodeKind::Itrunc => w.write_str("itrunc")?,
         NodeKind::Sfill(width) => write!(w, "sfill {width}")?,
         NodeKind::Icmp(kind) => write!(w, "icmp {kind}")?,
+        NodeKind::Fconst32(val) => write!(w, "fconst32 {val}")?,
         NodeKind::Fconst64(val) => write!(w, "fconst64 {val}")?,
         NodeKind::Fadd => write!(w, "fadd")?,
         NodeKind::Fsub => write!(w, "fsub")?,
@@ -379,7 +380,7 @@ mod tests {
 
     use crate::{
         builder::{BuilderExt, SimpleBuilder},
-        node::{BitwiseF64, FcmpKind, IcmpKind, MemSize, Type},
+        node::{BitwiseF32, BitwiseF64, FcmpKind, IcmpKind, MemSize, Type},
         test_utils::create_loop_body,
     };
 
@@ -488,6 +489,19 @@ mod tests {
             (NodeKind::Icmp(IcmpKind::Sle), "icmp sle"),
             (NodeKind::Icmp(IcmpKind::Ult), "icmp ult"),
             (NodeKind::Icmp(IcmpKind::Ule), "icmp ule"),
+            (
+                NodeKind::Fconst32(BitwiseF32(2.71)),
+                "fconst32 0x1.5ae148p1",
+            ),
+            (
+                NodeKind::Fconst32(BitwiseF32(f32::INFINITY)),
+                "fconst32 inf",
+            ),
+            (
+                NodeKind::Fconst32(BitwiseF32(-f32::INFINITY)),
+                "fconst32 -inf",
+            ),
+            (NodeKind::Fconst32(BitwiseF32(f32::NAN)), "fconst32 NaN"),
             (
                 NodeKind::Fconst64(BitwiseF64(2.71)),
                 "fconst64 0x1.5ae147ae147aep1",

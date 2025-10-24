@@ -37,8 +37,36 @@ func @iconst_bad_output_kind:f64() {
     return %0, %1
 }
 
-func @fconst_bad_input_count:f64() {
-    # check: function `fconst_bad_input_count`:
+func @fconst32_bad_input_count:f64() {
+    # check: function `fconst32_bad_input_count`:
+    # unordered: `$val:f64 = fconst32 0x1.800000p1 $val`: bad input count, expected 0
+
+    %0:ctrl = entry
+    %1:i32 = iconst 5
+    %2:f64 = fconst32 0x3 %1
+    return %0, %2
+}
+
+func @fconst32_bad_output_count:f64() {
+    # check: function `fconst32_bad_output_count`:
+    # unordered: `$val:f64, $val:i32 = fconst64 0x1.8000000000000p1`: bad output count, expected 1
+
+    %0:ctrl = entry
+    %1:f64, %2:i32 = fconst64 0x3
+    return %0, %1
+}
+
+func @fconst32_bad_output_kind:f64() {
+    # check: function `fconst32_bad_output_kind`:
+    # unordered: `$val:f64 = fconst32 0x1.5ae148p1`: bad value kind for output 0, expected one of `f32`, got `f64`
+
+    %0:ctrl = entry
+    %1:f64 = fconst32 0x1.5ae148p1
+    return %0, %1
+}
+
+func @fconst64_bad_input_count:f64() {
+    # check: function `fconst64_bad_input_count`:
     # unordered: `$val:f64 = fconst64 0x1.8000000000000p1 $val`: bad input count, expected 0
 
     %0:ctrl = entry
@@ -47,11 +75,20 @@ func @fconst_bad_input_count:f64() {
     return %0, %2
 }
 
-func @fconst_bad_output_count:f64() {
-    # check: function `fconst_bad_output_count`:
+func @fconst64_bad_output_count:f64() {
+    # check: function `fconst64_bad_output_count`:
     # unordered: `$val:f64, $val:i32 = fconst64 0x1.8000000000000p1`: bad output count, expected 1
 
     %0:ctrl = entry
     %1:f64, %2:i32 = fconst64 0x3
+    return %0, %1
+}
+
+func @fconst64_bad_output_kind:f32() {
+    # check: function `fconst64_bad_output_kind`:
+    # unordered: `$val:f32 = fconst64 0x1.5ae147ae147aep1`: bad value kind for output 0, expected one of `f64`, got `f32`
+
+    %0:ctrl = entry
+    %1:f32 = fconst64 0x1.5ae147ae147aep1
     return %0, %1
 }

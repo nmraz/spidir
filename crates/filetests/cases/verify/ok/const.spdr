@@ -25,3 +25,15 @@ func @ptr_near_range_end:ptr() {
     %1:ptr = iconst 18446744073709551615
     return %0, %1
 }
+
+func @fconst32:f32() {
+    %0:ctrl = entry
+    %1:f32 = fconst32 0x1.5ae148p1
+    return %0, %1
+}
+
+func @fconst64:f64() {
+    %0:ctrl = entry
+    %1:f64 = fconst64 0x1.5ae147ae147aep1
+    return %0, %1
+}

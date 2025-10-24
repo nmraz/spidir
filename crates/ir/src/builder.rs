@@ -275,6 +275,13 @@ pub trait BuilderExt: Builder {
         build_binop_with_lhs_type(self, NodeKind::Fdiv, lhs, rhs)
     }
 
+    fn build_fwiden(&mut self, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::Fwiden, [value], Type::F64)
+    }
+    fn build_fnarrow(&mut self, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::Fnarrow, [value], Type::F32)
+    }
+
     fn build_fcmp(
         &mut self,
         kind: FcmpKind,

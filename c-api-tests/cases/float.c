@@ -19,6 +19,9 @@ void builder_callback(spidir_builder_handle_t builder, void* ctx) {
     BUILD_BINOP(fmul);
     BUILD_BINOP(fdiv);
 
+    a = spidir_builder_build_fnarrow(builder, a);
+    a = spidir_builder_build_fwiden(builder, a);
+
     spidir_builder_build_return(builder, a);
 }
 

@@ -274,6 +274,13 @@ impl<'a> FunctionBuilder<'a> {
         self.builder().build_fdiv(lhs, rhs)
     }
 
+    pub fn build_fwiden(&mut self, value: DepValue) -> DepValue {
+        self.builder().build_fwiden(value)
+    }
+    pub fn build_fnarrow(&mut self, value: DepValue) -> DepValue {
+        self.builder().build_fnarrow(value)
+    }
+
     pub fn build_fcmp(
         &mut self,
         kind: FcmpKind,

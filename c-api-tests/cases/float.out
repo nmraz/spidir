@@ -6,5 +6,7 @@ func @func:f64(f64, f64) {
     %6:f64 = fsub %5, %2
     %7:f64 = fmul %6, %2
     %8:f64 = fdiv %7, %2
-    return %3, %8
+    %9:f32 = fnarrow %8
+    %10:f64 = fwiden %9
+    return %3, %10
 }

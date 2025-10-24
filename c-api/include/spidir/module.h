@@ -994,6 +994,36 @@ spidir_value_t spidir_builder_build_fdiv(spidir_builder_handle_t builder,
                                          spidir_value_t lhs,
                                          spidir_value_t rhs);
 
+/// Builds a floating-point widen operation at the current insertion point.
+///
+/// This converts a 32-bit float value into a 64-bit one, preserving the numeric
+/// value.
+///
+/// @note Spidir internally assumes this operation will not trap and may
+/// speculate it accordingly.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] value   The value to widen. This must be a 32-bit float.
+/// @return An SSA value representing the result of the operation. This value
+///         will be a 64-bit float.
+spidir_value_t spidir_builder_build_fwiden(spidir_builder_handle_t builder,
+                                           spidir_value_t value);
+
+/// Builds a floating-point narrow operation at the current insertion point.
+///
+/// This converts a 64-bit float value into a 32-bit one, rounding if the value
+/// cannot be represented exactly.
+///
+/// @note Spidir internally assumes this operation will not trap and may
+/// speculate it accordingly.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] value   The value to narrow. This must be a 64-bit float.
+/// @return An SSA value representing the result of the operation. This value
+///         will be a 32-bit float.
+spidir_value_t spidir_builder_build_fnarrow(spidir_builder_handle_t builder,
+                                            spidir_value_t value);
+
 /// Builds a floating-point compare operation at the current insertion point.
 ///
 /// The values `lhs` and `rhs` must both have the same floating-point type.

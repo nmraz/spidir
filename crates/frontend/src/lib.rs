@@ -254,6 +254,9 @@ impl<'a> FunctionBuilder<'a> {
         self.builder().build_icmp(kind, output_ty, lhs, rhs)
     }
 
+    pub fn build_fconst32(&mut self, value: f32) -> DepValue {
+        self.builder().build_fconst32(value)
+    }
     pub fn build_fconst64(&mut self, value: f64) -> DepValue {
         self.builder().build_fconst64(value)
     }

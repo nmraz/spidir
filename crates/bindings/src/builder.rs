@@ -204,6 +204,17 @@ unsafe extern "C" fn spidir_builder_build_iconst(
 }
 
 #[unsafe(no_mangle)]
+unsafe extern "C" fn spidir_builder_build_fconst32(
+    builder: *mut FunctionBuilder<'_>,
+    value: f32,
+) -> ApiValue {
+    unsafe {
+        let builder = &mut *builder;
+        value_to_api(builder.build_fconst32(value))
+    }
+}
+
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_fconst64(
     builder: *mut FunctionBuilder<'_>,
     value: f64,

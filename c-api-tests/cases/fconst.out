@@ -1,4 +1,11 @@
 
+func @func32:f32() {
+    %0:ctrl = entry
+    %1:ctrl, %2:phisel = region %0
+    %3:f32 = fconst32 0x1.000000p6
+    return %1, %3
+}
+
 func @func64:f64() {
     %0:ctrl = entry
     %1:ctrl, %2:phisel = region %0

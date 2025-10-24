@@ -2,7 +2,10 @@ use core::iter;
 
 use crate::{
     function::{FunctionBody, Signature},
-    node::{BitwiseF64, DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
+    node::{
+        BitwiseF32, BitwiseF64, DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind,
+        Type,
+    },
     valgraph::{DepValue, Node, ValGraph},
 };
 
@@ -252,6 +255,9 @@ pub trait BuilderExt: Builder {
         build_single_output_pure(self, NodeKind::Icmp(kind), [lhs, rhs], output_ty)
     }
 
+    fn build_fconst32(&mut self, value: f32) -> DepValue {
+        build_single_output_pure(self, NodeKind::Fconst32(BitwiseF32(value)), [], Type::F32)
+    }
     fn build_fconst64(&mut self, value: f64) -> DepValue {
         build_single_output_pure(self, NodeKind::Fconst64(BitwiseF64(value)), [], Type::F64)
     }

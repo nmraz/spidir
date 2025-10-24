@@ -900,6 +900,19 @@ spidir_value_t spidir_builder_build_icmp(spidir_builder_handle_t builder,
                                          spidir_value_t lhs,
                                          spidir_value_t rhs);
 
+/// Builds a 32-bit floating-point constant value at the current insertion
+/// point.
+///
+/// @note Spidir internally assumes this operation will not trap and may
+/// speculate it accordingly.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] value   The value of the constant to build.
+/// @return An SSA value representing the constant. This value will have type
+///         `SPIDIR_TYPE_F32`.
+spidir_value_t spidir_builder_build_fconst32(spidir_builder_handle_t builder,
+                                             float value);
+
 /// Builds a 64-bit floating-point constant value at the current insertion
 /// point.
 ///

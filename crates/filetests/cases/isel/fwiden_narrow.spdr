@@ -1,0 +1,23 @@
+# run: isel
+
+func @fwiden:f64(f32) {
+    # check: function `fwiden`:
+    # nextln:       block0[%1:xmm32($$xmm0)]:
+    # nextln: 0000:      %0:xmm64(reg)[late] = Cvtss2sd %1(any)[early]
+    # nextln: 0001:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:f32 = entry
+    %2:f64 = fwiden %1
+    return %0, %2
+}
+
+func @fnarrow:f32(f64) {
+    # check: function `fnarrow`:
+    # nextln:       block0[%1:xmm64($$xmm0)]:
+    # nextln: 0000:      %0:xmm32(reg)[late] = Cvtsd2ss %1(any)[early]
+    # nextln: 0001:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:f64 = entry
+    %2:f32 = fnarrow %1
+    return %0, %2
+}

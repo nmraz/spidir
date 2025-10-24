@@ -402,6 +402,16 @@ impl MachineEmit for X64Machine {
                 defs[0].as_reg().unwrap(),
                 state.operand_reg_mem(uses[0]),
             ),
+            X64Instr::Cvtss2sd => emit_cvtss2sd(
+                buffer,
+                defs[0].as_reg().unwrap(),
+                state.operand_reg_mem(uses[0]),
+            ),
+            X64Instr::Cvtsd2ss => emit_cvtsd2ss(
+                buffer,
+                defs[0].as_reg().unwrap(),
+                state.operand_reg_mem(uses[0]),
+            ),
             &X64Instr::PseudoUint64ToFloat(prec) => emit_uint64_to_float(
                 buffer,
                 prec,
@@ -1380,6 +1390,14 @@ fn emit_cvts2si(
     src: RegMem,
 ) {
     emit_sse_fpu_with_mandatory_prefix_and_op_size(buffer, prec, op_size, 0x2d, dest, src);
+}
+
+fn emit_cvtss2sd(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
+    emit_sse_fpu_with_mandatory_prefix(buffer, SseFpuPrecision::Single, 0x5a, dest, src);
+}
+
+fn emit_cvtsd2ss(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, src: RegMem) {
+    emit_sse_fpu_with_mandatory_prefix(buffer, SseFpuPrecision::Double, 0x5a, dest, src);
 }
 
 fn emit_mov_gprm_xmm(

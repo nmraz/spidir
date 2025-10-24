@@ -1,0 +1,27 @@
+# run: codegen
+
+func @fwiden:f64(f32) {
+    # check: function `fwiden`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f3 0f 5a c0                     cvtss2sd xmm0, xmm0
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %0:ctrl, %1:f32 = entry
+    %2:f64 = fwiden %1
+    return %0, %2
+}
+
+func @fnarrow:f32(f64) {
+    # check: function `fnarrow`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f 5a c0                     cvtsd2ss xmm0, xmm0
+    # nextln: 000008: 5d                              pop rbp
+    # nextln: 000009: c3                              ret
+
+    %0:ctrl, %1:f64 = entry
+    %2:f32 = fnarrow %1
+    return %0, %2
+}

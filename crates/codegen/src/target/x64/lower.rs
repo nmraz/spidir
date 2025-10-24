@@ -209,6 +209,8 @@ impl MachineLower for X64Machine {
             NodeKind::Fsub => emit_fpu_rr(ctx, node, SseFpuBinOp::Sub),
             NodeKind::Fmul => emit_fpu_rr(ctx, node, SseFpuBinOp::Mul),
             NodeKind::Fdiv => emit_fpu_rr(ctx, node, SseFpuBinOp::Div),
+            NodeKind::Fwiden => emit_cvtss2sd(ctx, node),
+            NodeKind::Fnarrow => emit_cvtsd2ss(ctx, node),
             &NodeKind::Fcmp(kind) => select_direct_fcmp(ctx, node, kind),
             NodeKind::SintToFloat => emit_cvtsi2s(ctx, node),
             NodeKind::UintToFloat => select_uinttofloat(ctx, node),
@@ -1324,6 +1326,34 @@ fn emit_cvts2si(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
 
     ctx.emit_instr(
         X64Instr::Cvts2si(operand_size_for_int_ty(output_ty), input_prec),
+        &[DefOperand::any_reg(output)],
+        &[UseOperand::any(input)],
+    );
+}
+
+fn emit_cvtss2sd(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
+    let [output] = ctx.node_outputs_exact(node);
+    let [input] = ctx.node_inputs_exact(node);
+
+    let input = ctx.get_value_vreg(input);
+    let output = ctx.get_value_vreg(output);
+
+    ctx.emit_instr(
+        X64Instr::Cvtss2sd,
+        &[DefOperand::any_reg(output)],
+        &[UseOperand::any(input)],
+    );
+}
+
+fn emit_cvtsd2ss(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
+    let [output] = ctx.node_outputs_exact(node);
+    let [input] = ctx.node_inputs_exact(node);
+
+    let input = ctx.get_value_vreg(input);
+    let output = ctx.get_value_vreg(output);
+
+    ctx.emit_instr(
+        X64Instr::Cvtsd2ss,
         &[DefOperand::any_reg(output)],
         &[UseOperand::any(input)],
     );

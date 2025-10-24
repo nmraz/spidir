@@ -42,13 +42,13 @@ pub fn verify_node_kind(
         NodeKind::Itrunc => verify_itrunc(graph, node, errors),
         NodeKind::Sfill(width) => verify_sfill(graph, node, *width, errors),
         NodeKind::Icmp(_) => verify_icmp(graph, node, errors),
-        NodeKind::Fcmp(_) => verify_fcmp(graph, node, errors),
         NodeKind::Fconst32(_) => verify_fconst32(graph, node, errors),
         NodeKind::Fconst64(_) => verify_fconst64(graph, node, errors),
         NodeKind::Fadd => verify_float_binop(graph, node, errors),
         NodeKind::Fsub => verify_float_binop(graph, node, errors),
         NodeKind::Fmul => verify_float_binop(graph, node, errors),
         NodeKind::Fdiv => verify_float_binop(graph, node, errors),
+        NodeKind::Fcmp(_) => verify_fcmp(graph, node, errors),
         NodeKind::SintToFloat => verify_inttofloat(graph, node, errors),
         NodeKind::UintToFloat => verify_inttofloat(graph, node, errors),
         NodeKind::FloatToSint => verify_floattoint(graph, node, errors),
@@ -203,40 +203,12 @@ fn verify_iconst(graph: &ValGraph, node: Node, val: u64, errors: &mut Vec<Functi
     }
 }
 
-fn verify_fconst32(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
-    let Ok([result]) = verify_node_arity(graph, node, 0, errors) else {
-        return;
-    };
-    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::F32)], errors);
-}
-
-fn verify_fconst64(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
-    let Ok([result]) = verify_node_arity(graph, node, 0, errors) else {
-        return;
-    };
-    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::F64)], errors);
-}
-
 fn verify_int_binop(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
     let Ok([result]) = verify_node_arity(graph, node, 2, errors) else {
         return;
     };
 
     if verify_integer_output_kind(graph, result, errors).is_err() {
-        return;
-    }
-
-    let result_kind = graph.value_kind(result);
-    let _ = verify_input_kind(graph, node, 0, &[result_kind], errors);
-    let _ = verify_input_kind(graph, node, 1, &[result_kind], errors);
-}
-
-fn verify_float_binop(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
-    let Ok([result]) = verify_node_arity(graph, node, 2, errors) else {
-        return;
-    };
-
-    if verify_float_output_kind(graph, result, errors).is_err() {
         return;
     }
 
@@ -330,6 +302,34 @@ fn verify_icmp(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierEr
         &[graph.value_kind(graph.node_inputs(node)[0])],
         errors,
     );
+}
+
+fn verify_fconst32(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 0, errors) else {
+        return;
+    };
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::F32)], errors);
+}
+
+fn verify_fconst64(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 0, errors) else {
+        return;
+    };
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::F64)], errors);
+}
+
+fn verify_float_binop(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 2, errors) else {
+        return;
+    };
+
+    if verify_float_output_kind(graph, result, errors).is_err() {
+        return;
+    }
+
+    let result_kind = graph.value_kind(result);
+    let _ = verify_input_kind(graph, node, 0, &[result_kind], errors);
+    let _ = verify_input_kind(graph, node, 1, &[result_kind], errors);
 }
 
 fn verify_fcmp(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {

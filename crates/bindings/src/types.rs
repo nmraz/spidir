@@ -81,8 +81,9 @@ const SPIDIR_FUNCREF_EXTERNAL: u64 = 1;
 
 const SPIDIR_TYPE_I32: u8 = 0;
 const SPIDIR_TYPE_I64: u8 = 1;
-const SPIDIR_TYPE_F64: u8 = 2;
-const SPIDIR_TYPE_PTR: u8 = 3;
+const SPIDIR_TYPE_F32: u8 = 2;
+const SPIDIR_TYPE_F64: u8 = 3;
+const SPIDIR_TYPE_PTR: u8 = 4;
 const SPIDIR_TYPE_NONE: u8 = u8::MAX;
 
 const SPIDIR_ICMP_EQ: u8 = 0;
@@ -227,6 +228,7 @@ pub fn type_from_api(api_type: ApiType) -> Type {
     match api_type {
         SPIDIR_TYPE_I32 => Type::I32,
         SPIDIR_TYPE_I64 => Type::I64,
+        SPIDIR_TYPE_F32 => Type::F32,
         SPIDIR_TYPE_F64 => Type::F64,
         SPIDIR_TYPE_PTR => Type::Ptr,
         SPIDIR_TYPE_NONE => panic!("type parameter is required here"),

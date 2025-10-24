@@ -85,10 +85,12 @@ enum spidir_value_type {
     SPIDIR_TYPE_I32 = 0,
     /// A 64-bit integer.
     SPIDIR_TYPE_I64 = 1,
+    /// A 32-bit float.
+    SPIDIR_TYPE_F32 = 2,
     /// A 64-bit float.
-    SPIDIR_TYPE_F64 = 2,
+    SPIDIR_TYPE_F64 = 3,
     /// A pointer that can be used with load and store instructions.
-    SPIDIR_TYPE_PTR = 3,
+    SPIDIR_TYPE_PTR = 4,
     /// A sentinel value representing the absence of a type.
     /// Unless otherwise specified, functions accepting a type will panic if
     /// they are passed this value.
@@ -160,7 +162,8 @@ enum spidir_mem_size {
     /// This access size is permitted for 32-bit and 64-bit integers.
     SPIDIR_MEM_SIZE_2 = 1,
     /// A 4-byte memory access.
-    /// This access size is permitted for 32-bit and 64-bit integers.
+    /// This access size is permitted for 32- and 64-bit integers and `f32`
+    /// values.
     SPIDIR_MEM_SIZE_4 = 2,
     /// An 8-byte memory access.
     /// This access size is permitted for 64-bit integers, `f64` values and

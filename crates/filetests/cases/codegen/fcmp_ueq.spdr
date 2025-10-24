@@ -1,7 +1,7 @@
 # run: codegen
 
-func @fcmp_ueq_i32:i32(f64, f64) {
-    # check: function `fcmp_ueq_i32`:
+func @fcmp64_ueq_i32:i32(f64, f64) {
+    # check: function `fcmp64_ueq_i32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 33 c0                           xor eax, eax
@@ -15,8 +15,8 @@ func @fcmp_ueq_i32:i32(f64, f64) {
     return %0, %3
 }
 
-func @fcmp_ueq_i64:i64(f64, f64) {
-    # check: function `fcmp_ueq_i64`:
+func @fcmp64_ueq_i64:i64(f64, f64) {
+    # check: function `fcmp64_ueq_i64`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 33 c0                           xor eax, eax
@@ -26,6 +26,36 @@ func @fcmp_ueq_i64:i64(f64, f64) {
     # nextln: 00000e: c3                              ret
 
     %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp ueq %1, %2
+    return %0, %3
+}
+
+func @fcmp32_ueq_i32:i32(f32, f32) {
+    # check: function `fcmp32_ueq_i32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 0f 2e c1                        ucomiss xmm0, xmm1
+    # nextln: 000009: 0f 94 c0                        sete al
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
+
+    %0:ctrl, %1:f32, %2:f32 = entry
+    %3:i32 = fcmp ueq %1, %2
+    return %0, %3
+}
+
+func @fcmp32_ueq_i64:i64(f32, f32) {
+    # check: function `fcmp32_ueq_i64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 0f 2e c1                        ucomiss xmm0, xmm1
+    # nextln: 000009: 0f 94 c0                        sete al
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
+
+    %0:ctrl, %1:f32, %2:f32 = entry
     %3:i64 = fcmp ueq %1, %2
     return %0, %3
 }

@@ -1,7 +1,7 @@
 # run: isel
 
-func @fcmp_ult_i32:i32(f64, f64) {
-    # check: function `fcmp_ult_i32`:
+func @fcmp64_ult_i32:i32(f64, f64) {
+    # check: function `fcmp64_ult_i32`:
     # nextln:       block0[%1:xmm64($$xmm0), %2:xmm64($$xmm1)]:
     # nextln: 0000:      %3:gpr64(any)[late] = MovRmS32(0)
     # nextln: 0001:      Ucomi(Double) %1(reg)[early], %2(any)[early]
@@ -13,8 +13,8 @@ func @fcmp_ult_i32:i32(f64, f64) {
     return %0, %3
 }
 
-func @fcmp_ult_i64:i64(f64, f64) {
-    # check: function `fcmp_ult_i64`:
+func @fcmp64_ult_i64:i64(f64, f64) {
+    # check: function `fcmp64_ult_i64`:
     # nextln:       block0[%1:xmm64($$xmm0), %2:xmm64($$xmm1)]:
     # nextln: 0000:      %3:gpr64(any)[late] = MovRmS32(0)
     # nextln: 0001:      Ucomi(Double) %1(reg)[early], %2(any)[early]
@@ -22,6 +22,32 @@ func @fcmp_ult_i64:i64(f64, f64) {
     # nextln: 0003:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:f64, %2:f64 = entry
+    %3:i64 = fcmp ult %1, %2
+    return %0, %3
+}
+
+func @fcmp32_ult_i32:i32(f32, f32) {
+    # check: function `fcmp32_ult_i32`:
+    # nextln:       block0[%1:xmm32($$xmm0), %2:xmm32($$xmm1)]:
+    # nextln: 0000:      %3:gpr64(any)[late] = MovRmS32(0)
+    # nextln: 0001:      Ucomi(Single) %1(reg)[early], %2(any)[early]
+    # nextln: 0002:      %0:gpr32(reg)[late] = Setcc(B) %3(tied:0)[early]
+    # nextln: 0003:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:f32, %2:f32 = entry
+    %3:i32 = fcmp ult %1, %2
+    return %0, %3
+}
+
+func @fcmp32_ult_i64:i64(f32, f32) {
+    # check: function `fcmp32_ult_i64`:
+    # nextln:       block0[%1:xmm32($$xmm0), %2:xmm32($$xmm1)]:
+    # nextln: 0000:      %3:gpr64(any)[late] = MovRmS32(0)
+    # nextln: 0001:      Ucomi(Single) %1(reg)[early], %2(any)[early]
+    # nextln: 0002:      %0:gpr64(reg)[late] = Setcc(B) %3(tied:0)[early]
+    # nextln: 0003:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:f32, %2:f32 = entry
     %3:i64 = fcmp ult %1, %2
     return %0, %3
 }

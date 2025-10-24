@@ -519,6 +519,8 @@ fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kin
     let [output] = ctx.node_outputs_exact(node);
     let [op1, op2] = ctx.node_inputs_exact(node);
 
+    let prec = fpu_precision_for_float_ty(ctx.value_type(op1));
+
     let output = ctx.get_value_vreg(output);
 
     let op1 = ctx.get_value_vreg(op1);
@@ -531,41 +533,41 @@ fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kin
             // check PF as well, but LLVM appears to prefer a direct `cmpeqsd` followed by an
             // XMM-to-GPR move. Let's do the same for now, because it results in simpler code and
             // less register pressure.
-            emit_fpu_cmp_sequence(ctx, SseFpuCmpCode::Eq, output, op1, op2);
+            emit_fpu_cmp_sequence(ctx, prec, SseFpuCmpCode::Eq, output, op1, op2);
         }
         FcmpKind::One => {
             // We can use a `ucomisd` here because unordered results set ZF, causing us to return
             // false.
-            emit_fpu_ucomi_sequence(ctx, CondCode::Ne, output, op1, op2);
+            emit_fpu_ucomi_sequence(ctx, prec, CondCode::Ne, output, op1, op2);
         }
         FcmpKind::Olt => {
             // Note: reverse the operands and the condition code so that CF=1, ZF=1 cause us to
             // return false when the result is unordered.
-            emit_fpu_ucomi_sequence(ctx, CondCode::A, output, op2, op1);
+            emit_fpu_ucomi_sequence(ctx, prec, CondCode::A, output, op2, op1);
         }
         FcmpKind::Ole => {
             // Note: reverse the operands and the condition code so that CF=1 causes us to return
             // false when the result is unordered.
-            emit_fpu_ucomi_sequence(ctx, CondCode::Ae, output, op2, op1);
+            emit_fpu_ucomi_sequence(ctx, prec, CondCode::Ae, output, op2, op1);
         }
         FcmpKind::Ueq => {
             // Now we actually do want unordered results to return true, so a simple `sete` is
             // correct.
-            emit_fpu_ucomi_sequence(ctx, CondCode::E, output, op1, op2);
+            emit_fpu_ucomi_sequence(ctx, prec, CondCode::E, output, op1, op2);
         }
         FcmpKind::Une => {
             // The `neq` predicate in SSE `cmps[sd]` returns the logical inverse of the `eq`
             // predicate, so DeMorgan's laws give us exactly what we want.
-            emit_fpu_cmp_sequence(ctx, SseFpuCmpCode::Neq, output, op1, op2);
+            emit_fpu_cmp_sequence(ctx, prec, SseFpuCmpCode::Neq, output, op1, op2);
         }
         FcmpKind::Ult => {
             // Finally, the straightforward condition code actually does what we want (we also get
             // CF=1 on unordered inputs).
-            emit_fpu_ucomi_sequence(ctx, CondCode::B, output, op1, op2);
+            emit_fpu_ucomi_sequence(ctx, prec, CondCode::B, output, op1, op2);
         }
         FcmpKind::Ule => {
             // Once again, this condition code achieves exactly what we need.
-            emit_fpu_ucomi_sequence(ctx, CondCode::Be, output, op1, op2);
+            emit_fpu_ucomi_sequence(ctx, prec, CondCode::Be, output, op1, op2);
         }
     };
 }
@@ -788,6 +790,8 @@ fn select_fcmp_brcond(
 ) {
     let [op1, op2] = ctx.node_inputs_exact(cmp_node);
 
+    let prec = fpu_precision_for_float_ty(ctx.value_type(op1));
+
     let mut op1 = ctx.get_value_vreg(op1);
     let mut op2 = ctx.get_value_vreg(op2);
 
@@ -832,7 +836,7 @@ fn select_fcmp_brcond(
     }
 
     ctx.emit_instr(
-        X64Instr::Ucomi(SseFpuPrecision::Double),
+        X64Instr::Ucomi(prec),
         &[],
         &[UseOperand::any_reg(op1), UseOperand::any(op2)],
     );
@@ -1201,6 +1205,7 @@ fn emit_fpu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: SseFpu
 
 fn emit_fpu_cmp_sequence(
     ctx: &mut IselContext<'_, '_, X64Machine>,
+    prec: SseFpuPrecision,
     code: SseFpuCmpCode,
     output: VirtReg,
     op1: VirtReg,
@@ -1209,7 +1214,7 @@ fn emit_fpu_cmp_sequence(
     let tmp_xmm_out = ctx.create_temp_vreg(RC_XMM64);
     let tmp_gpr_out = ctx.create_temp_vreg(RC_GPR64);
     ctx.emit_instr(
-        X64Instr::SseScalarFpuRRm(SseFpuPrecision::Double, SseFpuBinOp::Cmp(code)),
+        X64Instr::SseScalarFpuRRm(prec, SseFpuBinOp::Cmp(code)),
         &[DefOperand::any_reg(tmp_xmm_out)],
         &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
@@ -1227,6 +1232,7 @@ fn emit_fpu_cmp_sequence(
 
 fn emit_fpu_ucomi_sequence(
     ctx: &mut IselContext<'_, '_, X64Machine>,
+    prec: SseFpuPrecision,
     code: CondCode,
     output: VirtReg,
     op1: VirtReg,
@@ -1234,7 +1240,7 @@ fn emit_fpu_ucomi_sequence(
 ) {
     emit_setcc_sequence(ctx, output, |ctx| {
         ctx.emit_instr(
-            X64Instr::Ucomi(SseFpuPrecision::Double),
+            X64Instr::Ucomi(prec),
             &[],
             &[UseOperand::any_reg(op1), UseOperand::any(op2)],
         );

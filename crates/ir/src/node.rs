@@ -172,34 +172,40 @@ pub enum FunctionRef {
     External(ExternFunction),
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct BitwiseF64(pub f64);
+macro_rules! bitwise_float {
+    ($name:ident, $float_ty:ident, $bit_ty:ident) => {
+        #[derive(Debug, Clone, Copy)]
+        pub struct $name(pub $float_ty);
 
-impl BitwiseF64 {
-    pub fn bits(self) -> u64 {
-        self.0.to_bits()
-    }
+        impl $name {
+            pub fn bits(self) -> $bit_ty {
+                self.0.to_bits()
+            }
+        }
+
+        impl PartialEq for $name {
+            fn eq(&self, other: &Self) -> bool {
+                self.bits() == other.bits()
+            }
+        }
+
+        impl Eq for $name {}
+
+        impl Hash for $name {
+            fn hash<H: Hasher>(&self, state: &mut H) {
+                self.bits().hash(state)
+            }
+        }
+
+        impl fmt::Display for $name {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", HexFloat(self.0))
+            }
+        }
+    };
 }
 
-impl PartialEq for BitwiseF64 {
-    fn eq(&self, other: &Self) -> bool {
-        self.bits() == other.bits()
-    }
-}
-
-impl Eq for BitwiseF64 {}
-
-impl Hash for BitwiseF64 {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.bits().hash(state)
-    }
-}
-
-impl fmt::Display for BitwiseF64 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", HexFloat(self.0))
-    }
-}
+bitwise_float! { BitwiseF64, f64, u64 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NodeKind {

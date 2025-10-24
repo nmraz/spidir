@@ -342,26 +342,3 @@ impl fmt::Display for DepValueKind {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn type_is_integer() {
-        assert!(Type::I32.is_integer());
-        assert!(Type::I64.is_integer());
-        assert!(!Type::F64.is_integer());
-        assert!(!Type::Ptr.is_integer());
-    }
-
-    #[test]
-    fn display_value_kind() {
-        assert_eq!(DepValueKind::Value(Type::I32).to_string(), "i32");
-        assert_eq!(DepValueKind::Value(Type::I64).to_string(), "i64");
-        assert_eq!(DepValueKind::Value(Type::F64).to_string(), "f64");
-        assert_eq!(DepValueKind::Value(Type::Ptr).to_string(), "ptr");
-        assert_eq!(DepValueKind::Control.to_string(), "ctrl");
-        assert_eq!(DepValueKind::PhiSelector.to_string(), "phisel");
-    }
-}

@@ -1,7 +1,7 @@
 # run: codegen
 
-func @floattouint32:i32(f64) {
-    # check: function `floattouint32`:
+func @float64touint32:i32(f64) {
+    # check: function `float64touint32`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: f2 48 0f 2d c0                  cvtsd2si rax, xmm0
@@ -13,8 +13,8 @@ func @floattouint32:i32(f64) {
     return %0, %2
 }
 
-func @floattouint64:i64(f64) {
-    # check: function `floattouint64`:
+func @float64touint64:i64(f64) {
+    # check: function `float64touint64`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: f2 0f 10 0d 00 00 00 00         movsd xmm1, qword ptr [rip]  # RELOC_PC32 -> @<CP> + -4
@@ -31,6 +31,41 @@ func @floattouint64:i64(f64) {
     # nextln: 000000: 00 00 00 00 00 00 e0 43
 
     %0:ctrl, %1:f64 = entry
+    %2:i64 = floattouint %1
+    return %0, %2
+}
+
+func @float32touint32:i32(f32) {
+    # check: function `float32touint32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f3 48 0f 2d c0                  cvtss2si rax, xmm0
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
+
+    %0:ctrl, %1:f32 = entry
+    %2:i32 = floattouint %1
+    return %0, %2
+}
+
+func @float32touint64:i64(f32) {
+    # check: function `float32touint64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f3 0f 10 0d 00 00 00 00         movss xmm1, dword ptr [rip]  # RELOC_PC32 -> @<CP> + -4
+    # nextln: 00000c: 0f 2e c1                        ucomiss xmm0, xmm1
+    # nextln: 00000f: 0f 83 0a 00 00 00               jae 0x1f
+    # nextln: 000015: f3 48 0f 2d c0                  cvtss2si rax, xmm0
+    # nextln: 00001a: e9 0e 00 00 00                  jmp 0x2d
+    # nextln: 00001f: f3 0f 5c c1                     subss xmm0, xmm1
+    # nextln: 000023: f3 48 0f 2d c0                  cvtss2si rax, xmm0
+    # nextln: 000028: 48 0f ba f8 3f                  btc rax, 0x3f
+    # nextln: 00002d: 5d                              pop rbp
+    # nextln: 00002e: c3                              ret
+    # nextln: <CP>:
+    # nextln: 000000: 00 00 00 5f
+
+    %0:ctrl, %1:f32 = entry
     %2:i64 = floattouint %1
     return %0, %2
 }

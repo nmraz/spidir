@@ -577,6 +577,7 @@ fn select_uinttofloat(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     let [input] = ctx.node_inputs_exact(node);
 
     let input_ty = ctx.value_type(input);
+    let output_prec = fpu_precision_for_float_ty(ctx.value_type(output));
 
     let output = ctx.get_value_vreg(output);
     let input = ctx.get_value_vreg(input);
@@ -590,7 +591,7 @@ fn select_uinttofloat(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
                 &[UseOperand::any(input)],
             );
             ctx.emit_instr(
-                X64Instr::Cvtsi2s(OperandSize::S64, SseFpuPrecision::Double),
+                X64Instr::Cvtsi2s(OperandSize::S64, output_prec),
                 &[DefOperand::any_reg(output)],
                 &[UseOperand::any(tmp)],
             );
@@ -600,7 +601,7 @@ fn select_uinttofloat(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
             let tmp_gpr2 = ctx.create_temp_vreg(RC_GPR64);
 
             ctx.emit_instr(
-                X64Instr::PseudoUint64ToFloat(SseFpuPrecision::Double),
+                X64Instr::PseudoUint64ToFloat(output_prec),
                 &[
                     DefOperand::any_reg(output),
                     DefOperand::any_reg(tmp_gpr1),
@@ -617,6 +618,7 @@ fn select_floattouint(machine: &X64Machine, ctx: &mut IselContext<'_, '_, X64Mac
     let [output] = ctx.node_outputs_exact(node);
     let [input] = ctx.node_inputs_exact(node);
 
+    let input_prec = fpu_precision_for_float_ty(ctx.value_type(input));
     let output_ty = ctx.value_type(output);
 
     let output = ctx.get_value_vreg(output);
@@ -625,15 +627,15 @@ fn select_floattouint(machine: &X64Machine, ctx: &mut IselContext<'_, '_, X64Mac
     match output_ty {
         Type::I32 => {
             ctx.emit_instr(
-                X64Instr::Cvts2si(OperandSize::S64, SseFpuPrecision::Double),
+                X64Instr::Cvts2si(OperandSize::S64, input_prec),
                 &[DefOperand::any_reg(output)],
                 &[UseOperand::any(input)],
             );
         }
         Type::I64 => {
             let instr = match machine.config.internal_code_model {
-                CodeModel::SmallPic => X64Instr::PseudoFloatToUint64Rel(SseFpuPrecision::Double),
-                CodeModel::LargeAbs => X64Instr::PseudoFloatToUint64Abs(SseFpuPrecision::Double),
+                CodeModel::SmallPic => X64Instr::PseudoFloatToUint64Rel(input_prec),
+                CodeModel::LargeAbs => X64Instr::PseudoFloatToUint64Abs(input_prec),
             };
 
             let tmp_xmm1 = ctx.create_temp_vreg(RC_XMM64);
@@ -1253,12 +1255,13 @@ fn emit_cvtsi2s(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     let [input] = ctx.node_inputs_exact(node);
 
     let input_ty = ctx.value_type(input);
+    let output_prec = fpu_precision_for_float_ty(ctx.value_type(output));
 
     let input = ctx.get_value_vreg(input);
     let output = ctx.get_value_vreg(output);
 
     ctx.emit_instr(
-        X64Instr::Cvtsi2s(operand_size_for_int_ty(input_ty), SseFpuPrecision::Double),
+        X64Instr::Cvtsi2s(operand_size_for_int_ty(input_ty), output_prec),
         &[DefOperand::any_reg(output)],
         &[UseOperand::any(input)],
     );
@@ -1268,13 +1271,14 @@ fn emit_cvts2si(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     let [output] = ctx.node_outputs_exact(node);
     let [input] = ctx.node_inputs_exact(node);
 
+    let input_prec = fpu_precision_for_float_ty(ctx.value_type(input));
     let output_ty = ctx.value_type(output);
 
     let input = ctx.get_value_vreg(input);
     let output = ctx.get_value_vreg(output);
 
     ctx.emit_instr(
-        X64Instr::Cvts2si(operand_size_for_int_ty(output_ty), SseFpuPrecision::Double),
+        X64Instr::Cvts2si(operand_size_for_int_ty(output_ty), input_prec),
         &[DefOperand::any_reg(output)],
         &[UseOperand::any(input)],
     );

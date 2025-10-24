@@ -1,12 +1,23 @@
 # run: isel[large-abs]
 
-func @floattouint64:i64(f64) {
-    # check: function `floattouint64`:
+func @float64touint64:i64(f64) {
+    # check: function `float64touint64`:
     # nextln:       block0[%1:xmm64($$xmm0)]:
     # nextln: 0000:      %0:gpr64(reg)[late], %2:xmm64(reg)[early], %3:xmm64(reg)[late] = PseudoFloatToUint64Abs(Double) %1(soft-tied:2)[early]
     # nextln: 0001:      Ret %0($$rax)[early]
 
     %0:ctrl, %1:f64 = entry
+    %2:i64 = floattouint %1
+    return %0, %2
+}
+
+func @float32touint64:i64(f32) {
+    # check: function `float32touint64`:
+    # nextln:       block0[%1:xmm32($$xmm0)]:
+    # nextln: 0000:      %0:gpr64(reg)[late], %2:xmm64(reg)[early], %3:xmm64(reg)[late] = PseudoFloatToUint64Abs(Single) %1(soft-tied:2)[early]
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:f32 = entry
     %2:i64 = floattouint %1
     return %0, %2
 }

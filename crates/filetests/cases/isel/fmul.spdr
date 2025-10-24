@@ -1,12 +1,23 @@
 # run: isel
 
-func @fmul:f64(f64, f64) {
-    # check: function `fmul`:
+func @fmul64:f64(f64, f64) {
+    # check: function `fmul64`:
     # nextln:       block0[%1:xmm64($$xmm0), %2:xmm64($$xmm1)]:
     # nextln: 0000:      %0:xmm64(reg)[late] = SseScalarFpuRRm(Double, Mul) %1(tied:0)[early], %2(any)[early]
     # nextln: 0001:      Ret %0($$xmm0)[early]
 
     %c:ctrl, %a:f64, %b:f64 = entry
     %val:f64 = fmul %a, %b
+    return %c, %val
+}
+
+func @fmul32:f32(f32, f32) {
+    # check: function `fmul32`:
+    # nextln:       block0[%1:xmm32($$xmm0), %2:xmm32($$xmm1)]:
+    # nextln: 0000:      %0:xmm32(reg)[late] = SseScalarFpuRRm(Single, Mul) %1(tied:0)[early], %2(any)[early]
+    # nextln: 0001:      Ret %0($$xmm0)[early]
+
+    %c:ctrl, %a:f32, %b:f32 = entry
+    %val:f32 = fmul %a, %b
     return %c, %val
 }

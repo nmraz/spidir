@@ -1188,12 +1188,14 @@ fn emit_fpu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: SseFpu
     let [output] = ctx.node_outputs_exact(node);
     let [op1, op2] = ctx.node_inputs_exact(node);
 
+    let prec = fpu_precision_for_float_ty(ctx.value_type(output));
+
     let output = ctx.get_value_vreg(output);
     let op1 = ctx.get_value_vreg(op1);
     let op2 = ctx.get_value_vreg(op2);
 
     ctx.emit_instr(
-        X64Instr::SseScalarFpuRRm(SseFpuPrecision::Double, op),
+        X64Instr::SseScalarFpuRRm(prec, op),
         &[DefOperand::any_reg(output)],
         &[UseOperand::tied(op1, 0), UseOperand::any(op2)],
     );
@@ -1391,6 +1393,14 @@ fn operand_size_for_int_ty(ty: Type) -> OperandSize {
         Type::I32 => OperandSize::S32,
         Type::I64 => OperandSize::S64,
         Type::Ptr => OperandSize::S64,
+        _ => unreachable!(),
+    }
+}
+
+fn fpu_precision_for_float_ty(ty: Type) -> SseFpuPrecision {
+    match ty {
+        Type::F32 => SseFpuPrecision::Single,
+        Type::F64 => SseFpuPrecision::Double,
         _ => unreachable!(),
     }
 }

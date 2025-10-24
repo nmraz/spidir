@@ -670,10 +670,9 @@ fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: 
                 &uses,
             );
         }
-        Type::F32 => todo!(),
-        Type::F64 => {
+        Type::F32 | Type::F64 => {
             ctx.emit_instr(
-                X64Instr::MovsRM(SseFpuPrecision::Double, addr_mode),
+                X64Instr::MovsRM(fpu_precision_for_float_ty(ty), addr_mode),
                 &[DefOperand::any_reg(output)],
                 &uses,
             );
@@ -694,10 +693,9 @@ fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size:
             let op_size = operand_size_for_mem_size(mem_size);
             ctx.emit_instr(X64Instr::MovMR(op_size, addr_mode), &[], &uses);
         }
-        Type::F32 => todo!(),
-        Type::F64 => {
+        Type::F32 | Type::F64 => {
             ctx.emit_instr(
-                X64Instr::MovsMR(SseFpuPrecision::Double, addr_mode),
+                X64Instr::MovsMR(fpu_precision_for_float_ty(ty), addr_mode),
                 &[],
                 &uses,
             );

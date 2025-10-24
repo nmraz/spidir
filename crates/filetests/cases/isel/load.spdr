@@ -88,6 +88,17 @@ func @load8_ptr:ptr(ptr) {
     return %2, %3
 }
 
+func @load4_f32:f32(ptr) {
+    # check: function `load4_f32`:
+    # nextln:       block0[%1:gpr64($$rdi)]:
+    # nextln: 0000:      %0:xmm32(reg)[late] = MovsRM(Single, [reg + 0]) %1(reg)[early]
+    # nextln: 0001:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:ptr = entry
+    %2:ctrl, %3:f32 = load.4 %0, %1
+    return %2, %3
+}
+
 func @load8_f64:f64(ptr) {
     # check: function `load8_f64`:
     # nextln:       block0[%1:gpr64($$rdi)]:

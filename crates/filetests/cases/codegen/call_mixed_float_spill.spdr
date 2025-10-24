@@ -1,0 +1,27 @@
+# run: codegen[small-pic]
+
+extfunc @f(f32, f64)
+extfunc @g(f64, f32)
+
+func @caller(f64, f32) {
+    # check: function `caller`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 83 ec 10                     sub rsp, 0x10
+    # nextln: 000008: f3 0f 11 4c 24 08               movss dword ptr [rsp + 8], xmm1
+    # nextln: 00000e: f2 0f 11 04 24                  movsd qword ptr [rsp], xmm0
+    # nextln: 000013: f3 0f 10 44 24 08               movss xmm0, dword ptr [rsp + 8]
+    # nextln: 000019: f2 0f 10 0c 24                  movsd xmm1, qword ptr [rsp]
+    # nextln: 00001e: e8 00 00 00 00                  call 0x23  # RELOC_PC32 -> @f + -4
+    # nextln: 000023: f3 0f 10 4c 24 08               movss xmm1, dword ptr [rsp + 8]
+    # nextln: 000029: f2 0f 10 04 24                  movsd xmm0, qword ptr [rsp]
+    # nextln: 00002e: e8 00 00 00 00                  call 0x33  # RELOC_PC32 -> @g + -4
+    # nextln: 000033: 48 83 c4 10                     add rsp, 0x10
+    # nextln: 000037: 5d                              pop rbp
+    # nextln: 000038: c3                              ret
+
+    %0:ctrl, %1:f64, %2:f32 = entry
+    %3:ctrl = call @f %0, %2, %1
+    %4:ctrl = call @g %3, %1, %2
+    return %4
+}

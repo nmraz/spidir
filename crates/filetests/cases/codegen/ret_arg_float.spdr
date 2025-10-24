@@ -1,7 +1,42 @@
 # run: codegen
 
-func @ret_first:f64(f64, f64) {
-    # check: function `ret_first`:
+func @ret_first32:f32(f32, f32) {
+    # check: function `ret_first32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 5d                              pop rbp
+    # nextln: 000005: c3                              ret
+
+    %0:ctrl, %1:f32, %2:f32 = entry
+    return %0, %1
+}
+
+func @ret_second32:f32(f32, f32) {
+    # check: function `ret_second32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 0f 28 c1                        movaps xmm0, xmm1
+    # nextln: 000007: 5d                              pop rbp
+    # nextln: 000008: c3                              ret
+
+    %0:ctrl, %1:f32, %2:f32 = entry
+    return %0, %2
+}
+
+func @ret_ninth32:f32(f32, f32, f32, f32, f32, f32, f32, f32, f32) {
+    # check: function `ret_ninth32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f3 0f 10 45 10                  movss xmm0, dword ptr [rbp + 0x10]
+    # nextln: 000009: 5d                              pop rbp
+    # nextln: 00000a: c3                              ret
+
+    %0:ctrl, %1:f32, %2:f32, %3:f32, %4:f32, %5:f32, %6:f32, %7:f32, %8:f32, %9:f32 = entry
+    return %0, %9
+}
+
+func @ret_first64:f64(f64, f64) {
+    # check: function `ret_first64`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 5d                              pop rbp
@@ -11,8 +46,8 @@ func @ret_first:f64(f64, f64) {
     return %0, %1
 }
 
-func @ret_second:f64(f64, f64) {
-    # check: function `ret_second`:
+func @ret_second64:f64(f64, f64) {
+    # check: function `ret_second64`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 0f 28 c1                        movaps xmm0, xmm1
@@ -23,8 +58,8 @@ func @ret_second:f64(f64, f64) {
     return %0, %2
 }
 
-func @ret_ninth:f64(f64, f64, f64, f64, f64, f64, f64, f64, f64) {
-    # check: function `ret_ninth`:
+func @ret_ninth64:f64(f64, f64, f64, f64, f64, f64, f64, f64, f64) {
+    # check: function `ret_ninth64`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: f2 0f 10 45 10                  movsd xmm0, qword ptr [rbp + 0x10]

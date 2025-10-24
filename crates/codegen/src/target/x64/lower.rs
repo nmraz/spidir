@@ -23,8 +23,8 @@ use crate::{
 use super::{
     AddrBase, AddrMode, AluBinOp, AluCommBinOp, AluUnOp, CALLER_SAVED_REGS, CodeModel,
     CompoundCondCode, CondCode, DivOp, ExtWidth, FullOperandSize, OperandSize, RC_GPR32, RC_GPR64,
-    RC_XMM64, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_XMM0, REG_XMM1,
-    REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, ShiftOp, SseFpuBinOp,
+    RC_XMM32, RC_XMM64, REG_R8, REG_R9, REG_RAX, REG_RCX, REG_RDI, REG_RDX, REG_RSI, REG_XMM0,
+    REG_XMM1, REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7, ShiftOp, SseFpuBinOp,
     SseFpuCmpCode, SseFpuPrecision, X64Instr, X64Machine,
 };
 
@@ -44,7 +44,7 @@ impl MachineLower for X64Machine {
         match ty {
             Type::I32 => RC_GPR32,
             Type::I64 | Type::Ptr => RC_GPR64,
-            Type::F32 => todo!(),
+            Type::F32 => RC_XMM32,
             Type::F64 => RC_XMM64,
         }
     }
@@ -60,8 +60,7 @@ impl MachineLower for X64Machine {
         for &param_type in param_types {
             let reg = match param_type {
                 Type::I32 | Type::I64 | Type::Ptr => fixed_gpr_iter.next(),
-                Type::F32 => todo!(),
-                Type::F64 => fixed_xmm_iter.next(),
+                Type::F32 | Type::F64 => fixed_xmm_iter.next(),
             };
 
             match reg {
@@ -105,7 +104,10 @@ impl MachineLower for X64Machine {
                 op_size: FullOperandSize::S64,
                 offset,
             },
-            Type::F32 => todo!(),
+            Type::F32 => X64Instr::MovsRRbp {
+                prec: SseFpuPrecision::Single,
+                offset,
+            },
             Type::F64 => X64Instr::MovsRRbp {
                 prec: SseFpuPrecision::Double,
                 offset,
@@ -231,8 +233,7 @@ impl MachineLower for X64Machine {
                     let retval_vreg = ctx.get_value_vreg(retval);
                     let retval_reg = match ctx.value_type(retval) {
                         Type::I32 | Type::I64 | Type::Ptr => REG_RAX,
-                        Type::F32 => todo!(),
-                        Type::F64 => REG_XMM0,
+                        Type::F32 | Type::F64 => REG_XMM0,
                     };
                     ctx.emit_instr(
                         X64Instr::Ret,
@@ -952,8 +953,7 @@ fn emit_call_wrapper(
 
         let is_xmm = match ty {
             Type::I32 | Type::I64 | Type::Ptr => false,
-            Type::F32 => todo!(),
-            Type::F64 => true,
+            Type::F32 | Type::F64 => true,
         };
 
         let reg = if is_xmm {
@@ -1006,7 +1006,7 @@ fn emit_call_wrapper(
             let instr = match ty {
                 Type::I32 => X64Instr::MovMR(FullOperandSize::S32, addr_mode),
                 Type::I64 | Type::Ptr => X64Instr::MovMR(FullOperandSize::S64, addr_mode),
-                Type::F32 => todo!(),
+                Type::F32 => X64Instr::MovsMR(SseFpuPrecision::Single, addr_mode),
                 Type::F64 => X64Instr::MovsMR(SseFpuPrecision::Double, addr_mode),
             };
 
@@ -1019,8 +1019,7 @@ fn emit_call_wrapper(
     let retval = ctx.node_outputs(node).next().map(|retval: DepValue| {
         let reg = match ctx.value_type(retval) {
             Type::I32 | Type::I64 | Type::Ptr => REG_RAX,
-            Type::F32 => todo!(),
-            Type::F64 => REG_XMM0,
+            Type::F32 | Type::F64 => REG_XMM0,
         };
         let retval = ctx.get_value_vreg(retval);
         DefOperand::fixed(retval, reg)

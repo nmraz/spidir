@@ -1,7 +1,35 @@
 # run: isel
 
-func @ret_first:f64(f64, f64) {
-    # check: function `ret_first`:
+func @ret_first32:f32(f32, f32) {
+    # check: function `ret_first32`:
+    # nextln:       block0[%0:xmm32($$xmm0)]:
+    # nextln: 0000:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:f32, %2:f32 = entry
+    return %0, %1
+}
+
+func @ret_second32:f32(f32, f32) {
+    # check: function `ret_second32`:
+    # nextln:       block0[%0:xmm32($$xmm1)]:
+    # nextln: 0000:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:f32, %2:f32 = entry
+    return %0, %2
+}
+
+func @ret_ninth32:f32(f32, f32, f32, f32, f32, f32, f32, f32, f32) {
+    # check: function `ret_ninth32`:
+    # nextln:       block0[]:
+    # nextln: 0000:      %0:xmm32(reg)[late] = MovsRRbp { prec: Single, offset: 16 }
+    # nextln: 0001:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %1:f32, %2:f32, %3:f32, %4:f32, %5:f32, %6:f32, %7:f32, %8:f32, %9:f32 = entry
+    return %0, %9
+}
+
+func @ret_first64:f64(f64, f64) {
+    # check: function `ret_first64`:
     # nextln:       block0[%0:xmm64($$xmm0)]:
     # nextln: 0000:      Ret %0($$xmm0)[early]
 
@@ -9,8 +37,8 @@ func @ret_first:f64(f64, f64) {
     return %0, %1
 }
 
-func @ret_second:f64(f64, f64) {
-    # check: function `ret_second`:
+func @ret_second64:f64(f64, f64) {
+    # check: function `ret_second64`:
     # nextln:       block0[%0:xmm64($$xmm1)]:
     # nextln: 0000:      Ret %0($$xmm0)[early]
 
@@ -18,8 +46,8 @@ func @ret_second:f64(f64, f64) {
     return %0, %2
 }
 
-func @ret_ninth:f64(f64, f64, f64, f64, f64, f64, f64, f64, f64) {
-    # check: function `ret_ninth`:
+func @ret_ninth64:f64(f64, f64, f64, f64, f64, f64, f64, f64, f64) {
+    # check: function `ret_ninth64`:
     # nextln:       block0[]:
     # nextln: 0000:      %0:xmm64(reg)[late] = MovsRRbp { prec: Double, offset: 16 }
     # nextln: 0001:      Ret %0($$xmm0)[early]

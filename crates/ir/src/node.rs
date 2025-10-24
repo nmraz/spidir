@@ -239,6 +239,8 @@ pub enum NodeKind {
     Fsub,
     Fmul,
     Fdiv,
+    Fwiden,
+    Fnarrow,
     Fcmp(FcmpKind),
     SintToFloat,
     UintToFloat,

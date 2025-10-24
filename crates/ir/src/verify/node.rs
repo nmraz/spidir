@@ -48,6 +48,8 @@ pub fn verify_node_kind(
         NodeKind::Fsub => verify_float_binop(graph, node, errors),
         NodeKind::Fmul => verify_float_binop(graph, node, errors),
         NodeKind::Fdiv => verify_float_binop(graph, node, errors),
+        NodeKind::Fwiden => verify_fwiden(graph, node, errors),
+        NodeKind::Fnarrow => verify_fnarrow(graph, node, errors),
         NodeKind::Fcmp(_) => verify_fcmp(graph, node, errors),
         NodeKind::SintToFloat => verify_inttofloat(graph, node, errors),
         NodeKind::UintToFloat => verify_inttofloat(graph, node, errors),
@@ -330,6 +332,22 @@ fn verify_float_binop(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVer
     let result_kind = graph.value_kind(result);
     let _ = verify_input_kind(graph, node, 0, &[result_kind], errors);
     let _ = verify_input_kind(graph, node, 1, &[result_kind], errors);
+}
+
+fn verify_fwiden(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 1, errors) else {
+        return;
+    };
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::F32)], errors);
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::F64)], errors);
+}
+
+fn verify_fnarrow(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 1, errors) else {
+        return;
+    };
+    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::F64)], errors);
+    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::F32)], errors);
 }
 
 fn verify_fcmp(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {

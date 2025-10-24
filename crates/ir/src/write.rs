@@ -289,6 +289,8 @@ pub fn write_node_kind(
         NodeKind::Fsub => write!(w, "fsub")?,
         NodeKind::Fmul => write!(w, "fmul")?,
         NodeKind::Fdiv => write!(w, "fdiv")?,
+        NodeKind::Fwiden => write!(w, "fwiden")?,
+        NodeKind::Fnarrow => write!(w, "fnarrow")?,
         NodeKind::Fcmp(kind) => write!(w, "fcmp {kind}")?,
         NodeKind::SintToFloat => write!(w, "sinttofloat")?,
         NodeKind::UintToFloat => write!(w, "uinttofloat")?,

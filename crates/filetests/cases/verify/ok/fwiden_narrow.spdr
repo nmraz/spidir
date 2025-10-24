@@ -1,0 +1,15 @@
+# run: verify-ok
+
+# check: $()
+
+func @fwiden:f64(f32) {
+    %0:ctrl, %1:f32 = entry
+    %2:f64 = fwiden %1
+    return %0, %2
+}
+
+func @fnarrow:f32(f64) {
+    %0:ctrl, %1:f64 = entry
+    %2:f32 = fnarrow %1
+    return %0, %2
+}

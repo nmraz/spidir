@@ -1,0 +1,77 @@
+# run: verify-err
+
+func @fwiden_bad_input_count:f32() {
+    # check: function `fwiden_bad_input_count`:
+    # unordered: `$val:f32 = fwiden $val, $val, $val`: bad input count, expected 1
+    # unordered: `$val:f32 = fwiden`: bad input count, expected 1
+
+    %0:ctrl = entry
+    %1:f32 = fwiden
+    %2:f32 = fwiden %1, %1, %1
+    return %0, %2
+}
+
+func @fwiden_bad_output_count:f64(f32) {
+    # check: function `fwiden_bad_output_count`:
+    # unordered: `$val:f64, $val:f64 = fwiden $val`: bad output count, expected 1
+
+    %0:ctrl, %1:f32 = entry
+    %2:f64, %3:f64 = fwiden %1
+    return %0, %2
+}
+
+func @fwiden_bad_output_kind:f32(f32) {
+    # check: function `fwiden_bad_output_kind`:
+    # unordered: `$val:f32 = fwiden $val`: bad value kind for output 0, expected one of `f64`, got `f32`
+
+    %0:ctrl, %1:f32 = entry
+    %2:f32 = fwiden %1
+    return %0, %2
+}
+
+func @fwiden_bad_input_kind:f64(f64) {
+    # check: function `fwiden_bad_input_kind`:
+    # unordered: `$val:f64 = fwiden $val`: bad value kind for input 0, expected one of `f32`, got `f64`
+
+    %0:ctrl, %1:f64 = entry
+    %2:f64 = fwiden %1
+    return %0, %2
+}
+
+func @fnarrow_bad_input_count:f32() {
+    # check: function `fnarrow_bad_input_count`:
+    # unordered: `$val:f32 = fnarrow $val, $val, $val`: bad input count, expected 1
+    # unordered: `$val:f32 = fnarrow`: bad input count, expected 1
+
+    %0:ctrl = entry
+    %1:f32 = fnarrow
+    %2:f32 = fnarrow %1, %1, %1
+    return %0, %2
+}
+
+func @fnarrow_bad_output_count:f32(f64) {
+    # check: function `fnarrow_bad_output_count`:
+    # unordered: `$val:f32, $val:f32 = fnarrow $val`: bad output count, expected 1
+
+    %0:ctrl, %1:f64 = entry
+    %2:f32, %3:f32 = fnarrow %1
+    return %0, %2
+}
+
+func @fnarrow_bad_output_kind:f64(f64) {
+    # check: function `fnarrow_bad_output_kind`:
+    # unordered: `$val:f64 = fnarrow $val`: bad value kind for output 0, expected one of `f32`, got `f64`
+
+    %0:ctrl, %1:f64 = entry
+    %2:f64 = fnarrow %1
+    return %0, %2
+}
+
+func @fnarrow_bad_input_kind:f32(f32) {
+    # check: function `fnarrow_bad_input_kind`:
+    # unordered: `$val:f32 = fnarrow $val`: bad value kind for input 0, expected one of `f64`, got `f32`
+
+    %0:ctrl, %1:f32 = entry
+    %2:f32 = fnarrow %1
+    return %0, %2
+}

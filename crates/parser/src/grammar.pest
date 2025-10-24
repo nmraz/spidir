@@ -76,6 +76,8 @@ nodekind           =  {
   | "fsub"
   | "fmul"
   | "fdiv"
+  | "fwiden"
+  | "fnarrow"
   | fcmp_nodekind
   | "sinttofloat"
   | "uinttofloat"

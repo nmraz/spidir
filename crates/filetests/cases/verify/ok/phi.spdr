@@ -26,6 +26,14 @@ func @phi_ptr:ptr(i32, ptr, ptr) {
     return %6, %8
 }
 
+func @phi_f32:f32(i32, f32, f32) {
+    %0:ctrl, %1:i32, %2:f32, %3:f32 = entry
+    %4:ctrl, %5:ctrl = brcond %0, %1
+    %6:ctrl, %7:phisel = region %4, %5
+    %8:f32 = phi %7, %2, %3
+    return %6, %8
+}
+
 func @phi_f64:f64(i32, f64, f64) {
     %0:ctrl, %1:i32, %2:f64, %3:f64 = entry
     %4:ctrl, %5:ctrl = brcond %0, %1

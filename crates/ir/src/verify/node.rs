@@ -720,6 +720,7 @@ fn verify_output_kind(
 const ALL_VALUE_TYPES: &[DepValueKind] = &[
     DepValueKind::Value(Type::I32),
     DepValueKind::Value(Type::I64),
+    DepValueKind::Value(Type::F32),
     DepValueKind::Value(Type::F64),
     DepValueKind::Value(Type::Ptr),
 ];

@@ -631,8 +631,8 @@ spidir_value_t spidir_builder_build_phi(spidir_builder_handle_t builder,
 /// inputs of its parent block.
 ///
 /// This function is useful when constructing graphs with data-flow cycles, such
-/// as loops - inputs loop-carried dependencies can be added once they have been
-/// built.
+/// as loops - inputs from loop-carried dependencies can be added once they have
+/// been built.
 ///
 /// @param[in] builder A handle to the function builder.
 /// @param[in] phi     A handle to the phi value, as obtained by
@@ -649,8 +649,8 @@ void spidir_builder_add_phi_input(spidir_builder_handle_t builder,
 /// an `iconst` of type `SPIDIR_TYPE_I32` should fit in 32 bits.
 ///
 /// @param[in] builder A handle to the function builder.
-/// @param[in] type    The type of the integer value to build. This should be
-///                    either `SPIDIR_TYPE_I32` or `SPIDIR_TYPE_I64`.
+/// @param[in] type    The type of the integer value to build. This should be an
+///                    integer or pointer type.
 /// @param[in] value   The value of the constant to build.
 /// @return An SSA value representing the constant. This value will have the
 ///         type `type`.

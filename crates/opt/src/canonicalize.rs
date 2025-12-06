@@ -5,26 +5,12 @@ use smallvec::SmallVec;
 
 use ir::{
     builder::BuilderExt,
-    cache::NodeCache,
-    function::FunctionBody,
-    module::ModuleMetadata,
     node::{IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
 use valmatch::match_value;
 
-use crate::reduce::{ReduceContext, ReduceState, init_reduce_state, reduce};
-
-pub fn canonicalize(
-    module_metadata: &ModuleMetadata,
-    body: &mut FunctionBody,
-    node_cache: &mut NodeCache,
-) {
-    let mut state = ReduceState::new();
-    let mut ctx = ReduceContext::new(module_metadata, body, node_cache, &mut state);
-    init_reduce_state(&mut ctx);
-    reduce(&mut ctx, canonicalize_node);
-}
+use crate::state::EditContext;
 
 macro_rules! fold_constant {
     ($ctx:expr, $output:expr, $a:expr, $b:expr, $func:ident) => {{
@@ -38,7 +24,7 @@ macro_rules! fold_constant {
     }};
 }
 
-fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
+pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
     let graph = ctx.graph();
     match graph.node_kind(node) {
         NodeKind::Region => {
@@ -381,7 +367,7 @@ fn canonicalize_node(ctx: &mut ReduceContext<'_>, node: Node) {
     }
 }
 
-fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
+fn canonicalize_icmp(ctx: &mut EditContext<'_>, node: Node, kind: IcmpKind) {
     macro_rules! cmp_signed {
         ($ty:expr, $a:expr, $b:expr, $op:tt) => {
             if $ty == Type::I32 {
@@ -519,7 +505,7 @@ fn canonicalize_icmp(ctx: &mut ReduceContext<'_>, node: Node, kind: IcmpKind) {
 }
 
 fn simplify_icmp_gt_const_boundary(
-    ctx: &mut ReduceContext<'_>,
+    ctx: &mut EditContext<'_>,
     output: DepValue,
     a: DepValue,
     b: DepValue,
@@ -541,7 +527,7 @@ fn simplify_icmp_gt_const_boundary(
 }
 
 fn simplify_icmp_lt_const_boundary(
-    ctx: &mut ReduceContext<'_>,
+    ctx: &mut EditContext<'_>,
     output: DepValue,
     a: DepValue,
     b: DepValue,
@@ -561,7 +547,7 @@ fn simplify_icmp_lt_const_boundary(
 }
 
 fn replace_with_icmp(
-    ctx: &mut ReduceContext<'_>,
+    ctx: &mut EditContext<'_>,
     output: DepValue,
     kind: IcmpKind,
     a: DepValue,
@@ -572,13 +558,13 @@ fn replace_with_icmp(
     ctx.replace_value(output, new_output);
 }
 
-fn replace_with_iconst(ctx: &mut ReduceContext<'_>, value: DepValue, iconst: u64) {
+fn replace_with_iconst(ctx: &mut EditContext<'_>, value: DepValue, iconst: u64) {
     let ty = ctx.graph().value_kind(value).as_value().unwrap();
     let iconst = ctx.build_iconst(ty, iconst);
     ctx.replace_value(value, iconst);
 }
 
-fn commute_node_inputs(ctx: &mut ReduceContext<'_>, node: Node, a: DepValue, b: DepValue) {
+fn commute_node_inputs(ctx: &mut EditContext<'_>, node: Node, a: DepValue, b: DepValue) {
     ctx.set_node_input(node, 0, b);
     ctx.set_node_input(node, 1, a);
 }

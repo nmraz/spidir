@@ -3,7 +3,6 @@ use filecheck::Value;
 
 use fx_utils::FxHashMap;
 use ir::module::Module;
-use opt::canonicalize::canonicalize;
 
 use crate::{
     provider::{TestProvider, Updater, update_transformed_module_output},
@@ -23,13 +22,7 @@ impl TestProvider for CanonicalizeProvider {
     }
 
     fn output_for(&self, mut module: Module) -> Result<(String, Module)> {
-        for (func, body) in module.function_bodies.iter_mut() {
-            canonicalize(
-                &module.metadata,
-                body,
-                &mut module.function_node_caches[func],
-            );
-        }
+        opt::canonicalize(&mut module);
         verify_module_with_err(&module, "transformed module invalid")?;
         Ok((module.to_string(), module))
     }

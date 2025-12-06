@@ -266,7 +266,7 @@ fn main() -> Result<()> {
         }
         ToolCommand::Opt { input_file } => {
             let mut module = read_and_verify_module(&input_file)?;
-            optimize_module(&mut module);
+            opt::run(&mut module);
             write!(io::stdout(), "{module}")?;
         }
         ToolCommand::Schedule { input_file } => {
@@ -296,7 +296,7 @@ fn main() -> Result<()> {
             machine_opts,
         } => {
             let mut module = read_and_verify_module(&input_file)?;
-            optimize_module(&mut module);
+            opt::run(&mut module);
             io::stdout().write_all(get_module_code_str(&module, &machine_opts)?.as_bytes())?;
         }
         ToolCommand::CodegenExec {
@@ -383,17 +383,6 @@ fn output_dot_file(
         .context("failed to write dot file")?;
 
     Ok(())
-}
-
-fn optimize_module(module: &mut Module) {
-    // For now: just run the canonicalization pass on everything.
-    for (func, body) in module.function_bodies.iter_mut() {
-        opt::canonicalize::canonicalize(
-            &module.metadata,
-            body,
-            &mut module.function_node_caches[func],
-        );
-    }
 }
 
 fn get_module_schedule_str(module: &Module) -> String {

@@ -1,0 +1,112 @@
+# run: canonicalize
+
+func @direct_phi_loop(ptr, i32) {
+    # check:   func @direct_phi_loop(ptr, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         $(iconst1=$val):i32 = iconst 1
+    # dag:         $(isub0=$val):i32 = isub $(phi0=$val), $iconst1
+    # dag:         $(icmp0=$val):i32 = icmp eq $isub0, $iconst0
+    # dag:         $phi0:i32 = phi $(region0=$val), $entry2, $isub0
+    # dag:         $(store0=$val):ctrl = store.4 $(region1=$val), $phi0, $(phi1=$val)
+    # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $store0, $icmp0
+    # dag:         return $brcond0
+    # dag:         $region1:ctrl, $region0:phisel = region $entry0, $brcond1
+    # dag:         $phi1:ptr = phi $region0, $entry1, $phi1
+    # nextln:  }
+
+    %e:ctrl, %p:ptr, %c:i32 = entry
+
+    %h:ctrl, %hp:phisel = region %e, %next
+    # This redundant phi directly depends on its output
+    %lp:ptr = phi %hp, %p, %lp
+    %lc:i32 = phi %hp, %c, %nc
+    %l:ctrl = store.4 %h, %lc, %lp
+    %one:i32 = iconst 1
+    %nc:i32 = isub %lc, %one
+    %zero:i32 = iconst 0
+    %done:i32 = icmp eq %nc, %zero
+    %out:ctrl, %next:ctrl = brcond %l, %done
+
+    return %out
+}
+
+func @multi_direct_phi_loop(ptr, i32, i32) {
+    # check:   func @multi_direct_phi_loop(ptr, i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):i32, $(entry3=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry3, $iconst0
+    # dag:         $(iconst1=$val):i32 = iconst 1
+    # dag:         $(isub0=$val):i32 = isub $(phi0=$val), $iconst1
+    # dag:         $(icmp1=$val):i32 = icmp eq $isub0, $iconst0
+    # dag:         $phi0:i32 = phi $(region0=$val), $entry2, $isub0, $isub0
+    # dag:         $(store0=$val):ctrl = store.4 $(region1=$val), $phi0, $(phi1=$val)
+    # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $store0, $icmp0
+    # dag:         $(store1=$val):ctrl = store.4 $brcond1, $phi0, $phi1
+    # dag:         $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $store1, $icmp1
+    # dag:         return $brcond2
+    # dag:         $region1:ctrl, $region0:phisel = region $entry0, $brcond0, $brcond3
+    # dag:         $phi1:ptr = phi $region0, $entry1, $phi1, $phi1
+    # nextln:  }
+
+    %e:ctrl, %p:ptr, %c:i32, %s:i32 = entry
+    %zero:i32 = iconst 0
+    %sz:i32 = icmp eq %s, %zero
+
+    %h:ctrl, %hp:phisel = region %e, %enext, %next
+    # This redundant phi directly depends on its output, twice
+    %lp:ptr = phi %hp, %p, %lp, %lp
+    %lc:i32 = phi %hp, %c, %nc, %nc
+    %l:ctrl = store.4 %h, %lc, %lp
+    %one:i32 = iconst 1
+    %nc:i32 = isub %lc, %one
+    %done:i32 = icmp eq %nc, %zero
+    %enext:ctrl, %l2:ctrl = brcond %l, %sz
+    %l3:ctrl = store.4 %l2, %lc, %lp
+    %out:ctrl, %next:ctrl = brcond %l3, %done
+
+    return %out
+}
+
+func @indirect_phi_loop(ptr, i32, i32) {
+    # check:   func @indirect_phi_loop(ptr, i32, i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr, $(entry2=$val):i32, $(entry3=$val):i32 = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry3, $iconst0
+    # dag:         $(iconst1=$val):i32 = iconst 1
+    # dag:         $(isub0=$val):i32 = isub $(phi0=$val), $iconst1
+    # dag:         $(icmp1=$val):i32 = icmp eq $isub0, $iconst0
+    # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $(region0=$val), $icmp1
+    # dag:         return $brcond0
+    # dag:         $(region1=$val):ctrl, $(region2=$val):phisel = region $entry0, $brcond1
+    # dag:         $phi0:i32 = phi $region2, $entry2, $isub0
+    # unordered:   $(phi1=$val):ptr =
+    # sameln:      phi $region2, $entry1, $phi1
+    # dag:         $(store0=$val):ctrl = store.4 $region1, $phi0, $phi1
+    # dag:         $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $store0, $icmp0
+    # dag:         $(store1=$val):ctrl = store.4 $brcond3, $phi0, $phi1
+    # dag:         $region0:ctrl, $(region3=$val):phisel = region $brcond2, $store1
+    # nextln:  }
+
+    %e:ctrl, %p:ptr, %c:i32, %s:i32 = entry
+    %zero:i32 = iconst 0
+    %sz:i32 = icmp eq %s, %zero
+
+    %h:ctrl, %hp:phisel = region %e, %next
+    # This redundant phi indirectly depends on its output via %lp2
+    %lp:ptr = phi %hp, %p, %lp2
+    %lc:i32 = phi %hp, %c, %nc2
+    %l:ctrl = store.4 %h, %lc, %lp
+    %one:i32 = iconst 1
+    %nc:i32 = isub %lc, %one
+    %l2:ctrl, %l3:ctrl = brcond %l, %sz
+    %l4:ctrl = store.4 %l3, %lc, %lp
+
+    %l5:ctrl, %l5p:phisel = region %l2, %l4
+    %lp2:ptr = phi %l5p, %lp, %lp
+    %nc2:i32 = phi %l5p, %nc, %nc
+    %done:i32 = icmp eq %nc2, %zero
+    %out:ctrl, %next:ctrl = brcond %l5, %done
+
+    return %out
+}

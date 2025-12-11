@@ -8,11 +8,10 @@ func @direct_phi_loop(ptr, i32) {
     # dag:         $(isub0=$val):i32 = isub $(phi0=$val), $iconst1
     # dag:         $(icmp0=$val):i32 = icmp eq $isub0, $iconst0
     # dag:         $phi0:i32 = phi $(region0=$val), $entry2, $isub0
-    # dag:         $(store0=$val):ctrl = store.4 $(region1=$val), $phi0, $(phi1=$val)
+    # dag:         $(store0=$val):ctrl = store.4 $(region1=$val), $phi0, $entry1
     # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $store0, $icmp0
     # dag:         return $brcond0
     # dag:         $region1:ctrl, $region0:phisel = region $entry0, $brcond1
-    # dag:         $phi1:ptr = phi $region0, $entry1, $phi1
     # nextln:  }
 
     %e:ctrl, %p:ptr, %c:i32 = entry
@@ -40,13 +39,12 @@ func @multi_direct_phi_loop(ptr, i32, i32) {
     # dag:         $(isub0=$val):i32 = isub $(phi0=$val), $iconst1
     # dag:         $(icmp1=$val):i32 = icmp eq $isub0, $iconst0
     # dag:         $phi0:i32 = phi $(region0=$val), $entry2, $isub0, $isub0
-    # dag:         $(store0=$val):ctrl = store.4 $(region1=$val), $phi0, $(phi1=$val)
+    # dag:         $(store0=$val):ctrl = store.4 $(region1=$val), $phi0, $entry1
     # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $store0, $icmp0
-    # dag:         $(store1=$val):ctrl = store.4 $brcond1, $phi0, $phi1
+    # dag:         $(store1=$val):ctrl = store.4 $brcond1, $phi0, $entry1
     # dag:         $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $store1, $icmp1
     # dag:         return $brcond2
     # dag:         $region1:ctrl, $region0:phisel = region $entry0, $brcond0, $brcond3
-    # dag:         $phi1:ptr = phi $region0, $entry1, $phi1, $phi1
     # nextln:  }
 
     %e:ctrl, %p:ptr, %c:i32, %s:i32 = entry
@@ -80,11 +78,9 @@ func @indirect_phi_loop(ptr, i32, i32) {
     # dag:         return $brcond0
     # dag:         $(region1=$val):ctrl, $(region2=$val):phisel = region $entry0, $brcond1
     # dag:         $phi0:i32 = phi $region2, $entry2, $isub0
-    # unordered:   $(phi1=$val):ptr =
-    # sameln:      phi $region2, $entry1, $phi1
-    # dag:         $(store0=$val):ctrl = store.4 $region1, $phi0, $phi1
+    # dag:         $(store0=$val):ctrl = store.4 $region1, $phi0, $entry1
     # dag:         $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $store0, $icmp0
-    # dag:         $(store1=$val):ctrl = store.4 $brcond3, $phi0, $phi1
+    # dag:         $(store1=$val):ctrl = store.4 $brcond3, $phi0, $entry1
     # dag:         $region0:ctrl, $(region3=$val):phisel = region $brcond2, $store1
     # nextln:  }
 

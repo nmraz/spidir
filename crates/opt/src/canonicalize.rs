@@ -1,6 +1,5 @@
 use core::ops::{BitAnd, BitOr, BitXor};
 
-use itertools::Itertools;
 use smallvec::SmallVec;
 
 use ir::{
@@ -48,10 +47,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             }
         }
         NodeKind::Phi => {
-            // The first input is the selector, the rest are incoming values.
-            let mut incoming = graph.node_inputs(node).into_iter().skip(1);
-
-            if let Ok(input) = incoming.all_equal_value() {
+            if let Some(input) = single_phi_input(graph, node) {
                 // All inputs to this phi are actually the same value, so it can be removed.
                 let [output] = graph.node_outputs_exact(node);
                 ctx.replace_value(output, input);
@@ -365,6 +361,31 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
         }
         _ => {}
     }
+}
+
+fn single_phi_input(graph: &ValGraph, phi: Node) -> Option<DepValue> {
+    let output = graph.node_outputs(phi)[0];
+    let mut single_input = None;
+
+    // The first input is the selector, the rest are incoming values.
+    for input in graph.node_inputs(phi).into_iter().skip(1) {
+        // Deal with larger phi cycles or "webs" involving loops. On reducible flowgraphs, this
+        // simple added condition is sufficient to remove all non-minimal phis.
+        if input == output {
+            continue;
+        }
+
+        match single_input {
+            Some(existing) => {
+                if input != existing {
+                    return None;
+                }
+            }
+            None => single_input = Some(input),
+        }
+    }
+
+    single_input
 }
 
 fn canonicalize_icmp(ctx: &mut EditContext<'_>, node: Node, kind: IcmpKind) {

@@ -2,7 +2,7 @@ use core::cell::RefCell;
 
 use alloc::{collections::BTreeMap, vec, vec::Vec};
 use cranelift_entity::{PrimaryMap, SecondaryMap, packed_option::PackedOption};
-use entity_utils::DenseEntitySet;
+use entity_utils::set::DenseEntitySet;
 use fx_utils::FxHashMap;
 use itertools::Itertools;
 use log::{log_enabled, trace};

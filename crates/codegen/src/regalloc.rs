@@ -3,7 +3,7 @@ use core::{fmt, ops::Range};
 use alloc::vec::Vec;
 
 use cranelift_entity::{PrimaryMap, SecondaryMap};
-use entity_utils::DenseEntitySet;
+use entity_utils::set::DenseEntitySet;
 
 use crate::{
     cfg::{Block, CfgContext},

@@ -3,7 +3,7 @@ use core::{cmp, iter, mem};
 use alloc::vec::Vec;
 
 use cranelift_entity::{EntityRef, PrimaryMap, SecondaryMap, packed_option::ReservedValue};
-use entity_utils::DenseEntitySet;
+use entity_utils::set::DenseEntitySet;
 use fx_utils::FxHashMap;
 use log::trace;
 

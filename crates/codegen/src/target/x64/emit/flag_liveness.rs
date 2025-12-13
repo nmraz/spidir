@@ -1,4 +1,4 @@
-use entity_utils::DenseEntitySet;
+use entity_utils::set::DenseEntitySet;
 
 use crate::{
     cfg::CfgContext,

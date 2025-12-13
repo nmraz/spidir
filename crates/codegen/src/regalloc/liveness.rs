@@ -1,6 +1,6 @@
 use alloc::collections::VecDeque;
 use cranelift_entity::{SecondaryMap, packed_option::ReservedValue};
-use entity_utils::DenseEntitySet;
+use entity_utils::set::DenseEntitySet;
 use log::trace;
 use smallvec::{SmallVec, smallvec};
 

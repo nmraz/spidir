@@ -13,7 +13,7 @@ codegen = { path = "crates/codegen" }
 codegen-test-tools = { path = "crates/codegen-test-tools" }
 graphmock = { path = "crates/graphmock" }
 dominators = { path = "crates/dominators" }
-entity-set = { path = "crates/entity-set" }
+entity-utils = { path = "crates/entity-utils" }
 frontend = { path = "crates/frontend" }
 fx-utils = { path = "crates/fx-utils" }
 graphwalk = { path = "crates/graphwalk" }

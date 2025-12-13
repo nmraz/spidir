@@ -5,7 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-entity-set.workspace = true
+entity-utils.workspace = true
 fx-utils.workspace = true
 ir.workspace = true
 valmatch.workspace = true

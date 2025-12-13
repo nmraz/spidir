@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use anyhow::Result;
 use codegen::cfg::compute_block_cfg;
-use entity_utils::DenseEntitySet;
+use entity_utils::set::DenseEntitySet;
 use ir::module::Module;
 use itertools::Itertools;
 

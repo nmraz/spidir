@@ -1,6 +1,6 @@
 use core::{iter, ops::ControlFlow};
 
-use entity_utils::DenseEntitySet;
+use entity_utils::set::DenseEntitySet;
 use graphwalk::PostOrderContext;
 
 use crate::{

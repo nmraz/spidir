@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use core::ops::ControlFlow;
 
 use cranelift_entity::EntityRef;
-use entity_utils::DenseEntitySet;
+use entity_utils::set::DenseEntitySet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WalkPhase {

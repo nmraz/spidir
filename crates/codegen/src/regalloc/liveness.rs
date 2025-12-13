@@ -1,6 +1,5 @@
-use alloc::collections::VecDeque;
 use cranelift_entity::{SecondaryMap, packed_option::ReservedValue};
-use entity_utils::set::DenseEntitySet;
+use entity_utils::worklist::Worklist;
 use log::trace;
 use smallvec::{SmallVec, smallvec};
 
@@ -666,14 +665,11 @@ fn compute_block_liveness<M: MachineRegalloc>(
     let mut live_ins = make_block_vreg_map(cfg_ctx);
     let mut live_outs = make_block_vreg_map(cfg_ctx);
 
-    let mut worklist: VecDeque<_> = cfg_ctx.block_order.iter().copied().rev().collect();
-    let mut workset: DenseEntitySet<_> = worklist.iter().copied().collect();
+    let mut worklist: Worklist<_> = cfg_ctx.block_order.iter().copied().rev().collect();
 
     trace!("solving block liveness");
 
-    while let Some(block) = worklist.pop_front() {
-        workset.remove(block);
-
+    while let Some(block) = worklist.dequeue() {
         trace!("  {block}");
 
         // Note: we can do the union/subtraction in bulk here instead of iterating over individual
@@ -685,10 +681,9 @@ fn compute_block_liveness<M: MachineRegalloc>(
 
         for &pred in cfg_ctx.cfg.block_preds(block) {
             let status = live_outs[pred].union(live_in);
-            if status.is_changed() && !workset.contains(pred) {
+            if status.is_changed() {
                 trace!("    predecessor {pred} changed, requeuing");
-                worklist.push_back(pred);
-                workset.insert(pred);
+                worklist.enqueue(pred);
             }
         }
     }

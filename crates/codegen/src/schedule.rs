@@ -7,7 +7,7 @@ use cranelift_entity::{
     packed_option::{PackedOption, ReservedValue},
 };
 use dominators::depth_map::DepthMap;
-use entity_set::DenseEntitySet;
+use entity_utils::DenseEntitySet;
 use fx_utils::{FxHashMap, FxHashSet};
 use graphwalk::{GraphRef, PostOrderContext};
 use ir::{

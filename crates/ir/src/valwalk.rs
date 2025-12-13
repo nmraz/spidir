@@ -3,7 +3,7 @@ use core::{iter, ops::ControlFlow};
 use alloc::{vec, vec::Vec};
 
 use dominators::IntoCfg;
-use entity_set::DenseEntitySet;
+use entity_utils::DenseEntitySet;
 use itertools::izip;
 
 use crate::{

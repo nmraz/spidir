@@ -188,7 +188,7 @@ dependencies = [
  "cranelift-bitset",
  "cranelift-entity",
  "dominators",
- "entity-set",
+ "entity-utils",
  "expect-test",
  "fx-utils",
  "graphwalk",
@@ -302,7 +302,7 @@ name = "dominators"
 version = "0.1.0"
 dependencies = [
  "cranelift-entity",
- "entity-set",
+ "entity-utils",
  "expect-test",
  "fx-utils",
  "graphmock",
@@ -318,7 +318,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 
 [[package]]
-name = "entity-set"
+name = "entity-utils"
 version = "0.1.0"
 dependencies = [
  "cranelift-bitset",
@@ -399,7 +399,7 @@ dependencies = [
  "codegen",
  "codegen-test-tools",
  "cranelift-entity",
- "entity-set",
+ "entity-utils",
  "expect-test",
  "filecheck",
  "fx-utils",
@@ -476,7 +476,7 @@ name = "graphwalk"
 version = "0.1.0"
 dependencies = [
  "cranelift-entity",
- "entity-set",
+ "entity-utils",
  "expect-test",
  "graphmock",
  "itertools",
@@ -505,7 +505,7 @@ version = "0.1.0"
 dependencies = [
  "cranelift-entity",
  "dominators",
- "entity-set",
+ "entity-utils",
  "expect-test",
  "fx-utils",
  "graphwalk",
@@ -578,7 +578,7 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "cranelift-entity",
- "entity-set",
+ "entity-utils",
  "fx-utils",
  "ir",
  "itertools",

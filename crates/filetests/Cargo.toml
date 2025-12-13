@@ -9,7 +9,7 @@ rust-version.workspace = true
 [dependencies]
 codegen.workspace = true
 codegen-test-tools.workspace = true
-entity-set.workspace = true
+entity-utils.workspace = true
 ir.workspace = true
 ir-graphviz.workspace = true
 parser = { workspace = true, features = ["std"] }

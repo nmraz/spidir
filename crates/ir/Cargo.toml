@@ -8,7 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 dominators.workspace = true
-entity-set.workspace = true
+entity-utils.workspace = true
 fx-utils.workspace = true
 graphwalk.workspace = true
 

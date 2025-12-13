@@ -5,7 +5,7 @@ use dominators::{
     domtree::{DomTree, DomTreeNode},
     loops::{Loop, LoopForest},
 };
-use entity_set::DenseEntitySet;
+use entity_utils::DenseEntitySet;
 use expect_test::expect;
 use graphmock::{Graph, Node, graph};
 use itertools::Itertools;

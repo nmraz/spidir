@@ -4,6 +4,7 @@ use alloc::{collections::VecDeque, vec::Vec};
 
 use bitflags::bitflags;
 use cranelift_entity::SecondaryMap;
+use entity_utils::set::DenseEntitySet;
 use itertools::izip;
 use log::trace;
 use smallvec::SmallVec;
@@ -21,6 +22,7 @@ use ir::{
 
 pub struct FunctionState {
     node_queue: VecDeque<Node>,
+    live_nodes: DenseEntitySet<Node>,
     node_flags: SecondaryMap<Node, NodeFlags>,
 }
 
@@ -30,11 +32,6 @@ impl FunctionState {
         body: &mut FunctionBody,
         node_cache: &mut NodeCache,
     ) -> Self {
-        let mut state = Self {
-            node_queue: VecDeque::new(),
-            node_flags: SecondaryMap::new(),
-        };
-
         trace!("preparing function state");
 
         let walk_info = body.compute_full_walk_info();
@@ -47,10 +44,15 @@ impl FunctionState {
         )
         .collect();
 
+        let mut state = Self {
+            node_queue: VecDeque::new(),
+            live_nodes: walk_info.live_nodes,
+            node_flags: SecondaryMap::new(),
+        };
+
         let mut ctx = EditContext::new(module_metadata, body, node_cache, &mut state);
         for &node in node_postorder.iter().rev() {
-            if walk_info.live_nodes.contains(node) {
-                ctx.state.mark_node_live(node);
+            if ctx.state.live_nodes.contains(node) {
                 ctx.state.enqueue(node);
             } else {
                 // Make sure none of `node`'s inputs show up as live uses if they really aren't used.
@@ -83,7 +85,7 @@ impl FunctionState {
         // Avoid re-enqueueing nodes that are already waiting in the queue, and don't bother at all
         // with things that are already dead.
         let flags = self.node_flags[node];
-        if flags.contains(NodeFlags::LIVE) && !flags.contains(NodeFlags::ENQUEUED) {
+        if self.live_nodes.contains(node) && !flags.contains(NodeFlags::ENQUEUED) {
             trace!("    enqueue: {node}");
             self.node_flags[node].insert(NodeFlags::ENQUEUED);
             self.node_queue.push_back(node);
@@ -96,7 +98,7 @@ impl FunctionState {
             self.node_flags[node].remove(NodeFlags::ENQUEUED);
 
             // A node in the queue may have been killed while it was waiting - skip it.
-            if self.node_flags[node].contains(NodeFlags::LIVE) {
+            if self.live_nodes.contains(node) {
                 return Some(node);
             }
         }
@@ -121,11 +123,11 @@ impl FunctionState {
     }
 
     fn mark_node_live(&mut self, node: Node) {
-        self.node_flags[node].insert(NodeFlags::LIVE);
+        self.live_nodes.insert(node);
     }
 
     fn mark_node_dead(&mut self, node: Node) {
-        self.node_flags[node].remove(NodeFlags::LIVE);
+        self.live_nodes.remove(node);
     }
 }
 
@@ -135,7 +137,6 @@ bitflags! {
         const ENQUEUED = 0b01;
         const OUTPUT_KILLED = 0b10;
         const CANONICAL = 0b100;
-        const LIVE = 0b1000;
     }
 }
 
@@ -159,6 +160,10 @@ impl<'m> EditContext<'m> {
             node_cache,
             state,
         }
+    }
+
+    pub fn live_nodes(&self) -> &DenseEntitySet<Node> {
+        &self.state.live_nodes
     }
 
     pub fn set_node_input(&mut self, node: Node, index: u32, new_value: DepValue) {

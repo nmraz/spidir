@@ -210,6 +210,77 @@ pub fn dataflow_succs<'a>(
     raw_dataflow_succs(graph, node).filter(move |&(succ, _input_idx)| live_nodes.contains(succ))
 }
 
+pub fn is_cfg_pinned_node(graph: &ValGraph, node: Node) -> bool {
+    let kind = graph.node_kind(node);
+    kind.has_control_flow() || matches!(kind, NodeKind::Phi)
+}
+
+pub fn unpinned_dataflow_preds<'a>(
+    graph: &'a ValGraph,
+    live_nodes: &'a DenseEntitySet<Node>,
+    node: Node,
+) -> impl Iterator<Item = Node> + 'a {
+    dataflow_preds(graph, node)
+        .filter(|&pred| live_nodes.contains(pred))
+        .filter(move |&pred| !is_cfg_pinned_node(graph, pred))
+}
+
+pub struct UnpinnedDataflowPreds<'a> {
+    graph: &'a ValGraph,
+    live_nodes: &'a DenseEntitySet<Node>,
+}
+
+impl<'a> UnpinnedDataflowPreds<'a> {
+    pub fn new(graph: &'a ValGraph, live_nodes: &'a DenseEntitySet<Node>) -> Self {
+        Self { graph, live_nodes }
+    }
+}
+
+impl graphwalk::GraphRef for UnpinnedDataflowPreds<'_> {
+    type Node = Node;
+
+    fn try_successors(
+        &self,
+        node: Node,
+        f: impl FnMut(Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        unpinned_dataflow_preds(self.graph, self.live_nodes, node).try_for_each(f)
+    }
+}
+
+pub fn unpinned_dataflow_succs<'a>(
+    graph: &'a ValGraph,
+    live_nodes: &'a DenseEntitySet<Node>,
+    node: Node,
+) -> impl Iterator<Item = (Node, u32)> + 'a {
+    dataflow_succs(graph, live_nodes, node)
+        .filter(|&(succ, _input_idx)| !is_cfg_pinned_node(graph, succ))
+}
+
+pub struct UnpinnedDataflowSuccs<'a> {
+    graph: &'a ValGraph,
+    live_nodes: &'a DenseEntitySet<Node>,
+}
+
+impl<'a> UnpinnedDataflowSuccs<'a> {
+    pub fn new(graph: &'a ValGraph, live_nodes: &'a DenseEntitySet<Node>) -> Self {
+        Self { graph, live_nodes }
+    }
+}
+
+impl graphwalk::GraphRef for UnpinnedDataflowSuccs<'_> {
+    type Node = Node;
+
+    fn try_successors(
+        &self,
+        node: Node,
+        mut f: impl FnMut(Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        unpinned_dataflow_succs(self.graph, self.live_nodes, node)
+            .try_for_each(|(succ, _input_idx)| f(succ))
+    }
+}
+
 pub fn cfg_outputs(graph: &ValGraph, node: Node) -> impl Iterator<Item = DepValue> + '_ {
     graph
         .node_outputs(node)

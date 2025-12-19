@@ -7,10 +7,10 @@ use crate::{
     node::Type,
     test_utils::create_loop_body,
     valgraph::{Node, ValGraph},
-    valwalk::GraphWalkInfo,
+    valwalk::{GraphWalkInfo, is_cfg_pinned_node},
 };
 
-use super::{ScheduleContext, is_pinned_node, schedule_early, schedule_late};
+use super::{ScheduleContext, schedule_early, schedule_late};
 
 fn check_live_scheduled(
     graph: &ValGraph,
@@ -21,7 +21,7 @@ fn check_live_scheduled(
     for node in walk_info
         .live_nodes
         .iter()
-        .filter(|&node| !is_pinned_node(graph, node))
+        .filter(|&node| !is_cfg_pinned_node(graph, node))
     {
         assert!(scheduled.contains(node), "{node} not scheduled {kind}");
     }

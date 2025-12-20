@@ -162,6 +162,10 @@ impl<'m> EditContext<'m> {
         }
     }
 
+    pub fn display_node(&self, node: Node) -> impl fmt::Display + '_ {
+        display_node(self.module_metadata, self.body, node)
+    }
+
     pub fn live_nodes(&self) -> &DenseEntitySet<Node> {
         &self.state.live_nodes
     }
@@ -292,10 +296,6 @@ impl<'m> EditContext<'m> {
             node_changed(self.state, self.node_cache, user);
             cursor.replace_current_with(new_value);
         }
-    }
-
-    fn display_node(&self, node: Node) -> impl fmt::Display + '_ {
-        display_node(self.module_metadata, self.body, node)
     }
 }
 

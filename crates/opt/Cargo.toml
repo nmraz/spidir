@@ -7,6 +7,7 @@ rust-version.workspace = true
 [dependencies]
 entity-utils.workspace = true
 fx-utils.workspace = true
+graphwalk.workspace = true
 ir.workspace = true
 valmatch.workspace = true
 

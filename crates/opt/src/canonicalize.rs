@@ -1,5 +1,3 @@
-use core::ops::{BitAnd, BitOr, BitXor};
-
 use smallvec::SmallVec;
 
 use ir::{
@@ -9,17 +7,20 @@ use ir::{
 };
 use valmatch::match_value;
 
-use crate::{state::EditContext, utils::replace_with_iconst};
+use crate::{
+    constfold::{
+        fold_and, fold_ashr, fold_iadd, fold_icmp, fold_iext, fold_imul, fold_isub, fold_itrunc,
+        fold_lshr, fold_or, fold_sdiv, fold_sfill, fold_shl, fold_srem, fold_udiv, fold_urem,
+        fold_xor,
+    },
+    state::EditContext,
+    utils::replace_with_iconst,
+};
 
-macro_rules! fold_constant {
+macro_rules! fold_binop {
     ($ctx:expr, $output:expr, $a:expr, $b:expr, $func:ident) => {{
         let ty = $ctx.graph().value_kind($output).as_value().unwrap();
-        let combined = if ty == Type::I32 {
-            (($a as u32).$func($b as u32)) as u64
-        } else {
-            $a.$func($b)
-        };
-        replace_with_iconst($ctx, $output, combined);
+        replace_with_iconst($ctx, $output, $func(ty, $a, $b));
     }};
 }
 
@@ -58,7 +59,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             let [output] = graph.node_outputs_exact(node);
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_add),
+                (Some(a), Some(b)) => fold_binop!(ctx, output, a, b, fold_iadd),
                 (_, Some(0)) => ctx.replace_value(output, a),
                 (Some(_), None) => commute_node_inputs(ctx, node, a, b),
                 _ => {}
@@ -74,7 +75,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             }
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_sub),
+                (Some(a), Some(b)) => fold_binop!(ctx, output, a, b, fold_isub),
                 (_, Some(0)) => ctx.replace_value(output, a),
                 _ => {}
             }
@@ -85,7 +86,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             let ty = graph.value_kind(output).as_value().unwrap();
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, bitand),
+                (Some(a), Some(b)) => fold_binop!(ctx, output, a, b, fold_and),
 
                 (_, Some(0)) => replace_with_iconst(ctx, output, 0),
                 (_, Some(c)) if c == ty.all_ones_val() => ctx.replace_value(output, a),
@@ -101,7 +102,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             let ty = graph.value_kind(output).as_value().unwrap();
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, bitor),
+                (Some(a), Some(b)) => fold_binop!(ctx, output, a, b, fold_or),
 
                 (_, Some(0)) => ctx.replace_value(output, a),
                 (_, Some(c)) if c == ty.all_ones_val() => replace_with_iconst(ctx, output, c),
@@ -121,7 +122,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             }
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, bitxor),
+                (Some(a), Some(b)) => fold_binop!(ctx, output, a, b, fold_xor),
                 (_, Some(0)) => ctx.replace_value(output, a),
 
                 (Some(_), None) => commute_node_inputs(ctx, node, a, b),
@@ -134,11 +135,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             let [output] = graph.node_outputs_exact(node);
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (Some(a), Some(b)) => {
-                    // Shifting past the bit width produces an unspecified value anyway, so it's
-                    // easiest to just mask here.
-                    fold_constant!(ctx, output, a, b as u32, wrapping_shl);
-                }
+                (Some(a), Some(b)) => fold_binop!(ctx, output, a, b, fold_shl),
                 (Some(0), _) => replace_with_iconst(ctx, output, 0),
                 (_, Some(0)) => ctx.replace_value(output, a),
                 _ => {}
@@ -149,11 +146,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             let [output] = graph.node_outputs_exact(node);
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (Some(a), Some(b)) => {
-                    // Shifting past the bit width produces an unspecified value anyway, so it's
-                    // easiest to just mask here.
-                    fold_constant!(ctx, output, a, b as u32, wrapping_shr);
-                }
+                (Some(a), Some(b)) => fold_binop!(ctx, output, a, b, fold_lshr),
                 (Some(0), _) => replace_with_iconst(ctx, output, 0),
                 (_, Some(0)) => ctx.replace_value(output, a),
                 _ => {}
@@ -164,19 +157,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             let [output] = graph.node_outputs_exact(node);
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (Some(a), Some(b)) => {
-                    let ty = graph.value_kind(output).as_value().unwrap();
-                    // Shifting past the bit width produces an unspecified value anyway, so it's
-                    // easiest to just mask here.
-
-                    // Note: make sure to shift signed values so we end up with an arithmetic shift.
-                    let shifted = if ty == Type::I32 {
-                        (a as i32).wrapping_shr(b as u32) as u32 as u64
-                    } else {
-                        (a as i64).wrapping_shr(b as u32) as u64
-                    };
-                    replace_with_iconst(ctx, output, shifted);
-                }
+                (Some(a), Some(b)) => fold_binop!(ctx, output, a, b, fold_ashr),
                 (Some(0), _) => replace_with_iconst(ctx, output, 0),
                 (_, Some(0)) => ctx.replace_value(output, a),
                 _ => {}
@@ -187,7 +168,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             let [output] = graph.node_outputs_exact(node);
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (Some(a), Some(b)) => fold_constant!(ctx, output, a, b, wrapping_mul),
+                (Some(a), Some(b)) => fold_binop!(ctx, output, a, b, fold_imul),
 
                 (_, Some(0)) => replace_with_iconst(ctx, output, 0),
                 (_, Some(1)) => ctx.replace_value(output, a),
@@ -218,17 +199,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
                     }
                 }
                 (Some(a), Some(b)) => {
-                    let quotient = if ty == Type::I32 {
-                        (a as i32)
-                            .checked_div(b as i32)
-                            .map(|quotient| quotient as u32 as u64)
-                    } else {
-                        (a as i64)
-                            .checked_div(b as i64)
-                            .map(|quotient| quotient as u64)
-                    };
-
-                    if let Some(quotient) = quotient {
+                    if let Some(quotient) = fold_sdiv(ty, a, b) {
                         replace_with_iconst(ctx, output, quotient);
                         ctx.replace_value_and_kill(ctrl_out, ctrl_in);
                     };
@@ -250,14 +221,10 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
                     }
                 }
                 (Some(a), Some(b)) => {
-                    let quotient = if ty == Type::I32 {
-                        ((a as u32) / (b as u32)) as u64
-                    } else {
-                        a / b
+                    if let Some(quotient) = fold_udiv(ty, a, b) {
+                        replace_with_iconst(ctx, output, quotient);
+                        ctx.replace_value_and_kill(ctrl_out, ctrl_in);
                     };
-
-                    replace_with_iconst(ctx, output, quotient);
-                    ctx.replace_value_and_kill(ctrl_out, ctrl_in);
                 }
                 _ => {}
             }
@@ -276,17 +243,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
                     }
                 }
                 (Some(a), Some(b)) => {
-                    let remainder = if ty == Type::I32 {
-                        (a as i32)
-                            .checked_rem(b as i32)
-                            .map(|quotient| quotient as u32 as u64)
-                    } else {
-                        (a as i64)
-                            .checked_rem(b as i64)
-                            .map(|quotient| quotient as u64)
-                    };
-
-                    if let Some(remainder) = remainder {
+                    if let Some(remainder) = fold_srem(ty, a, b) {
                         replace_with_iconst(ctx, output, remainder);
                         ctx.replace_value_and_kill(ctrl_out, ctrl_in);
                     };
@@ -308,14 +265,10 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
                     }
                 }
                 (Some(a), Some(b)) => {
-                    let remainder = if ty == Type::I32 {
-                        ((a as u32) % (b as u32)) as u64
-                    } else {
-                        a % b
+                    if let Some(remainder) = fold_urem(ty, a, b) {
+                        replace_with_iconst(ctx, output, remainder);
+                        ctx.replace_value_and_kill(ctrl_out, ctrl_in);
                     };
-
-                    replace_with_iconst(ctx, output, remainder);
-                    ctx.replace_value_and_kill(ctrl_out, ctrl_in);
                 }
                 _ => {}
             }
@@ -324,14 +277,14 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             let [input] = graph.node_inputs_exact(node);
             let [output] = graph.node_outputs_exact(node);
             if let Some(value) = match_iconst(graph, input) {
-                replace_with_iconst(ctx, output, value);
+                replace_with_iconst(ctx, output, fold_iext(value));
             }
         }
         NodeKind::Itrunc => {
             let [input] = graph.node_inputs_exact(node);
             let [output] = graph.node_outputs_exact(node);
             if let Some(value) = match_iconst(graph, input) {
-                replace_with_iconst(ctx, output, value as u32 as u64);
+                replace_with_iconst(ctx, output, fold_itrunc(value));
             }
         }
         &NodeKind::Icmp(kind) => canonicalize_icmp(ctx, node, kind),
@@ -341,14 +294,7 @@ pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
             let ty = graph.value_kind(output).as_value().unwrap();
 
             if let Some(value) = match_iconst(graph, input) {
-                let shift_width = 64 - width;
-
-                let mut new_value = (((value << shift_width) as i64) >> shift_width) as u64;
-                if ty == Type::I32 {
-                    new_value = new_value as u32 as u64;
-                }
-
-                replace_with_iconst(ctx, output, new_value);
+                replace_with_iconst(ctx, output, fold_sfill(ty, value, width));
             }
         }
         NodeKind::PtrOff => {
@@ -389,16 +335,6 @@ fn single_phi_input(graph: &ValGraph, phi: Node) -> Option<DepValue> {
 }
 
 fn canonicalize_icmp(ctx: &mut EditContext<'_>, node: Node, kind: IcmpKind) {
-    macro_rules! cmp_signed {
-        ($ty:expr, $a:expr, $b:expr, $op:tt) => {
-            if $ty == Type::I32 {
-                ($a as i32) $op ($b as i32)
-            } else {
-                ($a as i64) $op ($b as i64)
-            }
-        };
-    }
-
     macro_rules! checked_op_signed {
         ($ty:expr, $a:expr, $b:expr, $op:ident) => {
             if $ty == Type::I32 {
@@ -426,19 +362,7 @@ fn canonicalize_icmp(ctx: &mut EditContext<'_>, node: Node, kind: IcmpKind) {
     let [output] = graph.node_outputs_exact(node);
 
     match (match_iconst(graph, a), match_iconst(graph, b)) {
-        (Some(a), Some(b)) => {
-            let res = match kind {
-                IcmpKind::Eq => a == b,
-                IcmpKind::Ne => a != b,
-                IcmpKind::Slt => cmp_signed!(input_ty, a, b, <),
-                IcmpKind::Sle => cmp_signed!(input_ty, a, b, <=),
-                // Note: these compares always behave the same for 32-bit and 64-bit values because
-                // 32-bit `iconst` nodes are not allowed to have their high bits set.
-                IcmpKind::Ult => a < b,
-                IcmpKind::Ule => a <= b,
-            };
-            replace_with_iconst(ctx, output, res as u64);
-        }
+        (Some(a), Some(b)) => replace_with_iconst(ctx, output, fold_icmp(input_ty, kind, a, b)),
 
         (Some(_), None) if kind.is_commutative() => commute_node_inputs(ctx, node, a, b),
 

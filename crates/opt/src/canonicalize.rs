@@ -5,7 +5,6 @@ use ir::{
     node::{IcmpKind, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
 };
-use valmatch::match_value;
 
 use crate::{
     constfold::{
@@ -14,7 +13,7 @@ use crate::{
         fold_xor,
     },
     state::EditContext,
-    utils::replace_with_iconst,
+    utils::{match_iconst, replace_with_iconst},
 };
 
 macro_rules! fold_binop {
@@ -530,13 +529,4 @@ fn unsigned_max_for_ty(ty: Type) -> u64 {
     } else {
         u64::MAX
     }
-}
-
-fn match_iconst(graph: &ValGraph, value: DepValue) -> Option<u64> {
-    match_value! {
-        if let &NodeKind::Iconst(val) = graph, value {
-            return Some(val);
-        }
-    }
-    None
 }

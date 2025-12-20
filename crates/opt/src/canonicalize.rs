@@ -9,7 +9,7 @@ use ir::{
 };
 use valmatch::match_value;
 
-use crate::state::EditContext;
+use crate::{state::EditContext, utils::replace_with_iconst};
 
 macro_rules! fold_constant {
     ($ctx:expr, $output:expr, $a:expr, $b:expr, $func:ident) => {{
@@ -577,12 +577,6 @@ fn replace_with_icmp(
     let output_ty = ctx.graph().value_kind(output).as_value().unwrap();
     let new_output = ctx.build_icmp(kind, output_ty, a, b);
     ctx.replace_value(output, new_output);
-}
-
-fn replace_with_iconst(ctx: &mut EditContext<'_>, value: DepValue, iconst: u64) {
-    let ty = ctx.graph().value_kind(value).as_value().unwrap();
-    let iconst = ctx.build_iconst(ty, iconst);
-    ctx.replace_value(value, iconst);
 }
 
 fn commute_node_inputs(ctx: &mut EditContext<'_>, node: Node, a: DepValue, b: DepValue) {

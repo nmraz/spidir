@@ -8,6 +8,7 @@ extern crate alloc;
 
 mod canonicalize;
 mod state;
+mod utils;
 
 pub fn run(module: &mut Module) {
     // For now: just run the canonicalization pass on everything.

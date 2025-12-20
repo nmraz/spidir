@@ -7,6 +7,7 @@ use crate::state::{EditContext, FunctionState};
 extern crate alloc;
 
 mod canonicalize;
+mod constfold;
 mod state;
 mod utils;
 

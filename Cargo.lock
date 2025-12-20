@@ -580,6 +580,7 @@ dependencies = [
  "cranelift-entity",
  "entity-utils",
  "fx-utils",
+ "graphwalk",
  "ir",
  "itertools",
  "log",

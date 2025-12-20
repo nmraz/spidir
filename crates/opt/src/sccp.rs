@@ -1,5 +1,4 @@
 use alloc::collections::VecDeque;
-use core::ops::{BitAnd, BitOr, BitXor};
 
 use entity_utils::{set::DenseEntitySet, worklist::Worklist};
 use fx_utils::FxHashMap;
@@ -7,13 +6,21 @@ use graphwalk::PostOrderContext;
 use ir::{
     builder::{Builder, BuilderExt},
     function::FunctionBody,
-    node::{NodeKind, Type},
+    node::NodeKind,
     valgraph::{DepValue, Node},
     valwalk::{UnpinnedDataflowPreds, cfg_outputs, get_attached_phis},
 };
 use smallvec::SmallVec;
 
-use crate::{state::EditContext, utils::replace_with_iconst};
+use crate::{
+    constfold::{
+        fold_and, fold_ashr, fold_iadd, fold_icmp, fold_iext, fold_imul, fold_isub, fold_itrunc,
+        fold_lshr, fold_or, fold_sdiv, fold_sfill, fold_shl, fold_srem, fold_udiv, fold_urem,
+        fold_xor,
+    },
+    state::EditContext,
+    utils::replace_with_iconst,
+};
 
 pub fn do_sccp(ctx: &mut EditContext) {
     let (live_cfg_nodes, value_constant_states) = solve_sccp(ctx);
@@ -146,7 +153,18 @@ fn solve_sccp(ctx: &EditContext) -> (DenseEntitySet<Node>, FxHashMap<DepValue, C
     (state.live_cfg_nodes, state.value_constant_states)
 }
 
-macro_rules! prop_bin_iconst {
+macro_rules! prop_exttrunc {
+    ($state:expr, $node:expr, $func:ident) => {{
+        let graph = &$state.body.graph;
+        let [out] = graph.node_outputs_exact($node);
+        let [input] = graph.node_inputs_exact($node);
+        if let ConstantState::Constant(val) = value_const_state($state, input) {
+            update_value_const_state($state, out, ConstantState::Constant($func(val)));
+        }
+    }};
+}
+
+macro_rules! prop_binop {
     ($state:expr, $node:expr, $func:ident) => {{
         let graph = &$state.body.graph;
         let [out] = graph.node_outputs_exact($node);
@@ -156,12 +174,24 @@ macro_rules! prop_bin_iconst {
             value_const_state($state, lhs),
             value_const_state($state, rhs),
         ) {
-            let combined = if ty == Type::I32 {
-                ((lhs as u32).$func(rhs as u32)) as u64
-            } else {
-                lhs.$func(rhs)
-            };
-            update_value_const_state($state, out, ConstantState::Constant(combined));
+            update_value_const_state($state, out, ConstantState::Constant($func(ty, lhs, rhs)));
+        }
+    }};
+}
+
+macro_rules! prop_divrem {
+    ($state:expr, $node:expr, $func:ident) => {{
+        let graph = &$state.body.graph;
+        let [_, out] = graph.node_outputs_exact($node);
+        let [_, lhs, rhs] = graph.node_inputs_exact($node);
+        let ty = graph.value_kind(out).as_value().unwrap();
+        if let (ConstantState::Constant(lhs), ConstantState::Constant(rhs)) = (
+            value_const_state($state, lhs),
+            value_const_state($state, rhs),
+        ) {
+            if let Some(res) = $func(ty, lhs, rhs) {
+                update_value_const_state($state, out, ConstantState::Constant(res));
+            }
         }
     }};
 }
@@ -217,11 +247,48 @@ fn visit_node(state: &mut SolverState<'_>, node: Node) {
 
             update_value_const_state(state, out, const_state);
         }
-        NodeKind::Iadd => prop_bin_iconst!(state, node, wrapping_add),
-        NodeKind::Isub => prop_bin_iconst!(state, node, wrapping_sub),
-        NodeKind::And => prop_bin_iconst!(state, node, bitand),
-        NodeKind::Or => prop_bin_iconst!(state, node, bitor),
-        NodeKind::Xor => prop_bin_iconst!(state, node, bitxor),
+        NodeKind::Iadd => prop_binop!(state, node, fold_iadd),
+        NodeKind::Isub => prop_binop!(state, node, fold_isub),
+        NodeKind::And => prop_binop!(state, node, fold_and),
+        NodeKind::Or => prop_binop!(state, node, fold_or),
+        NodeKind::Xor => prop_binop!(state, node, fold_xor),
+        NodeKind::Shl => prop_binop!(state, node, fold_shl),
+        NodeKind::Lshr => prop_binop!(state, node, fold_lshr),
+        NodeKind::Ashr => prop_binop!(state, node, fold_ashr),
+        NodeKind::Imul => prop_binop!(state, node, fold_imul),
+        NodeKind::Sdiv => prop_divrem!(state, node, fold_sdiv),
+        NodeKind::Udiv => prop_divrem!(state, node, fold_udiv),
+        NodeKind::Srem => prop_divrem!(state, node, fold_srem),
+        NodeKind::Urem => prop_divrem!(state, node, fold_urem),
+        NodeKind::Iext => prop_exttrunc!(state, node, fold_iext),
+        NodeKind::Itrunc => prop_exttrunc!(state, node, fold_itrunc),
+        &NodeKind::Sfill(width) => {
+            let [out] = graph.node_outputs_exact(node);
+            let [input] = graph.node_inputs_exact(node);
+            let ty = graph.value_kind(out).as_value().unwrap();
+            if let ConstantState::Constant(val) = value_const_state(state, input) {
+                update_value_const_state(
+                    state,
+                    out,
+                    ConstantState::Constant(fold_sfill(ty, val, width)),
+                );
+            }
+        }
+        &NodeKind::Icmp(kind) => {
+            let [out] = graph.node_outputs_exact(node);
+            let [lhs, rhs] = graph.node_inputs_exact(node);
+            let arg_ty = graph.value_kind(out).as_value().unwrap();
+
+            if let (ConstantState::Constant(lhs), ConstantState::Constant(rhs)) =
+                (value_const_state(state, lhs), value_const_state(state, rhs))
+            {
+                update_value_const_state(
+                    state,
+                    out,
+                    ConstantState::Constant(fold_icmp(arg_ty, kind, lhs, rhs)),
+                );
+            }
+        }
         _ => {}
     }
 }

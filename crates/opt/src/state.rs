@@ -177,6 +177,13 @@ impl<'m> EditContext<'m> {
         node_changed(self.state, self.node_cache, node);
     }
 
+    pub fn remove_node_input(&mut self, node: Node, index: u32) {
+        let old_input = self.graph().node_inputs(node)[index as usize];
+        self.state.will_detach_value(&self.body.graph, old_input);
+        self.body.graph.remove_node_input(node, index);
+        node_changed(self.state, self.node_cache, node);
+    }
+
     pub fn replace_value(&mut self, old_value: DepValue, new_value: DepValue) {
         let def_node = self.graph().value_def(old_value).0;
         self.replace_value_raw(old_value, new_value);

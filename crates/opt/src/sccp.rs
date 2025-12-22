@@ -23,53 +23,76 @@ use crate::{
 };
 
 pub fn do_sccp(ctx: &mut EditContext) {
-    let (live_cfg_nodes, value_constant_states) = solve_sccp(ctx);
+    let solution = solve_sccp(ctx);
 
-    let mut dead_cfg_input_indices = SmallVec::<[usize; 8]>::new();
-
-    trace!("killing dead control nodes");
+    trace!("killing dead nodes");
 
     let live_nodes = ctx.live_nodes().clone();
+
+    let mut dead_cfg_input_indices = SmallVec::<[u32; 8]>::new();
+    let mut attached_phis = SmallVec::<[Node; 8]>::new();
+
     for node in live_nodes.iter() {
-        let kind = ctx.graph().node_kind(node);
-        if !kind.has_control_flow() {
+        if !solution.live_nodes.contains(node) {
+            ctx.kill_node(node);
             continue;
         }
 
-        if live_cfg_nodes.contains(node) {
-            match kind {
-                NodeKind::Region => {
-                    dead_cfg_input_indices.clear();
-                    dead_cfg_input_indices.extend(
-                        ctx.graph()
-                            .node_inputs(node)
-                            .into_iter()
-                            .enumerate()
-                            .filter(|&(_, input)| {
-                                if !ctx.graph().value_kind(input).is_control() {
-                                    return false;
-                                }
+        match ctx.graph().node_kind(node) {
+            NodeKind::Region => {
+                dead_cfg_input_indices.clear();
+                dead_cfg_input_indices.extend(
+                    ctx.graph()
+                        .node_inputs(node)
+                        .into_iter()
+                        .zip(0..)
+                        .filter(|&(edge, _)| !solution.live_cfg_edges.contains(edge))
+                        .map(|(_, i)| i),
+                );
 
-                                let pred = ctx.graph().value_def(input).0;
-                                !live_cfg_nodes.contains(pred)
-                            })
-                            .map(|(i, _)| i),
-                    );
-                    // TODO: Remove all dead inputs from node/phis.
+                // Make sure we remove dead inputs in reverse order, so indices are stable.
+                dead_cfg_input_indices.reverse();
+
+                // TODO: This is quadratic in predecessor count.
+
+                for &i in &dead_cfg_input_indices {
+                    ctx.remove_node_input(node, i);
                 }
-                NodeKind::BrCond => {
-                    // TODO: Delete node if one output is dead.
+
+                attached_phis.clear();
+                attached_phis.extend(get_attached_phis(ctx.graph(), node));
+
+                for &phi in &attached_phis {
+                    for &i in &dead_cfg_input_indices {
+                        // Note: the first input to every phi is the selector.
+                        ctx.remove_node_input(phi, i + 1);
+                    }
                 }
-                _ => {}
             }
-        } else {
-            ctx.kill_node(node);
+            NodeKind::BrCond => {
+                let [in_ctrl, _] = ctx.graph().node_inputs_exact(node);
+                let [true_ctrl, false_ctrl] = ctx.graph().node_outputs_exact(node);
+
+                debug_assert!(
+                    solution.live_cfg_edges.contains(true_ctrl)
+                        || solution.live_cfg_edges.contains(false_ctrl),
+                    "live brcond should have at least one live successor"
+                );
+
+                // If exactly one successor is live, remove the branch and reroute its input.
+                if !solution.live_cfg_edges.contains(false_ctrl) {
+                    ctx.replace_value_and_kill(true_ctrl, in_ctrl);
+                } else if !solution.live_cfg_edges.contains(true_ctrl) {
+                    ctx.replace_value_and_kill(false_ctrl, in_ctrl);
+                }
+            }
+            _ => {}
         }
     }
 
     trace!("rewriting constants");
 
-    for (&val, state) in &value_constant_states {
+    for (&val, state) in &solution.value_constant_states {
         // Avoid replacing existing constants with themselves.
         if let &ConstantState::Constant(c) = state
             && match_iconst(ctx.graph(), val).is_none()
@@ -112,23 +135,29 @@ impl ConstantState {
     }
 }
 
+struct Solution {
+    live_nodes: DenseEntitySet<Node>,
+    live_cfg_edges: DenseEntitySet<DepValue>,
+    value_constant_states: FxHashMap<DepValue, ConstantState>,
+}
+
 struct SolverState {
     cfg_queue: VecDeque<Node>,
     dataflow_worklist: Worklist<Node>,
     live_cfg_edges: DenseEntitySet<DepValue>,
     value_constant_states: FxHashMap<DepValue, ConstantState>,
     cfg_discovered_nodes: DenseEntitySet<Node>,
-    cfg_visited_nodes: DenseEntitySet<Node>,
+    visited_nodes: DenseEntitySet<Node>,
 }
 
-fn solve_sccp(ctx: &EditContext) -> (DenseEntitySet<Node>, FxHashMap<DepValue, ConstantState>) {
+fn solve_sccp(ctx: &EditContext) -> Solution {
     let mut state = SolverState {
         cfg_queue: VecDeque::new(),
         dataflow_worklist: Worklist::new(),
         live_cfg_edges: DenseEntitySet::new(),
         value_constant_states: FxHashMap::default(),
         cfg_discovered_nodes: DenseEntitySet::new(),
-        cfg_visited_nodes: DenseEntitySet::new(),
+        visited_nodes: DenseEntitySet::new(),
     };
 
     let body = ctx.body();
@@ -156,19 +185,40 @@ fn solve_sccp(ctx: &EditContext) -> (DenseEntitySet<Node>, FxHashMap<DepValue, C
                 scratch_postorder.next(&pred_graph, &mut state.cfg_discovered_nodes)
             {
                 visit_node(ctx, &mut state, pred);
-                state.cfg_visited_nodes.insert(pred);
+                state.visited_nodes.insert(pred);
             }
+
+            let node_inputs = graph.node_inputs(node);
 
             // Visit any phis attached to this node; we do this whenever the node/edge is revisited.
             for phi in get_attached_phis(graph, node) {
+                // Visit phi inputs manually here so that we grab only live predecessors.
+                for (i, phi_input) in graph.node_inputs(phi).into_iter().skip(1).enumerate() {
+                    if !state.live_cfg_edges.contains(node_inputs[i]) {
+                        continue;
+                    }
+
+                    // Discover phi inputs from newly-discovered control inputs.
+                    let phi_pred = graph.value_def(phi_input).0;
+                    if !state.visited_nodes.contains(phi_pred) {
+                        visit_node(ctx, &mut state, phi_pred);
+                        state.visited_nodes.insert(phi_pred);
+                    }
+                }
+
                 visit_node(ctx, &mut state, phi);
+                state.visited_nodes.insert(phi);
             }
         }
     }
 
     trace!("SCCP solution found");
 
-    (state.cfg_discovered_nodes, state.value_constant_states)
+    Solution {
+        live_nodes: state.visited_nodes,
+        live_cfg_edges: state.live_cfg_edges,
+        value_constant_states: state.value_constant_states,
+    }
 }
 
 macro_rules! prop_exttrunc {
@@ -350,7 +400,7 @@ fn update_value_const_state(
             // (1) completely unreachable in the CFG, or
             // (2) reachable but still-unvisited (meaining it will be visited in the future).
             // In both cases, we don't want to explicitly visit it again.
-            if state.cfg_visited_nodes.contains(user) {
+            if state.visited_nodes.contains(user) {
                 trace!("        requeue: {user} ({})", ctx.display_node(user));
                 state.dataflow_worklist.enqueue(user);
             }

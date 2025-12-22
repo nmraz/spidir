@@ -7,7 +7,7 @@ use ir::{
     builder::{Builder, BuilderExt},
     node::NodeKind,
     valgraph::{DepValue, Node},
-    valwalk::{UnpinnedDataflowPreds, cfg_outputs, get_attached_phis},
+    valwalk::{UnpinnedDataflowPreds, cfg_outputs, dataflow_outputs, get_attached_phis},
 };
 use log::trace;
 use smallvec::SmallVec;
@@ -146,6 +146,7 @@ struct SolverState {
     dataflow_worklist: Worklist<Node>,
     live_cfg_edges: DenseEntitySet<DepValue>,
     value_constant_states: FxHashMap<DepValue, ConstantState>,
+    scratch_postorder: PostOrderContext<Node>,
     cfg_discovered_nodes: DenseEntitySet<Node>,
     visited_nodes: DenseEntitySet<Node>,
 }
@@ -156,6 +157,7 @@ fn solve_sccp(ctx: &EditContext) -> Solution {
         dataflow_worklist: Worklist::new(),
         live_cfg_edges: DenseEntitySet::new(),
         value_constant_states: FxHashMap::default(),
+        scratch_postorder: PostOrderContext::new(),
         cfg_discovered_nodes: DenseEntitySet::new(),
         visited_nodes: DenseEntitySet::new(),
     };
@@ -164,8 +166,6 @@ fn solve_sccp(ctx: &EditContext) -> Solution {
     let graph = &body.graph;
 
     state.cfg_queue.push_back(body.entry);
-
-    let mut scratch_postorder = PostOrderContext::new();
 
     trace!("solving SCCP");
 
@@ -177,16 +177,7 @@ fn solve_sccp(ctx: &EditContext) -> Solution {
         while let Some(node) = state.cfg_queue.pop_front() {
             trace!("ctrl: {node} ({})", ctx.display_node(node));
 
-            // Visit any dataflow inputs to this node that we haven't seen yet, as well as the node
-            // itself. This will only walk the nodes the first time we encounter them.
-            scratch_postorder.reset([node]);
-            let pred_graph = UnpinnedDataflowPreds::new(graph, ctx.live_nodes());
-            while let Some(pred) =
-                scratch_postorder.next(&pred_graph, &mut state.cfg_discovered_nodes)
-            {
-                visit_node(ctx, &mut state, pred);
-                state.visited_nodes.insert(pred);
-            }
+            discover_node_and_dataflow_preds(ctx, &mut state, node);
 
             let node_inputs = graph.node_inputs(node);
 
@@ -200,12 +191,10 @@ fn solve_sccp(ctx: &EditContext) -> Solution {
 
                     // Discover phi inputs from newly-discovered control inputs.
                     let phi_pred = graph.value_def(phi_input).0;
-                    if !state.visited_nodes.contains(phi_pred) {
-                        visit_node(ctx, &mut state, phi_pred);
-                        state.visited_nodes.insert(phi_pred);
-                    }
+                    discover_node_and_dataflow_preds(ctx, &mut state, phi_pred);
                 }
 
+                // Visit the phi itself now that its inputs are up-to-date.
                 visit_node(ctx, &mut state, phi);
                 state.visited_nodes.insert(phi);
             }
@@ -218,6 +207,20 @@ fn solve_sccp(ctx: &EditContext) -> Solution {
         live_nodes: state.visited_nodes,
         live_cfg_edges: state.live_cfg_edges,
         value_constant_states: state.value_constant_states,
+    }
+}
+
+fn discover_node_and_dataflow_preds(ctx: &EditContext, state: &mut SolverState, node: Node) {
+    // Visit any dataflow inputs to this node that we haven't seen yet, as well as the node
+    // itself. This will only walk the nodes the first time we encounter them.
+    state.scratch_postorder.reset([node]);
+    let pred_graph = UnpinnedDataflowPreds::new(ctx.graph(), ctx.live_nodes());
+    while let Some(pred) = state
+        .scratch_postorder
+        .next(&pred_graph, &mut state.cfg_discovered_nodes)
+    {
+        visit_node(ctx, state, pred);
+        state.visited_nodes.insert(pred);
     }
 }
 
@@ -365,7 +368,12 @@ fn visit_node(ctx: &EditContext, state: &mut SolverState, node: Node) {
                 );
             }
         }
-        _ => {}
+        _ => {
+            // We don't know anything about this node's outputs...
+            for out in dataflow_outputs(graph, node) {
+                update_value_const_state(ctx, state, out, ConstantState::NotConstant);
+            }
+        }
     }
 }
 

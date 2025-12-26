@@ -65,8 +65,8 @@ impl FunctionState {
         state
     }
 
-    fn value_detached(&mut self, graph: &ValGraph, value: DepValue) {
-        if graph.value_uses(value).next().is_none() {
+    fn will_detach_value(&mut self, graph: &ValGraph, value: DepValue) {
+        if graph.value_uses(value).nth(1).is_none() {
             let def_node = graph.value_def(value).0;
             self.enqueue_killed_def_node(graph, def_node);
         }
@@ -168,7 +168,7 @@ impl<'m> EditContext<'m> {
 
     pub fn set_node_input(&mut self, node: Node, index: u32, new_value: DepValue) {
         let old_input = self.graph().node_inputs(node)[index as usize];
-        self.state.value_detached(&self.body.graph, old_input);
+        self.state.will_detach_value(&self.body.graph, old_input);
         self.body.graph.set_node_input(node, index, new_value);
         node_changed(self.state, self.node_cache, node);
     }
@@ -189,7 +189,7 @@ impl<'m> EditContext<'m> {
     pub fn kill_node(&mut self, node: Node) {
         trace!("    kill: {node} ({})", self.display_node(node));
         for input in self.body.graph.node_inputs(node) {
-            self.state.value_detached(&self.body.graph, input);
+            self.state.will_detach_value(&self.body.graph, input);
         }
         self.body.graph.detach_node_inputs(node);
         self.node_cache.remove(node);

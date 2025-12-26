@@ -187,7 +187,7 @@ impl<'m> EditContext<'m> {
     }
 
     pub fn kill_node(&mut self, node: Node) {
-        trace!("    kill: {node}");
+        trace!("    kill: {node} ({})", self.display_node(node));
         for input in self.body.graph.node_inputs(node) {
             self.state.value_detached(&self.body.graph, input);
         }

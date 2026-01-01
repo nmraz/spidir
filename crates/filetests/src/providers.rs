@@ -1,7 +1,7 @@
 use anyhow::{Result, bail, ensure};
 use isel_regalloc::IselRegallocProvider;
 
-use crate::provider::DynTestProvider;
+use crate::{provider::DynTestProvider, providers::opt::OptProvider};
 
 use self::{
     canonicalize::CanonicalizeProvider,
@@ -24,6 +24,7 @@ mod graphviz;
 mod isel;
 mod isel_regalloc;
 mod loops;
+mod opt;
 mod schedule;
 mod verify;
 mod x64;
@@ -37,6 +38,7 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn DynTestProvider
         "graphviz" => Ok(Box::new(GraphvizTestProvider::new(&params)?)),
         "isel" => Ok(Box::new(IselProvider::new(create_x64_machine(&params)?))),
         "isel-regalloc" => Ok(Box::new(IselRegallocProvider::from_params(&params)?)),
+        "opt" => Ok(Box::new(OptProvider)),
         "canonicalize" => Ok(Box::new(CanonicalizeProvider)),
         "codegen" => Ok(Box::new(CodegenProvider::new(create_x64_machine(&params)?))),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),

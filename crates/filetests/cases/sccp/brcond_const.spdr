@@ -1,0 +1,40 @@
+# run: opt
+
+func @brcond_const0() {
+    # check:   func @brcond_const0() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         return $entry0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %0:i32 = iconst 0
+    %c1:ctrl, %c2:ctrl = brcond %c, %0
+    %r:ctrl, %rp:phisel = region %c1, %c2
+    return %r
+}
+
+func @brcond_const1() {
+    # check:   func @brcond_const1() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         return $entry0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %0:i32 = iconst 1
+    %c1:ctrl, %c2:ctrl = brcond %c, %0
+    %r:ctrl, %rp:phisel = region %c1, %c2
+    return %r
+}
+
+func @brcond_const7() {
+    # check:   func @brcond_const7() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         return $entry0
+    # nextln:  }
+
+    %c:ctrl = entry
+    %0:i32 = iconst 7
+    %c1:ctrl, %c2:ctrl = brcond %c, %0
+    %r:ctrl, %rp:phisel = region %c1, %c2
+    return %r
+}

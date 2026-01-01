@@ -1,0 +1,46 @@
+# run: opt
+
+func @dead_subgraph(i32) {
+    # check:   func @dead_subgraph(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         return $entry0
+    # nextln:  }
+
+    %ent:ctrl, %p1:i32 = entry
+    %d:ctrl, %dp:phisel = region
+    %e:ctrl, %f:ctrl = brcond %d, %p1
+    %g:ctrl, %gp:phisel = region %e, %f
+    %exit:ctrl, %exitp:phisel = region %ent, %g
+    return %exit
+}
+
+func @dead_subgraph_input_mid(i32) {
+    # check:   func @dead_subgraph_input_mid(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $entry1
+    # dag:         $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond0, $brcond1
+    # dag:         return $region0
+    # nextln:  }
+
+    %ent:ctrl, %p1:i32 = entry
+    %a:ctrl, %b:ctrl = brcond %ent, %p1
+    %d:ctrl, %dp:phisel = region
+    %e:ctrl, %f:ctrl = brcond %d, %p1
+    %g:ctrl, %gp:phisel = region %e, %f
+    %exit:ctrl, %exitp:phisel = region %a, %g, %b
+    return %exit
+}
+
+func @dead_subgraph_input_1(i32) {
+    # check:   func @dead_subgraph_input_1(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         return $entry0
+    # nextln:  }
+
+    %ent:ctrl, %p1:i32 = entry
+    %d:ctrl, %dp:phisel = region
+    %e:ctrl, %f:ctrl = brcond %d, %p1
+    %g:ctrl, %gp:phisel = region %e, %f
+    %exit:ctrl, %exitp:phisel = region %g, %ent
+    return %exit
+}

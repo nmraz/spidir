@@ -1,0 +1,316 @@
+# run: opt
+
+extfunc @jit_throw(ptr)
+extfunc @jit_throw_index_out_of_range()
+extfunc @jit_throw_invalid_cast()
+extfunc @"System.Void System.String::CopyStringContent(System.String, System.Int32, System.String)"(ptr, i32, ptr)
+extfunc @"System.String System.String::FastAllocateString(System.Int32)":ptr(i32)
+extfunc @jit_newobj:ptr(ptr)
+
+func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
+    # check:   func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):ptr = entry
+    # dag:         $(iconst0=$val):ptr = iconst 0
+    # dag:         $(icmp0=$val):i32 = icmp eq $entry1, $iconst0
+    # dag:         $(iconst1=$val):ptr = iconst 136096799136688
+    # dag:         $(iconst2=$val):i64 = iconst 24
+    # dag:         $(ptroff0=$val):ptr = ptroff $entry1, $iconst2
+    # dag:         $(iconst3=$val):i64 = iconst 0
+    # dag:         $(iconst4=$val):i64 = iconst 16
+    # dag:         $(ptroff1=$val):ptr = ptroff $entry1, $iconst4
+    # dag:         $(iconst5=$val):i32 = iconst 255
+    # dag:         $(and0=$val):i32 = and $icmp0, $iconst5
+    # dag:         $(brcond0=$val):ctrl, $(brcond1=$val):ctrl = brcond $entry0, $and0
+    # dag:         $(load0=$val):ctrl, $(load1=$val):i64 = load.4 $brcond1, $ptroff1
+    # dag:         $(itrunc0=$val):i32 = itrunc $load1
+    # dag:         $(iconst6=$val):i32 = iconst 3
+    # dag:         $(iconst7=$val):i32 = iconst 1
+    # dag:         $(icmp1=$val):i32 = icmp slt $iconst7, $itrunc0
+    # dag:         $(iconst8=$val):i32 = iconst 0
+    # dag:         $(icmp2=$val):i32 = icmp eq $icmp1, $iconst8
+    # dag:         $(and1=$val):i32 = and $icmp2, $iconst5
+    # dag:         $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $load0, $and1
+    # dag:         $(load2=$val):ctrl, $(load3=$val):i64 = load.4 $brcond2, $ptroff1
+    # dag:         $(brcond4=$val):ctrl, $(brcond5=$val):ctrl = brcond $load2, $load3
+    # dag:         $(load4=$val):ctrl, $(load5=$val):i64 = load.4 $brcond4, $ptroff1
+    # dag:         $(icmp3=$val):i32 = icmp ne $load5, $iconst3
+    # dag:         $(brcond6=$val):ctrl, $(brcond7=$val):ctrl = brcond $load4, $icmp3
+    # dag:         $(load6=$val):ctrl, $(load7=$val):ptr = load.8 $brcond6, $ptroff0
+    # dag:         $(icmp4=$val):i32 = icmp ne $load7, $iconst0
+    # dag:         $(brcond8=$val):ctrl, $(brcond9=$val):ctrl = brcond $load6, $icmp4
+    # dag:         $(load8=$val):ctrl, $(load9=$val):ptr = load.8 $brcond9, $iconst1
+    # dag:         $(region0=$val):ctrl, $(region1=$val):phisel = region $brcond8, $load8
+    # dag:         $(phi0=$val):ptr = phi $region1, $load7, $load9
+    # dag:         $(call0=$val):ctrl = call @jit_throw_index_out_of_range $brcond7
+    # dag:         unreachable $call0
+    # dag:         $(load10=$val):ctrl, $(load11=$val):ptr = load.8 $brcond5, $iconst1
+    # dag:         $(region2=$val):ctrl, $(region3=$val):phisel = region $region0, $load10
+    # dag:         $(phi1=$val):ptr = phi $region3, $phi0, $load11
+    # dag:         $(region4=$val):ctrl, $(region5=$val):phisel = region $brcond3, $(region6=$val)
+    # dag:         $(load12=$val):ctrl, $(load13=$val):i64 = load.4 $region4, $ptroff1
+    # dag:         $(itrunc1=$val):i32 = itrunc $load13
+    # dag:         $(phi2=$val):i32 = phi $region5, $iconst8, $(iadd0=$val)
+    # dag:         $(icmp5=$val):i32 = icmp slt $phi2, $itrunc1
+    # dag:         $(and2=$val):i32 = and $icmp5, $iconst5
+    # dag:         $(brcond10=$val):ctrl, $(brcond11=$val):ctrl = brcond $load12, $and2
+    # dag:         $(load14=$val):ctrl, $(load15=$val):i64 = load.4 $brcond10, $ptroff1
+    # dag:         $iadd0:i32 = iadd $phi2, $iconst7
+    # dag:         $(iext0=$val):i64 = iext $phi2
+    # dag:         $(sfill0=$val):i64 = sfill 32 $iext0
+    # dag:         $(icmp6=$val):i32 = icmp ult $sfill0, $load15
+    # dag:         $(brcond12=$val):ctrl, $(brcond13=$val):ctrl = brcond $load14, $icmp6
+    # dag:         $(call1=$val):ctrl = call @jit_throw_index_out_of_range $brcond13
+    # dag:         unreachable $call1
+    # dag:         $(shl0=$val):i64 = shl $sfill0, $iconst6
+    # dag:         $(iadd1=$val):i64 = iadd $shl0, $iconst2
+    # dag:         $(ptroff2=$val):ptr = ptroff $entry1, $iadd1
+    # dag:         $(load16=$val):ctrl, $(load17=$val):ptr = load.8 $brcond12, $ptroff2
+    # dag:         $(icmp7=$val):i32 = icmp ne $load17, $iconst0
+    # dag:         $(and3=$val):i32 = and $icmp7, $iconst5
+    # dag:         $(brcond14=$val):ctrl, $(brcond15=$val):ctrl = brcond $load16, $and3
+    # dag:         $(ptroff3=$val):ptr = ptroff $load17, $iconst4
+    # dag:         $(load18=$val):ctrl, $(load19=$val):i32 = load.4 $brcond14, $ptroff3
+    # dag:         $region6:ctrl, $(region7=$val):phisel = region $brcond15, $load18
+    # dag:         $(iext1=$val):i64 = iext $load19
+    # dag:         $(sfill1=$val):i64 = sfill 32 $iext1
+    # dag:         $(iadd2=$val):i64 = iadd $(phi3=$val), $sfill1
+    # dag:         $(phi4=$val):i64 = phi $region7, $phi3, $iadd2
+    # dag:         $phi3:i64 = phi $region5, $iconst3, $phi4
+    # dag:         $(itrunc2=$val):i32 = itrunc $phi3
+    # dag:         $(icmp8=$val):i32 = icmp eq $itrunc2, $iconst8
+    # dag:         $(and4=$val):i32 = and $icmp8, $iconst5
+    # dag:         $(iconst9=$val):i32 = iconst 4294967295
+    # dag:         $(iconst10=$val):ptr = iconst 137196310807360
+    # dag:         $(iconst11=$val):i64 = iconst 2147483647
+    # dag:         $(icmp9=$val):i32 = icmp slt $iconst11, $phi3
+    # dag:         $(and5=$val):i32 = and $icmp9, $iconst5
+    # dag:         $(brcond16=$val):ctrl, $(brcond17=$val):ctrl = brcond $brcond11, $and5
+    # dag:         $(call2=$val):ctrl, $(call3=$val):ptr = call @jit_newobj $brcond16, $iconst10
+    # dag:         $(call4=$val):ctrl = call @jit_throw $call2, $call3
+    # dag:         unreachable $call4
+    # dag:         $(brcond18=$val):ctrl, $(brcond19=$val):ctrl = brcond $brcond17, $and4
+    # dag:         $(load20=$val):ctrl, $(load21=$val):ptr = load.8 $brcond18, $iconst1
+    # dag:         $(call5=$val):ctrl, $(call6=$val):ptr = call @"System.String System.String::FastAllocateString(System.Int32)" $brcond19, $itrunc2
+    # dag:         $(call7=$val):ctrl = call @"System.Void System.String::CopyStringContent(System.String, System.Int32, System.String)" $(brcond20=$val), $call6, $(phi5=$val), $(load22=$val)
+    # dag:         $(region8=$val):ctrl, $(region9=$val):phisel = region $(brcond21=$val), $call7
+    # dag:         $(region10=$val):ctrl, $(region11=$val):phisel = region $call5, $region8
+    # dag:         $(load23=$val):ctrl, $(load24=$val):i64 = load.4 $region10, $ptroff1
+    # dag:         $(itrunc3=$val):i32 = itrunc $load24
+    # dag:         $(phi6=$val):i32 = phi $region11, $iconst8, $(iadd3=$val)
+    # dag:         $(icmp10=$val):i32 = icmp slt $phi6, $itrunc3
+    # dag:         $(and6=$val):i32 = and $icmp10, $iconst5
+    # dag:         $(brcond22=$val):ctrl, $(brcond23=$val):ctrl = brcond $load23, $and6
+    # dag:         $(load25=$val):ctrl, $(load26=$val):i64 = load.4 $brcond22, $ptroff1
+    # dag:         $iadd3:i32 = iadd $phi6, $iconst7
+    # dag:         $(iext2=$val):i64 = iext $phi6
+    # dag:         $(sfill2=$val):i64 = sfill 32 $iext2
+    # dag:         $(icmp11=$val):i32 = icmp ult $sfill2, $load26
+    # dag:         $(brcond24=$val):ctrl, $(brcond25=$val):ctrl = brcond $load25, $icmp11
+    # dag:         $(call8=$val):ctrl = call @jit_throw_index_out_of_range $brcond25
+    # dag:         unreachable $call8
+    # dag:         $(shl1=$val):i64 = shl $sfill2, $iconst6
+    # dag:         $(iadd4=$val):i64 = iadd $shl1, $iconst2
+    # dag:         $(ptroff4=$val):ptr = ptroff $entry1, $iadd4
+    # dag:         $(load27=$val):ctrl, $load22:ptr = load.8 $brcond24, $ptroff4
+    # dag:         $(ptroff5=$val):ptr = ptroff $load22, $iconst4
+    # dag:         $(icmp12=$val):i32 = icmp eq $load22, $iconst0
+    # dag:         $(brcond26=$val):ctrl, $(brcond27=$val):ctrl = brcond $load27, $icmp12
+    # dag:         $(load28=$val):ctrl, $(load29=$val):i32 = load.4 $brcond27, $ptroff5
+    # dag:         $(region12=$val):ctrl, $(region13=$val):phisel = region $load28, $brcond26
+    # dag:         $(icmp13=$val):i32 = icmp eq $load29, $iconst8
+    # dag:         $(phi7=$val):i32 = phi $region13, $icmp13, $iconst7
+    # dag:         $(and7=$val):i32 = and $phi7, $iconst5
+    # dag:         $(icmp14=$val):i32 = icmp eq $and7, $iconst8
+    # dag:         $(and8=$val):i32 = and $icmp14, $iconst5
+    # dag:         $(brcond28=$val):ctrl, $brcond21:ctrl = brcond $region12, $and8
+    # dag:         $(load30=$val):ctrl, $(load31=$val):i32 = load.4 $brcond28, $ptroff5
+    # dag:         $(phi8=$val):i32 = phi $region9, $phi5, $(iadd5=$val)
+    # dag:         $phi5:i32 = phi $region11, $iconst8, $phi8
+    # dag:         $iadd5:i32 = iadd $phi5, $load31
+    # dag:         $(isub0=$val):i32 = isub $itrunc2, $phi5
+    # dag:         $(icmp15=$val):i32 = icmp slt $isub0, $load31
+    # dag:         $(and9=$val):i32 = and $icmp15, $iconst5
+    # dag:         $(brcond29=$val):ctrl, $brcond20:ctrl = brcond $load30, $and9
+    # dag:         $(region14=$val):ctrl, $(region15=$val):phisel = region $brcond23, $brcond29
+    # dag:         $(phi9=$val):i32 = phi $region15, $phi5, $iconst9
+    # dag:         $(icmp16=$val):i32 = icmp eq $phi9, $itrunc2
+    # dag:         $(brcond30=$val):ctrl, $(brcond31=$val):ctrl = brcond $region14, $icmp16
+    # dag:         $(region16=$val):ctrl, $(region17=$val):phisel = region $region2, $load20, $brcond30
+    # dag:         $(phi10=$val):ptr = phi $region17, $phi1, $load21, $call6
+    # dag:         return $region16, $phi10
+    # dag:         $(call9=$val):ctrl = call @jit_throw $brcond31, $iconst0
+    # dag:         unreachable $call9
+    # dag:         $(iconst12=$val):ptr = iconst 136234271001616
+    # dag:         $(iconst13=$val):ptr = iconst 137196310787008
+    # dag:         $(call10=$val):ctrl, $(call11=$val):ptr = call @jit_newobj $brcond0, $iconst13
+    # dag:         $(ptroff6=$val):ptr = ptroff $call11, $iconst4
+    # dag:         $(store0=$val):ctrl = store.8 $call10, $iconst12, $ptroff6
+    # dag:         $(call12=$val):ctrl = call @jit_throw $store0, $call11
+    # dag:         unreachable $call12
+    # nextln:  }
+
+    %0:ctrl, %1:ptr = entry
+    %2:ptr = iconst 0
+    %3:i32 = icmp eq %1, %2
+    %4:ctrl, %5:phisel = region
+    %6:ptr = phi %5
+    %7:i32 = icmp eq %6, %2
+    %8:ctrl, %9:ctrl = brcond %4, %7
+    %10:ctrl, %11:ptr = load.8 %9, %6
+    %12:i32 = iconst 1
+    %13:i64 = iconst 8
+    %14:ptr = ptroff %11, %13
+    %15:ctrl, %16:i64 = load.8 %10, %14
+    %17:ctrl, %18:ctrl = brcond %15, %12
+    %19:ctrl, %20:phisel = region %17, %8
+    %21:ptr = phi %20, %6, %2
+    %22:ctrl, %23:ptr = call @"System.String System.String::Concat(System.String[])" %19, %21
+    %24:ctrl = call @jit_throw_invalid_cast %18
+    unreachable %24
+    %25:ptr = iconst 136096799136688
+    %26:i64 = iconst 24
+    %27:ptr = ptroff %1, %26
+    %28:i64 = iconst 0
+    %29:i64 = iconst 16
+    %30:ptr = ptroff %1, %29
+    %31:i32 = iconst 255
+    %32:i32 = and %3, %31
+    %33:ctrl, %34:ctrl = brcond %0, %32
+    %35:i32 = iconst 3
+    %36:i32 = iconst 0
+    %37:i32 = iconst 4294967295
+    %38:ctrl, %39:phisel = region
+    %40:ptr = iconst 137196310807360
+    %41:i64 = iconst 2147483647
+    %42:ctrl, %43:phisel = region
+    %44:ctrl, %45:phisel = region %34, %42
+    %46:ctrl, %47:i64 = load.4 %44, %30
+    %48:i32 = itrunc %47
+    %49:i32 = icmp slt %12, %48
+    %50:i32 = icmp eq %49, %36
+    %51:i32 = and %50, %31
+    %52:ctrl, %53:ctrl = brcond %46, %51
+    %54:ctrl, %55:i64 = load.4 %52, %30
+    %56:ctrl, %57:ctrl = brcond %54, %55
+    %58:ctrl, %59:i64 = load.4 %56, %30
+    %60:i32 = icmp ne %59, %28
+    %61:ctrl, %62:ctrl = brcond %58, %60
+    %63:ctrl, %64:ptr = load.8 %61, %27
+    %65:i32 = icmp ne %64, %2
+    %66:ctrl, %67:ctrl = brcond %63, %65
+    %68:ctrl, %69:ptr = load.8 %67, %25
+    %70:ctrl, %71:phisel = region %66, %68
+    %72:ptr = phi %71, %64, %69
+    %73:ctrl = call @jit_throw_index_out_of_range %62
+    unreachable %73
+    %74:ctrl, %75:ptr = load.8 %57, %25
+    %76:ctrl, %77:phisel = region %70, %74
+    %78:ptr = phi %77, %72, %75
+    %79:ctrl, %80:phisel = region %53, %111
+    %86:i32 = phi %80, %36, %87
+    %88:i64 = iext %86
+    %89:i64 = sfill 32 %88
+    %90:i64 = shl %89, %35
+    %91:i64 = iadd %90, %26
+    %87:i32 = iadd %86, %12
+    %81:ptr = phi %80, %1, %81
+    %92:ptr = ptroff %81, %91
+    %82:ptr = ptroff %81, %29
+    %83:ctrl, %84:i64 = load.4 %79, %82
+    %85:i32 = itrunc %84
+    %93:i32 = icmp slt %86, %85
+    %94:i32 = and %93, %31
+    %95:ctrl, %96:ctrl = brcond %83, %94
+    %97:ctrl, %98:i64 = load.4 %95, %82
+    %99:i32 = icmp ult %89, %98
+    %100:ctrl, %101:ctrl = brcond %97, %99
+    %102:ctrl, %103:ptr = load.8 %100, %92
+    %108:ptr = ptroff %103, %29
+    %104:i32 = icmp ne %103, %2
+    %105:i32 = and %104, %31
+    %106:ctrl, %107:ctrl = brcond %102, %105
+    %109:ctrl, %110:i32 = load.4 %106, %108
+    %113:i64 = iext %110
+    %114:i64 = sfill 32 %113
+    %111:ctrl, %112:phisel = region %107, %109
+    %121:i64 = phi %112, %116, %120
+    %116:i64 = phi %80, %28, %121
+    %122:i32 = icmp slt %41, %116
+    %123:i32 = and %122, %31
+    %120:i64 = iadd %116, %114
+    %117:i32 = itrunc %116
+    %118:i32 = icmp eq %117, %36
+    %119:i32 = and %118, %31
+    %115:ctrl = call @jit_throw_index_out_of_range %101
+    unreachable %115
+    %124:ctrl, %125:ctrl = brcond %96, %123
+    %126:ctrl, %127:ptr = call @jit_newobj %124, %40
+    %128:ctrl = call @jit_throw %126, %127
+    unreachable %128
+    %129:ctrl, %130:phisel = region %125, %38
+    %131:ctrl, %132:ctrl = brcond %129, %119
+    %133:ctrl, %134:ptr = load.8 %131, %25
+    %135:ctrl, %136:ptr = call @"System.String System.String::FastAllocateString(System.Int32)" %132, %117
+    %137:ptr = phi %142, %136, %137
+    %138:ctrl = call @"System.Void System.String::CopyStringContent(System.String, System.Int32, System.String)" %192, %137, %186, %165
+    %139:ctrl, %140:phisel = region %180, %138
+    %141:ctrl, %142:phisel = region %135, %139
+    %184:i32 = phi %142, %117, %184
+    %148:i32 = phi %142, %36, %149
+    %150:i64 = iext %148
+    %151:i64 = sfill 32 %150
+    %152:i64 = shl %151, %35
+    %153:i64 = iadd %152, %26
+    %149:i32 = iadd %148, %12
+    %143:ptr = phi %142, %81, %143
+    %154:ptr = ptroff %143, %153
+    %144:ptr = ptroff %143, %29
+    %145:ctrl, %146:i64 = load.4 %141, %144
+    %147:i32 = itrunc %146
+    %155:i32 = icmp slt %148, %147
+    %156:i32 = and %155, %31
+    %157:ctrl, %158:ctrl = brcond %145, %156
+    %159:ctrl, %160:i64 = load.4 %157, %144
+    %161:i32 = icmp ult %151, %160
+    %162:ctrl, %163:ctrl = brcond %159, %161
+    %164:ctrl, %165:ptr = load.8 %162, %154
+    %167:i32 = icmp eq %165, %2
+    %168:ctrl, %169:ctrl = brcond %164, %167
+    %166:ptr = ptroff %165, %29
+    %170:ctrl, %171:i32 = load.4 %169, %166
+    %172:ctrl, %173:phisel = region %170, %168
+    %174:i32 = icmp eq %171, %36
+    %175:i32 = phi %173, %174, %12
+    %176:i32 = and %175, %31
+    %177:i32 = icmp eq %176, %36
+    %178:i32 = and %177, %31
+    %179:ctrl, %180:ctrl = brcond %172, %178
+    %181:ctrl, %182:i32 = load.4 %179, %166
+    %183:ctrl = call @jit_throw_index_out_of_range %163
+    unreachable %183
+    %185:i32 = phi %140, %186, %187
+    %186:i32 = phi %142, %36, %185
+    %188:i32 = isub %184, %186
+    %189:i32 = icmp slt %188, %182
+    %190:i32 = and %189, %31
+    %191:ctrl, %192:ctrl = brcond %181, %190
+    %193:ctrl, %194:phisel = region %158, %191
+    %195:i32 = phi %194, %186, %37
+    %196:i32 = icmp eq %195, %184
+    %197:ctrl, %198:ctrl = brcond %193, %196
+    %199:ctrl, %200:phisel = region %22, %197
+    %201:ctrl, %202:phisel = region %76, %133, %199
+    %203:ptr = phi %200, %23, %137
+    %204:ptr = phi %202, %78, %134, %203
+    return %201, %204
+    %205:ctrl = call @jit_throw %198, %2
+    unreachable %205
+    %187:i32 = iadd %186, %182
+    %206:ptr = iconst 136234271001616
+    %207:ptr = iconst 137196310787008
+    %208:ctrl, %209:ptr = call @jit_newobj %33, %207
+    %210:ptr = ptroff %209, %29
+    %211:ctrl = store.8 %208, %206, %210
+    %212:ctrl = call @jit_throw %211, %209
+    unreachable %212
+}

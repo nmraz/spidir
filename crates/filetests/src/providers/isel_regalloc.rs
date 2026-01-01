@@ -16,26 +16,16 @@ use super::x64::create_x64_machine;
 
 pub struct IselRegallocProvider {
     machine: X64Machine,
-    verify_regalloc: bool,
 }
 
 impl IselRegallocProvider {
-    pub fn new(machine: X64Machine, verify_regalloc: bool) -> Self {
-        Self {
-            machine,
-            verify_regalloc,
-        }
+    pub fn new(machine: X64Machine) -> Self {
+        Self { machine }
     }
 
-    pub fn from_params(mut params: &[&str]) -> Result<Self> {
-        let mut verify_regalloc = true;
-        if let ["no-verify-regalloc", rest @ ..] = params {
-            verify_regalloc = false;
-            params = rest;
-        }
-
+    pub fn from_params(params: &[&str]) -> Result<Self> {
         let machine = create_x64_machine(params)?;
-        Ok(Self::new(machine, verify_regalloc))
+        Ok(Self::new(machine))
     }
 }
 
@@ -57,15 +47,13 @@ impl SimpleTestProvider for IselRegallocProvider {
             let assignment = regalloc::run(&lir, &cfg_ctx, &self.machine)
                 .map_err(|err| anyhow!("regalloc failed for `{}`: {err}", func.metadata.name))?;
 
-            if self.verify_regalloc {
-                regalloc::verify(&lir, &cfg_ctx, &assignment).map_err(|err| {
-                    anyhow!(
-                        "regalloc invalid for `{}`: {}",
-                        func.metadata.name,
-                        err.display(&lir, &assignment)
-                    )
-                })?;
-            }
+            regalloc::verify(&lir, &cfg_ctx, &assignment).map_err(|err| {
+                anyhow!(
+                    "regalloc invalid for `{}`: {}",
+                    func.metadata.name,
+                    err.display(&lir, &assignment)
+                )
+            })?;
 
             writeln!(
                 output,

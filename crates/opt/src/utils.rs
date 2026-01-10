@@ -5,7 +5,7 @@ use ir::{
 };
 use valmatch::match_value;
 
-use crate::state::EditContext;
+use crate::state::FunctionEditContext;
 
 pub fn match_iconst(graph: &ValGraph, value: DepValue) -> Option<u64> {
     match_value! {
@@ -16,7 +16,7 @@ pub fn match_iconst(graph: &ValGraph, value: DepValue) -> Option<u64> {
     None
 }
 
-pub fn replace_with_iconst(ctx: &mut EditContext<'_>, value: DepValue, iconst: u64) {
+pub fn replace_with_iconst(ctx: &mut FunctionEditContext<'_>, value: DepValue, iconst: u64) {
     let ty = ctx.graph().value_kind(value).as_value().unwrap();
     let iconst = ctx.build_iconst(ty, iconst);
     ctx.replace_value(value, iconst);

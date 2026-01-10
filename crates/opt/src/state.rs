@@ -50,7 +50,7 @@ impl FunctionState {
             node_flags: SecondaryMap::new(),
         };
 
-        let mut ctx = EditContext::new(module_metadata, body, node_cache, &mut state);
+        let mut ctx = FunctionEditContext::new(module_metadata, body, node_cache, &mut state);
         for &node in node_postorder.iter().rev() {
             if ctx.state.live_nodes.contains(node) {
                 ctx.state.enqueue(node);
@@ -140,14 +140,14 @@ bitflags! {
     }
 }
 
-pub struct EditContext<'m> {
+pub struct FunctionEditContext<'m> {
     module_metadata: &'m ModuleMetadata,
     body: &'m mut FunctionBody,
     node_cache: &'m mut NodeCache,
     state: &'m mut FunctionState,
 }
 
-impl<'m> EditContext<'m> {
+impl<'m> FunctionEditContext<'m> {
     pub fn new(
         module_metadata: &'m ModuleMetadata,
         body: &'m mut FunctionBody,
@@ -306,7 +306,7 @@ impl<'m> EditContext<'m> {
     }
 }
 
-impl Builder for EditContext<'_> {
+impl Builder for FunctionEditContext<'_> {
     fn create_node(
         &mut self,
         kind: NodeKind,

@@ -4,7 +4,7 @@ use ir::module::Module;
 
 use crate::{
     sccp::do_sccp,
-    state::{EditContext, FunctionState},
+    state::{FunctionEditContext, FunctionState},
 };
 
 extern crate alloc;
@@ -22,7 +22,7 @@ pub fn run(module: &mut Module) {
             body,
             &mut module.function_node_caches[func],
         );
-        let mut ctx = EditContext::new(
+        let mut ctx = FunctionEditContext::new(
             &module.metadata,
             body,
             &mut module.function_node_caches[func],
@@ -44,7 +44,7 @@ pub fn canonicalize(module: &mut Module) {
             body,
             &mut module.function_node_caches[func],
         );
-        let mut ctx = EditContext::new(
+        let mut ctx = FunctionEditContext::new(
             &module.metadata,
             body,
             &mut module.function_node_caches[func],

@@ -18,11 +18,11 @@ use crate::{
         fold_lshr, fold_or, fold_sdiv, fold_sfill, fold_shl, fold_srem, fold_udiv, fold_urem,
         fold_xor,
     },
-    state::EditContext,
+    state::FunctionEditContext,
     utils::{match_iconst, replace_with_iconst},
 };
 
-pub fn do_sccp(ctx: &mut EditContext) {
+pub fn do_sccp(ctx: &mut FunctionEditContext) {
     let solution = solve_sccp(ctx);
 
     trace!("killing dead nodes");
@@ -151,7 +151,7 @@ struct SolverState {
     visited_nodes: DenseEntitySet<Node>,
 }
 
-fn solve_sccp(ctx: &EditContext) -> Solution {
+fn solve_sccp(ctx: &FunctionEditContext) -> Solution {
     let mut state = SolverState {
         cfg_queue: VecDeque::new(),
         dataflow_worklist: Worklist::new(),
@@ -210,7 +210,11 @@ fn solve_sccp(ctx: &EditContext) -> Solution {
     }
 }
 
-fn discover_node_and_dataflow_preds(ctx: &EditContext, state: &mut SolverState, node: Node) {
+fn discover_node_and_dataflow_preds(
+    ctx: &FunctionEditContext,
+    state: &mut SolverState,
+    node: Node,
+) {
     // Visit any dataflow inputs to this node that we haven't seen yet, as well as the node
     // itself. This will only walk the nodes the first time we encounter them.
     state.scratch_postorder.reset([node]);
@@ -224,7 +228,7 @@ fn discover_node_and_dataflow_preds(ctx: &EditContext, state: &mut SolverState, 
     }
 }
 
-fn visit_node(ctx: &EditContext, state: &mut SolverState, node: Node) {
+fn visit_node(ctx: &FunctionEditContext, state: &mut SolverState, node: Node) {
     let graph = ctx.graph();
     let kind = graph.node_kind(node);
 
@@ -307,7 +311,7 @@ fn visit_node(ctx: &EditContext, state: &mut SolverState, node: Node) {
 }
 
 fn prop_unop(
-    ctx: &EditContext,
+    ctx: &FunctionEditContext,
     state: &mut SolverState,
     node: Node,
     f: impl FnOnce(Type, u64) -> u64,
@@ -329,7 +333,7 @@ fn prop_unop(
 }
 
 fn prop_binop(
-    ctx: &EditContext,
+    ctx: &FunctionEditContext,
     state: &mut SolverState,
     node: Node,
     f: impl FnOnce(Type, u64, u64) -> u64,
@@ -351,7 +355,7 @@ fn prop_binop(
 }
 
 fn prop_divrem(
-    ctx: &EditContext,
+    ctx: &FunctionEditContext,
     state: &mut SolverState,
     node: Node,
     f: impl FnOnce(Type, u64, u64) -> Option<u64>,
@@ -374,7 +378,7 @@ fn prop_divrem(
     }
 }
 
-fn mark_cfg_live(ctx: &EditContext, state: &mut SolverState, edge: DepValue) {
+fn mark_cfg_live(ctx: &FunctionEditContext, state: &mut SolverState, edge: DepValue) {
     if state.live_cfg_edges.contains(edge) {
         return;
     }
@@ -387,7 +391,7 @@ fn mark_cfg_live(ctx: &EditContext, state: &mut SolverState, edge: DepValue) {
 }
 
 fn update_value_const_state(
-    ctx: &EditContext,
+    ctx: &FunctionEditContext,
     state: &mut SolverState,
     value: DepValue,
     const_state: ConstantState,

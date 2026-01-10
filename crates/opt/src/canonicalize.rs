@@ -12,7 +12,7 @@ use crate::{
         fold_lshr, fold_or, fold_sdiv, fold_sfill, fold_shl, fold_srem, fold_udiv, fold_urem,
         fold_xor,
     },
-    state::EditContext,
+    state::FunctionEditContext,
     utils::{match_iconst, replace_with_iconst},
 };
 
@@ -23,7 +23,7 @@ macro_rules! fold_binop {
     }};
 }
 
-pub fn canonicalize_node(ctx: &mut EditContext<'_>, node: Node) {
+pub fn canonicalize_node(ctx: &mut FunctionEditContext<'_>, node: Node) {
     let graph = ctx.graph();
     match graph.node_kind(node) {
         NodeKind::Region => {
@@ -333,7 +333,7 @@ fn single_phi_input(graph: &ValGraph, phi: Node) -> Option<DepValue> {
     single_input
 }
 
-fn canonicalize_icmp(ctx: &mut EditContext<'_>, node: Node, kind: IcmpKind) {
+fn canonicalize_icmp(ctx: &mut FunctionEditContext<'_>, node: Node, kind: IcmpKind) {
     macro_rules! checked_op_signed {
         ($ty:expr, $a:expr, $b:expr, $op:ident) => {
             if $ty == Type::I32 {
@@ -449,7 +449,7 @@ fn canonicalize_icmp(ctx: &mut EditContext<'_>, node: Node, kind: IcmpKind) {
 }
 
 fn simplify_icmp_gt_const_boundary(
-    ctx: &mut EditContext<'_>,
+    ctx: &mut FunctionEditContext<'_>,
     output: DepValue,
     a: DepValue,
     b: DepValue,
@@ -471,7 +471,7 @@ fn simplify_icmp_gt_const_boundary(
 }
 
 fn simplify_icmp_lt_const_boundary(
-    ctx: &mut EditContext<'_>,
+    ctx: &mut FunctionEditContext<'_>,
     output: DepValue,
     a: DepValue,
     b: DepValue,
@@ -491,7 +491,7 @@ fn simplify_icmp_lt_const_boundary(
 }
 
 fn replace_with_icmp(
-    ctx: &mut EditContext<'_>,
+    ctx: &mut FunctionEditContext<'_>,
     output: DepValue,
     kind: IcmpKind,
     a: DepValue,
@@ -502,7 +502,7 @@ fn replace_with_icmp(
     ctx.replace_value(output, new_output);
 }
 
-fn commute_node_inputs(ctx: &mut EditContext<'_>, node: Node, a: DepValue, b: DepValue) {
+fn commute_node_inputs(ctx: &mut FunctionEditContext<'_>, node: Node, a: DepValue, b: DepValue) {
     ctx.set_node_input(node, 0, b);
     ctx.set_node_input(node, 1, a);
 }

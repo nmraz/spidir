@@ -13,13 +13,47 @@ use ir::{
     builder::{Builder, BuilderExt},
     cache::{CachingBuilder, Entry, NodeCache},
     function::FunctionBody,
-    module::ModuleMetadata,
+    module::{Function, Module, ModuleMetadata},
     node::{DepValueKind, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{PostOrder, RawDefUseSuccs},
     write::display_node,
 };
 
+pub struct ModuleState {
+    pub func_states: SecondaryMap<Function, FunctionState>,
+}
+
+impl ModuleState {
+    pub fn populate(module: &mut Module) -> Self {
+        let mut func_states = SecondaryMap::with_capacity(module.metadata.functions().len());
+
+        for func in module.metadata.functions().keys() {
+            func_states[func] = FunctionState::populate(
+                &module.metadata,
+                &mut module.function_bodies[func],
+                &mut module.function_node_caches[func],
+            );
+        }
+
+        Self { func_states }
+    }
+
+    pub fn edit_function<'m>(
+        &'m mut self,
+        module: &'m mut Module,
+        func: Function,
+    ) -> FunctionEditContext<'m> {
+        FunctionEditContext::new(
+            &module.metadata,
+            &mut module.function_bodies[func],
+            &mut module.function_node_caches[func],
+            &mut self.func_states[func],
+        )
+    }
+}
+
+#[derive(Clone, Default)]
 pub struct FunctionState {
     node_queue: VecDeque<Node>,
     live_nodes: DenseEntitySet<Node>,

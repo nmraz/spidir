@@ -3,6 +3,7 @@ use filecheck::Value;
 
 use fx_utils::FxHashMap;
 use ir::module::Module;
+use opt::{FunctionPipeline, ModulePipeline};
 
 use crate::{
     provider::{TestProvider, Updater, update_transformed_module_output},
@@ -22,7 +23,7 @@ impl TestProvider for CanonicalizeProvider {
     }
 
     fn output_for(&self, mut module: Module) -> Result<(String, Module)> {
-        opt::canonicalize(&mut module);
+        ModulePipeline::new(vec![Box::new(FunctionPipeline::new(vec![]))]).run(&mut module);
         verify_module_with_err(&module, "transformed module invalid")?;
         Ok((module.to_string(), module))
     }

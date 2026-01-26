@@ -13,6 +13,7 @@ use log::trace;
 use smallvec::SmallVec;
 
 use crate::{
+    FunctionPass,
     constfold::{
         fold_and, fold_ashr, fold_iadd, fold_icmp, fold_iext, fold_imul, fold_isub, fold_itrunc,
         fold_lshr, fold_or, fold_sdiv, fold_sfill, fold_shl, fold_srem, fold_udiv, fold_urem,
@@ -22,82 +23,86 @@ use crate::{
     utils::{match_iconst, replace_with_iconst},
 };
 
-pub fn do_sccp(ctx: &mut FunctionEditContext) {
-    let solution = solve_sccp(ctx);
+pub struct SccpPass;
 
-    trace!("killing dead nodes");
+impl FunctionPass for SccpPass {
+    fn run(&mut self, ctx: &mut FunctionEditContext<'_>) {
+        let solution = solve_sccp(ctx);
 
-    let live_nodes = ctx.live_nodes().clone();
+        trace!("killing dead nodes");
 
-    let mut dead_cfg_input_indices = SmallVec::<[u32; 8]>::new();
-    let mut attached_phis = SmallVec::<[Node; 8]>::new();
+        let live_nodes = ctx.live_nodes().clone();
 
-    for node in live_nodes.iter() {
-        if !solution.live_nodes.contains(node) {
-            ctx.kill_node(node);
-            continue;
-        }
+        let mut dead_cfg_input_indices = SmallVec::<[u32; 8]>::new();
+        let mut attached_phis = SmallVec::<[Node; 8]>::new();
 
-        match ctx.graph().node_kind(node) {
-            NodeKind::Region => {
-                dead_cfg_input_indices.clear();
-                dead_cfg_input_indices.extend(
-                    ctx.graph()
-                        .node_inputs(node)
-                        .into_iter()
-                        .zip(0..)
-                        .filter(|&(edge, _)| !solution.live_cfg_edges.contains(edge))
-                        .map(|(_, i)| i),
-                );
+        for node in live_nodes.iter() {
+            if !solution.live_nodes.contains(node) {
+                ctx.kill_node(node);
+                continue;
+            }
 
-                // Make sure we remove dead inputs in reverse order, so indices are stable.
-                dead_cfg_input_indices.reverse();
+            match ctx.graph().node_kind(node) {
+                NodeKind::Region => {
+                    dead_cfg_input_indices.clear();
+                    dead_cfg_input_indices.extend(
+                        ctx.graph()
+                            .node_inputs(node)
+                            .into_iter()
+                            .zip(0..)
+                            .filter(|&(edge, _)| !solution.live_cfg_edges.contains(edge))
+                            .map(|(_, i)| i),
+                    );
 
-                // TODO: This is quadratic in predecessor count.
+                    // Make sure we remove dead inputs in reverse order, so indices are stable.
+                    dead_cfg_input_indices.reverse();
 
-                for &i in &dead_cfg_input_indices {
-                    ctx.remove_node_input(node, i);
-                }
+                    // TODO: This is quadratic in predecessor count.
 
-                attached_phis.clear();
-                attached_phis.extend(get_attached_phis(ctx.graph(), node));
-
-                for &phi in &attached_phis {
                     for &i in &dead_cfg_input_indices {
-                        // Note: the first input to every phi is the selector.
-                        ctx.remove_node_input(phi, i + 1);
+                        ctx.remove_node_input(node, i);
+                    }
+
+                    attached_phis.clear();
+                    attached_phis.extend(get_attached_phis(ctx.graph(), node));
+
+                    for &phi in &attached_phis {
+                        for &i in &dead_cfg_input_indices {
+                            // Note: the first input to every phi is the selector.
+                            ctx.remove_node_input(phi, i + 1);
+                        }
                     }
                 }
-            }
-            NodeKind::BrCond => {
-                let [in_ctrl, _] = ctx.graph().node_inputs_exact(node);
-                let [true_ctrl, false_ctrl] = ctx.graph().node_outputs_exact(node);
+                NodeKind::BrCond => {
+                    let [in_ctrl, _] = ctx.graph().node_inputs_exact(node);
+                    let [true_ctrl, false_ctrl] = ctx.graph().node_outputs_exact(node);
 
-                debug_assert!(
-                    solution.live_cfg_edges.contains(true_ctrl)
-                        || solution.live_cfg_edges.contains(false_ctrl),
-                    "live brcond should have at least one live successor"
-                );
+                    debug_assert!(
+                        solution.live_cfg_edges.contains(true_ctrl)
+                            || solution.live_cfg_edges.contains(false_ctrl),
+                        "live brcond should have at least one live successor"
+                    );
 
-                // If exactly one successor is live, remove the branch and reroute its input.
-                if !solution.live_cfg_edges.contains(false_ctrl) {
-                    ctx.replace_value_and_kill(true_ctrl, in_ctrl);
-                } else if !solution.live_cfg_edges.contains(true_ctrl) {
-                    ctx.replace_value_and_kill(false_ctrl, in_ctrl);
+                    // If exactly one successor is live, remove the branch and reroute its input.
+                    if !solution.live_cfg_edges.contains(false_ctrl) {
+                        ctx.replace_value_and_kill(true_ctrl, in_ctrl);
+                    } else if !solution.live_cfg_edges.contains(true_ctrl) {
+                        ctx.replace_value_and_kill(false_ctrl, in_ctrl);
+                    }
                 }
+                _ => {}
             }
-            _ => {}
         }
-    }
 
-    trace!("rewriting constants");
+        trace!("rewriting constants");
 
-    for (&val, state) in &solution.value_constant_states {
-        // Avoid replacing existing constants with themselves.
-        if let &ConstantState::Constant(c) = state
-            && match_iconst(ctx.graph(), val).is_none()
-        {
-            replace_with_iconst(ctx, val, c);
+        for (&val, state) in &solution.value_constant_states {
+            // Avoid replacing existing constants with themselves.
+            if let &ConstantState::Constant(c) = state
+                && match_iconst(ctx.graph(), val).is_none()
+            {
+                replace_with_iconst(ctx, val, c);
+            }
         }
     }
 }

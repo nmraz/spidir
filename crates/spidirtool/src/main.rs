@@ -266,7 +266,7 @@ fn main() -> Result<()> {
         }
         ToolCommand::Opt { input_file } => {
             let mut module = read_and_verify_module(&input_file)?;
-            opt::run(&mut module);
+            opt::default_pipeline().run(&mut module);
             write!(io::stdout(), "{module}")?;
         }
         ToolCommand::Schedule { input_file } => {
@@ -296,7 +296,7 @@ fn main() -> Result<()> {
             machine_opts,
         } => {
             let mut module = read_and_verify_module(&input_file)?;
-            opt::run(&mut module);
+            opt::default_pipeline().run(&mut module);
             io::stdout().write_all(get_module_code_str(&module, &machine_opts)?.as_bytes())?;
         }
         ToolCommand::CodegenExec {

@@ -22,7 +22,7 @@ impl TestProvider for OptProvider {
     }
 
     fn output_for(&self, mut module: Module) -> Result<(String, Module)> {
-        opt::run(&mut module);
+        opt::default_pipeline().run(&mut module);
         verify_module_with_err(&module, "transformed module invalid")?;
         Ok((module.to_string(), module))
     }

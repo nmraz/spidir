@@ -584,6 +584,8 @@ dependencies = [
  "ir",
  "itertools",
  "log",
+ "pest",
+ "pest_derive",
  "smallvec",
  "valmatch",
 ]

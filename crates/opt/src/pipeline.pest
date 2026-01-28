@@ -1,0 +1,11 @@
+WHITESPACE = _{ " " | "\t" }
+
+funcpass = { "sccp" }
+
+funcpipeline = { "func" ~ "(" ~ (funcpass ~ ("," ~ funcpass)*)? ~ ")" }
+
+modpass = {
+    funcpipeline
+}
+
+modpipeline = { (modpass ~ ("," ~ modpass)*)? }

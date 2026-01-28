@@ -14,6 +14,12 @@ mod sccp;
 mod state;
 mod utils;
 
+#[cfg(feature = "parse-pipeline-desc")]
+mod parse_pipeline;
+
+#[cfg(feature = "parse-pipeline-desc")]
+pub use parse_pipeline::pipeline_from_desc;
+
 pub use sccp::SccpPass;
 
 pub trait ModulePass {

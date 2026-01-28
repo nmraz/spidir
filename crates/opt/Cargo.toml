@@ -16,3 +16,9 @@ cranelift-entity.workspace = true
 itertools.workspace = true
 log.workspace = true
 smallvec.workspace = true
+
+pest = { workspace = true, optional = true }
+pest_derive = { workspace = true, optional = true }
+
+[features]
+parse-pipeline-desc = ["dep:pest", "dep:pest_derive"]

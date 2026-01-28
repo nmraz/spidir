@@ -8,4 +8,4 @@ modpass = {
     funcpipeline
 }
 
-modpipeline = { (modpass ~ ("," ~ modpass)*)? }
+modpipeline = { SOI ~ (modpass ~ ("," ~ modpass)*)? ~ EOI }

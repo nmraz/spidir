@@ -14,12 +14,18 @@ pub fn pipeline_from_desc(desc: &str) -> Result<ModulePipeline, Box<Error<Rule>>
         .next()
         .expect("expected top-level pipeline node");
 
-    let passes = parsed.into_inner().map(extract_modpass).collect();
+    let passes = parsed
+        .into_inner()
+        .filter_map(|pair| match pair.as_rule() {
+            Rule::modpass => Some(extract_modpass(pair)),
+            Rule::EOI => None,
+            _ => unreachable!("unkown module pass rule"),
+        })
+        .collect();
     Ok(ModulePipeline::new(passes))
 }
 
 fn extract_modpass(modpass_pair: Pair<'_, Rule>) -> Box<dyn ModulePass> {
-    assert!(modpass_pair.as_rule() == Rule::modpass);
     extract_special_modpass(modpass_pair)
 }
 

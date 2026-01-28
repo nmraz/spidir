@@ -12,7 +12,7 @@ codegen-test-tools.workspace = true
 fx-utils.workspace = true
 ir.workspace = true
 ir-graphviz.workspace = true
-opt.workspace = true
+opt = { workspace = true, features = ["parse-pipeline-desc"] }
 parser = { workspace = true, features = ["std"] }
 
 clap.workspace = true

@@ -98,6 +98,13 @@ struct MachineOptions {
     extern_code_model: Option<CliCodeModel>,
 }
 
+#[derive(Args)]
+struct OptOptions {
+    /// Description of the optimizer pipeline to use
+    #[arg(short, long)]
+    pipeline: Option<String>,
+}
+
 #[derive(Subcommand)]
 enum ToolCommand {
     /// Display the specified function as a graphviz graph
@@ -141,6 +148,8 @@ enum ToolCommand {
     Opt {
         /// The input IR file
         input_file: PathBuf,
+        #[clap(flatten)]
+        opt_opts: OptOptions,
     },
     /// Schedule an IR module in preparation for codegen
     Schedule {
@@ -172,6 +181,8 @@ enum ToolCommand {
     /// Optimize and generate code for an IR module, then dump the disassembly
     Compile {
         input_file: PathBuf,
+        #[clap(flatten)]
+        opt_opts: OptOptions,
         #[clap(flatten)]
         machine_opts: MachineOptions,
     },
@@ -264,9 +275,12 @@ fn main() -> Result<()> {
             let extracted_module = extract_function(&module, &function)?;
             write!(io::stdout(), "{extracted_module}")?;
         }
-        ToolCommand::Opt { input_file } => {
+        ToolCommand::Opt {
+            input_file,
+            opt_opts,
+        } => {
             let mut module = read_and_verify_module(&input_file)?;
-            opt::default_pipeline().run(&mut module);
+            optimize_module(&mut module, &opt_opts)?;
             write!(io::stdout(), "{module}")?;
         }
         ToolCommand::Schedule { input_file } => {
@@ -293,10 +307,11 @@ fn main() -> Result<()> {
         }
         ToolCommand::Compile {
             input_file,
+            opt_opts,
             machine_opts,
         } => {
             let mut module = read_and_verify_module(&input_file)?;
-            opt::default_pipeline().run(&mut module);
+            optimize_module(&mut module, &opt_opts)?;
             io::stdout().write_all(get_module_code_str(&module, &machine_opts)?.as_bytes())?;
         }
         ToolCommand::CodegenExec {
@@ -466,6 +481,17 @@ fn get_module_code_str(module: &Module, machine_opts: &MachineOptions) -> Result
         writeln!(output).unwrap();
     }
     Ok(output)
+}
+
+fn optimize_module(module: &mut Module, opts: &OptOptions) -> Result<()> {
+    let mut pipeline = match &opts.pipeline {
+        Some(pipeline) => {
+            opt::pipeline_from_desc(pipeline).context("failed to parse pipeline description")?
+        }
+        None => opt::default_pipeline(),
+    };
+    pipeline.run(module);
+    Ok(())
 }
 
 fn get_graphviz_str(

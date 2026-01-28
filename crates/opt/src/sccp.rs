@@ -26,7 +26,7 @@ use crate::{
 pub struct SccpPass;
 
 impl FunctionPass for SccpPass {
-    fn run(&mut self, ctx: &mut FunctionEditContext<'_>) {
+    fn run(&self, ctx: &mut FunctionEditContext<'_>) {
         let solution = solve_sccp(ctx);
 
         trace!("killing dead nodes");

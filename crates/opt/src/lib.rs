@@ -23,11 +23,11 @@ pub use parse_pipeline::pipeline_from_desc;
 pub use sccp::SccpPass;
 
 pub trait ModulePass {
-    fn run(&mut self, module: &mut Module, state: &mut ModuleState);
+    fn run(&self, module: &mut Module, state: &mut ModuleState);
 }
 
 pub trait FunctionPass {
-    fn run(&mut self, ctx: &mut FunctionEditContext<'_>);
+    fn run(&self, ctx: &mut FunctionEditContext<'_>);
 }
 
 pub struct FunctionPipeline {
@@ -41,12 +41,12 @@ impl FunctionPipeline {
 }
 
 impl ModulePass for FunctionPipeline {
-    fn run(&mut self, module: &mut Module, state: &mut ModuleState) {
+    fn run(&self, module: &mut Module, state: &mut ModuleState) {
         for func in module.function_bodies.keys() {
             let mut ctx = state.edit_function(module, func);
 
             ctx.canonicalize_outstanding();
-            for pass in &mut self.passes {
+            for pass in &self.passes {
                 pass.run(&mut ctx);
                 ctx.canonicalize_outstanding();
             }
@@ -63,9 +63,9 @@ impl ModulePipeline {
         Self { passes }
     }
 
-    pub fn run(&mut self, module: &mut Module) {
+    pub fn run(&self, module: &mut Module) {
         let mut state = ModuleState::populate(module);
-        for pass in &mut self.passes {
+        for pass in &self.passes {
             pass.run(module, &mut state);
         }
     }

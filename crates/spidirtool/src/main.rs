@@ -484,7 +484,7 @@ fn get_module_code_str(module: &Module, machine_opts: &MachineOptions) -> Result
 }
 
 fn optimize_module(module: &mut Module, opts: &OptOptions) -> Result<()> {
-    let mut pipeline = match &opts.pipeline {
+    let pipeline = match &opts.pipeline {
         Some(pipeline) => {
             opt::pipeline_from_desc(pipeline).context("failed to parse pipeline description")?
         }

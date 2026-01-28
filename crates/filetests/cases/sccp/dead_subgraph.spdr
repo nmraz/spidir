@@ -1,4 +1,4 @@
-# run: opt
+# run: opt[func(sccp)]
 
 func @dead_subgraph(i32) {
     # check:   func @dead_subgraph(i32) {

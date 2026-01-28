@@ -1,4 +1,4 @@
-# run: canonicalize
+# run: opt[func()]
 
 func @icmp_eq:i64(i64, i64) {
     # check:   func @icmp_eq:i64(i64, i64) {

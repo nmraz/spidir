@@ -1,4 +1,4 @@
-# run: canonicalize
+# run: opt[func()]
 
 func @offset_ptr:ptr(ptr, i64) {
     # check:   func @offset_ptr:ptr(ptr, i64) {

@@ -1,4 +1,4 @@
-# run: canonicalize
+# run: opt[func()]
 
 func @itrunc:i32(i64) {
     # check:   func @itrunc:i32(i64) {

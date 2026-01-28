@@ -1,4 +1,4 @@
-# run: canonicalize
+# run: opt[func()]
 
 func @icmp_eq:i32(ptr, ptr) {
     # check:   func @icmp_eq:i32(ptr, ptr) {

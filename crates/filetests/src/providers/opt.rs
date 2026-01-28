@@ -1,8 +1,9 @@
-use anyhow::Result;
+use anyhow::{Result, bail};
 use filecheck::Value;
 
 use fx_utils::FxHashMap;
 use ir::module::Module;
+use opt::ModulePipeline;
 
 use crate::{
     provider::{TestProvider, Updater, update_transformed_module_output},
@@ -10,7 +11,17 @@ use crate::{
     utils::verify_module_with_err,
 };
 
-pub struct OptProvider;
+pub struct OptProvider(ModulePipeline);
+
+impl OptProvider {
+    pub fn from_params(params: &[&str]) -> Result<Self> {
+        match params {
+            [] => Ok(Self(opt::default_pipeline())),
+            &[desc] => Ok(Self(opt::pipeline_from_desc(desc)?)),
+            _ => bail!("invalid parameter count for opt provider"),
+        }
+    }
+}
 
 impl TestProvider for OptProvider {
     type AuxOutput = Module;
@@ -22,7 +33,7 @@ impl TestProvider for OptProvider {
     }
 
     fn output_for(&self, mut module: Module) -> Result<(String, Module)> {
-        opt::default_pipeline().run(&mut module);
+        self.0.run(&mut module);
         verify_module_with_err(&module, "transformed module invalid")?;
         Ok((module.to_string(), module))
     }

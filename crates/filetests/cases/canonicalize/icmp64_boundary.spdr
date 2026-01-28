@@ -1,4 +1,4 @@
-# run: canonicalize
+# run: opt[func()]
 
 func @icmp_slt_smin_val:i32(i64) {
     # check:   func @icmp_slt_smin_val:i32(i64) {

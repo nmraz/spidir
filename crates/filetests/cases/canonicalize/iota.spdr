@@ -1,4 +1,4 @@
-# run: canonicalize
+# run: opt[func()]
 
 func @iota(ptr, i64) {
     # check:   func @iota(ptr, i64) {

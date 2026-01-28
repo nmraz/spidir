@@ -1,4 +1,4 @@
-# run: canonicalize
+# run: opt[func()]
 
 func @mul2_32:i32(i32) {
     # check:   func @mul2_32:i32(i32) {

@@ -1,4 +1,4 @@
-# run: opt
+# run: opt[func(sccp)]
 
 func @brcond_const0() {
     # check:   func @brcond_const0() {

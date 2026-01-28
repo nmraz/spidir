@@ -4,7 +4,6 @@ use isel_regalloc::IselRegallocProvider;
 use crate::{provider::DynTestProvider, providers::opt::OptProvider};
 
 use self::{
-    canonicalize::CanonicalizeProvider,
     cfg::CfgProvider,
     codegen::CodegenProvider,
     domtree::DomTreeProvider,
@@ -16,7 +15,6 @@ use self::{
     x64::create_x64_machine,
 };
 
-mod canonicalize;
 mod cfg;
 mod codegen;
 mod domtree;
@@ -38,8 +36,7 @@ pub fn select_test_provider(run_command: &str) -> Result<Box<dyn DynTestProvider
         "graphviz" => Ok(Box::new(GraphvizTestProvider::new(&params)?)),
         "isel" => Ok(Box::new(IselProvider::new(create_x64_machine(&params)?))),
         "isel-regalloc" => Ok(Box::new(IselRegallocProvider::from_params(&params)?)),
-        "opt" => Ok(Box::new(OptProvider)),
-        "canonicalize" => Ok(Box::new(CanonicalizeProvider)),
+        "opt" => Ok(Box::new(OptProvider::from_params(&params)?)),
         "codegen" => Ok(Box::new(CodegenProvider::new(create_x64_machine(&params)?))),
         "loop-forest" => Ok(Box::new(LoopForestProvider)),
         "schedule" => Ok(Box::new(ScheduleProvider)),

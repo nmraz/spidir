@@ -1,4 +1,4 @@
-# run: canonicalize
+# run: opt[func()]
 
 func @sub32:i32(i32, i32) {
     # check:   func @sub32:i32(i32, i32) {

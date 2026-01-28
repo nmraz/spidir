@@ -1,4 +1,4 @@
-# run: opt
+# run: opt[func(sccp)]
 
 extfunc @jit_throw(ptr)
 extfunc @jit_throw_index_out_of_range()

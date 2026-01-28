@@ -1,4 +1,4 @@
-# run: canonicalize
+# run: opt[func()]
 
 extfunc @gc_new:ptr(ptr, i64)
 extfunc @"System.Boolean Tests.Bool_No_Op::simple_func_bool()":i32()

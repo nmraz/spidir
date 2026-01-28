@@ -1,4 +1,4 @@
-# run: canonicalize
+# run: opt[func()]
 
 func @sfill_8_32:i32(i32) {
     # check:   func @sfill_8_32:i32(i32) {

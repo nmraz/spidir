@@ -46,15 +46,13 @@ If you're building for a hosted Rust target platform or need to link against oth
 ### Implemented
 
 - Miscellaneous:
-
   - C bindings: IR construction/dumping/optimization/codegen
   - IR text format/parser for testing and debugging
   - IR verifier
 
 - IR features:
-
   - Basic integer arithmetic/bitwise instructions
-  - 64-bit floating point arithmetic
+  - Floating point arithmetic (both 32-bit and 64-bit)
   - Loads/stores
   - Basic control flow (conditional branches)
   - Internal/external/indirect calls
@@ -62,7 +60,6 @@ If you're building for a hosted Rust target platform or need to link against oth
   - Stack slots
 
 - Codegen:
-
   - Basic x64 backend
   - Hopefully-intelligent register allocator
     - Live range splitting
@@ -71,7 +68,6 @@ If you're building for a hosted Rust target platform or need to link against oth
     - Instruction commutation/3-address conversion
 
 - Optimization:
-
   - Global code motion
   - Simple canonicalization/GVN
   - SCCP
@@ -81,18 +77,15 @@ If you're building for a hosted Rust target platform or need to link against oth
 Spidir's roadmap is most accurately described as "whatever TomatoDotNet needs next", but here's some stuff we'll probably want eventually (in no particular order):
 
 - IR:
-
   - Memory operations (`memset`, `memcpy`, etc.)
   - Bit-counting operations
   - External globals
   - Cold block annotation
-  - 32-bit floating point arithmetic
   - Unwinding support
   - Jump tables
   - Static branch/patchpoint support
 
 - Codegen:
-
   - Improved x64 instruction selection
   - Minor register allocator improvements
     - Spill slot coloring

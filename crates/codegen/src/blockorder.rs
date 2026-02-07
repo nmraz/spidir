@@ -2,17 +2,16 @@ use core::{cell::RefCell, ops::ControlFlow};
 
 use alloc::vec::Vec;
 
-use dominators::loops::LoopForest;
 use graphwalk::{GraphRef, entity_postorder};
 use log::trace;
 use smallvec::SmallVec;
 
-use crate::cfg::{Block, BlockCfg, BlockDomTree};
+use crate::cfg::{Block, BlockCfg, BlockDomTree, BlockLoopForest};
 
 pub fn compute_block_order(
     cfg: &BlockCfg,
     domtree: &BlockDomTree,
-    loop_forest: &LoopForest,
+    loop_forest: &BlockLoopForest,
 ) -> Vec<Block> {
     let entry = domtree.get_cfg_node(domtree.root());
 
@@ -32,7 +31,7 @@ pub fn compute_block_order(
 struct LoopGroupedCfg<'a> {
     cfg: &'a BlockCfg,
     domtree: &'a BlockDomTree,
-    loop_forest: &'a LoopForest,
+    loop_forest: &'a BlockLoopForest,
     other_loop_succ_cache: RefCell<SmallVec<[Block; 4]>>,
 }
 

@@ -11,12 +11,12 @@ struct DepthData {
     loop_depth: u32,
 }
 
-pub struct DepthMap {
-    data: SecondaryMap<DomTreeNode, DepthData>,
+pub struct DepthMap<N: EntityRef> {
+    data: SecondaryMap<DomTreeNode<N>, DepthData>,
 }
 
-impl DepthMap {
-    pub fn compute<N: EntityRef>(domtree: &DomTree<N>, loop_forest: &LoopForest) -> Self {
+impl<N: EntityRef> DepthMap<N> {
+    pub fn compute(domtree: &DomTree<N>, loop_forest: &LoopForest<N>) -> Self {
         let mut depth_map = Self {
             data: SecondaryMap::new(),
         };
@@ -53,21 +53,21 @@ impl DepthMap {
     }
 
     #[inline]
-    pub fn loop_depth(&self, node: DomTreeNode) -> u32 {
+    pub fn loop_depth(&self, node: DomTreeNode<N>) -> u32 {
         self.data[node].loop_depth
     }
 
     #[inline]
-    pub fn domtree_depth(&self, node: DomTreeNode) -> u32 {
+    pub fn domtree_depth(&self, node: DomTreeNode<N>) -> u32 {
         self.data[node].domtree_depth
     }
 
-    pub fn domtree_lca<N: EntityRef>(
+    pub fn domtree_lca(
         &self,
         domtree: &DomTree<N>,
-        mut a: DomTreeNode,
-        mut b: DomTreeNode,
-    ) -> DomTreeNode {
+        mut a: DomTreeNode<N>,
+        mut b: DomTreeNode<N>,
+    ) -> DomTreeNode<N> {
         while self.data[a].domtree_depth > self.data[b].domtree_depth {
             // Note: `a` must have an immediate dominator here because its depth is nonzero.
             a = domtree.idom(a).unwrap();

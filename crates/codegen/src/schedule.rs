@@ -6,7 +6,6 @@ use cranelift_entity::{
     EntityList, ListPool, SecondaryMap,
     packed_option::{PackedOption, ReservedValue},
 };
-use dominators::depth_map::DepthMap;
 use entity_utils::set::DenseEntitySet;
 use fx_utils::{FxHashMap, FxHashSet};
 use graphwalk::{GraphRef, PostOrderContext};
@@ -28,7 +27,7 @@ mod display;
 pub use display::Display;
 use smallvec::SmallVec;
 
-use crate::cfg::{Block, BlockCfg, BlockDomTree, CfgContext, FunctionBlockMap};
+use crate::cfg::{Block, BlockCfg, BlockDepthMap, BlockDomTree, CfgContext, FunctionBlockMap};
 
 /// The maximum path length up the dominator tree we are willing to hoist nodes, to avoid quadratic
 /// behavior.
@@ -360,7 +359,7 @@ impl<'a> Scheduler<'a> {
         &self.cfg_ctx.domtree
     }
 
-    fn depth_map(&self) -> &'a DepthMap {
+    fn depth_map(&self) -> &'a BlockDepthMap {
         &self.cfg_ctx.depth_map
     }
 }

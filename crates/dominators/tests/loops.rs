@@ -25,9 +25,9 @@ fn stringify_loops(g: &Graph) -> String {
     let lf = LoopForest::compute(g, &domtree);
 
     let mut root_loop = Vec::new();
-    let mut loop_classes: SecondaryMap<Loop, Vec<DomTreeNode>> = SecondaryMap::new();
+    let mut loop_classes: SecondaryMap<Loop<Node>, Vec<DomTreeNode<Node>>> = SecondaryMap::new();
 
-    let mut loop_children: SecondaryMap<Loop, Vec<Loop>> = SecondaryMap::new();
+    let mut loop_children: SecondaryMap<Loop<Node>, Vec<Loop<Node>>> = SecondaryMap::new();
     let mut outermost_loops = Vec::new();
     let mut visited_loops = DenseEntitySet::new();
 
@@ -87,14 +87,14 @@ fn stringify_loops(g: &Graph) -> String {
     output
 }
 
-fn graph_loops(input: &str) -> (Graph, DomTree<Node>, LoopForest) {
+fn graph_loops(input: &str) -> (Graph, DomTree<Node>, LoopForest<Node>) {
     let g = graph(input);
     let domtree = DomTree::compute(&g, g.entry());
     let lf = LoopForest::compute(&g, &domtree);
     (g, domtree, lf)
 }
 
-fn domtree_node(g: &Graph, domtree: &DomTree<Node>, name: &str) -> DomTreeNode {
+fn domtree_node(g: &Graph, domtree: &DomTree<Node>, name: &str) -> DomTreeNode<Node> {
     domtree.get_tree_node(g.node(name)).unwrap()
 }
 

@@ -6,34 +6,32 @@ use core::{
 use alloc::{vec, vec::Vec};
 
 use cranelift_entity::{
-    EntityList, EntityRef, ListPool, PrimaryMap, SecondaryMap, entity_impl,
+    EntityList, EntityRef, ListPool, PrimaryMap, SecondaryMap,
     packed_option::{PackedOption, ReservedValue},
 };
 use graphwalk::{PredGraphRef, TreePostOrder, TreePreOrder, WalkPhase};
 use smallvec::SmallVec;
 
-use crate::IntoCfg;
+use crate::{IntoCfg, macros::define_param_entity};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct DomTreeNode(u32);
-entity_impl!(DomTreeNode);
+define_param_entity!(DomTreeNode<N>, "dt");
 
-type TreeNodeList = EntityList<DomTreeNode>;
+type TreeNodeList<N> = EntityList<DomTreeNode<N>>;
 
 struct DomTreeNodeData<N> {
     cfg_node: N,
-    idom: PackedOption<DomTreeNode>,
-    children: TreeNodeList,
+    idom: PackedOption<DomTreeNode<N>>,
+    children: TreeNodeList<N>,
     dfs_entry: u32,
     dfs_exit: u32,
 }
 
 pub struct DomTree<N: EntityRef> {
-    tree: PrimaryMap<DomTreeNode, DomTreeNodeData<N>>,
+    tree: PrimaryMap<DomTreeNode<N>, DomTreeNodeData<N>>,
     // Note: if valgraph control nodes are too sparse, we might want to consider going back to
     // hashmaps.
-    tree_nodes_by_node: SecondaryMap<N, PackedOption<DomTreeNode>>,
-    child_pool: ListPool<DomTreeNode>,
+    tree_nodes_by_node: SecondaryMap<N, PackedOption<DomTreeNode<N>>>,
+    child_pool: ListPool<DomTreeNode<N>>,
 }
 
 impl<N: EntityRef> DomTree<N> {
@@ -85,39 +83,39 @@ impl<N: EntityRef> DomTree<N> {
     }
 
     #[inline]
-    pub fn get_tree_node(&self, node: N) -> Option<DomTreeNode> {
+    pub fn get_tree_node(&self, node: N) -> Option<DomTreeNode<N>> {
         self.tree_nodes_by_node[node].expand()
     }
 
     #[inline]
-    pub fn get_cfg_node(&self, node: DomTreeNode) -> N {
+    pub fn get_cfg_node(&self, node: DomTreeNode<N>) -> N {
         self.tree[node].cfg_node
     }
 
     #[inline]
-    pub fn root(&self) -> DomTreeNode {
+    pub fn root(&self) -> DomTreeNode<N> {
         // This is verified below when constructing the tree.
-        DomTreeNode::from_u32(0)
+        DomTreeNode::new(0)
     }
 
     #[inline]
-    pub fn idom(&self, node: DomTreeNode) -> Option<DomTreeNode> {
+    pub fn idom(&self, node: DomTreeNode<N>) -> Option<DomTreeNode<N>> {
         self.tree[node].idom.expand()
     }
 
     #[inline]
-    pub fn children(&self, node: DomTreeNode) -> &[DomTreeNode] {
+    pub fn children(&self, node: DomTreeNode<N>) -> &[DomTreeNode<N>] {
         self.tree[node].children.as_slice(&self.child_pool)
     }
 
-    pub fn dominates(&self, a: DomTreeNode, b: DomTreeNode) -> bool {
+    pub fn dominates(&self, a: DomTreeNode<N>, b: DomTreeNode<N>) -> bool {
         let a = &self.tree[a];
         let b = &self.tree[b];
         // Apply the parenthesis theorem to determine whether `a` is an ancestor of `b`.
         a.dfs_entry <= b.dfs_entry && b.dfs_exit <= a.dfs_exit
     }
 
-    pub fn strictly_dominates(&self, a: DomTreeNode, b: DomTreeNode) -> bool {
+    pub fn strictly_dominates(&self, a: DomTreeNode<N>, b: DomTreeNode<N>) -> bool {
         a != b && self.dominates(a, b)
     }
 
@@ -147,11 +145,11 @@ impl<N: EntityRef> DomTree<N> {
         }
     }
 
-    fn add_child(&mut self, idom: DomTreeNode, child: DomTreeNode) {
+    fn add_child(&mut self, idom: DomTreeNode<N>, child: DomTreeNode<N>) {
         self.tree[idom].children.push(child, &mut self.child_pool);
     }
 
-    fn insert_node(&mut self, node: N, idom: Option<DomTreeNode>) -> DomTreeNode {
+    fn insert_node(&mut self, node: N, idom: Option<DomTreeNode<N>>) -> DomTreeNode<N> {
         let tree_node = self.tree.push(DomTreeNodeData {
             cfg_node: node,
             idom: idom.into(),
@@ -165,7 +163,7 @@ impl<N: EntityRef> DomTree<N> {
 }
 
 impl<N: EntityRef> graphwalk::GraphRef for &'_ DomTree<N> {
-    type Node = DomTreeNode;
+    type Node = DomTreeNode<N>;
 
     fn try_successors(
         &self,
@@ -180,7 +178,7 @@ impl<N: EntityRef> graphwalk::GraphRef for &'_ DomTree<N> {
 }
 
 impl<N: EntityRef> graphwalk::GraphRef for &'_ mut DomTree<N> {
-    type Node = DomTreeNode;
+    type Node = DomTreeNode<N>;
 
     fn try_successors(
         &self,

@@ -4,7 +4,11 @@ use alloc::vec::Vec;
 use cranelift_entity::{
     EntityList, ListPool, PrimaryMap, SecondaryMap, entity_impl, packed_option::PackedOption,
 };
-use dominators::{depth_map::DepthMap, domtree::DomTree, loops::LoopForest};
+use dominators::{
+    depth_map::DepthMap,
+    domtree::{DomTree, DomTreeNode},
+    loops::{Loop, LoopForest},
+};
 use fx_utils::FxHashMap;
 use graphwalk::{GraphRef, PredGraphRef};
 use ir::{
@@ -27,7 +31,11 @@ struct BlockLinks {
     succs: EntityList<Block>,
 }
 
+pub type BlockDomTreeNode = DomTreeNode<Block>;
 pub type BlockDomTree = DomTree<Block>;
+pub type BlockLoop = Loop<Block>;
+pub type BlockLoopForest = LoopForest<Block>;
+pub type BlockDepthMap = DepthMap<Block>;
 
 #[derive(Default, Clone)]
 pub struct BlockCfg {
@@ -190,15 +198,15 @@ pub struct CfgContext {
     pub cfg: BlockCfg,
     pub block_order: Vec<Block>,
     pub domtree: BlockDomTree,
-    pub loop_forest: LoopForest,
-    pub depth_map: DepthMap,
+    pub loop_forest: BlockLoopForest,
+    pub depth_map: BlockDepthMap,
 }
 
 impl CfgContext {
     pub fn compute(cfg: BlockCfg, entry: Block) -> Self {
         let domtree = BlockDomTree::compute(&cfg, entry);
-        let loop_forest = LoopForest::compute(&cfg, &domtree);
-        let depth_map = DepthMap::compute(&domtree, &loop_forest);
+        let loop_forest = BlockLoopForest::compute(&cfg, &domtree);
+        let depth_map = BlockDepthMap::compute(&domtree, &loop_forest);
 
         let block_order = compute_block_order(&cfg, &domtree, &loop_forest);
 

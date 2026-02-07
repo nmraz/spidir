@@ -8,6 +8,8 @@ pub mod depth_map;
 pub mod domtree;
 pub mod loops;
 
+mod macros;
+
 pub trait IntoCfg {
     type Node: Copy;
     type Cfg: PredGraphRef<Node = Self::Node>;

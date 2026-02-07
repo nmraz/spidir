@@ -1,6 +1,6 @@
 use crate::valgraph::Node;
 
-pub use dominators::domtree::DomTreeNode;
+pub type DomTreeNode = dominators::domtree::DomTreeNode<Node>;
 pub type DomTree = dominators::domtree::DomTree<Node>;
 
 #[cfg(test)]

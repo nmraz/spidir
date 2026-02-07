@@ -15,7 +15,7 @@ macro_rules! test_depth_map {
     };
 }
 
-fn graph_depth_map(input: &str) -> (Graph, DomTree<Node>, DepthMap) {
+fn graph_depth_map(input: &str) -> (Graph, DomTree<Node>, DepthMap<Node>) {
     let g = graph(input);
     let domtree = DomTree::compute(&g, g.entry());
     let loop_forest = LoopForest::compute(&g, &domtree);

@@ -1,33 +1,30 @@
 use alloc::{borrow::ToOwned, vec::Vec};
 use core::{iter, ops::ControlFlow};
 
-use cranelift_entity::{
-    EntityRef, PrimaryMap, SecondaryMap, entity_impl, packed_option::PackedOption,
-};
+use cranelift_entity::{EntityRef, PrimaryMap, SecondaryMap, packed_option::PackedOption};
 use graphwalk::PredGraphRef;
 use smallvec::SmallVec;
 
 use crate::{
     IntoCfg,
     domtree::{DomTree, DomTreeNode},
+    macros::define_param_entity,
 };
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Loop(u32);
-entity_impl!(Loop, "loop");
+define_param_entity!(Loop<N>, "loop");
 
-struct LoopData {
-    parent: PackedOption<Loop>,
-    header: DomTreeNode,
+struct LoopData<N> {
+    parent: PackedOption<Loop<N>>,
+    header: DomTreeNode<N>,
 }
 
-pub struct LoopForest {
-    loops: PrimaryMap<Loop, LoopData>,
-    containing_loops: SecondaryMap<DomTreeNode, PackedOption<Loop>>,
+pub struct LoopForest<N> {
+    loops: PrimaryMap<Loop<N>, LoopData<N>>,
+    containing_loops: SecondaryMap<DomTreeNode<N>, PackedOption<Loop<N>>>,
 }
 
-impl LoopForest {
-    pub fn compute<N: EntityRef>(graph: impl IntoCfg<Node = N>, domtree: &DomTree<N>) -> Self {
+impl<N: EntityRef> LoopForest<N> {
+    pub fn compute(graph: impl IntoCfg<Node = N>, domtree: &DomTree<N>) -> Self {
         let graph = graph.into_cfg();
 
         let mut forest = Self {
@@ -35,7 +32,7 @@ impl LoopForest {
             containing_loops: SecondaryMap::new(),
         };
 
-        let mut latches = SmallVec::<[DomTreeNode; 4]>::new();
+        let mut latches = SmallVec::<[_; 4]>::new();
 
         for tree_node in domtree.postorder() {
             // Detect if `tree_node` is a loop header by checking if it has a CFG
@@ -73,39 +70,39 @@ impl LoopForest {
     }
 
     #[inline]
-    pub fn loop_header(&self, loop_node: Loop) -> DomTreeNode {
+    pub fn loop_header(&self, loop_node: Loop<N>) -> DomTreeNode<N> {
         self.loops[loop_node].header
     }
 
     #[inline]
-    pub fn loop_parent(&self, loop_node: Loop) -> Option<Loop> {
+    pub fn loop_parent(&self, loop_node: Loop<N>) -> Option<Loop<N>> {
         self.loops[loop_node].parent.expand()
     }
 
     #[inline]
-    pub fn loop_ancestors(&self, loop_node: Loop) -> impl Iterator<Item = Loop> + '_ {
+    pub fn loop_ancestors(&self, loop_node: Loop<N>) -> impl Iterator<Item = Loop<N>> + '_ {
         iter::successors(Some(loop_node), |&loop_node| self.loop_parent(loop_node))
     }
 
-    pub fn loop_depth(&self, loop_node: Loop) -> u32 {
+    pub fn loop_depth(&self, loop_node: Loop<N>) -> u32 {
         self.loop_ancestors(loop_node).count() as u32
     }
 
-    pub fn root_loop(&self, loop_node: Loop) -> Loop {
+    pub fn root_loop(&self, loop_node: Loop<N>) -> Loop<N> {
         self.loop_ancestors(loop_node).last().unwrap()
     }
 
     #[inline]
-    pub fn containing_loop(&self, node: DomTreeNode) -> Option<Loop> {
+    pub fn containing_loop(&self, node: DomTreeNode<N>) -> Option<Loop<N>> {
         self.containing_loops[node].expand()
     }
 
-    pub fn is_latch<N: EntityRef>(
+    pub fn is_latch(
         &self,
         graph: impl IntoCfg<Node = N>,
         domtree: &DomTree<N>,
-        loop_node: Loop,
-        node: DomTreeNode,
+        loop_node: Loop<N>,
+        node: DomTreeNode<N>,
     ) -> bool {
         let header = self.loop_header(loop_node);
         if !domtree.dominates(header, node) {
@@ -128,12 +125,12 @@ impl LoopForest {
 
     /// Discovers the maximal loop containing `latches` and populates `loop_node` accordingly,
     /// assuming no ancestors of the loop have yet been recorded in the forest.
-    fn discover_loop<N: EntityRef>(
+    fn discover_loop(
         &mut self,
         graph: &impl PredGraphRef<Node = N>,
         domtree: &DomTree<N>,
-        new_loop: Loop,
-        latches: &[DomTreeNode],
+        new_loop: Loop<N>,
+        latches: &[DomTreeNode<N>],
     ) {
         let header = self.loops[new_loop].header;
         let mut stack = latches.to_owned();
@@ -167,7 +164,7 @@ impl LoopForest {
         }
     }
 
-    fn create_loop(&mut self, header: DomTreeNode) -> Loop {
+    fn create_loop(&mut self, header: DomTreeNode<N>) -> Loop<N> {
         let loop_node = self.loops.push(LoopData {
             parent: None.into(),
             header,
@@ -180,9 +177,9 @@ impl LoopForest {
 fn push_loop_preds<N: EntityRef>(
     graph: &impl PredGraphRef<Node = N>,
     domtree: &DomTree<N>,
-    node: DomTreeNode,
-    header: DomTreeNode,
-    stack: &mut Vec<DomTreeNode>,
+    node: DomTreeNode<N>,
+    header: DomTreeNode<N>,
+    stack: &mut Vec<DomTreeNode<N>>,
 ) {
     graph.predecessors(domtree.get_cfg_node(node), |pred| {
         if let Some(tree_pred) = domtree.get_tree_node(pred) {

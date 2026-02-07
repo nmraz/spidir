@@ -273,10 +273,10 @@ fn populate_builtins(
     module_metadata: &ModuleMetadata,
 ) -> SecondaryMap<ExternFunction, Option<usize>> {
     let builtins = FxHashMap::from_iter([
-        ("malloc", libc::malloc as usize),
-        ("free", libc::free as usize),
-        ("memcpy", libc::memcpy as usize),
-        ("memset", libc::memset as usize),
+        ("malloc", libc::malloc as *const () as usize),
+        ("free", libc::free as *const () as usize),
+        ("memcpy", libc::memcpy as *const () as usize),
+        ("memset", libc::memset as *const () as usize),
     ]);
 
     let mut mapping = SecondaryMap::new();

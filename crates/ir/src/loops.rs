@@ -1,4 +1,4 @@
 use crate::valgraph::Node;
 
-pub type Loop = dominators::loops::Loop<Node>;
-pub type LoopForest = dominators::loops::LoopForest<Node>;
+pub type ValLoop = dominators::loops::Loop<Node>;
+pub type ValLoopForest = dominators::loops::LoopForest<Node>;

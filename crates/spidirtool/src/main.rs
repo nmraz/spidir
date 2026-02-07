@@ -16,9 +16,9 @@ use codegen::{
 };
 use codegen_test_tools::{disasm::disasm_code, exec::codegen_and_exec};
 use ir::{
-    domtree::DomTree,
+    domtree::ValDomTree,
     function::{FunctionBody, FunctionBorrow},
-    loops::LoopForest,
+    loops::ValLoopForest,
     module::{Module, ModuleMetadata},
     verify::verify_func,
     write::{display_node, quote_ident, write_function_metadata},
@@ -367,7 +367,7 @@ fn output_dot_file(
     let loop_forest;
 
     let domtree = if annotator_opts.domtree || annotator_opts.loops {
-        Some(DomTree::compute(graph, func.body.entry))
+        Some(ValDomTree::compute(graph, func.body.entry))
     } else {
         None
     };
@@ -381,7 +381,7 @@ fn output_dot_file(
 
     if annotator_opts.loops {
         let domtree = domtree.as_ref().unwrap();
-        loop_forest = LoopForest::compute(graph, domtree);
+        loop_forest = ValLoopForest::compute(graph, domtree);
         annotators.push(Box::new(LoopAnnotator::new(domtree, &loop_forest)));
     }
 

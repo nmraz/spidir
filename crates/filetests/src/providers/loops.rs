@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use anyhow::Result;
-use ir::{domtree::DomTree, loops::LoopForest, module::Module};
+use ir::{domtree::ValDomTree, loops::ValLoopForest, module::Module};
 
 use crate::{
     provider::{SimpleTestProvider, Updater, update_per_func_output},
@@ -15,8 +15,8 @@ impl SimpleTestProvider for LoopForestProvider {
 
         for func in module.iter_function_borrows() {
             let body = func.body;
-            let domtree = DomTree::compute(&body.graph, body.entry);
-            let loop_forest = LoopForest::compute(&body.graph, &domtree);
+            let domtree = ValDomTree::compute(&body.graph, body.entry);
+            let loop_forest = ValLoopForest::compute(&body.graph, &domtree);
 
             write_body_with_trailing_comments(&mut output, &module.metadata, func, |s, node| {
                 if let Some(domtree_node) = domtree.get_tree_node(node)

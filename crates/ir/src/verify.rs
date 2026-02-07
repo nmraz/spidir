@@ -9,7 +9,7 @@ use itertools::{Itertools, izip};
 use smallvec::SmallVec;
 
 use crate::{
-    domtree::{DomTree, DomTreeNode},
+    domtree::{ValDomTree, ValDomTreeNode},
     function::{FunctionBody, FunctionBorrow, FunctionMetadata},
     module::{Function, Module, ModuleMetadata},
     node::{DepValueKind, NodeKind},
@@ -329,15 +329,15 @@ fn verify_control_outputs(graph: &ValGraph, node: Node, errors: &mut Vec<Functio
     }
 }
 
-type InputLocScratch = SmallVec<[(DomTreeNode, u32); 4]>;
-type ByNodeSchedule = SecondaryMap<Node, PackedOption<DomTreeNode>>;
+type InputLocScratch = SmallVec<[(ValDomTreeNode, u32); 4]>;
+type ByNodeSchedule = SecondaryMap<Node, PackedOption<ValDomTreeNode>>;
 
 fn verify_dataflow(body: &FunctionBody, errors: &mut Vec<FunctionVerifierError>) {
     let cfg_preorder = body.compute_cfg_preorder_info();
     let walk_info = body.compute_cfg_live_walk_info(&cfg_preorder);
     let ctx = ScheduleContext::new(&body.graph, &walk_info, &cfg_preorder.preorder);
 
-    let domtree = DomTree::compute(&body.graph, body.entry);
+    let domtree = ValDomTree::compute(&body.graph, body.entry);
     let mut scheduler = VerifierScheduler {
         domtree: &domtree,
         errors,
@@ -367,7 +367,7 @@ fn verify_dataflow(body: &FunctionBody, errors: &mut Vec<FunctionVerifierError>)
 }
 
 struct VerifierScheduler<'a> {
-    domtree: &'a DomTree,
+    domtree: &'a ValDomTree,
     errors: &'a mut Vec<FunctionVerifierError>,
     input_loc_scratch: InputLocScratch,
     schedule: ByNodeSchedule,
@@ -391,7 +391,7 @@ impl VerifierScheduler<'_> {
     fn verify_dataflow_cfg_node_inputs(
         &mut self,
         ctx: &ScheduleContext<'_>,
-        domtree_node: DomTreeNode,
+        domtree_node: ValDomTreeNode,
     ) {
         let cfg_node = self.domtree.get_cfg_node(domtree_node);
         let Some((last_scheduled_input, last_scheduled_input_idx)) =
@@ -459,7 +459,7 @@ impl VerifierScheduler<'_> {
         &mut self,
         ctx: &ScheduleContext<'_>,
         node: Node,
-    ) -> Option<(DomTreeNode, u32)> {
+    ) -> Option<(ValDomTreeNode, u32)> {
         let graph = ctx.graph;
 
         let input_loc_scratch = &mut self.input_loc_scratch;

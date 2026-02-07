@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use anyhow::{Ok, Result};
 use cranelift_entity::SecondaryMap;
-use ir::{domtree::DomTree, module::Module};
+use ir::{domtree::ValDomTree, module::Module};
 use itertools::Itertools;
 
 use crate::{
@@ -18,7 +18,7 @@ impl SimpleTestProvider for DomTreeProvider {
         for func in module.iter_function_borrows() {
             let body = func.body;
 
-            let domtree = DomTree::compute(&body.graph, body.entry);
+            let domtree = ValDomTree::compute(&body.graph, body.entry);
             let mut rpo_nums = SecondaryMap::new();
             for (i, &node) in body
                 .compute_full_walk_info()

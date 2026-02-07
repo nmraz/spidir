@@ -9,8 +9,8 @@ use core::fmt::Write;
 use fx_utils::FxHashMap;
 
 use ir::{
-    domtree::DomTree,
-    loops::LoopForest,
+    domtree::ValDomTree,
+    loops::ValLoopForest,
     node::DepValueKind,
     valgraph::{Node, ValGraph},
     verify::FunctionVerifierError,
@@ -172,11 +172,11 @@ fn format_verifier_errors(errors: &[&FunctionVerifierError], graph: &ValGraph) -
 }
 
 pub struct DomTreeAnnotator<'a> {
-    domtree: &'a DomTree,
+    domtree: &'a ValDomTree,
 }
 
 impl<'a> DomTreeAnnotator<'a> {
-    pub fn new(domtree: &'a DomTree) -> Self {
+    pub fn new(domtree: &'a ValDomTree) -> Self {
         Self { domtree }
     }
 }
@@ -205,12 +205,12 @@ impl Annotate for DomTreeAnnotator<'_> {
 }
 
 pub struct LoopAnnotator<'a> {
-    domtree: &'a DomTree,
-    loop_forest: &'a LoopForest,
+    domtree: &'a ValDomTree,
+    loop_forest: &'a ValLoopForest,
 }
 
 impl<'a> LoopAnnotator<'a> {
-    pub fn new(domtree: &'a DomTree, loop_forest: &'a LoopForest) -> Self {
+    pub fn new(domtree: &'a ValDomTree, loop_forest: &'a ValLoopForest) -> Self {
         Self {
             domtree,
             loop_forest,

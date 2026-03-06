@@ -119,15 +119,17 @@ impl<L: RangeKeyIter, R: RangeKeyIter> Iterator for ConflictIter<L, R> {
 
             match lhs_range.end.cmp(&rhs_range.end) {
                 Ordering::Less => {
-                    // The LHS range ended below the RHS range, so try to get the LHS iterator back
-                    // to a point where it ends above the start of the RHS range for the next
-                    // iteration. Doing this might completely "miss" the RHS range (there might be
-                    // no range intersecting it), but that will be handled correctly later.
+                    // The LHS range ended below the RHS range, so consume the LHS and try to get
+                    // the LHS iterator back to a point where it ends above the start of the RHS
+                    // range for the next iteration. Note that this might completely "miss" the RHS
+                    // range if none of the LHS ranges intersect it.
+                    self.lhs.next();
                     advance_range_iter(&mut self.lhs, rhs_range.start);
                 }
                 Ordering::Greater => {
                     // Conversely, if the RHS range ended below the LHS, catch up with the RHS
                     // iterator.
+                    self.rhs.next();
                     advance_range_iter(&mut self.rhs, lhs_range.start);
                 }
                 Ordering::Equal => {
@@ -149,8 +151,6 @@ fn advance_range_iter(iter: &mut impl RangeKeyIter, pos: ProgramPoint) {
 
     // Try to skip a few ranges for the dense case, keeping things linear.
     for _ in 0..MAX_NEXT_CALLS {
-        iter.next();
-
         if let Some((current, _)) = iter.current() {
             if current.end > pos {
                 return;
@@ -159,6 +159,8 @@ fn advance_range_iter(iter: &mut impl RangeKeyIter, pos: ProgramPoint) {
             // Nothing to do if we've exhausted the iterator.
             return;
         }
+
+        iter.next();
     }
 
     // Use the asymptotically more efficient `skip_to_endpoint_above` for large gaps.

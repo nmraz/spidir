@@ -123,10 +123,6 @@ impl ProgramRange {
         Self { start, end }
     }
 
-    pub fn point(point: ProgramPoint) -> Self {
-        Self::new(point, point.next())
-    }
-
     pub fn len(self) -> u32 {
         self.end.index() - self.start.index()
     }
@@ -152,12 +148,6 @@ impl fmt::Debug for ProgramRange {
 
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct RangeEndKey(pub ProgramRange);
-
-impl RangeEndKey {
-    pub fn point(point: ProgramPoint) -> Self {
-        Self(ProgramRange::point(point))
-    }
-}
 
 impl PartialEq for RangeEndKey {
     fn eq(&self, other: &Self) -> bool {

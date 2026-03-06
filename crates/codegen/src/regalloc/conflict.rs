@@ -28,10 +28,18 @@ impl<V: Copy> RangeKeyIter for BTreeRangeIter<'_, V> {
     }
 
     fn skip_to_endpoint_above(&mut self, pos: ProgramPoint) {
-        // Note: we want ranges that end strictly above pos. The key we chose here actually ends
-        // just *after* `pos` (because it is half-open), so we end up getting exactly what we
-        // wanted.
-        self.iter = self.tree.range(RangeEndKey::point(pos)..).peekable();
+        let Some((cur, _)) = self.current() else {
+            // If we've already exhausted the entire iterator, we have nowhere else to skip to.
+            return;
+        };
+
+        // Make sure we find something strictly above `pos`, and no earlier than `end`.
+        let end = pos.next().max(cur.end);
+
+        self.iter = self
+            .tree
+            .range(RangeEndKey(ProgramRange::new(pos, end))..)
+            .peekable();
     }
 }
 

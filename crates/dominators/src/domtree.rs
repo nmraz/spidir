@@ -9,7 +9,10 @@ use cranelift_entity::{
     EntityList, EntityRef, ListPool, PrimaryMap, SecondaryMap,
     packed_option::{PackedOption, ReservedValue},
 };
-use graphwalk::{PredGraphRef, TreePostOrder, TreePreOrder, WalkPhase};
+use graphwalk::{
+    PredGraphRef,
+    dfs::{TreePostOrder, TreePreOrder, WalkPhase},
+};
 use smallvec::SmallVec;
 
 use crate::{IntoCfg, macros::define_param_entity};

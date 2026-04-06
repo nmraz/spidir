@@ -8,7 +8,7 @@ use cranelift_entity::{
 };
 use entity_utils::set::DenseEntitySet;
 use fx_utils::{FxHashMap, FxHashSet};
-use graphwalk::{GraphRef, PostOrderContext};
+use graphwalk::{GraphRef, dfs::PostOrderContext};
 use ir::{
     function::FunctionBody,
     module::ModuleMetadata,

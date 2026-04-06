@@ -1,6 +1,6 @@
 use expect_test::expect;
 use graphmock::Graph;
-use graphwalk::entity_preorder;
+use graphwalk::dfs::entity_preorder;
 use itertools::Itertools;
 
 macro_rules! test_preorder {

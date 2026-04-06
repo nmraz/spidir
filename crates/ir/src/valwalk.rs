@@ -11,8 +11,8 @@ use crate::{
     valgraph::{DepValue, Node, ValGraph},
 };
 
-pub type PreOrder<G> = graphwalk::PreOrder<G, DenseEntitySet<Node>>;
-pub type PostOrder<G> = graphwalk::PostOrder<G, DenseEntitySet<Node>>;
+pub type PreOrder<G> = graphwalk::dfs::PreOrder<G, DenseEntitySet<Node>>;
+pub type PostOrder<G> = graphwalk::dfs::PostOrder<G, DenseEntitySet<Node>>;
 
 pub fn graph_walk_succs(graph: &ValGraph, node: Node) -> impl Iterator<Item = Node> + '_ {
     // Visit all inputs so we don't cause cases where uses are traversed without their corresponding

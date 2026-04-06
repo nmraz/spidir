@@ -4,7 +4,7 @@ use alloc::{borrow::ToOwned, string::String, vec::Vec};
 
 use cranelift_entity::{SecondaryMap, packed_option::PackedOption};
 use fx_utils::FxHashSet;
-use graphwalk::PostOrderContext;
+use graphwalk::dfs::PostOrderContext;
 use itertools::{Itertools, izip};
 use smallvec::SmallVec;
 

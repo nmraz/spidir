@@ -1,6 +1,6 @@
 use expect_test::expect;
 use graphmock::Graph;
-use graphwalk::{WalkPhase, entity_postorder};
+use graphwalk::dfs::{WalkPhase, entity_postorder};
 use itertools::Itertools;
 use std::fmt::Write;
 

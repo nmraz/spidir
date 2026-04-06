@@ -2,7 +2,7 @@ use core::{cell::RefCell, ops::ControlFlow};
 
 use alloc::vec::Vec;
 
-use graphwalk::{GraphRef, entity_postorder};
+use graphwalk::{GraphRef, dfs::entity_postorder};
 use log::trace;
 use smallvec::SmallVec;
 

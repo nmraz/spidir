@@ -2,7 +2,7 @@ use alloc::collections::VecDeque;
 
 use entity_utils::{set::DenseEntitySet, worklist::Worklist};
 use fx_utils::FxHashMap;
-use graphwalk::PostOrderContext;
+use graphwalk::dfs::PostOrderContext;
 use ir::{
     builder::{Builder, BuilderExt},
     node::{NodeKind, Type},

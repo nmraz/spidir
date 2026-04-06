@@ -1,7 +1,7 @@
 use core::iter;
 
 use entity_utils::set::DenseEntitySet;
-use graphwalk::PostOrderContext;
+use graphwalk::dfs::PostOrderContext;
 
 use crate::{
     valgraph::{Node, ValGraph},

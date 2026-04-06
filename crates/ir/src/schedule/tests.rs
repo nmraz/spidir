@@ -1,5 +1,5 @@
 use entity_utils::set::DenseEntitySet;
-use graphwalk::PostOrderContext;
+use graphwalk::dfs::PostOrderContext;
 
 use crate::{
     builder::{BuilderExt, SimpleBuilder},

@@ -1,6 +1,6 @@
 #![cfg_attr(not(test), no_std)]
 
-use graphwalk::{GraphRef, PredGraphRef};
+use graphwalk::{Graph, PredGraph};
 
 extern crate alloc;
 
@@ -12,13 +12,13 @@ mod macros;
 
 pub trait IntoCfg {
     type Node: Copy;
-    type Cfg: PredGraphRef<Node = Self::Node>;
+    type Cfg: PredGraph<Node = Self::Node>;
 
     fn into_cfg(self) -> Self::Cfg;
 }
 
-impl<G: PredGraphRef> IntoCfg for G {
-    type Node = <Self as GraphRef>::Node;
+impl<G: PredGraph> IntoCfg for G {
+    type Node = <Self as Graph>::Node;
     type Cfg = Self;
 
     #[inline]

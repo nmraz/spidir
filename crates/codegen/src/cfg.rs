@@ -10,7 +10,7 @@ use dominators::{
     loops::{Loop, LoopForest},
 };
 use fx_utils::FxHashMap;
-use graphwalk::{GraphRef, PredGraphRef};
+use graphwalk::{Graph, PredGraph};
 use ir::{
     node::NodeKind,
     valgraph::{DepValue, Node, ValGraph},
@@ -73,7 +73,7 @@ impl BlockCfg {
     }
 }
 
-impl GraphRef for &'_ BlockCfg {
+impl Graph for BlockCfg {
     type Node = Block;
 
     fn try_successors(
@@ -85,7 +85,7 @@ impl GraphRef for &'_ BlockCfg {
     }
 }
 
-impl PredGraphRef for &'_ BlockCfg {
+impl PredGraph for BlockCfg {
     fn try_predecessors(
         &self,
         node: Block,

@@ -38,7 +38,7 @@ impl<'a> GraphWalkSuccs<'a> {
     }
 }
 
-impl graphwalk::GraphRef for GraphWalkSuccs<'_> {
+impl graphwalk::Graph for GraphWalkSuccs<'_> {
     type Node = Node;
 
     fn try_successors(
@@ -89,7 +89,7 @@ impl<'a> RawDefUseSuccs<'a> {
     }
 }
 
-impl graphwalk::GraphRef for RawDefUseSuccs<'_> {
+impl graphwalk::Graph for RawDefUseSuccs<'_> {
     type Node = Node;
 
     fn try_successors(
@@ -114,7 +114,7 @@ impl<'a> DefUseSuccs<'a> {
     }
 }
 
-impl graphwalk::GraphRef for DefUseSuccs<'_> {
+impl graphwalk::Graph for DefUseSuccs<'_> {
     type Node = Node;
 
     fn try_successors(
@@ -149,7 +149,7 @@ impl<'a> CfgLiveDataflowPreds<'a> {
     }
 }
 
-impl graphwalk::GraphRef for CfgLiveDataflowPreds<'_> {
+impl graphwalk::Graph for CfgLiveDataflowPreds<'_> {
     type Node = Node;
 
     fn try_successors(
@@ -236,7 +236,7 @@ impl<'a> UnpinnedDataflowPreds<'a> {
     }
 }
 
-impl graphwalk::GraphRef for UnpinnedDataflowPreds<'_> {
+impl graphwalk::Graph for UnpinnedDataflowPreds<'_> {
     type Node = Node;
 
     fn try_successors(
@@ -268,7 +268,7 @@ impl<'a> UnpinnedDataflowSuccs<'a> {
     }
 }
 
-impl graphwalk::GraphRef for UnpinnedDataflowSuccs<'_> {
+impl graphwalk::Graph for UnpinnedDataflowSuccs<'_> {
     type Node = Node;
 
     fn try_successors(
@@ -304,7 +304,7 @@ impl<'a> ForwardCfg<'a> {
     }
 }
 
-impl graphwalk::GraphRef for ForwardCfg<'_> {
+impl graphwalk::Graph for ForwardCfg<'_> {
     type Node = Node;
 
     fn try_successors(
@@ -316,7 +316,7 @@ impl graphwalk::GraphRef for ForwardCfg<'_> {
     }
 }
 
-impl graphwalk::PredGraphRef for ForwardCfg<'_> {
+impl graphwalk::PredGraph for ForwardCfg<'_> {
     fn try_predecessors(
         &self,
         node: Self::Node,

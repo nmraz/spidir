@@ -6,7 +6,7 @@ use core::ops::ControlFlow;
 
 pub mod dfs;
 
-pub trait GraphRef {
+pub trait Graph {
     type Node: Copy;
 
     fn try_successors(
@@ -23,7 +23,7 @@ pub trait GraphRef {
     }
 }
 
-impl<G: GraphRef> GraphRef for &'_ G {
+impl<G: Graph> Graph for &'_ G {
     type Node = G::Node;
 
     fn try_successors(
@@ -31,10 +31,23 @@ impl<G: GraphRef> GraphRef for &'_ G {
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,
     ) -> ControlFlow<()> {
-        (*self).try_successors(node, f)
+        (**self).try_successors(node, f)
     }
 }
-pub trait PredGraphRef: GraphRef {
+
+impl<G: Graph> Graph for &'_ mut G {
+    type Node = G::Node;
+
+    fn try_successors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        (**self).try_successors(node, f)
+    }
+}
+
+pub trait PredGraph: Graph {
     fn try_predecessors(
         &self,
         node: Self::Node,
@@ -49,12 +62,22 @@ pub trait PredGraphRef: GraphRef {
     }
 }
 
-impl<G: PredGraphRef> PredGraphRef for &'_ G {
+impl<G: PredGraph> PredGraph for &'_ G {
     fn try_predecessors(
         &self,
         node: Self::Node,
         f: impl FnMut(Self::Node) -> ControlFlow<()>,
     ) -> ControlFlow<()> {
-        (*self).try_predecessors(node, f)
+        (**self).try_predecessors(node, f)
+    }
+}
+
+impl<G: PredGraph> PredGraph for &'_ mut G {
+    fn try_predecessors(
+        &self,
+        node: Self::Node,
+        f: impl FnMut(Self::Node) -> ControlFlow<()>,
+    ) -> ControlFlow<()> {
+        (**self).try_predecessors(node, f)
     }
 }

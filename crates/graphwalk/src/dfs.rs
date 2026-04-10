@@ -1,4 +1,4 @@
-use crate::GraphRef;
+use crate::Graph;
 
 use alloc::vec::Vec;
 
@@ -54,7 +54,7 @@ impl<N: Copy> PreOrderContext<N> {
 
     pub fn next(
         &mut self,
-        graph: impl GraphRef<Node = N>,
+        graph: impl Graph<Node = N>,
         visited: &mut impl VisitTracker<N>,
     ) -> Option<N> {
         let node = loop {
@@ -85,13 +85,13 @@ impl<N: Copy> Default for PreOrderContext<N> {
     }
 }
 
-pub struct PreOrder<G: GraphRef, V> {
+pub struct PreOrder<G: Graph, V> {
     pub graph: G,
     pub visited: V,
     pub(crate) ctx: PreOrderContext<G::Node>,
 }
 
-impl<G: GraphRef, V: VisitTracker<G::Node>> PreOrder<G, V> {
+impl<G: Graph, V: VisitTracker<G::Node>> PreOrder<G, V> {
     pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
         let mut ctx = PreOrderContext::new();
         ctx.reset(roots);
@@ -103,7 +103,7 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> PreOrder<G, V> {
     }
 }
 
-impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PreOrder<G, V> {
+impl<G: Graph, V: VisitTracker<G::Node>> Iterator for PreOrder<G, V> {
     type Item = G::Node;
 
     fn next(&mut self) -> Option<G::Node> {
@@ -111,7 +111,7 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PreOrder<G, V> {
     }
 }
 
-pub fn entity_preorder<G: GraphRef>(
+pub fn entity_preorder<G: Graph>(
     graph: G,
     roots: impl IntoIterator<Item = G::Node>,
 ) -> PreOrder<G, DenseEntitySet<G::Node>>
@@ -150,7 +150,7 @@ impl<N: Copy> PostOrderContext<N> {
 
     pub fn next(
         &mut self,
-        graph: impl GraphRef<Node = N>,
+        graph: impl Graph<Node = N>,
         visited: &mut impl VisitTracker<N>,
     ) -> Option<N> {
         loop {
@@ -163,7 +163,7 @@ impl<N: Copy> PostOrderContext<N> {
 
     pub fn next_event(
         &mut self,
-        graph: impl GraphRef<Node = N>,
+        graph: impl Graph<Node = N>,
         visited: &mut impl VisitTracker<N>,
     ) -> Option<(WalkPhase, N)> {
         loop {
@@ -199,13 +199,13 @@ impl<N: Copy> Default for PostOrderContext<N> {
     }
 }
 
-pub struct PostOrder<G: GraphRef, V> {
+pub struct PostOrder<G: Graph, V> {
     pub graph: G,
     pub visited: V,
     pub(crate) ctx: PostOrderContext<G::Node>,
 }
 
-impl<G: GraphRef, V: VisitTracker<G::Node>> PostOrder<G, V> {
+impl<G: Graph, V: VisitTracker<G::Node>> PostOrder<G, V> {
     pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
         let mut ctx = PostOrderContext::new();
         ctx.reset(roots);
@@ -221,7 +221,7 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> PostOrder<G, V> {
     }
 }
 
-impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PostOrder<G, V> {
+impl<G: Graph, V: VisitTracker<G::Node>> Iterator for PostOrder<G, V> {
     type Item = G::Node;
 
     fn next(&mut self) -> Option<G::Node> {
@@ -229,7 +229,7 @@ impl<G: GraphRef, V: VisitTracker<G::Node>> Iterator for PostOrder<G, V> {
     }
 }
 
-pub fn entity_postorder<G: GraphRef>(
+pub fn entity_postorder<G: Graph>(
     graph: G,
     roots: impl IntoIterator<Item = G::Node>,
 ) -> PostOrder<G, DenseEntitySet<G::Node>>

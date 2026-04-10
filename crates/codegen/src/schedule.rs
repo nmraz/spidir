@@ -8,7 +8,7 @@ use cranelift_entity::{
 };
 use entity_utils::set::DenseEntitySet;
 use fx_utils::{FxHashMap, FxHashSet};
-use graphwalk::{GraphRef, dfs::PostOrderContext};
+use graphwalk::{Graph, dfs::PostOrderContext};
 use ir::{
     function::FunctionBody,
     module::ModuleMetadata,
@@ -675,7 +675,7 @@ struct BlockSubgraph<'a> {
     block: Block,
 }
 
-impl GraphRef for BlockSubgraph<'_> {
+impl Graph for BlockSubgraph<'_> {
     type Node = Node;
 
     fn try_successors(

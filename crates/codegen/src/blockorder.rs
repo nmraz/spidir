@@ -2,7 +2,7 @@ use core::{cell::RefCell, ops::ControlFlow};
 
 use alloc::vec::Vec;
 
-use graphwalk::{GraphRef, dfs::entity_postorder};
+use graphwalk::{Graph, dfs::entity_postorder};
 use log::trace;
 use smallvec::SmallVec;
 
@@ -35,7 +35,7 @@ struct LoopGroupedCfg<'a> {
     other_loop_succ_cache: RefCell<SmallVec<[Block; 4]>>,
 }
 
-impl GraphRef for LoopGroupedCfg<'_> {
+impl Graph for LoopGroupedCfg<'_> {
     type Node = Block;
 
     fn try_successors(

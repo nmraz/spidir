@@ -2,7 +2,7 @@ use std::ops::ControlFlow;
 
 use cranelift_entity::{PrimaryMap, entity_impl};
 use fx_utils::FxHashMap;
-use graphwalk::{GraphRef, PredGraphRef};
+use graphwalk::{Graph as GraphTrait, PredGraph as PredGraphTrait};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Node(u32);
@@ -79,7 +79,7 @@ pub fn graph(input: &str) -> Graph {
     graph
 }
 
-impl GraphRef for &'_ Graph {
+impl GraphTrait for Graph {
     type Node = Node;
 
     fn try_successors(
@@ -91,7 +91,7 @@ impl GraphRef for &'_ Graph {
     }
 }
 
-impl PredGraphRef for &'_ Graph {
+impl PredGraphTrait for Graph {
     fn try_predecessors(
         &self,
         node: Self::Node,

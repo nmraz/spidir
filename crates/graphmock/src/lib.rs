@@ -1,6 +1,6 @@
 use std::ops::ControlFlow;
 
-use cranelift_entity::{PrimaryMap, entity_impl};
+use cranelift_entity::{Keys, PrimaryMap, entity_impl};
 use fx_utils::FxHashMap;
 use graphwalk::{Graph as GraphTrait, PredGraph as PredGraphTrait};
 
@@ -22,6 +22,10 @@ pub struct Graph {
 impl Graph {
     pub fn entry(&self) -> Node {
         Node(0)
+    }
+
+    pub fn nodes(&self) -> Keys<Node> {
+        self.nodes.keys()
     }
 
     pub fn node(&self, name: &str) -> Node {

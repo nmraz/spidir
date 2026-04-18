@@ -11,7 +11,7 @@ pub enum WalkPhase {
     Post,
 }
 
-pub trait VisitTracker<N>: Default {
+pub trait VisitTracker<N> {
     fn is_visited(&self, node: N) -> bool;
     fn mark_visited(&mut self, node: N);
 }
@@ -91,7 +91,7 @@ pub struct PreOrder<G: Graph, V> {
     ctx: PreOrderContext<G::Node>,
 }
 
-impl<G: Graph, V: VisitTracker<G::Node>> PreOrder<G, V> {
+impl<G: Graph, V: VisitTracker<G::Node> + Default> PreOrder<G, V> {
     pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
         let mut ctx = PreOrderContext::new();
         ctx.reset(roots);
@@ -205,7 +205,7 @@ pub struct PostOrder<G: Graph, V> {
     ctx: PostOrderContext<G::Node>,
 }
 
-impl<G: Graph, V: VisitTracker<G::Node>> PostOrder<G, V> {
+impl<G: Graph, V: VisitTracker<G::Node> + Default> PostOrder<G, V> {
     pub fn new(graph: G, roots: impl IntoIterator<Item = G::Node>) -> Self {
         let mut ctx = PostOrderContext::new();
         ctx.reset(roots);

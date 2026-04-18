@@ -5,6 +5,7 @@ extern crate alloc;
 use core::ops::ControlFlow;
 
 pub mod dfs;
+pub mod scc;
 
 pub trait Graph {
     type Node: Copy;

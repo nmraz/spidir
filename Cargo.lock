@@ -480,6 +480,7 @@ dependencies = [
  "expect-test",
  "graphmock",
  "itertools",
+ "smallvec",
 ]
 
 [[package]]

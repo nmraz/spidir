@@ -39,7 +39,7 @@ impl<N: EntityRef> VisitTracker<N> for DenseEntitySet<N> {
 
 #[derive(Debug)]
 pub struct PreOrderContext<N> {
-    pub(crate) stack: Vec<N>,
+    stack: Vec<N>,
 }
 
 impl<N: Copy> PreOrderContext<N> {
@@ -88,7 +88,7 @@ impl<N: Copy> Default for PreOrderContext<N> {
 pub struct PreOrder<G: Graph, V> {
     pub graph: G,
     pub visited: V,
-    pub(crate) ctx: PreOrderContext<G::Node>,
+    ctx: PreOrderContext<G::Node>,
 }
 
 impl<G: Graph, V: VisitTracker<G::Node>> PreOrder<G, V> {
@@ -124,7 +124,7 @@ where
 pub type TreePreOrder<G> = PreOrder<G, NopTracker>;
 
 pub struct PostOrderContext<N> {
-    pub(crate) stack: Vec<(WalkPhase, N)>,
+    stack: Vec<(WalkPhase, N)>,
 }
 
 impl<N: Copy> PostOrderContext<N> {
@@ -202,7 +202,7 @@ impl<N: Copy> Default for PostOrderContext<N> {
 pub struct PostOrder<G: Graph, V> {
     pub graph: G,
     pub visited: V,
-    pub(crate) ctx: PostOrderContext<G::Node>,
+    ctx: PostOrderContext<G::Node>,
 }
 
 impl<G: Graph, V: VisitTracker<G::Node>> PostOrder<G, V> {

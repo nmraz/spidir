@@ -9,13 +9,14 @@ use cranelift_entity::{
     EntityList, EntityRef, ListPool, PrimaryMap, SecondaryMap,
     packed_option::{PackedOption, ReservedValue},
 };
+use entity_utils::define_param_entity;
 use graphwalk::{
     PredGraph,
     dfs::{TreePostOrder, TreePreOrder, WalkPhase},
 };
 use smallvec::SmallVec;
 
-use crate::{IntoCfg, macros::define_param_entity};
+use crate::IntoCfg;
 
 define_param_entity!(DomTreeNode<N>, "dt");
 

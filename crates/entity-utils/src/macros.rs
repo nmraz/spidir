@@ -1,3 +1,4 @@
+#[macro_export]
 macro_rules! define_param_entity {
     ($entity:ident<$param:ident>, $display_prefix:expr) => {
         pub struct $entity<$param>(u32, core::marker::PhantomData<$param>);
@@ -75,5 +76,3 @@ macro_rules! define_param_entity {
         }
     };
 }
-
-pub(crate) use define_param_entity;

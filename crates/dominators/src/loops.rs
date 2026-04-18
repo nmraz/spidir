@@ -2,13 +2,13 @@ use alloc::{borrow::ToOwned, vec::Vec};
 use core::{iter, ops::ControlFlow};
 
 use cranelift_entity::{EntityRef, PrimaryMap, SecondaryMap, packed_option::PackedOption};
+use entity_utils::define_param_entity;
 use graphwalk::PredGraph;
 use smallvec::SmallVec;
 
 use crate::{
     IntoCfg,
     domtree::{DomTree, DomTreeNode},
-    macros::define_param_entity,
 };
 
 define_param_entity!(Loop<N>, "loop");

@@ -15,7 +15,6 @@ cranelift-entity.workspace = true
 smallvec.workspace = true
 
 [dev-dependencies]
-entity-utils.workspace = true
 graphmock.workspace = true
 expect-test.workspace = true
 itertools.workspace = true

@@ -7,6 +7,7 @@ extern crate alloc;
 pub mod depth_map;
 pub mod domtree;
 pub mod loops;
+pub mod postdomtree;
 
 pub trait IntoCfg {
     type Node: Copy;

@@ -14,7 +14,6 @@ use super::{
         LiveSetFragmentFlags, PhysRegHint, PhysRegHints, ProgramPoint, ProgramRange,
         TaggedLiveRange, TaggedRangeList,
     },
-    utils::coalesce_slice,
 };
 
 /// The spill weight assigned to all atomic fragments.
@@ -224,7 +223,7 @@ fn sort_reg_hints(hints: &mut PhysRegHints) {
     hints.sort_unstable_by_key(|hint| hint.preg.as_u8());
 
     // Coalesce adjacent hints for the same register, recording total weight for each.
-    let new_len = coalesce_slice(hints, |prev_hint, cur_hint| {
+    let new_len = slice_utils::coalesce(hints, |prev_hint, cur_hint| {
         if prev_hint.preg == cur_hint.preg {
             Some(PhysRegHint {
                 preg: prev_hint.preg,

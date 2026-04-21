@@ -18,7 +18,7 @@ use super::{
         ConflictBoundary, LiveSetFragment, LiveSetFragmentFlags, ProgramRange, QueuedFragment,
         RangeEndKey,
     },
-    utils::{coalesce_slice, get_weight_at_instr},
+    utils::get_weight_at_instr,
 };
 
 enum RegProbeConflict {
@@ -630,7 +630,7 @@ fn sort_probe_hints(probe_order: &mut ProbeOrder) {
     probe_order.sort_unstable_by_key(|hint| hint.preg.as_u8());
 
     // Coalesce adjacent hints for the same register, recording total weight for each.
-    let new_len = coalesce_slice(probe_order, |prev_hint, cur_hint| {
+    let new_len = slice_utils::coalesce(probe_order, |prev_hint, cur_hint| {
         if prev_hint.preg == cur_hint.preg {
             Some(ProbeHint {
                 preg: prev_hint.preg,

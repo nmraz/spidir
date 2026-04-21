@@ -27,5 +27,5 @@ smallvec = { workspace = true, features = ["drain_filter"] }
 expect-test.workspace = true
 capstone.workspace = true
 
-quickcheck = "1.0.3"
-quickcheck_macros = "1.0.0"
+quickcheck = "1.1.0"
+quickcheck_macros = "1.2.0"

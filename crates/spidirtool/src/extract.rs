@@ -250,9 +250,9 @@ mod tests {
             ",
             "fib",
             expect![[r#"
+                extfunc @dec2:i32(i32)
                 extfunc @add:i32(i32, i32)
                 extfunc @dec:i32(i32)
-                extfunc @dec2:i32(i32)
 
                 func @fib:i32(i32) {
                     %0:ctrl, %1:i32 = entry

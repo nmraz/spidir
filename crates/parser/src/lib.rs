@@ -693,13 +693,13 @@ mod tests {
             "icmp ult",
             "icmp ule",
             "fconst32 0x1.5ae148p1",
-            "fconst32 0x1.000000p0",
-            "fconst32 -0x1.000000p0",
-            "fconst32 0x1.000000p-5",
+            "fconst32 0x1.0p0",
+            "fconst32 -0x1.0p0",
+            "fconst32 0x1.0p-5",
             "fconst64 0x1.5ae147ae147aep1",
-            "fconst64 0x1.0000000000000p0",
-            "fconst64 -0x1.0000000000000p0",
-            "fconst64 0x1.0000000000000p-5",
+            "fconst64 0x1.0p0",
+            "fconst64 -0x1.0p0",
+            "fconst64 0x1.0p-5",
             "fadd",
             "fsub",
             "fmul",
@@ -744,7 +744,10 @@ mod tests {
                 }}"
             );
             let roundtripped = parse_module(&module_str).unwrap().to_string();
-            assert!(roundtripped.contains(node_str));
+            assert!(
+                roundtripped.contains(node_str),
+                "`{node_str}` not roundtripped in: {roundtripped}"
+            );
         }
     }
 
@@ -914,12 +917,12 @@ mod tests {
             &module,
             expect![[r#"
 
-            func @f:f64() {
-                %0:ctrl = entry
-                %1:f64 = fconst64 0x1.0000000000000p0
-                return %0, %1
-            }
-        "#]],
+                func @f:f64() {
+                    %0:ctrl = entry
+                    %1:f64 = fconst64 0x1.0p0
+                    return %0, %1
+                }
+            "#]],
         );
     }
 
@@ -941,7 +944,7 @@ mod tests {
 
                 func @f:f64() {
                     %0:ctrl = entry
-                    %1:f64 = fconst64 -0x1.0000000000000p0
+                    %1:f64 = fconst64 -0x1.0p0
                     return %0, %1
                 }
             "#]],
@@ -966,7 +969,7 @@ mod tests {
 
                 func @f:f64() {
                     %0:ctrl = entry
-                    %1:f64 = fconst64 0x1.0000000000000p-5
+                    %1:f64 = fconst64 0x1.0p-5
                     return %0, %1
                 }
             "#]],

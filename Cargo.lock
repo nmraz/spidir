@@ -521,8 +521,9 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "hexfloat2"
-version = "0.1.3"
-source = "git+https://github.com/ericseppanen/hexfloat2.git?rev=42baa1ffaf641163e2bc63a3fccacab2f3957860#42baa1ffaf641163e2bc63a3fccacab2f3957860"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46e9a91c41b4112953fa8309790954e87fe6f69e3b88a059df367eca2deb3db7"
 
 [[package]]
 name = "id-arena"

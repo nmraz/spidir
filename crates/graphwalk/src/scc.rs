@@ -10,7 +10,6 @@ use cranelift_entity::{
     packed_option::{PackedOption, ReservedValue},
 };
 use entity_utils::{define_param_entity, set::DenseEntitySet};
-use smallvec::SmallVec;
 
 use crate::{
     Graph, PredGraph,
@@ -251,18 +250,9 @@ impl<N: EntityRef + ReservedValue> Condensation<N> {
             });
         }
 
-        let mut dedup_scratch = SmallVec::new();
         for scc_data in condensation.sccs.values_mut() {
-            dedup_entity_list(
-                &mut scc_data.preds,
-                &mut condensation.scc_link_pool,
-                &mut dedup_scratch,
-            );
-            dedup_entity_list(
-                &mut scc_data.succs,
-                &mut condensation.scc_link_pool,
-                &mut dedup_scratch,
-            );
+            dedup_entity_list(&mut scc_data.preds, &mut condensation.scc_link_pool);
+            dedup_entity_list(&mut scc_data.succs, &mut condensation.scc_link_pool);
         }
 
         condensation
@@ -314,16 +304,9 @@ impl<N: EntityRef + ReservedValue> PredGraph for Condensation<N> {
 fn dedup_entity_list<E: EntityRef + ReservedValue>(
     list: &mut EntityList<E>,
     pool: &mut ListPool<E>,
-    scratch: &mut SmallVec<[E; 4]>,
 ) {
-    scratch.clear();
-    scratch.extend_from_slice(list.as_slice(pool));
-    scratch.sort_unstable_by_key(|entity| entity.index());
-
-    let orig_len = scratch.len();
-    scratch.dedup();
-    if scratch.len() < orig_len {
-        list.truncate(scratch.len(), pool);
-        list.as_mut_slice(pool).copy_from_slice(scratch);
-    }
+    let contents = list.as_mut_slice(pool);
+    contents.sort_unstable_by_key(|entity| entity.index());
+    let new_len = slice_utils::dedup(contents);
+    list.truncate(new_len, pool);
 }

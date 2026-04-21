@@ -481,6 +481,7 @@ dependencies = [
  "expect-test",
  "graphmock",
  "itertools",
+ "slice-utils",
  "smallvec",
 ]
 

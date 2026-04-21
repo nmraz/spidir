@@ -118,7 +118,7 @@ test_sccs! {
 
         scc1 -> scc0
         scc2 -> scc0
-        scc3 -> scc2, scc1
+        scc3 -> scc1, scc2
     "#]]
 }
 

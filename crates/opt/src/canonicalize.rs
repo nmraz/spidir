@@ -190,12 +190,10 @@ pub fn canonicalize_node(ctx: &mut FunctionEditContext<'_>, node: Node) {
             let ty = graph.value_kind(output).as_value().unwrap();
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (a, Some(0)) => {
+                (a, Some(0)) if a != Some(0) => {
                     // Replace all divisions by 0 with 0/0.
-                    if a != Some(0) {
-                        let zero = ctx.build_iconst(ty, 0);
-                        ctx.set_node_input(node, 1, zero);
-                    }
+                    let zero = ctx.build_iconst(ty, 0);
+                    ctx.set_node_input(node, 1, zero);
                 }
                 (Some(a), Some(b)) => {
                     if let Some(quotient) = fold_sdiv(ty, a, b) {
@@ -212,12 +210,10 @@ pub fn canonicalize_node(ctx: &mut FunctionEditContext<'_>, node: Node) {
             let ty = graph.value_kind(output).as_value().unwrap();
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (a, Some(0)) => {
+                (a, Some(0)) if a != Some(0) => {
                     // Replace all divisions by 0 with 0/0.
-                    if a != Some(0) {
-                        let zero = ctx.build_iconst(ty, 0);
-                        ctx.set_node_input(node, 1, zero);
-                    }
+                    let zero = ctx.build_iconst(ty, 0);
+                    ctx.set_node_input(node, 1, zero);
                 }
                 (Some(a), Some(b)) => {
                     if let Some(quotient) = fold_udiv(ty, a, b) {
@@ -234,12 +230,10 @@ pub fn canonicalize_node(ctx: &mut FunctionEditContext<'_>, node: Node) {
             let ty = graph.value_kind(output).as_value().unwrap();
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (a, Some(0)) => {
+                (a, Some(0)) if a != Some(0) => {
                     // Replace all divisions by 0 with 0/0.
-                    if a != Some(0) {
-                        let zero = ctx.build_iconst(ty, 0);
-                        ctx.set_node_input(node, 1, zero);
-                    }
+                    let zero = ctx.build_iconst(ty, 0);
+                    ctx.set_node_input(node, 1, zero);
                 }
                 (Some(a), Some(b)) => {
                     if let Some(remainder) = fold_srem(ty, a, b) {
@@ -256,12 +250,10 @@ pub fn canonicalize_node(ctx: &mut FunctionEditContext<'_>, node: Node) {
             let ty = graph.value_kind(output).as_value().unwrap();
 
             match (match_iconst(graph, a), match_iconst(graph, b)) {
-                (a, Some(0)) => {
+                (a, Some(0)) if a != Some(0) => {
                     // Replace all divisions by 0 with 0/0.
-                    if a != Some(0) {
-                        let zero = ctx.build_iconst(ty, 0);
-                        ctx.set_node_input(node, 1, zero);
-                    }
+                    let zero = ctx.build_iconst(ty, 0);
+                    ctx.set_node_input(node, 1, zero);
                 }
                 (Some(a), Some(b)) => {
                     if let Some(remainder) = fold_urem(ty, a, b) {

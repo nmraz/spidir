@@ -96,15 +96,16 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
                         min_weight = last_weight;
                     }
                 }
-                Ordering::Greater if weight < min_weight => {
+                Ordering::Greater
+                    if weight < min_weight
+                        && hull.can_split_before(ProgramPoint::before(block_start)) =>
+                {
                     // We've found a transition from a high-weight block to a lower-weight block,
                     // with the low weight having reached a new minimum across our walk. Split just
                     // before the start of the low-weight block, noting that any copies inserted
                     // later will never be placed in a more deeply-nested loop.
-                    if hull.can_split_before(ProgramPoint::before(block_start)) {
-                        split_point = Some(block_start);
-                        min_weight = weight;
-                    }
+                    split_point = Some(block_start);
+                    min_weight = weight;
                 }
                 _ => {}
             }

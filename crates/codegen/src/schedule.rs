@@ -9,6 +9,7 @@ use cranelift_entity::{
 use entity_utils::set::DenseEntitySet;
 use fx_utils::{FxHashMap, FxHashSet};
 use graphwalk::{Graph, dfs::PostOrderContext};
+use hashbrown::hash_map::Entry;
 use ir::{
     function::FunctionBody,
     module::ModuleMetadata,
@@ -570,16 +571,15 @@ impl<'a> BlockScheduler<'a> {
             let cp_length = self.compute_node_cp_length(node);
             let unscheduled_preds = self.count_unscheduled_preds(node);
 
-            self.block_node_data.insert(
-                node,
-                BlockNodeData {
+            let node_data = match self.block_node_data.entry(node) {
+                Entry::Vacant(entry) => entry.insert(BlockNodeData {
                     unscheduled_preds,
                     cp_length,
                     last_use_count: 0,
                     unique_inputs: EntityList::new(),
-                },
-            );
-            let node_data = self.block_node_data.get_mut(&node).unwrap();
+                }),
+                Entry::Occupied(_) => panic!("node data already prepared"),
+            };
 
             // Record this node's deduplicated input list.
             recorded_inputs.clear();

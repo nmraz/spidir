@@ -34,6 +34,6 @@ pub fn function_by_name<'a>(
         .functions()
         .iter()
         .find(|(_func, metadata)| metadata.name == name)
-        .ok_or_else(|| anyhow!("function `{}` not found in module", name))?;
+        .ok_or_else(|| anyhow!("function `{name}` not found in module"))?;
     Ok((func, module.borrow_function(func)))
 }

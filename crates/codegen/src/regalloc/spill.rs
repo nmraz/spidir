@@ -145,7 +145,7 @@ impl<M: MachineRegalloc> RegAllocContext<'_, M> {
             if log_enabled!(log::Level::Trace) {
                 trace!("    range {:?}:", range.prog_range);
                 for instr in &self.live_ranges[range.live_range].instrs {
-                    trace!("      {:?}", instr);
+                    trace!("      {instr:?}");
                 }
             }
 

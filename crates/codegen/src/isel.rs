@@ -426,7 +426,7 @@ impl<'ctx, M: MachineLower> IselState<'ctx, M> {
                     self.cfg_ctx.cfg.block_preds(succ).len() == 1,
                     "critical edge not split"
                 );
-                trace!("    => {}", succ);
+                trace!("    => {succ}");
             }
             return;
         }

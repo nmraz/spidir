@@ -639,7 +639,7 @@ fn compute_block_liveness<M: MachineRegalloc>(
         let raw_defs = &mut raw_block_defs[block];
 
         for &outgoing_vreg in lir.outgoing_block_params(block) {
-            trace!("    use {}", outgoing_vreg);
+            trace!("    use {outgoing_vreg}");
             raw_uses.insert(outgoing_vreg);
         }
 
@@ -657,7 +657,7 @@ fn compute_block_liveness<M: MachineRegalloc>(
         }
 
         for &incoming_vreg in lir.block_params(block) {
-            trace!("    def {}", incoming_vreg);
+            trace!("    def {incoming_vreg}");
             raw_defs.insert(incoming_vreg);
         }
     }

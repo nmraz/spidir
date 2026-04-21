@@ -78,7 +78,7 @@ impl<'a, M: MachineRegalloc> RegAllocContext<'a, M> {
                 continue;
             }
 
-            trace!("{}:", vreg);
+            trace!("{vreg}:");
 
             for &range in ranges {
                 trace!("  {:?}", self.live_ranges[range].prog_range);

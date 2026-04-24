@@ -82,9 +82,9 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0000c5: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
     # nextln: 0000c8: 48 83 f9 01                     cmp rcx, 1
     # nextln: 0000cc: 0f 8e 2b 00 00 00               jle 0xfd
-    # nextln: 0000d2: 48 8b 40 20                     mov rax, qword ptr [rax + 0x20]
-    # nextln: 0000d6: 8b 50 10                        mov edx, dword ptr [rax + 0x10]
-    # nextln: 0000d9: 48 63 cb                        movsxd rcx, ebx
+    # nextln: 0000d2: 48 63 cb                        movsxd rcx, ebx
+    # nextln: 0000d5: 48 8b 40 20                     mov rax, qword ptr [rax + 0x20]
+    # nextln: 0000d9: 8b 50 10                        mov edx, dword ptr [rax + 0x10]
     # nextln: 0000dc: 48 3b ca                        cmp rcx, rdx
     # nextln: 0000df: 0f 8d 18 00 00 00               jge 0xfd
     # nextln: 0000e5: 48 c1 e1 02                     shl rcx, 2

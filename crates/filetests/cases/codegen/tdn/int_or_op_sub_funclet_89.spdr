@@ -4,9 +4,9 @@ func @"System.Int32 testout1::Sub_Funclet_89()":i32() {
     # check: function `System.Int32 testout1::Sub_Funclet_89()`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: ba 01 00 00 00                  mov edx, 1
+    # nextln: 000004: b8 03 00 00 00                  mov eax, 3
     # nextln: 000009: 48 b9 90 a5 00 00 20 50 00 00   movabs rcx, 0x50200000a590
-    # nextln: 000013: b8 03 00 00 00                  mov eax, 3
+    # nextln: 000013: ba 01 00 00 00                  mov edx, 1
     # nextln: 000018: 88 11                           mov byte ptr [rcx], dl
     # nextln: 00001a: 85 d2                           test edx, edx
     # nextln: 00001c: 0f 85 0b 00 00 00               jne 0x2d

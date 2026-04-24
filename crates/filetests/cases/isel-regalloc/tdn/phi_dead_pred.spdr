@@ -16,11 +16,11 @@ func @"System.Int32 Tests.Program::Main(System.String[])":i32(ptr) {
     # nextln:     !0: 0
     # nextln:     !1: 16
     # nextln:       block0:
-    # nextln: 0002:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0000:     $$rbx = MovRmS32(0)
+    # nextln: 0003:     $$rax = FuncAddrAbs(External(extfunc2))
     # nextln:           $$rsi = MovRmS32(16)
     # nextln:           $$rdi = StackAddr(!0)
-    # nextln: 0003:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0004:     $$rbx = MovRmS32(0)
+    # nextln: 0004:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0005:     AluRRm(S32, Test) $$rbx, $$rbx
     # nextln: 0006:     Jumpcc(Ne, block1, block2)
     # nextln:       block1:
@@ -34,8 +34,8 @@ func @"System.Int32 Tests.Program::Main(System.String[])":i32(ptr) {
     # nextln:       block2:
     # nextln: 0013:     Jump(block3)
     # nextln:       block3:
-    # nextln: 0014:     $$rax = MovRI64(136295969869616)
-    # nextln: 0015:     MovMR(S64, [!0 + 0]) $$rax
+    # nextln: 0016:     $$rax = MovRI64(136295969869616)
+    # nextln: 0017:     MovMR(S64, [!0 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(256)
     # nextln: 0019:     MovMR(S32, [!0 + 8]) $$rax
     # nextln: 0020:     $$rax = FuncAddrAbs(External(extfunc0))

@@ -53,8 +53,8 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln: 0000:      Jump(block1)
     # nextln:       => block1
     # nextln:       block1:
-    # nextln: 0001:      %6:gpr32(any)[late] = MovRmS32(0)
-    # nextln: 0002:      MovMR(S32, [!0 + 0]) %7(reg)[early]
+    # nextln: 0001:      MovMR(S32, [!0 + 0]) %7(reg)[early]
+    # nextln: 0002:      %6:gpr32(any)[late] = MovRmS32(0)
     # nextln: 0003:      MovMR(S32, [!1 + 0]) %6(reg)[early]
     # nextln: 0004:      Jump(block2)
     # nextln:       => block2

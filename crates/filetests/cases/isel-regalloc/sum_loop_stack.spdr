@@ -9,7 +9,7 @@ func @sum_to_n_with_stack:i32(i32) {
     # nextln:       block0:
     # nextln: 0000:     Jump(block1)
     # nextln:       block1:
-    # nextln: 0002:     MovMR(S32, [!0 + 0]) $$rdi
+    # nextln: 0001:     MovMR(S32, [!0 + 0]) $$rdi
     # nextln:           $$rax = MovRmS32(0)
     # nextln: 0003:     MovMR(S32, [!1 + 0]) $$rax
     # nextln: 0004:     Jump(block2)

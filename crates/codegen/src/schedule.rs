@@ -17,8 +17,8 @@ use ir::{
     schedule::{ScheduleContext, schedule_early, schedule_late},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{
-        CfgPreorderInfo, GraphWalkInfo, dataflow_inputs, dataflow_preds, dataflow_succs,
-        def_use_preds, raw_dataflow_succs, raw_def_use_succs,
+        CfgPreorderInfo, DefUseSuccs, GraphWalkInfo, dataflow_inputs, dataflow_preds,
+        dataflow_succs, def_use_preds, raw_def_use_succs,
     },
 };
 use log::trace;
@@ -64,13 +64,17 @@ impl Schedule {
             cfg_ctx,
             block_map,
             blocks_by_node: SecondaryMap::new(),
+            node_cp_lengths: SecondaryMap::new(),
             block_terminators: SecondaryMap::new(),
             schedule: &mut schedule,
         };
 
+        let mut scratch_postorder = PostOrderContext::new();
+
+        scheduler.compute_node_cp_lengths(&ctx, &mut scratch_postorder);
+
         scheduler.pin_nodes(&ctx);
 
-        let mut scratch_postorder = PostOrderContext::new();
         schedule_early(&ctx, &mut scratch_postorder, |ctx, node| {
             scheduler.schedule_early(ctx, node);
         });
@@ -110,16 +114,42 @@ impl Schedule {
 }
 
 type BlocksByNode = SecondaryMap<Node, PackedOption<Block>>;
+type NodeCpLengths = SecondaryMap<Node, u32>;
 
 struct Scheduler<'a> {
     cfg_ctx: &'a CfgContext,
     block_map: &'a FunctionBlockMap,
     blocks_by_node: BlocksByNode,
+    node_cp_lengths: NodeCpLengths,
     block_terminators: SecondaryMap<Block, PackedOption<Node>>,
     schedule: &'a mut Schedule,
 }
 
 impl<'a> Scheduler<'a> {
+    fn compute_node_cp_lengths(
+        &mut self,
+        ctx: &ScheduleContext<'_>,
+        scratch_postorder: &mut PostOrderContext<Node>,
+    ) {
+        scratch_postorder.reset(ctx.walk_info.roots.iter().copied());
+
+        let mut visited = DenseEntitySet::new();
+        let graph = DefUseSuccs::new(ctx.graph, ctx.live_nodes());
+
+        while let Some(node) = scratch_postorder.next(graph, &mut visited) {
+            let cp_length = dataflow_succs(ctx.graph, ctx.live_nodes(), node)
+                // Note: this value will already have been computed for all nodes dominated by this
+                // one because we are walking in postorder. For dataflow cycles involving phi nodes,
+                // unvisited successors will be ignored because the CP lengths default to 0.
+                .map(|(succ, _)| self.node_cp_lengths[succ])
+                .max()
+                // If we have any users, we lengthen the critical path by 1. Otherwise, all paths
+                // exiting the node have length 0.
+                .map_or(0, |succ_cp_length| succ_cp_length + 1);
+            self.node_cp_lengths[node] = cp_length;
+        }
+    }
+
     fn pin_nodes(&mut self, ctx: &ScheduleContext<'_>) {
         for &cfg_node in ctx.cfg_preorder {
             let block = self
@@ -163,8 +193,12 @@ impl<'a> Scheduler<'a> {
         graph: &ValGraph,
         scratch_postorder: &mut PostOrderContext<Node>,
     ) {
-        let mut block_scheduler =
-            BlockScheduler::new(graph, &self.blocks_by_node, scratch_postorder);
+        let mut block_scheduler = BlockScheduler::new(
+            graph,
+            &self.blocks_by_node,
+            &self.node_cp_lengths,
+            scratch_postorder,
+        );
 
         for &block in &self.cfg_ctx.block_order {
             trace!("scheduling {block}");
@@ -393,8 +427,6 @@ impl PartialEq for ReadyNode {
 struct BlockNodeData {
     /// The number of block-local predecessors of this node that have not yet been scheduled.
     unscheduled_preds: u32,
-    /// The length of the longest data dependency chain in the block headed by this node.
-    cp_length: u32,
     /// The number of deduplicated data inputs for which this node is the last use point in the
     /// block.
     last_use_count: u32,
@@ -411,6 +443,7 @@ struct BlockValueData {
 struct BlockScheduler<'a> {
     graph: &'a ValGraph,
     blocks_by_node: &'a BlocksByNode,
+    node_cp_lengths: &'a NodeCpLengths,
     scratch_postorder: &'a mut PostOrderContext<Node>,
     scheduled: DenseEntitySet<Node>,
     block: Block,
@@ -426,11 +459,13 @@ impl<'a> BlockScheduler<'a> {
     fn new(
         graph: &'a ValGraph,
         blocks_by_node: &'a BlocksByNode,
+        node_cp_lengths: &'a NodeCpLengths,
         scratch_postorder: &'a mut PostOrderContext<Node>,
     ) -> Self {
         Self {
             graph,
             blocks_by_node,
+            node_cp_lengths,
             scratch_postorder,
             scheduled: DenseEntitySet::new(),
             block: Block::reserved_value(),
@@ -466,7 +501,7 @@ impl<'a> BlockScheduler<'a> {
                 "    place: node {} [luc {}, cp {}]",
                 node.as_u32(),
                 self.block_node_data[&node].last_use_count,
-                self.block_node_data[&node].cp_length,
+                self.node_cp_lengths[node],
             );
 
             self.scheduled.insert(node);
@@ -568,13 +603,11 @@ impl<'a> BlockScheduler<'a> {
         for i in 0..self.block_postorder.len() {
             let node = self.block_postorder[i];
 
-            let cp_length = self.compute_node_cp_length(node);
             let unscheduled_preds = self.count_unscheduled_preds(node);
 
             let node_data = match self.block_node_data.entry(node) {
                 Entry::Vacant(entry) => entry.insert(BlockNodeData {
                     unscheduled_preds,
-                    cp_length,
                     last_use_count: 0,
                     unique_inputs: EntityList::new(),
                 }),
@@ -633,27 +666,10 @@ impl<'a> BlockScheduler<'a> {
         preds.count() as u32
     }
 
-    fn compute_node_cp_length(&self, node: Node) -> u32 {
-        let block_dataflow_succs = raw_dataflow_succs(self.graph, node)
-            .map(|(succ, _use_idx)| succ)
-            .filter(|&succ| self.is_block_interior_node(succ));
-
-        let exit_cp_length = block_dataflow_succs
-            .map(|succ| {
-                // Note: we expect node data to have been computed for all successors in the block.
-                self.block_node_data[&succ].cp_length
-            })
-            .max();
-
-        // If we have any users in the block, we lengthen the critical path by 1. Otherwise, all
-        // paths exiting the node have length 0.
-        exit_cp_length.map_or(0, |exit_cp_length| exit_cp_length + 1)
-    }
-
     fn node_prio(&self, node: Node) -> u64 {
-        let node_data = &self.block_node_data[&node];
         // Prefer last use count, and fall back to CP length when tied.
-        ((node_data.last_use_count as u64) << 32) | node_data.cp_length as u64
+        ((self.block_node_data[&node].last_use_count as u64) << 32)
+            | self.node_cp_lengths[node] as u64
     }
 
     fn is_block_interior_node(&self, node: Node) -> bool {

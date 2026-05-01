@@ -43,6 +43,10 @@ smallvec = { version = "1.15.1", default-features = false, features = [
     "const_new",
 ] }
 
+[profile.profiling]
+inherits = "release"
+debug = true
+
 # This crate is very hot because of filetests, so make sure it gets reasonably
 # optimized.
 [profile.dev.package.regex-automata]

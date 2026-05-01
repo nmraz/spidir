@@ -47,9 +47,9 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:           $$rax = MovRmS32(2)
     # nextln: 0007:     $$r13 = MovsxRRm(Ext32_64) $$rax
     # nextln: 0009:     $$rsi = ImulRRmI(S64, 8) $$r13
-    # nextln:           $$rax = MovRmS32(24)
-    # nextln: 0011:     $$rsi = AddRR(S64) $$rax, $$rsi
-    # nextln: 0013:     $$rax = ImulRRmI(S64, 4) $$r13
+    # nextln: 0011:     $$rax = ImulRRmI(S64, 4) $$r13
+    # nextln:           $$rcx = MovRmS32(24)
+    # nextln: 0013:     $$rsi = AddRR(S64) $$rcx, $$rsi
     # nextln:           $$rcx = MovRmS32(20)
     # nextln: 0015:     $$rax = AddRR(S64) $$rcx, $$rax
     # nextln:           $$rbx:gpr64 = $$rax

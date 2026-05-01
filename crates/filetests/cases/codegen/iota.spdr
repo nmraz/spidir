@@ -7,10 +7,10 @@ func @iota(ptr, i64) {
     # nextln: 000004: 33 c0                           xor eax, eax
     # nextln: 000006: 48 85 f6                        test rsi, rsi
     # nextln: 000009: 0f 84 22 00 00 00               je 0x31
-    # nextln: 00000f: 48 8d 48 01                     lea rcx, [rax + 1]
-    # nextln: 000013: 48 89 c2                        mov rdx, rax
-    # nextln: 000016: 48 c1 e2 03                     shl rdx, 3
-    # nextln: 00001a: 48 03 d7                        add rdx, rdi
+    # nextln: 00000f: 48 89 c2                        mov rdx, rax
+    # nextln: 000012: 48 c1 e2 03                     shl rdx, 3
+    # nextln: 000016: 48 03 d7                        add rdx, rdi
+    # nextln: 000019: 48 8d 48 01                     lea rcx, [rax + 1]
     # nextln: 00001d: 48 89 02                        mov qword ptr [rdx], rax
     # nextln: 000020: 48 3b ce                        cmp rcx, rsi
     # nextln: 000023: 0f 84 08 00 00 00               je 0x31

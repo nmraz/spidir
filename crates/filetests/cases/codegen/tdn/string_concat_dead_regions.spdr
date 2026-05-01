@@ -32,15 +32,15 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 000052: 48 89 c7                        mov rdi, rax
     # nextln: 000055: ff d1                           call rcx
     # nextln: 000057: 0f 0b                           ud2
-    # nextln: 000059: 8b 47 10                        mov eax, dword ptr [rdi + 0x10]
-    # nextln: 00005c: 33 c9                           xor ecx, ecx
-    # nextln: 00005e: 83 f8 01                        cmp eax, 1
-    # nextln: 000061: 0f 9f c1                        setg cl
-    # nextln: 000064: 33 c0                           xor eax, eax
-    # nextln: 000066: 85 c9                           test ecx, ecx
-    # nextln: 000068: 0f 94 c0                        sete al
-    # nextln: 00006b: 0f b6 c8                        movzx ecx, al
-    # nextln: 00006e: 48 b8 b0 1b 5e 81 c7 7b 00 00   movabs rax, 0x7bc7815e1bb0
+    # nextln: 000059: 8b 4f 10                        mov ecx, dword ptr [rdi + 0x10]
+    # nextln: 00005c: 48 b8 b0 1b 5e 81 c7 7b 00 00   movabs rax, 0x7bc7815e1bb0
+    # nextln: 000066: 33 d2                           xor edx, edx
+    # nextln: 000068: 83 f9 01                        cmp ecx, 1
+    # nextln: 00006b: 0f 9f c2                        setg dl
+    # nextln: 00006e: 33 c9                           xor ecx, ecx
+    # nextln: 000070: 85 d2                           test edx, edx
+    # nextln: 000072: 0f 94 c1                        sete cl
+    # nextln: 000075: 0f b6 c9                        movzx ecx, cl
     # nextln: 000078: 85 c9                           test ecx, ecx
     # nextln: 00007a: 0f 84 43 00 00 00               je 0xc3
     # nextln: 000080: 8b 4f 10                        mov ecx, dword ptr [rdi + 0x10]

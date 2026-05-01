@@ -25,8 +25,8 @@ func @call_virt_no_ret(ptr, i32) {
 func @call_virt_many_params(ptr, ptr) {
     # check: function `call_virt_many_params`:
     # nextln:       block0[%0:gpr64($$rdi), %3:gpr64($$rsi)]:
-    # nextln: 0000:      %1:gpr32(any)[late] = MovRmS32(0)
-    # nextln: 0001:      %2:gpr64(any)[late] = MovRmS32(0)
+    # nextln: 0000:      %2:gpr64(any)[late] = MovRmS32(0)
+    # nextln: 0001:      %1:gpr32(any)[late] = MovRmS32(0)
     # nextln: 0002:      Push %2(reg)[early]
     # nextln: 0003:      Push %1(reg)[early]
     # nextln: 0004:      Push %3(reg)[early]

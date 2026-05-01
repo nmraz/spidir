@@ -34,8 +34,8 @@ func @call_virt_many_params(ptr, ptr) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 48 89 f2                        mov rdx, rsi
     # nextln: 000007: 48 89 f8                        mov rax, rdi
-    # nextln: 00000a: 33 ff                           xor edi, edi
-    # nextln: 00000c: 33 c9                           xor ecx, ecx
+    # nextln: 00000a: 33 c9                           xor ecx, ecx
+    # nextln: 00000c: 33 ff                           xor edi, edi
     # nextln: 00000e: 51                              push rcx
     # nextln: 00000f: 57                              push rdi
     # nextln: 000010: 52                              push rdx

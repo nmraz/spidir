@@ -6,14 +6,14 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 53                              push rbx
     # nextln: 000005: 48 83 ec 78                     sub rsp, 0x78
-    # nextln: 000009: b9 03 00 00 00                  mov ecx, 3
-    # nextln: 00000e: be 02 00 00 00                  mov esi, 2
-    # nextln: 000013: 41 b8 05 00 00 00               mov r8d, 5
+    # nextln: 000009: b9 05 00 00 00                  mov ecx, 5
+    # nextln: 00000e: be 06 00 00 00                  mov esi, 6
+    # nextln: 000013: 41 b8 02 00 00 00               mov r8d, 2
     # nextln: 000019: 41 b9 04 00 00 00               mov r9d, 4
-    # nextln: 00001f: 41 ba 06 00 00 00               mov r10d, 6
+    # nextln: 00001f: 41 ba 03 00 00 00               mov r10d, 3
     # nextln: 000025: 45 33 db                        xor r11d, r11d
-    # nextln: 000028: 44 89 1c 24                     mov dword ptr [rsp], r11d
-    # nextln: 00002c: 44 89 5c 24 04                  mov dword ptr [rsp + 4], r11d
+    # nextln: 000028: 44 89 5c 24 04                  mov dword ptr [rsp + 4], r11d
+    # nextln: 00002d: 44 89 1c 24                     mov dword ptr [rsp], r11d
     # nextln: 000031: 44 89 5c 24 08                  mov dword ptr [rsp + 8], r11d
     # nextln: 000036: 44 89 5c 24 0c                  mov dword ptr [rsp + 0xc], r11d
     # nextln: 00003b: 44 89 5c 24 10                  mov dword ptr [rsp + 0x10], r11d
@@ -26,28 +26,28 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 00005e: 44 89 5c 24 2c                  mov dword ptr [rsp + 0x2c], r11d
     # nextln: 000063: 44 89 5c 24 30                  mov dword ptr [rsp + 0x30], r11d
     # nextln: 000068: 44 89 5c 24 34                  mov dword ptr [rsp + 0x34], r11d
-    # nextln: 00006d: 44 89 5c 24 40                  mov dword ptr [rsp + 0x40], r11d
+    # nextln: 00006d: 44 89 5c 24 50                  mov dword ptr [rsp + 0x50], r11d
     # nextln: 000072: 44 89 5c 24 54                  mov dword ptr [rsp + 0x54], r11d
-    # nextln: 000077: 44 89 5c 24 3c                  mov dword ptr [rsp + 0x3c], r11d
-    # nextln: 00007c: 44 89 5c 24 50                  mov dword ptr [rsp + 0x50], r11d
+    # nextln: 000077: 44 89 5c 24 40                  mov dword ptr [rsp + 0x40], r11d
+    # nextln: 00007c: 44 89 5c 24 38                  mov dword ptr [rsp + 0x38], r11d
     # nextln: 000081: 44 89 5c 24 4c                  mov dword ptr [rsp + 0x4c], r11d
     # nextln: 000086: 44 89 5c 24 48                  mov dword ptr [rsp + 0x48], r11d
-    # nextln: 00008b: 44 88 5c 24 5e                  mov byte ptr [rsp + 0x5e], r11b
-    # nextln: 000090: 44 88 5c 24 5d                  mov byte ptr [rsp + 0x5d], r11b
-    # nextln: 000095: 44 88 5c 24 5c                  mov byte ptr [rsp + 0x5c], r11b
-    # nextln: 00009a: 44 89 5c 24 38                  mov dword ptr [rsp + 0x38], r11d
-    # nextln: 00009f: 44 88 5c 24 5f                  mov byte ptr [rsp + 0x5f], r11b
-    # nextln: 0000a4: 44 89 5c 24 44                  mov dword ptr [rsp + 0x44], r11d
-    # nextln: 0000a9: 44 88 5c 24 60                  mov byte ptr [rsp + 0x60], r11b
-    # nextln: 0000ae: 44 88 5c 24 61                  mov byte ptr [rsp + 0x61], r11b
+    # nextln: 00008b: 44 88 5c 24 60                  mov byte ptr [rsp + 0x60], r11b
+    # nextln: 000090: 44 88 5c 24 5c                  mov byte ptr [rsp + 0x5c], r11b
+    # nextln: 000095: 44 88 5c 24 5d                  mov byte ptr [rsp + 0x5d], r11b
+    # nextln: 00009a: 44 89 5c 24 44                  mov dword ptr [rsp + 0x44], r11d
+    # nextln: 00009f: 44 88 5c 24 61                  mov byte ptr [rsp + 0x61], r11b
+    # nextln: 0000a4: 44 89 5c 24 3c                  mov dword ptr [rsp + 0x3c], r11d
+    # nextln: 0000a9: 44 88 5c 24 5e                  mov byte ptr [rsp + 0x5e], r11b
+    # nextln: 0000ae: 44 88 5c 24 5f                  mov byte ptr [rsp + 0x5f], r11b
     # nextln: 0000b3: 44 89 5c 24 58                  mov dword ptr [rsp + 0x58], r11d
     # nextln: 0000b8: b8 01 00 00 00                  mov eax, 1
-    # nextln: 0000bd: 89 04 24                        mov dword ptr [rsp], eax
-    # nextln: 0000c0: 89 74 24 04                     mov dword ptr [rsp + 4], esi
-    # nextln: 0000c4: 89 4c 24 08                     mov dword ptr [rsp + 8], ecx
-    # nextln: 0000c8: 44 89 4c 24 0c                  mov dword ptr [rsp + 0xc], r9d
-    # nextln: 0000cd: 44 89 44 24 10                  mov dword ptr [rsp + 0x10], r8d
-    # nextln: 0000d2: 44 89 54 24 14                  mov dword ptr [rsp + 0x14], r10d
+    # nextln: 0000bd: 89 44 24 04                     mov dword ptr [rsp + 4], eax
+    # nextln: 0000c1: 44 89 04 24                     mov dword ptr [rsp], r8d
+    # nextln: 0000c5: 44 89 54 24 08                  mov dword ptr [rsp + 8], r10d
+    # nextln: 0000ca: 44 89 4c 24 0c                  mov dword ptr [rsp + 0xc], r9d
+    # nextln: 0000cf: 89 4c 24 10                     mov dword ptr [rsp + 0x10], ecx
+    # nextln: 0000d3: 89 74 24 14                     mov dword ptr [rsp + 0x14], esi
     # nextln: 0000d7: b8 07 00 00 00                  mov eax, 7
     # nextln: 0000dc: 89 44 24 18                     mov dword ptr [rsp + 0x18], eax
     # nextln: 0000e0: b8 08 00 00 00                  mov eax, 8
@@ -65,189 +65,189 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 000116: b8 0e 00 00 00                  mov eax, 0xe
     # nextln: 00011b: 89 44 24 34                     mov dword ptr [rsp + 0x34], eax
     # nextln: 00011f: b8 0f 00 00 00                  mov eax, 0xf
-    # nextln: 000124: 89 44 24 40                     mov dword ptr [rsp + 0x40], eax
+    # nextln: 000124: 89 44 24 50                     mov dword ptr [rsp + 0x50], eax
     # nextln: 000128: 44 89 5c 24 54                  mov dword ptr [rsp + 0x54], r11d
-    # nextln: 00012d: 44 89 5c 24 3c                  mov dword ptr [rsp + 0x3c], r11d
-    # nextln: 000132: 8b 54 24 3c                     mov edx, dword ptr [rsp + 0x3c]
+    # nextln: 00012d: 44 89 5c 24 40                  mov dword ptr [rsp + 0x40], r11d
+    # nextln: 000132: 8b 54 24 40                     mov edx, dword ptr [rsp + 0x40]
     # nextln: 000136: 33 c0                           xor eax, eax
     # nextln: 000138: 3b d7                           cmp edx, edi
     # nextln: 00013a: 0f 9c c0                        setl al
-    # nextln: 00013d: 88 44 24 61                     mov byte ptr [rsp + 0x61], al
-    # nextln: 000141: 0f b6 44 24 61                  movzx eax, byte ptr [rsp + 0x61]
+    # nextln: 00013d: 88 44 24 5f                     mov byte ptr [rsp + 0x5f], al
+    # nextln: 000141: 0f b6 44 24 5f                  movzx eax, byte ptr [rsp + 0x5f]
     # nextln: 000146: 85 c0                           test eax, eax
     # nextln: 000148: 0f 84 8b 02 00 00               je 0x3d9
-    # nextln: 00014e: 44 89 5c 24 50                  mov dword ptr [rsp + 0x50], r11d
-    # nextln: 000153: 8b 5c 24 50                     mov ebx, dword ptr [rsp + 0x50]
+    # nextln: 00014e: 44 89 5c 24 38                  mov dword ptr [rsp + 0x38], r11d
+    # nextln: 000153: 8b 5c 24 38                     mov ebx, dword ptr [rsp + 0x38]
     # nextln: 000157: 89 f8                           mov eax, edi
     # nextln: 000159: 99                              cdq
-    # nextln: 00015a: f7 fe                           idiv esi
-    # nextln: 00015c: 33 d2                           xor edx, edx
-    # nextln: 00015e: 3b d8                           cmp ebx, eax
-    # nextln: 000160: 0f 9c c2                        setl dl
-    # nextln: 000163: 88 54 24 5c                     mov byte ptr [rsp + 0x5c], dl
-    # nextln: 000167: 0f b6 44 24 5c                  movzx eax, byte ptr [rsp + 0x5c]
-    # nextln: 00016c: 85 c0                           test eax, eax
-    # nextln: 00016e: 0f 84 5e 01 00 00               je 0x2d2
-    # nextln: 000174: 8b 44 24 54                     mov eax, dword ptr [rsp + 0x54]
-    # nextln: 000178: 8b 14 24                        mov edx, dword ptr [rsp]
-    # nextln: 00017b: 8b 5c 24 04                     mov ebx, dword ptr [rsp + 4]
-    # nextln: 00017f: 03 d3                           add edx, ebx
-    # nextln: 000181: 8b 5c 24 08                     mov ebx, dword ptr [rsp + 8]
-    # nextln: 000185: 03 da                           add ebx, edx
-    # nextln: 000187: 03 c3                           add eax, ebx
-    # nextln: 000189: 89 44 24 54                     mov dword ptr [rsp + 0x54], eax
-    # nextln: 00018d: 8b 04 24                        mov eax, dword ptr [rsp]
-    # nextln: 000190: 8b 54 24 3c                     mov edx, dword ptr [rsp + 0x3c]
-    # nextln: 000194: 03 c2                           add eax, edx
-    # nextln: 000196: 99                              cdq
-    # nextln: 000197: f7 ff                           idiv edi
-    # nextln: 000199: 89 14 24                        mov dword ptr [rsp], edx
-    # nextln: 00019c: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
-    # nextln: 0001a0: 8b 54 24 50                     mov edx, dword ptr [rsp + 0x50]
-    # nextln: 0001a4: 03 c2                           add eax, edx
-    # nextln: 0001a6: 99                              cdq
-    # nextln: 0001a7: f7 ff                           idiv edi
-    # nextln: 0001a9: 89 54 24 04                     mov dword ptr [rsp + 4], edx
-    # nextln: 0001ad: 8b 44 24 08                     mov eax, dword ptr [rsp + 8]
-    # nextln: 0001b1: 8b 14 24                        mov edx, dword ptr [rsp]
-    # nextln: 0001b4: 03 c2                           add eax, edx
-    # nextln: 0001b6: 8b 54 24 04                     mov edx, dword ptr [rsp + 4]
-    # nextln: 0001ba: 03 c2                           add eax, edx
-    # nextln: 0001bc: 99                              cdq
-    # nextln: 0001bd: f7 ff                           idiv edi
-    # nextln: 0001bf: 89 54 24 08                     mov dword ptr [rsp + 8], edx
-    # nextln: 0001c3: 44 89 5c 24 4c                  mov dword ptr [rsp + 0x4c], r11d
-    # nextln: 0001c8: 8b 5c 24 4c                     mov ebx, dword ptr [rsp + 0x4c]
-    # nextln: 0001cc: 89 f8                           mov eax, edi
-    # nextln: 0001ce: 99                              cdq
-    # nextln: 0001cf: f7 f9                           idiv ecx
-    # nextln: 0001d1: 33 d2                           xor edx, edx
-    # nextln: 0001d3: 3b d8                           cmp ebx, eax
-    # nextln: 0001d5: 0f 9c c2                        setl dl
-    # nextln: 0001d8: 88 54 24 5d                     mov byte ptr [rsp + 0x5d], dl
-    # nextln: 0001dc: 0f b6 44 24 5d                  movzx eax, byte ptr [rsp + 0x5d]
-    # nextln: 0001e1: 85 c0                           test eax, eax
-    # nextln: 0001e3: 0f 84 d9 00 00 00               je 0x2c2
-    # nextln: 0001e9: 8b 44 24 0c                     mov eax, dword ptr [rsp + 0xc]
-    # nextln: 0001ed: 8b 54 24 4c                     mov edx, dword ptr [rsp + 0x4c]
-    # nextln: 0001f1: 03 c2                           add eax, edx
-    # nextln: 0001f3: 99                              cdq
-    # nextln: 0001f4: f7 ff                           idiv edi
-    # nextln: 0001f6: 89 54 24 0c                     mov dword ptr [rsp + 0xc], edx
-    # nextln: 0001fa: 8b 44 24 10                     mov eax, dword ptr [rsp + 0x10]
-    # nextln: 0001fe: 8b 54 24 0c                     mov edx, dword ptr [rsp + 0xc]
-    # nextln: 000202: 03 c2                           add eax, edx
-    # nextln: 000204: 99                              cdq
-    # nextln: 000205: f7 ff                           idiv edi
-    # nextln: 000207: 89 54 24 10                     mov dword ptr [rsp + 0x10], edx
-    # nextln: 00020b: 8b 44 24 54                     mov eax, dword ptr [rsp + 0x54]
-    # nextln: 00020f: 8b 54 24 0c                     mov edx, dword ptr [rsp + 0xc]
-    # nextln: 000213: 8b 5c 24 10                     mov ebx, dword ptr [rsp + 0x10]
-    # nextln: 000217: 03 d3                           add edx, ebx
-    # nextln: 000219: 03 c2                           add eax, edx
-    # nextln: 00021b: 89 44 24 54                     mov dword ptr [rsp + 0x54], eax
-    # nextln: 00021f: 44 89 5c 24 48                  mov dword ptr [rsp + 0x48], r11d
-    # nextln: 000224: 8b 5c 24 48                     mov ebx, dword ptr [rsp + 0x48]
-    # nextln: 000228: 89 f8                           mov eax, edi
-    # nextln: 00022a: 99                              cdq
-    # nextln: 00022b: 41 f7 f9                        idiv r9d
-    # nextln: 00022e: 33 d2                           xor edx, edx
-    # nextln: 000230: 3b d8                           cmp ebx, eax
-    # nextln: 000232: 0f 9c c2                        setl dl
-    # nextln: 000235: 88 54 24 5e                     mov byte ptr [rsp + 0x5e], dl
-    # nextln: 000239: 0f b6 44 24 5e                  movzx eax, byte ptr [rsp + 0x5e]
-    # nextln: 00023e: 85 c0                           test eax, eax
-    # nextln: 000240: 0f 84 6c 00 00 00               je 0x2b2
-    # nextln: 000246: 8b 44 24 14                     mov eax, dword ptr [rsp + 0x14]
-    # nextln: 00024a: 8b 54 24 18                     mov edx, dword ptr [rsp + 0x18]
-    # nextln: 00024e: 8b 5c 24 1c                     mov ebx, dword ptr [rsp + 0x1c]
-    # nextln: 000252: 03 d3                           add edx, ebx
-    # nextln: 000254: 8b 5c 24 48                     mov ebx, dword ptr [rsp + 0x48]
-    # nextln: 000258: 03 d3                           add edx, ebx
-    # nextln: 00025a: 03 c2                           add eax, edx
-    # nextln: 00025c: 89 44 24 14                     mov dword ptr [rsp + 0x14], eax
-    # nextln: 000260: 8b 44 24 18                     mov eax, dword ptr [rsp + 0x18]
-    # nextln: 000264: 8b 54 24 14                     mov edx, dword ptr [rsp + 0x14]
-    # nextln: 000268: 03 c2                           add eax, edx
-    # nextln: 00026a: 8b 54 24 48                     mov edx, dword ptr [rsp + 0x48]
-    # nextln: 00026e: 03 c2                           add eax, edx
-    # nextln: 000270: 99                              cdq
-    # nextln: 000271: f7 ff                           idiv edi
-    # nextln: 000273: 89 54 24 18                     mov dword ptr [rsp + 0x18], edx
-    # nextln: 000277: 8b 44 24 1c                     mov eax, dword ptr [rsp + 0x1c]
-    # nextln: 00027b: 8b 54 24 18                     mov edx, dword ptr [rsp + 0x18]
-    # nextln: 00027f: 03 c2                           add eax, edx
-    # nextln: 000281: 99                              cdq
-    # nextln: 000282: f7 ff                           idiv edi
-    # nextln: 000284: 89 54 24 1c                     mov dword ptr [rsp + 0x1c], edx
-    # nextln: 000288: 8b 44 24 54                     mov eax, dword ptr [rsp + 0x54]
-    # nextln: 00028c: 8b 54 24 14                     mov edx, dword ptr [rsp + 0x14]
-    # nextln: 000290: 8b 5c 24 18                     mov ebx, dword ptr [rsp + 0x18]
-    # nextln: 000294: 03 d3                           add edx, ebx
-    # nextln: 000296: 8b 5c 24 1c                     mov ebx, dword ptr [rsp + 0x1c]
-    # nextln: 00029a: 03 da                           add ebx, edx
-    # nextln: 00029c: 03 c3                           add eax, ebx
-    # nextln: 00029e: 89 44 24 54                     mov dword ptr [rsp + 0x54], eax
-    # nextln: 0002a2: 8b 44 24 48                     mov eax, dword ptr [rsp + 0x48]
-    # nextln: 0002a6: 83 c0 01                        add eax, 1
-    # nextln: 0002a9: 89 44 24 48                     mov dword ptr [rsp + 0x48], eax
-    # nextln: 0002ad: e9 72 ff ff ff                  jmp 0x224
-    # nextln: 0002b2: 8b 44 24 4c                     mov eax, dword ptr [rsp + 0x4c]
-    # nextln: 0002b6: 83 c0 01                        add eax, 1
-    # nextln: 0002b9: 89 44 24 4c                     mov dword ptr [rsp + 0x4c], eax
-    # nextln: 0002bd: e9 06 ff ff ff                  jmp 0x1c8
-    # nextln: 0002c2: 8b 44 24 50                     mov eax, dword ptr [rsp + 0x50]
-    # nextln: 0002c6: 83 c0 01                        add eax, 1
-    # nextln: 0002c9: 89 44 24 50                     mov dword ptr [rsp + 0x50], eax
-    # nextln: 0002cd: e9 81 fe ff ff                  jmp 0x153
-    # nextln: 0002d2: 44 89 5c 24 38                  mov dword ptr [rsp + 0x38], r11d
-    # nextln: 0002d7: 8b 5c 24 38                     mov ebx, dword ptr [rsp + 0x38]
-    # nextln: 0002db: 89 f8                           mov eax, edi
-    # nextln: 0002dd: 99                              cdq
-    # nextln: 0002de: 41 f7 f8                        idiv r8d
-    # nextln: 0002e1: 33 d2                           xor edx, edx
-    # nextln: 0002e3: 3b d8                           cmp ebx, eax
-    # nextln: 0002e5: 0f 9c c2                        setl dl
-    # nextln: 0002e8: 88 54 24 5f                     mov byte ptr [rsp + 0x5f], dl
-    # nextln: 0002ec: 0f b6 44 24 5f                  movzx eax, byte ptr [rsp + 0x5f]
-    # nextln: 0002f1: 85 c0                           test eax, eax
-    # nextln: 0002f3: 0f 84 46 00 00 00               je 0x33f
-    # nextln: 0002f9: 8b 44 24 20                     mov eax, dword ptr [rsp + 0x20]
-    # nextln: 0002fd: 8b 54 24 38                     mov edx, dword ptr [rsp + 0x38]
-    # nextln: 000301: 03 c2                           add eax, edx
-    # nextln: 000303: 99                              cdq
-    # nextln: 000304: f7 ff                           idiv edi
-    # nextln: 000306: 89 54 24 20                     mov dword ptr [rsp + 0x20], edx
-    # nextln: 00030a: 8b 44 24 24                     mov eax, dword ptr [rsp + 0x24]
-    # nextln: 00030e: 8b 54 24 20                     mov edx, dword ptr [rsp + 0x20]
-    # nextln: 000312: 03 c2                           add eax, edx
-    # nextln: 000314: 99                              cdq
-    # nextln: 000315: f7 ff                           idiv edi
-    # nextln: 000317: 89 54 24 24                     mov dword ptr [rsp + 0x24], edx
-    # nextln: 00031b: 8b 44 24 54                     mov eax, dword ptr [rsp + 0x54]
-    # nextln: 00031f: 8b 54 24 20                     mov edx, dword ptr [rsp + 0x20]
-    # nextln: 000323: 8b 5c 24 24                     mov ebx, dword ptr [rsp + 0x24]
-    # nextln: 000327: 03 da                           add ebx, edx
-    # nextln: 000329: 03 c3                           add eax, ebx
-    # nextln: 00032b: 89 44 24 54                     mov dword ptr [rsp + 0x54], eax
-    # nextln: 00032f: 8b 44 24 38                     mov eax, dword ptr [rsp + 0x38]
-    # nextln: 000333: 83 c0 01                        add eax, 1
-    # nextln: 000336: 89 44 24 38                     mov dword ptr [rsp + 0x38], eax
-    # nextln: 00033a: e9 98 ff ff ff                  jmp 0x2d7
-    # nextln: 00033f: 44 89 5c 24 44                  mov dword ptr [rsp + 0x44], r11d
-    # nextln: 000344: 8b 5c 24 44                     mov ebx, dword ptr [rsp + 0x44]
-    # nextln: 000348: 89 f8                           mov eax, edi
-    # nextln: 00034a: 99                              cdq
-    # nextln: 00034b: 41 f7 fa                        idiv r10d
+    # nextln: 00015a: 41 f7 f8                        idiv r8d
+    # nextln: 00015d: 33 d2                           xor edx, edx
+    # nextln: 00015f: 3b d8                           cmp ebx, eax
+    # nextln: 000161: 0f 9c c2                        setl dl
+    # nextln: 000164: 88 54 24 5d                     mov byte ptr [rsp + 0x5d], dl
+    # nextln: 000168: 0f b6 44 24 5d                  movzx eax, byte ptr [rsp + 0x5d]
+    # nextln: 00016d: 85 c0                           test eax, eax
+    # nextln: 00016f: 0f 84 5f 01 00 00               je 0x2d4
+    # nextln: 000175: 8b 44 24 54                     mov eax, dword ptr [rsp + 0x54]
+    # nextln: 000179: 8b 54 24 04                     mov edx, dword ptr [rsp + 4]
+    # nextln: 00017d: 8b 1c 24                        mov ebx, dword ptr [rsp]
+    # nextln: 000180: 03 d3                           add edx, ebx
+    # nextln: 000182: 8b 5c 24 08                     mov ebx, dword ptr [rsp + 8]
+    # nextln: 000186: 03 da                           add ebx, edx
+    # nextln: 000188: 03 c3                           add eax, ebx
+    # nextln: 00018a: 89 44 24 54                     mov dword ptr [rsp + 0x54], eax
+    # nextln: 00018e: 8b 44 24 04                     mov eax, dword ptr [rsp + 4]
+    # nextln: 000192: 8b 54 24 40                     mov edx, dword ptr [rsp + 0x40]
+    # nextln: 000196: 03 c2                           add eax, edx
+    # nextln: 000198: 99                              cdq
+    # nextln: 000199: f7 ff                           idiv edi
+    # nextln: 00019b: 89 54 24 04                     mov dword ptr [rsp + 4], edx
+    # nextln: 00019f: 8b 04 24                        mov eax, dword ptr [rsp]
+    # nextln: 0001a2: 8b 54 24 38                     mov edx, dword ptr [rsp + 0x38]
+    # nextln: 0001a6: 03 c2                           add eax, edx
+    # nextln: 0001a8: 99                              cdq
+    # nextln: 0001a9: f7 ff                           idiv edi
+    # nextln: 0001ab: 89 14 24                        mov dword ptr [rsp], edx
+    # nextln: 0001ae: 8b 44 24 08                     mov eax, dword ptr [rsp + 8]
+    # nextln: 0001b2: 8b 54 24 04                     mov edx, dword ptr [rsp + 4]
+    # nextln: 0001b6: 03 c2                           add eax, edx
+    # nextln: 0001b8: 8b 14 24                        mov edx, dword ptr [rsp]
+    # nextln: 0001bb: 03 c2                           add eax, edx
+    # nextln: 0001bd: 99                              cdq
+    # nextln: 0001be: f7 ff                           idiv edi
+    # nextln: 0001c0: 89 54 24 08                     mov dword ptr [rsp + 8], edx
+    # nextln: 0001c4: 44 89 5c 24 4c                  mov dword ptr [rsp + 0x4c], r11d
+    # nextln: 0001c9: 8b 5c 24 4c                     mov ebx, dword ptr [rsp + 0x4c]
+    # nextln: 0001cd: 89 f8                           mov eax, edi
+    # nextln: 0001cf: 99                              cdq
+    # nextln: 0001d0: 41 f7 fa                        idiv r10d
+    # nextln: 0001d3: 33 d2                           xor edx, edx
+    # nextln: 0001d5: 3b d8                           cmp ebx, eax
+    # nextln: 0001d7: 0f 9c c2                        setl dl
+    # nextln: 0001da: 88 54 24 5c                     mov byte ptr [rsp + 0x5c], dl
+    # nextln: 0001de: 0f b6 44 24 5c                  movzx eax, byte ptr [rsp + 0x5c]
+    # nextln: 0001e3: 85 c0                           test eax, eax
+    # nextln: 0001e5: 0f 84 d9 00 00 00               je 0x2c4
+    # nextln: 0001eb: 8b 44 24 0c                     mov eax, dword ptr [rsp + 0xc]
+    # nextln: 0001ef: 8b 54 24 4c                     mov edx, dword ptr [rsp + 0x4c]
+    # nextln: 0001f3: 03 c2                           add eax, edx
+    # nextln: 0001f5: 99                              cdq
+    # nextln: 0001f6: f7 ff                           idiv edi
+    # nextln: 0001f8: 89 54 24 0c                     mov dword ptr [rsp + 0xc], edx
+    # nextln: 0001fc: 8b 44 24 10                     mov eax, dword ptr [rsp + 0x10]
+    # nextln: 000200: 8b 54 24 0c                     mov edx, dword ptr [rsp + 0xc]
+    # nextln: 000204: 03 c2                           add eax, edx
+    # nextln: 000206: 99                              cdq
+    # nextln: 000207: f7 ff                           idiv edi
+    # nextln: 000209: 89 54 24 10                     mov dword ptr [rsp + 0x10], edx
+    # nextln: 00020d: 8b 44 24 54                     mov eax, dword ptr [rsp + 0x54]
+    # nextln: 000211: 8b 54 24 0c                     mov edx, dword ptr [rsp + 0xc]
+    # nextln: 000215: 8b 5c 24 10                     mov ebx, dword ptr [rsp + 0x10]
+    # nextln: 000219: 03 d3                           add edx, ebx
+    # nextln: 00021b: 03 c2                           add eax, edx
+    # nextln: 00021d: 89 44 24 54                     mov dword ptr [rsp + 0x54], eax
+    # nextln: 000221: 44 89 5c 24 48                  mov dword ptr [rsp + 0x48], r11d
+    # nextln: 000226: 8b 5c 24 48                     mov ebx, dword ptr [rsp + 0x48]
+    # nextln: 00022a: 89 f8                           mov eax, edi
+    # nextln: 00022c: 99                              cdq
+    # nextln: 00022d: 41 f7 f9                        idiv r9d
+    # nextln: 000230: 33 d2                           xor edx, edx
+    # nextln: 000232: 3b d8                           cmp ebx, eax
+    # nextln: 000234: 0f 9c c2                        setl dl
+    # nextln: 000237: 88 54 24 60                     mov byte ptr [rsp + 0x60], dl
+    # nextln: 00023b: 0f b6 44 24 60                  movzx eax, byte ptr [rsp + 0x60]
+    # nextln: 000240: 85 c0                           test eax, eax
+    # nextln: 000242: 0f 84 6c 00 00 00               je 0x2b4
+    # nextln: 000248: 8b 44 24 14                     mov eax, dword ptr [rsp + 0x14]
+    # nextln: 00024c: 8b 54 24 18                     mov edx, dword ptr [rsp + 0x18]
+    # nextln: 000250: 8b 5c 24 1c                     mov ebx, dword ptr [rsp + 0x1c]
+    # nextln: 000254: 03 d3                           add edx, ebx
+    # nextln: 000256: 8b 5c 24 48                     mov ebx, dword ptr [rsp + 0x48]
+    # nextln: 00025a: 03 d3                           add edx, ebx
+    # nextln: 00025c: 03 c2                           add eax, edx
+    # nextln: 00025e: 89 44 24 14                     mov dword ptr [rsp + 0x14], eax
+    # nextln: 000262: 8b 44 24 18                     mov eax, dword ptr [rsp + 0x18]
+    # nextln: 000266: 8b 54 24 14                     mov edx, dword ptr [rsp + 0x14]
+    # nextln: 00026a: 03 c2                           add eax, edx
+    # nextln: 00026c: 8b 54 24 48                     mov edx, dword ptr [rsp + 0x48]
+    # nextln: 000270: 03 c2                           add eax, edx
+    # nextln: 000272: 99                              cdq
+    # nextln: 000273: f7 ff                           idiv edi
+    # nextln: 000275: 89 54 24 18                     mov dword ptr [rsp + 0x18], edx
+    # nextln: 000279: 8b 44 24 1c                     mov eax, dword ptr [rsp + 0x1c]
+    # nextln: 00027d: 8b 54 24 18                     mov edx, dword ptr [rsp + 0x18]
+    # nextln: 000281: 03 c2                           add eax, edx
+    # nextln: 000283: 99                              cdq
+    # nextln: 000284: f7 ff                           idiv edi
+    # nextln: 000286: 89 54 24 1c                     mov dword ptr [rsp + 0x1c], edx
+    # nextln: 00028a: 8b 44 24 54                     mov eax, dword ptr [rsp + 0x54]
+    # nextln: 00028e: 8b 54 24 14                     mov edx, dword ptr [rsp + 0x14]
+    # nextln: 000292: 8b 5c 24 18                     mov ebx, dword ptr [rsp + 0x18]
+    # nextln: 000296: 03 d3                           add edx, ebx
+    # nextln: 000298: 8b 5c 24 1c                     mov ebx, dword ptr [rsp + 0x1c]
+    # nextln: 00029c: 03 da                           add ebx, edx
+    # nextln: 00029e: 03 c3                           add eax, ebx
+    # nextln: 0002a0: 89 44 24 54                     mov dword ptr [rsp + 0x54], eax
+    # nextln: 0002a4: 8b 44 24 48                     mov eax, dword ptr [rsp + 0x48]
+    # nextln: 0002a8: 83 c0 01                        add eax, 1
+    # nextln: 0002ab: 89 44 24 48                     mov dword ptr [rsp + 0x48], eax
+    # nextln: 0002af: e9 72 ff ff ff                  jmp 0x226
+    # nextln: 0002b4: 8b 44 24 4c                     mov eax, dword ptr [rsp + 0x4c]
+    # nextln: 0002b8: 83 c0 01                        add eax, 1
+    # nextln: 0002bb: 89 44 24 4c                     mov dword ptr [rsp + 0x4c], eax
+    # nextln: 0002bf: e9 05 ff ff ff                  jmp 0x1c9
+    # nextln: 0002c4: 8b 44 24 38                     mov eax, dword ptr [rsp + 0x38]
+    # nextln: 0002c8: 83 c0 01                        add eax, 1
+    # nextln: 0002cb: 89 44 24 38                     mov dword ptr [rsp + 0x38], eax
+    # nextln: 0002cf: e9 7f fe ff ff                  jmp 0x153
+    # nextln: 0002d4: 44 89 5c 24 44                  mov dword ptr [rsp + 0x44], r11d
+    # nextln: 0002d9: 8b 5c 24 44                     mov ebx, dword ptr [rsp + 0x44]
+    # nextln: 0002dd: 89 f8                           mov eax, edi
+    # nextln: 0002df: 99                              cdq
+    # nextln: 0002e0: f7 f9                           idiv ecx
+    # nextln: 0002e2: 33 d2                           xor edx, edx
+    # nextln: 0002e4: 3b d8                           cmp ebx, eax
+    # nextln: 0002e6: 0f 9c c2                        setl dl
+    # nextln: 0002e9: 88 54 24 61                     mov byte ptr [rsp + 0x61], dl
+    # nextln: 0002ed: 0f b6 44 24 61                  movzx eax, byte ptr [rsp + 0x61]
+    # nextln: 0002f2: 85 c0                           test eax, eax
+    # nextln: 0002f4: 0f 84 46 00 00 00               je 0x340
+    # nextln: 0002fa: 8b 44 24 20                     mov eax, dword ptr [rsp + 0x20]
+    # nextln: 0002fe: 8b 54 24 44                     mov edx, dword ptr [rsp + 0x44]
+    # nextln: 000302: 03 c2                           add eax, edx
+    # nextln: 000304: 99                              cdq
+    # nextln: 000305: f7 ff                           idiv edi
+    # nextln: 000307: 89 54 24 20                     mov dword ptr [rsp + 0x20], edx
+    # nextln: 00030b: 8b 44 24 24                     mov eax, dword ptr [rsp + 0x24]
+    # nextln: 00030f: 8b 54 24 20                     mov edx, dword ptr [rsp + 0x20]
+    # nextln: 000313: 03 c2                           add eax, edx
+    # nextln: 000315: 99                              cdq
+    # nextln: 000316: f7 ff                           idiv edi
+    # nextln: 000318: 89 54 24 24                     mov dword ptr [rsp + 0x24], edx
+    # nextln: 00031c: 8b 44 24 54                     mov eax, dword ptr [rsp + 0x54]
+    # nextln: 000320: 8b 54 24 20                     mov edx, dword ptr [rsp + 0x20]
+    # nextln: 000324: 8b 5c 24 24                     mov ebx, dword ptr [rsp + 0x24]
+    # nextln: 000328: 03 da                           add ebx, edx
+    # nextln: 00032a: 03 c3                           add eax, ebx
+    # nextln: 00032c: 89 44 24 54                     mov dword ptr [rsp + 0x54], eax
+    # nextln: 000330: 8b 44 24 44                     mov eax, dword ptr [rsp + 0x44]
+    # nextln: 000334: 83 c0 01                        add eax, 1
+    # nextln: 000337: 89 44 24 44                     mov dword ptr [rsp + 0x44], eax
+    # nextln: 00033b: e9 99 ff ff ff                  jmp 0x2d9
+    # nextln: 000340: 44 89 5c 24 3c                  mov dword ptr [rsp + 0x3c], r11d
+    # nextln: 000345: 8b 5c 24 3c                     mov ebx, dword ptr [rsp + 0x3c]
+    # nextln: 000349: 89 f8                           mov eax, edi
+    # nextln: 00034b: 99                              cdq
+    # nextln: 00034c: f7 fe                           idiv esi
     # nextln: 00034e: 33 d2                           xor edx, edx
     # nextln: 000350: 3b d8                           cmp ebx, eax
     # nextln: 000352: 0f 9c c2                        setl dl
-    # nextln: 000355: 88 54 24 60                     mov byte ptr [rsp + 0x60], dl
-    # nextln: 000359: 0f b6 44 24 60                  movzx eax, byte ptr [rsp + 0x60]
+    # nextln: 000355: 88 54 24 5e                     mov byte ptr [rsp + 0x5e], dl
+    # nextln: 000359: 0f b6 44 24 5e                  movzx eax, byte ptr [rsp + 0x5e]
     # nextln: 00035e: 85 c0                           test eax, eax
     # nextln: 000360: 0f 84 63 00 00 00               je 0x3c9
     # nextln: 000366: 8b 44 24 28                     mov eax, dword ptr [rsp + 0x28]
-    # nextln: 00036a: 8b 54 24 44                     mov edx, dword ptr [rsp + 0x44]
+    # nextln: 00036a: 8b 54 24 3c                     mov edx, dword ptr [rsp + 0x3c]
     # nextln: 00036e: 03 c2                           add eax, edx
     # nextln: 000370: 99                              cdq
     # nextln: 000371: f7 ff                           idiv edi
@@ -261,7 +261,7 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 000388: 8b 44 24 30                     mov eax, dword ptr [rsp + 0x30]
     # nextln: 00038c: 8b 54 24 2c                     mov edx, dword ptr [rsp + 0x2c]
     # nextln: 000390: 03 c2                           add eax, edx
-    # nextln: 000392: 8b 54 24 44                     mov edx, dword ptr [rsp + 0x44]
+    # nextln: 000392: 8b 54 24 3c                     mov edx, dword ptr [rsp + 0x3c]
     # nextln: 000396: 03 c2                           add eax, edx
     # nextln: 000398: 99                              cdq
     # nextln: 000399: f7 ff                           idiv edi
@@ -274,17 +274,17 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0003b1: 03 da                           add ebx, edx
     # nextln: 0003b3: 03 c3                           add eax, ebx
     # nextln: 0003b5: 89 44 24 54                     mov dword ptr [rsp + 0x54], eax
-    # nextln: 0003b9: 8b 44 24 44                     mov eax, dword ptr [rsp + 0x44]
+    # nextln: 0003b9: 8b 44 24 3c                     mov eax, dword ptr [rsp + 0x3c]
     # nextln: 0003bd: 83 c0 01                        add eax, 1
-    # nextln: 0003c0: 89 44 24 44                     mov dword ptr [rsp + 0x44], eax
-    # nextln: 0003c4: e9 7b ff ff ff                  jmp 0x344
-    # nextln: 0003c9: 8b 44 24 3c                     mov eax, dword ptr [rsp + 0x3c]
+    # nextln: 0003c0: 89 44 24 3c                     mov dword ptr [rsp + 0x3c], eax
+    # nextln: 0003c4: e9 7c ff ff ff                  jmp 0x345
+    # nextln: 0003c9: 8b 44 24 40                     mov eax, dword ptr [rsp + 0x40]
     # nextln: 0003cd: 83 c0 01                        add eax, 1
-    # nextln: 0003d0: 89 44 24 3c                     mov dword ptr [rsp + 0x3c], eax
+    # nextln: 0003d0: 89 44 24 40                     mov dword ptr [rsp + 0x40], eax
     # nextln: 0003d4: e9 59 fd ff ff                  jmp 0x132
     # nextln: 0003d9: 8b 44 24 54                     mov eax, dword ptr [rsp + 0x54]
-    # nextln: 0003dd: 8b 0c 24                        mov ecx, dword ptr [rsp]
-    # nextln: 0003e0: 8b 54 24 04                     mov edx, dword ptr [rsp + 4]
+    # nextln: 0003dd: 8b 4c 24 04                     mov ecx, dword ptr [rsp + 4]
+    # nextln: 0003e1: 8b 14 24                        mov edx, dword ptr [rsp]
     # nextln: 0003e4: 03 ca                           add ecx, edx
     # nextln: 0003e6: 8b 54 24 08                     mov edx, dword ptr [rsp + 8]
     # nextln: 0003ea: 03 ca                           add ecx, edx
@@ -310,7 +310,7 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 000426: 03 ca                           add ecx, edx
     # nextln: 000428: 8b 54 24 34                     mov edx, dword ptr [rsp + 0x34]
     # nextln: 00042c: 03 ca                           add ecx, edx
-    # nextln: 00042e: 8b 54 24 40                     mov edx, dword ptr [rsp + 0x40]
+    # nextln: 00042e: 8b 54 24 50                     mov edx, dword ptr [rsp + 0x50]
     # nextln: 000432: 03 ca                           add ecx, edx
     # nextln: 000434: 03 c1                           add eax, ecx
     # nextln: 000436: 89 44 24 54                     mov dword ptr [rsp + 0x54], eax

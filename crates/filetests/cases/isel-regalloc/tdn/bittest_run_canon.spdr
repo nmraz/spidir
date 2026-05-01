@@ -28,8 +28,8 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:       block0:
     # nextln: 0003:     $$rax = MovRmS32(1)
     # nextln: 0005:     $$rcx = MovRmS32(0)
-    # nextln: 0022:     $$rdx = MovRmS32(2)
-    # nextln: 0023:     $$rdi = MovRmS32(0)
+    # nextln: 0018:     $$rdi = MovRmS32(0)
+    # nextln: 0023:     $$rdx = MovRmS32(2)
     # nextln: 0024:     MovMR(S8, [!0 + 0]) $$rcx
     # nextln: 0025:     MovMR(S8, [!1 + 0]) $$rcx
     # nextln: 0026:     MovMR(S8, [!2 + 0]) $$rcx

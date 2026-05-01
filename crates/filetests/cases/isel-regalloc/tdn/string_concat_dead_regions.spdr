@@ -32,15 +32,15 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln:       block2:
     # nextln: 0015:     Jump(block3)
     # nextln:       block3:
-    # nextln: 0016:     $$rax = MovRM(S32, [reg + 16]) $$rdi
-    # nextln: 0020:     $$rcx = MovRmS32(0)
-    # nextln: 0021:     AluRmI(S32, Cmp, 1) $$rax
-    # nextln: 0022:     $$rcx = Setcc(G) $$rcx
-    # nextln: 0023:     $$rax = MovRmS32(0)
-    # nextln: 0024:     AluRRm(S32, Test) $$rcx, $$rcx
-    # nextln: 0025:     $$rax = Setcc(E) $$rax
-    # nextln: 0026:     $$rcx = MovzxRRm(S8) $$rax
-    # nextln: 0027:     $$rax = MovRI64(136096799136688)
+    # nextln: 0016:     $$rcx = MovRM(S32, [reg + 16]) $$rdi
+    # nextln: 0019:     $$rax = MovRI64(136096799136688)
+    # nextln: 0021:     $$rdx = MovRmS32(0)
+    # nextln: 0022:     AluRmI(S32, Cmp, 1) $$rcx
+    # nextln: 0023:     $$rdx = Setcc(G) $$rdx
+    # nextln: 0024:     $$rcx = MovRmS32(0)
+    # nextln: 0025:     AluRRm(S32, Test) $$rdx, $$rdx
+    # nextln: 0026:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0027:     $$rcx = MovzxRRm(S8) $$rcx
     # nextln: 0028:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0029:     Jumpcc(Ne, block4, block5)
     # nextln:       block4:

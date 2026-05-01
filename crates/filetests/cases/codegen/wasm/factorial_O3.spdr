@@ -9,9 +9,9 @@ func @func00000001:i64(i32) {
     # nextln: 00000b: 0f 8e af 00 00 00               jle 0xc0
     # nextln: 000011: 8d 77 01                        lea esi, [rdi + 1]
     # nextln: 000014: 48 8d 56 ff                     lea rdx, [rsi - 1]
-    # nextln: 000018: 48 8d 7e fe                     lea rdi, [rsi - 2]
-    # nextln: 00001c: 48 89 d1                        mov rcx, rdx
-    # nextln: 00001f: 48 83 e1 07                     and rcx, 7
+    # nextln: 000018: 48 89 d1                        mov rcx, rdx
+    # nextln: 00001b: 48 83 e1 07                     and rcx, 7
+    # nextln: 00001f: 48 8d 7e fe                     lea rdi, [rsi - 2]
     # nextln: 000023: 48 83 ff 06                     cmp rdi, 6
     # nextln: 000027: 0f 86 6b 00 00 00               jbe 0x98
     # nextln: 00002d: bf 08 00 00 00                  mov edi, 8
@@ -43,8 +43,8 @@ func @func00000001:i64(i32) {
     # nextln: 000098: 48 89 c6                        mov rsi, rax
     # nextln: 00009b: 48 85 c9                        test rcx, rcx
     # nextln: 00009e: 0f 84 1a 00 00 00               je 0xbe
-    # nextln: 0000a4: 48 0f af c6                     imul rax, rsi
-    # nextln: 0000a8: 48 83 c1 ff                     add rcx, -1
+    # nextln: 0000a4: 48 83 c1 ff                     add rcx, -1
+    # nextln: 0000a8: 48 0f af c6                     imul rax, rsi
     # nextln: 0000ac: 48 85 c9                        test rcx, rcx
     # nextln: 0000af: 0f 84 09 00 00 00               je 0xbe
     # nextln: 0000b5: 48 83 c6 01                     add rsi, 1

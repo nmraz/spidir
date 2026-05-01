@@ -46,9 +46,9 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 000023: b8 02 00 00 00                  mov eax, 2
     # nextln: 000028: 4c 63 e8                        movsxd r13, eax
     # nextln: 00002b: 49 6b f5 08                     imul rsi, r13, 8
-    # nextln: 00002f: b8 18 00 00 00                  mov eax, 0x18
-    # nextln: 000034: 48 03 f0                        add rsi, rax
-    # nextln: 000037: 49 6b c5 04                     imul rax, r13, 4
+    # nextln: 00002f: 49 6b c5 04                     imul rax, r13, 4
+    # nextln: 000033: b9 18 00 00 00                  mov ecx, 0x18
+    # nextln: 000038: 48 03 f1                        add rsi, rcx
     # nextln: 00003b: b9 14 00 00 00                  mov ecx, 0x14
     # nextln: 000040: 48 03 c1                        add rax, rcx
     # nextln: 000043: 48 89 c3                        mov rbx, rax

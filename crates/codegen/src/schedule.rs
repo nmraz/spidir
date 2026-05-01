@@ -1,6 +1,6 @@
-use core::{cmp::Ordering, ops::ControlFlow};
+use core::cmp::Ordering;
 
-use alloc::{collections::BinaryHeap, vec::Vec};
+use alloc::collections::BinaryHeap;
 
 use cranelift_entity::{
     EntityList, ListPool, SecondaryMap,
@@ -8,7 +8,7 @@ use cranelift_entity::{
 };
 use entity_utils::set::DenseEntitySet;
 use fx_utils::{FxHashMap, FxHashSet};
-use graphwalk::{Graph, dfs::PostOrderContext};
+use graphwalk::dfs::PostOrderContext;
 use hashbrown::hash_map::Entry;
 use ir::{
     function::FunctionBody,
@@ -81,7 +81,7 @@ impl Schedule {
         schedule_late(&ctx, &mut scratch_postorder, |ctx, node| {
             scheduler.schedule_late(ctx, node);
         });
-        scheduler.schedule_intra_block(graph, &mut scratch_postorder);
+        scheduler.schedule_intra_block(graph);
 
         schedule
     }
@@ -188,17 +188,9 @@ impl<'a> Scheduler<'a> {
         }
     }
 
-    fn schedule_intra_block(
-        &mut self,
-        graph: &ValGraph,
-        scratch_postorder: &mut PostOrderContext<Node>,
-    ) {
-        let mut block_scheduler = BlockScheduler::new(
-            graph,
-            &self.blocks_by_node,
-            &self.node_cp_lengths,
-            scratch_postorder,
-        );
+    fn schedule_intra_block(&mut self, graph: &ValGraph) {
+        let mut block_scheduler =
+            BlockScheduler::new(graph, &self.blocks_by_node, &self.node_cp_lengths);
 
         for &block in &self.cfg_ctx.block_order {
             trace!("scheduling {block}");
@@ -444,10 +436,8 @@ struct BlockScheduler<'a> {
     graph: &'a ValGraph,
     blocks_by_node: &'a BlocksByNode,
     node_cp_lengths: &'a NodeCpLengths,
-    scratch_postorder: &'a mut PostOrderContext<Node>,
     scheduled: DenseEntitySet<Node>,
     block: Block,
-    block_postorder: Vec<Node>,
     block_node_data: FxHashMap<Node, BlockNodeData>,
     block_value_data: FxHashMap<DepValue, BlockValueData>,
     unique_input_pool: ListPool<DepValue>,
@@ -460,16 +450,13 @@ impl<'a> BlockScheduler<'a> {
         graph: &'a ValGraph,
         blocks_by_node: &'a BlocksByNode,
         node_cp_lengths: &'a NodeCpLengths,
-        scratch_postorder: &'a mut PostOrderContext<Node>,
     ) -> Self {
         Self {
             graph,
             blocks_by_node,
             node_cp_lengths,
-            scratch_postorder,
             scheduled: DenseEntitySet::new(),
             block: Block::reserved_value(),
-            block_postorder: Vec::new(),
             block_node_data: FxHashMap::default(),
             block_value_data: FxHashMap::default(),
             unique_input_pool: ListPool::new(),
@@ -479,9 +466,60 @@ impl<'a> BlockScheduler<'a> {
     }
 
     fn reset(&mut self, block: Block, nodes: &[Node]) {
+        self.block_node_data.clear();
+        self.unique_input_pool.clear();
+        self.block_value_data.clear();
+
         self.block = block;
-        self.compute_postorder(nodes);
-        self.prepare_node_data();
+
+        let mut recorded_inputs = FxHashSet::default();
+
+        // Start by recording every node's inputs and counting outstanding uses.
+        for &node in nodes {
+            let unscheduled_preds = self.count_unscheduled_preds(node);
+
+            let node_data = match self.block_node_data.entry(node) {
+                Entry::Vacant(entry) => entry.insert(BlockNodeData {
+                    unscheduled_preds,
+                    last_use_count: 0,
+                    unique_inputs: EntityList::new(),
+                }),
+                Entry::Occupied(_) => panic!("node data already prepared"),
+            };
+
+            // Record this node's deduplicated input list.
+            recorded_inputs.clear();
+            for input in dataflow_inputs(self.graph, node) {
+                if recorded_inputs.contains(&input) {
+                    continue;
+                }
+                recorded_inputs.insert(input);
+                node_data
+                    .unique_inputs
+                    .push(input, &mut self.unique_input_pool);
+            }
+
+            // Record outstanding uses for all incoming values.
+            for &input in node_data.unique_inputs.as_slice(&self.unique_input_pool) {
+                let value_data = self.block_value_data.entry(input).or_default();
+                value_data.users.push(node, &mut self.value_use_pool);
+                value_data.outstanding_uses += 1;
+            }
+        }
+
+        // Now that all outstanding uses across the block have been counted, bump last use counts
+        // and enqueue nodes.
+        for &node in nodes {
+            let node_data = self.block_node_data.get_mut(&node).unwrap();
+            for &input in node_data.unique_inputs.as_slice(&self.unique_input_pool) {
+                if self.block_value_data[&input].outstanding_uses == 1 {
+                    // This node is the only use of the input in the block, bump its last use count
+                    // now.
+                    node_data.last_use_count += 1;
+                }
+            }
+            self.enqueue_if_ready(node);
+        }
     }
 
     fn schedule(&mut self, mut f: impl FnMut(Node)) {
@@ -525,7 +563,7 @@ impl<'a> BlockScheduler<'a> {
 
             let succ_data = self.block_node_data.get_mut(&succ).unwrap();
             debug_assert!(succ_data.unscheduled_preds > 0);
-            debug_assert!(!self.scheduled.contains(succ));
+
             succ_data.unscheduled_preds -= 1;
             self.enqueue_if_ready(succ);
         }
@@ -573,85 +611,9 @@ impl<'a> BlockScheduler<'a> {
         }
     }
 
-    fn compute_postorder(&mut self, nodes: &[Node]) {
-        self.scratch_postorder.reset(nodes.iter().copied());
-
-        // Temporarily use `scheduled` here to track which nodes have already been visited by the
-        // postorder.
-        self.scheduled.clear();
-
-        let block_graph = self.block_graph();
-
-        self.block_postorder.clear();
-        while let Some(node) = self
-            .scratch_postorder
-            .next(&block_graph, &mut self.scheduled)
-        {
-            self.block_postorder.push(node);
-        }
-    }
-
-    fn prepare_node_data(&mut self) {
-        self.block_node_data.clear();
-        self.unique_input_pool.clear();
-        self.block_value_data.clear();
-
-        let mut recorded_inputs = FxHashSet::default();
-
-        // Walk the block in postorder here so we have critical path lengths for successors before
-        // reaching the nodes themselves.
-        for i in 0..self.block_postorder.len() {
-            let node = self.block_postorder[i];
-
-            let unscheduled_preds = self.count_unscheduled_preds(node);
-
-            let node_data = match self.block_node_data.entry(node) {
-                Entry::Vacant(entry) => entry.insert(BlockNodeData {
-                    unscheduled_preds,
-                    last_use_count: 0,
-                    unique_inputs: EntityList::new(),
-                }),
-                Entry::Occupied(_) => panic!("node data already prepared"),
-            };
-
-            // Record this node's deduplicated input list.
-            recorded_inputs.clear();
-            for input in dataflow_inputs(self.graph, node) {
-                if recorded_inputs.contains(&input) {
-                    continue;
-                }
-                recorded_inputs.insert(input);
-                node_data
-                    .unique_inputs
-                    .push(input, &mut self.unique_input_pool);
-            }
-
-            // Record outstanding uses for all incoming values.
-            for &input in node_data.unique_inputs.as_slice(&self.unique_input_pool) {
-                let value_data = self.block_value_data.entry(input).or_default();
-                value_data.users.push(node, &mut self.value_use_pool);
-                value_data.outstanding_uses += 1;
-            }
-        }
-
-        // Now that everything has been set up and outstanding uses have been counted, bump last use
-        // counts and enqueue nodes.
-        for i in 0..self.block_postorder.len() {
-            let node = self.block_postorder[i];
-            let node_data = self.block_node_data.get_mut(&node).unwrap();
-            for &input in node_data.unique_inputs.as_slice(&self.unique_input_pool) {
-                if self.block_value_data[&input].outstanding_uses == 1 {
-                    // This node is the only use of the input in the block, bump its last use count
-                    // now.
-                    node_data.last_use_count += 1;
-                }
-            }
-            self.enqueue_if_ready(node);
-        }
-    }
-
     fn enqueue_if_ready(&mut self, node: Node) {
         if self.block_node_data[&node].unscheduled_preds == 0 {
+            debug_assert!(!self.scheduled.contains(node));
             trace!("    ready: node {}", node.as_u32());
             self.ready_nodes.push(ReadyNode {
                 node,
@@ -674,36 +636,6 @@ impl<'a> BlockScheduler<'a> {
 
     fn is_block_interior_node(&self, node: Node) -> bool {
         is_block_interior_node(self.graph, self.blocks_by_node, self.block, node)
-    }
-
-    fn block_graph(&self) -> BlockSubgraph<'a> {
-        BlockSubgraph {
-            graph: self.graph,
-            blocks_by_node: self.blocks_by_node,
-            block: self.block,
-        }
-    }
-}
-
-struct BlockSubgraph<'a> {
-    graph: &'a ValGraph,
-    blocks_by_node: &'a BlocksByNode,
-    block: Block,
-}
-
-impl Graph for BlockSubgraph<'_> {
-    type Node = Node;
-
-    fn try_successors(
-        &self,
-        node: Node,
-        mut f: impl FnMut(Node) -> ControlFlow<()>,
-    ) -> ControlFlow<()> {
-        raw_def_use_succs(self.graph, node)
-            .filter(|&(succ, _use_idx)| {
-                is_block_interior_node(self.graph, self.blocks_by_node, self.block, succ)
-            })
-            .try_for_each(|(node, _use_idx)| f(node))
     }
 }
 

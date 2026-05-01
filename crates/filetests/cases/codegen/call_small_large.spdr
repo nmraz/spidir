@@ -133,8 +133,8 @@ func @call_many_params(ptr) {
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 48 89 fa                        mov rdx, rdi
-    # nextln: 000007: 33 ff                           xor edi, edi
-    # nextln: 000009: 33 c9                           xor ecx, ecx
+    # nextln: 000007: 33 c9                           xor ecx, ecx
+    # nextln: 000009: 33 ff                           xor edi, edi
     # nextln: 00000b: 51                              push rcx
     # nextln: 00000c: 57                              push rdi
     # nextln: 00000d: 52                              push rdx

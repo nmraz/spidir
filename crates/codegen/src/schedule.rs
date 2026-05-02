@@ -6,8 +6,8 @@ use cranelift_entity::{
     EntityList, ListPool, SecondaryMap,
     packed_option::{PackedOption, ReservedValue},
 };
-use entity_utils::set::DenseEntitySet;
-use fx_utils::{FxHashMap, FxHashSet};
+use entity_utils::{list::dedup_entity_list, set::DenseEntitySet};
+use fx_utils::FxHashMap;
 use graphwalk::dfs::PostOrderContext;
 use hashbrown::hash_map::Entry;
 use ir::{
@@ -472,8 +472,6 @@ impl<'a> BlockScheduler<'a> {
 
         self.block = block;
 
-        let mut recorded_inputs = FxHashSet::default();
-
         // Start by recording every node's inputs and counting outstanding uses.
         for &node in nodes {
             let unscheduled_preds = self.count_unscheduled_preds(node);
@@ -482,22 +480,15 @@ impl<'a> BlockScheduler<'a> {
                 Entry::Vacant(entry) => entry.insert(BlockNodeData {
                     unscheduled_preds,
                     last_use_count: 0,
-                    unique_inputs: EntityList::new(),
+                    unique_inputs: EntityList::from_iter(
+                        dataflow_inputs(self.graph, node),
+                        &mut self.unique_input_pool,
+                    ),
                 }),
                 Entry::Occupied(_) => panic!("node data already prepared"),
             };
 
-            // Record this node's deduplicated input list.
-            recorded_inputs.clear();
-            for input in dataflow_inputs(self.graph, node) {
-                if recorded_inputs.contains(&input) {
-                    continue;
-                }
-                recorded_inputs.insert(input);
-                node_data
-                    .unique_inputs
-                    .push(input, &mut self.unique_input_pool);
-            }
+            dedup_entity_list(&mut node_data.unique_inputs, &mut self.unique_input_pool);
 
             // Record outstanding uses for all incoming values.
             for &input in node_data.unique_inputs.as_slice(&self.unique_input_pool) {

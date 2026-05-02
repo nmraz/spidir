@@ -14,10 +14,10 @@ func @"System.Int32 testout1::Sub_Funclet_96()":i32() {
     # nextln:     spill3: 12
     # nextln:       block0:
     # nextln: 0000:     $$rdi = MovRI64(89197880973888)
-    # nextln: 0002:     $$r12 = MovRI64(89197880974656)
-    # nextln: 0003:     $$rax = FuncAddrAbs(External(extfunc2))
-    # nextln: 0004:     $$rax = CallRm $$rax, $$rdi
+    # nextln: 0001:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0002:     $$rax = CallRm $$rax, $$rdi
     # nextln:           $$rbx:gpr64 = $$rax
+    # nextln: 0004:     $$r12 = MovRI64(89197880974656)
     # nextln: 0005:     $$rax = FuncAddrAbs(External(extfunc0))
     # nextln:           $$rsi = MovRmS32(3)
     # nextln:           $$rdi:gpr64 = $$r12

@@ -17,8 +17,8 @@ use ir::{
     schedule::{ScheduleContext, schedule_early, schedule_late},
     valgraph::{DepValue, Node, ValGraph},
     valwalk::{
-        CfgPreorderInfo, DefUseSuccs, GraphWalkInfo, dataflow_inputs, dataflow_preds,
-        dataflow_succs, def_use_preds, raw_def_use_succs,
+        CfgPreorderInfo, DefUseSuccs, GraphWalkInfo, dataflow_inputs, dataflow_outputs,
+        dataflow_preds, dataflow_succs, def_use_preds, raw_def_use_succs,
     },
 };
 use log::trace;
@@ -419,9 +419,9 @@ impl PartialEq for ReadyNode {
 struct BlockNodeData {
     /// The number of block-local predecessors of this node that have not yet been scheduled.
     unscheduled_preds: u32,
-    /// The number of deduplicated data inputs for which this node is the last use point in the
-    /// block.
-    last_use_count: u32,
+    /// The number of live ranges forward execution of this instruction is expected to add. May be
+    /// negative if the instruction terminates more live ranges than it creates.
+    live_range_delta: i32,
     /// A deduplicated list of all data inputs to this node.
     unique_inputs: EntityList<DepValue>,
 }
@@ -479,7 +479,7 @@ impl<'a> BlockScheduler<'a> {
             let node_data = match self.block_node_data.entry(node) {
                 Entry::Vacant(entry) => entry.insert(BlockNodeData {
                     unscheduled_preds,
-                    last_use_count: 0,
+                    live_range_delta: 0,
                     unique_inputs: EntityList::from_iter(
                         dataflow_inputs(self.graph, node),
                         &mut self.unique_input_pool,
@@ -498,15 +498,18 @@ impl<'a> BlockScheduler<'a> {
             }
         }
 
-        // Now that all outstanding uses across the block have been counted, bump last use counts
-        // and enqueue nodes.
+        // Now that all outstanding uses across the block have been counted, compute live range
+        // deltas and enqueue nodes.
         for &node in nodes {
             let node_data = self.block_node_data.get_mut(&node).unwrap();
+
+            node_data.live_range_delta = dataflow_outputs(self.graph, node).count() as i32;
+
             for &input in node_data.unique_inputs.as_slice(&self.unique_input_pool) {
                 if self.block_value_data[&input].outstanding_uses == 1 {
-                    // This node is the only use of the input in the block, bump its last use count
-                    // now.
-                    node_data.last_use_count += 1;
+                    // This node is the only use of the input in the block, so it terminates the
+                    // input's live range.
+                    node_data.live_range_delta -= 1;
                 }
             }
             self.enqueue_if_ready(node);
@@ -527,9 +530,9 @@ impl<'a> BlockScheduler<'a> {
             }
 
             trace!(
-                "    place: node {} [luc {}, cp {}]",
+                "    place: node {} [lrg delta {}, cp {}]",
                 node.as_u32(),
-                self.block_node_data[&node].last_use_count,
+                self.block_node_data[&node].live_range_delta,
                 self.node_cp_lengths[node],
             );
 
@@ -574,8 +577,8 @@ impl<'a> BlockScheduler<'a> {
             debug_assert!(value_data.outstanding_uses > 0);
             value_data.outstanding_uses -= 1;
             if value_data.outstanding_uses == 1 {
-                // The remaining user of this value is now the last in the block, so bump its
-                // last use count and report it to the caller.
+                // The remaining user of this value is now the last in the block, so adjust its live
+                // range delta and report it to the caller.
 
                 // This search happens at most once per value during scheduling of the block (and
                 // only walks edges leading into the block), so the total complexity here is still
@@ -593,7 +596,7 @@ impl<'a> BlockScheduler<'a> {
                     self.block_node_data
                         .get_mut(&last_user)
                         .unwrap()
-                        .last_use_count += 1;
+                        .live_range_delta -= 1;
                     // Note: this node may be pushed multiple times if several of its inputs are
                     // last users.
                     updated_last_users.push(last_user);
@@ -620,9 +623,14 @@ impl<'a> BlockScheduler<'a> {
     }
 
     fn node_prio(&self, node: Node) -> u64 {
-        // Prefer last use count, and fall back to CP length when tied.
-        ((self.block_node_data[&node].last_use_count as u64) << 32)
-            | self.node_cp_lengths[node] as u64
+        // We want lower `live_range_delta` values to have higher priority, so we need an unsigned
+        // value that increases when `live_range_delta` decreases. Accomplish this by centering
+        // `-live_range_delta` around the middle of the unsigned range.
+        let biased_delta =
+            (1u32 << 31).wrapping_sub(self.block_node_data[&node].live_range_delta as u32);
+
+        // Prefer reducing live ranges, and fall back to CP length when tied.
+        ((biased_delta as u64) << 32) | self.node_cp_lengths[node] as u64
     }
 
     fn is_block_interior_node(&self, node: Node) -> bool {

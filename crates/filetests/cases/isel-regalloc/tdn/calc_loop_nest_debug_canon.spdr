@@ -40,54 +40,54 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0003:     $$r9 = MovRmS32(4)
     # nextln: 0004:     $$r10 = MovRmS32(3)
     # nextln: 0009:     $$r11 = MovRmS32(0)
-    # nextln: 0016:     MovMR(S32, [!1 + 0]) $$r11
-    # nextln: 0017:     MovMR(S32, [!0 + 0]) $$r11
-    # nextln: 0018:     MovMR(S32, [!2 + 0]) $$r11
-    # nextln: 0019:     MovMR(S32, [!3 + 0]) $$r11
-    # nextln: 0020:     MovMR(S32, [!4 + 0]) $$r11
-    # nextln: 0021:     MovMR(S32, [!5 + 0]) $$r11
-    # nextln: 0022:     MovMR(S32, [!6 + 0]) $$r11
-    # nextln: 0023:     MovMR(S32, [!7 + 0]) $$r11
-    # nextln: 0024:     MovMR(S32, [!8 + 0]) $$r11
-    # nextln: 0025:     MovMR(S32, [!9 + 0]) $$r11
-    # nextln: 0026:     MovMR(S32, [!10 + 0]) $$r11
-    # nextln: 0027:     MovMR(S32, [!11 + 0]) $$r11
-    # nextln: 0028:     MovMR(S32, [!12 + 0]) $$r11
-    # nextln: 0029:     MovMR(S32, [!13 + 0]) $$r11
-    # nextln: 0030:     MovMR(S32, [!20 + 0]) $$r11
-    # nextln: 0031:     MovMR(S32, [!21 + 0]) $$r11
-    # nextln: 0032:     MovMR(S32, [!16 + 0]) $$r11
-    # nextln: 0033:     MovMR(S32, [!14 + 0]) $$r11
-    # nextln: 0034:     MovMR(S32, [!19 + 0]) $$r11
-    # nextln: 0035:     MovMR(S32, [!18 + 0]) $$r11
-    # nextln: 0036:     MovMR(S8, [!27 + 0]) $$r11
-    # nextln: 0037:     MovMR(S8, [!22 + 0]) $$r11
-    # nextln: 0038:     MovMR(S8, [!24 + 0]) $$r11
-    # nextln: 0039:     MovMR(S32, [!17 + 0]) $$r11
-    # nextln: 0040:     MovMR(S8, [!28 + 0]) $$r11
-    # nextln: 0041:     MovMR(S32, [!15 + 0]) $$r11
-    # nextln: 0042:     MovMR(S8, [!25 + 0]) $$r11
-    # nextln: 0043:     MovMR(S8, [!26 + 0]) $$r11
-    # nextln: 0044:     MovMR(S32, [!23 + 0]) $$r11
+    # nextln: 0010:     MovMR(S32, [!1 + 0]) $$r11
+    # nextln: 0011:     MovMR(S32, [!0 + 0]) $$r11
+    # nextln: 0012:     MovMR(S32, [!2 + 0]) $$r11
+    # nextln: 0013:     MovMR(S32, [!3 + 0]) $$r11
+    # nextln: 0014:     MovMR(S32, [!4 + 0]) $$r11
+    # nextln: 0015:     MovMR(S32, [!5 + 0]) $$r11
+    # nextln: 0016:     MovMR(S32, [!6 + 0]) $$r11
+    # nextln: 0017:     MovMR(S32, [!7 + 0]) $$r11
+    # nextln: 0018:     MovMR(S32, [!8 + 0]) $$r11
+    # nextln: 0019:     MovMR(S32, [!9 + 0]) $$r11
+    # nextln: 0020:     MovMR(S32, [!10 + 0]) $$r11
+    # nextln: 0021:     MovMR(S32, [!11 + 0]) $$r11
+    # nextln: 0022:     MovMR(S32, [!12 + 0]) $$r11
+    # nextln: 0023:     MovMR(S32, [!13 + 0]) $$r11
+    # nextln: 0024:     MovMR(S32, [!20 + 0]) $$r11
+    # nextln: 0025:     MovMR(S32, [!21 + 0]) $$r11
+    # nextln: 0026:     MovMR(S32, [!16 + 0]) $$r11
+    # nextln: 0027:     MovMR(S32, [!14 + 0]) $$r11
+    # nextln: 0028:     MovMR(S32, [!19 + 0]) $$r11
+    # nextln: 0029:     MovMR(S32, [!18 + 0]) $$r11
+    # nextln: 0030:     MovMR(S8, [!27 + 0]) $$r11
+    # nextln: 0031:     MovMR(S8, [!22 + 0]) $$r11
+    # nextln: 0032:     MovMR(S8, [!24 + 0]) $$r11
+    # nextln: 0033:     MovMR(S32, [!17 + 0]) $$r11
+    # nextln: 0034:     MovMR(S8, [!28 + 0]) $$r11
+    # nextln: 0035:     MovMR(S32, [!15 + 0]) $$r11
+    # nextln: 0036:     MovMR(S8, [!25 + 0]) $$r11
+    # nextln: 0037:     MovMR(S8, [!26 + 0]) $$r11
+    # nextln: 0038:     MovMR(S32, [!23 + 0]) $$r11
     # nextln:           $$rax = MovRmS32(1)
-    # nextln: 0045:     MovMR(S32, [!1 + 0]) $$rax
-    # nextln: 0046:     MovMR(S32, [!0 + 0]) $$r8
-    # nextln: 0047:     MovMR(S32, [!2 + 0]) $$r10
-    # nextln: 0048:     MovMR(S32, [!3 + 0]) $$r9
-    # nextln: 0049:     MovMR(S32, [!4 + 0]) $$rcx
-    # nextln: 0050:     MovMR(S32, [!5 + 0]) $$rsi
+    # nextln: 0039:     MovMR(S32, [!1 + 0]) $$rax
+    # nextln: 0040:     MovMR(S32, [!0 + 0]) $$r8
+    # nextln: 0041:     MovMR(S32, [!2 + 0]) $$r10
+    # nextln: 0042:     MovMR(S32, [!3 + 0]) $$r9
+    # nextln: 0043:     MovMR(S32, [!4 + 0]) $$rcx
+    # nextln: 0044:     MovMR(S32, [!5 + 0]) $$rsi
     # nextln:           $$rax = MovRmS32(7)
-    # nextln: 0051:     MovMR(S32, [!6 + 0]) $$rax
+    # nextln: 0045:     MovMR(S32, [!6 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(8)
-    # nextln: 0052:     MovMR(S32, [!7 + 0]) $$rax
+    # nextln: 0046:     MovMR(S32, [!7 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(9)
-    # nextln: 0053:     MovMR(S32, [!8 + 0]) $$rax
+    # nextln: 0052:     MovMR(S32, [!8 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(10)
-    # nextln: 0054:     MovMR(S32, [!9 + 0]) $$rax
+    # nextln: 0053:     MovMR(S32, [!9 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(11)
-    # nextln: 0055:     MovMR(S32, [!10 + 0]) $$rax
+    # nextln: 0054:     MovMR(S32, [!10 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(12)
-    # nextln: 0056:     MovMR(S32, [!11 + 0]) $$rax
+    # nextln: 0055:     MovMR(S32, [!11 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(13)
     # nextln: 0057:     MovMR(S32, [!12 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(14)
@@ -180,8 +180,8 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0135:     $$rax = MovRM(S32, [!21 + 0])
     # nextln: 0136:     $$rdx = MovRM(S32, [!3 + 0])
     # nextln: 0137:     $$rbx = MovRM(S32, [!4 + 0])
-    # nextln: 0138:     $$rdx = AddRR(S32) $$rdx, $$rbx
-    # nextln: 0139:     $$rax = AddRR(S32) $$rax, $$rdx
+    # nextln: 0138:     $$rbx = AddRR(S32) $$rdx, $$rbx
+    # nextln: 0139:     $$rax = AddRR(S32) $$rax, $$rbx
     # nextln: 0140:     MovMR(S32, [!21 + 0]) $$rax
     # nextln: 0141:     MovMR(S32, [!18 + 0]) $$r11
     # nextln: 0142:     Jump(block16)
@@ -273,8 +273,8 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 0219:     $$rax = MovRM(S32, [!21 + 0])
     # nextln: 0220:     $$rdx = MovRM(S32, [!8 + 0])
     # nextln: 0221:     $$rbx = MovRM(S32, [!9 + 0])
-    # nextln: 0222:     $$rbx = AddRR(S32) $$rdx, $$rbx
-    # nextln: 0223:     $$rax = AddRR(S32) $$rax, $$rbx
+    # nextln: 0222:     $$rdx = AddRR(S32) $$rdx, $$rbx
+    # nextln: 0223:     $$rax = AddRR(S32) $$rax, $$rdx
     # nextln: 0224:     MovMR(S32, [!21 + 0]) $$rax
     # nextln: 0225:     $$rax = MovRM(S32, [!17 + 0])
     # nextln: 0226:     $$rax = AddRI(S32, 1) $$rax

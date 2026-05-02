@@ -28,30 +28,30 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:       block0:
     # nextln: 0003:     $$rax = MovRmS32(1)
     # nextln: 0005:     $$rcx = MovRmS32(0)
-    # nextln: 0018:     $$rdi = MovRmS32(0)
-    # nextln: 0023:     $$rdx = MovRmS32(2)
-    # nextln: 0024:     MovMR(S8, [!0 + 0]) $$rcx
-    # nextln: 0025:     MovMR(S8, [!1 + 0]) $$rcx
-    # nextln: 0026:     MovMR(S8, [!2 + 0]) $$rcx
-    # nextln: 0027:     MovMR(S16, [!3 + 0]) $$rcx
-    # nextln: 0028:     MovMR(S16, [!4 + 0]) $$rcx
-    # nextln: 0029:     MovMR(S16, [!5 + 0]) $$rcx
-    # nextln: 0030:     MovMR(S32, [!6 + 0]) $$rcx
-    # nextln: 0031:     MovMR(S32, [!7 + 0]) $$rcx
-    # nextln: 0032:     MovMR(S64, [!8 + 0]) $$rdi
-    # nextln: 0033:     MovMR(S64, [!9 + 0]) $$rdi
-    # nextln:           $$rcx = MovRU32(4294967168)
-    # nextln: 0034:     MovMR(S8, [!0 + 0]) $$rcx
-    # nextln: 0035:     MovMR(S8, [!1 + 0]) $$rax
-    # nextln: 0036:     MovMR(S8, [!2 + 0]) $$rdx
-    # nextln:           $$rcx = MovRU32(4294934528)
-    # nextln: 0037:     MovMR(S16, [!3 + 0]) $$rcx
-    # nextln: 0038:     MovMR(S16, [!4 + 0]) $$rax
-    # nextln: 0039:     MovMR(S16, [!5 + 0]) $$rdx
-    # nextln: 0040:     MovMR(S32, [!6 + 0]) $$rax
-    # nextln: 0041:     MovMR(S32, [!7 + 0]) $$rdx
+    # nextln: 0006:     MovMR(S8, [!0 + 0]) $$rcx
+    # nextln: 0007:     MovMR(S8, [!1 + 0]) $$rcx
+    # nextln: 0009:     MovMR(S8, [!2 + 0]) $$rcx
+    # nextln: 0012:     MovMR(S16, [!3 + 0]) $$rcx
+    # nextln: 0014:     MovMR(S16, [!4 + 0]) $$rcx
+    # nextln: 0018:     MovMR(S16, [!5 + 0]) $$rcx
+    # nextln: 0020:     MovMR(S32, [!6 + 0]) $$rcx
+    # nextln: 0022:     MovMR(S32, [!7 + 0]) $$rcx
+    # nextln: 0028:     $$rcx = MovRmS32(2)
+    # nextln: 0030:     $$rdx = MovRmS32(0)
+    # nextln: 0031:     MovMR(S64, [!8 + 0]) $$rdx
+    # nextln: 0032:     MovMR(S64, [!9 + 0]) $$rdx
+    # nextln:           $$rdx = MovRU32(4294967168)
+    # nextln: 0033:     MovMR(S8, [!0 + 0]) $$rdx
+    # nextln: 0034:     MovMR(S8, [!1 + 0]) $$rax
+    # nextln: 0035:     MovMR(S8, [!2 + 0]) $$rcx
+    # nextln:           $$rdx = MovRU32(4294934528)
+    # nextln: 0036:     MovMR(S16, [!3 + 0]) $$rdx
+    # nextln: 0037:     MovMR(S16, [!4 + 0]) $$rax
+    # nextln: 0038:     MovMR(S16, [!5 + 0]) $$rcx
+    # nextln: 0039:     MovMR(S32, [!6 + 0]) $$rax
+    # nextln: 0040:     MovMR(S32, [!7 + 0]) $$rcx
     # nextln:           $$rax = MovRmS32(1)
-    # nextln: 0042:     MovMR(S64, [!8 + 0]) $$rax
+    # nextln: 0041:     MovMR(S64, [!8 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(2)
     # nextln: 0043:     MovMR(S64, [!9 + 0]) $$rax
     # nextln: 0044:     $$rax = MovRM(S8, [!0 + 0])

@@ -325,6 +325,7 @@ version = "0.1.0"
 dependencies = [
  "cranelift-bitset",
  "cranelift-entity",
+ "slice-utils",
 ]
 
 [[package]]
@@ -494,7 +495,6 @@ dependencies = [
  "expect-test",
  "graphmock",
  "itertools",
- "slice-utils",
  "smallvec",
 ]
 

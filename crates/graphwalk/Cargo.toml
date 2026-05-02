@@ -8,7 +8,6 @@ rust-version.workspace = true
 
 [dependencies]
 entity-utils.workspace = true
-slice-utils.workspace = true
 
 cranelift-entity.workspace = true
 smallvec.workspace = true

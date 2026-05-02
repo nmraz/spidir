@@ -5,5 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+slice-utils.workspace = true
+
 cranelift-bitset.workspace = true
 cranelift-entity.workspace = true

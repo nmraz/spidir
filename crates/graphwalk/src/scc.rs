@@ -9,7 +9,7 @@ use cranelift_entity::{
     EntityList, EntityRef, ListPool, PrimaryMap, SecondaryMap,
     packed_option::{PackedOption, ReservedValue},
 };
-use entity_utils::{define_param_entity, set::DenseEntitySet};
+use entity_utils::{define_param_entity, list::dedup_entity_list, set::DenseEntitySet};
 
 use crate::{
     Graph, PredGraph,
@@ -299,14 +299,4 @@ impl<N: EntityRef + ReservedValue> PredGraph for Condensation<N> {
     ) -> ControlFlow<()> {
         self.scc_preds(node).iter().copied().try_for_each(f)
     }
-}
-
-fn dedup_entity_list<E: EntityRef + ReservedValue>(
-    list: &mut EntityList<E>,
-    pool: &mut ListPool<E>,
-) {
-    let contents = list.as_mut_slice(pool);
-    contents.sort_unstable_by_key(|entity| entity.index());
-    let new_len = slice_utils::dedup(contents);
-    list.truncate(new_len, pool);
 }

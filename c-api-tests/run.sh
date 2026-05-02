@@ -4,6 +4,8 @@ set -euo pipefail
 
 cd $(dirname $(readlink -f "$0"))
 
+export CC=clang
+export CXX=clang++
 export CMAKE_EXPORT_COMPILE_COMMANDS=ON
 export CTEST_OUTPUT_ON_FAILURE=1
 

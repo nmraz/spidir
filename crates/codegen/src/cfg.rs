@@ -8,6 +8,7 @@ use dominators::{
     depth_map::DepthMap,
     domtree::{DomTree, DomTreeNode},
     loops::{Loop, LoopForest},
+    postdomtree::{PostDomTree, PostDomTreeNode},
 };
 use fx_utils::FxHashMap;
 use graphwalk::{Graph, PredGraph};
@@ -33,6 +34,8 @@ struct BlockLinks {
 
 pub type BlockDomTreeNode = DomTreeNode<Block>;
 pub type BlockDomTree = DomTree<Block>;
+pub type BlockPostDomTreeNode = PostDomTreeNode<Block>;
+pub type BlockPostDomTree = PostDomTree<Block>;
 pub type BlockLoop = Loop<Block>;
 pub type BlockLoopForest = LoopForest<Block>;
 pub type BlockDepthMap = DepthMap<Block>;
@@ -198,6 +201,7 @@ pub struct CfgContext {
     pub cfg: BlockCfg,
     pub block_order: Vec<Block>,
     pub domtree: BlockDomTree,
+    pub postdomtree: BlockPostDomTree,
     pub loop_forest: BlockLoopForest,
     pub depth_map: BlockDepthMap,
 }
@@ -205,6 +209,7 @@ pub struct CfgContext {
 impl CfgContext {
     pub fn compute(cfg: BlockCfg, entry: Block) -> Self {
         let domtree = BlockDomTree::compute(&cfg, entry);
+        let postdomtree = BlockPostDomTree::compute(&cfg, entry);
         let loop_forest = BlockLoopForest::compute(&cfg, &domtree);
         let depth_map = BlockDepthMap::compute(&domtree, &loop_forest);
 
@@ -214,6 +219,7 @@ impl CfgContext {
             cfg,
             block_order,
             domtree,
+            postdomtree,
             loop_forest,
             depth_map,
         }

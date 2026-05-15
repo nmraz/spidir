@@ -238,7 +238,7 @@ impl<'a> Scheduler<'a> {
 
         // We might not have a late schedule location at all if all uses are dead phi inputs - just
         // don't schedule in that case.
-        if let Some(late_loc) = self.late_schedule_location(ctx, node) {
+        if let Some(late_loc) = self.late_schedule_location(ctx, node, early_loc) {
             let loc = self.best_schedule_location(node, early_loc, late_loc);
             trace!("place: node {} -> {loc}", node.as_u32());
             self.assign_and_append(loc, node);
@@ -341,13 +341,18 @@ impl<'a> Scheduler<'a> {
         loc
     }
 
-    fn late_schedule_location(&self, ctx: &ScheduleContext<'_>, node: Node) -> Option<Block> {
+    fn late_schedule_location(
+        &self,
+        ctx: &ScheduleContext<'_>,
+        node: Node,
+        early_loc: Block,
+    ) -> Option<Block> {
         let graph = ctx.graph;
 
         trace!("late: node {}", node.as_u32());
 
-        let loc = dataflow_succs(ctx.graph, ctx.live_nodes(), node)
-            .filter_map(|(succ, input_idx)| {
+        let mut succ_locs =
+            dataflow_succs(ctx.graph, ctx.live_nodes(), node).filter_map(|(succ, input_idx)| {
                 if matches!(graph.node_kind(succ), NodeKind::Phi) {
                     // Phi nodes are special, because they "use" their inputs in the corresponding
                     // input blocks and not in the blocks housing them.
@@ -386,9 +391,30 @@ impl<'a> Scheduler<'a> {
                     trace!("    succ: node {} ({loc})", succ.as_u32());
                     Some(loc)
                 }
-            })
+            });
+
+        let loc = 'lca: {
             // The node might not have any live uses if all uses are dead phi inputs.
-            .reduce(|acc, cur| self.domtree_lca(acc, cur))?;
+            let mut lca_loc = succ_locs.next()?;
+
+            // If we ever hit the early location, we have no reason to keep inspecting predecessors
+            // and climbing the dominator tree. Note that this is strictly an optimization and
+            // should not affect the computed location.
+            if lca_loc == early_loc {
+                break 'lca lca_loc;
+            }
+
+            for loc in succ_locs {
+                lca_loc = self.domtree_lca(lca_loc, loc);
+
+                // Once more, we can stop looking if we ever hit the early location.
+                if lca_loc == early_loc {
+                    break 'lca lca_loc;
+                }
+            }
+
+            lca_loc
+        };
 
         trace!("late: node {} -> {loc}", node.as_u32());
         Some(loc)

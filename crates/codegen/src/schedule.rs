@@ -59,8 +59,7 @@ impl Schedule {
         let mut scheduler = Scheduler {
             cfg_ctx,
             block_map,
-            blocks_by_node: SecondaryMap::new(),
-            node_cp_lengths: SecondaryMap::new(),
+            node_data: SecondaryMap::new(),
             block_data: SecondaryMap::new(),
             schedule: &mut schedule,
         };
@@ -121,14 +120,16 @@ struct BlockSchedulerData {
     terminator: PackedOption<Node>,
 }
 
-type BlocksByNode = SecondaryMap<Node, PackedOption<Block>>;
-type NodeCpLengths = SecondaryMap<Node, u32>;
+#[derive(Clone, Copy, Default)]
+struct NodeSchedulerData {
+    cp_length: u32,
+    block: PackedOption<Block>,
+}
 
 struct Scheduler<'a> {
     cfg_ctx: &'a CfgContext,
     block_map: &'a FunctionBlockMap,
-    blocks_by_node: BlocksByNode,
-    node_cp_lengths: NodeCpLengths,
+    node_data: SecondaryMap<Node, NodeSchedulerData>,
     block_data: SecondaryMap<Block, BlockSchedulerData>,
     schedule: &'a mut Schedule,
 }
@@ -149,12 +150,12 @@ impl<'a> Scheduler<'a> {
                 // Note: this value will already have been computed for all nodes dominated by this
                 // one because we are walking in postorder. For dataflow cycles involving phi nodes,
                 // unvisited successors will be ignored because the CP lengths default to 0.
-                .map(|(succ, _)| self.node_cp_lengths[succ])
+                .map(|(succ, _)| self.node_data[succ].cp_length)
                 .max()
                 // If we have any users, we lengthen the critical path by 1. Otherwise, all paths
                 // exiting the node have length 0.
                 .map_or(0, |succ_cp_length| succ_cp_length + 1);
-            self.node_cp_lengths[node] = cp_length;
+            self.node_data[node].cp_length = cp_length;
         }
     }
 
@@ -198,8 +199,7 @@ impl<'a> Scheduler<'a> {
     }
 
     fn schedule_intra_block(&mut self, graph: &ValGraph) {
-        let mut block_scheduler =
-            BlockScheduler::new(graph, &self.blocks_by_node, &self.node_cp_lengths);
+        let mut block_scheduler = BlockScheduler::new(graph, &self.node_data);
 
         for &block in &self.cfg_ctx.block_order {
             trace!("scheduling {block}");
@@ -227,12 +227,14 @@ impl<'a> Scheduler<'a> {
     }
 
     fn schedule_early(&mut self, ctx: &ScheduleContext<'_>, node: Node) {
-        assert!(self.blocks_by_node[node].is_none());
+        assert!(self.node_data[node].block.is_none());
         self.assign_block(self.early_schedule_location(ctx, node), node);
     }
 
     fn schedule_late(&mut self, ctx: &ScheduleContext<'_>, node: Node) {
-        let early_loc = self.blocks_by_node[node].expect("node should have been scheduled early");
+        let early_loc = self.node_data[node]
+            .block
+            .expect("node should have been scheduled early");
 
         // We might not have a late schedule location at all if all uses are dead phi inputs - just
         // don't schedule in that case.
@@ -305,7 +307,7 @@ impl<'a> Scheduler<'a> {
 
         // If the node already lives in a block with a long-enough critical path, there's no reason
         // to hoist it earlier.
-        if self.block_data[best_loc].max_cp_length >= self.node_cp_lengths[node] {
+        if self.block_data[best_loc].max_cp_length >= self.node_data[node].cp_length {
             return false;
         }
 
@@ -319,7 +321,9 @@ impl<'a> Scheduler<'a> {
         trace!("early: node {}", node.as_u32());
         let loc = dataflow_preds(ctx.graph, node)
             .map(|pred| {
-                let pred_loc = self.blocks_by_node[pred].expect("data flow cycle or dead input");
+                let pred_loc = self.node_data[pred]
+                    .block
+                    .expect("data flow cycle or dead input");
                 trace!("    pred: node {} ({pred_loc})", pred.as_u32());
                 pred_loc
             })
@@ -378,7 +382,7 @@ impl<'a> Scheduler<'a> {
                 } else {
                     // Other nodes using the value should always be scheduled in the same block as
                     // the value computation.
-                    let loc = self.blocks_by_node[succ].expect("data flow cycle");
+                    let loc = self.node_data[succ].block.expect("data flow cycle");
                     trace!("    succ: node {} ({loc})", succ.as_u32());
                     Some(loc)
                 }
@@ -400,11 +404,11 @@ impl<'a> Scheduler<'a> {
     }
 
     fn assign_block(&mut self, block: Block, node: Node) {
-        self.blocks_by_node[node] = block.into();
+        self.node_data[node].block = block.into();
     }
 
     fn bump_max_cp_length(&mut self, block: Block, node: Node) {
-        let node_cp_length = self.node_cp_lengths[node];
+        let node_cp_length = self.node_data[node].cp_length;
         if node_cp_length > self.block_data[block].max_cp_length {
             self.block_data[block].max_cp_length = node_cp_length;
         }
@@ -479,8 +483,7 @@ struct BlockValueData {
 
 struct BlockScheduler<'a> {
     graph: &'a ValGraph,
-    blocks_by_node: &'a BlocksByNode,
-    node_cp_lengths: &'a NodeCpLengths,
+    node_data: &'a SecondaryMap<Node, NodeSchedulerData>,
     scheduled: DenseEntitySet<Node>,
     block: Block,
     block_node_data: FxHashMap<Node, BlockNodeData>,
@@ -491,15 +494,10 @@ struct BlockScheduler<'a> {
 }
 
 impl<'a> BlockScheduler<'a> {
-    fn new(
-        graph: &'a ValGraph,
-        blocks_by_node: &'a BlocksByNode,
-        node_cp_lengths: &'a NodeCpLengths,
-    ) -> Self {
+    fn new(graph: &'a ValGraph, node_data: &'a SecondaryMap<Node, NodeSchedulerData>) -> Self {
         Self {
             graph,
-            blocks_by_node,
-            node_cp_lengths,
+            node_data,
             scheduled: DenseEntitySet::new(),
             block: Block::reserved_value(),
             block_node_data: FxHashMap::default(),
@@ -578,7 +576,7 @@ impl<'a> BlockScheduler<'a> {
                 "    place: node {} [lrg delta {}, cp {}]",
                 node.as_u32(),
                 self.block_node_data[&node].live_range_delta,
-                self.node_cp_lengths[node],
+                self.node_data[node].cp_length,
             );
 
             self.scheduled.insert(node);
@@ -675,21 +673,21 @@ impl<'a> BlockScheduler<'a> {
             (1u32 << 31).wrapping_sub(self.block_node_data[&node].live_range_delta as u32);
 
         // Prefer reducing live ranges, and fall back to CP length when tied.
-        ((biased_delta as u64) << 32) | self.node_cp_lengths[node] as u64
+        ((biased_delta as u64) << 32) | self.node_data[node].cp_length as u64
     }
 
     fn is_block_interior_node(&self, node: Node) -> bool {
-        is_block_interior_node(self.graph, self.blocks_by_node, self.block, node)
+        is_block_interior_node(self.graph, self.node_data, self.block, node)
     }
 }
 
 fn is_block_interior_node(
     graph: &ValGraph,
-    blocks_by_node: &BlocksByNode,
+    node_data: &SecondaryMap<Node, NodeSchedulerData>,
     block: Block,
     node: Node,
 ) -> bool {
-    blocks_by_node[node].expand() == Some(block)
+    node_data[node].block.expand() == Some(block)
         && is_block_interior_node_kind(graph.node_kind(node))
 }
 

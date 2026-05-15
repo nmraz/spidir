@@ -32,9 +32,9 @@ func @"System.Int32 Tests.Program::Main(System.String[])":i32(ptr) {
     # nextln: 0011:     CallRm $$rcx, $$rdi
     # nextln: 0012:     Ud2
     # nextln:       block2:
-    # nextln: 0013:     Jump(block3)
+    # nextln: 0015:     $$rax = MovRI64(136295969869616)
+    # nextln: 0016:     Jump(block3)
     # nextln:       block3:
-    # nextln: 0016:     $$rax = MovRI64(136295969869616)
     # nextln: 0017:     MovMR(S64, [!0 + 0]) $$rax
     # nextln:           $$rax = MovRmS32(256)
     # nextln: 0019:     MovMR(S32, [!0 + 8]) $$rax

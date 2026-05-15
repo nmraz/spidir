@@ -28,20 +28,16 @@ mod display;
 pub use display::Display;
 use smallvec::SmallVec;
 
-use crate::cfg::{Block, BlockCfg, BlockDepthMap, BlockDomTree, CfgContext, FunctionBlockMap};
+use crate::cfg::{
+    Block, BlockCfg, BlockDepthMap, BlockDomTree, BlockPostDomTree, CfgContext, FunctionBlockMap,
+};
 
 /// The maximum path length up the dominator tree we are willing to hoist nodes, to avoid quadratic
 /// behavior.
 const MAX_HOIST_DEPTH: usize = 50;
 
-#[derive(Clone, Copy, Default)]
-struct BlockData {
-    phis: EntityList<Node>,
-    scheduled_nodes: EntityList<Node>,
-}
-
 pub struct Schedule {
-    block_data: SecondaryMap<Block, BlockData>,
+    block_data: SecondaryMap<Block, BlockScheduleData>,
     node_list_pool: ListPool<Node>,
 }
 
@@ -65,7 +61,7 @@ impl Schedule {
             block_map,
             blocks_by_node: SecondaryMap::new(),
             node_cp_lengths: SecondaryMap::new(),
-            block_terminators: SecondaryMap::new(),
+            block_data: SecondaryMap::new(),
             schedule: &mut schedule,
         };
 
@@ -113,6 +109,18 @@ impl Schedule {
     }
 }
 
+#[derive(Clone, Copy, Default)]
+struct BlockScheduleData {
+    phis: EntityList<Node>,
+    scheduled_nodes: EntityList<Node>,
+}
+
+#[derive(Clone, Copy, Default)]
+struct BlockSchedulerData {
+    max_cp_length: u32,
+    terminator: PackedOption<Node>,
+}
+
 type BlocksByNode = SecondaryMap<Node, PackedOption<Block>>;
 type NodeCpLengths = SecondaryMap<Node, u32>;
 
@@ -121,7 +129,7 @@ struct Scheduler<'a> {
     block_map: &'a FunctionBlockMap,
     blocks_by_node: BlocksByNode,
     node_cp_lengths: NodeCpLengths,
-    block_terminators: SecondaryMap<Block, PackedOption<Node>>,
+    block_data: SecondaryMap<Block, BlockSchedulerData>,
     schedule: &'a mut Schedule,
 }
 
@@ -163,7 +171,7 @@ impl<'a> Scheduler<'a> {
                     // scheduling.
                     trace!("terminator: node {}", cfg_node.as_u32());
                     self.assign_block(block, cfg_node);
-                    self.block_terminators[block] = cfg_node.into();
+                    self.block_data[block].terminator = cfg_node.into();
                 }
                 NodeKind::Region => {
                     // Exclude region nodes from the final schedule, since their purpose was just to
@@ -174,6 +182,7 @@ impl<'a> Scheduler<'a> {
                     for phi in ctx.get_attached_phis(cfg_node) {
                         trace!("phi: node {} -> {block}", phi.as_u32());
                         self.assign_block(block, phi);
+                        self.bump_max_cp_length(block, phi);
                         self.schedule.block_data[block]
                             .phis
                             .push(phi, &mut self.schedule.node_list_pool);
@@ -210,7 +219,7 @@ impl<'a> Scheduler<'a> {
             debug_assert_eq!(nodes.len(&self.schedule.node_list_pool), orig_len);
 
             // Place the terminator last (if it exists).
-            if let Some(terminator) = self.block_terminators[block].expand() {
+            if let Some(terminator) = self.block_data[block].terminator.expand() {
                 trace!("    term: node {}", terminator.as_u32());
                 nodes.push(terminator, &mut self.schedule.node_list_pool);
             }
@@ -229,58 +238,81 @@ impl<'a> Scheduler<'a> {
         // don't schedule in that case.
         if let Some(late_loc) = self.late_schedule_location(ctx, node) {
             let loc = self.best_schedule_location(node, early_loc, late_loc);
+            trace!("place: node {} -> {loc}", node.as_u32());
             self.assign_and_append(loc, node);
         }
     }
 
     fn best_schedule_location(&self, node: Node, early_loc: Block, late_loc: Block) -> Block {
+        // Avoid the heavy work below if the node is "locked" into a single block anyway.
+        if early_loc == late_loc {
+            return early_loc;
+        }
+
         let domtree = self.domtree();
-        let depth_map = self.depth_map();
 
-        let early_tree_loc = domtree.get_tree_node(early_loc).unwrap();
-        let late_tree_loc = domtree.get_tree_node(late_loc).unwrap();
-        trace!(
-            "place: node {} in {early_loc} [domtree depth {}, loop depth {}] .. {late_loc} [domtree depth {}, loop depth {}]",
-            node.as_u32(),
-            depth_map.domtree_depth(early_tree_loc),
-            depth_map.loop_depth(early_tree_loc),
-            depth_map.domtree_depth(late_tree_loc),
-            depth_map.loop_depth(late_tree_loc),
-        );
+        debug_assert!(domtree.cfg_dominates(early_loc, late_loc));
 
-        debug_assert!(domtree.dominates(early_tree_loc, late_tree_loc));
+        trace!("place: node {} in {early_loc}..{late_loc}", node.as_u32());
 
         // Select a node between `early_loc` and `late_loc` on the dominator tree that has minimal
         // loop depth, favoring deeper nodes (those closer to `late_loc`).
-        let mut cur_tree_loc = late_tree_loc;
-        let mut best_tree_loc = cur_tree_loc;
+        let mut cur_loc = late_loc;
+        let mut best_loc = cur_loc;
         let mut i = 0;
 
-        while cur_tree_loc != early_tree_loc {
-            cur_tree_loc = domtree.idom(cur_tree_loc).unwrap();
+        while cur_loc != early_loc {
             i += 1;
-
             if i > MAX_HOIST_DEPTH {
-                trace!("place: reached maximum hoist depth {MAX_HOIST_DEPTH}, stopping search");
+                trace!("    place: reached maximum hoist depth {MAX_HOIST_DEPTH}, stopping search");
                 break;
             }
 
-            if depth_map.loop_depth(cur_tree_loc) < depth_map.loop_depth(best_tree_loc) {
-                trace!(
-                    "place: hoist to {} [domtree depth {}, loop depth {}]",
-                    domtree.get_cfg_node(cur_tree_loc),
-                    depth_map.domtree_depth(cur_tree_loc),
-                    depth_map.loop_depth(cur_tree_loc),
-                );
-                best_tree_loc = cur_tree_loc;
+            cur_loc = domtree.cfg_idom(cur_loc).unwrap();
+
+            if self.is_better_schedule_location(node, best_loc, cur_loc) {
+                trace!("    place: hoist to {cur_loc}");
+                best_loc = cur_loc;
             }
         }
 
-        debug_assert!(domtree.dominates(early_tree_loc, best_tree_loc));
+        debug_assert!(domtree.cfg_dominates(early_loc, best_loc));
 
-        let best_loc = domtree.get_cfg_node(best_tree_loc);
-        trace!("place: node {} -> {best_loc}", node.as_u32());
         best_loc
+    }
+
+    fn is_better_schedule_location(&self, node: Node, best_loc: Block, cand_loc: Block) -> bool {
+        let domtree = self.domtree();
+        let postdomtree = self.postdomtree();
+        let depth_map = self.depth_map();
+
+        let best_tree_loc = domtree.get_tree_node(best_loc).unwrap();
+        let cand_tree_loc = domtree.get_tree_node(cand_loc).unwrap();
+
+        let cand_loop_depth = depth_map.loop_depth(cand_tree_loc);
+        let best_loop_depth = depth_map.loop_depth(best_tree_loc);
+
+        // Loop depth is our strongest signal and overrides everything else. This includes the
+        // control dependence check below, because we want LICM to be willing to hoist things out
+        // of more control-dependent blocks in loop bodies.
+        match cand_loop_depth.cmp(&best_loop_depth) {
+            Ordering::Less => return true,
+            Ordering::Greater => return false,
+            Ordering::Equal => {
+                // Move on...
+            }
+        }
+
+        // If the node already lives in a block with a long-enough critical path, there's no reason
+        // to hoist it earlier.
+        if self.block_data[best_loc].max_cp_length >= self.node_cp_lengths[node] {
+            return false;
+        }
+
+        // At this point, every bit we can hoist the node should help latency. It should never come
+        // at the expense of hoisting out of a more control-dependent block (i.e., one which does
+        // not postdominate the current candidate), however.
+        postdomtree.cfg_postdominates(best_loc, cand_loc)
     }
 
     fn early_schedule_location(&self, ctx: &ScheduleContext<'_>, node: Node) -> Block {
@@ -360,13 +392,22 @@ impl<'a> Scheduler<'a> {
 
     fn assign_and_append(&mut self, block: Block, node: Node) {
         self.assign_block(block, node);
-        self.schedule.block_data[block]
+        self.bump_max_cp_length(block, node);
+        let block_data = &mut self.schedule.block_data[block];
+        block_data
             .scheduled_nodes
             .push(node, &mut self.schedule.node_list_pool);
     }
 
     fn assign_block(&mut self, block: Block, node: Node) {
         self.blocks_by_node[node] = block.into();
+    }
+
+    fn bump_max_cp_length(&mut self, block: Block, node: Node) {
+        let node_cp_length = self.node_cp_lengths[node];
+        if node_cp_length > self.block_data[block].max_cp_length {
+            self.block_data[block].max_cp_length = node_cp_length;
+        }
     }
 
     fn domtree_lca(&self, a: Block, b: Block) -> Block {
@@ -384,6 +425,10 @@ impl<'a> Scheduler<'a> {
 
     fn domtree(&self) -> &'a BlockDomTree {
         &self.cfg_ctx.domtree
+    }
+
+    fn postdomtree(&self) -> &'a BlockPostDomTree {
+        &self.cfg_ctx.postdomtree
     }
 
     fn depth_map(&self) -> &'a BlockDepthMap {

@@ -26,20 +26,20 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:     !8: 0
     # nextln:     !9: 8
     # nextln:       block0:
-    # nextln: 0000:     Jump(block1)
+    # nextln: 0002:     $$rax = MovRmS32(0)
+    # nextln: 0011:     $$rcx = MovRmS32(0)
+    # nextln: 0012:     Jump(block1)
     # nextln:       block1:
-    # nextln: 0003:     $$rax = MovRmS32(0)
-    # nextln: 0004:     MovMR(S8, [!0 + 0]) $$rax
-    # nextln: 0005:     MovMR(S8, [!1 + 0]) $$rax
-    # nextln: 0007:     MovMR(S8, [!2 + 0]) $$rax
-    # nextln: 0009:     MovMR(S16, [!3 + 0]) $$rax
-    # nextln: 0011:     MovMR(S16, [!4 + 0]) $$rax
-    # nextln: 0013:     MovMR(S16, [!5 + 0]) $$rax
-    # nextln: 0015:     MovMR(S32, [!6 + 0]) $$rax
-    # nextln: 0017:     MovMR(S32, [!7 + 0]) $$rax
-    # nextln: 0020:     $$rax = MovRmS32(0)
-    # nextln: 0021:     MovMR(S64, [!8 + 0]) $$rax
-    # nextln: 0022:     MovMR(S64, [!9 + 0]) $$rax
+    # nextln: 0013:     MovMR(S8, [!0 + 0]) $$rax
+    # nextln: 0014:     MovMR(S8, [!1 + 0]) $$rax
+    # nextln: 0015:     MovMR(S8, [!2 + 0]) $$rax
+    # nextln: 0016:     MovMR(S16, [!3 + 0]) $$rax
+    # nextln: 0017:     MovMR(S16, [!4 + 0]) $$rax
+    # nextln: 0018:     MovMR(S16, [!5 + 0]) $$rax
+    # nextln: 0019:     MovMR(S32, [!6 + 0]) $$rax
+    # nextln: 0020:     MovMR(S32, [!7 + 0]) $$rax
+    # nextln: 0021:     MovMR(S64, [!8 + 0]) $$rcx
+    # nextln: 0022:     MovMR(S64, [!9 + 0]) $$rcx
     # nextln: 0023:     Jump(block2)
     # nextln:       block2:
     # nextln: 0026:     $$rax = MovRmS32(1)

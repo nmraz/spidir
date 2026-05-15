@@ -19,28 +19,28 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # check: function `System.Boolean Tests.BitTest::Run()`:
     # nextln: block0:
     # nextln:     $(entry0=$val):ctrl = entry
-    # nextln: => block1
-    # nextln: block1:
     # nextln:     $(stackslot0=$val):ptr = stackslot 1:1
     # nextln:     $(stackslot1=$val):ptr = stackslot 1:1
     # nextln:     $(iconst0=$val):i32 = iconst 0
-    # nextln:     $(store0=$val):ctrl = store.1 $(region0=$val), $iconst0, $stackslot0
-    # nextln:     $(store1=$val):ctrl = store.1 $store0, $iconst0, $stackslot1
     # nextln:     $(stackslot2=$val):ptr = stackslot 1:1
-    # nextln:     $(store2=$val):ctrl = store.1 $store1, $iconst0, $stackslot2
     # nextln:     $(stackslot3=$val):ptr = stackslot 2:2
-    # nextln:     $(store3=$val):ctrl = store.2 $store2, $iconst0, $stackslot3
     # nextln:     $(stackslot4=$val):ptr = stackslot 2:2
-    # nextln:     $(store4=$val):ctrl = store.2 $store3, $iconst0, $stackslot4
     # nextln:     $(stackslot5=$val):ptr = stackslot 2:2
-    # nextln:     $(store5=$val):ctrl = store.2 $store4, $iconst0, $stackslot5
     # nextln:     $(stackslot6=$val):ptr = stackslot 4:4
-    # nextln:     $(store6=$val):ctrl = store.4 $store5, $iconst0, $stackslot6
     # nextln:     $(stackslot7=$val):ptr = stackslot 4:4
-    # nextln:     $(store7=$val):ctrl = store.4 $store6, $iconst0, $stackslot7
     # nextln:     $(stackslot8=$val):ptr = stackslot 8:8
     # nextln:     $(stackslot9=$val):ptr = stackslot 8:8
     # nextln:     $(iconst1=$val):i64 = iconst 0
+    # nextln: => block1
+    # nextln: block1:
+    # nextln:     $(store0=$val):ctrl = store.1 $(region0=$val), $iconst0, $stackslot0
+    # nextln:     $(store1=$val):ctrl = store.1 $store0, $iconst0, $stackslot1
+    # nextln:     $(store2=$val):ctrl = store.1 $store1, $iconst0, $stackslot2
+    # nextln:     $(store3=$val):ctrl = store.2 $store2, $iconst0, $stackslot3
+    # nextln:     $(store4=$val):ctrl = store.2 $store3, $iconst0, $stackslot4
+    # nextln:     $(store5=$val):ctrl = store.2 $store4, $iconst0, $stackslot5
+    # nextln:     $(store6=$val):ctrl = store.4 $store5, $iconst0, $stackslot6
+    # nextln:     $(store7=$val):ctrl = store.4 $store6, $iconst0, $stackslot7
     # nextln:     $(store8=$val):ctrl = store.8 $store7, $iconst1, $stackslot8
     # nextln:     $(store9=$val):ctrl = store.8 $store8, $iconst1, $stackslot9
     # nextln: => block2

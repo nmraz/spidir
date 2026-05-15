@@ -30,17 +30,17 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0013:     CallRm $$rcx, $$rdi
     # nextln: 0014:     Ud2
     # nextln:       block2:
-    # nextln: 0015:     Jump(block3)
+    # nextln: 0017:     Jump(block3)
     # nextln:       block3:
-    # nextln: 0016:     $$rcx = MovRM(S32, [reg + 16]) $$rdi
-    # nextln: 0019:     $$rax = MovRI64(136096799136688)
-    # nextln: 0021:     $$rdx = MovRmS32(0)
-    # nextln: 0022:     AluRmI(S32, Cmp, 1) $$rcx
-    # nextln: 0023:     $$rdx = Setcc(G) $$rdx
-    # nextln: 0024:     $$rcx = MovRmS32(0)
-    # nextln: 0025:     AluRRm(S32, Test) $$rdx, $$rdx
-    # nextln: 0026:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0027:     $$rcx = MovzxRRm(S8) $$rcx
+    # nextln: 0018:     $$rcx = MovRM(S32, [reg + 16]) $$rdi
+    # nextln: 0020:     $$rax = MovRmS32(0)
+    # nextln: 0021:     AluRmI(S32, Cmp, 1) $$rcx
+    # nextln: 0022:     $$rax = Setcc(G) $$rax
+    # nextln: 0023:     $$rcx = MovRmS32(0)
+    # nextln: 0024:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0025:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0026:     $$rcx = MovzxRRm(S8) $$rcx
+    # nextln: 0027:     $$rax = MovRI64(136096799136688)
     # nextln: 0028:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0029:     Jumpcc(Ne, block4, block5)
     # nextln:       block4:
@@ -131,12 +131,12 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0091:     CallRm $$rcx, $$rdi
     # nextln: 0092:     Ud2
     # nextln:       block10:
-    # nextln: 0093:     Jump(block11)
+    # nextln: 0093:     $$rcx = MovRmS32(0)
+    # nextln: 0094:     AluRRm(S32, Test) $$r13, $$r13
+    # nextln: 0095:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0096:     $$rcx = MovzxRRm(S8) $$rcx
+    # nextln: 0097:     Jump(block11)
     # nextln:       block11:
-    # nextln: 0094:     $$rcx = MovRmS32(0)
-    # nextln: 0095:     AluRRm(S32, Test) $$r13, $$r13
-    # nextln: 0096:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0097:     $$rcx = MovzxRRm(S8) $$rcx
     # nextln: 0098:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0099:     Jumpcc(Ne, block12, block13)
     # nextln:       block12:

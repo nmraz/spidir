@@ -19,17 +19,17 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 000006: 53                              push rbx
     # nextln: 000007: 48 83 ec 30                     sub rsp, 0x30
     # nextln: 00000b: 33 c0                           xor eax, eax
-    # nextln: 00000d: 88 44 24 1e                     mov byte ptr [rsp + 0x1e], al
-    # nextln: 000011: 88 44 24 1f                     mov byte ptr [rsp + 0x1f], al
-    # nextln: 000015: 88 44 24 20                     mov byte ptr [rsp + 0x20], al
-    # nextln: 000019: 66 89 44 24 18                  mov word ptr [rsp + 0x18], ax
-    # nextln: 00001e: 66 89 44 24 1a                  mov word ptr [rsp + 0x1a], ax
-    # nextln: 000023: 66 89 44 24 1c                  mov word ptr [rsp + 0x1c], ax
-    # nextln: 000028: 89 44 24 10                     mov dword ptr [rsp + 0x10], eax
-    # nextln: 00002c: 89 44 24 14                     mov dword ptr [rsp + 0x14], eax
-    # nextln: 000030: 33 c0                           xor eax, eax
-    # nextln: 000032: 48 89 04 24                     mov qword ptr [rsp], rax
-    # nextln: 000036: 48 89 44 24 08                  mov qword ptr [rsp + 8], rax
+    # nextln: 00000d: 33 c9                           xor ecx, ecx
+    # nextln: 00000f: 88 44 24 1e                     mov byte ptr [rsp + 0x1e], al
+    # nextln: 000013: 88 44 24 1f                     mov byte ptr [rsp + 0x1f], al
+    # nextln: 000017: 88 44 24 20                     mov byte ptr [rsp + 0x20], al
+    # nextln: 00001b: 66 89 44 24 18                  mov word ptr [rsp + 0x18], ax
+    # nextln: 000020: 66 89 44 24 1a                  mov word ptr [rsp + 0x1a], ax
+    # nextln: 000025: 66 89 44 24 1c                  mov word ptr [rsp + 0x1c], ax
+    # nextln: 00002a: 89 44 24 10                     mov dword ptr [rsp + 0x10], eax
+    # nextln: 00002e: 89 44 24 14                     mov dword ptr [rsp + 0x14], eax
+    # nextln: 000032: 48 89 0c 24                     mov qword ptr [rsp], rcx
+    # nextln: 000036: 48 89 4c 24 08                  mov qword ptr [rsp + 8], rcx
     # nextln: 00003b: b8 01 00 00 00                  mov eax, 1
     # nextln: 000040: ba 02 00 00 00                  mov edx, 2
     # nextln: 000045: 48 63 c8                        movsxd rcx, eax

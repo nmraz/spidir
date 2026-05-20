@@ -703,18 +703,9 @@ impl<'a> BlockScheduler<'a> {
     }
 
     fn is_block_interior_node(&self, node: Node) -> bool {
-        is_block_interior_node(self.graph, self.node_data, self.block, node)
+        self.node_data[node].block.expand() == Some(self.block)
+            && is_block_interior_node_kind(self.graph.node_kind(node))
     }
-}
-
-fn is_block_interior_node(
-    graph: &ValGraph,
-    node_data: &SecondaryMap<Node, NodeSchedulerData>,
-    block: Block,
-    node: Node,
-) -> bool {
-    node_data[node].block.expand() == Some(block)
-        && is_block_interior_node_kind(graph.node_kind(node))
 }
 
 fn is_block_interior_node_kind(kind: &NodeKind) -> bool {

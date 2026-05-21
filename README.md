@@ -69,6 +69,7 @@ If you're building for a hosted Rust target platform or need to link against oth
 
 - Optimization:
   - Global code motion
+  - Scheduling for register pressure
   - Simple canonicalization/GVN
   - SCCP
 
@@ -93,7 +94,6 @@ Spidir's roadmap is most accurately described as "whatever TomatoDotNet needs ne
     - Improved redundant copy elimination?
 
 - Optimization:
-  - Improved global/local scheduling
   - SROA
   - Jump threading
   - Range check elimination

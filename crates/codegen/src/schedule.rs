@@ -32,10 +32,6 @@ use crate::cfg::{
     Block, BlockCfg, BlockDepthMap, BlockDomTree, BlockPostDomTree, CfgContext, FunctionBlockMap,
 };
 
-/// The maximum path length up the dominator tree we are willing to hoist nodes, to avoid quadratic
-/// behavior.
-const MAX_HOIST_DEPTH: usize = 50;
-
 pub struct Schedule {
     block_data: SecondaryMap<Block, BlockScheduleData>,
     node_list_pool: ListPool<Node>,
@@ -132,6 +128,21 @@ struct Scheduler<'a> {
     node_data: SecondaryMap<Node, NodeSchedulerData>,
     block_data: SecondaryMap<Block, BlockSchedulerData>,
     schedule: &'a mut Schedule,
+}
+
+/// The maximum path length up the dominator tree we are willing to hoist nodes, to avoid quadratic
+/// behavior.
+const MAX_HOIST_DEPTH: u32 = 50;
+
+/// The maximum number of levels down the dominator tree we're willing to sink operations guaranteed
+/// to have a net-negative live range delta.
+const MAX_LRG_TERMINATOR_SINK_DEPTH: u32 = 3;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RegPressureHoistMode {
+    None,
+    Always,
+    ControlDependent,
 }
 
 impl<'a> Scheduler<'a> {
@@ -239,13 +250,19 @@ impl<'a> Scheduler<'a> {
         // We might not have a late schedule location at all if all uses are dead phi inputs - just
         // don't schedule in that case.
         if let Some(late_loc) = self.late_schedule_location(ctx, node, early_loc) {
-            let loc = self.best_schedule_location(node, early_loc, late_loc);
+            let loc = self.best_schedule_location(ctx.graph, node, early_loc, late_loc);
             trace!("place: node {} -> {loc}", node.as_u32());
             self.assign_and_append(loc, node);
         }
     }
 
-    fn best_schedule_location(&self, node: Node, early_loc: Block, late_loc: Block) -> Block {
+    fn best_schedule_location(
+        &self,
+        graph: &ValGraph,
+        node: Node,
+        early_loc: Block,
+        late_loc: Block,
+    ) -> Block {
         // Avoid the heavy work below if the node is "locked" into a single block anyway.
         if early_loc == late_loc {
             return early_loc;
@@ -256,6 +273,8 @@ impl<'a> Scheduler<'a> {
         debug_assert!(domtree.cfg_dominates(early_loc, late_loc));
 
         trace!("place: node {} in {early_loc}..{late_loc}", node.as_u32());
+
+        let hoist_mode = self.reg_pressure_hoist_mode(graph, node, early_loc, late_loc);
 
         // Select a node between `early_loc` and `late_loc` on the dominator tree that has minimal
         // loop depth, favoring deeper nodes (those closer to `late_loc`).
@@ -272,7 +291,7 @@ impl<'a> Scheduler<'a> {
 
             cur_loc = domtree.cfg_idom(cur_loc).unwrap();
 
-            if self.is_better_schedule_location(node, best_loc, cur_loc) {
+            if self.is_better_schedule_location(node, hoist_mode, best_loc, cur_loc) {
                 trace!("    place: hoist to {cur_loc}");
                 best_loc = cur_loc;
             }
@@ -283,7 +302,13 @@ impl<'a> Scheduler<'a> {
         best_loc
     }
 
-    fn is_better_schedule_location(&self, node: Node, best_loc: Block, cand_loc: Block) -> bool {
+    fn is_better_schedule_location(
+        &self,
+        node: Node,
+        hoist_mode: RegPressureHoistMode,
+        best_loc: Block,
+        cand_loc: Block,
+    ) -> bool {
         let domtree = self.domtree();
         let postdomtree = self.postdomtree();
         let depth_map = self.depth_map();
@@ -305,16 +330,55 @@ impl<'a> Scheduler<'a> {
             }
         }
 
-        // If the node already lives in a block with a long-enough critical path, there's no reason
-        // to hoist it earlier.
-        if self.block_data[best_loc].max_cp_length >= self.node_data[node].cp_length {
+        // If we've been instructed to hoist aggressively for register pressure, hoist even into a
+        // less-control dependent location as long as we wouldn't be hoisting into a loop. Note that
+        // this may execute the node speculatively.
+        if hoist_mode == RegPressureHoistMode::Always {
+            return true;
+        }
+
+        // At this point, make sure we never hoist into a less control-dependent block so things
+        // aren't speculated too eagerly.
+        if !postdomtree.cfg_postdominates(best_loc, cand_loc) {
             return false;
         }
 
-        // At this point, every bit we can hoist the node should help latency. It should never come
-        // at the expense of hoisting out of a more control-dependent block (i.e., one which does
-        // not postdominate the current candidate), however.
-        postdomtree.cfg_postdominates(best_loc, cand_loc)
+        // Hoist the node if doing so would reduce register pressure or if its critical path doesn't
+        // fit in the current block.
+        hoist_mode == RegPressureHoistMode::ControlDependent
+            || self.node_data[node].cp_length > self.block_data[best_loc].max_cp_length
+    }
+
+    fn reg_pressure_hoist_mode(
+        &self,
+        graph: &ValGraph,
+        node: Node,
+        early_loc: Block,
+        late_loc: Block,
+    ) -> RegPressureHoistMode {
+        // If placing this node will always terminate live ranges, prefer to hoist it (potentially
+        // even speculatively) if its input live ranges would otherwise be stretched too far.
+        if estimate_max_lrg_delta(graph, node) < 0 {
+            let domtree = self.domtree();
+            let depth_map = self.depth_map();
+
+            let early_tree_loc = domtree.get_tree_node(early_loc).unwrap();
+            let late_tree_loc = domtree.get_tree_node(late_loc).unwrap();
+
+            // If not hoisting the instruction would end up making live ranges too long, prefer
+            // to hoist even into a less control-dependent location.
+            if depth_map.domtree_depth(late_tree_loc)
+                > depth_map.domtree_depth(early_tree_loc) + MAX_LRG_TERMINATOR_SINK_DEPTH
+            {
+                return RegPressureHoistMode::Always;
+            }
+
+            // If the live range would be small enough regardless, prefer to hoist into regions that
+            // aren't less control-dependent.
+            return RegPressureHoistMode::ControlDependent;
+        }
+
+        RegPressureHoistMode::None
     }
 
     fn early_schedule_location(&self, ctx: &ScheduleContext<'_>, node: Node) -> Block {
@@ -464,6 +528,18 @@ impl<'a> Scheduler<'a> {
     fn depth_map(&self) -> &'a BlockDepthMap {
         &self.cfg_ctx.depth_map
     }
+}
+
+fn estimate_max_lrg_delta(graph: &ValGraph, node: Node) -> i32 {
+    let added = dataflow_outputs(graph, node).count() as i32;
+
+    // This under-estimates the number of terminated live ranges, but is simple and does not depend
+    // on the node's placement.
+    let terminated = dataflow_inputs(graph, node)
+        .filter(|&input| graph.has_one_use(input))
+        .count() as i32;
+
+    added - terminated
 }
 
 #[derive(Clone, Copy, Eq)]

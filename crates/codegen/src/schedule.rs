@@ -57,6 +57,7 @@ impl Schedule {
             block_map,
             node_data: SecondaryMap::new(),
             block_data: SecondaryMap::new(),
+            tethered_values: DenseEntitySet::new(),
             schedule: &mut schedule,
         };
 
@@ -127,6 +128,7 @@ struct Scheduler<'a> {
     block_map: &'a FunctionBlockMap,
     node_data: SecondaryMap<Node, NodeSchedulerData>,
     block_data: SecondaryMap<Block, BlockSchedulerData>,
+    tethered_values: DenseEntitySet<DepValue>,
     schedule: &'a mut Schedule,
 }
 
@@ -172,6 +174,8 @@ impl<'a> Scheduler<'a> {
 
     fn pin_nodes(&mut self, ctx: &ScheduleContext<'_>) {
         for &cfg_node in ctx.cfg_preorder {
+            self.mark_node_tethered(ctx.graph, cfg_node);
+
             let block = self
                 .block_map
                 .containing_block(cfg_node)
@@ -193,6 +197,7 @@ impl<'a> Scheduler<'a> {
 
                     for phi in ctx.get_attached_phis(cfg_node) {
                         trace!("phi: node {} -> {block}", phi.as_u32());
+                        self.mark_node_tethered(ctx.graph, phi);
                         self.assign_block(block, phi);
                         self.bump_max_cp_length(block, phi);
                         self.schedule.block_data[block]
@@ -239,6 +244,12 @@ impl<'a> Scheduler<'a> {
 
     fn schedule_early(&mut self, ctx: &ScheduleContext<'_>, node: Node) {
         assert!(self.node_data[node].block.is_none());
+
+        // Compute whether this node is tethered now that we know about all its predecessors.
+        if dataflow_inputs(ctx.graph, node).any(|input| self.tethered_values.contains(input)) {
+            self.mark_node_tethered(ctx.graph, node);
+        }
+
         self.assign_block(self.early_schedule_location(ctx, node), node);
     }
 
@@ -356,9 +367,10 @@ impl<'a> Scheduler<'a> {
         early_loc: Block,
         late_loc: Block,
     ) -> RegPressureHoistMode {
-        // If placing this node will always terminate live ranges, prefer to hoist it (potentially
-        // even speculatively) if its input live ranges would otherwise be stretched too far.
-        if estimate_max_lrg_delta(graph, node) < 0 {
+        // If placing this node will always terminate tethered live ranges, prefer to hoist it
+        // (potentially even speculatively) if its input live ranges would otherwise be stretched
+        // too far.
+        if self.max_tethered_lrg_delta(graph, node) < 0 {
             let domtree = self.domtree();
             let depth_map = self.depth_map();
 
@@ -504,6 +516,24 @@ impl<'a> Scheduler<'a> {
         }
     }
 
+    fn mark_node_tethered(&mut self, graph: &ValGraph, node: Node) {
+        for output in dataflow_outputs(graph, node) {
+            self.tethered_values.insert(output);
+        }
+    }
+
+    fn max_tethered_lrg_delta(&self, graph: &ValGraph, node: Node) -> i32 {
+        let added = dataflow_outputs(graph, node).count() as i32;
+
+        // This under-estimates the number of terminated live ranges, but is simple and does not
+        // depend on the node's placement.
+        let terminated = dataflow_inputs(graph, node)
+            .filter(|&input| self.tethered_values.contains(input) && graph.has_one_use(input))
+            .count() as i32;
+
+        added - terminated
+    }
+
     fn domtree_lca(&self, a: Block, b: Block) -> Block {
         let domtree = self.domtree();
         domtree.get_cfg_node(self.depth_map().domtree_lca(
@@ -528,18 +558,6 @@ impl<'a> Scheduler<'a> {
     fn depth_map(&self) -> &'a BlockDepthMap {
         &self.cfg_ctx.depth_map
     }
-}
-
-fn estimate_max_lrg_delta(graph: &ValGraph, node: Node) -> i32 {
-    let added = dataflow_outputs(graph, node).count() as i32;
-
-    // This under-estimates the number of terminated live ranges, but is simple and does not depend
-    // on the node's placement.
-    let terminated = dataflow_inputs(graph, node)
-        .filter(|&input| graph.has_one_use(input))
-        .count() as i32;
-
-    added - terminated
 }
 
 #[derive(Clone, Copy, Eq)]

@@ -1,0 +1,129 @@
+# run: codegen
+
+func @func00000001:i64(i32) {
+    # check: function `func00000001`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 8d 77 01                        lea esi, [rdi + 1]
+    # nextln: 000007: 48 8d 4e f7                     lea rcx, [rsi - 9]
+    # nextln: 00000b: b8 01 00 00 00                  mov eax, 1
+    # nextln: 000010: 48 83 e1 f8                     and rcx, 0xfffffffffffffff8
+    # nextln: 000014: 48 83 c1 09                     add rcx, 9
+    # nextln: 000018: 85 ff                           test edi, edi
+    # nextln: 00001a: 0f 8e a0 00 00 00               jle 0xc0
+    # nextln: 000020: 48 8d 56 ff                     lea rdx, [rsi - 1]
+    # nextln: 000024: 48 83 c6 fe                     add rsi, -2
+    # nextln: 000028: 48 83 fe 06                     cmp rsi, 6
+    # nextln: 00002c: 0f 86 62 00 00 00               jbe 0x94
+    # nextln: 000032: 48 89 d7                        mov rdi, rdx
+    # nextln: 000035: 48 83 e7 f8                     and rdi, 0xfffffffffffffff8
+    # nextln: 000039: 48 f7 df                        neg rdi
+    # nextln: 00003c: be 08 00 00 00                  mov esi, 8
+    # nextln: 000041: 4c 8d 46 ff                     lea r8, [rsi - 1]
+    # nextln: 000045: 4c 8d 4e f9                     lea r9, [rsi - 7]
+    # nextln: 000049: 49 0f af c1                     imul rax, r9
+    # nextln: 00004d: 4c 8d 4e fa                     lea r9, [rsi - 6]
+    # nextln: 000051: 49 0f af c1                     imul rax, r9
+    # nextln: 000055: 4c 8d 4e fb                     lea r9, [rsi - 5]
+    # nextln: 000059: 49 0f af c1                     imul rax, r9
+    # nextln: 00005d: 4c 8d 4e fc                     lea r9, [rsi - 4]
+    # nextln: 000061: 49 0f af c1                     imul rax, r9
+    # nextln: 000065: 4c 8d 4e fd                     lea r9, [rsi - 3]
+    # nextln: 000069: 49 0f af c1                     imul rax, r9
+    # nextln: 00006d: 4c 8d 4e fe                     lea r9, [rsi - 2]
+    # nextln: 000071: 49 0f af c1                     imul rax, r9
+    # nextln: 000075: 49 0f af c0                     imul rax, r8
+    # nextln: 000079: 48 0f af c6                     imul rax, rsi
+    # nextln: 00007d: 48 83 c6 08                     add rsi, 8
+    # nextln: 000081: 4c 8d 04 37                     lea r8, [rdi + rsi]
+    # nextln: 000085: 49 83 f8 08                     cmp r8, 8
+    # nextln: 000089: 0f 85 b2 ff ff ff               jne 0x41
+    # nextln: 00008f: e9 03 00 00 00                  jmp 0x97
+    # nextln: 000094: 48 89 c1                        mov rcx, rax
+    # nextln: 000097: 48 83 e2 07                     and rdx, 7
+    # nextln: 00009b: 48 85 d2                        test rdx, rdx
+    # nextln: 00009e: 0f 84 1a 00 00 00               je 0xbe
+    # nextln: 0000a4: 48 0f af c1                     imul rax, rcx
+    # nextln: 0000a8: 48 83 c2 ff                     add rdx, -1
+    # nextln: 0000ac: 48 85 d2                        test rdx, rdx
+    # nextln: 0000af: 0f 84 09 00 00 00               je 0xbe
+    # nextln: 0000b5: 48 83 c1 01                     add rcx, 1
+    # nextln: 0000b9: e9 e6 ff ff ff                  jmp 0xa4
+    # nextln: 0000be: 5d                              pop rbp
+    # nextln: 0000bf: c3                              ret
+    # nextln: 0000c0: 5d                              pop rbp
+    # nextln: 0000c1: c3                              ret
+
+    %0:ctrl, %1:i32 = entry
+    %2:i64 = iconst 1
+    %3:i64 = iconst 9
+    %4:i64 = iconst 18446744073709551608
+    %5:i64 = iconst 18446744073709551607
+    %6:i32 = iconst 1
+    %7:i32 = iadd %1, %6
+    %8:i64 = iext %7
+    %9:i64 = iadd %8, %5
+    %10:i64 = and %9, %4
+    %61:i64 = iadd %10, %3
+    %11:i64 = iconst 8
+    %12:i64 = iconst 18446744073709551615
+    %13:i64 = iadd %8, %12
+    %14:i64 = and %13, %4
+    %15:i64 = iconst 0
+    %16:i64 = isub %15, %14
+    %17:i64 = iconst 18446744073709551614
+    %18:i64 = iadd %8, %17
+    %19:i64 = iconst 18446744073709551613
+    %20:i64 = iconst 18446744073709551612
+    %21:i64 = iconst 18446744073709551611
+    %22:i64 = iconst 18446744073709551610
+    %23:i64 = iconst 18446744073709551609
+    %24:i64 = iconst 7
+    %25:i64 = and %13, %24
+    %67:i32 = icmp eq %25, %15
+    %26:i64 = iconst 6
+    %27:i32 = icmp ult %26, %18
+    %28:i32 = iconst 0
+    %29:i32 = icmp slt %28, %1
+    %30:ctrl, %31:ctrl = brcond %0, %29
+    %32:ctrl, %33:ctrl = brcond %30, %27
+    %34:ctrl, %35:phisel = region %32, %58
+    %36:i64 = phi %35, %11, %53
+    %53:i64 = iadd %36, %11
+    %56:i64 = iadd %16, %53
+    %57:i32 = icmp ne %56, %11
+    %58:ctrl, %59:ctrl = brcond %34, %57
+    %43:i64 = iadd %36, %12
+    %42:i64 = iadd %36, %17
+    %41:i64 = iadd %36, %19
+    %40:i64 = iadd %36, %20
+    %39:i64 = iadd %36, %21
+    %38:i64 = iadd %36, %22
+    %37:i64 = iadd %36, %23
+    %47:i64 = imul %46, %37
+    %48:i64 = imul %47, %38
+    %49:i64 = imul %48, %39
+    %50:i64 = imul %49, %40
+    %51:i64 = imul %50, %41
+    %52:i64 = imul %51, %42
+    %44:i64 = imul %52, %43
+    %45:i64 = imul %44, %36
+    %46:i64 = phi %35, %2, %45
+    %62:ctrl, %63:phisel = region %33, %59
+    %68:ctrl, %69:ctrl = brcond %62, %67
+    %70:ctrl, %71:phisel = region %69, %79
+    %76:i64 = phi %71, %25, %77
+    %77:i64 = iadd %76, %12
+    %78:i32 = icmp ne %77, %15
+    %79:ctrl, %80:ctrl = brcond %70, %78
+    %81:ctrl, %82:phisel = region %68, %80
+    %65:i64 = phi %63, %2, %45
+    %64:i64 = phi %63, %2, %61
+    %72:i64 = phi %71, %64, %75
+    %75:i64 = iadd %72, %2
+    %73:i64 = imul %74, %72
+    %83:i64 = phi %82, %65, %73
+    return %81, %83
+    %74:i64 = phi %71, %65, %73
+    return %31, %2
+}

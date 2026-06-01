@@ -20,10 +20,10 @@ func @licm_chain(ptr, i64) {
     # nextln: => block2, block3
     # nextln: block2:
     # nextln:     $(shl0=$val):i64 = shl $phi0, $iconst1
-    # nextln:     $iadd0:i64 = iadd $phi0, $iconst3
     # nextln:     $(ptroff1=$val):ptr = ptroff $ptroff0, $shl0
     # nextln:     $(load2=$val):ctrl, $(load3=$val):i32 = load.4 $brcond0, $ptroff1
     # nextln:     $(call0=$val):ctrl = call @f $load2, $load3
+    # nextln:     $iadd0:i64 = iadd $phi0, $iconst3
     # nextln: => block1
     # nextln: block3:
     # nextln:     return $brcond1

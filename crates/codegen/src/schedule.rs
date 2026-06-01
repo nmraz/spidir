@@ -58,12 +58,13 @@ impl Schedule {
             node_data: SecondaryMap::new(),
             block_data: SecondaryMap::new(),
             tethered_values: DenseEntitySet::new(),
+            indvar_update_nodes: DenseEntitySet::new(),
             schedule: &mut schedule,
         };
 
         let mut scratch_postorder = PostOrderContext::new();
 
-        scheduler.compute_node_cp_lengths(&ctx, &mut scratch_postorder);
+        scheduler.prepare_node_data(&ctx, &mut scratch_postorder);
 
         scheduler.pin_nodes(&ctx);
 
@@ -129,6 +130,7 @@ struct Scheduler<'a> {
     node_data: SecondaryMap<Node, NodeSchedulerData>,
     block_data: SecondaryMap<Block, BlockSchedulerData>,
     tethered_values: DenseEntitySet<DepValue>,
+    indvar_update_nodes: DenseEntitySet<Node>,
     schedule: &'a mut Schedule,
 }
 
@@ -148,7 +150,7 @@ enum RegPressureHoistMode {
 }
 
 impl<'a> Scheduler<'a> {
-    fn compute_node_cp_lengths(
+    fn prepare_node_data(
         &mut self,
         ctx: &ScheduleContext<'_>,
         scratch_postorder: &mut PostOrderContext<Node>,
@@ -157,6 +159,9 @@ impl<'a> Scheduler<'a> {
 
         let mut visited = DenseEntitySet::new();
         let graph = DefUseSuccs::new(ctx.graph, ctx.live_nodes());
+
+        // Walk nodes in postorder so we can compute critical path lengths. As we visit each node,
+        // we also determine whether it is a loop induction variable update.
 
         while let Some(node) = scratch_postorder.next(graph, &mut visited) {
             let cp_length = dataflow_succs(ctx.graph, ctx.live_nodes(), node)
@@ -169,6 +174,10 @@ impl<'a> Scheduler<'a> {
                 // exiting the node have length 0.
                 .map_or(0, |succ_cp_length| succ_cp_length + 1);
             self.node_data[node].cp_length = cp_length;
+
+            if self.is_loop_indvar_update(ctx, node) {
+                self.indvar_update_nodes.insert(node);
+            }
         }
     }
 
@@ -215,7 +224,8 @@ impl<'a> Scheduler<'a> {
     }
 
     fn schedule_intra_block(&mut self, graph: &ValGraph) {
-        let mut block_scheduler = BlockScheduler::new(graph, &self.node_data);
+        let mut block_scheduler =
+            BlockScheduler::new(graph, &self.node_data, &self.indvar_update_nodes);
 
         for &block in &self.cfg_ctx.block_order {
             trace!("scheduling {block}");
@@ -352,6 +362,13 @@ impl<'a> Scheduler<'a> {
         // this may execute the node speculatively.
         if hoist_mode == RegPressureHoistMode::Always {
             return true;
+        }
+
+        // Don't hoist loop induction variable updates, because they may cause copies to be inserted
+        // on split loop backedges if they aren't the last use of the previous induction variable
+        // value.
+        if self.indvar_update_nodes.contains(node) {
+            return false;
         }
 
         // At this point, make sure we never hoist into a less control-dependent block so things
@@ -562,6 +579,37 @@ impl<'a> Scheduler<'a> {
         added - terminated
     }
 
+    fn is_loop_indvar_update(&self, ctx: &ScheduleContext<'_>, node: Node) -> bool {
+        let graph = ctx.graph;
+        let domtree = self.domtree();
+        let block_map = self.block_map;
+
+        dataflow_succs(graph, ctx.live_nodes(), node).any(|(succ, idx)| {
+            if matches!(graph.node_kind(succ), NodeKind::Phi) {
+                // Consider this node an induction variable update if it feeds into a phi along a
+                // natural loop backedge.
+
+                let region = graph.value_def(graph.node_inputs(succ)[0]).0;
+                let cfg_pred = graph
+                    .value_def(graph.node_inputs(region)[idx as usize - 1])
+                    .0;
+
+                // We know that `region` be live (and thus exist in the block map) because its
+                // attached phi is live.
+                let region = block_map.containing_block(region).unwrap();
+
+                // By contrast, the CFG predecessor corresponding to this phi input may be dead, so
+                // be careful here.
+                if let Some(cfg_pred) = block_map.containing_block(cfg_pred) {
+                    // Is the edge `cfg_pred -> region` a natural loop backedge?
+                    return domtree.cfg_dominates(region, cfg_pred);
+                }
+            }
+
+            false
+        })
+    }
+
     fn domtree_lca(&self, a: Block, b: Block) -> Block {
         let domtree = self.domtree();
         domtree.get_cfg_node(self.depth_map().domtree_lca(
@@ -632,6 +680,7 @@ struct BlockValueData {
 struct BlockScheduler<'a> {
     graph: &'a ValGraph,
     node_data: &'a SecondaryMap<Node, NodeSchedulerData>,
+    indvar_update_nodes: &'a DenseEntitySet<Node>,
     scheduled: DenseEntitySet<Node>,
     block: Block,
     block_node_data: FxHashMap<Node, BlockNodeData>,
@@ -642,10 +691,15 @@ struct BlockScheduler<'a> {
 }
 
 impl<'a> BlockScheduler<'a> {
-    fn new(graph: &'a ValGraph, node_data: &'a SecondaryMap<Node, NodeSchedulerData>) -> Self {
+    fn new(
+        graph: &'a ValGraph,
+        node_data: &'a SecondaryMap<Node, NodeSchedulerData>,
+        indvar_update_nodes: &'a DenseEntitySet<Node>,
+    ) -> Self {
         Self {
             graph,
             node_data,
+            indvar_update_nodes,
             scheduled: DenseEntitySet::new(),
             block: Block::reserved_value(),
             block_node_data: FxHashMap::default(),
@@ -721,8 +775,13 @@ impl<'a> BlockScheduler<'a> {
             }
 
             trace!(
-                "    place: node {} [lrg delta {}, cp {}]",
+                "    place: node {} [{}, lrg delta {}, cp {}]",
                 node.as_u32(),
+                if self.indvar_update_nodes.contains(node) {
+                    "indvar"
+                } else {
+                    "non-indvar"
+                },
                 self.block_node_data[&node].live_range_delta,
                 self.node_data[node].cp_length,
             );
@@ -816,12 +875,18 @@ impl<'a> BlockScheduler<'a> {
     fn node_prio(&self, node: Node) -> u64 {
         // We want lower `live_range_delta` values to have higher priority, so we need an unsigned
         // value that increases when `live_range_delta` decreases. Accomplish this by centering
-        // `-live_range_delta` around the middle of the unsigned range.
+        // `-live_range_delta` around the middle of the 31-bit unsigned range.
         let biased_delta =
-            (1u32 << 31).wrapping_sub(self.block_node_data[&node].live_range_delta as u32);
+            (1u32 << 30).wrapping_sub(self.block_node_data[&node].live_range_delta as u32);
 
-        // Prefer reducing live ranges, and fall back to CP length when tied.
-        ((biased_delta as u64) << 32) | self.node_data[node].cp_length as u64
+        let is_indvar_update = self.indvar_update_nodes.contains(node);
+
+        // Prefer to place non-induction-variable-updates first (to avoid introducing copies on
+        // split backedges), then prefer reducing live ranges, and finally fall back to CP length
+        // when tied.
+        ((!is_indvar_update as u64) << 63)
+            | ((biased_delta as u64) << 32)
+            | self.node_data[node].cp_length as u64
     }
 
     fn is_block_interior_node(&self, node: Node) -> bool {

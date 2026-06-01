@@ -10,12 +10,12 @@ func @func00000001:i32(i32) {
     # nextln: 00000b: 85 f6                           test esi, esi
     # nextln: 00000d: 0f 85 07 00 00 00               jne 0x1a
     # nextln: 000013: 89 fe                           mov esi, edi
-    # nextln: 000015: e9 45 00 00 00                  jmp 0x5f
+    # nextln: 000015: e9 43 00 00 00                  jmp 0x5d
     # nextln: 00001a: 8b c7                           mov eax, edi
     # nextln: 00001c: 48 03 c1                        add rax, rcx
     # nextln: 00001f: 0f b6 00                        movzx eax, byte ptr [rax]
     # nextln: 000022: 85 c0                           test eax, eax
-    # nextln: 000024: 0f 84 8a 00 00 00               je 0xb4
+    # nextln: 000024: 0f 84 81 00 00 00               je 0xab
     # nextln: 00002a: 8d 57 01                        lea edx, [rdi + 1]
     # nextln: 00002d: 89 f8                           mov eax, edi
     # nextln: 00002f: 89 fe                           mov esi, edi
@@ -23,46 +23,43 @@ func @func00000001:i32(i32) {
     # nextln: 000034: 89 c7                           mov edi, eax
     # nextln: 000036: 83 e7 03                        and edi, 3
     # nextln: 000039: 85 ff                           test edi, edi
-    # nextln: 00003b: 0f 84 1a 00 00 00               je 0x5b
-    # nextln: 000041: 8d 7a 01                        lea edi, [rdx + 1]
-    # nextln: 000044: 8b d2                           mov edx, edx
-    # nextln: 000046: 48 03 d1                        add rdx, rcx
-    # nextln: 000049: 0f b6 12                        movzx edx, byte ptr [rdx]
-    # nextln: 00004c: 85 d2                           test edx, edx
-    # nextln: 00004e: 0f 84 64 00 00 00               je 0xb8
-    # nextln: 000054: 89 fa                           mov edx, edi
-    # nextln: 000056: e9 d6 ff ff ff                  jmp 0x31
-    # nextln: 00005b: 89 f7                           mov edi, esi
-    # nextln: 00005d: 89 d6                           mov esi, edx
-    # nextln: 00005f: 8d 56 fc                        lea edx, [rsi - 4]
-    # nextln: 000062: 8d 46 fb                        lea eax, [rsi - 5]
-    # nextln: 000065: 83 c2 04                        add edx, 4
-    # nextln: 000068: 83 c0 04                        add eax, 4
-    # nextln: 00006b: 8b f2                           mov esi, edx
-    # nextln: 00006d: 48 03 f1                        add rsi, rcx
-    # nextln: 000070: 8b 36                           mov esi, dword ptr [rsi]
-    # nextln: 000072: 41 b8 00 01 01 01               mov r8d, 0x1010100
-    # nextln: 000078: 44 2b c6                        sub r8d, esi
-    # nextln: 00007b: 41 0b f0                        or esi, r8d
-    # nextln: 00007e: 81 e6 80 80 80 80               and esi, 0x80808080
-    # nextln: 000084: 81 fe 80 80 80 80               cmp esi, 0x80808080
-    # nextln: 00008a: 0f 84 d5 ff ff ff               je 0x65
-    # nextln: 000090: 83 c0 01                        add eax, 1
-    # nextln: 000093: 8d 72 01                        lea esi, [rdx + 1]
-    # nextln: 000096: 8b d2                           mov edx, edx
-    # nextln: 000098: 48 03 d1                        add rdx, rcx
-    # nextln: 00009b: 0f b6 12                        movzx edx, byte ptr [rdx]
-    # nextln: 00009e: 85 d2                           test edx, edx
-    # nextln: 0000a0: 0f 84 07 00 00 00               je 0xad
-    # nextln: 0000a6: 89 f2                           mov edx, esi
-    # nextln: 0000a8: e9 e3 ff ff ff                  jmp 0x90
-    # nextln: 0000ad: 89 fe                           mov esi, edi
-    # nextln: 0000af: e9 04 00 00 00                  jmp 0xb8
-    # nextln: 0000b4: 89 fe                           mov esi, edi
-    # nextln: 0000b6: 89 f8                           mov eax, edi
-    # nextln: 0000b8: 2b c6                           sub eax, esi
-    # nextln: 0000ba: 5d                              pop rbp
-    # nextln: 0000bb: c3                              ret
+    # nextln: 00003b: 0f 84 18 00 00 00               je 0x59
+    # nextln: 000041: 8b fa                           mov edi, edx
+    # nextln: 000043: 48 03 f9                        add rdi, rcx
+    # nextln: 000046: 0f b6 3f                        movzx edi, byte ptr [rdi]
+    # nextln: 000049: 83 c2 01                        add edx, 1
+    # nextln: 00004c: 85 ff                           test edi, edi
+    # nextln: 00004e: 0f 85 dd ff ff ff               jne 0x31
+    # nextln: 000054: e9 56 00 00 00                  jmp 0xaf
+    # nextln: 000059: 89 f7                           mov edi, esi
+    # nextln: 00005b: 89 d6                           mov esi, edx
+    # nextln: 00005d: 8d 56 fc                        lea edx, [rsi - 4]
+    # nextln: 000060: 8d 46 fb                        lea eax, [rsi - 5]
+    # nextln: 000063: 83 c2 04                        add edx, 4
+    # nextln: 000066: 8b f2                           mov esi, edx
+    # nextln: 000068: 48 03 f1                        add rsi, rcx
+    # nextln: 00006b: 8b 36                           mov esi, dword ptr [rsi]
+    # nextln: 00006d: 41 b8 00 01 01 01               mov r8d, 0x1010100
+    # nextln: 000073: 44 2b c6                        sub r8d, esi
+    # nextln: 000076: 41 0b f0                        or esi, r8d
+    # nextln: 000079: 81 e6 80 80 80 80               and esi, 0x80808080
+    # nextln: 00007f: 83 c0 04                        add eax, 4
+    # nextln: 000082: 81 fe 80 80 80 80               cmp esi, 0x80808080
+    # nextln: 000088: 0f 84 d5 ff ff ff               je 0x63
+    # nextln: 00008e: 8b f2                           mov esi, edx
+    # nextln: 000090: 48 03 f1                        add rsi, rcx
+    # nextln: 000093: 0f b6 36                        movzx esi, byte ptr [rsi]
+    # nextln: 000096: 83 c0 01                        add eax, 1
+    # nextln: 000099: 83 c2 01                        add edx, 1
+    # nextln: 00009c: 85 f6                           test esi, esi
+    # nextln: 00009e: 0f 85 ea ff ff ff               jne 0x8e
+    # nextln: 0000a4: 89 fe                           mov esi, edi
+    # nextln: 0000a6: e9 04 00 00 00                  jmp 0xaf
+    # nextln: 0000ab: 89 fe                           mov esi, edi
+    # nextln: 0000ad: 89 f8                           mov eax, edi
+    # nextln: 0000af: 2b c6                           sub eax, esi
+    # nextln: 0000b1: 5d                              pop rbp
+    # nextln: 0000b2: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %31:i64 = iext %1

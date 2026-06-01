@@ -6,7 +6,7 @@ func @func00000001:i64(i32) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: b8 01 00 00 00                  mov eax, 1
     # nextln: 000009: 85 ff                           test edi, edi
-    # nextln: 00000b: 0f 8e af 00 00 00               jle 0xc0
+    # nextln: 00000b: 0f 8e aa 00 00 00               jle 0xbb
     # nextln: 000011: 8d 77 01                        lea esi, [rdi + 1]
     # nextln: 000014: 48 8d 56 ff                     lea rdx, [rsi - 1]
     # nextln: 000018: 48 89 d1                        mov rcx, rdx
@@ -42,17 +42,16 @@ func @func00000001:i64(i32) {
     # nextln: 000093: e9 03 00 00 00                  jmp 0x9b
     # nextln: 000098: 48 89 c6                        mov rsi, rax
     # nextln: 00009b: 48 85 c9                        test rcx, rcx
-    # nextln: 00009e: 0f 84 1a 00 00 00               je 0xbe
+    # nextln: 00009e: 0f 84 15 00 00 00               je 0xb9
     # nextln: 0000a4: 48 83 c1 ff                     add rcx, -1
     # nextln: 0000a8: 48 0f af c6                     imul rax, rsi
-    # nextln: 0000ac: 48 85 c9                        test rcx, rcx
-    # nextln: 0000af: 0f 84 09 00 00 00               je 0xbe
-    # nextln: 0000b5: 48 83 c6 01                     add rsi, 1
-    # nextln: 0000b9: e9 e6 ff ff ff                  jmp 0xa4
-    # nextln: 0000be: 5d                              pop rbp
-    # nextln: 0000bf: c3                              ret
-    # nextln: 0000c0: 5d                              pop rbp
-    # nextln: 0000c1: c3                              ret
+    # nextln: 0000ac: 48 83 c6 01                     add rsi, 1
+    # nextln: 0000b0: 48 85 c9                        test rcx, rcx
+    # nextln: 0000b3: 0f 85 eb ff ff ff               jne 0xa4
+    # nextln: 0000b9: 5d                              pop rbp
+    # nextln: 0000ba: c3                              ret
+    # nextln: 0000bb: 5d                              pop rbp
+    # nextln: 0000bc: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %2:i64 = iconst 1

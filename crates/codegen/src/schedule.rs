@@ -341,6 +341,12 @@ impl<'a> Scheduler<'a> {
             }
         }
 
+        // Don't put things in split loop backedges when we don't need to, because doing so can
+        // "undo" loop rotation and introduce extra branches.
+        if self.is_split_loop_backedge(best_loc) {
+            return true;
+        }
+
         // If we've been instructed to hoist aggressively for register pressure, hoist even into a
         // less-control dependent location as long as we wouldn't be hoisting into a loop. Note that
         // this may execute the node speculatively.
@@ -520,6 +526,28 @@ impl<'a> Scheduler<'a> {
         for output in dataflow_outputs(graph, node) {
             self.tethered_values.insert(output);
         }
+    }
+
+    fn is_split_loop_backedge(&self, block: Block) -> bool {
+        let cfg = self.cfg();
+
+        // Is this a split critical edge? Split critical edges have one predecessor, one successor
+        // and no pinned nodes.
+
+        if cfg.block_preds(block).len() != 1 {
+            return false;
+        }
+
+        let &[succ] = cfg.block_succs(block) else {
+            return false;
+        };
+
+        if !self.schedule.block_data[block].scheduled_nodes.is_empty() {
+            return false;
+        }
+
+        // Is this split edge a natural loop backedge (does it flow to a dominator)?
+        self.domtree().cfg_dominates(succ, block)
     }
 
     fn max_tethered_lrg_delta(&self, graph: &ValGraph, node: Node) -> i32 {

@@ -22,11 +22,10 @@ func @func00000001:i64(i32, i32) {
     # nextln: 000033: 85 db                           test ebx, ebx
     # nextln: 000035: 0f 85 d7 ff ff ff               jne 0x12
     # nextln: 00003b: 83 c0 01                        add eax, 1
-    # nextln: 00003e: 8b c0                           mov eax, eax
-    # nextln: 000040: 48 83 c4 08                     add rsp, 8
-    # nextln: 000044: 5b                              pop rbx
-    # nextln: 000045: 5d                              pop rbp
-    # nextln: 000046: c3                              ret
+    # nextln: 00003e: 48 83 c4 08                     add rsp, 8
+    # nextln: 000042: 5b                              pop rbx
+    # nextln: 000043: 5d                              pop rbp
+    # nextln: 000044: c3                              ret
 
     %0:ctrl, %1:i32, %2:i32 = entry
     %44:i64 = iconst 4294967295

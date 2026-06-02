@@ -346,12 +346,7 @@ fn select_alu_comm(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: Al
         };
 
         if let Some(zext_size) = zext_size {
-            let op1 = ctx.get_value_vreg(op1);
-            ctx.emit_instr(
-                X64Instr::MovzxRRm(zext_size),
-                &[DefOperand::any_reg(output)],
-                &[UseOperand::any(op1)],
-            );
+            select_zext(ctx, output, op1, zext_size);
             return;
         }
     }
@@ -372,6 +367,26 @@ fn select_alu_comm(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: Al
         X64Instr::AluCommRR(op_size, op),
         &[DefOperand::any_reg(output)],
         &[UseOperand::soft_tied(op1, 0), UseOperand::soft_tied(op2, 0)],
+    );
+}
+
+fn select_zext(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    output: VirtReg,
+    input: DepValue,
+    from_size: FullOperandSize,
+) {
+    let input_reg = ctx.get_value_vreg(input);
+
+    if from_size == FullOperandSize::S32 && will_be_zext32(ctx, input) {
+        ctx.copy_vreg(output, input_reg);
+        return;
+    }
+
+    ctx.emit_instr(
+        X64Instr::MovzxRRm(from_size),
+        &[DefOperand::any_reg(output)],
+        &[UseOperand::any(input_reg)],
     );
 }
 
@@ -1361,6 +1376,40 @@ fn emit_cvtsd2ss(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
 
 // Matching helpers
 
+fn will_be_zext32(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> bool {
+    let Some(ext_source) = match_iext(ctx, value) else {
+        return false;
+    };
+
+    // Note: `ext_source` must be an `i32` at this point. The following match depends on our isel
+    // matching behavior and the behavior of the instructions we end up selecting.
+
+    matches!(
+        ctx.node_kind(ctx.value_def(ext_source).0),
+        // Constants should always be 32-bit in well-formed IR.
+        | NodeKind::Iconst(_)
+        // The ALU operations (or sequences thereof) we emit for these always clear the upper bits
+        // of their destination.
+        | NodeKind::Iadd
+        | NodeKind::Isub
+        | NodeKind::And
+        | NodeKind::Or
+        | NodeKind::Xor
+        | NodeKind::Shl
+        | NodeKind::Lshr
+        | NodeKind::Ashr
+        | NodeKind::Imul
+        | NodeKind::Sdiv
+        | NodeKind::Udiv
+        | NodeKind::Srem
+        | NodeKind::Urem
+        | NodeKind::Sfill(_)
+        | NodeKind::Icmp(_)
+        // We always emit full zero-extending loads for IR `Load` operations.
+        | NodeKind::Load(..)
+    )
+}
+
 fn match_icmp_imm32(
     ctx: &IselContext<'_, '_, X64Machine>,
     op1: DepValue,
@@ -1398,6 +1447,16 @@ fn as_imm32(ty: Type, val: u64) -> Option<i32> {
     if ty == Type::I32 || is_sint::<32>(val) {
         return Some(val as i32);
     }
+
+    None
+}
+
+fn match_iext(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> Option<DepValue> {
+    match_value! {
+        if let NodeKind::Iext[val inner] = ctx, value {
+            return Some(inner);
+        }
+    };
 
     None
 }

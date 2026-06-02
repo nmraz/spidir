@@ -6,16 +6,15 @@ func @func00000001:i32(i32) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 33 c0                           xor eax, eax
     # nextln: 000006: 8d 0c 07                        lea ecx, [rdi + rax]
-    # nextln: 000009: 8b c9                           mov ecx, ecx
-    # nextln: 00000b: 33 d2                           xor edx, edx
-    # nextln: 00000d: 48 03 ca                        add rcx, rdx
-    # nextln: 000010: 0f b6 09                        movzx ecx, byte ptr [rcx]
-    # nextln: 000013: 83 c0 01                        add eax, 1
-    # nextln: 000016: 85 c9                           test ecx, ecx
-    # nextln: 000018: 0f 85 e8 ff ff ff               jne 6
-    # nextln: 00001e: 83 c0 ff                        add eax, -1
-    # nextln: 000021: 5d                              pop rbp
-    # nextln: 000022: c3                              ret
+    # nextln: 000009: 33 d2                           xor edx, edx
+    # nextln: 00000b: 48 03 ca                        add rcx, rdx
+    # nextln: 00000e: 0f b6 09                        movzx ecx, byte ptr [rcx]
+    # nextln: 000011: 83 c0 01                        add eax, 1
+    # nextln: 000014: 85 c9                           test ecx, ecx
+    # nextln: 000016: 0f 85 ea ff ff ff               jne 6
+    # nextln: 00001c: 83 c0 ff                        add eax, -1
+    # nextln: 00001f: 5d                              pop rbp
+    # nextln: 000020: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %26:i32 = iconst 4294967295

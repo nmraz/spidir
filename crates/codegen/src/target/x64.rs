@@ -171,6 +171,12 @@ pub enum ShiftOp {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BitCountOp {
+    TzcntBsf,
+    Bsr,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DivOp {
     Div,
     Idiv,
@@ -255,6 +261,7 @@ pub enum X64Instr {
     ImulRRmI(OperandSize, i32),
     ShiftRmR(OperandSize, ShiftOp),
     ShiftRmI(OperandSize, ShiftOp, u8),
+    BitCountRRm(OperandSize, BitCountOp),
     Div(OperandSize, DivOp),
     ConvertWord(OperandSize),
     MovRmS32(i32),
@@ -320,6 +327,7 @@ impl X64Instr {
             X64Instr::ImulRRmI(..) => false,
             X64Instr::ShiftRmR(..) => false,
             X64Instr::ShiftRmI(..) => false,
+            X64Instr::BitCountRRm(..) => false,
             X64Instr::Div(..) => false,
             X64Instr::ConvertWord(..) => false,
             X64Instr::MovRmS32(..) => false,
@@ -377,6 +385,7 @@ impl X64Instr {
             X64Instr::ImulRRmI(..) => true,
             X64Instr::ShiftRmR(..) => true,
             X64Instr::ShiftRmI(..) => true,
+            X64Instr::BitCountRRm(..) => true,
             X64Instr::Div(..) => true,
             X64Instr::ConvertWord(..) => false,
             X64Instr::MovRmS32(..) => false,

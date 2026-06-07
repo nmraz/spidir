@@ -13,8 +13,8 @@ use crate::{
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{OperandAssignment, SpillSlot},
     target::x64::{
-        AluCommBinOp, CALLEE_SAVED_REGS, CompoundCondCode, RB_GPR, RB_XMM, RW_32, RW_64,
-        SseFpuCmpCode, SseFpuPrecision,
+        AluCommBinOp, BitCountOp, CALLEE_SAVED_REGS, CompoundCondCode, RB_GPR, RB_XMM, RW_32,
+        RW_64, SseFpuCmpCode, SseFpuPrecision,
     },
 };
 
@@ -312,6 +312,13 @@ impl MachineEmit for X64Machine {
             &X64Instr::ShiftRmI(op_size, op, imm) => {
                 emit_shift_rm_i(buffer, op, op_size, state.operand_reg_mem(uses[0]), imm)
             }
+            &X64Instr::BitCountRRm(op_size, op) => emit_bitcount_r_rm(
+                buffer,
+                op,
+                op_size,
+                defs[0].as_reg().unwrap(),
+                state.operand_reg_mem(uses[0]),
+            ),
             &X64Instr::Div(op_size, op) => {
                 emit_div_rm(buffer, op, op_size, state.operand_reg_mem(uses[2]))
             }
@@ -1184,6 +1191,36 @@ fn emit_shift_rm_i(
     });
 }
 
+fn emit_bitcount_r_rm(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op: BitCountOp,
+    op_size: OperandSize,
+    dest: PhysReg,
+    arg: RegMem,
+) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(arg, |rex| {
+        rex.encode_operand_size(op_size);
+        rex.encode_modrm_reg(dest)
+    });
+
+    // `{l,t}zcnt` are just `bs{r,f}` with a REP prefix.
+    let needs_rep = matches!(op, BitCountOp::TzcntBsf);
+    let opcode = match op {
+        BitCountOp::TzcntBsf => 0xbc,
+        BitCountOp::Bsr => 0xbd,
+    };
+
+    buffer.instr(|sink| {
+        if needs_rep {
+            sink.emit(&[PREFIX_REP]);
+        }
+
+        rex.emit(sink);
+        sink.emit(&[0x0f, opcode]);
+        modrm_sib.emit(sink);
+    });
+}
+
 fn emit_setcc_r(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, dest: PhysReg) {
     let mut rex = RexPrefix::new();
     rex.use_reg8(dest);
@@ -1953,6 +1990,7 @@ const SIB_INDEX_NONE: u8 = 0b100;
 
 // Legacy prefixes
 const PREFIX_OPERAND_SIZE: u8 = 0x66;
+const PREFIX_REP: u8 = 0xf3;
 
 #[cfg(test)]
 mod tests;

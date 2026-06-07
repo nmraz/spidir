@@ -19,7 +19,7 @@ use crate::{
     },
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
-    target::x64::{LIBCALL_POPCNT32, LIBCALL_POPCNT64},
+    target::x64::{BitCountOp, LIBCALL_POPCNT32, LIBCALL_POPCNT64},
 };
 
 use super::{
@@ -165,6 +165,16 @@ impl MachineLower for X64Machine {
                 let output = ctx.get_value_vreg(output);
                 let (_, rdx) = emit_sdiv(ctx, op1, op2);
                 ctx.copy_vreg(output, rdx);
+            }
+            NodeKind::Lzcount => {
+                let [input] = ctx.node_inputs_exact(node);
+                let [output] = ctx.node_outputs_exact(node);
+                emit_lzcnt(ctx, input, output);
+            }
+            NodeKind::Tzcount => {
+                let [input] = ctx.node_inputs_exact(node);
+                let [output] = ctx.node_outputs_exact(node);
+                emit_tzcnt(ctx, input, output);
             }
             NodeKind::Popcount => {
                 let [input] = ctx.node_inputs_exact(node);
@@ -1273,6 +1283,78 @@ fn emit_setcc_sequence(
         X64Instr::Setcc(cond_code),
         &[DefOperand::any_reg(output)],
         &[UseOperand::tied(temp, 0)],
+    );
+}
+
+fn emit_lzcnt(ctx: &mut IselContext<'_, '_, X64Machine>, input: DepValue, output: DepValue) {
+    let ty = ctx.value_type(input);
+
+    // The tricks below only work because we're dealing with powers of 2.
+    debug_assert!(ty.bit_width().is_power_of_two());
+
+    let bit_width = ty.bit_width() as i32;
+
+    let input = ctx.get_value_vreg(input);
+    let output = ctx.get_value_vreg(output);
+
+    // Note: all intermediate calculations are done on a 32-bit value because the result will always
+    // fit and be zero-extended.
+
+    // Prepare a value that will cancel with the `xor` below and leave `bit_width` in the output in
+    // the zero case.
+    let double_width_minus_one = ctx.create_temp_vreg(RC_GPR32);
+    ctx.emit_instr(
+        X64Instr::MovRmS32((bit_width << 1) - 1),
+        &[DefOperand::any(double_width_minus_one)],
+        &[],
+    );
+
+    let bsr_output = ctx.create_temp_vreg(RC_GPR32);
+    ctx.emit_instr(
+        X64Instr::BitCountRRm(operand_size_for_int_ty(ty), BitCountOp::Bsr),
+        &[DefOperand::any_reg(bsr_output)],
+        &[
+            UseOperand::any(input),
+            // Place the tied use last so emission can behave uniformly and ignore it.
+            UseOperand::tied(double_width_minus_one, 0),
+        ],
+    );
+
+    // Either subtract the result from `bit_width - 1` (if it is less than `bit_width`, meaning the
+    // input was nonzero) or leave exactly `bit_width` because of the setup above.
+    ctx.emit_instr(
+        X64Instr::AluCommRmI(OperandSize::S32, AluCommBinOp::Xor, bit_width - 1),
+        &[DefOperand::any(output)],
+        &[UseOperand::tied(bsr_output, 0)],
+    );
+}
+
+fn emit_tzcnt(ctx: &mut IselContext<'_, '_, X64Machine>, input: DepValue, output: DepValue) {
+    let ty = ctx.value_type(input);
+
+    let input = ctx.get_value_vreg(input);
+    let output = ctx.get_value_vreg(output);
+
+    // Note: all intermediate calculations are done on a 32-bit value because the result will always
+    // fit and be zero-extended.
+
+    // Prepare the full bit width in the output. This will carry through to the output in the zero
+    // case on processors that don't support `tzcnt` and break the false dependency `tzcnt` may have
+    // on its output (Haswell).
+    let width = ctx.create_temp_vreg(RC_GPR32);
+    ctx.emit_instr(
+        X64Instr::MovRmS32(ty.bit_width() as i32),
+        &[DefOperand::any(width)],
+        &[],
+    );
+
+    // This will decode as either `tzcnt` (which returns the full bit width for 0) or as `bsf`
+    // (which leaves its input unchaged for 0).
+    ctx.emit_instr(
+        X64Instr::BitCountRRm(operand_size_for_int_ty(ty), BitCountOp::TzcntBsf),
+        &[DefOperand::any_reg(output)],
+        // Place the tied use last so emission can behave uniformly and ignore it.
+        &[UseOperand::any(input), UseOperand::tied(width, 0)],
     );
 }
 

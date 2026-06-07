@@ -830,6 +830,20 @@ spidir_value_t spidir_builder_build_urem(spidir_builder_handle_t builder,
                                          spidir_value_t lhs,
                                          spidir_value_t rhs);
 
+/// Builds an integer population-count operation at the current insertion point.
+///
+/// This operation counts the number of set bits in its input.
+///
+/// @param[in] builder     A handle to the function builder.
+/// @param[in] output_type The desired output type. This must be an integer
+///                        type.
+/// @param[in] value       The input value. This must be an integer.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the type `output_type`.
+spidir_value_t spidir_builder_build_popcount(spidir_builder_handle_t builder,
+                                             spidir_value_type_t output_type,
+                                             spidir_value_t value);
+
 /// Builds an integer extend operation at the current insertion point.
 ///
 /// This operation extends a 32-bit integer into a 64-bit one, leaving an

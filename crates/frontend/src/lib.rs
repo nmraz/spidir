@@ -232,6 +232,10 @@ impl<'a> FunctionBuilder<'a> {
         built.output
     }
 
+    pub fn build_popcount(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        self.builder().build_popcount(output_ty, value)
+    }
+
     pub fn build_iext(&mut self, value: DepValue) -> DepValue {
         self.builder().build_iext(value)
     }

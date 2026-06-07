@@ -233,6 +233,10 @@ pub trait BuilderExt: Builder {
         build_int_div(self, NodeKind::Urem, ctrl, lhs, rhs)
     }
 
+    fn build_popcount(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::Popcount, [value], output_ty)
+    }
+
     fn build_iext(&mut self, value: DepValue) -> DepValue {
         build_single_output_pure(self, NodeKind::Iext, [value], Type::I64)
     }

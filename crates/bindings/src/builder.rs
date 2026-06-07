@@ -340,11 +340,11 @@ unsafe extern "C" fn spidir_builder_build_fcmp(
     }
 }
 
-macro_rules! impl_builder_convop {
-    ($convop:ident) => {
+macro_rules! impl_builder_typed_unop {
+    ($unop:ident) => {
         paste! {
             #[unsafe(no_mangle)]
-            unsafe extern "C" fn [<spidir_builder_build_ $convop>](
+            unsafe extern "C" fn [<spidir_builder_build_ $unop>](
                 builder: *mut FunctionBuilder<'_>,
                 ty: ApiType,
                 value: ApiValue
@@ -352,7 +352,7 @@ macro_rules! impl_builder_convop {
                 unsafe {
                     let builder = &mut *builder;
                     value_to_api(
-                        builder.[<build_ $convop>](type_from_api(ty), value_from_api(value))
+                        builder.[<build_ $unop>](type_from_api(ty), value_from_api(value))
                     )
                 }
             }
@@ -360,10 +360,12 @@ macro_rules! impl_builder_convop {
     };
 }
 
-impl_builder_convop!(sinttofloat);
-impl_builder_convop!(uinttofloat);
-impl_builder_convop!(floattosint);
-impl_builder_convop!(floattouint);
+impl_builder_typed_unop!(popcount);
+
+impl_builder_typed_unop!(sinttofloat);
+impl_builder_typed_unop!(uinttofloat);
+impl_builder_typed_unop!(floattosint);
+impl_builder_typed_unop!(floattouint);
 
 #[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_ptroff(

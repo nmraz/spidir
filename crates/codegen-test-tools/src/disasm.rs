@@ -10,7 +10,7 @@ use capstone::{
 };
 use codegen::{
     code_buffer::{CodeBlob, LibCallKind, RelocKind, RelocTarget},
-    target::x64::{RELOC_ABS64, RELOC_PC32},
+    target::x64::{LIBCALL_POPCNT32, LIBCALL_POPCNT64, RELOC_ABS64, RELOC_PC32},
 };
 use ir::{module::ModuleMetadata, write::quote_ident};
 use itertools::Itertools;
@@ -110,7 +110,12 @@ fn reloc_name(reloc: RelocKind) -> String {
 }
 
 fn libcall_name(libcall: LibCallKind) -> String {
-    format!("libcall:{}", libcall.0)
+    let known_name = match libcall {
+        LIBCALL_POPCNT32 => "POPCNT32",
+        LIBCALL_POPCNT64 => "POPCNT64",
+        _ => return format!("libcall:{}", libcall.0),
+    };
+    format!("libcall:{known_name}")
 }
 
 const CP_CHUNK_SIZE: usize = 8;

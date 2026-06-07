@@ -19,6 +19,7 @@ use crate::{
     },
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
+    target::x64::{LIBCALL_POPCNT32, LIBCALL_POPCNT64},
 };
 
 use super::{
@@ -164,6 +165,11 @@ impl MachineLower for X64Machine {
                 let output = ctx.get_value_vreg(output);
                 let (_, rdx) = emit_sdiv(ctx, op1, op2);
                 ctx.copy_vreg(output, rdx);
+            }
+            NodeKind::Popcount => {
+                let [input] = ctx.node_inputs_exact(node);
+                let [output] = ctx.node_outputs_exact(node);
+                emit_popcnt(self, ctx, input, output);
             }
             NodeKind::Iext | NodeKind::Itrunc | NodeKind::IntToPtr | NodeKind::PtrToInt => {
                 let [input] = ctx.node_inputs_exact(node);
@@ -1267,6 +1273,28 @@ fn emit_setcc_sequence(
         X64Instr::Setcc(cond_code),
         &[DefOperand::any_reg(output)],
         &[UseOperand::tied(temp, 0)],
+    );
+}
+
+fn emit_popcnt(
+    machine: &X64Machine,
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    input: DepValue,
+    output: DepValue,
+) {
+    let input_ty = ctx.value_type(input);
+    let libcall = match input_ty {
+        Type::I32 => LIBCALL_POPCNT32,
+        Type::I64 => LIBCALL_POPCNT64,
+        _ => unreachable!(),
+    };
+
+    emit_call(
+        machine,
+        ctx,
+        libcall.into(),
+        Some(output),
+        [input].into_iter(),
     );
 }
 

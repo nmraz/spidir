@@ -4,7 +4,7 @@ use ir::node::FunctionRef;
 
 use crate::{
     cfg::Block,
-    code_buffer::{CallTarget, RelocKind},
+    code_buffer::{CallTarget, LibCallKind, RelocKind},
     lir::{MemLayout, PhysReg, RegBank, RegClass, RegWidth, StackSlot},
     machine::{MachineCore, MachineRegalloc},
     regalloc::RematCost,
@@ -15,6 +15,9 @@ mod lower;
 
 pub const RELOC_PC32: RelocKind = RelocKind(0);
 pub const RELOC_ABS64: RelocKind = RelocKind(1);
+
+pub const LIBCALL_POPCNT32: LibCallKind = LibCallKind(0);
+pub const LIBCALL_POPCNT64: LibCallKind = LibCallKind(1);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OperandSize {

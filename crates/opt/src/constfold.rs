@@ -104,6 +104,10 @@ pub fn fold_urem(ty: Type, lhs: u64, rhs: u64) -> Option<u64> {
     }
 }
 
+pub fn fold_popcount(val: u64) -> u64 {
+    val.count_ones() as u64
+}
+
 pub fn fold_iext(val: u64) -> u64 {
     val
 }
@@ -552,6 +556,16 @@ mod tests {
             fold_urem(Type::I64, 4294967259, 4294967292),
             Some(4294967259)
         );
+    }
+
+    #[test]
+    fn popcount() {
+        assert_eq!(fold_popcount(0), 0);
+        assert_eq!(fold_popcount(1), 1);
+        assert_eq!(fold_popcount(8), 1);
+        assert_eq!(fold_popcount(5), 2);
+        assert_eq!(fold_popcount(4294967295), 32);
+        assert_eq!(fold_popcount(18446744073709551615), 64);
     }
 
     #[test]

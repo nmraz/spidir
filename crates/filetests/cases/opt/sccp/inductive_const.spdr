@@ -49,12 +49,14 @@ func @inductive_const:i32(i32) {
     %tmp14:i32 = itrunc %tmp13                           # 256
     %lbct4:ctrl, %tmp15:i32 = srem %lbct3, %tmp14, %120  # 16
     %lbct5:ctrl, %tmp16:i32 = urem %lbct4, %tmp15, %11   # 5
+    %tmp17:i32 = popcount %tmp16                         # 2
+    %tmp18:i32 = iadd %tmp17, %3                         # 5
 
     %lbcf2:ctrl = call @g %lbcf
 
     %lbm:ctrl, %lbmp:phisel = region %lbct5, %lbcf2
 
-    %constvaln:i32 = phi %lbmp, %tmp16, %11
+    %constvaln:i32 = phi %lbmp, %tmp18, %11
     %lbm1:ctrl, %lcn:i32 = call @f %lbm
 
     return %exit, %constval
@@ -83,7 +85,8 @@ func @inductive_nonconst:i32(i32) {
     # dag:         $(itrunc0=$val):i32 = itrunc $sfill0
     # dag:         $(srem0=$val):ctrl, $(srem1=$val):i32 = srem $udiv0, $itrunc0, $iconst1
     # dag:         $(urem0=$val):ctrl, $(urem1=$val):i32 = urem $srem0, $srem1, $iconst2
-    # dag:         $(phi0=$val):i32 = phi $(region0=$val), $urem1, $iconst0
+    # dag:         $(popcount0=$val):i32 = popcount $urem1
+    # dag:         $(phi0=$val):i32 = phi $(region0=$val), $popcount0, $iconst0
     # dag:         $(phi1=$val):i32 = phi $(region1=$val), $iconst4, $phi0
     # dag:         $(iadd0=$val):i32 = iadd $phi1, $iconst2
     # dag:         $isub0:i32 = isub $iadd0, $iconst4
@@ -134,12 +137,13 @@ func @inductive_nonconst:i32(i32) {
     %tmp14:i32 = itrunc %tmp13                           # 256
     %lbct4:ctrl, %tmp15:i32 = srem %lbct3, %tmp14, %120  # 16
     %lbct5:ctrl, %tmp16:i32 = urem %lbct4, %tmp15, %7    # 2
+    %tmp17:i32 = popcount %tmp16                         # 1
 
     %lbcf2:ctrl = call @g %lbcf
 
     %lbm:ctrl, %lbmp:phisel = region %lbct5, %lbcf2
 
-    %constvaln:i32 = phi %lbmp, %tmp16, %11
+    %constvaln:i32 = phi %lbmp, %tmp17, %11
     %lbm1:ctrl, %lcn:i32 = call @f %lbm
 
     return %exit, %constval

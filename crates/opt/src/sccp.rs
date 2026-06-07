@@ -16,8 +16,8 @@ use crate::{
     FunctionPass,
     constfold::{
         fold_and, fold_ashr, fold_iadd, fold_icmp, fold_iext, fold_imul, fold_isub, fold_itrunc,
-        fold_lshr, fold_or, fold_sdiv, fold_sfill, fold_shl, fold_srem, fold_udiv, fold_urem,
-        fold_xor,
+        fold_lshr, fold_or, fold_popcount, fold_sdiv, fold_sfill, fold_shl, fold_srem, fold_udiv,
+        fold_urem, fold_xor,
     },
     state::FunctionEditContext,
     utils::{match_iconst, replace_with_iconst},
@@ -298,6 +298,7 @@ fn visit_node(ctx: &FunctionEditContext, state: &mut SolverState, node: Node) {
         NodeKind::Udiv => prop_divrem(ctx, state, node, fold_udiv),
         NodeKind::Srem => prop_divrem(ctx, state, node, fold_srem),
         NodeKind::Urem => prop_divrem(ctx, state, node, fold_urem),
+        NodeKind::Popcount => prop_unop(ctx, state, node, |_, val| fold_popcount(val)),
         NodeKind::Iext => prop_unop(ctx, state, node, |_, val| fold_iext(val)),
         NodeKind::Itrunc => prop_unop(ctx, state, node, |_, val| fold_itrunc(val)),
         &NodeKind::Sfill(width) => {

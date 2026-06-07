@@ -9,8 +9,8 @@ use ir::{
 use crate::{
     constfold::{
         fold_and, fold_ashr, fold_iadd, fold_icmp, fold_iext, fold_imul, fold_isub, fold_itrunc,
-        fold_lshr, fold_or, fold_sdiv, fold_sfill, fold_shl, fold_srem, fold_udiv, fold_urem,
-        fold_xor,
+        fold_lshr, fold_or, fold_popcount, fold_sdiv, fold_sfill, fold_shl, fold_srem, fold_udiv,
+        fold_urem, fold_xor,
     },
     state::FunctionEditContext,
     utils::{match_iconst, replace_with_iconst},
@@ -262,6 +262,13 @@ pub fn canonicalize_node(ctx: &mut FunctionEditContext<'_>, node: Node) {
                     };
                 }
                 _ => {}
+            }
+        }
+        NodeKind::Popcount => {
+            let [input] = graph.node_inputs_exact(node);
+            let [output] = graph.node_outputs_exact(node);
+            if let Some(value) = match_iconst(graph, input) {
+                replace_with_iconst(ctx, output, fold_popcount(value));
             }
         }
         NodeKind::Iext => {

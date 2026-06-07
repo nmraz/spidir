@@ -247,12 +247,18 @@ impl MachineLower for X64Machine {
                 }
             },
             &NodeKind::FuncAddr(func) => emit_funcaddr(self, ctx, node, func),
-            &NodeKind::Call(func) => emit_call(self, ctx, node, func.into()),
+            &NodeKind::Call(func) => emit_call(
+                self,
+                ctx,
+                func.into(),
+                ctx.node_outputs(node).next(),
+                ctx.node_inputs(node),
+            ),
             NodeKind::CallInd(_) => {
-                let mut vals = ctx.node_inputs(node);
+                let mut inputs = ctx.node_inputs(node);
                 let target =
-                    ctx.get_value_vreg(vals.next().expect("expected indirect call target"));
-                emit_callind(ctx, node, target, vals);
+                    ctx.get_value_vreg(inputs.next().expect("expected indirect call target"));
+                emit_callind(ctx, target, ctx.node_outputs(node).next(), inputs);
             }
             NodeKind::Unreachable => ctx.emit_instr(X64Instr::Ud2, &[], &[]),
             _ => return Err(MachineIselError),
@@ -943,17 +949,23 @@ fn emit_funcaddr(
 fn emit_call(
     machine: &X64Machine,
     ctx: &mut IselContext<'_, '_, X64Machine>,
-    node: Node,
     func: CallTarget,
+    retval: Option<DepValue>,
+    args: impl Iterator<Item = DepValue>,
 ) {
     match machine.code_model_for_function(func) {
-        CodeModel::SmallPic => emit_call_rel(ctx, node, func),
-        CodeModel::LargeAbs => emit_call_abs(ctx, node, func),
+        CodeModel::SmallPic => emit_call_rel(ctx, func, retval, args),
+        CodeModel::LargeAbs => emit_call_abs(ctx, func, retval, args),
     }
 }
 
-fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: CallTarget) {
-    emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
+fn emit_call_rel(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    func: CallTarget,
+    retval: Option<DepValue>,
+    args: impl Iterator<Item = DepValue>,
+) {
+    emit_call_wrapper(ctx, retval, args, |ctx, retvals, args| {
         ctx.emit_instr_with_clobbers(
             X64Instr::CallRel(func),
             retvals,
@@ -963,8 +975,13 @@ fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Ca
     });
 }
 
-fn emit_call_abs(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: CallTarget) {
-    emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
+fn emit_call_abs(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    func: CallTarget,
+    retval: Option<DepValue>,
+    args: impl Iterator<Item = DepValue>,
+) {
+    emit_call_wrapper(ctx, retval, args, |ctx, retvals, args| {
         let target = ctx.create_temp_vreg(RC_GPR64);
         ctx.emit_instr(
             X64Instr::FuncAddrAbs(func),
@@ -985,11 +1002,11 @@ fn emit_call_abs(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Ca
 
 fn emit_callind(
     ctx: &mut IselContext<'_, '_, X64Machine>,
-    node: Node,
     target: VirtReg,
+    retval: Option<DepValue>,
     args: impl Iterator<Item = DepValue>,
 ) {
-    emit_call_wrapper(ctx, node, args, |ctx, retvals, args| {
+    emit_call_wrapper(ctx, retval, args, |ctx, retvals, args| {
         let mut uses: SmallVec<[_; FIXED_ARG_REG_COUNT + 1]> = smallvec![UseOperand::any(target)];
         uses.extend_from_slice(args);
         ctx.emit_instr_with_clobbers(
@@ -1003,7 +1020,7 @@ fn emit_callind(
 
 fn emit_call_wrapper(
     ctx: &mut IselContext<'_, '_, X64Machine>,
-    node: Node,
+    retval: Option<DepValue>,
     args: impl Iterator<Item = DepValue>,
     emit_inner: impl FnOnce(&mut IselContext<'_, '_, X64Machine>, &[DefOperand], &[UseOperand]),
 ) {
@@ -1085,7 +1102,7 @@ fn emit_call_wrapper(
         }
     }
 
-    let retval = ctx.node_outputs(node).next().map(|retval: DepValue| {
+    let retval = retval.map(|retval: DepValue| {
         let reg = match ctx.value_type(retval) {
             Type::I32 | Type::I64 | Type::Ptr => REG_RAX,
             Type::F32 | Type::F64 => REG_XMM0,

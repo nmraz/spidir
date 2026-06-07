@@ -104,6 +104,24 @@ pub fn fold_urem(ty: Type, lhs: u64, rhs: u64) -> Option<u64> {
     }
 }
 
+pub fn fold_lzcount(ty: Type, val: u64) -> u64 {
+    let count = if ty == Type::I32 {
+        (val as u32).leading_zeros()
+    } else {
+        val.leading_zeros()
+    };
+    count as u64
+}
+
+pub fn fold_tzcount(ty: Type, val: u64) -> u64 {
+    let count = if ty == Type::I32 {
+        (val as u32).trailing_zeros()
+    } else {
+        val.trailing_zeros()
+    };
+    count as u64
+}
+
 pub fn fold_popcount(val: u64) -> u64 {
     val.count_ones() as u64
 }
@@ -556,6 +574,44 @@ mod tests {
             fold_urem(Type::I64, 4294967259, 4294967292),
             Some(4294967259)
         );
+    }
+
+    #[test]
+    fn lzcount() {
+        assert_eq!(fold_lzcount(Type::I32, 0), 32);
+        assert_eq!(fold_lzcount(Type::I32, 1), 31);
+        assert_eq!(fold_lzcount(Type::I32, 8), 28);
+        assert_eq!(fold_lzcount(Type::I32, 5), 29);
+        assert_eq!(fold_lzcount(Type::I32, 7), 29);
+        assert_eq!(fold_lzcount(Type::I32, 4294967295), 0);
+
+        assert_eq!(fold_lzcount(Type::I64, 0), 64);
+        assert_eq!(fold_lzcount(Type::I64, 1), 63);
+        assert_eq!(fold_lzcount(Type::I64, 8), 60);
+        assert_eq!(fold_lzcount(Type::I64, 5), 61);
+        assert_eq!(fold_lzcount(Type::I64, 7), 61);
+        assert_eq!(fold_lzcount(Type::I64, 4294967295), 32);
+        assert_eq!(fold_lzcount(Type::I64, 18446744073709551615), 0);
+    }
+
+    #[test]
+    fn tzcount() {
+        assert_eq!(fold_tzcount(Type::I32, 0), 32);
+        assert_eq!(fold_tzcount(Type::I32, 1), 0);
+        assert_eq!(fold_tzcount(Type::I32, 8), 3);
+        assert_eq!(fold_tzcount(Type::I32, 40), 3);
+        assert_eq!(fold_tzcount(Type::I32, 5), 0);
+        assert_eq!(fold_tzcount(Type::I32, 7), 0);
+        assert_eq!(fold_tzcount(Type::I32, 4294967295), 0);
+
+        assert_eq!(fold_tzcount(Type::I64, 0), 64);
+        assert_eq!(fold_tzcount(Type::I64, 1), 0);
+        assert_eq!(fold_tzcount(Type::I64, 8), 3);
+        assert_eq!(fold_tzcount(Type::I64, 40), 3);
+        assert_eq!(fold_tzcount(Type::I64, 5), 0);
+        assert_eq!(fold_tzcount(Type::I64, 7), 0);
+        assert_eq!(fold_tzcount(Type::I64, 4294967295), 0);
+        assert_eq!(fold_tzcount(Type::I64, 18446744073709551615), 0);
     }
 
     #[test]

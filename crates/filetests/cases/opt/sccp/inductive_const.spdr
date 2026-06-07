@@ -49,14 +49,16 @@ func @inductive_const:i32(i32) {
     %tmp14:i32 = itrunc %tmp13                           # 256
     %lbct4:ctrl, %tmp15:i32 = srem %lbct3, %tmp14, %120  # 16
     %lbct5:ctrl, %tmp16:i32 = urem %lbct4, %tmp15, %11   # 5
-    %tmp17:i32 = popcount %tmp16                         # 2
-    %tmp18:i32 = iadd %tmp17, %3                         # 5
+    %tmp17:i32 = lzcount %tmp16                          # 29
+    %tmp18:i32 = popcount %tmp17                         # 4
+    %tmp19:i32 = tzcount %tmp18                          # 2
+    %tmp20:i32 = iadd %tmp19, %3                         # 5
 
     %lbcf2:ctrl = call @g %lbcf
 
     %lbm:ctrl, %lbmp:phisel = region %lbct5, %lbcf2
 
-    %constvaln:i32 = phi %lbmp, %tmp18, %11
+    %constvaln:i32 = phi %lbmp, %tmp20, %11
     %lbm1:ctrl, %lcn:i32 = call @f %lbm
 
     return %exit, %constval
@@ -85,8 +87,10 @@ func @inductive_nonconst:i32(i32) {
     # dag:         $(itrunc0=$val):i32 = itrunc $sfill0
     # dag:         $(srem0=$val):ctrl, $(srem1=$val):i32 = srem $udiv0, $itrunc0, $iconst1
     # dag:         $(urem0=$val):ctrl, $(urem1=$val):i32 = urem $srem0, $srem1, $iconst2
-    # dag:         $(popcount0=$val):i32 = popcount $urem1
-    # dag:         $(phi0=$val):i32 = phi $(region0=$val), $popcount0, $iconst0
+    # dag:         $(lzcount0=$val):i32 = lzcount $urem1
+    # dag:         $(popcount0=$val):i32 = popcount $lzcount0
+    # dag:         $(tzcount0=$val):i32 = tzcount $popcount0
+    # dag:         $(phi0=$val):i32 = phi $(region0=$val), $tzcount0, $iconst0
     # dag:         $(phi1=$val):i32 = phi $(region1=$val), $iconst4, $phi0
     # dag:         $(iadd0=$val):i32 = iadd $phi1, $iconst2
     # dag:         $isub0:i32 = isub $iadd0, $iconst4
@@ -137,13 +141,15 @@ func @inductive_nonconst:i32(i32) {
     %tmp14:i32 = itrunc %tmp13                           # 256
     %lbct4:ctrl, %tmp15:i32 = srem %lbct3, %tmp14, %120  # 16
     %lbct5:ctrl, %tmp16:i32 = urem %lbct4, %tmp15, %7    # 2
-    %tmp17:i32 = popcount %tmp16                         # 1
+    %tmp17:i32 = lzcount %tmp16                          # 30
+    %tmp18:i32 = popcount %tmp17                         # 4
+    %tmp19:i32 = tzcount %tmp18                          # 2
 
     %lbcf2:ctrl = call @g %lbcf
 
     %lbm:ctrl, %lbmp:phisel = region %lbct5, %lbcf2
 
-    %constvaln:i32 = phi %lbmp, %tmp17, %11
+    %constvaln:i32 = phi %lbmp, %tmp19, %11
     %lbm1:ctrl, %lcn:i32 = call @f %lbm
 
     return %exit, %constval

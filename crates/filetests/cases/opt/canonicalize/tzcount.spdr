@@ -1,0 +1,154 @@
+# run: opt[func()]
+
+func @tzcount32_32:i32(i32) {
+    # check:   func @tzcount32_32:i32(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(tzcount0=$val):i32 = tzcount $entry1
+    # dag:         return $entry0, $tzcount0
+    # nextln:  }
+
+    %0:ctrl, %1:i32 = entry
+    %2:i32 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount32_64:i64(i32) {
+    # check:   func @tzcount32_64:i64(i32) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i32 = entry
+    # dag:         $(tzcount0=$val):i64 = tzcount $entry1
+    # dag:         return $entry0, $tzcount0
+    # nextln:  }
+
+    %0:ctrl, %1:i32 = entry
+    %2:i64 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount64_32:i32(i64) {
+    # check:   func @tzcount64_32:i32(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(tzcount0=$val):i32 = tzcount $entry1
+    # dag:         return $entry0, $tzcount0
+    # nextln:  }
+
+    %0:ctrl, %1:i64 = entry
+    %2:i32 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount64_64:i64(i64) {
+    # check:   func @tzcount64_64:i64(i64) {
+    # nextln:      $(entry0=$val):ctrl, $(entry1=$val):i64 = entry
+    # dag:         $(tzcount0=$val):i64 = tzcount $entry1
+    # dag:         return $entry0, $tzcount0
+    # nextln:  }
+
+    %0:ctrl, %1:i64 = entry
+    %2:i64 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount_const_32_32:i32() {
+    # check:   func @tzcount_const_32_32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %0:ctrl = entry
+    %1:i32 = iconst 7
+    %2:i32 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount_const_32_64:i64() {
+    # check:   func @tzcount_const_32_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %0:ctrl = entry
+    %1:i32 = iconst 7
+    %2:i64 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount_const_64_32:i32() {
+    # check:   func @tzcount_const_64_32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %0:ctrl = entry
+    %1:i64 = iconst 7
+    %2:i32 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount_const_64_64:i64() {
+    # check:   func @tzcount_const_64_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 0
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %0:ctrl = entry
+    %1:i64 = iconst 7
+    %2:i64 = tzcount %1
+    return %0, %2
+}
+
+
+func @tzcount_zero_32_32:i32() {
+    # check:   func @tzcount_zero_32_32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 32
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %0:ctrl = entry
+    %1:i32 = iconst 0
+    %2:i32 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount_zero_32_64:i64() {
+    # check:   func @tzcount_zero_32_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 32
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %0:ctrl = entry
+    %1:i32 = iconst 0
+    %2:i64 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount_zero_64_32:i32() {
+    # check:   func @tzcount_zero_64_32:i32() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i32 = iconst 64
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %0:ctrl = entry
+    %1:i64 = iconst 0
+    %2:i32 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount_zero_64_64:i64() {
+    # check:   func @tzcount_zero_64_64:i64() {
+    # nextln:      $(entry0=$val):ctrl = entry
+    # dag:         $(iconst0=$val):i64 = iconst 64
+    # dag:         return $entry0, $iconst0
+    # nextln:  }
+
+    %0:ctrl = entry
+    %1:i64 = iconst 0
+    %2:i64 = tzcount %1
+    return %0, %2
+}

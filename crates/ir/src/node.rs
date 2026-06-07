@@ -229,6 +229,7 @@ pub enum NodeKind {
     Udiv,
     Srem,
     Urem,
+    Popcount,
     Iext,
     Itrunc,
     Sfill(u8),

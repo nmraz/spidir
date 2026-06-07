@@ -66,6 +66,7 @@ nodekind           =  {
   | "udiv"
   | "srem"
   | "urem"
+  | "popcount"
   | "iext"
   | "itrunc"
   | sfill_nodekind

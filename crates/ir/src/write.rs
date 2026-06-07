@@ -279,6 +279,7 @@ pub fn write_node_kind(
         NodeKind::Udiv => w.write_str("udiv")?,
         NodeKind::Srem => w.write_str("srem")?,
         NodeKind::Urem => w.write_str("urem")?,
+        NodeKind::Popcount => w.write_str("popcount")?,
         NodeKind::Iext => w.write_str("iext")?,
         NodeKind::Itrunc => w.write_str("itrunc")?,
         NodeKind::Sfill(width) => write!(w, "sfill {width}")?,

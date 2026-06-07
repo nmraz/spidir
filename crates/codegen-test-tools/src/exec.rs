@@ -193,6 +193,7 @@ fn relocate_buf(
                         )
                     })? as u64
                 }
+                RelocTarget::LibCall(_) => bail!("unknown libcall kind"),
                 RelocTarget::ConstantPool => {
                     buf.as_ptr() as u64
                         + constpool_off as u64

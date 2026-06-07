@@ -9,7 +9,7 @@ use capstone::{
     },
 };
 use codegen::{
-    code_buffer::{CodeBlob, RelocKind, RelocTarget},
+    code_buffer::{CodeBlob, LibCallKind, RelocKind, RelocTarget},
     target::x64::{RELOC_ABS64, RELOC_PC32},
 };
 use ir::{module::ModuleMetadata, write::quote_ident};
@@ -53,6 +53,7 @@ pub fn disasm_code(
                 RelocTarget::Function(func) => {
                     quote_ident(&module_metadata.resolve_funcref(func).name)
                 }
+                RelocTarget::LibCall(kind) => libcall_name(kind).into(),
                 RelocTarget::ConstantPool => "<CP>".into(),
             };
 
@@ -106,6 +107,10 @@ fn reloc_name(reloc: RelocKind) -> String {
         RELOC_ABS64 => "RELOC_ABS64".to_owned(),
         _ => format!("RELOC_{}", reloc.0),
     }
+}
+
+fn libcall_name(libcall: LibCallKind) -> String {
+    format!("libcall:{}", libcall.0)
 }
 
 const CP_CHUNK_SIZE: usize = 8;

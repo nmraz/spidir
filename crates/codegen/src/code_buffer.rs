@@ -14,6 +14,9 @@ use crate::constpool::{Constant, ConstantPoolBuilder};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RelocKind(pub u8);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct LibCallKind(pub u32);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RawReloc<T> {
     pub kind: RelocKind,
@@ -22,10 +25,38 @@ pub struct RawReloc<T> {
     pub addend: i64,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum CallTarget {
+    Function(FunctionRef),
+    LibCall(LibCallKind),
+}
+
+impl From<FunctionRef> for CallTarget {
+    fn from(v: FunctionRef) -> Self {
+        Self::Function(v)
+    }
+}
+
+impl From<LibCallKind> for CallTarget {
+    fn from(v: LibCallKind) -> Self {
+        Self::LibCall(v)
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BufferRelocTarget {
     Function(FunctionRef),
+    LibCall(LibCallKind),
     Constant(Constant),
+}
+
+impl From<CallTarget> for BufferRelocTarget {
+    fn from(value: CallTarget) -> Self {
+        match value {
+            CallTarget::Function(func) => BufferRelocTarget::Function(func),
+            CallTarget::LibCall(kind) => BufferRelocTarget::LibCall(kind),
+        }
+    }
 }
 
 type BufferReloc = RawReloc<BufferRelocTarget>;
@@ -33,6 +64,7 @@ type BufferReloc = RawReloc<BufferRelocTarget>;
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RelocTarget {
     Function(FunctionRef),
+    LibCall(LibCallKind),
     ConstantPool,
 }
 
@@ -271,6 +303,12 @@ impl<F: FixupKind> CodeBuffer<F> {
                     kind: reloc.kind,
                     offset: reloc.offset,
                     target: RelocTarget::Function(func),
+                    addend: reloc.addend,
+                },
+                BufferRelocTarget::LibCall(kind) => Reloc {
+                    kind: reloc.kind,
+                    offset: reloc.offset,
+                    target: RelocTarget::LibCall(kind),
                     addend: reloc.addend,
                 },
                 BufferRelocTarget::Constant(constant) => {

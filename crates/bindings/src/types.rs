@@ -35,11 +35,14 @@ pub struct ApiValue(pub u32);
 #[repr(C)]
 pub struct ApiPhi(pub u32);
 
+pub type ApiLibcallKind = u32;
+
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub union ApiRelocTarget {
     internal: ApiFunction,
     external: ApiExternFunction,
+    libcall: ApiLibcallKind,
 }
 
 #[derive(Clone, Copy)]
@@ -109,7 +112,8 @@ const SPIDIR_MEM_SIZE_8: u8 = 3;
 
 const SPIDIR_RELOC_TARGET_INTERNAL_FUNCTION: u8 = 0;
 const SPIDIR_RELOC_TARGET_EXTERNAL_FUNCTION: u8 = 1;
-const SPIDIR_RELOC_TARGET_CONSTPOOL: u8 = 2;
+const SPIDIR_RELOC_TARGET_LIBCALL: u8 = 2;
+const SPIDIR_RELOC_TARGET_CONSTPOOL: u8 = 3;
 
 pub unsafe fn value_list_from_api(
     arg_count: usize,
@@ -288,6 +292,10 @@ pub fn reloc_to_api(reloc: &Reloc) -> ApiReloc {
             ApiRelocTarget {
                 external: extern_function_to_api(func),
             },
+        ),
+        RelocTarget::LibCall(kind) => (
+            SPIDIR_RELOC_TARGET_LIBCALL,
+            ApiRelocTarget { libcall: kind.0 },
         ),
         RelocTarget::ConstantPool => (
             SPIDIR_RELOC_TARGET_CONSTPOOL,

@@ -39,20 +39,20 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln:           $$rax = MovRmS32(0)
     # nextln: 0021:     $$r12 = MovsxRRm(Ext32_64) $$rax
     # nextln: 0022:     $$rdi = MovRI64(106721347409792)
-    # nextln: 0023:     $$rax = FuncAddrAbs(External(extfunc0))
+    # nextln: 0023:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rsi = MovRmS32(40)
     # nextln: 0024:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$r13:gpr64 = $$rax
-    # nextln: 0025:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0025:     $$rax = FuncAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rdi:gpr64 = $$r13
     # nextln: 0026:     CallRm $$rax, $$rdi
     # nextln: 0027:     MovMR(S64, [!2 + 0]) $$r13
-    # nextln: 0028:     $$rax = FuncAddrAbs(External(extfunc0))
+    # nextln: 0028:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rsi:gpr64 = $$rbx
     # nextln:           $$rdi:gpr64 = $$r15
     # nextln: 0029:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0030:     MovMR(S32, [reg + 32]) $$r14, $$rax
-    # nextln: 0031:     $$rax = FuncAddrAbs(External(extfunc0))
+    # nextln: 0031:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rsi:gpr64 = $$rbx
     # nextln:           $$rdi:gpr64 = $$r15
     # nextln: 0032:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -92,7 +92,7 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0059:     $$rsi = ImulRRmI(S64, 4) $$r14
     # nextln: 0060:     $$rsi = AddRI(S64, 48) $$rsi
     # nextln: 0061:     $$rdi = MovRI64(106721347438592)
-    # nextln: 0062:     $$rax = FuncAddrAbs(External(extfunc0))
+    # nextln: 0062:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
     # nextln: 0063:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0064:     MovMR(S32, [reg + 32]) $$r14, $$rax
     # nextln: 0065:     MovMR(S64, [!3 + 0]) $$rax
@@ -213,7 +213,7 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln:           $$rax:gpr32 = $$r14
     # nextln: 0144:     Jump(block32)
     # nextln:       block31:
-    # nextln: 0145:     $$rax = FuncAddrAbs(External(extfunc3))
+    # nextln: 0145:     $$rax = FuncAddrAbs(Function(External(extfunc3)))
     # nextln: 0146:     $$rax = CallRm $$rax
     # nextln: 0147:     Jump(block32)
     # nextln:       block32:
@@ -326,7 +326,7 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0224:     $$rax = MovRM(S32, [!0 + 0])
     # nextln: 0225:     Jump(block60)
     # nextln:       block59:
-    # nextln: 0226:     $$rax = FuncAddrAbs(External(extfunc3))
+    # nextln: 0226:     $$rax = FuncAddrAbs(Function(External(extfunc3)))
     # nextln: 0227:     $$rax = CallRm $$rax
     # nextln: 0228:     Jump(block60)
     # nextln:       block60:
@@ -420,43 +420,43 @@ func @"System.Int32 Tests.Int_No_Op::Sub_Funclet_10()":i32() {
     # nextln: 0294:     $$rax = AddRR(S32) $$rax, $$rcx
     # nextln: 0295:     Ret $$rax
     # nextln:       block69:
-    # nextln: 0296:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0296:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln: 0297:     CallRm $$rax
     # nextln: 0298:     Ud2
     # nextln:       block64:
-    # nextln: 0299:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0299:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln: 0300:     CallRm $$rax
     # nextln: 0301:     Ud2
     # nextln:       block41:
-    # nextln: 0302:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0302:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln: 0303:     CallRm $$rax
     # nextln: 0304:     Ud2
     # nextln:       block36:
-    # nextln: 0305:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0305:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln: 0306:     CallRm $$rax
     # nextln: 0307:     Ud2
     # nextln:       block14:
-    # nextln: 0308:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0308:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln: 0309:     CallRm $$rax
     # nextln: 0310:     Ud2
     # nextln:       block12:
-    # nextln: 0311:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0311:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln: 0312:     CallRm $$rax
     # nextln: 0313:     Ud2
     # nextln:       block10:
-    # nextln: 0314:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0314:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln: 0315:     CallRm $$rax
     # nextln: 0316:     Ud2
     # nextln:       block8:
-    # nextln: 0317:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0317:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln: 0318:     CallRm $$rax
     # nextln: 0319:     Ud2
     # nextln:       block6:
-    # nextln: 0320:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0320:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln: 0321:     CallRm $$rax
     # nextln: 0322:     Ud2
     # nextln:       block4:
-    # nextln: 0323:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0323:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln: 0324:     CallRm $$rax
     # nextln: 0325:     Ud2
 

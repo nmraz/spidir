@@ -11,6 +11,7 @@ use valmatch::match_value;
 
 use crate::{
     cfg::Block,
+    code_buffer::CallTarget,
     isel::{IselContext, MachineIselError, ParamLoc},
     lir::{
         DefOperand, DefOperandConstraint, OperandPos, PhysReg, PhysRegSet, RegClass, UseOperand,
@@ -246,7 +247,7 @@ impl MachineLower for X64Machine {
                 }
             },
             &NodeKind::FuncAddr(func) => emit_funcaddr(self, ctx, node, func),
-            &NodeKind::Call(func) => emit_call(self, ctx, node, func),
+            &NodeKind::Call(func) => emit_call(self, ctx, node, func.into()),
             NodeKind::CallInd(_) => {
                 let mut vals = ctx.node_inputs(node);
                 let target =
@@ -919,6 +920,8 @@ fn emit_funcaddr(
     let [output] = ctx.node_outputs_exact(node);
     let output = ctx.get_value_vreg(output);
 
+    let func: CallTarget = func.into();
+
     match machine.code_model_for_function(func) {
         CodeModel::SmallPic => {
             ctx.emit_instr(
@@ -941,7 +944,7 @@ fn emit_call(
     machine: &X64Machine,
     ctx: &mut IselContext<'_, '_, X64Machine>,
     node: Node,
-    func: FunctionRef,
+    func: CallTarget,
 ) {
     match machine.code_model_for_function(func) {
         CodeModel::SmallPic => emit_call_rel(ctx, node, func),
@@ -949,7 +952,7 @@ fn emit_call(
     }
 }
 
-fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
+fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: CallTarget) {
     emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
         ctx.emit_instr_with_clobbers(
             X64Instr::CallRel(func),
@@ -960,7 +963,7 @@ fn emit_call_rel(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: Fu
     });
 }
 
-fn emit_call_abs(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: FunctionRef) {
+fn emit_call_abs(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, func: CallTarget) {
     emit_call_wrapper(ctx, node, ctx.node_inputs(node), |ctx, retvals, args| {
         let target = ctx.create_temp_vreg(RC_GPR64);
         ctx.emit_instr(

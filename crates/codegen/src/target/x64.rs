@@ -4,7 +4,7 @@ use ir::node::FunctionRef;
 
 use crate::{
     cfg::Block,
-    code_buffer::RelocKind,
+    code_buffer::{CallTarget, RelocKind},
     lir::{MemLayout, PhysReg, RegBank, RegClass, RegWidth, StackSlot},
     machine::{MachineCore, MachineRegalloc},
     regalloc::RematCost,
@@ -293,9 +293,9 @@ pub enum X64Instr {
     MovsRM(SseFpuPrecision, AddrMode),
     MovsMR(SseFpuPrecision, AddrMode),
     Ret,
-    FuncAddrRel(FunctionRef),
-    FuncAddrAbs(FunctionRef),
-    CallRel(FunctionRef),
+    FuncAddrRel(CallTarget),
+    FuncAddrAbs(CallTarget),
+    CallRel(CallTarget),
     CallRm,
     Jump(Block),
     Jumpcc(CondCode, Block, Block),
@@ -450,10 +450,12 @@ impl X64Machine {
         Self { config }
     }
 
-    fn code_model_for_function(&self, func: FunctionRef) -> CodeModel {
+    fn code_model_for_function(&self, func: CallTarget) -> CodeModel {
         match func {
-            FunctionRef::Internal(_) => self.config.internal_code_model,
-            FunctionRef::External(_) => self.config.extern_code_model,
+            CallTarget::Function(FunctionRef::Internal(_)) => self.config.internal_code_model,
+            CallTarget::LibCall(_) | CallTarget::Function(FunctionRef::External(_)) => {
+                self.config.extern_code_model
+            }
         }
     }
 }

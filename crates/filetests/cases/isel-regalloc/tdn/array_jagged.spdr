@@ -8,7 +8,7 @@ func @gc_new:ptr(i32, i64) {
     # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln:           $$rdi:gpr64 = $$rsi
-    # nextln: 0000:     $$rax = FuncAddrAbs(External(extfunc0))
+    # nextln: 0000:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
     # nextln: 0001:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0002:     Ret $$rax
 
@@ -54,13 +54,13 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0016:     $$rsi = AddRR(S64) $$rcx, $$rsi
     # nextln:           $$rbx:gpr64 = $$rax
     # nextln:           $$rdi = MovRmS32(171)
-    # nextln: 0018:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
+    # nextln: 0018:     $$rax = CallRel(Function(Internal(func0))) $$rdi, $$rsi
     # nextln: 0019:     MovMR(S32, [reg + 16]) $$r13, $$rax
     # nextln: 0020:     MovMR(S64, [!0 + 0]) $$rax
     # nextln: 0021:     $$r14 = MovRM(S64, [!0 + 0])
     # nextln:           $$rdi = MovRmS32(170)
     # nextln:           $$rsi:gpr64 = $$rbx
-    # nextln: 0022:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
+    # nextln: 0022:     $$rax = CallRel(Function(Internal(func0))) $$rdi, $$rsi
     # nextln:           $$rsi:gpr64 = $$rbx
     # nextln: 0023:     MovMR(S32, [reg + 16]) $$r13, $$rax
     # nextln: 0024:     $$rcx = MovRM(S32, [reg + 16]) $$rax
@@ -88,7 +88,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0039:     MovMR(S64, [reg + 0]) $$rax, $$rcx
     # nextln: 0040:     $$r14 = MovRM(S64, [!0 + 0])
     # nextln:           $$rdi = MovRmS32(170)
-    # nextln: 0041:     $$rax = CallRel(Internal(func0)) $$rdi, $$rsi
+    # nextln: 0041:     $$rax = CallRel(Function(Internal(func0))) $$rdi, $$rsi
     # nextln: 0042:     MovMR(S32, [reg + 16]) $$r13, $$rax
     # nextln: 0043:     $$rcx = MovRM(S32, [reg + 16]) $$rax
     # nextln: 0044:     AluRRm(S64, Cmp) $$r12, $$rcx
@@ -150,7 +150,7 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln:       block4:
     # nextln: 0084:     Jump(block5)
     # nextln:       block5:
-    # nextln: 0085:     CallRel(Internal(func1))
+    # nextln: 0085:     CallRel(Function(Internal(func1)))
     # nextln: 0086:     Ud2
 
     %0:ctrl, %1:i32 = entry

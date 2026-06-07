@@ -1,9 +1,10 @@
 use flag_liveness::BlockFlagLivenessTracker;
-use ir::node::FunctionRef;
 
 use crate::{
     cfg::Block,
-    code_buffer::{BufferRelocTarget, CodeBuffer, FixupKind, InstrAnchor, InstrSink, Label},
+    code_buffer::{
+        BufferRelocTarget, CallTarget, CodeBuffer, FixupKind, InstrAnchor, InstrSink, Label,
+    },
     constpool::Constant,
     emit::{EmitContext, EmitCopyData, EmitInstrData},
     frame::FrameLayout,
@@ -505,14 +506,10 @@ impl MachineEmit for X64Machine {
                 state.sp_frame_offset += 8;
             }
             &X64Instr::FuncAddrRel(target) => {
-                emit_lea_rip_reloc(buffer, defs[0].as_reg().unwrap(), target);
+                emit_lea_rip_reloc(buffer, defs[0].as_reg().unwrap(), target.into());
             }
             &X64Instr::FuncAddrAbs(target) => {
-                emit_movabs_r_i_reloc(
-                    buffer,
-                    defs[0].as_reg().unwrap(),
-                    BufferRelocTarget::Function(target),
-                );
+                emit_movabs_r_i_reloc(buffer, defs[0].as_reg().unwrap(), target.into());
             }
             &X64Instr::CallRel(target) => {
                 emit_call_rel(buffer, target);
@@ -1014,20 +1011,15 @@ fn emit_lea(
     });
 }
 
-fn emit_lea_rip_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: FunctionRef) {
-    buffer.instr_with_reloc(
-        BufferRelocTarget::Function(target),
-        -4,
-        RELOC_PC32,
-        |sink| {
-            emit_lea_instr(
-                sink,
-                OperandSize::S64,
-                dest,
-                RawAddrMode::RipOff { offset: 0 },
-            )
-        },
-    );
+fn emit_lea_rip_reloc(buffer: &mut CodeBuffer<X64Fixup>, dest: PhysReg, target: BufferRelocTarget) {
+    buffer.instr_with_reloc(target, -4, RELOC_PC32, |sink| {
+        emit_lea_instr(
+            sink,
+            OperandSize::S64,
+            dest,
+            RawAddrMode::RipOff { offset: 0 },
+        )
+    });
 }
 
 fn emit_lea_instr(
@@ -1242,18 +1234,13 @@ fn emit_movsx_r_rm(buffer: &mut CodeBuffer<X64Fixup>, width: ExtWidth, dest: Phy
     });
 }
 
-fn emit_call_rel(buffer: &mut CodeBuffer<X64Fixup>, target: FunctionRef) {
-    buffer.instr_with_reloc(
-        BufferRelocTarget::Function(target),
-        -4,
-        RELOC_PC32,
-        |sink| {
-            sink.emit(&[0xe8]);
-            let anchor = sink.anchor();
-            sink.emit(&0u32.to_le_bytes());
-            anchor
-        },
-    );
+fn emit_call_rel(buffer: &mut CodeBuffer<X64Fixup>, target: CallTarget) {
+    buffer.instr_with_reloc(target.into(), -4, RELOC_PC32, |sink| {
+        sink.emit(&[0xe8]);
+        let anchor = sink.anchor();
+        sink.emit(&0u32.to_le_bytes());
+        anchor
+    });
 }
 
 fn emit_call_rm(buffer: &mut CodeBuffer<X64Fixup>, target: RegMem) {

@@ -129,18 +129,18 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$rdi = StackAddr(!1)
     # nextln:           $$rsi:gpr64 = $$rdx
     # nextln:           $$rdx:gpr64 = $$rax
-    # nextln: 0008:     $$rax = CallRel(External(extfunc4)) $$rdi, $$rsi, $$rdx
+    # nextln: 0008:     $$rax = CallRel(Function(External(extfunc4))) $$rdi, $$rsi, $$rdx
     # nextln: 0009:     Jump(block2)
     # nextln:       block2:
     # nextln: 0010:     $$r14 = MovRI64(136994935934016)
     # nextln: 0011:     MovMR(S64, [!2 + 0]) $$r14
     # nextln:           $$rdi = StackAddr(!2)
-    # nextln: 0012:     $$rax = CallRel(External(extfunc11)) $$rdi
+    # nextln: 0012:     $$rax = CallRel(Function(External(extfunc11))) $$rdi
     # nextln:           $$r15:gpr64 = $$rax
     # nextln: 0013:     $$rax = MovRI64(136994935934400)
     # nextln: 0014:     MovMR(S64, [!3 + 0]) $$rax
     # nextln:           $$rdi = StackAddr(!3)
-    # nextln: 0015:     $$rax = CallRel(External(extfunc11)) $$rdi
+    # nextln: 0015:     $$rax = CallRel(Function(External(extfunc11))) $$rdi
     # nextln: 0016:     AluRRm(S64, Cmp) $$r15, $$rax
     # nextln: 0017:     Jumpcc(E, block3, block4)
     # nextln:       block3:
@@ -153,11 +153,11 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block4:
     # nextln: 0021:     MovMR(S64, [!5 + 0]) $$r14
     # nextln:           $$rdi = StackAddr(!5)
-    # nextln: 0022:     $$rax = CallRel(External(extfunc11)) $$rdi
+    # nextln: 0022:     $$rax = CallRel(Function(External(extfunc11))) $$rdi
     # nextln:           $$r15:gpr64 = $$rax
     # nextln: 0023:     MovMR(S64, [!4 + 0]) $$r14
     # nextln:           $$rdi = StackAddr(!4)
-    # nextln: 0024:     $$rax = CallRel(External(extfunc11)) $$rdi
+    # nextln: 0024:     $$rax = CallRel(Function(External(extfunc11))) $$rdi
     # nextln: 0025:     $$rcx = MovRmS32(0)
     # nextln: 0026:     AluRRm(S64, Cmp) $$r15, $$rax
     # nextln: 0027:     $$rcx = Setcc(E) $$rcx
@@ -168,17 +168,17 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0028:     Jump(block5)
     # nextln:       block5:
     # nextln: 0030:     $$rdi = MovzxRRm(S8) $$rcx
-    # nextln: 0031:     CallRel(External(extfunc24)) $$rdi
+    # nextln: 0031:     CallRel(Function(External(extfunc24))) $$rdi
     # nextln:           $$rdi:gpr64 = $$rbx
-    # nextln: 0032:     CallRel(External(extfunc1)) $$rdi
+    # nextln: 0032:     CallRel(Function(External(extfunc1))) $$rdi
     # nextln:           $$rdi:gpr64 = $$rbx
-    # nextln: 0033:     $$rax = CallRel(External(extfunc13)) $$rdi
+    # nextln: 0033:     $$rax = CallRel(Function(External(extfunc13))) $$rdi
     # nextln:           $$r12 = StackAddr(!0)
     # nextln:           $$r15:gpr64 = $$rax
     # nextln:           $$rdx = MovRmS32(16)
     # nextln:           $$rsi = StackAddr(!1)
     # nextln:           $$rdi:gpr64 = $$r12
-    # nextln: 0034:     $$rax = CallRel(External(extfunc4)) $$rdi, $$rsi, $$rdx
+    # nextln: 0034:     $$rax = CallRel(Function(External(extfunc4))) $$rdi, $$rsi, $$rdx
     # nextln: 0035:     $$rax = MovRM(S8, [reg + 0]) $$r15
     # nextln: 0036:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0037:     Jumpcc(Ne, block6, block7)
@@ -205,7 +205,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0044:     Jump(block8)
     # nextln:       block8:
     # nextln:           $$rdi:gpr64 = $$r12
-    # nextln: 0045:     $$rax = CallRel(External(extfunc25)) $$rdi, $$rsi
+    # nextln: 0045:     $$rax = CallRel(Function(External(extfunc25))) $$rdi, $$rsi
     # nextln:           $$spill0:gpr32 = $$rax
     # nextln:           $$rax = MovRmS32(0)
     # nextln: 0046:     $$rax = MovzxRRm(S8) $$rax
@@ -226,9 +226,9 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$rsi = StackAddr(!1)
     # nextln:           $$rdi = StackAddr(!6)
     # nextln:           $$rdx = MovRmS32(16)
-    # nextln: 0057:     $$rax = CallRel(External(extfunc4)) $$rdi, $$rsi, $$rdx
+    # nextln: 0057:     $$rax = CallRel(Function(External(extfunc4))) $$rdi, $$rsi, $$rdx
     # nextln:           $$rdi = StackAddr(!6)
-    # nextln: 0058:     $$rax = CallRel(External(extfunc30)) $$rdi
+    # nextln: 0058:     $$rax = CallRel(Function(External(extfunc30))) $$rdi
     # nextln:           $$rdx:gpr64 = $$r15
     # nextln:           $$rcx:gpr32 = $$spill8
     # nextln:           $$r15:gpr64 = $$rax
@@ -257,7 +257,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0059:     Jump(block11)
     # nextln:       block11:
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0060:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0060:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0061:     AluRRm(S32, Cmp) $$rax, $$r13
     # nextln: 0062:     Jumpcc(Le, block12, block14)
     # nextln:       block12:
@@ -339,7 +339,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block381:
     # nextln:           $$r13:gpr32 = $$rax
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0090:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0090:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0091:     AluRRm(S32, Cmp) $$rax, $$r12
     # nextln: 0092:     Jumpcc(Le, block389, block390)
     # nextln:       block389:
@@ -554,7 +554,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0140:     Jump(block372)
     # nextln:       block372:
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0141:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0141:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0142:     AluRRm(S32, Cmp) $$rax, $$r12
     # nextln: 0143:     Jumpcc(Le, block373, block375)
     # nextln:       block373:
@@ -884,7 +884,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0233:     Jump(block308)
     # nextln:       block308:
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0234:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0234:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0235:     AluRRm(S32, Cmp) $$rax, $$r12
     # nextln: 0236:     Jumpcc(Le, block311, block313)
     # nextln:       block311:
@@ -915,7 +915,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block312:
     # nextln: 0246:     $$r13 = AddRI(S32, 1) $$r12
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0247:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0247:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0248:     AluRRm(S32, Cmp) $$rax, $$r13
     # nextln: 0249:     Jumpcc(Le, block316, block318)
     # nextln:       block316:
@@ -979,7 +979,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block329:
     # nextln: 0278:     $$r12 = AddRI(S32, 1) $$r12
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0279:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0279:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0280:     AluRRm(S32, Cmp) $$rax, $$r12
     # nextln: 0281:     Jumpcc(Le, block330, block331)
     # nextln:       block330:
@@ -1204,7 +1204,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block290:
     # nextln:           $$rdi:gpr64 = $$r13
     # nextln:           $$rdx:gpr32 = $$spill57
-    # nextln: 0346:     CallRel(External(extfunc5)) $$rdi, $$rsi, $$rdx
+    # nextln: 0346:     CallRel(Function(External(extfunc5))) $$rdi, $$rsi, $$rdx
     # nextln: 0347:     $$rcx = MovRM(S8, [reg + 0]) $$r12
     # nextln: 0348:     $$rax = MovRmS32(0)
     # nextln: 0349:     AluRRm(S32, Test) $$rcx, $$rcx
@@ -1216,10 +1216,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$rdx = MovRmS32(16)
     # nextln:           $$rsi = StackAddr(!1)
     # nextln:           $$rdi = StackAddr(!7)
-    # nextln: 0354:     $$rax = CallRel(External(extfunc4)) $$rdi, $$rsi, $$rdx
+    # nextln: 0354:     $$rax = CallRel(Function(External(extfunc4))) $$rdi, $$rsi, $$rdx
     # nextln:           $$rsi = MovRmS32(2)
     # nextln:           $$rdi = StackAddr(!7)
-    # nextln: 0355:     $$rax = CallRel(External(extfunc25)) $$rdi, $$rsi
+    # nextln: 0355:     $$rax = CallRel(Function(External(extfunc25))) $$rdi, $$rsi
     # nextln: 0356:     $$rcx = MovRmS32(0)
     # nextln: 0357:     AluRRm(S32, Cmp) $$rax, $$spill15
     # nextln: 0358:     $$rcx = Setcc(E) $$rcx
@@ -1398,25 +1398,25 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$spill43:gpr32 = $$rcx
     # nextln:           $$rdi = StackAddr(!9)
     # nextln:           $$rsi = MovRmS32(16)
-    # nextln: 0412:     $$rax = CallRel(External(extfunc16)) $$rdi, $$rsi
+    # nextln: 0412:     $$rax = CallRel(Function(External(extfunc16))) $$rdi, $$rsi
     # nextln:           $$rdi = StackAddr(!10)
     # nextln:           $$rsi = MovRmS32(16)
-    # nextln: 0413:     $$rax = CallRel(External(extfunc28)) $$rdi, $$rsi
+    # nextln: 0413:     $$rax = CallRel(Function(External(extfunc28))) $$rdi, $$rsi
     # nextln:           $$rdx = MovRmS32(4)
     # nextln:           $$rsi = StackAddr(!9)
     # nextln:           $$rdi = StackAddr(!10)
-    # nextln: 0414:     CallRel(External(extfunc17)) $$rdi, $$rsi, $$rdx
+    # nextln: 0414:     CallRel(Function(External(extfunc17))) $$rdi, $$rsi, $$rdx
     # nextln:           $$rsi = StackAddr(!10)
     # nextln:           $$rdx = MovRmS32(16)
     # nextln:           $$rdi = StackAddr(!8)
-    # nextln: 0415:     $$rax = CallRel(External(extfunc4)) $$rdi, $$rsi, $$rdx
+    # nextln: 0415:     $$rax = CallRel(Function(External(extfunc4))) $$rdi, $$rsi, $$rdx
     # nextln: 0416:     AluRRm(S32, Test) $$r12, $$r12
     # nextln: 0417:     Jumpcc(Ne, block45, block46)
     # nextln:       block45:
     # nextln:           $$rdi:gpr64 = $$rbx
-    # nextln: 0418:     $$rax = CallRel(External(extfunc29)) $$rdi
+    # nextln: 0418:     $$rax = CallRel(Function(External(extfunc29))) $$rdi
     # nextln:           $$rdi:gpr64 = $$rax
-    # nextln: 0419:     $$rax = CallRel(External(extfunc8)) $$rdi
+    # nextln: 0419:     $$rax = CallRel(Function(External(extfunc8))) $$rdi
     # nextln: 0420:     $$rcx = MovRmS32(0)
     # nextln: 0421:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0422:     $$rcx = Setcc(G) $$rcx
@@ -1483,7 +1483,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$r15:gpr64 = $$r13
     # nextln: 0442:     Jump(block265)
     # nextln:       block287:
-    # nextln: 0443:     CallRel(External(extfunc10))
+    # nextln: 0443:     CallRel(Function(External(extfunc10)))
     # nextln: 0444:     Ud2
     # nextln:       block264:
     # nextln:           $$rdi:gpr32 = $$spill40
@@ -1602,7 +1602,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$rbx:gpr32 = $$r8
     # nextln:           $$r12:gpr32 = $$spill34
     # nextln:           $$rdi = StackAddr(!8)
-    # nextln: 0472:     $$rax = CallRel(External(extfunc7)) $$rdi
+    # nextln: 0472:     $$rax = CallRel(Function(External(extfunc7))) $$rdi
     # nextln: 0473:     $$rcx = MovRmS32(0)
     # nextln: 0474:     AluRRm(S32, Cmp) $$r12, $$rax
     # nextln:           $$spill34:gpr32 = $$r12
@@ -1615,29 +1615,29 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0481:     Jumpcc(Ne, block278, block279)
     # nextln:       block278:
     # nextln:           $$rdi = StackAddr(!8)
-    # nextln: 0482:     $$rax = CallRel(External(extfunc7)) $$rdi
+    # nextln: 0482:     $$rax = CallRel(Function(External(extfunc7))) $$rdi
     # nextln: 0483:     $$rax = ImulRRmI(S32, 2) $$rax
     # nextln: 0484:     $$r14 = MovsxRRm(Ext32_64) $$rax
     # nextln:           $$rdi = MovRI64(136994937567936)
     # nextln:           $$rsi:gpr64 = $$r14
-    # nextln: 0485:     $$rax = CallRel(External(extfunc22)) $$rdi, $$rsi
+    # nextln: 0485:     $$rax = CallRel(Function(External(extfunc22))) $$rdi, $$rsi
     # nextln:           $$r15:gpr64 = $$rax
     # nextln:           $$rax:gpr32 = $$rbx
     # nextln: 0486:     MovMR(S32, [reg + 16]) $$r14, $$r15
     # nextln:           $$r14:gpr32 = $$rax
     # nextln:           $$rsi = StackAddr(!12)
     # nextln:           $$rdi:gpr64 = $$r15
-    # nextln: 0487:     CallRel(External(extfunc20)) $$rdi, $$rsi
+    # nextln: 0487:     CallRel(Function(External(extfunc20))) $$rdi, $$rsi
     # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rsi = StackAddr(!12)
-    # nextln: 0488:     CallRel(External(extfunc0)) $$rdi, $$rsi
+    # nextln: 0488:     CallRel(Function(External(extfunc0))) $$rdi, $$rsi
     # nextln:           $$rsi = StackAddr(!11)
     # nextln:           $$rdi:gpr64 = $$r15
-    # nextln: 0489:     CallRel(External(extfunc20)) $$rdi, $$rsi
+    # nextln: 0489:     CallRel(Function(External(extfunc20))) $$rdi, $$rsi
     # nextln:           $$rsi = StackAddr(!11)
     # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rdx = MovRmS32(16)
-    # nextln: 0490:     $$rax = CallRel(External(extfunc4)) $$rdi, $$rsi, $$rdx
+    # nextln: 0490:     $$rax = CallRel(Function(External(extfunc4))) $$rdi, $$rsi, $$rdx
     # nextln:           $$r9:gpr64 = $$spill37
     # nextln:           $$rbx:gpr32 = $$spill27
     # nextln:           $$rdi:gpr32 = $$spill32
@@ -1685,7 +1685,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0496:     $$r14 = Setcc(L) $$r14
     # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rsi:gpr32 = $$spill34
-    # nextln: 0497:     $$rax = CallRel(External(extfunc12)) $$rdi, $$rsi
+    # nextln: 0497:     $$rax = CallRel(Function(External(extfunc12))) $$rdi, $$rsi
     # nextln:           $$rcx:gpr32 = $$spill28
     # nextln: 0498:     MovMR(S32, [reg + 0]) $$rcx, $$rax
     # nextln: 0499:     $$rax = MovzxRRm(S8) $$r14
@@ -1720,7 +1720,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$r13:gpr32 = $$spill42
     # nextln: 0511:     Jump(block283)
     # nextln:       block285:
-    # nextln: 0512:     CallRel(External(extfunc10))
+    # nextln: 0512:     CallRel(Function(External(extfunc10)))
     # nextln: 0513:     Ud2
     # nextln:       block282:
     # nextln:           $$r11:gpr32 = $$spill48
@@ -1896,10 +1896,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$r15:gpr32 = $$rsi
     # nextln:           $$rsi = StackAddr(!14)
     # nextln:           $$rdi:gpr64 = $$r13
-    # nextln: 0541:     CallRel(External(extfunc23)) $$rdi, $$rsi
+    # nextln: 0541:     CallRel(Function(External(extfunc23))) $$rdi, $$rsi
     # nextln:           $$rsi = StackAddr(!14)
     # nextln:           $$rdi:gpr64 = $$r12
-    # nextln: 0542:     CallRel(External(extfunc3)) $$rdi, $$rsi
+    # nextln: 0542:     CallRel(Function(External(extfunc3))) $$rdi, $$rsi
     # nextln:           $$spill41:gpr64 = $$r13
     # nextln: 0543:     Jump(block54)
     # nextln:       block53:
@@ -1911,9 +1911,9 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$rsi = StackAddr(!1)
     # nextln:           $$rdx = MovRmS32(16)
     # nextln:           $$rdi = StackAddr(!13)
-    # nextln: 0545:     $$rax = CallRel(External(extfunc4)) $$rdi, $$rsi, $$rdx
+    # nextln: 0545:     $$rax = CallRel(Function(External(extfunc4))) $$rdi, $$rsi, $$rdx
     # nextln:           $$rdi = StackAddr(!13)
-    # nextln: 0546:     $$rax = CallRel(External(extfunc30)) $$rdi
+    # nextln: 0546:     $$rax = CallRel(Function(External(extfunc30))) $$rdi
     # nextln:           $$rcx = MovRmS32(1)
     # nextln: 0547:     $$rcx = MovsxRRm(Ext32_64) $$rcx
     # nextln:           $$spill58:gpr64 = $$rcx
@@ -1950,7 +1950,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0554:     Jump(block55)
     # nextln:       block55:
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0555:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0555:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0556:     AluRRm(S32, Cmp) $$rax, $$rbx
     # nextln: 0557:     Jumpcc(Le, block56, block58)
     # nextln:       block56:
@@ -2190,10 +2190,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0612:     $$rdi = MovzxRRm(S16) $$rcx
     # nextln:           $$r13:gpr32 = $$rsi
     # nextln:           $$r15:gpr32 = $$r10
-    # nextln: 0613:     $$rax = CallRel(External(extfunc6)) $$rdi
+    # nextln: 0613:     $$rax = CallRel(Function(External(extfunc6))) $$rdi
     # nextln: 0614:     $$rsi = MovzxRRm(S8) $$rax
     # nextln:           $$rdi:gpr64 = $$rbx
-    # nextln: 0615:     CallRel(External(extfunc19)) $$rdi, $$rsi
+    # nextln: 0615:     CallRel(Function(External(extfunc19))) $$rdi, $$rsi
     # nextln:           $$rax:gpr32 = $$spill43
     # nextln: 0616:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0617:     Jumpcc(Ne, block246, block247)
@@ -2278,7 +2278,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block250:
     # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rsi:gpr32 = $$r14
-    # nextln: 0633:     $$rax = CallRel(External(extfunc12)) $$rdi, $$rsi
+    # nextln: 0633:     $$rax = CallRel(Function(External(extfunc12))) $$rdi, $$rsi
     # nextln: 0634:     $$rcx = MovRM(S32, [reg + 0]) $$rax
     # nextln: 0635:     $$rcx = AddRI(S32, 1) $$rcx
     # nextln: 0636:     $$rax = MovRmS32(0)
@@ -2292,10 +2292,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$spill34:gpr32 = $$r14
     # nextln:           $$rsi = StackAddr(!15)
     # nextln:           $$rdi:gpr64 = $$spill29
-    # nextln: 0643:     CallRel(External(extfunc31)) $$rdi, $$rsi
+    # nextln: 0643:     CallRel(Function(External(extfunc31))) $$rdi, $$rsi
     # nextln:           $$rsi = StackAddr(!15)
     # nextln:           $$rdi:gpr64 = $$r13
-    # nextln: 0644:     CallRel(External(extfunc3)) $$rdi, $$rsi
+    # nextln: 0644:     CallRel(Function(External(extfunc3))) $$rdi, $$rsi
     # nextln:           $$r14:gpr32 = $$r15
     # nextln:           $$r8:gpr32 = $$spill47
     # nextln:           $$r15:gpr32 = $$spill46
@@ -2437,7 +2437,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block216:
     # nextln:           $$rbx:gpr32 = $$spill51
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0662:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0662:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0663:     AluRRm(S32, Cmp) $$rax, $$rbx
     # nextln: 0664:     Jumpcc(Le, block224, block225)
     # nextln:       block224:
@@ -2477,7 +2477,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0682:     $$rsi = MovzxRRm(S16) $$rcx
     # nextln:           $$r12:gpr64 = $$rax
     # nextln:           $$rdi:gpr64 = $$rbx
-    # nextln: 0683:     CallRel(External(extfunc21)) $$rdi, $$rsi
+    # nextln: 0683:     CallRel(Function(External(extfunc21))) $$rdi, $$rsi
     # nextln:           $$rdi:gpr64 = $$r12
     # nextln:           $$r10:gpr32 = $$spill34
     # nextln:           $$rsi:gpr64 = $$spill33
@@ -2588,10 +2588,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block222:
     # nextln:           $$rsi = StackAddr(!16)
     # nextln:           $$rdi:gpr64 = $$spill29
-    # nextln: 0694:     CallRel(External(extfunc26)) $$rdi, $$rsi
+    # nextln: 0694:     CallRel(Function(External(extfunc26))) $$rdi, $$rsi
     # nextln:           $$rsi = StackAddr(!16)
     # nextln:           $$rdi:gpr64 = $$rbx
-    # nextln: 0695:     CallRel(External(extfunc3)) $$rdi, $$rsi
+    # nextln: 0695:     CallRel(Function(External(extfunc3))) $$rdi, $$rsi
     # nextln:           $$spill44:gpr32 = $$r14
     # nextln:           $$r14:gpr32 = $$r15
     # nextln:           $$spill40:gpr32 = $$r13
@@ -2674,10 +2674,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block197:
     # nextln:           $$rsi = StackAddr(!17)
     # nextln:           $$rdi:gpr64 = $$spill29
-    # nextln: 0712:     CallRel(External(extfunc9)) $$rdi, $$rsi
+    # nextln: 0712:     CallRel(Function(External(extfunc9))) $$rdi, $$rsi
     # nextln:           $$rsi = StackAddr(!17)
     # nextln:           $$rdi:gpr64 = $$rbx
-    # nextln: 0713:     CallRel(External(extfunc3)) $$rdi, $$rsi
+    # nextln: 0713:     CallRel(Function(External(extfunc3))) $$rdi, $$rsi
     # nextln:           $$spill44:gpr32 = $$r14
     # nextln:           $$r14:gpr32 = $$r15
     # nextln:           $$r15:gpr64 = $$spill33
@@ -2735,7 +2735,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0719:     Jump(block201)
     # nextln:       block201:
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0720:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0720:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0721:     AluRRm(S32, Cmp) $$rax, $$spill40
     # nextln: 0722:     Jumpcc(Le, block202, block204)
     # nextln:       block202:
@@ -2778,7 +2778,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0749:     $$rax = MovRM(S16, [reg + 0]) $$rax
     # nextln: 0750:     $$rsi = MovzxRRm(S16) $$rax
     # nextln:           $$rdi:gpr64 = $$r12
-    # nextln: 0751:     CallRel(External(extfunc21)) $$rdi, $$rsi
+    # nextln: 0751:     CallRel(Function(External(extfunc21))) $$rdi, $$rsi
     # nextln:           $$rax:gpr32 = $$spill40
     # nextln: 0752:     $$rax = AddRI(S32, 1) $$rax
     # nextln:           $$spill40:gpr32 = $$rax
@@ -2789,7 +2789,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$spill37:gpr64 = $$r12
     # nextln:           $$r12 = MovRmS32(0)
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0754:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0754:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0755:     AluRRm(S32, Cmp) $$rax, $$spill40
     # nextln: 0756:     Jumpcc(Le, block210, block211)
     # nextln:       block210:
@@ -2917,10 +2917,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block187:
     # nextln:           $$rsi = StackAddr(!19)
     # nextln:           $$rdi:gpr64 = $$spill29
-    # nextln: 0808:     CallRel(External(extfunc2)) $$rdi, $$rsi
+    # nextln: 0808:     CallRel(Function(External(extfunc2))) $$rdi, $$rsi
     # nextln:           $$rsi = StackAddr(!19)
     # nextln:           $$rdi:gpr64 = $$spill37
-    # nextln: 0809:     CallRel(External(extfunc3)) $$rdi, $$rsi
+    # nextln: 0809:     CallRel(Function(External(extfunc3))) $$rdi, $$rsi
     # nextln:           $$rax:gpr32 = $$spill53
     # nextln:           $$spill31:gpr32 = $$rax
     # nextln: 0810:     Jump(block189)
@@ -3019,10 +3019,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0848:     Jumpcc(Ne, block161, block162)
     # nextln:       block161:
     # nextln: 0849:     $$rdi = MovzxRRm(S16) $$spill38
-    # nextln: 0850:     $$rax = CallRel(External(extfunc6)) $$rdi
+    # nextln: 0850:     $$rax = CallRel(Function(External(extfunc6))) $$rdi
     # nextln: 0851:     $$rsi = MovzxRRm(S8) $$rax
     # nextln:           $$rdi:gpr64 = $$spill37
-    # nextln: 0852:     CallRel(External(extfunc19)) $$rdi, $$rsi
+    # nextln: 0852:     CallRel(Function(External(extfunc19))) $$rdi, $$rsi
     # nextln:           $$rax:gpr32 = $$spill43
     # nextln: 0853:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0854:     Jumpcc(Ne, block164, block165)
@@ -3052,7 +3052,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block168:
     # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rsi:gpr32 = $$spill34
-    # nextln: 0870:     $$rax = CallRel(External(extfunc12)) $$rdi, $$rsi
+    # nextln: 0870:     $$rax = CallRel(Function(External(extfunc12))) $$rdi, $$rsi
     # nextln: 0871:     $$rcx = MovRM(S32, [reg + 0]) $$rax
     # nextln: 0872:     $$rcx = AddRI(S32, 1) $$rcx
     # nextln: 0873:     $$rax = MovRmS32(0)
@@ -3065,10 +3065,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0879:     $$spill34 = AluRmI(S32, Sub, 1) $$spill34
     # nextln:           $$rsi = StackAddr(!18)
     # nextln:           $$rdi:gpr64 = $$spill29
-    # nextln: 0880:     CallRel(External(extfunc31)) $$rdi, $$rsi
+    # nextln: 0880:     CallRel(Function(External(extfunc31))) $$rdi, $$rsi
     # nextln:           $$rsi = StackAddr(!18)
     # nextln:           $$rdi:gpr64 = $$spill37
-    # nextln: 0881:     CallRel(External(extfunc3)) $$rdi, $$rsi
+    # nextln: 0881:     CallRel(Function(External(extfunc3))) $$rdi, $$rsi
     # nextln: 0882:     Jump(block173)
     # nextln:       block172:
     # nextln: 0883:     Jump(block173)
@@ -3103,7 +3103,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0896:     Jumpcc(Ne, block91, block92)
     # nextln:       block91:
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0897:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0897:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0898:     AluRRm(S32, Cmp) $$rax, $$rbx
     # nextln: 0899:     Jumpcc(Le, block109, block110)
     # nextln:       block109:
@@ -3155,7 +3155,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$rbx:gpr32 = $$spill40
     # nextln: 0914:     $$rbx = AddRI(S32, 1) $$rbx
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0915:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0915:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0916:     AluRRm(S32, Cmp) $$rax, $$rbx
     # nextln: 0917:     Jumpcc(Le, block114, block116)
     # nextln:       block114:
@@ -3285,7 +3285,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$rbx:gpr32 = $$spill40
     # nextln: 0940:     $$rbx = AddRI(S32, 1) $$rbx
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0941:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0941:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0942:     AluRRm(S32, Cmp) $$rax, $$rbx
     # nextln: 0943:     Jumpcc(Le, block122, block124)
     # nextln:       block122:
@@ -3358,7 +3358,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 0967:     $$rax = AddRI(S32, 1) $$rax
     # nextln:           $$spill40:gpr32 = $$rax
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0968:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 0968:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 0969:     AluRRm(S32, Cmp) $$rax, $$spill40
     # nextln: 0970:     Jumpcc(Le, block132, block133)
     # nextln:       block132:
@@ -3486,7 +3486,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$rdi:gpr64 = $$r13
     # nextln:           $$rsi:gpr64 = $$spill29
     # nextln:           $$r8:gpr32 = $$spill54
-    # nextln: 1002:     CallRel(External(extfunc14)) $$rdi, $$rsi, $$rdx, $$rcx, $$r8, $$r9
+    # nextln: 1002:     CallRel(Function(External(extfunc14))) $$rdi, $$rsi, $$rdx, $$rcx, $$r8, $$r9
     # nextln:           $$rdi:gpr64 = $$spill36
     # nextln:           $$r9:gpr32 = $$spill32
     # nextln:           $$rsi:gpr32 = $$spill48
@@ -3519,10 +3519,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$r12:gpr32 = $$spill38
     # nextln:           $$spill56:gpr64 = $$rax
     # nextln: 1004:     $$rdi = MovzxRRm(S16) $$r12
-    # nextln: 1005:     $$rax = CallRel(External(extfunc6)) $$rdi
+    # nextln: 1005:     $$rax = CallRel(Function(External(extfunc6))) $$rdi
     # nextln: 1006:     $$rsi = MovzxRRm(S8) $$rax
     # nextln:           $$rdi:gpr64 = $$r13
-    # nextln: 1007:     CallRel(External(extfunc19)) $$rdi, $$rsi
+    # nextln: 1007:     CallRel(Function(External(extfunc19))) $$rdi, $$rsi
     # nextln:           $$r14:gpr32 = $$spill47
     # nextln:           $$rbx:gpr32 = $$r12
     # nextln:           $$r12:gpr32 = $$spill43
@@ -3533,12 +3533,12 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:           $$r12:gpr32 = $$spill38
     # nextln:           $$r13:gpr64 = $$spill37
     # nextln: 1009:     $$rdi = MovzxRRm(S16) $$r12
-    # nextln: 1010:     $$rax = CallRel(External(extfunc6)) $$rdi
+    # nextln: 1010:     $$rax = CallRel(Function(External(extfunc6))) $$rdi
     # nextln: 1011:     $$rsi = MovzxRRm(S8) $$rax
     # nextln:           $$rdi:gpr64 = $$r13
-    # nextln: 1012:     CallRel(External(extfunc19)) $$rdi, $$rsi
+    # nextln: 1012:     CallRel(Function(External(extfunc19))) $$rdi, $$rsi
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 1013:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 1013:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 1014:     $$rcx = MovRmS32(0)
     # nextln: 1015:     AluRRm(S32, Cmp) $$rbx, $$rax
     # nextln: 1016:     $$rcx = Setcc(L) $$rcx
@@ -3583,7 +3583,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 1042:     $$rax = MovRM(S16, [reg + 0]) $$rax
     # nextln: 1043:     $$rsi = MovzxRRm(S16) $$rax
     # nextln:           $$rdi:gpr64 = $$r13
-    # nextln: 1044:     CallRel(External(extfunc21)) $$rdi, $$rsi
+    # nextln: 1044:     CallRel(Function(External(extfunc21))) $$rdi, $$rsi
     # nextln:           $$rax:gpr32 = $$spill32
     # nextln:           $$spill40:gpr32 = $$rbx
     # nextln:           $$r8:gpr32 = $$spill47
@@ -3627,7 +3627,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 1047:     Jump(block103)
     # nextln:       block103:
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 1048:     $$rax = CallRel(External(extfunc18)) $$rdi
+    # nextln: 1048:     $$rax = CallRel(Function(External(extfunc18))) $$rdi
     # nextln: 1049:     AluRRm(S32, Cmp) $$rax, $$spill40
     # nextln: 1050:     Jumpcc(Le, block104, block105)
     # nextln:       block104:
@@ -3657,7 +3657,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 1066:     $$rax = MovRM(S16, [reg + 0]) $$rax
     # nextln: 1067:     $$rsi = MovzxRRm(S16) $$rax
     # nextln:           $$rdi:gpr64 = $$r13
-    # nextln: 1068:     CallRel(External(extfunc21)) $$rdi, $$rsi
+    # nextln: 1068:     CallRel(Function(External(extfunc21))) $$rdi, $$rsi
     # nextln:           $$rax:gpr32 = $$spill40
     # nextln: 1069:     $$rax = AddRI(S32, 1) $$rax
     # nextln:           $$spill40:gpr32 = $$rax
@@ -3724,7 +3724,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block89:
     # nextln: 1076:     $$rsi = MovzxRRm(S16) $$rbx
     # nextln:           $$rdi:gpr64 = $$r13
-    # nextln: 1077:     CallRel(External(extfunc21)) $$rdi, $$rsi
+    # nextln: 1077:     CallRel(Function(External(extfunc21))) $$rdi, $$rsi
     # nextln:           $$rax:gpr32 = $$spill51
     # nextln:           $$spill40:gpr32 = $$rax
     # nextln: 1078:     Jump(block90)
@@ -3764,7 +3764,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln: 1089:     Jump(block66)
     # nextln:       block74:
     # nextln:           $$rdi:gpr64 = $$r13
-    # nextln: 1090:     $$rax = CallRel(External(extfunc15)) $$rdi
+    # nextln: 1090:     $$rax = CallRel(Function(External(extfunc15))) $$rdi
     # nextln: 1091:     $$rcx = MovRmS32(0)
     # nextln: 1092:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 1093:     $$rcx = Setcc(G) $$rcx
@@ -3785,11 +3785,11 @@ func @"System.Void System.Number::NumberToStringFormat[System.Byte](System.Colle
     # nextln:       block68:
     # nextln: 1100:     $$rax = StackAddr(!20)
     # nextln:           $$rsi = StackAddr(!20)
-    # nextln: 1101:     CallRel(External(extfunc23)) $$rdi, $$rsi
+    # nextln: 1101:     CallRel(Function(External(extfunc23))) $$rdi, $$rsi
     # nextln:           $$rdx = StackAddr(!20)
     # nextln:           $$rsi = MovRmS32(0)
     # nextln:           $$rdi:gpr64 = $$rbx
-    # nextln: 1102:     CallRel(External(extfunc27)) $$rdi, $$rsi, $$rdx
+    # nextln: 1102:     CallRel(Function(External(extfunc27))) $$rdi, $$rsi, $$rdx
     # nextln: 1103:     Jump(block70)
     # nextln:       block69:
     # nextln: 1104:     Jump(block70)

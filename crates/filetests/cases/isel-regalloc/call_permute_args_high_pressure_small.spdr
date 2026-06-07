@@ -33,25 +33,25 @@ func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # nextln:           $$rsi:gpr32 = $$rdx
     # nextln:           $$rdx:gpr32 = $$rcx
     # nextln:           $$rcx:gpr32 = $$rax
-    # nextln: 0010:     CallRel(External(extfunc1)) $$rdi, $$rsi, $$rdx, $$rcx, $$r8, $$r9
+    # nextln: 0010:     CallRel(Function(External(extfunc1))) $$rdi, $$rsi, $$rdx, $$rcx, $$r8, $$r9
     # nextln:           $$rdi:gpr32 = $$r15
-    # nextln: 0011:     CallRel(External(extfunc0)) $$rdi
+    # nextln: 0011:     CallRel(Function(External(extfunc0))) $$rdi
     # nextln:           $$rdi:gpr32 = $$spill3
-    # nextln: 0012:     CallRel(External(extfunc0)) $$rdi
+    # nextln: 0012:     CallRel(Function(External(extfunc0))) $$rdi
     # nextln:           $$rdi:gpr32 = $$rbx
-    # nextln: 0013:     CallRel(External(extfunc0)) $$rdi
+    # nextln: 0013:     CallRel(Function(External(extfunc0))) $$rdi
     # nextln:           $$rdi:gpr32 = $$r13
-    # nextln: 0014:     CallRel(External(extfunc0)) $$rdi
+    # nextln: 0014:     CallRel(Function(External(extfunc0))) $$rdi
     # nextln:           $$rdi:gpr32 = $$r14
-    # nextln: 0015:     CallRel(External(extfunc0)) $$rdi
+    # nextln: 0015:     CallRel(Function(External(extfunc0))) $$rdi
     # nextln:           $$rdi:gpr32 = $$spill2
-    # nextln: 0016:     CallRel(External(extfunc0)) $$rdi
+    # nextln: 0016:     CallRel(Function(External(extfunc0))) $$rdi
     # nextln:           $$rdi:gpr32 = $$r12
-    # nextln: 0017:     CallRel(External(extfunc0)) $$rdi
+    # nextln: 0017:     CallRel(Function(External(extfunc0))) $$rdi
     # nextln:           $$rdi:gpr32 = $$spill1
-    # nextln: 0018:     CallRel(External(extfunc0)) $$rdi
+    # nextln: 0018:     CallRel(Function(External(extfunc0))) $$rdi
     # nextln:           $$rdi:gpr32 = $$spill0
-    # nextln: 0019:     CallRel(External(extfunc0)) $$rdi
+    # nextln: 0019:     CallRel(Function(External(extfunc0))) $$rdi
     # nextln: 0020:     Ret
 
     %ent:ctrl, %a1:i32, %a2:i32, %a3:i32, %a4:i32, %a5:i32, %a6:i32, %p:ptr = entry

@@ -10,7 +10,7 @@ func @caller(f64) {
     # nextln: clobbers: rax, rcx, rdx, rdi, rsi, r8, r9, r10, r11, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln: 0000:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0000:     $$rax = FuncAddrAbs(Function(External(extfunc1)))
     # nextln: 0001:     CallRm $$rax, $$xmm0
     # nextln: 0002:     Ret
 
@@ -26,7 +26,7 @@ func @large_caller(f64) {
     # nextln:       block0:
     # nextln: 0000:     AddSp(-16)
     # nextln: 0001:     MovsMR(Double, [rsp + 0]) $$xmm0
-    # nextln: 0002:     $$rax = FuncAddrAbs(External(extfunc2))
+    # nextln: 0002:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
     # nextln:           $$xmm7:xmm64 = $$xmm0
     # nextln:           $$xmm6:xmm64 = $$xmm0
     # nextln:           $$xmm5:xmm64 = $$xmm0
@@ -51,7 +51,7 @@ func @larger_caller(f64, f64) {
     # nextln: 0000:     AddSp(-16)
     # nextln: 0001:     MovsMR(Double, [rsp + 0]) $$xmm0
     # nextln: 0002:     MovsMR(Double, [rsp + 8]) $$xmm1
-    # nextln: 0003:     $$rax = FuncAddrAbs(External(extfunc3))
+    # nextln: 0003:     $$rax = FuncAddrAbs(Function(External(extfunc3)))
     # nextln:           $$xmm7:xmm64 = $$xmm0
     # nextln:           $$xmm6:xmm64 = $$xmm0
     # nextln:           $$xmm5:xmm64 = $$xmm0
@@ -73,9 +73,9 @@ func @source_sink() {
     # nextln: clobbers: rax, rcx, rdx, rdi, rsi, r8, r9, r10, r11, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     # nextln: frame: size 0, align 0
     # nextln:       block0:
-    # nextln: 0000:     $$rax = FuncAddrAbs(External(extfunc0))
+    # nextln: 0000:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
     # nextln: 0001:     $$xmm0 = CallRm $$rax
-    # nextln: 0002:     $$rax = FuncAddrAbs(External(extfunc1))
+    # nextln: 0002:     $$rax = FuncAddrAbs(Function(External(extfunc1)))
     # nextln: 0003:     CallRm $$rax, $$xmm0
     # nextln: 0004:     Ret
 

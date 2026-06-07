@@ -233,6 +233,12 @@ pub trait BuilderExt: Builder {
         build_int_div(self, NodeKind::Urem, ctrl, lhs, rhs)
     }
 
+    fn build_lzcount(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::Lzcount, [value], output_ty)
+    }
+    fn build_tzcount(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        build_single_output_pure(self, NodeKind::Tzcount, [value], output_ty)
+    }
     fn build_popcount(&mut self, output_ty: Type, value: DepValue) -> DepValue {
         build_single_output_pure(self, NodeKind::Popcount, [value], output_ty)
     }

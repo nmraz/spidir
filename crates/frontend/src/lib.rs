@@ -232,6 +232,14 @@ impl<'a> FunctionBuilder<'a> {
         built.output
     }
 
+    pub fn build_lzcount(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        self.builder().build_lzcount(output_ty, value)
+    }
+
+    pub fn build_tzcount(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        self.builder().build_tzcount(output_ty, value)
+    }
+
     pub fn build_popcount(&mut self, output_ty: Type, value: DepValue) -> DepValue {
         self.builder().build_popcount(output_ty, value)
     }

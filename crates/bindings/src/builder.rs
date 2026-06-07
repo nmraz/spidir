@@ -360,6 +360,8 @@ macro_rules! impl_builder_typed_unop {
     };
 }
 
+impl_builder_typed_unop!(lzcount);
+impl_builder_typed_unop!(tzcount);
 impl_builder_typed_unop!(popcount);
 
 impl_builder_typed_unop!(sinttofloat);

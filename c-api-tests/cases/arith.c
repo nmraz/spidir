@@ -45,6 +45,8 @@ void builder_callback(spidir_builder_handle_t builder, void* ctx) {
     a = spidir_builder_build_ptrtoint(builder, a);
     a = spidir_builder_build_itrunc(builder, a);
     a = spidir_builder_build_sfill(builder, 16, a);
+    a = spidir_builder_build_lzcount(builder, SPIDIR_TYPE_I32, a);
+    a = spidir_builder_build_tzcount(builder, SPIDIR_TYPE_I32, a);
     a = spidir_builder_build_popcount(builder, SPIDIR_TYPE_I32, a);
 
     spidir_builder_build_return(builder, a);

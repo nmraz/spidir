@@ -1,0 +1,27 @@
+# run: verify-ok
+
+# check: $()
+
+func @tzcount32_32:i32(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:i32 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount32_64:i64(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:i64 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount64_32:i32(i64) {
+    %0:ctrl, %1:i64 = entry
+    %2:i32 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount64_64:i64(i64) {
+    %0:ctrl, %1:i64 = entry
+    %2:i64 = tzcount %1
+    return %0, %2
+}

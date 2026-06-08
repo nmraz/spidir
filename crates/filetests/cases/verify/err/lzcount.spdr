@@ -1,0 +1,39 @@
+# run: verify-err
+
+func @lzcount_bad_input_count:i32() {
+    # check: function `lzcount_bad_input_count`:
+    # unordered: `$val:i32 = lzcount $val, $val, $val`: bad input count, expected 1
+    # unordered: `$val:i32 = lzcount`: bad input count, expected 1
+
+    %0:ctrl = entry
+    %1:i32 = lzcount
+    %2:i32 = lzcount %1, %1, %1
+    return %0, %2
+}
+
+func @lzcount_bad_output_count:i64(i32) {
+    # check: function `lzcount_bad_output_count`:
+    # unordered: `$val:i64, $val:i64 = lzcount $val`: bad output count, expected 1
+
+    %0:ctrl, %1:i32 = entry
+    %2:i64, %3:i64 = lzcount %1
+    return %0, %2
+}
+
+func @lzcount_bad_output_kind:ptr(i32) {
+    # check: function `lzcount_bad_output_kind`:
+    # unordered: `$val:ptr = lzcount $val`: bad value kind for output 0, expected one of `i32`, `i64`, got `ptr`
+
+    %0:ctrl, %1:i32 = entry
+    %2:ptr = lzcount %1
+    return %0, %2
+}
+
+func @lzcount_bad_input_kind:i64(ptr) {
+    # check: function `lzcount_bad_input_kind`:
+    # unordered: `$val:i64 = lzcount $val`: bad value kind for input 0, expected one of `i32`, `i64`, got `ptr`
+
+    %0:ctrl, %1:ptr = entry
+    %2:i64 = lzcount %1
+    return %0, %2
+}

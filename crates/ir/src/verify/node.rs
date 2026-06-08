@@ -38,7 +38,9 @@ pub fn verify_node_kind(
         NodeKind::Udiv => verify_int_div(graph, node, errors),
         NodeKind::Srem => verify_int_div(graph, node, errors),
         NodeKind::Urem => verify_int_div(graph, node, errors),
-        NodeKind::Popcount => verify_popcount(graph, node, errors),
+        NodeKind::Lzcount => verify_bit_count(graph, node, errors),
+        NodeKind::Tzcount => verify_bit_count(graph, node, errors),
+        NodeKind::Popcount => verify_bit_count(graph, node, errors),
         NodeKind::Iext => verify_iext(graph, node, errors),
         NodeKind::Itrunc => verify_itrunc(graph, node, errors),
         NodeKind::Sfill(width) => verify_sfill(graph, node, *width, errors),
@@ -252,7 +254,7 @@ fn verify_int_div(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifie
     let _ = verify_input_kind(graph, node, 2, &[result_kind], errors);
 }
 
-fn verify_popcount(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+fn verify_bit_count(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
     let Ok([result]) = verify_node_arity(graph, node, 1, errors) else {
         return;
     };

@@ -279,6 +279,8 @@ pub fn write_node_kind(
         NodeKind::Udiv => w.write_str("udiv")?,
         NodeKind::Srem => w.write_str("srem")?,
         NodeKind::Urem => w.write_str("urem")?,
+        NodeKind::Lzcount => w.write_str("lzcount")?,
+        NodeKind::Tzcount => w.write_str("tzcount")?,
         NodeKind::Popcount => w.write_str("popcount")?,
         NodeKind::Iext => w.write_str("iext")?,
         NodeKind::Itrunc => w.write_str("itrunc")?,

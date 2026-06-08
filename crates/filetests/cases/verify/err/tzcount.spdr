@@ -1,0 +1,39 @@
+# run: verify-err
+
+func @tzcount_bad_input_count:i32() {
+    # check: function `tzcount_bad_input_count`:
+    # unordered: `$val:i32 = tzcount $val, $val, $val`: bad input count, expected 1
+    # unordered: `$val:i32 = tzcount`: bad input count, expected 1
+
+    %0:ctrl = entry
+    %1:i32 = tzcount
+    %2:i32 = tzcount %1, %1, %1
+    return %0, %2
+}
+
+func @tzcount_bad_output_count:i64(i32) {
+    # check: function `tzcount_bad_output_count`:
+    # unordered: `$val:i64, $val:i64 = tzcount $val`: bad output count, expected 1
+
+    %0:ctrl, %1:i32 = entry
+    %2:i64, %3:i64 = tzcount %1
+    return %0, %2
+}
+
+func @tzcount_bad_output_kind:ptr(i32) {
+    # check: function `tzcount_bad_output_kind`:
+    # unordered: `$val:ptr = tzcount $val`: bad value kind for output 0, expected one of `i32`, `i64`, got `ptr`
+
+    %0:ctrl, %1:i32 = entry
+    %2:ptr = tzcount %1
+    return %0, %2
+}
+
+func @tzcount_bad_input_kind:i64(ptr) {
+    # check: function `tzcount_bad_input_kind`:
+    # unordered: `$val:i64 = tzcount $val`: bad value kind for input 0, expected one of `i32`, `i64`, got `ptr`
+
+    %0:ctrl, %1:ptr = entry
+    %2:i64 = tzcount %1
+    return %0, %2
+}

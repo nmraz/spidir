@@ -66,6 +66,8 @@ nodekind           =  {
   | "udiv"
   | "srem"
   | "urem"
+  | "lzcount"
+  | "tzcount"
   | "popcount"
   | "iext"
   | "itrunc"

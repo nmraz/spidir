@@ -52,6 +52,7 @@ If you're building for a hosted Rust target platform or need to link against oth
 
 - IR features:
   - Basic integer arithmetic/bitwise instructions
+  - Bit-counting operations
   - Floating point arithmetic (both 32-bit and 64-bit)
   - Loads/stores
   - Basic control flow (conditional branches)
@@ -79,7 +80,6 @@ Spidir's roadmap is most accurately described as "whatever TomatoDotNet needs ne
 
 - IR:
   - Memory operations (`memset`, `memcpy`, etc.)
-  - Bit-counting operations
   - External globals
   - Cold block annotation
   - Unwinding support

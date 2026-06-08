@@ -22,6 +22,15 @@ enum {
     SPIDIR_RELOC_X64_ABS64 = 1,
 };
 
+enum {
+    /// Libcall that counts the number of bits set in its 32-bit input,
+    /// returning a 64-bit output.
+    SPIDIR_LIBCALL_X64_POPCNT32 = 0,
+    /// Libcall that counts the number of bits set in its 64-bit input,
+    /// returning a 64-bit output.
+    SPIDIR_LIBCALL_X64_POPCNT64 = 1,
+};
+
 /// Represents the code models for which the x64 backend can generate code.
 ///
 /// See the `SPIDIR_X64_CM_` constants for possible values.

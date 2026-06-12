@@ -450,6 +450,12 @@ impl MachineEmit for X64Machine {
                 state.operand_reg_mem(defs[0]),
                 uses[0].as_reg().unwrap(),
             ),
+            &X64Instr::MovXmmGprm(op_size) => emit_mov_xmm_gprm(
+                buffer,
+                op_size,
+                defs[0].as_reg().unwrap(),
+                state.operand_reg_mem(uses[0]),
+            ),
             &X64Instr::MovRRbp { op_size, offset } => emit_movzx_r_rm(
                 buffer,
                 op_size,
@@ -1440,6 +1446,25 @@ fn emit_mov_gprm_xmm(
         sink.emit(&[PREFIX_OPERAND_SIZE]);
         rex.emit(sink);
         sink.emit(&[0xf, 0x7e]);
+        modrm_sib.emit(sink);
+    });
+}
+
+fn emit_mov_xmm_gprm(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op_size: OperandSize,
+    dest: PhysReg,
+    src: RegMem,
+) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| {
+        rex.encode_operand_size(op_size);
+        rex.encode_modrm_reg(dest)
+    });
+    buffer.instr(|sink| {
+        // This operand size prefix indicates we want XMM and not MM.
+        sink.emit(&[PREFIX_OPERAND_SIZE]);
+        rex.emit(sink);
+        sink.emit(&[0xf, 0x6e]);
         modrm_sib.emit(sink);
     });
 }

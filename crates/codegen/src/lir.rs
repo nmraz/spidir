@@ -664,6 +664,10 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         }
     }
 
+    pub fn vreg_class(&self, vreg: VirtReg) -> RegClass {
+        self.lir.vreg_class(vreg)
+    }
+
     pub fn advance_block(&mut self) -> Option<Block> {
         assert!(self.cur_block >= 0);
 
@@ -698,8 +702,8 @@ impl<'o, M: MachineCore> Builder<'o, M> {
         let src = resolve_vreg_copy(&mut self.vreg_copies, src).unwrap_or(src);
         assert!(dest != src, "vreg copy cycle on register {dest}");
 
-        let src_class = self.lir.vreg_class(src);
-        let dest_class = self.lir.vreg_class(dest);
+        let src_class = self.vreg_class(src);
+        let dest_class = self.vreg_class(dest);
 
         // We intentionally compare only banks, because extension/truncation instructions might want
         // to copy across different widths.

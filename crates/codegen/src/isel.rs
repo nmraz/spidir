@@ -91,6 +91,10 @@ impl<'ctx, M: MachineLower> IselContext<'ctx, '_, M> {
         ret
     }
 
+    pub fn vreg_class(&self, vreg: VirtReg) -> RegClass {
+        self.builder.lir_builder().vreg_class(vreg)
+    }
+
     pub fn get_value_vreg(&mut self, value: DepValue) -> VirtReg {
         let graph = self.state.graph();
         get_value_vreg_helper(

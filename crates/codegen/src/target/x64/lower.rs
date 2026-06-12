@@ -19,7 +19,7 @@ use crate::{
     },
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
-    target::x64::{BitCountOp, LIBCALL_POPCNT32, LIBCALL_POPCNT64},
+    target::x64::{BitCountOp, LIBCALL_POPCNT32, LIBCALL_POPCNT64, RB_GPR, RB_XMM},
 };
 
 use super::{
@@ -777,18 +777,41 @@ fn select_bitcast(
     let [input] = ctx.node_inputs_exact(node);
     let [output] = ctx.node_outputs_exact(node);
 
+    let op_size = match ctx.value_type(input).byte_size() {
+        4 => OperandSize::S32,
+        8 => OperandSize::S64,
+        _ => unreachable!(),
+    };
+
     let input = ctx.get_value_vreg(input);
     let output = ctx.get_value_vreg(output);
 
     let input_bank = ctx.vreg_class(input).bank();
     let output_bank = ctx.vreg_class(output).bank();
 
-    if input_bank == output_bank {
-        ctx.copy_vreg(output, input);
-        return Ok(());
+    match (output_bank, input_bank) {
+        (output_bank, input_bank) if input_bank == output_bank => {
+            ctx.copy_vreg(output, input);
+        }
+        (RB_XMM, RB_GPR) => {
+            ctx.emit_instr(
+                X64Instr::MovXmmGprm(op_size),
+                &[DefOperand::any(output)],
+                &[UseOperand::any_reg(input)],
+            );
+        }
+        (RB_GPR, RB_XMM) => {
+            ctx.emit_instr(
+                X64Instr::MovGprmXmm(op_size),
+                &[DefOperand::any(output)],
+                &[UseOperand::any_reg(input)],
+            );
+        }
+
+        _ => return Err(MachineIselError),
     }
 
-    Err(MachineIselError)
+    Ok(())
 }
 
 fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {

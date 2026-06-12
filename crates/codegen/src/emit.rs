@@ -94,11 +94,11 @@ pub fn emit_code<M: MachineEmit>(
                         &mut state,
                         &mut buffer,
                     ),
-                    CopySourceAssignment::Remat(instr) => machine.emit_instr(
+                    CopySourceAssignment::Remat(source) => machine.emit_instr(
                         &ctx,
                         instr,
                         &EmitInstrData {
-                            instr: lir.instr_data(instr),
+                            instr: lir.instr_data(source),
                             defs: &[copy.to],
                             uses: &[],
                         },

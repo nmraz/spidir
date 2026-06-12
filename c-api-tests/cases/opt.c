@@ -40,8 +40,8 @@ void builder_callback(spidir_builder_handle_t builder, void* ctx) {
     BUILD_ICMP(ULE);
 
     a = spidir_builder_build_iext(builder, a);
-    a = spidir_builder_build_inttoptr(builder, a);
-    a = spidir_builder_build_ptrtoint(builder, a);
+    a = spidir_builder_build_bitcast(builder, SPIDIR_TYPE_PTR, a);
+    a = spidir_builder_build_bitcast(builder, SPIDIR_TYPE_I64, a);
     a = spidir_builder_build_itrunc(builder, a);
     a = spidir_builder_build_sfill(builder, 16, a);
 

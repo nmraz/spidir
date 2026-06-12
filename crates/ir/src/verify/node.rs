@@ -59,8 +59,7 @@ pub fn verify_node_kind(
         NodeKind::FloatToSint => verify_floattoint(graph, node, errors),
         NodeKind::FloatToUint => verify_floattoint(graph, node, errors),
         NodeKind::PtrOff => verify_ptroff(graph, node, errors),
-        NodeKind::IntToPtr => verify_inttoptr(graph, node, errors),
-        NodeKind::PtrToInt => verify_ptrtoint(graph, node, errors),
+        NodeKind::Bitcast => verify_bitcast(graph, node, errors),
         NodeKind::Load(size) => verify_load(graph, node, *size, errors),
         NodeKind::Store(size) => verify_store(graph, node, *size, errors),
         NodeKind::StackSlot { align, .. } => verify_stack_slot(graph, node, *align, errors),
@@ -406,20 +405,28 @@ fn verify_ptroff(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifier
     let _ = verify_input_kind(graph, node, 1, &[DepValueKind::Value(Type::I64)], errors);
 }
 
-fn verify_inttoptr(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+fn verify_bitcast(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
     let Ok([result]) = verify_node_arity(graph, node, 1, errors) else {
         return;
     };
-    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::Ptr)], errors);
-    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::I64)], errors);
-}
 
-fn verify_ptrtoint(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
-    let Ok([result]) = verify_node_arity(graph, node, 1, errors) else {
+    if verify_output_kind(graph, result, ALL_VALUE_TYPES, errors).is_err() {
         return;
+    }
+
+    let allowed_input_kinds: &[_] = match graph.value_kind(result).as_value().unwrap() {
+        Type::I32 | Type::F32 => &[
+            DepValueKind::Value(Type::I32),
+            DepValueKind::Value(Type::F32),
+        ],
+        Type::I64 | Type::F64 | Type::Ptr => &[
+            DepValueKind::Value(Type::I64),
+            DepValueKind::Value(Type::F64),
+            DepValueKind::Value(Type::Ptr),
+        ],
     };
-    let _ = verify_output_kind(graph, result, &[DepValueKind::Value(Type::I64)], errors);
-    let _ = verify_input_kind(graph, node, 0, &[DepValueKind::Value(Type::Ptr)], errors);
+
+    let _ = verify_input_kind(graph, node, 0, allowed_input_kinds, errors);
 }
 
 fn verify_load(

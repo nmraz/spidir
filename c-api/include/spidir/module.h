@@ -82,14 +82,24 @@ typedef uint8_t spidir_value_type_t;
 
 enum spidir_value_type {
     /// A 32-bit integer.
+    ///
+    /// Thie size of this type is 4 bytes.
     SPIDIR_TYPE_I32 = 0,
     /// A 64-bit integer.
+    ///
+    /// Thie size of this type is 8 bytes.
     SPIDIR_TYPE_I64 = 1,
     /// A 32-bit float.
+    ///
+    /// Thie size of this type is 4 bytes.
     SPIDIR_TYPE_F32 = 2,
     /// A 64-bit float.
+    ///
+    /// Thie size of this type is 8 bytes.
     SPIDIR_TYPE_F64 = 3,
     /// A pointer that can be used with load and store instructions.
+    ///
+    /// Thie size of this type is 8 bytes.
     SPIDIR_TYPE_PTR = 4,
     /// A sentinel value representing the absence of a type.
     /// Unless otherwise specified, functions accepting a type will panic if
@@ -1169,27 +1179,23 @@ spidir_value_t spidir_builder_build_ptroff(spidir_builder_handle_t builder,
                                            spidir_value_t ptr,
                                            spidir_value_t off);
 
-/// Builds an integer-to-pointer operation at the current insertion point.
+/// Builds a bitcast operation at the current insertion point.
 ///
-/// This operation turns a 64-bit integer into a pointer.
+/// This operation reinterprets the bit pattern of its input value as a value of
+/// the specified type.
 ///
-/// @param[in] builder A handle to the function builder.
-/// @param[in] value   The value to convert. This must be a 64-bit integer.
+/// The input and output types must have the same byte size (as documented for
+/// individual `SPIDIR_TYPE_` values).
+///
+/// @param[in] builder     A handle to the function builder.
+/// @param[in] output_type The desired output type. This may be any type.
+/// @param[in] value       The value to convert. This value must have the same
+///                        byte size as `output_type`.
 /// @return An SSA value representing the result of the operation. This value
-///         will be a pointer.
-spidir_value_t spidir_builder_build_inttoptr(spidir_builder_handle_t builder,
-                                             spidir_value_t value);
-
-/// Builds a pointer-to-integer operation at the current insertion point.
-///
-/// This operation turns a pointer into a 64-bit integer.
-///
-/// @param[in] builder A handle to the function builder.
-/// @param[in] value   The value to convert. This must be a pointer.
-/// @return An SSA value representing the result of the operation. This value
-///         will be a 64-bit integer.
-spidir_value_t spidir_builder_build_ptrtoint(spidir_builder_handle_t builder,
-                                             spidir_value_t value);
+///         will have the type `output_type`.
+spidir_value_t spidir_builder_build_bitcast(spidir_builder_handle_t builder,
+                                            spidir_value_type_t output_type,
+                                            spidir_value_t value);
 
 /// Builds a load operation at the current insertion point.
 ///

@@ -100,8 +100,8 @@ func @"System.Int32 Tests.Program::Main(System.String[])":i32(ptr) {
     %17:ptr = ptroff %3, %14
     %22:i32 = iconst 256
     %23:ptr = iconst 136295969869616
-    %24:i64 = ptrtoint %23
-    %25:ptr = inttoptr %24
+    %24:i64 = bitcast %23
+    %25:ptr = bitcast %24
     %26:ctrl, %27:phisel = region
     %28:ctrl, %29:phisel = region %21, %26
     %30:ctrl = store.8 %28, %25, %3

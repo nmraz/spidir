@@ -320,11 +320,8 @@ impl<'a> FunctionBuilder<'a> {
         self.builder().build_ptroff(ptr, off)
     }
 
-    pub fn build_inttoptr(&mut self, value: DepValue) -> DepValue {
-        self.builder().build_inttoptr(value)
-    }
-    pub fn build_ptrtoint(&mut self, value: DepValue) -> DepValue {
-        self.builder().build_ptrtoint(value)
+    pub fn build_bitcast(&mut self, output_ty: Type, value: DepValue) -> DepValue {
+        self.builder().build_bitcast(output_ty, value)
     }
 
     pub fn build_load(&mut self, size: MemSize, ty: Type, ptr: DepValue) -> DepValue {

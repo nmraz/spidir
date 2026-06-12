@@ -181,7 +181,7 @@ impl MachineLower for X64Machine {
                 let [output] = ctx.node_outputs_exact(node);
                 emit_popcnt(self, ctx, input, output);
             }
-            NodeKind::Iext | NodeKind::Itrunc | NodeKind::IntToPtr | NodeKind::PtrToInt => {
+            NodeKind::Iext | NodeKind::Itrunc => {
                 let [input] = ctx.node_inputs_exact(node);
                 let [output] = ctx.node_outputs_exact(node);
                 let input = ctx.get_value_vreg(input);
@@ -233,6 +233,7 @@ impl MachineLower for X64Machine {
             NodeKind::UintToFloat => select_uinttofloat(ctx, node),
             NodeKind::FloatToSint => emit_cvts2si(ctx, node),
             NodeKind::FloatToUint => select_floattouint(self, ctx, node),
+            NodeKind::Bitcast => select_bitcast(ctx, node)?,
             NodeKind::PtrOff => select_add(ctx, node),
             &NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             &NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
@@ -767,6 +768,27 @@ fn select_load(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: 
             );
         }
     }
+}
+
+fn select_bitcast(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+) -> Result<(), MachineIselError> {
+    let [input] = ctx.node_inputs_exact(node);
+    let [output] = ctx.node_outputs_exact(node);
+
+    let input = ctx.get_value_vreg(input);
+    let output = ctx.get_value_vreg(output);
+
+    let input_bank = ctx.vreg_class(input).bank();
+    let output_bank = ctx.vreg_class(output).bank();
+
+    if input_bank == output_bank {
+        ctx.copy_vreg(output, input);
+        return Ok(());
+    }
+
+    Err(MachineIselError)
 }
 
 fn select_store(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, mem_size: MemSize) {

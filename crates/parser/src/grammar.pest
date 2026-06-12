@@ -87,8 +87,7 @@ nodekind           =  {
   | "floattosint"
   | "floattouint"
   | "ptroff"
-  | "inttoptr"
-  | "ptrtoint"
+  | "bitcast"
   | load_nodekind
   | store_nodekind
   | stackslot_nodekind

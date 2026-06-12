@@ -287,8 +287,6 @@ impl_builder_unop!(iext);
 impl_builder_unop!(itrunc);
 impl_builder_unop!(fwiden);
 impl_builder_unop!(fnarrow);
-impl_builder_unop!(inttoptr);
-impl_builder_unop!(ptrtoint);
 
 #[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_sfill(
@@ -363,6 +361,8 @@ macro_rules! impl_builder_typed_unop {
 impl_builder_typed_unop!(lzcount);
 impl_builder_typed_unop!(tzcount);
 impl_builder_typed_unop!(popcount);
+
+impl_builder_typed_unop!(bitcast);
 
 impl_builder_typed_unop!(sinttofloat);
 impl_builder_typed_unop!(uinttofloat);

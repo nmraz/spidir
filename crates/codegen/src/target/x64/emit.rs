@@ -1374,8 +1374,9 @@ fn emit_cmps(
 ) {
     let (rex, modrm_sib) = encode_reg_mem_parts(arg1, |rex| rex.encode_modrm_reg(arg0_dest));
     buffer.instr(|sink| {
+        sink.emit(&[sse_mandatory_prefix_for_prec(prec)]);
         rex.emit(sink);
-        sink.emit(&[sse_mandatory_prefix_for_prec(prec), 0xf, 0xc2]);
+        sink.emit(&[0xf, 0xc2]);
         modrm_sib.emit(sink);
         sink.emit(&[code as u8]);
     });

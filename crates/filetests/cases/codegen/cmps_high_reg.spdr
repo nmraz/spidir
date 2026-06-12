@@ -1,0 +1,63 @@
+# run: codegen
+
+# The following sequence eventually forces a `cmpeqss` to be emitted against `xmm8`, requiring a
+# REX prefix on the instruction. This test exists to make sure the REX is emitted in the correct
+# position in the instruction (after the SSE mandatory prefix).
+
+func @cmp9:i32(f32, f32, f32, f32, f32, f32, f32, f32, f32) {
+    # check: function `cmp9`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f3 44 0f 10 45 10               movss xmm8, dword ptr [rbp + 0x10]
+    # nextln: 00000a: f3 0f c2 c8 00                  cmpeqss xmm1, xmm0
+    # nextln: 00000f: 66 48 0f 7e c8                  movq rax, xmm1
+    # nextln: 000014: 83 e0 01                        and eax, 1
+    # nextln: 000017: f3 0f c2 d0 00                  cmpeqss xmm2, xmm0
+    # nextln: 00001c: 66 48 0f 7e d1                  movq rcx, xmm2
+    # nextln: 000021: 83 e1 01                        and ecx, 1
+    # nextln: 000024: 03 c1                           add eax, ecx
+    # nextln: 000026: f3 0f c2 d8 00                  cmpeqss xmm3, xmm0
+    # nextln: 00002b: 66 48 0f 7e d9                  movq rcx, xmm3
+    # nextln: 000030: 83 e1 01                        and ecx, 1
+    # nextln: 000033: 03 c1                           add eax, ecx
+    # nextln: 000035: f3 0f c2 e0 00                  cmpeqss xmm4, xmm0
+    # nextln: 00003a: 66 48 0f 7e e1                  movq rcx, xmm4
+    # nextln: 00003f: 83 e1 01                        and ecx, 1
+    # nextln: 000042: 03 c1                           add eax, ecx
+    # nextln: 000044: f3 0f c2 e8 00                  cmpeqss xmm5, xmm0
+    # nextln: 000049: 66 48 0f 7e e9                  movq rcx, xmm5
+    # nextln: 00004e: 83 e1 01                        and ecx, 1
+    # nextln: 000051: 03 c1                           add eax, ecx
+    # nextln: 000053: f3 0f c2 f0 00                  cmpeqss xmm6, xmm0
+    # nextln: 000058: 66 48 0f 7e f1                  movq rcx, xmm6
+    # nextln: 00005d: 83 e1 01                        and ecx, 1
+    # nextln: 000060: 03 c1                           add eax, ecx
+    # nextln: 000062: f3 0f c2 f8 00                  cmpeqss xmm7, xmm0
+    # nextln: 000067: 66 48 0f 7e f9                  movq rcx, xmm7
+    # nextln: 00006c: 83 e1 01                        and ecx, 1
+    # nextln: 00006f: f3 44 0f c2 c0 00               cmpeqss xmm8, xmm0
+    # nextln: 000075: 66 4c 0f 7e c2                  movq rdx, xmm8
+    # nextln: 00007a: 83 e2 01                        and edx, 1
+    # nextln: 00007d: 03 c1                           add eax, ecx
+    # nextln: 00007f: 03 c2                           add eax, edx
+    # nextln: 000081: 5d                              pop rbp
+    # nextln: 000082: c3                              ret
+
+    %0:ctrl, %1:f32, %2:f32, %3:f32, %4:f32, %5:f32, %6:f32, %7:f32, %8:f32, %9:f32 = entry
+    %10:i32 = fcmp oeq %2, %1
+    %11:i32 = fcmp oeq %3, %1
+    %12:i32 = fcmp oeq %4, %1
+    %13:i32 = fcmp oeq %5, %1
+    %14:i32 = fcmp oeq %6, %1
+    %15:i32 = fcmp oeq %7, %1
+    %16:i32 = fcmp oeq %8, %1
+    %17:i32 = fcmp oeq %9, %1
+    %18:i32 = iadd %10, %11
+    %19:i32 = iadd %18, %12
+    %20:i32 = iadd %19, %13
+    %21:i32 = iadd %20, %14
+    %22:i32 = iadd %21, %15
+    %23:i32 = iadd %22, %16
+    %24:i32 = iadd %23, %17
+    return %0, %24
+}

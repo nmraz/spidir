@@ -613,3 +613,55 @@ fn adds() {
         expect!["f2 41 0f 58 38            addsd xmm7, qword ptr [r8]"],
     );
 }
+
+#[test]
+fn cmpeqs() {
+    let check = |prec, dest, src, expected| {
+        check_emit_instr(
+            |buffer| emit_cmps(buffer, prec, SseFpuCmpCode::Eq, dest, src),
+            expected,
+        );
+    };
+
+    check(
+        SseFpuPrecision::Single,
+        REG_XMM0,
+        RegMem::Reg(REG_XMM1),
+        expect!["f3 0f c2 c1 00            cmpeqss xmm0, xmm1"],
+    );
+
+    check(
+        SseFpuPrecision::Double,
+        REG_XMM0,
+        RegMem::Reg(REG_XMM1),
+        expect!["f2 0f c2 c1 00            cmpeqsd xmm0, xmm1"],
+    );
+    check(
+        SseFpuPrecision::Double,
+        REG_XMM10,
+        RegMem::Reg(REG_XMM1),
+        expect!["f2 44 0f c2 d1 00         cmpeqsd xmm10, xmm1"],
+    );
+    check(
+        SseFpuPrecision::Double,
+        REG_XMM0,
+        RegMem::Reg(REG_XMM10),
+        expect!["f2 41 0f c2 c2 00         cmpeqsd xmm0, xmm10"],
+    );
+    check(
+        SseFpuPrecision::Double,
+        REG_XMM15,
+        RegMem::Reg(REG_XMM10),
+        expect!["f2 45 0f c2 fa 00         cmpeqsd xmm15, xmm10"],
+    );
+    check(
+        SseFpuPrecision::Double,
+        REG_XMM7,
+        RegMem::Mem(RawAddrMode::BaseIndexOff {
+            base: Some(REG_R8),
+            index: None,
+            offset: 0,
+        }),
+        expect!["f2 41 0f c2 38 00         cmpeqsd xmm7, qword ptr [r8]"],
+    );
+}

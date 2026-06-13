@@ -329,6 +329,20 @@ impl MachineEmit for X64Machine {
                 let dest = defs[0].as_reg().unwrap();
                 emit_setcc_r(buffer, code, dest);
             }
+            &X64Instr::Cmovcc(op_size, code) => {
+                let dest = defs[0].as_reg().unwrap();
+                let true_arg = uses[0].as_reg().unwrap();
+                let false_arg = uses[1].as_reg().unwrap();
+
+                if dest == true_arg {
+                    emit_movcc_r_rm(buffer, op_size, code.negate(), dest, RegMem::Reg(false_arg));
+                } else if dest == false_arg {
+                    emit_movcc_r_rm(buffer, op_size, code, dest, RegMem::Reg(true_arg));
+                } else {
+                    emit_mov_rm_r(buffer, op_size.into(), RegMem::Reg(dest), false_arg);
+                    emit_movcc_r_rm(buffer, op_size, code, dest, RegMem::Reg(true_arg));
+                }
+            }
             &X64Instr::MovRmS32(val) => {
                 let dest = state.operand_reg_mem(defs[0]);
                 emit_mov_rm_s32(ctx, pos, state, buffer, dest, val)
@@ -1235,6 +1249,25 @@ fn emit_setcc_r(buffer: &mut CodeBuffer<X64Fixup>, code: CondCode, dest: PhysReg
     buffer.instr(|sink| {
         rex.emit(sink);
         sink.emit(&[0xf, 0x90 | encode_cond_code(code), encode_modrm_r(0, dest)]);
+    });
+}
+
+fn emit_movcc_r_rm(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    op_size: OperandSize,
+    code: CondCode,
+    dest: PhysReg,
+    src: RegMem,
+) {
+    let (rex, modrm_sib) = encode_reg_mem_parts(src, |rex| {
+        rex.encode_operand_size(op_size);
+        rex.encode_modrm_reg(dest)
+    });
+
+    buffer.instr(|sink| {
+        rex.emit(sink);
+        sink.emit(&[0x0f, 0x40 + encode_cond_code(code)]);
+        modrm_sib.emit(sink);
     });
 }
 

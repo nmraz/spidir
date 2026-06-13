@@ -234,6 +234,7 @@ impl MachineLower for X64Machine {
             NodeKind::FloatToSint => emit_cvts2si(ctx, node),
             NodeKind::FloatToUint => select_floattouint(self, ctx, node),
             NodeKind::Bitcast => select_bitcast(ctx, node)?,
+            NodeKind::Select => select_select(ctx, node)?,
             NodeKind::PtrOff => select_add(ctx, node),
             &NodeKind::Load(mem_size) => select_load(ctx, node, mem_size),
             &NodeKind::Store(mem_size) => select_store(ctx, node, mem_size),
@@ -810,6 +811,39 @@ fn select_bitcast(
 
         _ => return Err(MachineIselError),
     }
+
+    Ok(())
+}
+
+fn select_select(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+) -> Result<(), MachineIselError> {
+    let [cond, true_val, false_val] = ctx.node_inputs_exact(node);
+    let [output] = ctx.node_outputs_exact(node);
+
+    let ty = ctx.value_type(true_val);
+
+    let true_val = ctx.get_value_vreg(true_val);
+    let false_val = ctx.get_value_vreg(false_val);
+    let output = ctx.get_value_vreg(output);
+
+    // We only support this on integer registers for now.
+    if ctx.vreg_class(output).bank() != RB_GPR {
+        return Err(MachineIselError);
+    }
+
+    let op_size = operand_size_for_int_ty(ty);
+
+    emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
+    ctx.emit_instr(
+        X64Instr::Cmovcc(op_size, CondCode::Ne),
+        &[DefOperand::any_reg(output)],
+        &[
+            UseOperand::soft_tied(true_val, 0),
+            UseOperand::soft_tied(false_val, 0),
+        ],
+    );
 
     Ok(())
 }

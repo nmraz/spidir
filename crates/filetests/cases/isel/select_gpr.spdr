@@ -1,0 +1,73 @@
+# run: isel
+
+func @select_i32_i32:i32(i32, i32, i32) {
+    # check: function `select_i32_i32`:
+    # nextln:       block0[%3:gpr32($$rdi), %1:gpr32($$rsi), %2:gpr32($$rdx)]:
+    # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0001:      %0:gpr32(reg)[late] = Cmovcc(S32, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i32_i64:i64(i32, i64, i64) {
+    # check: function `select_i32_i64`:
+    # nextln:       block0[%3:gpr32($$rdi), %1:gpr64($$rsi), %2:gpr64($$rdx)]:
+    # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0001:      %0:gpr64(reg)[late] = Cmovcc(S64, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i32, %2:i64, %3:i64 = entry
+    %4:i64 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i32_ptr:ptr(i32, ptr, ptr) {
+    # check: function `select_i32_ptr`:
+    # nextln:       block0[%3:gpr32($$rdi), %1:gpr64($$rsi), %2:gpr64($$rdx)]:
+    # nextln: 0000:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0001:      %0:gpr64(reg)[late] = Cmovcc(S64, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i32, %2:ptr, %3:ptr = entry
+    %4:ptr = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i64_i32:i32(i64, i32, i32) {
+    # check: function `select_i64_i32`:
+    # nextln:       block0[%3:gpr64($$rdi), %1:gpr32($$rsi), %2:gpr32($$rdx)]:
+    # nextln: 0000:      AluRRm(S64, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0001:      %0:gpr32(reg)[late] = Cmovcc(S32, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i64, %2:i32, %3:i32 = entry
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i64_i64:i64(i64, i64, i64) {
+    # check: function `select_i64_i64`:
+    # nextln:       block0[%3:gpr64($$rdi), %1:gpr64($$rsi), %2:gpr64($$rdx)]:
+    # nextln: 0000:      AluRRm(S64, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0001:      %0:gpr64(reg)[late] = Cmovcc(S64, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i64, %2:i64, %3:i64 = entry
+    %4:i64 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i64_ptr:ptr(i64, ptr, ptr) {
+    # check: function `select_i64_ptr`:
+    # nextln:       block0[%3:gpr64($$rdi), %1:gpr64($$rsi), %2:gpr64($$rdx)]:
+    # nextln: 0000:      AluRRm(S64, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0001:      %0:gpr64(reg)[late] = Cmovcc(S64, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %1:i64, %2:ptr, %3:ptr = entry
+    %4:ptr = select %1, %2, %3
+    return %0, %4
+}

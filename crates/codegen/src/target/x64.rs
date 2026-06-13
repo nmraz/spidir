@@ -270,6 +270,7 @@ pub enum X64Instr {
     MovzxRRm(FullOperandSize),
     MovsxRRm(ExtWidth),
     Setcc(CondCode),
+    Cmovcc(OperandSize, CondCode),
     SseScalarFpuRRm(SseFpuPrecision, SseFpuBinOp),
     // This instruction has only a scalar variant because it sets flags.
     Ucomi(SseFpuPrecision),
@@ -337,6 +338,7 @@ impl X64Instr {
             X64Instr::MovzxRRm(..) => false,
             X64Instr::MovsxRRm(..) => false,
             X64Instr::Setcc(..) => true,
+            X64Instr::Cmovcc(..) => true,
             X64Instr::SseScalarFpuRRm(..) => false,
             X64Instr::Ucomi(..) => false,
             X64Instr::SseMovRZ => false,
@@ -412,6 +414,7 @@ impl X64Instr {
             X64Instr::MovGprmXmm(..) => false,
             X64Instr::MovXmmGprm(..) => false,
             X64Instr::Setcc(..) => false,
+            X64Instr::Cmovcc(..) => false,
             X64Instr::MovRRbp { .. } => false,
             X64Instr::MovsRRbp { .. } => false,
             X64Instr::StackAddr(..) => false,

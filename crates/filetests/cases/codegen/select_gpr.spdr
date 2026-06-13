@@ -1,0 +1,91 @@
+# run: codegen
+
+func @select_i32_i32:i32(i32, i32, i32) {
+    # check: function `select_i32_i32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 85 ff                           test edi, edi
+    # nextln: 000006: 89 d0                           mov eax, edx
+    # nextln: 000008: 0f 45 c6                        cmovne eax, esi
+    # nextln: 00000b: 5d                              pop rbp
+    # nextln: 00000c: c3                              ret
+
+    %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i32_i64:i64(i32, i64, i64) {
+    # check: function `select_i32_i64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 85 ff                           test edi, edi
+    # nextln: 000006: 48 89 d0                        mov rax, rdx
+    # nextln: 000009: 48 0f 45 c6                     cmovne rax, rsi
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
+
+    %0:ctrl, %1:i32, %2:i64, %3:i64 = entry
+    %4:i64 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i32_ptr:ptr(i32, ptr, ptr) {
+    # check: function `select_i32_ptr`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 85 ff                           test edi, edi
+    # nextln: 000006: 48 89 d0                        mov rax, rdx
+    # nextln: 000009: 48 0f 45 c6                     cmovne rax, rsi
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
+
+    %0:ctrl, %1:i32, %2:ptr, %3:ptr = entry
+    %4:ptr = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i64_i32:i32(i64, i32, i32) {
+    # check: function `select_i64_i32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 85 ff                        test rdi, rdi
+    # nextln: 000007: 89 d0                           mov eax, edx
+    # nextln: 000009: 0f 45 c6                        cmovne eax, esi
+    # nextln: 00000c: 5d                              pop rbp
+    # nextln: 00000d: c3                              ret
+
+    %0:ctrl, %1:i64, %2:i32, %3:i32 = entry
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i64_i64:i64(i64, i64, i64) {
+    # check: function `select_i64_i64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 85 ff                        test rdi, rdi
+    # nextln: 000007: 48 89 d0                        mov rax, rdx
+    # nextln: 00000a: 48 0f 45 c6                     cmovne rax, rsi
+    # nextln: 00000e: 5d                              pop rbp
+    # nextln: 00000f: c3                              ret
+
+    %0:ctrl, %1:i64, %2:i64, %3:i64 = entry
+    %4:i64 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i64_ptr:ptr(i64, ptr, ptr) {
+    # check: function `select_i64_ptr`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 85 ff                        test rdi, rdi
+    # nextln: 000007: 48 89 d0                        mov rax, rdx
+    # nextln: 00000a: 48 0f 45 c6                     cmovne rax, rsi
+    # nextln: 00000e: 5d                              pop rbp
+    # nextln: 00000f: c3                              ret
+
+    %0:ctrl, %1:i64, %2:ptr, %3:ptr = entry
+    %4:ptr = select %1, %2, %3
+    return %0, %4
+}

@@ -410,7 +410,7 @@ fn verify_bitcast(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifie
         return;
     };
 
-    if verify_output_kind(graph, result, ALL_VALUE_TYPES, errors).is_err() {
+    if verify_value_output_kind(graph, result, errors).is_err() {
         return;
     }
 

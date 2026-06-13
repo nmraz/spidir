@@ -50,13 +50,13 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0012:     MovMR(S32, [reg + 16]) $$r12, $$rax
     # nextln: 0013:     $$rcx = MovRM(S32, [reg + 16]) $$rax
     # nextln: 0014:     AluRmI(S64, Cmp, 1) $$rcx
-    # nextln: 0015:     Jumpcc(G, block1, block2)
+    # nextln: 0015:     Jumpcc(Simple(G), block1, block2)
     # nextln:       block1:
     # nextln:           $$rcx = MovRmS32(1)
     # nextln: 0017:     MovMR(S32, [reg + 24]) $$rcx, $$rax
     # nextln: 0018:     $$rcx = MovRM(S32, [reg + 16]) $$r13
     # nextln: 0019:     AluRRm(S64, Test) $$rcx, $$rcx
-    # nextln: 0020:     Jumpcc(G, block4, block5)
+    # nextln: 0020:     Jumpcc(Simple(G), block4, block5)
     # nextln:       block4:
     # nextln: 0021:     MovMR(S64, [reg + 24]) $$rax, $$r13
     # nextln: 0022:     $$r13 = MovRM(S64, [!0 + 0])
@@ -66,31 +66,31 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 0024:     MovMR(S32, [reg + 16]) $$r12, $$rax
     # nextln: 0025:     $$rcx = MovRM(S32, [reg + 16]) $$rax
     # nextln: 0026:     AluRRm(S64, Test) $$rcx, $$rcx
-    # nextln: 0027:     Jumpcc(G, block6, block7)
+    # nextln: 0027:     Jumpcc(Simple(G), block6, block7)
     # nextln:       block6:
     # nextln:           $$rcx = MovRmS32(2)
     # nextln: 0029:     MovMR(S32, [reg + 20]) $$rcx, $$rax
     # nextln: 0030:     $$rcx = MovRM(S32, [reg + 16]) $$rax
     # nextln: 0031:     AluRmI(S64, Cmp, 1) $$rcx
-    # nextln: 0032:     Jumpcc(G, block8, block9)
+    # nextln: 0032:     Jumpcc(Simple(G), block8, block9)
     # nextln:       block8:
     # nextln:           $$rcx = MovRmS32(3)
     # nextln: 0034:     MovMR(S32, [reg + 24]) $$rcx, $$rax
     # nextln: 0035:     $$rcx = MovRM(S32, [reg + 16]) $$r13
     # nextln: 0036:     AluRmI(S64, Cmp, 1) $$rcx
-    # nextln: 0037:     Jumpcc(G, block10, block11)
+    # nextln: 0037:     Jumpcc(Simple(G), block10, block11)
     # nextln:       block10:
     # nextln: 0038:     MovMR(S64, [reg + 32]) $$rax, $$r13
     # nextln: 0039:     $$rax = MovRM(S64, [!0 + 0])
     # nextln: 0040:     $$rcx = MovRM(S32, [reg + 16]) $$rax
     # nextln: 0041:     AluRmI(S64, Cmp, 1) $$rcx
-    # nextln: 0042:     Jumpcc(G, block12, block13)
+    # nextln: 0042:     Jumpcc(Simple(G), block12, block13)
     # nextln:       block12:
     # nextln: 0043:     $$rcx = MovsxRRm(Ext32_64) $$rbx
     # nextln: 0044:     $$rax = MovRM(S64, [reg + 32]) $$rax
     # nextln: 0045:     $$rdx = MovRM(S32, [reg + 16]) $$rax
     # nextln: 0046:     AluRRm(S64, Cmp) $$rcx, $$rdx
-    # nextln: 0047:     Jumpcc(L, block14, block15)
+    # nextln: 0047:     Jumpcc(Simple(L), block14, block15)
     # nextln:       block14:
     # nextln: 0048:     $$rcx = ShiftRmI(S64, Shl, 2) $$rcx
     # nextln: 0049:     $$rcx = AddRI(S64, 20) $$rcx

@@ -19,7 +19,7 @@ use crate::{
     },
     machine::MachineLower,
     num_utils::{is_sint, is_uint},
-    target::x64::{BitCountOp, LIBCALL_POPCNT32, LIBCALL_POPCNT64, RB_GPR, RB_XMM},
+    target::x64::{BitCountOp, JumpCondCode, LIBCALL_POPCNT32, LIBCALL_POPCNT64, RB_GPR, RB_XMM},
 };
 
 use super::{
@@ -941,7 +941,7 @@ fn select_brcond(
             if let node cond_node @ &NodeKind::Icmp(kind) = ctx, cond {
                 let cond_code = select_icmp(ctx, cond_node, kind);
                 ctx.emit_instr(
-                    X64Instr::Jumpcc(cond_code, true_target, false_target),
+                    X64Instr::Jumpcc(JumpCondCode::Simple(cond_code), true_target, false_target),
                     &[],
                     &[],
                 );
@@ -958,7 +958,11 @@ fn select_brcond(
 
     emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
     ctx.emit_instr(
-        X64Instr::Jumpcc(CondCode::Ne, true_target, false_target),
+        X64Instr::Jumpcc(
+            JumpCondCode::Simple(CondCode::Ne),
+            true_target,
+            false_target,
+        ),
         &[],
         &[],
     );
@@ -982,35 +986,55 @@ fn select_fcmp_brcond(
     let (swap_cmp_operands, branch_instr) = match cmp_kind {
         FcmpKind::Oeq => (
             false,
-            X64Instr::CompundJumpcc(CompoundCondCode::FpuOeq, true_target, false_target),
+            X64Instr::Jumpcc(
+                JumpCondCode::Compound(CompoundCondCode::FpuOeq),
+                true_target,
+                false_target,
+            ),
         ),
         FcmpKind::One => (
             false,
-            X64Instr::Jumpcc(CondCode::Ne, true_target, false_target),
+            X64Instr::Jumpcc(
+                JumpCondCode::Simple(CondCode::Ne),
+                true_target,
+                false_target,
+            ),
         ),
         FcmpKind::Olt => (
             true,
-            X64Instr::Jumpcc(CondCode::A, true_target, false_target),
+            X64Instr::Jumpcc(JumpCondCode::Simple(CondCode::A), true_target, false_target),
         ),
         FcmpKind::Ole => (
             true,
-            X64Instr::Jumpcc(CondCode::Ae, true_target, false_target),
+            X64Instr::Jumpcc(
+                JumpCondCode::Simple(CondCode::Ae),
+                true_target,
+                false_target,
+            ),
         ),
         FcmpKind::Ueq => (
             false,
-            X64Instr::Jumpcc(CondCode::E, true_target, false_target),
+            X64Instr::Jumpcc(JumpCondCode::Simple(CondCode::E), true_target, false_target),
         ),
         FcmpKind::Une => (
             false,
-            X64Instr::CompundJumpcc(CompoundCondCode::FpuUne, true_target, false_target),
+            X64Instr::Jumpcc(
+                JumpCondCode::Compound(CompoundCondCode::FpuUne),
+                true_target,
+                false_target,
+            ),
         ),
         FcmpKind::Ult => (
             false,
-            X64Instr::Jumpcc(CondCode::B, true_target, false_target),
+            X64Instr::Jumpcc(JumpCondCode::Simple(CondCode::B), true_target, false_target),
         ),
         FcmpKind::Ule => (
             false,
-            X64Instr::Jumpcc(CondCode::Be, true_target, false_target),
+            X64Instr::Jumpcc(
+                JumpCondCode::Simple(CondCode::Be),
+                true_target,
+                false_target,
+            ),
         ),
     };
 

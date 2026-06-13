@@ -126,6 +126,12 @@ pub enum CompoundCondCode {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum JumpCondCode {
+    Simple(CondCode),
+    Compound(CompoundCondCode),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SseFpuCmpCode {
     Eq = 0,
     Lt = 1,
@@ -310,8 +316,7 @@ pub enum X64Instr {
     CallRel(CallTarget),
     CallRm,
     Jump(Block),
-    Jumpcc(CondCode, Block, Block),
-    CompundJumpcc(CompoundCondCode, Block, Block),
+    Jumpcc(JumpCondCode, Block, Block),
     Ud2,
 }
 
@@ -371,7 +376,6 @@ impl X64Instr {
             X64Instr::CallRm => false,
             X64Instr::Jump(..) => false,
             X64Instr::Jumpcc(..) => true,
-            X64Instr::CompundJumpcc(..) => true,
             X64Instr::Ud2 => false,
         }
     }
@@ -431,7 +435,6 @@ impl X64Instr {
             X64Instr::CallRm => false,
             X64Instr::Jump(..) => false,
             X64Instr::Jumpcc(..) => false,
-            X64Instr::CompundJumpcc(..) => false,
             X64Instr::Ud2 => false,
         }
     }

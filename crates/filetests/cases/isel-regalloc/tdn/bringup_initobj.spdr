@@ -35,7 +35,7 @@ func @"System.Boolean Tests.CodeGenBringUpTests::InitObj()":i32() {
     # nextln: 0014:     CallRm $$rax, $$rdi, $$rsi, $$rdx
     # nextln: 0015:     $$rax = MovRM(S32, [!0 + 4])
     # nextln: 0016:     AluRRm(S32, Cmp) $$rbx, $$rax
-    # nextln: 0017:     Jumpcc(Ne, block3, block5)
+    # nextln: 0017:     Jumpcc(Simple(Ne), block3, block5)
     # nextln:       block3:
     # nextln: 0018:     Jump(block4)
     # nextln:       block5:
@@ -52,7 +52,7 @@ func @"System.Boolean Tests.CodeGenBringUpTests::InitObj()":i32() {
     # nextln: 0023:     CallRm $$rax, $$rdi, $$rsi, $$rdx
     # nextln: 0024:     $$rax = MovRM(S32, [!0 + 8])
     # nextln: 0025:     AluRRm(S32, Cmp) $$rbx, $$rax
-    # nextln: 0026:     Jumpcc(Ne, block6, block7)
+    # nextln: 0026:     Jumpcc(Simple(Ne), block6, block7)
     # nextln:       block6:
     # nextln: 0027:     Jump(block4)
     # nextln:       block4:

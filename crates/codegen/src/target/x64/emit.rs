@@ -13,8 +13,8 @@ use crate::{
     num_utils::{align_up, is_sint, is_uint},
     regalloc::{OperandAssignment, SpillSlot},
     target::x64::{
-        AluCommBinOp, BitCountOp, CALLEE_SAVED_REGS, CompoundCondCode, RB_GPR, RB_XMM, RW_32,
-        RW_64, SseFpuCmpCode, SseFpuPrecision,
+        AluCommBinOp, BitCountOp, CALLEE_SAVED_REGS, CompoundCondCode, JumpCondCode, RB_GPR,
+        RB_XMM, RW_32, RW_64, SseFpuCmpCode, SseFpuPrecision,
     },
 };
 
@@ -546,11 +546,7 @@ impl MachineEmit for X64Machine {
                 emit_jmp(buffer, ctx.block_labels[target]);
             }
             &X64Instr::Jumpcc(code, true_target, false_target) => {
-                emit_jcc(buffer, code, ctx.block_labels[true_target]);
-                emit_jmp(buffer, ctx.block_labels[false_target]);
-            }
-            &X64Instr::CompundJumpcc(code, true_target, false_target) => {
-                emit_compound_jcc(ctx, buffer, code, true_target, false_target);
+                emit_jcc_sequence(ctx, buffer, code, true_target, false_target)
             }
         }
     }
@@ -666,10 +662,10 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Fixup>, offset: i32) {
     }
 }
 
-fn emit_compound_jcc(
+fn emit_jcc_sequence(
     ctx: &EmitContext<'_, X64Machine>,
     buffer: &mut CodeBuffer<X64Fixup>,
-    code: CompoundCondCode,
+    code: JumpCondCode,
     true_target: Block,
     false_target: Block,
 ) {
@@ -677,16 +673,24 @@ fn emit_compound_jcc(
     let false_target = ctx.block_labels[false_target];
 
     match code {
-        CompoundCondCode::FpuOeq => {
-            emit_jcc(buffer, CondCode::Ne, false_target);
-            emit_jcc(buffer, CondCode::P, false_target);
+        JumpCondCode::Simple(code) => {
+            emit_jcc(buffer, code, true_target);
+            emit_jmp(buffer, false_target);
         }
-        CompoundCondCode::FpuUne => {
-            emit_jcc(buffer, CondCode::Ne, true_target);
-            emit_jcc(buffer, CondCode::Np, false_target);
+        JumpCondCode::Compound(code) => {
+            match code {
+                CompoundCondCode::FpuOeq => {
+                    emit_jcc(buffer, CondCode::Ne, false_target);
+                    emit_jcc(buffer, CondCode::P, false_target);
+                }
+                CompoundCondCode::FpuUne => {
+                    emit_jcc(buffer, CondCode::Ne, true_target);
+                    emit_jcc(buffer, CondCode::Np, false_target);
+                }
+            }
+            emit_jmp(buffer, true_target);
         }
     }
-    emit_jmp(buffer, true_target);
 }
 
 fn emit_uint64_to_float(

@@ -64,7 +64,10 @@ mod tests {
             Builder as LirBuilder, DefOperand, OperandPos, UseOperandConstraint,
             test_utils::push_instr,
         },
-        target::x64::{AluBinOp, AluCommBinOp, CondCode, OperandSize, RC_GPR64, REG_RAX, X64Instr},
+        target::x64::{
+            AluBinOp, AluCommBinOp, CondCode, JumpCondCode, OperandSize, RC_GPR64, REG_RAX,
+            X64Instr,
+        },
     };
 
     use super::*;
@@ -112,7 +115,11 @@ mod tests {
             |builder| {
                 push_instr(
                     builder,
-                    X64Instr::Jumpcc(CondCode::E, Block::new(0), Block::new(0)),
+                    X64Instr::Jumpcc(
+                        JumpCondCode::Simple(CondCode::E),
+                        Block::new(0),
+                        Block::new(0),
+                    ),
                     [],
                     [],
                 );
@@ -216,7 +223,11 @@ mod tests {
             |builder| {
                 push_instr(
                     builder,
-                    X64Instr::Jumpcc(CondCode::E, Block::new(0), Block::new(0)),
+                    X64Instr::Jumpcc(
+                        JumpCondCode::Simple(CondCode::E),
+                        Block::new(0),
+                        Block::new(0),
+                    ),
                     [],
                     [],
                 );
@@ -273,7 +284,11 @@ mod tests {
             |builder| {
                 push_instr(
                     builder,
-                    X64Instr::Jumpcc(CondCode::E, Block::new(0), Block::new(0)),
+                    X64Instr::Jumpcc(
+                        JumpCondCode::Simple(CondCode::E),
+                        Block::new(0),
+                        Block::new(0),
+                    ),
                     [],
                     [],
                 );
@@ -323,7 +338,11 @@ mod tests {
             |builder| {
                 push_instr(
                     builder,
-                    X64Instr::Jumpcc(CondCode::E, Block::new(0), Block::new(0)),
+                    X64Instr::Jumpcc(
+                        JumpCondCode::Simple(CondCode::E),
+                        Block::new(0),
+                        Block::new(0),
+                    ),
                     [],
                     [],
                 );

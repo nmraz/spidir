@@ -28,7 +28,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0012:     $$rcx = MovRM(S32, [!2 + 0])
     # nextln: 0013:     $$rdx = MovRM(S32, [!0 + 0])
     # nextln: 0014:     AluRRm(S32, Cmp) $$rdx, $$rcx
-    # nextln: 0015:     Jumpcc(L, block2, block3)
+    # nextln: 0015:     Jumpcc(Simple(L), block2, block3)
     # nextln:       block2:
     # nextln: 0016:     $$rcx = MovRM(S32, [!2 + 0])
     # nextln: 0017:     Jump(block4)
@@ -37,7 +37,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0019:     Jump(block4)
     # nextln:       block4:
     # nextln: 0020:     AluRRm(S32, Cmp) $$rax, $$rcx
-    # nextln: 0021:     Jumpcc(L, block5, block6)
+    # nextln: 0021:     Jumpcc(Simple(L), block5, block6)
     # nextln:       block5:
     # nextln: 0022:     $$rax = MovRM(S32, [!2 + 0])
     # nextln: 0023:     MovMR(S32, [!3 + 0]) $$rax
@@ -45,14 +45,14 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln:       block16:
     # nextln: 0025:     $$rax = MovRM(S32, [!3 + 0])
     # nextln: 0026:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0027:     Jumpcc(G, block17, block18)
+    # nextln: 0027:     Jumpcc(Simple(G), block17, block18)
     # nextln:       block17:
     # nextln: 0028:     $$rax = MovRM(S32, [!3 + 0])
     # nextln: 0029:     $$rcx = MovRM(S32, [!4 + 0])
     # nextln: 0030:     $$rax = AddRR(S32) $$rax, $$rcx
     # nextln: 0031:     $$rcx = MovRM(S32, [!2 + 0])
     # nextln: 0032:     AluRRm(S32, Test) $$rcx, $$rcx
-    # nextln: 0033:     Jumpcc(G, block22, block23)
+    # nextln: 0033:     Jumpcc(Simple(G), block22, block23)
     # nextln:       block22:
     # nextln: 0034:     $$rcx = MovRM(S32, [!2 + 0])
     # nextln: 0035:     Jump(block24)
@@ -63,7 +63,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0037:     $$rdx = ConvertWord(S32) $$rax
     # nextln: 0038:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rcx
     # nextln: 0039:     AluRRm(S32, Test) $$rdx, $$rdx
-    # nextln: 0040:     Jumpcc(Ne, block25, block27)
+    # nextln: 0040:     Jumpcc(Simple(Ne), block25, block27)
     # nextln:       block25:
     # nextln: 0041:     Jump(block26)
     # nextln:       block27:
@@ -73,7 +73,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0044:     $$rax = MovRM(S32, [!1 + 0])
     # nextln: 0045:     $$rcx = MovRM(S32, [!0 + 0])
     # nextln: 0046:     AluRRm(S32, Cmp) $$rax, $$rcx
-    # nextln: 0047:     Jumpcc(L, block29, block30)
+    # nextln: 0047:     Jumpcc(Simple(L), block29, block30)
     # nextln:       block29:
     # nextln: 0048:     $$rdi = MovRM(S32, [!2 + 0])
     # nextln: 0049:     $$rax = MovRM(S32, [!4 + 0])
@@ -82,7 +82,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0052:     $$rcx = MovRM(S32, [!1 + 0])
     # nextln: 0053:     $$rax = AddRR(S32) $$rax, $$rcx
     # nextln: 0054:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0055:     Jumpcc(G, block31, block32)
+    # nextln: 0055:     Jumpcc(Simple(G), block31, block32)
     # nextln:       block31:
     # nextln: 0056:     $$rax = MovRM(S32, [!1 + 0])
     # nextln: 0057:     $$rcx = MovRM(S32, [!0 + 0])
@@ -110,7 +110,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0074:     $$rax = MovRM(S32, [!2 + 0])
     # nextln: 0075:     $$rcx = MovRM(S32, [!0 + 0])
     # nextln: 0076:     AluRRm(S32, Cmp) $$rcx, $$rax
-    # nextln: 0077:     Jumpcc(L, block19, block20)
+    # nextln: 0077:     Jumpcc(Simple(L), block19, block20)
     # nextln:       block19:
     # nextln: 0078:     $$rax = MovRM(S32, [!0 + 0])
     # nextln: 0079:     $$rcx = MovRM(S32, [!4 + 0])
@@ -134,7 +134,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0093:     $$rax = MovRM(S32, [!5 + 0])
     # nextln: 0094:     $$rcx = MovRM(S32, [!0 + 0])
     # nextln: 0095:     AluRRm(S32, Cmp) $$rax, $$rcx
-    # nextln: 0096:     Jumpcc(L, block8, block9)
+    # nextln: 0096:     Jumpcc(Simple(L), block8, block9)
     # nextln:       block8:
     # nextln: 0097:     $$rcx = MovRM(S32, [!2 + 0])
     # nextln: 0098:     $$rax = MovRM(S32, [!5 + 0])
@@ -142,7 +142,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln:           $$rdi = MovRmS32(2)
     # nextln: 0100:     $$rax, $$rdx = Div(S32, Idiv) $$rax, $$rdx, $$rdi
     # nextln: 0101:     AluRRm(S32, Test) $$rdx, $$rdx
-    # nextln: 0102:     Jumpcc(Ne, block10, block11)
+    # nextln: 0102:     Jumpcc(Simple(Ne), block10, block11)
     # nextln:       block10:
     # nextln: 0103:     $$rax = MovRM(S32, [!0 + 0])
     # nextln: 0104:     $$rax = AluRm(S32, Neg) $$rax
@@ -155,7 +155,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0109:     MovMR(S32, [!2 + 0]) $$rax
     # nextln: 0110:     $$rax = MovRM(S32, [!2 + 0])
     # nextln: 0111:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0112:     Jumpcc(G, block13, block14)
+    # nextln: 0112:     Jumpcc(Simple(G), block13, block14)
     # nextln:       block13:
     # nextln: 0113:     $$rdi = MovRM(S32, [!2 + 0])
     # nextln: 0114:     $$rax = MovRM(S32, [!0 + 0])

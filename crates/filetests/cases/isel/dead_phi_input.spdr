@@ -31,7 +31,7 @@ func @icmp_dead_phi_input:i32(i32) {
     # nextln:       => block1
     # nextln:       block1:
     # nextln: 0002:      AluRRm(S32, Test) %2(reg)[early], %2(any)[early]
-    # nextln: 0003:      Jumpcc(E, block2, block3)
+    # nextln: 0003:      Jumpcc(Simple(E), block2, block3)
     # nextln:       => block2, block3
     # nextln:       block2:
     # nextln: 0004:      Ret %1($$rax)[early]

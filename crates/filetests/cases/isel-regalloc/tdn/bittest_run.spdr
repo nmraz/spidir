@@ -350,7 +350,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0270:     $$rcx = Setcc(E) $$rcx
     # nextln: 0271:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
     # nextln: 0272:     AluRRm(S32, Test) $$rbx, $$rbx
-    # nextln: 0273:     Jumpcc(Ne, block3, block4)
+    # nextln: 0273:     Jumpcc(Simple(Ne), block3, block4)
     # nextln:       block3:
     # nextln:           $$rax = MovRmS32(1)
     # nextln: 0274:     Ret $$rax

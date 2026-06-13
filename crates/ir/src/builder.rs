@@ -323,6 +323,16 @@ pub trait BuilderExt: Builder {
         build_single_output_pure(self, NodeKind::Bitcast, [value], output_ty)
     }
 
+    fn build_select(
+        &mut self,
+        cond: DepValue,
+        true_val: DepValue,
+        false_val: DepValue,
+    ) -> DepValue {
+        let ty = get_input_ty(self, true_val);
+        build_single_output_pure(self, NodeKind::Select, [cond, true_val, false_val], ty)
+    }
+
     fn build_load(
         &mut self,
         size: MemSize,

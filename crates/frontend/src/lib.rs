@@ -324,6 +324,15 @@ impl<'a> FunctionBuilder<'a> {
         self.builder().build_bitcast(output_ty, value)
     }
 
+    pub fn build_select(
+        &mut self,
+        cond: DepValue,
+        true_val: DepValue,
+        false_val: DepValue,
+    ) -> DepValue {
+        self.builder().build_select(cond, true_val, false_val)
+    }
+
     pub fn build_load(&mut self, size: MemSize, ty: Type, ptr: DepValue) -> DepValue {
         let ctrl = self.cur_block_ctrl();
         let built = self.builder().build_load(size, ty, ctrl, ptr);

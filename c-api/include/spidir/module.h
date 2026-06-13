@@ -1197,6 +1197,23 @@ spidir_value_t spidir_builder_build_bitcast(spidir_builder_handle_t builder,
                                             spidir_value_type_t output_type,
                                             spidir_value_t value);
 
+/// Builds a select operation at the current insertion point.
+///
+/// This operation returns `true_val` if `cond` is nonzero, and `false_val`
+/// otherwise. The two inputs must have the same type.
+///
+/// @param[in] builder   A handle to the function builder.
+/// @param[in] cond      An SSA value containing the condition for the
+///                      operation. This value must have integer type.
+/// @param[in] true_val  The value to return when `cond` is nonzero.
+/// @param[in] false_val The value to return when `cond` is zero.
+/// @return An SSA value representing the result of the operation. This value
+///         will have the same type as `true_val` and `false_val`.
+spidir_value_t spidir_builder_build_select(spidir_builder_handle_t builder,
+                                           spidir_value_t cond,
+                                           spidir_value_t true_val,
+                                           spidir_value_t false_val);
+
 /// Builds a load operation at the current insertion point.
 ///
 /// @param[in] builder A handle to the function builder.

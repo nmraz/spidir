@@ -370,6 +370,23 @@ impl_builder_typed_unop!(floattosint);
 impl_builder_typed_unop!(floattouint);
 
 #[unsafe(no_mangle)]
+unsafe extern "C" fn spidir_builder_build_select(
+    builder: *mut FunctionBuilder<'_>,
+    cond: ApiValue,
+    true_val: ApiValue,
+    false_val: ApiValue,
+) -> ApiValue {
+    unsafe {
+        let builder = &mut *builder;
+        value_to_api(builder.build_select(
+            value_from_api(cond),
+            value_from_api(true_val),
+            value_from_api(false_val),
+        ))
+    }
+}
+
+#[unsafe(no_mangle)]
 unsafe extern "C" fn spidir_builder_build_ptroff(
     builder: *mut FunctionBuilder<'_>,
     ptr: ApiValue,

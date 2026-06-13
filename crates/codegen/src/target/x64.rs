@@ -125,10 +125,28 @@ pub enum CompoundCondCode {
     FpuUne,
 }
 
+impl CompoundCondCode {
+    fn negate(self) -> Self {
+        match self {
+            Self::FpuOeq => Self::FpuUne,
+            Self::FpuUne => Self::FpuOeq,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JumpCondCode {
     Simple(CondCode),
     Compound(CompoundCondCode),
+}
+
+impl JumpCondCode {
+    fn negate(self) -> Self {
+        match self {
+            Self::Simple(code) => Self::Simple(code.negate()),
+            Self::Compound(code) => Self::Compound(code.negate()),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

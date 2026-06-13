@@ -1,0 +1,35 @@
+# run: codegen[small-pic]
+
+extfunc @sink(i32)
+
+func @nz(i32, i32, i32) {
+    # check: function `nz`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 85 d2                           test edx, edx
+    # nextln: 000006: 0f 44 fe                        cmove edi, esi
+    # nextln: 000009: e8 00 00 00 00                  call 0xe  # RELOC_PC32 -> @sink + -4
+    # nextln: 00000e: 5d                              pop rbp
+    # nextln: 00000f: c3                              ret
+
+    %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
+    %4:i32 = select %3, %1, %2
+    %5:ctrl = call @sink %0, %4
+    return %5
+}
+
+func @z(i32, i32, i32) {
+    # check: function `z`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 85 d2                           test edx, edx
+    # nextln: 000006: 0f 45 fe                        cmovne edi, esi
+    # nextln: 000009: e8 00 00 00 00                  call 0xe  # RELOC_PC32 -> @sink + -4
+    # nextln: 00000e: 5d                              pop rbp
+    # nextln: 00000f: c3                              ret
+
+    %0:ctrl, %1:i32, %2:i32, %3:i32 = entry
+    %4:i32 = select %3, %2, %1
+    %5:ctrl = call @sink %0, %4
+    return %5
+}

@@ -1,0 +1,132 @@
+# run: isel
+
+func @select_oeq:i32(f64, f64, i32, i32) {
+    # check: function `select_oeq`:
+    # nextln:       block0[%4:xmm64($$xmm0), %5:xmm64($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
+    # nextln: 0000:      %6:xmm64(reg)[late] = SseScalarFpuRRm(Double, Cmp(Eq)) %4(tied:0)[early], %5(any)[early]
+    # nextln: 0001:      %7:gpr64(any)[late] = MovGprmXmm(S64) %6(reg)[early]
+    # nextln: 0002:      %3:gpr32(any)[late] = AluCommRmI(S32, And, 1) %7(tied:0)[early]
+    # nextln: 0003:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0004:      %0:gpr32(reg)[late] = Cmovcc(S32, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0005:      Ret %0($$rax)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp oeq %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_one:i32(f64, f64, i32, i32) {
+    # check: function `select_one`:
+    # nextln:       block0[%3:xmm64($$xmm0), %4:xmm64($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:gpr32(reg)[late] = Cmovcc(S32, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp one %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_olt:i32(f64, f64, i32, i32) {
+    # check: function `select_olt`:
+    # nextln:       block0[%4:xmm64($$xmm0), %3:xmm64($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:gpr32(reg)[late] = Cmovcc(S32, A) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp olt %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ole:i32(f64, f64, i32, i32) {
+    # check: function `select_ole`:
+    # nextln:       block0[%4:xmm64($$xmm0), %3:xmm64($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:gpr32(reg)[late] = Cmovcc(S32, Ae) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp ole %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ueq:i32(f64, f64, i32, i32) {
+    # check: function `select_ueq`:
+    # nextln:       block0[%3:xmm64($$xmm0), %4:xmm64($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:gpr32(reg)[late] = Cmovcc(S32, E) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp ueq %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_une:i32(f64, f64, i32, i32) {
+    # check: function `select_une`:
+    # nextln:       block0[%4:xmm64($$xmm0), %5:xmm64($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
+    # nextln: 0000:      %6:xmm64(reg)[late] = SseScalarFpuRRm(Double, Cmp(Neq)) %4(tied:0)[early], %5(any)[early]
+    # nextln: 0001:      %7:gpr64(any)[late] = MovGprmXmm(S64) %6(reg)[early]
+    # nextln: 0002:      %3:gpr32(any)[late] = AluCommRmI(S32, And, 1) %7(tied:0)[early]
+    # nextln: 0003:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0004:      %0:gpr32(reg)[late] = Cmovcc(S32, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0005:      Ret %0($$rax)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp une %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ult:i32(f64, f64, i32, i32) {
+    # check: function `select_ult`:
+    # nextln:       block0[%3:xmm64($$xmm0), %4:xmm64($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:gpr32(reg)[late] = Cmovcc(S32, B) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp ult %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ule:i32(f64, f64, i32, i32) {
+    # check: function `select_ule`:
+    # nextln:       block0[%3:xmm64($$xmm0), %4:xmm64($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:gpr32(reg)[late] = Cmovcc(S32, Be) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$rax)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp ule %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_olt_cond_reused:i32(f64, f64, i32, i32) {
+    # check: function `select_olt_cond_reused`:
+    # nextln:       block0[%8:xmm64($$xmm0), %7:xmm64($$xmm1), %4:gpr32($$rdi), %5:gpr32($$rsi)]:
+    # nextln: 0000:      %6:gpr64(any)[late] = MovRmS32(0)
+    # nextln: 0001:      Ucomi(Double) %7(reg)[early], %8(any)[early]
+    # nextln: 0002:      %3:gpr32(reg)[late] = Setcc(A) %6(tied:0)[early]
+    # nextln: 0003:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
+    # nextln: 0004:      %1:gpr32(reg)[late] = Cmovcc(S32, Ne) %4(soft-tied:0)[early], %5(soft-tied:0)[early]
+    # nextln: 0005:      %2:gpr32(any)[late] = AluCommRmI(S32, Xor, 5) %3(tied:0)[early]
+    # nextln: 0006:      %0:gpr32(reg)[late] = AddRR(S32) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0007:      Ret %0($$rax)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp olt %a, %b
+    %five:i32 = iconst 5
+    %thing:i32 = xor %1, %five
+    %4:i32 = select %1, %2, %3
+    %retval:i32 = iadd %4, %thing
+    return %0, %retval
+}

@@ -1,0 +1,158 @@
+# run: codegen
+
+func @select_oeq:i32(f64, f64, i32, i32) {
+    # check: function `select_oeq`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f c2 c1 00                  cmpeqsd xmm0, xmm1
+    # nextln: 000009: 66 48 0f 7e c0                  movq rax, xmm0
+    # nextln: 00000e: 83 e0 01                        and eax, 1
+    # nextln: 000011: 85 c0                           test eax, eax
+    # nextln: 000013: 89 f0                           mov eax, esi
+    # nextln: 000015: 0f 45 c7                        cmovne eax, edi
+    # nextln: 000018: 5d                              pop rbp
+    # nextln: 000019: c3                              ret
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp oeq %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_one:i32(f64, f64, i32, i32) {
+    # check: function `select_one`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 66 0f 2e c1                     ucomisd xmm0, xmm1
+    # nextln: 000008: 89 f0                           mov eax, esi
+    # nextln: 00000a: 0f 45 c7                        cmovne eax, edi
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp one %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_olt:i32(f64, f64, i32, i32) {
+    # check: function `select_olt`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 66 0f 2e c8                     ucomisd xmm1, xmm0
+    # nextln: 000008: 89 f0                           mov eax, esi
+    # nextln: 00000a: 0f 47 c7                        cmova eax, edi
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp olt %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ole:i32(f64, f64, i32, i32) {
+    # check: function `select_ole`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 66 0f 2e c8                     ucomisd xmm1, xmm0
+    # nextln: 000008: 89 f0                           mov eax, esi
+    # nextln: 00000a: 0f 43 c7                        cmovae eax, edi
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp ole %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ueq:i32(f64, f64, i32, i32) {
+    # check: function `select_ueq`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 66 0f 2e c1                     ucomisd xmm0, xmm1
+    # nextln: 000008: 89 f0                           mov eax, esi
+    # nextln: 00000a: 0f 44 c7                        cmove eax, edi
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp ueq %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_une:i32(f64, f64, i32, i32) {
+    # check: function `select_une`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: f2 0f c2 c1 04                  cmpneqsd xmm0, xmm1
+    # nextln: 000009: 66 48 0f 7e c0                  movq rax, xmm0
+    # nextln: 00000e: 83 e0 01                        and eax, 1
+    # nextln: 000011: 85 c0                           test eax, eax
+    # nextln: 000013: 89 f0                           mov eax, esi
+    # nextln: 000015: 0f 45 c7                        cmovne eax, edi
+    # nextln: 000018: 5d                              pop rbp
+    # nextln: 000019: c3                              ret
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp une %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ult:i32(f64, f64, i32, i32) {
+    # check: function `select_ult`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 66 0f 2e c1                     ucomisd xmm0, xmm1
+    # nextln: 000008: 89 f0                           mov eax, esi
+    # nextln: 00000a: 0f 42 c7                        cmovb eax, edi
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp ult %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ule:i32(f64, f64, i32, i32) {
+    # check: function `select_ule`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 66 0f 2e c1                     ucomisd xmm0, xmm1
+    # nextln: 000008: 89 f0                           mov eax, esi
+    # nextln: 00000a: 0f 46 c7                        cmovbe eax, edi
+    # nextln: 00000d: 5d                              pop rbp
+    # nextln: 00000e: c3                              ret
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp ule %a, %b
+    %4:i32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_olt_cond_reused:i32(f64, f64, i32, i32) {
+    # check: function `select_olt_cond_reused`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 33 c0                           xor eax, eax
+    # nextln: 000006: 66 0f 2e c8                     ucomisd xmm1, xmm0
+    # nextln: 00000a: 0f 97 c0                        seta al
+    # nextln: 00000d: 85 c0                           test eax, eax
+    # nextln: 00000f: 0f 44 fe                        cmove edi, esi
+    # nextln: 000012: 83 f0 05                        xor eax, 5
+    # nextln: 000015: 03 c7                           add eax, edi
+    # nextln: 000017: 5d                              pop rbp
+    # nextln: 000018: c3                              ret
+
+    %0:ctrl, %a:f64, %b:f64, %2:i32, %3:i32 = entry
+    %1:i32 = fcmp olt %a, %b
+    %five:i32 = iconst 5
+    %thing:i32 = xor %1, %five
+    %4:i32 = select %1, %2, %3
+    %retval:i32 = iadd %4, %thing
+    return %0, %retval
+}

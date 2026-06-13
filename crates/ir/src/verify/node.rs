@@ -60,6 +60,7 @@ pub fn verify_node_kind(
         NodeKind::FloatToUint => verify_floattoint(graph, node, errors),
         NodeKind::PtrOff => verify_ptroff(graph, node, errors),
         NodeKind::Bitcast => verify_bitcast(graph, node, errors),
+        NodeKind::Select => verify_select(graph, node, errors),
         NodeKind::Load(size) => verify_load(graph, node, *size, errors),
         NodeKind::Store(size) => verify_store(graph, node, *size, errors),
         NodeKind::StackSlot { align, .. } => verify_stack_slot(graph, node, *align, errors),
@@ -427,6 +428,22 @@ fn verify_bitcast(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifie
     };
 
     let _ = verify_input_kind(graph, node, 0, allowed_input_kinds, errors);
+}
+
+fn verify_select(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+    let Ok([result]) = verify_node_arity(graph, node, 3, errors) else {
+        return;
+    };
+
+    if verify_value_output_kind(graph, result, errors).is_err() {
+        return;
+    }
+
+    let result_kind = graph.value_kind(result);
+
+    let _ = verify_integer_input_kind(graph, node, 0, errors);
+    let _ = verify_input_kind(graph, node, 1, &[result_kind], errors);
+    let _ = verify_input_kind(graph, node, 2, &[result_kind], errors);
 }
 
 fn verify_load(

@@ -301,6 +301,7 @@ pub fn write_node_kind(
         NodeKind::FloatToUint => write!(w, "floattouint")?,
         NodeKind::PtrOff => w.write_str("ptroff")?,
         NodeKind::Bitcast => w.write_str("bitcast")?,
+        NodeKind::Select => w.write_str("select")?,
         NodeKind::Load(size) => write!(w, "load.{}", size.as_str())?,
         NodeKind::Store(size) => write!(w, "store.{}", size.as_str())?,
         NodeKind::StackSlot { size, align } => write!(w, "stackslot {size}:{align}")?,

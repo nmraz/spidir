@@ -289,6 +289,7 @@ fn extract_node_kind(
         "floattouint" => Ok(NodeKind::FloatToUint),
         "ptroff" => Ok(NodeKind::PtrOff),
         "bitcast" => Ok(NodeKind::Bitcast),
+        "select" => Ok(NodeKind::Select),
         "brcond" => Ok(NodeKind::BrCond),
         _ => extract_special_node_kind(node_kind_pair, function_names, body),
     }
@@ -725,6 +726,7 @@ mod tests {
             "floattouint",
             "ptroff",
             "bitcast",
+            "select",
             "load.1",
             "load.2",
             "load.4",

@@ -251,6 +251,7 @@ pub enum NodeKind {
     FloatToUint,
     PtrOff,
     Bitcast,
+    Select,
     Load(MemSize),
     Store(MemSize),
     StackSlot { size: u32, align: u32 },

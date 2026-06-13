@@ -211,6 +211,8 @@ impl MachineLower for X64Machine {
                 }
             }
             &NodeKind::Icmp(kind) => {
+                let sequence = match_icmp_flag_test_sequence(ctx, node, kind);
+
                 let [output] = ctx.node_outputs_exact(node);
                 let output = ctx.get_value_vreg(output);
 
@@ -218,7 +220,10 @@ impl MachineLower for X64Machine {
                 // `setcc` modifies only the low byte of its output operand, so clearing the
                 // register first avoids the (false) partial dependency on the previous value of the
                 // `setcc` output register.
-                emit_setcc_sequence(ctx, output, |ctx| select_icmp(ctx, node, kind));
+                emit_setcc_sequence(ctx, output, |ctx| {
+                    emit_simple_flag_test_sequence(ctx, &sequence.kind);
+                    sequence.code
+                });
             }
             &NodeKind::Fconst32(val) => select_fconst32(self, ctx, node, val),
             &NodeKind::Fconst64(val) => select_fconst64(self, ctx, node, val),
@@ -492,28 +497,6 @@ fn select_imul(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     }
 }
 
-fn select_icmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: IcmpKind) -> CondCode {
-    let [op1, op2] = ctx.node_inputs_exact(node);
-
-    if let Some((op, imm, code)) = match_icmp_imm32(ctx, op1, op2, kind) {
-        if imm == 0 {
-            emit_alu_rr_discarded(ctx, op, op, AluBinOp::Test);
-        } else {
-            let op_size = operand_size_for_int_ty(ctx.value_type(op));
-            let op = ctx.get_value_vreg(op);
-            ctx.emit_instr(
-                X64Instr::AluRmI(op_size, AluBinOp::Cmp, imm),
-                &[],
-                &[UseOperand::any(op)],
-            );
-        }
-        return code;
-    }
-
-    emit_alu_rr_discarded(ctx, op1, op2, AluBinOp::Cmp);
-    cond_code_for_icmp(kind)
-}
-
 fn select_fconst32(
     machine: &X64Machine,
     ctx: &mut IselContext<'_, '_, X64Machine>,
@@ -603,60 +586,33 @@ fn select_fconst64(
 }
 
 fn select_direct_fcmp(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, kind: FcmpKind) {
+    let sequence = match_fcmp_flag_test_sequence(ctx, node, kind);
+
     let [output] = ctx.node_outputs_exact(node);
-    let [op1, op2] = ctx.node_inputs_exact(node);
-
-    let prec = fpu_precision_for_float_ty(ctx.value_type(op1));
-
     let output = ctx.get_value_vreg(output);
 
-    let op1 = ctx.get_value_vreg(op1);
-    let op2 = ctx.get_value_vreg(op2);
+    match sequence {
+        FlagTestSequence::Simple(sequence) => {
+            emit_setcc_sequence(ctx, output, |ctx| {
+                emit_simple_flag_test_sequence(ctx, &sequence.kind);
+                sequence.code
+            });
+        }
+        FlagTestSequence::CompoundFloatCmp { code, lhs, rhs } => {
+            let ty = ctx.value_type(lhs);
+            let prec = fpu_precision_for_float_ty(ty);
 
-    match kind {
-        FcmpKind::Oeq => {
-            // Unfortunately, unordered `ucomisd` results set ZF, so we need to be a bit more
-            // creative in our choice of instructions here. One option is to emit extra code to
-            // check PF as well, but LLVM appears to prefer a direct `cmpeqsd` followed by an
-            // XMM-to-GPR move. Let's do the same for now, because it results in simpler code and
-            // less register pressure.
-            emit_fpu_cmp_sequence(ctx, prec, SseFpuCmpCode::Eq, output, op1, op2);
+            let lhs = ctx.get_value_vreg(lhs);
+            let rhs = ctx.get_value_vreg(rhs);
+
+            let code = match code {
+                CompoundCondCode::FpuOeq => SseFpuCmpCode::Eq,
+                CompoundCondCode::FpuUne => SseFpuCmpCode::Neq,
+            };
+
+            emit_fpu_cmp_sequence(ctx, prec, code, output, lhs, rhs);
         }
-        FcmpKind::One => {
-            // We can use a `ucomisd` here because unordered results set ZF, causing us to return
-            // false.
-            emit_fpu_ucomi_sequence(ctx, prec, CondCode::Ne, output, op1, op2);
-        }
-        FcmpKind::Olt => {
-            // Note: reverse the operands and the condition code so that CF=1, ZF=1 cause us to
-            // return false when the result is unordered.
-            emit_fpu_ucomi_sequence(ctx, prec, CondCode::A, output, op2, op1);
-        }
-        FcmpKind::Ole => {
-            // Note: reverse the operands and the condition code so that CF=1 causes us to return
-            // false when the result is unordered.
-            emit_fpu_ucomi_sequence(ctx, prec, CondCode::Ae, output, op2, op1);
-        }
-        FcmpKind::Ueq => {
-            // Now we actually do want unordered results to return true, so a simple `sete` is
-            // correct.
-            emit_fpu_ucomi_sequence(ctx, prec, CondCode::E, output, op1, op2);
-        }
-        FcmpKind::Une => {
-            // The `neq` predicate in SSE `cmps[sd]` returns the logical inverse of the `eq`
-            // predicate, so DeMorgan's laws give us exactly what we want.
-            emit_fpu_cmp_sequence(ctx, prec, SseFpuCmpCode::Neq, output, op1, op2);
-        }
-        FcmpKind::Ult => {
-            // Finally, the straightforward condition code actually does what we want (we also get
-            // CF=1 on unordered inputs).
-            emit_fpu_ucomi_sequence(ctx, prec, CondCode::B, output, op1, op2);
-        }
-        FcmpKind::Ule => {
-            // Once again, this condition code achieves exactly what we need.
-            emit_fpu_ucomi_sequence(ctx, prec, CondCode::Be, output, op1, op2);
-        }
-    };
+    }
 }
 
 fn select_uinttofloat(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
@@ -835,21 +791,17 @@ fn select_select(
 
     let op_size = operand_size_for_int_ty(ty);
 
-    if ctx.has_one_use(cond) {
-        match_value! {
-            if let node cond_node @ &NodeKind::Icmp(kind) = ctx, cond {
-                let cond_code = select_icmp(ctx, cond_node, kind);
-                ctx.emit_instr(
-                    X64Instr::Cmovcc(op_size, cond_code),
-                    &[DefOperand::any_reg(output)],
-                    &[
-                        UseOperand::soft_tied(true_val, 0),
-                        UseOperand::soft_tied(false_val, 0),
-                    ],
-                );
-                return Ok(());
-            }
-        }
+    if let FlagTestSequence::Simple(sequence) = match_flag_test_sequence(ctx, cond) {
+        emit_simple_flag_test_sequence(ctx, &sequence.kind);
+        ctx.emit_instr(
+            X64Instr::Cmovcc(op_size, sequence.code),
+            &[DefOperand::any_reg(output)],
+            &[
+                UseOperand::soft_tied(true_val, 0),
+                UseOperand::soft_tied(false_val, 0),
+            ],
+        );
+        return Ok(());
     }
 
     emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
@@ -936,122 +888,104 @@ fn select_brcond(
     false_target: Block,
 ) {
     let [cond] = ctx.node_inputs_exact(node);
-    if ctx.has_one_use(cond) {
-        match_value! {
-            if let node cond_node @ &NodeKind::Icmp(kind) = ctx, cond {
-                let cond_code = select_icmp(ctx, cond_node, kind);
-                ctx.emit_instr(
-                    X64Instr::Jumpcc(JumpCondCode::Simple(cond_code), true_target, false_target),
-                    &[],
-                    &[],
-                );
-                return;
-            }
-        }
-
-        match_value! {
-            if let node cmp_node @ &NodeKind::Fcmp(kind) = ctx, cond {
-                return select_fcmp_brcond(ctx, cmp_node, kind, true_target, false_target);
-            }
-        }
-    }
-
-    emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
+    let sequence = match_flag_test_sequence(ctx, cond);
+    emit_flag_test_sequence(ctx, &sequence);
     ctx.emit_instr(
-        X64Instr::Jumpcc(
-            JumpCondCode::Simple(CondCode::Ne),
-            true_target,
-            false_target,
-        ),
+        X64Instr::Jumpcc(sequence.jump_code(), true_target, false_target),
         &[],
         &[],
     );
-}
-
-fn select_fcmp_brcond(
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    cmp_node: Node,
-    cmp_kind: FcmpKind,
-    true_target: Block,
-    false_target: Block,
-) {
-    let [op1, op2] = ctx.node_inputs_exact(cmp_node);
-
-    let prec = fpu_precision_for_float_ty(ctx.value_type(op1));
-
-    let mut op1 = ctx.get_value_vreg(op1);
-    let mut op2 = ctx.get_value_vreg(op2);
-
-    // See `select_direct_fcmp` for more detail about what's going on here.
-    let (swap_cmp_operands, branch_instr) = match cmp_kind {
-        FcmpKind::Oeq => (
-            false,
-            X64Instr::Jumpcc(
-                JumpCondCode::Compound(CompoundCondCode::FpuOeq),
-                true_target,
-                false_target,
-            ),
-        ),
-        FcmpKind::One => (
-            false,
-            X64Instr::Jumpcc(
-                JumpCondCode::Simple(CondCode::Ne),
-                true_target,
-                false_target,
-            ),
-        ),
-        FcmpKind::Olt => (
-            true,
-            X64Instr::Jumpcc(JumpCondCode::Simple(CondCode::A), true_target, false_target),
-        ),
-        FcmpKind::Ole => (
-            true,
-            X64Instr::Jumpcc(
-                JumpCondCode::Simple(CondCode::Ae),
-                true_target,
-                false_target,
-            ),
-        ),
-        FcmpKind::Ueq => (
-            false,
-            X64Instr::Jumpcc(JumpCondCode::Simple(CondCode::E), true_target, false_target),
-        ),
-        FcmpKind::Une => (
-            false,
-            X64Instr::Jumpcc(
-                JumpCondCode::Compound(CompoundCondCode::FpuUne),
-                true_target,
-                false_target,
-            ),
-        ),
-        FcmpKind::Ult => (
-            false,
-            X64Instr::Jumpcc(JumpCondCode::Simple(CondCode::B), true_target, false_target),
-        ),
-        FcmpKind::Ule => (
-            false,
-            X64Instr::Jumpcc(
-                JumpCondCode::Simple(CondCode::Be),
-                true_target,
-                false_target,
-            ),
-        ),
-    };
-
-    if swap_cmp_operands {
-        mem::swap(&mut op1, &mut op2);
-    }
-
-    ctx.emit_instr(
-        X64Instr::Ucomi(prec),
-        &[],
-        &[UseOperand::any_reg(op1), UseOperand::any(op2)],
-    );
-
-    ctx.emit_instr(branch_instr, &[], &[]);
 }
 
 // Raw emission helpers
+
+enum SimpleFlagTestSequenceKind {
+    IntCmp { lhs: DepValue, rhs: DepValue },
+    IntTest { lhs: DepValue, rhs: DepValue },
+    IntCmpImm { lhs: DepValue, rhs: i32 },
+    FloatCmp { lhs: DepValue, rhs: DepValue },
+}
+
+struct SimpleFlagTestSequence {
+    kind: SimpleFlagTestSequenceKind,
+    code: CondCode,
+}
+
+enum FlagTestSequence {
+    Simple(SimpleFlagTestSequence),
+    CompoundFloatCmp {
+        code: CompoundCondCode,
+        lhs: DepValue,
+        rhs: DepValue,
+    },
+}
+
+impl FlagTestSequence {
+    fn jump_code(&self) -> JumpCondCode {
+        match self {
+            FlagTestSequence::Simple(sequence) => JumpCondCode::Simple(sequence.code),
+            &FlagTestSequence::CompoundFloatCmp { code, .. } => JumpCondCode::Compound(code),
+        }
+    }
+}
+
+fn emit_flag_test_sequence(ctx: &mut IselContext<'_, '_, X64Machine>, sequence: &FlagTestSequence) {
+    match sequence {
+        FlagTestSequence::Simple(sequence) => emit_simple_flag_test_sequence(ctx, &sequence.kind),
+        &FlagTestSequence::CompoundFloatCmp { lhs, rhs, .. } => {
+            let ty = ctx.value_type(lhs);
+            let prec = fpu_precision_for_float_ty(ty);
+
+            let lhs = ctx.get_value_vreg(lhs);
+            let rhs = ctx.get_value_vreg(rhs);
+
+            ctx.emit_instr(
+                X64Instr::Ucomi(prec),
+                &[],
+                &[UseOperand::any_reg(lhs), UseOperand::any(rhs)],
+            );
+        }
+    }
+}
+
+fn emit_simple_flag_test_sequence(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    kind: &SimpleFlagTestSequenceKind,
+) {
+    match *kind {
+        SimpleFlagTestSequenceKind::IntCmp { lhs, rhs } => {
+            emit_alu_rr_discarded(ctx, lhs, rhs, AluBinOp::Cmp)
+        }
+        SimpleFlagTestSequenceKind::IntTest { lhs, rhs } => {
+            emit_alu_rr_discarded(ctx, lhs, rhs, AluBinOp::Test)
+        }
+        SimpleFlagTestSequenceKind::IntCmpImm { lhs, rhs } => {
+            let ty = ctx.value_type(lhs);
+            let op_size = operand_size_for_int_ty(ty);
+
+            let lhs = ctx.get_value_vreg(lhs);
+
+            ctx.emit_instr(
+                X64Instr::AluRmI(op_size, AluBinOp::Cmp, rhs),
+                &[],
+                &[UseOperand::any(lhs)],
+            );
+        }
+        SimpleFlagTestSequenceKind::FloatCmp { lhs, rhs } => {
+            let ty = ctx.value_type(lhs);
+            let prec = fpu_precision_for_float_ty(ty);
+
+            let lhs = ctx.get_value_vreg(lhs);
+            let rhs = ctx.get_value_vreg(rhs);
+
+            ctx.emit_instr(
+                X64Instr::Ucomi(prec),
+                &[],
+                &[UseOperand::any_reg(lhs), UseOperand::any(rhs)],
+            );
+        }
+    }
+}
 
 fn emit_funcaddr(
     machine: &X64Machine,
@@ -1544,24 +1478,6 @@ fn emit_fpu_cmp_sequence(
     );
 }
 
-fn emit_fpu_ucomi_sequence(
-    ctx: &mut IselContext<'_, '_, X64Machine>,
-    prec: SseFpuPrecision,
-    code: CondCode,
-    output: VirtReg,
-    op1: VirtReg,
-    op2: VirtReg,
-) {
-    emit_setcc_sequence(ctx, output, |ctx| {
-        ctx.emit_instr(
-            X64Instr::Ucomi(prec),
-            &[],
-            &[UseOperand::any_reg(op1), UseOperand::any(op2)],
-        );
-        code
-    });
-}
-
 fn emit_cvtsi2s(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node) {
     let [output] = ctx.node_outputs_exact(node);
     let [input] = ctx.node_inputs_exact(node);
@@ -1658,6 +1574,118 @@ fn will_be_zext32(ctx: &IselContext<'_, '_, X64Machine>, value: DepValue) -> boo
         // We always emit full zero-extending loads for IR `Load` operations.
         | NodeKind::Load(..)
     )
+}
+
+fn match_flag_test_sequence(
+    ctx: &IselContext<'_, '_, X64Machine>,
+    value: DepValue,
+) -> FlagTestSequence {
+    if ctx.has_one_use(value) {
+        match_value! {
+            if let node cmp_node @ &NodeKind::Icmp(kind) = ctx, value {
+                return FlagTestSequence::Simple(match_icmp_flag_test_sequence(ctx, cmp_node, kind));
+            }
+        }
+
+        match_value! {
+            if let node cmp_node @ &NodeKind::Fcmp(kind) = ctx, value {
+                return match_fcmp_flag_test_sequence(ctx, cmp_node, kind);
+            }
+        }
+    }
+
+    FlagTestSequence::Simple(SimpleFlagTestSequence {
+        kind: SimpleFlagTestSequenceKind::IntTest {
+            lhs: value,
+            rhs: value,
+        },
+        code: CondCode::Ne,
+    })
+}
+
+fn match_fcmp_flag_test_sequence(
+    ctx: &IselContext<'_, '_, X64Machine>,
+    node: Node,
+    kind: FcmpKind,
+) -> FlagTestSequence {
+    let [mut lhs, mut rhs] = ctx.node_inputs_exact(node);
+
+    let (swap_cmp_operands, code) = match kind {
+        FcmpKind::Oeq => {
+            // Unordered `ucomisd` results set ZF, so this needs to be emitted as a compound
+            // operation.
+            return FlagTestSequence::CompoundFloatCmp {
+                code: CompoundCondCode::FpuOeq,
+                lhs,
+                rhs,
+            };
+        }
+        FcmpKind::One => {
+            // ZF=1 for unordered inputs will correctly make the condition false here.
+            (false, CondCode::Ne)
+        }
+        FcmpKind::Olt => {
+            // Reverse the operands and the condition code so that CF=1, ZF=1 make the condition
+            // false when the result is unordered.
+            (true, CondCode::A)
+        }
+        FcmpKind::Ole => {
+            // Reverse the operands and the condition code so that CF=1 makes the condition false
+            // when the result is unordered.
+            (true, CondCode::Ae)
+        }
+        FcmpKind::Ueq => {
+            // ZF=1 for unordered inputs will correctly make the condition true here.
+            (false, CondCode::E)
+        }
+        FcmpKind::Une => {
+            // This needs to be a compound operation because unordered results don't set ZF=0.
+            return FlagTestSequence::CompoundFloatCmp {
+                code: CompoundCondCode::FpuUne,
+                lhs,
+                rhs,
+            };
+        }
+        FcmpKind::Ult => {
+            // CF=1 for unordered inputs will correctly make the condition true here.
+            (false, CondCode::B)
+        }
+        FcmpKind::Ule => {
+            // CF=1 for unordered inputs will correctly make the condition true here.
+            (false, CondCode::Be)
+        }
+    };
+
+    if swap_cmp_operands {
+        mem::swap(&mut lhs, &mut rhs);
+    }
+
+    FlagTestSequence::Simple(SimpleFlagTestSequence {
+        kind: SimpleFlagTestSequenceKind::FloatCmp { lhs, rhs },
+        code,
+    })
+}
+
+fn match_icmp_flag_test_sequence(
+    ctx: &IselContext<'_, '_, X64Machine>,
+    node: Node,
+    kind: IcmpKind,
+) -> SimpleFlagTestSequence {
+    let [lhs, rhs] = ctx.node_inputs_exact(node);
+
+    if let Some((op, imm, code)) = match_icmp_imm32(ctx, lhs, rhs, kind) {
+        let kind = if imm == 0 {
+            SimpleFlagTestSequenceKind::IntTest { lhs: op, rhs: op }
+        } else {
+            SimpleFlagTestSequenceKind::IntCmpImm { lhs: op, rhs: imm }
+        };
+        return SimpleFlagTestSequence { kind, code };
+    }
+
+    SimpleFlagTestSequence {
+        kind: SimpleFlagTestSequenceKind::IntCmp { lhs, rhs },
+        code: cond_code_for_icmp(kind),
+    }
 }
 
 fn match_icmp_imm32(

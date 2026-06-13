@@ -48,8 +48,8 @@ func @select_one:i32(f32, f32, i32, i32) {
 
 func @select_olt:i32(f32, f32, i32, i32) {
     # check: function `select_olt`:
-    # nextln:       block0[%3:xmm32($$xmm0), %4:xmm32($$xmm1), %2:gpr32($$rdi), %1:gpr32($$rsi)]:
-    # nextln: 0000:      Ucomi(Single) %4(reg)[early], %3(any)[early]
+    # nextln:       block0[%4:xmm32($$xmm0), %3:xmm32($$xmm1), %2:gpr32($$rdi), %1:gpr32($$rsi)]:
+    # nextln: 0000:      Ucomi(Single) %3(reg)[early], %4(any)[early]
     # nextln: 0001:      Jumpcc(Simple(A), block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
@@ -71,8 +71,8 @@ func @select_olt:i32(f32, f32, i32, i32) {
 
 func @select_ole:i32(f32, f32, i32, i32) {
     # check: function `select_ole`:
-    # nextln:       block0[%3:xmm32($$xmm0), %4:xmm32($$xmm1), %2:gpr32($$rdi), %1:gpr32($$rsi)]:
-    # nextln: 0000:      Ucomi(Single) %4(reg)[early], %3(any)[early]
+    # nextln:       block0[%4:xmm32($$xmm0), %3:xmm32($$xmm1), %2:gpr32($$rdi), %1:gpr32($$rsi)]:
+    # nextln: 0000:      Ucomi(Single) %3(reg)[early], %4(any)[early]
     # nextln: 0001:      Jumpcc(Simple(Ae), block1, block3)
     # nextln:       => block1, block3
     # nextln:       block1:
@@ -186,10 +186,10 @@ func @select_ule:i32(f32, f32, i32, i32) {
 
 func @select_olt_cond_reused:i32(f32, f32, i32, i32) {
     # check: function `select_olt_cond_reused`:
-    # nextln:       block0[%6:xmm32($$xmm0), %7:xmm32($$xmm1), %5:gpr32($$rdi), %4:gpr32($$rsi)]:
-    # nextln: 0000:      %8:gpr64(any)[late] = MovRmS32(0)
-    # nextln: 0001:      Ucomi(Single) %7(reg)[early], %6(any)[early]
-    # nextln: 0002:      %3:gpr32(reg)[late] = Setcc(A) %8(tied:0)[early]
+    # nextln:       block0[%8:xmm32($$xmm0), %7:xmm32($$xmm1), %5:gpr32($$rdi), %4:gpr32($$rsi)]:
+    # nextln: 0000:      %6:gpr64(any)[late] = MovRmS32(0)
+    # nextln: 0001:      Ucomi(Single) %7(reg)[early], %8(any)[early]
+    # nextln: 0002:      %3:gpr32(reg)[late] = Setcc(A) %6(tied:0)[early]
     # nextln: 0003:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
     # nextln: 0004:      Jumpcc(Simple(Ne), block1, block3)
     # nextln:       => block1, block3

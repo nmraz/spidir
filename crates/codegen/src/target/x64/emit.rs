@@ -545,9 +545,12 @@ impl MachineEmit for X64Machine {
             &X64Instr::Jump(target) => {
                 emit_jmp(buffer, ctx.block_labels[target]);
             }
-            &X64Instr::Jumpcc(code, true_target, false_target) => {
-                emit_jcc_sequence(ctx, buffer, code, true_target, false_target)
-            }
+            &X64Instr::Jumpcc(code, true_target, false_target) => emit_jcc_sequence(
+                buffer,
+                code,
+                ctx.block_labels[true_target],
+                ctx.block_labels[false_target],
+            ),
         }
     }
 
@@ -663,15 +666,11 @@ fn emit_add_sp(buffer: &mut CodeBuffer<X64Fixup>, offset: i32) {
 }
 
 fn emit_jcc_sequence(
-    ctx: &EmitContext<'_, X64Machine>,
     buffer: &mut CodeBuffer<X64Fixup>,
     code: JumpCondCode,
-    true_target: Block,
-    false_target: Block,
+    true_target: Label,
+    false_target: Label,
 ) {
-    let true_target = ctx.block_labels[true_target];
-    let false_target = ctx.block_labels[false_target];
-
     match code {
         JumpCondCode::Simple(code) => {
             emit_jcc(buffer, code, true_target);

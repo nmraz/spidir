@@ -835,6 +835,23 @@ fn select_select(
 
     let op_size = operand_size_for_int_ty(ty);
 
+    if ctx.has_one_use(cond) {
+        match_value! {
+            if let node cond_node @ &NodeKind::Icmp(kind) = ctx, cond {
+                let cond_code = select_icmp(ctx, cond_node, kind);
+                ctx.emit_instr(
+                    X64Instr::Cmovcc(op_size, cond_code),
+                    &[DefOperand::any_reg(output)],
+                    &[
+                        UseOperand::soft_tied(true_val, 0),
+                        UseOperand::soft_tied(false_val, 0),
+                    ],
+                );
+                return Ok(());
+            }
+        }
+    }
+
     emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
     ctx.emit_instr(
         X64Instr::Cmovcc(op_size, CondCode::Ne),

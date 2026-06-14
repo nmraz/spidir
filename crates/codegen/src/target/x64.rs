@@ -310,6 +310,7 @@ pub enum X64Instr {
     PseudoUint64ToFloat(SseFpuPrecision),
     PseudoFloatToUint64Rel(SseFpuPrecision),
     PseudoFloatToUint64Abs(SseFpuPrecision),
+    PseudoSseSelectcc(JumpCondCode),
     MovGprmXmm(OperandSize),
     MovXmmGprm(OperandSize),
     /// Load from [rbp + offset]
@@ -376,6 +377,7 @@ impl X64Instr {
             X64Instr::PseudoUint64ToFloat(..) => false,
             X64Instr::PseudoFloatToUint64Rel(..) => false,
             X64Instr::PseudoFloatToUint64Abs(..) => false,
+            X64Instr::PseudoSseSelectcc(..) => true,
             X64Instr::MovGprmXmm(..) => false,
             X64Instr::MovXmmGprm(..) => false,
             X64Instr::MovRRbp { .. } => false,
@@ -433,6 +435,7 @@ impl X64Instr {
             X64Instr::PseudoUint64ToFloat(..) => true,
             X64Instr::PseudoFloatToUint64Rel(..) => true,
             X64Instr::PseudoFloatToUint64Abs(..) => true,
+            X64Instr::PseudoSseSelectcc(..) => false,
             X64Instr::MovGprmXmm(..) => false,
             X64Instr::MovXmmGprm(..) => false,
             X64Instr::Setcc(..) => false,

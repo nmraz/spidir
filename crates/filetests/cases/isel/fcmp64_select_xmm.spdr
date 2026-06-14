@@ -1,0 +1,128 @@
+# run: isel
+
+func @select_oeq:f32(f64, f64, f32, f32) {
+    # check: function `select_oeq`:
+    # nextln:       block0[%3:xmm64($$xmm0), %4:xmm64($$xmm1), %1:xmm32($$xmm2), %2:xmm32($$xmm3)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:xmm32(reg)[late] = PseudoSseSelectcc(Compound(FpuOeq)) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:f32, %3:f32 = entry
+    %1:i32 = fcmp oeq %a, %b
+    %4:f32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_one:f32(f64, f64, f32, f32) {
+    # check: function `select_one`:
+    # nextln:       block0[%3:xmm64($$xmm0), %4:xmm64($$xmm1), %1:xmm32($$xmm2), %2:xmm32($$xmm3)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:xmm32(reg)[late] = PseudoSseSelectcc(Simple(Ne)) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:f32, %3:f32 = entry
+    %1:i32 = fcmp one %a, %b
+    %4:f32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_olt:f32(f64, f64, f32, f32) {
+    # check: function `select_olt`:
+    # nextln:       block0[%4:xmm64($$xmm0), %3:xmm64($$xmm1), %1:xmm32($$xmm2), %2:xmm32($$xmm3)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:xmm32(reg)[late] = PseudoSseSelectcc(Simple(A)) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:f32, %3:f32 = entry
+    %1:i32 = fcmp olt %a, %b
+    %4:f32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ole:f32(f64, f64, f32, f32) {
+    # check: function `select_ole`:
+    # nextln:       block0[%4:xmm64($$xmm0), %3:xmm64($$xmm1), %1:xmm32($$xmm2), %2:xmm32($$xmm3)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:xmm32(reg)[late] = PseudoSseSelectcc(Simple(Ae)) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:f32, %3:f32 = entry
+    %1:i32 = fcmp ole %a, %b
+    %4:f32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ueq:f32(f64, f64, f32, f32) {
+    # check: function `select_ueq`:
+    # nextln:       block0[%3:xmm64($$xmm0), %4:xmm64($$xmm1), %1:xmm32($$xmm2), %2:xmm32($$xmm3)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:xmm32(reg)[late] = PseudoSseSelectcc(Simple(E)) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:f32, %3:f32 = entry
+    %1:i32 = fcmp ueq %a, %b
+    %4:f32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_une:f32(f64, f64, f32, f32) {
+    # check: function `select_une`:
+    # nextln:       block0[%3:xmm64($$xmm0), %4:xmm64($$xmm1), %1:xmm32($$xmm2), %2:xmm32($$xmm3)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:xmm32(reg)[late] = PseudoSseSelectcc(Compound(FpuUne)) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:f32, %3:f32 = entry
+    %1:i32 = fcmp une %a, %b
+    %4:f32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ult:f32(f64, f64, f32, f32) {
+    # check: function `select_ult`:
+    # nextln:       block0[%3:xmm64($$xmm0), %4:xmm64($$xmm1), %1:xmm32($$xmm2), %2:xmm32($$xmm3)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:xmm32(reg)[late] = PseudoSseSelectcc(Simple(B)) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:f32, %3:f32 = entry
+    %1:i32 = fcmp ult %a, %b
+    %4:f32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_ule:f32(f64, f64, f32, f32) {
+    # check: function `select_ule`:
+    # nextln:       block0[%3:xmm64($$xmm0), %4:xmm64($$xmm1), %1:xmm32($$xmm2), %2:xmm32($$xmm3)]:
+    # nextln: 0000:      Ucomi(Double) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %0:xmm32(reg)[late] = PseudoSseSelectcc(Simple(Be)) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      Ret %0($$xmm0)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:f32, %3:f32 = entry
+    %1:i32 = fcmp ule %a, %b
+    %4:f32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_olt_cond_reused:i32(f64, f64, f32, f32) {
+    # check: function `select_olt_cond_reused`:
+    # nextln:       block0[%9:xmm64($$xmm0), %8:xmm64($$xmm1), %5:xmm32($$xmm2), %6:xmm32($$xmm3)]:
+    # nextln: 0000:      %7:gpr64(any)[late] = MovRmS32(0)
+    # nextln: 0001:      Ucomi(Double) %8(reg)[early], %9(any)[early]
+    # nextln: 0002:      %4:gpr32(reg)[late] = Setcc(A) %7(tied:0)[early]
+    # nextln: 0003:      AluRRm(S32, Test) %4(reg)[early], %4(any)[early]
+    # nextln: 0004:      %3:xmm32(reg)[late] = PseudoSseSelectcc(Simple(Ne)) %5(soft-tied:0)[early], %6(soft-tied:0)[early]
+    # nextln: 0005:      %2:gpr32(any)[late] = AluCommRmI(S32, Xor, 5) %4(tied:0)[early]
+    # nextln: 0006:      %1:gpr32(reg)[late] = Cvts2si(S32, Single) %3(any)[early]
+    # nextln: 0007:      %0:gpr32(reg)[late] = AddRR(S32) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0008:      Ret %0($$rax)[early]
+
+    %0:ctrl, %a:f64, %b:f64, %2:f32, %3:f32 = entry
+    %1:i32 = fcmp olt %a, %b
+    %five:i32 = iconst 5
+    %thing:i32 = xor %1, %five
+    %4:f32 = select %1, %2, %3
+    %5:i32 = floattosint %4
+    %retval:i32 = iadd %5, %thing
+    return %0, %retval
+}

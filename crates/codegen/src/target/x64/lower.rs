@@ -784,35 +784,47 @@ fn select_select(
     let false_val = ctx.get_value_vreg(false_val);
     let output = ctx.get_value_vreg(output);
 
-    // We only support this on integer registers for now.
-    if ctx.vreg_class(output).bank() != RB_GPR {
-        return Err(MachineIselError);
+    match ctx.vreg_class(output).bank() {
+        RB_GPR => {
+            let op_size = operand_size_for_int_ty(ty);
+
+            if let FlagTestSequence::Simple(sequence) = match_flag_test_sequence(ctx, cond) {
+                emit_simple_flag_test_sequence(ctx, &sequence.kind);
+                ctx.emit_instr(
+                    X64Instr::Cmovcc(op_size, sequence.code),
+                    &[DefOperand::any_reg(output)],
+                    &[
+                        UseOperand::soft_tied(true_val, 0),
+                        UseOperand::soft_tied(false_val, 0),
+                    ],
+                );
+                return Ok(());
+            }
+
+            emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
+            ctx.emit_instr(
+                X64Instr::Cmovcc(op_size, CondCode::Ne),
+                &[DefOperand::any_reg(output)],
+                &[
+                    UseOperand::soft_tied(true_val, 0),
+                    UseOperand::soft_tied(false_val, 0),
+                ],
+            );
+        }
+        RB_XMM => {
+            let sequence = match_flag_test_sequence(ctx, cond);
+            emit_flag_test_sequence(ctx, &sequence);
+            ctx.emit_instr(
+                X64Instr::PseudoSseSelectcc(sequence.jump_code()),
+                &[DefOperand::any_reg(output)],
+                &[
+                    UseOperand::soft_tied(true_val, 0),
+                    UseOperand::soft_tied(false_val, 0),
+                ],
+            );
+        }
+        _ => return Err(MachineIselError),
     }
-
-    let op_size = operand_size_for_int_ty(ty);
-
-    if let FlagTestSequence::Simple(sequence) = match_flag_test_sequence(ctx, cond) {
-        emit_simple_flag_test_sequence(ctx, &sequence.kind);
-        ctx.emit_instr(
-            X64Instr::Cmovcc(op_size, sequence.code),
-            &[DefOperand::any_reg(output)],
-            &[
-                UseOperand::soft_tied(true_val, 0),
-                UseOperand::soft_tied(false_val, 0),
-            ],
-        );
-        return Ok(());
-    }
-
-    emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
-    ctx.emit_instr(
-        X64Instr::Cmovcc(op_size, CondCode::Ne),
-        &[DefOperand::any_reg(output)],
-        &[
-            UseOperand::soft_tied(true_val, 0),
-            UseOperand::soft_tied(false_val, 0),
-        ],
-    );
 
     Ok(())
 }

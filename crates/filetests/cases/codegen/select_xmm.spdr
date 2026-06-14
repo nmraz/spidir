@@ -1,0 +1,61 @@
+# run: codegen
+
+func @select_i32_f32:f32(i32, f32, f32) {
+    # check: function `select_i32_f32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 85 ff                           test edi, edi
+    # nextln: 000006: 0f 85 03 00 00 00               jne 0xf
+    # nextln: 00000c: 0f 28 c1                        movaps xmm0, xmm1
+    # nextln: 00000f: 5d                              pop rbp
+    # nextln: 000010: c3                              ret
+
+    %0:ctrl, %1:i32, %2:f32, %3:f32 = entry
+    %4:f32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i32_f64:f64(i32, f64, f64) {
+    # check: function `select_i32_f64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 85 ff                           test edi, edi
+    # nextln: 000006: 0f 85 03 00 00 00               jne 0xf
+    # nextln: 00000c: 0f 28 c1                        movaps xmm0, xmm1
+    # nextln: 00000f: 5d                              pop rbp
+    # nextln: 000010: c3                              ret
+
+    %0:ctrl, %1:i32, %2:f64, %3:f64 = entry
+    %4:f64 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i64_f32:f32(i64, f32, f32) {
+    # check: function `select_i64_f32`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 85 ff                        test rdi, rdi
+    # nextln: 000007: 0f 85 03 00 00 00               jne 0x10
+    # nextln: 00000d: 0f 28 c1                        movaps xmm0, xmm1
+    # nextln: 000010: 5d                              pop rbp
+    # nextln: 000011: c3                              ret
+
+    %0:ctrl, %1:i64, %2:f32, %3:f32 = entry
+    %4:f32 = select %1, %2, %3
+    return %0, %4
+}
+
+func @select_i64_f64:f64(i64, f64, f64) {
+    # check: function `select_i64_f64`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 85 ff                        test rdi, rdi
+    # nextln: 000007: 0f 85 03 00 00 00               jne 0x10
+    # nextln: 00000d: 0f 28 c1                        movaps xmm0, xmm1
+    # nextln: 000010: 5d                              pop rbp
+    # nextln: 000011: c3                              ret
+
+    %0:ctrl, %1:i64, %2:f64, %3:f64 = entry
+    %4:f64 = select %1, %2, %3
+    return %0, %4
+}

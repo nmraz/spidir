@@ -458,6 +458,13 @@ impl MachineEmit for X64Machine {
                 defs[1].as_reg().unwrap(),
                 defs[2].as_reg().unwrap(),
             ),
+            &X64Instr::PseudoSseSelectcc(code) => emit_sse_selectcc(
+                buffer,
+                code,
+                defs[0].as_reg().unwrap(),
+                uses[0].as_reg().unwrap(),
+                uses[1].as_reg().unwrap(),
+            ),
             &X64Instr::MovGprmXmm(op_size) => emit_mov_gprm_xmm(
                 buffer,
                 op_size,
@@ -864,6 +871,31 @@ fn get_f_1p63(buffer: &mut CodeBuffer<X64Fixup>, prec: SseFpuPrecision) -> Const
         SseFpuPrecision::Single => buffer.get_constant(4, &0x5f000000u32.to_le_bytes()),
         SseFpuPrecision::Double => buffer.get_constant(8, &0x43e0000000000000u64.to_le_bytes()),
     }
+}
+
+fn emit_sse_selectcc(
+    buffer: &mut CodeBuffer<X64Fixup>,
+    code: JumpCondCode,
+    dest: PhysReg,
+    true_arg: PhysReg,
+    false_arg: PhysReg,
+) {
+    let (code, other) = if dest == true_arg {
+        (code, false_arg)
+    } else if dest == false_arg {
+        (code.negate(), true_arg)
+    } else {
+        emit_movaps_r_rm(buffer, dest, RegMem::Reg(true_arg));
+        (code, false_arg)
+    };
+
+    let done = buffer.create_label();
+    let copy_other = buffer.create_label();
+
+    emit_jcc_sequence(buffer, code, done, copy_other);
+    buffer.bind_label(copy_other);
+    emit_movaps_r_rm(buffer, dest, RegMem::Reg(other));
+    buffer.bind_label(done);
 }
 
 // Single-instruction emission helpers

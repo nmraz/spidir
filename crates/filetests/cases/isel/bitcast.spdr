@@ -53,7 +53,7 @@ func @identptr:ptr(ptr) {
 func @i32tof32:f32(i32) {
     # check: function `i32tof32`:
     # nextln:       block0[%1:gpr32($$rdi)]:
-    # nextln: 0000:      %0:xmm32(any)[late] = MovXmmGprm(S32) %1(reg)[early]
+    # nextln: 0000:      %0:xmm32(reg)[late] = MovXmmGprm(S32) %1(any)[early]
     # nextln: 0001:      Ret %0($$xmm0)[early]
 
     %0:ctrl, %1:i32 = entry
@@ -75,7 +75,7 @@ func @f32toi32:i32(f32) {
 func @i64tof64:f64(i64) {
     # check: function `i64tof64`:
     # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:xmm64(any)[late] = MovXmmGprm(S64) %1(reg)[early]
+    # nextln: 0000:      %0:xmm64(reg)[late] = MovXmmGprm(S64) %1(any)[early]
     # nextln: 0001:      Ret %0($$xmm0)[early]
 
     %0:ctrl, %1:i64 = entry
@@ -128,7 +128,7 @@ func @f64toptr:ptr(f64) {
 func @ptrtof64:f64(ptr) {
     # check: function `ptrtof64`:
     # nextln:       block0[%1:gpr64($$rdi)]:
-    # nextln: 0000:      %0:xmm64(any)[late] = MovXmmGprm(S64) %1(reg)[early]
+    # nextln: 0000:      %0:xmm64(reg)[late] = MovXmmGprm(S64) %1(any)[early]
     # nextln: 0001:      Ret %0($$xmm0)[early]
 
     %0:ctrl, %1:ptr = entry

@@ -796,8 +796,8 @@ fn select_bitcast(
         (RB_XMM, RB_GPR) => {
             ctx.emit_instr(
                 X64Instr::MovXmmGprm(op_size),
-                &[DefOperand::any(output)],
-                &[UseOperand::any_reg(input)],
+                &[DefOperand::any_reg(output)],
+                &[UseOperand::any(input)],
             );
         }
         (RB_GPR, RB_XMM) => {

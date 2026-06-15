@@ -2,13 +2,11 @@
 
 func @select_oeq:i32(f32, f32, i32, i32) {
     # check: function `select_oeq`:
-    # nextln:       block0[%4:xmm32($$xmm0), %5:xmm32($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
-    # nextln: 0000:      %6:xmm64(reg)[late] = SseScalarFpuRRm(Single, Cmp(Eq)) %4(tied:0)[early], %5(any)[early]
-    # nextln: 0001:      %7:gpr64(any)[late] = MovGprmXmm(S64) %6(reg)[early]
-    # nextln: 0002:      %3:gpr32(any)[late] = AluCommRmI(S32, And, 1) %7(tied:0)[early]
-    # nextln: 0003:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
-    # nextln: 0004:      %0:gpr32(reg)[late] = Cmovcc(S32, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
-    # nextln: 0005:      Ret %0($$rax)[early]
+    # nextln:       block0[%3:xmm32($$xmm0), %4:xmm32($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
+    # nextln: 0000:      Ucomi(Single) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %5:gpr32(reg)[late] = Cmovcc(S32, E) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      %0:gpr32(reg)[late] = Cmovcc(S32, Np) %5(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0003:      Ret %0($$rax)[early]
 
     %0:ctrl, %a:f32, %b:f32, %2:i32, %3:i32 = entry
     %1:i32 = fcmp oeq %a, %b
@@ -70,13 +68,11 @@ func @select_ueq:i32(f32, f32, i32, i32) {
 
 func @select_une:i32(f32, f32, i32, i32) {
     # check: function `select_une`:
-    # nextln:       block0[%4:xmm32($$xmm0), %5:xmm32($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
-    # nextln: 0000:      %6:xmm64(reg)[late] = SseScalarFpuRRm(Single, Cmp(Neq)) %4(tied:0)[early], %5(any)[early]
-    # nextln: 0001:      %7:gpr64(any)[late] = MovGprmXmm(S64) %6(reg)[early]
-    # nextln: 0002:      %3:gpr32(any)[late] = AluCommRmI(S32, And, 1) %7(tied:0)[early]
-    # nextln: 0003:      AluRRm(S32, Test) %3(reg)[early], %3(any)[early]
-    # nextln: 0004:      %0:gpr32(reg)[late] = Cmovcc(S32, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
-    # nextln: 0005:      Ret %0($$rax)[early]
+    # nextln:       block0[%3:xmm32($$xmm0), %4:xmm32($$xmm1), %1:gpr32($$rdi), %2:gpr32($$rsi)]:
+    # nextln: 0000:      Ucomi(Single) %3(reg)[early], %4(any)[early]
+    # nextln: 0001:      %5:gpr32(reg)[late] = Cmovcc(S32, Ne) %1(soft-tied:0)[early], %2(soft-tied:0)[early]
+    # nextln: 0002:      %0:gpr32(reg)[late] = Cmovcc(S32, P) %1(soft-tied:0)[early], %5(soft-tied:0)[early]
+    # nextln: 0003:      Ret %0($$rax)[early]
 
     %0:ctrl, %a:f32, %b:f32, %2:i32, %3:i32 = entry
     %1:i32 = fcmp une %a, %b

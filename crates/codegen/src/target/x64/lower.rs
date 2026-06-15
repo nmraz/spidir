@@ -784,18 +784,36 @@ fn select_select(
     let false_val = ctx.get_value_vreg(false_val);
     let output = ctx.get_value_vreg(output);
 
-    match ctx.vreg_class(output).bank() {
+    let class = ctx.vreg_class(output);
+    match class.bank() {
         RB_GPR => {
             let op_size = operand_size_for_int_ty(ty);
 
-            if let FlagTestSequence::Simple(sequence) = match_flag_test_sequence(ctx, cond) {
-                emit_simple_flag_test_sequence(ctx, &sequence.kind);
-                emit_cmovcc(ctx, op_size, sequence.code, output, true_val, false_val);
-                return Ok(());
-            }
+            let sequence = match_flag_test_sequence(ctx, cond);
+            emit_flag_test_sequence(ctx, &sequence);
 
-            emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
-            emit_cmovcc(ctx, op_size, CondCode::Ne, output, true_val, false_val);
+            match sequence.jump_code() {
+                JumpCondCode::Simple(code) => {
+                    emit_cmovcc(ctx, op_size, code, output, true_val, false_val);
+                }
+                JumpCondCode::Compound(code) => {
+                    let temp = ctx.create_temp_vreg(class);
+                    match code {
+                        CompoundCondCode::FpuOeq => {
+                            // temp = ZF ? true_val : false_val
+                            emit_cmovcc(ctx, op_size, CondCode::E, temp, true_val, false_val);
+                            // output = PF ? false_val : (ZF ? true_val : false_val)
+                            emit_cmovcc(ctx, op_size, CondCode::Np, output, temp, false_val);
+                        }
+                        CompoundCondCode::FpuUne => {
+                            // temp = ZF ? false_val : true_val
+                            emit_cmovcc(ctx, op_size, CondCode::Ne, temp, true_val, false_val);
+                            // output = PF ? true_val : (ZF ? false_val : true_val)
+                            emit_cmovcc(ctx, op_size, CondCode::P, output, true_val, temp);
+                        }
+                    }
+                }
+            }
         }
         RB_XMM => {
             let sequence = match_flag_test_sequence(ctx, cond);

@@ -790,26 +790,12 @@ fn select_select(
 
             if let FlagTestSequence::Simple(sequence) = match_flag_test_sequence(ctx, cond) {
                 emit_simple_flag_test_sequence(ctx, &sequence.kind);
-                ctx.emit_instr(
-                    X64Instr::Cmovcc(op_size, sequence.code),
-                    &[DefOperand::any_reg(output)],
-                    &[
-                        UseOperand::soft_tied(true_val, 0),
-                        UseOperand::soft_tied(false_val, 0),
-                    ],
-                );
+                emit_cmovcc(ctx, op_size, sequence.code, output, true_val, false_val);
                 return Ok(());
             }
 
             emit_alu_rr_discarded(ctx, cond, cond, AluBinOp::Test);
-            ctx.emit_instr(
-                X64Instr::Cmovcc(op_size, CondCode::Ne),
-                &[DefOperand::any_reg(output)],
-                &[
-                    UseOperand::soft_tied(true_val, 0),
-                    UseOperand::soft_tied(false_val, 0),
-                ],
-            );
+            emit_cmovcc(ctx, op_size, CondCode::Ne, output, true_val, false_val);
         }
         RB_XMM => {
             let sequence = match_flag_test_sequence(ctx, cond);
@@ -1281,6 +1267,24 @@ fn emit_movsx_rr(
         X64Instr::MovsxRRm(width),
         &[DefOperand::any_reg(output)],
         &[UseOperand::any(input)],
+    );
+}
+
+fn emit_cmovcc(
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    op_size: OperandSize,
+    code: CondCode,
+    output: VirtReg,
+    true_val: VirtReg,
+    false_val: VirtReg,
+) {
+    ctx.emit_instr(
+        X64Instr::Cmovcc(op_size, code),
+        &[DefOperand::any_reg(output)],
+        &[
+            UseOperand::soft_tied(true_val, 0),
+            UseOperand::soft_tied(false_val, 0),
+        ],
     );
 }
 

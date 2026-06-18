@@ -18,10 +18,20 @@ entity_impl!(Function, "func");
 pub struct ExternFunction(u32);
 entity_impl!(ExternFunction, "extfunc");
 
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ExternGlobal(u32);
+entity_impl!(ExternGlobal, "extglobal");
+
+#[derive(Debug, Clone)]
+pub struct GlobalMetadata {
+    pub name: String,
+}
+
 #[derive(Clone)]
 pub struct ModuleMetadata {
     functions: PrimaryMap<Function, FunctionMetadata>,
     extern_functions: PrimaryMap<ExternFunction, FunctionMetadata>,
+    extern_globals: PrimaryMap<ExternGlobal, GlobalMetadata>,
 }
 
 impl ModuleMetadata {
@@ -31,6 +41,10 @@ impl ModuleMetadata {
 
     pub fn extern_functions(&self) -> &PrimaryMap<ExternFunction, FunctionMetadata> {
         &self.extern_functions
+    }
+
+    pub fn extern_globals(&self) -> &PrimaryMap<ExternGlobal, GlobalMetadata> {
+        &self.extern_globals
     }
 
     pub fn resolve_funcref(&self, funcref: FunctionRef) -> &FunctionMetadata {
@@ -54,10 +68,15 @@ impl Module {
             metadata: ModuleMetadata {
                 functions: PrimaryMap::new(),
                 extern_functions: PrimaryMap::new(),
+                extern_globals: PrimaryMap::new(),
             },
             function_bodies: SecondaryMap::with_default(FunctionBody::new_invalid()),
             function_node_caches: SecondaryMap::new(),
         }
+    }
+
+    pub fn create_extern_global(&mut self, name: String) -> ExternGlobal {
+        self.metadata.extern_globals.push(GlobalMetadata { name })
     }
 
     pub fn create_extern_function(&mut self, name: String, sig: Signature) -> ExternFunction {

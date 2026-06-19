@@ -1,4 +1,3 @@
-
 func @arith_stuff:i32() {
     %0:ctrl = entry
     %32:i64 = iconst 1

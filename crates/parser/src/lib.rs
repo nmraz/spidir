@@ -569,7 +569,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @func1(i32) {
                     %0:ctrl, %1:i32 = entry
                 }
@@ -632,7 +631,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @func() {
                     %0:ctrl = entry
                     return %0
@@ -654,12 +652,11 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
-            func @func:i32(i32) {
-                %0:ctrl, %1:i32 = entry
-                return %0, %1
-            }
-        "#]],
+                func @func:i32(i32) {
+                    %0:ctrl, %1:i32 = entry
+                    return %0, %1
+                }
+            "#]],
         );
     }
 
@@ -798,7 +795,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @func:i32(ptr, i32) {
                     %0:ctrl, %1:ptr, %2:i32 = entry
                     %3:ctrl, %4:phisel = region %0
@@ -848,13 +844,12 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
-            func @add:i32(i32, i32) {
-                %0:ctrl, %1:i32, %2:i32 = entry
-                %3:i32 = iadd %1, %2
-                return %0, %3
-            }
-        "#]],
+                func @add:i32(i32, i32) {
+                    %0:ctrl, %1:i32, %2:i32 = entry
+                    %3:i32 = iadd %1, %2
+                    return %0, %3
+                }
+            "#]],
         );
     }
 
@@ -885,7 +880,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @sum_to_n:i32(i32) {
                     %0:ctrl, %1:i32 = entry
                     %2:i32 = iconst 1
@@ -922,7 +916,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @f:f64() {
                     %0:ctrl = entry
                     %1:f64 = fconst64 0x1.0p0
@@ -947,7 +940,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @f:f64() {
                     %0:ctrl = entry
                     %1:f64 = fconst64 -0x1.0p0
@@ -972,7 +964,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @f:f64() {
                     %0:ctrl = entry
                     %1:f64 = fconst64 0x1.0p-5
@@ -997,7 +988,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @f:f64() {
                     %0:ctrl = entry
                     %1:f64 = fconst64 inf
@@ -1022,7 +1012,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @f:f64() {
                     %0:ctrl = entry
                     %1:f64 = fconst64 -inf
@@ -1047,7 +1036,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @f:f64() {
                     %0:ctrl = entry
                     %1:f64 = fconst64 NaN
@@ -1108,7 +1096,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @f:i32(i32) {
                     %0:ctrl, %1:i32 = entry
                     %2:i32 = iconst 1
@@ -1174,7 +1161,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @f:i32(i32) {
                     %0:ctrl, %1:i32 = entry
                     %2:i32 = iconst 1
@@ -1221,7 +1207,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @f:i32(i32) {
                     %0:ctrl, %1:i32 = entry
                     %2:i32 = iconst 0
@@ -1261,13 +1246,12 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
-            func @call_virt:i32(ptr) {
-                %0:ctrl, %1:ptr = entry
-                %2:ctrl, %3:i32 = callind i32() %0, %1
-                return %2, %3
-            }
-        "#]],
+                func @call_virt:i32(ptr) {
+                    %0:ctrl, %1:ptr = entry
+                    %2:ctrl, %3:i32 = callind i32() %0, %1
+                    return %2, %3
+                }
+            "#]],
         );
     }
 
@@ -1289,7 +1273,6 @@ mod tests {
         check_module(
             &module,
             expect![[r#"
-
                 func @with_slots(i32, f64) {
                     %0:ctrl, %1:i32, %2:f64 = entry
                     %3:ptr = stackslot 8:8

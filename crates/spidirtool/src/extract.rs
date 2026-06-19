@@ -93,7 +93,6 @@ mod tests {
             ",
             "a",
             expect![[r#"
-
                 func @a:i32() {
                     %0:ctrl = entry
                     %1:i32 = iconst 5

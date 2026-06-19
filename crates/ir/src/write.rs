@@ -104,10 +104,13 @@ pub fn write_annotated_module<W: fmt::Write + ?Sized>(
     annotator: &mut (impl AnnotateModule<W> + ?Sized),
     module: &Module,
 ) -> fmt::Result {
-    for extern_func in module.metadata.extern_functions().keys() {
-        annotator.write_extern_function(w, &module.metadata, extern_func)?;
+    let extern_functions = module.metadata.extern_functions();
+    if !extern_functions.is_empty() {
+        for extern_func in extern_functions.keys() {
+            annotator.write_extern_function(w, &module.metadata, extern_func)?;
+        }
+        w.write_str("\n")?;
     }
-    w.write_str("\n")?;
 
     let mut first_function = true;
     for func in module.function_bodies.keys() {

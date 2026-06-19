@@ -1,4 +1,4 @@
-use codegen::target::x64::{CodeModel, X64Machine, X64MachineConfig};
+use codegen::target::x64::{CodeModel, X64CpuFeatures, X64Machine, X64MachineConfig};
 
 use crate::codegen::{ApiCodegenMachine, codegen_machine_to_api};
 
@@ -8,9 +8,15 @@ const SPIDIR_X64_CM_SMALL_PIC: u8 = 0;
 const SPIDIR_X64_CM_LARGE_ABS: u8 = 1;
 
 #[repr(C)]
+struct ApiX64CpuFeatures {
+    popcnt: bool,
+}
+
+#[repr(C)]
 struct ApiX64MachineConfig {
     internal_code_model: ApiX64CodeModel,
     extern_code_model: ApiX64CodeModel,
+    cpu_features: ApiX64CpuFeatures,
 }
 
 fn x64_code_model_from_api(code_model: ApiX64CodeModel) -> CodeModel {
@@ -21,10 +27,17 @@ fn x64_code_model_from_api(code_model: ApiX64CodeModel) -> CodeModel {
     }
 }
 
+fn x64_cpu_features_from_api(cpu_features: &ApiX64CpuFeatures) -> X64CpuFeatures {
+    X64CpuFeatures {
+        popcnt: cpu_features.popcnt,
+    }
+}
+
 fn x64_machine_config_from_api(machine_config: &ApiX64MachineConfig) -> X64MachineConfig {
     X64MachineConfig {
         internal_code_model: x64_code_model_from_api(machine_config.internal_code_model),
         extern_code_model: x64_code_model_from_api(machine_config.extern_code_model),
+        cpu_features: x64_cpu_features_from_api(&machine_config.cpu_features),
     }
 }
 

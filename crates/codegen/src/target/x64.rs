@@ -461,6 +461,11 @@ impl X64Instr {
     }
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct X64CpuFeatures {
+    pub popcnt: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CodeModel {
     SmallPic,
@@ -471,6 +476,7 @@ pub enum CodeModel {
 pub struct X64MachineConfig {
     pub internal_code_model: CodeModel,
     pub extern_code_model: CodeModel,
+    pub cpu_features: X64CpuFeatures,
 }
 
 impl Default for X64MachineConfig {
@@ -478,6 +484,7 @@ impl Default for X64MachineConfig {
         Self {
             internal_code_model: CodeModel::SmallPic,
             extern_code_model: CodeModel::LargeAbs,
+            cpu_features: X64CpuFeatures::default(),
         }
     }
 }

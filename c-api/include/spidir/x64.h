@@ -6,6 +6,8 @@
 
 #include <spidir/codegen.h>
 
+#include <stdbool.h>
+
 enum {
     /// A 32-bit relocation whose value must be calculated as `F + A - P`,
     /// where:
@@ -47,6 +49,15 @@ enum spidir_x64_code_model {
     SPIDIR_X64_CM_LARGE_ABS = 1,
 };
 
+/// CPU features the x64 backend can take advantage of when generating code.
+///
+/// All options here default to false, generating code that should work on any
+/// x64 CPU.
+typedef struct spidir_x64_cpu_features {
+    /// Support for the SSE4.2/ABM `popcnt` instruction.
+    bool popcnt;
+} spidir_x64_cpu_features_t;
+
 /// Configuration options that can be passed to the x64 backend.
 typedef struct spidir_x64_machine_config {
     /// The code model to use for internal (module-local) calls.
@@ -55,6 +66,12 @@ typedef struct spidir_x64_machine_config {
     /// The code model to use for external calls.
     /// This option defaults to `SPIDIR_X64_CM_LARGE_ABS`.
     spidir_x64_code_model_t extern_code_model;
+    /// CPU features/extensions to use when generating code.
+    /// The generated code may crash or misbehave when executed on a CPU that
+    /// doesn't support the selected features.
+    /// All feature flags in this structure default to
+    /// false.
+    spidir_x64_cpu_features_t cpu_features;
 } spidir_x64_machine_config_t;
 
 /// Creates a machine backend that generates code for the x64 architecture using

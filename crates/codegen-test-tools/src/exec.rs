@@ -254,6 +254,7 @@ fn codegen_func(module: &Module, func: Function) -> Result<CodeBlob> {
             &X64Machine::new(X64MachineConfig {
                 internal_code_model: CodeModel::SmallPic,
                 extern_code_model: CodeModel::LargeAbs,
+                ..Default::default()
             }),
             module,
             func,

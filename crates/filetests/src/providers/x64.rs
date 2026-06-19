@@ -9,6 +9,7 @@ pub fn create_x64_machine(params: &[&str]) -> Result<X64Machine> {
             Ok(X64Machine::new(X64MachineConfig {
                 internal_code_model,
                 extern_code_model,
+                ..Default::default()
             }))
         }
         _ => bail!("invalid parameter count for x64 backend provider"),

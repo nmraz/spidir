@@ -1258,9 +1258,11 @@ fn emit_bitcount_r_rm(
         rex.encode_modrm_reg(dest)
     });
 
-    // `{l,t}zcnt` are just `bs{r,f}` with a REP prefix.
-    let needs_rep = matches!(op, BitCountOp::TzcntBsf);
+    // The newer instructions all have a mandatory REP prefix. In fact, `{l,t}zcnt` are just
+    // `bs{r,f}` with a REP prefix.
+    let needs_rep = matches!(op, BitCountOp::TzcntBsf | BitCountOp::Popcnt);
     let opcode = match op {
+        BitCountOp::Popcnt => 0xb8,
         BitCountOp::TzcntBsf => 0xbc,
         BitCountOp::Bsr => 0xbd,
     };

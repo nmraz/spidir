@@ -1,0 +1,12 @@
+func @func:i32(i32) {
+    %0:ctrl, %1:i32 = entry
+    %2:ctrl, %3:phisel = region %0
+    %4:i32 = popcount %1
+    return %2, %4
+}
+func @func:i32(i64) {
+    %0:ctrl, %1:i64 = entry
+    %2:ctrl, %3:phisel = region %0
+    %4:i32 = popcount %1
+    return %2, %4
+}

@@ -196,6 +196,7 @@ pub enum ShiftOp {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BitCountOp {
+    Popcnt,
     TzcntBsf,
     Bsr,
 }

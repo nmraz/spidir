@@ -1474,19 +1474,31 @@ fn emit_popcnt(
     output: DepValue,
 ) {
     let input_ty = ctx.value_type(input);
-    let libcall = match input_ty {
-        Type::I32 => LIBCALL_POPCNT32,
-        Type::I64 => LIBCALL_POPCNT64,
-        _ => unreachable!(),
-    };
 
-    emit_call(
-        machine,
-        ctx,
-        libcall.into(),
-        Some(output),
-        [input].into_iter(),
-    );
+    if machine.config.cpu_features.popcnt {
+        let input = ctx.get_value_vreg(input);
+        let output = ctx.get_value_vreg(output);
+
+        ctx.emit_instr(
+            X64Instr::BitCountRRm(operand_size_for_int_ty(input_ty), BitCountOp::Popcnt),
+            &[DefOperand::any_reg(output)],
+            &[UseOperand::any(input)],
+        );
+    } else {
+        let libcall = match input_ty {
+            Type::I32 => LIBCALL_POPCNT32,
+            Type::I64 => LIBCALL_POPCNT64,
+            _ => unreachable!(),
+        };
+
+        emit_call(
+            machine,
+            ctx,
+            libcall.into(),
+            Some(output),
+            [input].into_iter(),
+        );
+    }
 }
 
 fn emit_fpu_rr(ctx: &mut IselContext<'_, '_, X64Machine>, node: Node, op: SseFpuBinOp) {

@@ -16,23 +16,19 @@ void builder_callback(spidir_builder_handle_t builder, void* ctx) {
 }
 
 void check_popcnt_nolibcall(spidir_codegen_machine_handle_t machine,
-                            spidir_value_type_t input_ty,
-                            spidir_libcall_kind_t expected_libcall) {
+                            spidir_value_type_t input_ty) {
     spidir_module_handle_t module = spidir_module_create();
 
     spidir_function_t func = spidir_module_create_function(
         module, "func", SPIDIR_TYPE_I32, 1, (spidir_value_type_t[]) {input_ty});
     spidir_module_build_function(module, func, builder_callback, NULL);
 
+    dump_module_to_stdout(module);
+
     spidir_codegen_blob_handle_t code =
         codegen_function(machine, module, func, false);
 
-    ASSERT(spidir_codegen_blob_get_reloc_count(code) == 1);
-
-    const spidir_codegen_reloc_t* reloc = spidir_codegen_blob_get_relocs(code);
-    ASSERT(reloc->kind == SPIDIR_RELOC_X64_PC32);
-    ASSERT(reloc->target_kind == SPIDIR_RELOC_TARGET_LIBCALL);
-    ASSERT(reloc->target.libcall == expected_libcall);
+    ASSERT(spidir_codegen_blob_get_reloc_count(code) == 0);
 
     spidir_module_destroy(module);
 }
@@ -43,13 +39,11 @@ int main(void) {
             &(spidir_x64_machine_config_t) {
                 .internal_code_model = SPIDIR_X64_CM_SMALL_PIC,
                 .extern_code_model = SPIDIR_X64_CM_SMALL_PIC,
-
+                .cpu_features.popcnt = true,
             });
 
-    check_popcnt_nolibcall(machine, SPIDIR_TYPE_I32,
-                           SPIDIR_LIBCALL_X64_POPCNT32);
-    check_popcnt_nolibcall(machine, SPIDIR_TYPE_I64,
-                           SPIDIR_LIBCALL_X64_POPCNT64);
+    check_popcnt_nolibcall(machine, SPIDIR_TYPE_I32);
+    check_popcnt_nolibcall(machine, SPIDIR_TYPE_I64);
 
     return 0;
 }

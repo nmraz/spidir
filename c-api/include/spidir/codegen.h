@@ -51,6 +51,9 @@ enum spidir_reloc_target_kind {
     /// implement a certain operation. See individual backend definitions for
     /// possible values.
     SPIDIR_RELOC_TARGET_LIBCALL,
+    /// The relocation refers to a global variable, accessible via the
+    /// `target.global` relocation field.
+    SPIDIR_RELOC_TARGET_GLOBAL,
     /// The relocation refers to the function's constant pool.
     SPIDIR_RELOC_TARGET_CONSTPOOL,
 };
@@ -71,12 +74,13 @@ typedef struct spidir_codegen_reloc {
     /// The exact meaning of this field depends on the target architecture and
     /// the value of the `kind` field.
     int64_t addend;
-    /// The target function of this relocation, if it refers to a function or
-    /// libcall.
+    /// The target function of this relocation, if it refers to a function,
+    /// libcall or global.
     union {
         spidir_function_t internal;
         spidir_extern_function_t external;
         spidir_libcall_kind_t libcall;
+        spidir_extern_global_t global;
     } target;
     /// The offset in the generated code to which the relocation applies.
     uint32_t offset;

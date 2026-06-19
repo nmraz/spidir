@@ -46,6 +46,7 @@ pub union ApiRelocTarget {
     internal: ApiFunction,
     external: ApiExternFunction,
     libcall: ApiLibcallKind,
+    global: ApiExternGlobal,
 }
 
 #[derive(Clone, Copy)]
@@ -116,7 +117,8 @@ const SPIDIR_MEM_SIZE_8: u8 = 3;
 const SPIDIR_RELOC_TARGET_INTERNAL_FUNCTION: u8 = 0;
 const SPIDIR_RELOC_TARGET_EXTERNAL_FUNCTION: u8 = 1;
 const SPIDIR_RELOC_TARGET_LIBCALL: u8 = 2;
-const SPIDIR_RELOC_TARGET_CONSTPOOL: u8 = 3;
+const SPIDIR_RELOC_TARGET_GLOBAL: u8 = 3;
+const SPIDIR_RELOC_TARGET_CONSTPOOL: u8 = 4;
 
 pub unsafe fn value_list_from_api(
     arg_count: usize,
@@ -315,7 +317,12 @@ pub fn reloc_to_api(reloc: &Reloc) -> ApiReloc {
             SPIDIR_RELOC_TARGET_LIBCALL,
             ApiRelocTarget { libcall: kind.0 },
         ),
-        RelocTarget::Global(_) => todo!(),
+        RelocTarget::Global(global) => (
+            SPIDIR_RELOC_TARGET_GLOBAL,
+            ApiRelocTarget {
+                global: extern_global_to_api(global),
+            },
+        ),
         RelocTarget::ConstantPool => (
             SPIDIR_RELOC_TARGET_CONSTPOOL,
             ApiRelocTarget {

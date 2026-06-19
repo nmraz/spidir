@@ -115,7 +115,19 @@ fn verify_module_propagate_graph_error() {
 }
 
 #[test]
-fn verify_module_duplicate_extern_names() {
+fn verify_module_duplicate_extern_global_names() {
+    let mut module = Module::new();
+    module.create_extern_global("global".to_owned());
+    module.create_extern_global("global".to_owned());
+
+    check_verify_module_errors(
+        &module,
+        &[ModuleVerifierError::ReusedGlobalName("global".to_owned())],
+    );
+}
+
+#[test]
+fn verify_module_duplicate_extern_function_names() {
     let mut module = Module::new();
     module.create_extern_function(
         "func".to_owned(),
@@ -139,7 +151,7 @@ fn verify_module_duplicate_extern_names() {
 }
 
 #[test]
-fn verify_module_duplicate_intern_extern_names() {
+fn verify_module_duplicate_intern_extern_function_names() {
     let mut module = Module::new();
     module.create_extern_function(
         "func".to_owned(),
@@ -168,7 +180,7 @@ fn verify_module_duplicate_intern_extern_names() {
 }
 
 #[test]
-fn verify_module_duplicate_intern_names() {
+fn verify_module_duplicate_intern_function_names() {
     let mut module = Module::new();
 
     let f = module.create_function(
@@ -202,7 +214,7 @@ fn verify_module_duplicate_intern_names() {
 }
 
 #[test]
-fn verify_module_many_duplicate_names() {
+fn verify_module_many_duplicate_function_names() {
     let mut module = Module::new();
     module.create_extern_function(
         "func".to_owned(),
@@ -229,5 +241,18 @@ fn verify_module_many_duplicate_names() {
     check_verify_module_errors(
         &module,
         &[ModuleVerifierError::ReusedFunctionName("func".to_owned())],
+    );
+}
+
+#[test]
+fn verify_module_many_duplicate_extern_global_names() {
+    let mut module = Module::new();
+    module.create_extern_global("global".to_owned());
+    module.create_extern_global("global".to_owned());
+    module.create_extern_global("global".to_owned());
+
+    check_verify_module_errors(
+        &module,
+        &[ModuleVerifierError::ReusedGlobalName("global".to_owned())],
     );
 }

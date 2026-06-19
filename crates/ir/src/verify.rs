@@ -168,6 +168,7 @@ pub enum ModuleVerifierError {
         error: FunctionVerifierError,
     },
     ReusedFunctionName(String),
+    ReusedGlobalName(String),
 }
 
 impl ModuleVerifierError {
@@ -216,6 +217,9 @@ impl fmt::Display for DisplayError<'_> {
             ModuleVerifierError::ReusedFunctionName(name) => {
                 write!(f, "function name `{name}` reused")
             }
+            ModuleVerifierError::ReusedGlobalName(name) => {
+                write!(f, "global name `{name}` reused")
+            }
         }
     }
 }
@@ -241,28 +245,44 @@ impl fmt::Display for DisplayErrorWithContext<'_> {
     }
 }
 
-pub fn verify_module<'m>(module: &'m Module) -> Result<(), Vec<ModuleVerifierError>> {
+pub fn verify_module(module: &Module) -> Result<(), Vec<ModuleVerifierError>> {
     let mut errors = Vec::new();
-    let mut names = FxHashSet::<&str>::default();
-    let mut reported_names = FxHashSet::<&str>::default();
 
-    let mut check_name = |name: &'m str, errors: &mut Vec<ModuleVerifierError>| {
-        if names.contains(&name) {
-            if !reported_names.contains(&name) {
-                errors.push(ModuleVerifierError::ReusedFunctionName(name.to_owned()));
-                reported_names.insert(name);
-            }
-        } else {
-            names.insert(name);
-        }
-    };
+    let mut seen_names = FxHashSet::default();
+    let mut reported_names = FxHashSet::default();
+
+    for extern_global_data in module.metadata.extern_globals().values() {
+        check_name(
+            &extern_global_data.name,
+            &mut seen_names,
+            &mut reported_names,
+            ModuleVerifierError::ReusedGlobalName,
+            &mut errors,
+        );
+    }
+
+    seen_names.clear();
+    reported_names.clear();
 
     for extern_function_data in module.metadata.extern_functions().values() {
-        check_name(&extern_function_data.name, &mut errors);
+        check_name(
+            &extern_function_data.name,
+            &mut seen_names,
+            &mut reported_names,
+            ModuleVerifierError::ReusedFunctionName,
+            &mut errors,
+        );
     }
 
     for (function, func_borrow) in module.iter_functions() {
-        check_name(&func_borrow.metadata.name, &mut errors);
+        check_name(
+            &func_borrow.metadata.name,
+            &mut seen_names,
+            &mut reported_names,
+            ModuleVerifierError::ReusedFunctionName,
+            &mut errors,
+        );
+
         if let Err(graph_errors) = verify_func(&module.metadata, func_borrow) {
             errors.extend(
                 graph_errors
@@ -308,6 +328,23 @@ pub fn verify_func(
         Ok(())
     } else {
         Err(errors)
+    }
+}
+
+fn check_name<'a>(
+    name: &'a str,
+    seen_names: &mut FxHashSet<&'a str>,
+    reported_names: &mut FxHashSet<&'a str>,
+    err_ctor: impl FnOnce(String) -> ModuleVerifierError,
+    errors: &mut Vec<ModuleVerifierError>,
+) {
+    if seen_names.contains(&name) {
+        if !reported_names.contains(&name) {
+            errors.push(err_ctor(name.to_owned()));
+            reported_names.insert(name);
+        }
+    } else {
+        seen_names.insert(name);
     }
 }
 

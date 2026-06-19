@@ -1,0 +1,6 @@
+# run: verify-ok
+
+# check: $()
+
+extglobal @name
+extfunc @name:i32()

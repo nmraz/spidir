@@ -90,12 +90,20 @@ impl CliCodeModel {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum CliCpuFeature {
+    /// Support for the SSE4.2/ABM `popcnt` instruction
+    Popcnt,
+}
+
 #[derive(Args)]
 struct MachineOptions {
     #[arg(long)]
     internal_code_model: Option<CliCodeModel>,
     #[arg(long)]
     extern_code_model: Option<CliCodeModel>,
+    #[arg(short = 'F', long)]
+    cpu_features: Vec<CliCpuFeature>,
 }
 
 #[derive(Args)]
@@ -512,6 +520,12 @@ fn create_machine(machine_opts: &MachineOptions) -> X64Machine {
     }
     if let Some(extern_code_model) = machine_opts.extern_code_model {
         config.extern_code_model = extern_code_model.as_code_model();
+    }
+
+    for &feature in &machine_opts.cpu_features {
+        match feature {
+            CliCpuFeature::Popcnt => config.cpu_features.popcnt = true,
+        }
     }
 
     X64Machine::new(config)

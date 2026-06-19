@@ -197,6 +197,10 @@ pub fn extern_global_to_api(global: ExternGlobal) -> ApiExternGlobal {
     ApiExternGlobal(global.as_u32())
 }
 
+pub fn extern_global_from_api(global: ApiExternGlobal) -> ExternGlobal {
+    ExternGlobal::from_u32(global.0)
+}
+
 pub fn function_from_api(func: ApiFunction) -> Function {
     Function::from_u32(func.0)
 }

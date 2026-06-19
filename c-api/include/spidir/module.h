@@ -500,6 +500,16 @@ void spidir_builder_set_entry_block(spidir_builder_handle_t builder,
 spidir_value_t spidir_builder_build_param_ref(spidir_builder_handle_t builder,
                                               uint32_t index);
 
+/// Creates an SSA value containing the address of the requested global
+/// variable.
+///
+/// @param[in] builder A handle to the function builder.
+/// @param[in] global  The global whose address should be taken.
+/// @return An SSA value containing the address of `global` for use with
+///         load and store instructions. This value will be a pointer.
+spidir_value_t spidir_builder_build_globaladdr(spidir_builder_handle_t builder,
+                                               spidir_extern_global_t global);
+
 /// Creates an SSA value containing the address of the requested function.
 ///
 /// @param[in] builder A handle to the function builder.

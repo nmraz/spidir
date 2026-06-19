@@ -4,10 +4,10 @@ use ir::module::Module;
 use paste::paste;
 
 use crate::types::{
-    ApiBlock, ApiFcmpKind, ApiFunctionRef, ApiIcmpKind, ApiMemSize, ApiPhi, ApiType, ApiValue,
-    block_from_api, block_to_api, fcmp_kind_from_api, funcref_from_api, icmp_kind_from_api,
-    mem_size_from_api, opt_value_from_api, opt_value_to_api, signature_from_api, type_from_api,
-    value_from_api, value_list_from_api, value_to_api,
+    ApiBlock, ApiExternGlobal, ApiFcmpKind, ApiFunctionRef, ApiIcmpKind, ApiMemSize, ApiPhi,
+    ApiType, ApiValue, block_from_api, block_to_api, extern_global_from_api, fcmp_kind_from_api,
+    funcref_from_api, icmp_kind_from_api, mem_size_from_api, opt_value_from_api, opt_value_to_api,
+    signature_from_api, type_from_api, value_from_api, value_list_from_api, value_to_api,
 };
 
 #[unsafe(no_mangle)]
@@ -67,6 +67,17 @@ unsafe extern "C" fn spidir_builder_build_param_ref(
     unsafe {
         let builder = &mut *builder;
         value_to_api(builder.build_param_ref(index))
+    }
+}
+
+#[unsafe(no_mangle)]
+unsafe extern "C" fn spidir_builder_build_globaladdr(
+    builder: *mut FunctionBuilder<'_>,
+    global: ApiExternGlobal,
+) -> ApiValue {
+    unsafe {
+        let builder = &mut *builder;
+        value_to_api(builder.build_globaladdr(extern_global_from_api(global)))
     }
 }
 

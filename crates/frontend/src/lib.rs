@@ -7,7 +7,7 @@ use ir::{
     builder::{Builder, BuilderExt},
     cache::CachingBuilder,
     function::{FunctionBody, Signature},
-    module::{Function, Module},
+    module::{ExternGlobal, Function, Module},
     node::{DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node, ValGraph},
     write::display_node,
@@ -97,6 +97,10 @@ impl<'a> FunctionBuilder<'a> {
 
     pub fn build_param_ref(&mut self, index: u32) -> DepValue {
         self.graph().node_outputs(self.body().entry)[index as usize + 1]
+    }
+
+    pub fn build_globaladdr(&mut self, global: ExternGlobal) -> DepValue {
+        self.builder().build_globaladdr(global)
     }
 
     pub fn build_funcaddr(&mut self, func: FunctionRef) -> DepValue {

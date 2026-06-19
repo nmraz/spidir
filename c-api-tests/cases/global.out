@@ -1,2 +1,8 @@
 extglobal @global
 
+func @get_global:ptr() {
+    %0:ctrl = entry
+    %1:ctrl, %2:phisel = region %0
+    %3:ptr = globaladdr @global
+    return %1, %3
+}

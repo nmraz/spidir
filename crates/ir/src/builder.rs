@@ -2,6 +2,7 @@ use core::iter;
 
 use crate::{
     function::{FunctionBody, Signature},
+    module::ExternGlobal,
     node::{
         BitwiseF32, BitwiseF64, DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind,
         Type,
@@ -127,6 +128,9 @@ pub trait BuilderExt: Builder {
         }
     }
 
+    fn build_globaladdr(&mut self, global: ExternGlobal) -> DepValue {
+        build_single_output_pure(self, NodeKind::GlobalAddr(global), [], Type::Ptr)
+    }
     fn build_funcaddr(&mut self, func: FunctionRef) -> DepValue {
         build_single_output_pure(self, NodeKind::FuncAddr(func), [], Type::Ptr)
     }

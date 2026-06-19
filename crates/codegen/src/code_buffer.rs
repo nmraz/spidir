@@ -43,7 +43,7 @@ impl From<LibCallKind> for CallTarget {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BufferRelocTarget {
     Function(FunctionRef),
     LibCall(LibCallKind),

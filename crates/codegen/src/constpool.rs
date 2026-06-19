@@ -13,7 +13,7 @@ use crate::{lir::MemLayout, num_utils::align_up};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Constant(u32);
-entity_impl!(Constant);
+entity_impl!(Constant, "const");
 
 pub struct ConstantPool {
     pub align: u32,

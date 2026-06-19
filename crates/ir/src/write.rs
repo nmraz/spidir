@@ -326,6 +326,10 @@ pub fn write_node_kind(
         NodeKind::Store(size) => write!(w, "store.{}", size.as_str())?,
         NodeKind::StackSlot { size, align } => write!(w, "stackslot {size}:{align}")?,
         NodeKind::BrCond => w.write_str("brcond")?,
+        NodeKind::GlobalAddr(global) => {
+            w.write_str("globaladdr ")?;
+            write_global_ref(w, module_metadata, *global)?;
+        }
         NodeKind::FuncAddr(func) => {
             w.write_str("funcaddr ")?;
             write_func_ref(w, module_metadata, *func)?;
@@ -400,6 +404,18 @@ fn write_func_ref(
         w,
         "@{}",
         quote_ident(&module_metadata.resolve_funcref(func).name)
+    )
+}
+
+fn write_global_ref(
+    w: &mut dyn fmt::Write,
+    module_metadata: &ModuleMetadata,
+    global: ExternGlobal,
+) -> fmt::Result {
+    write!(
+        w,
+        "@{}",
+        quote_ident(&module_metadata.extern_globals()[global].name)
     )
 }
 

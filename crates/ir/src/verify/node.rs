@@ -65,7 +65,8 @@ pub fn verify_node_kind(
         NodeKind::Store(size) => verify_store(graph, node, *size, errors),
         NodeKind::StackSlot { align, .. } => verify_stack_slot(graph, node, *align, errors),
         NodeKind::BrCond => verify_brcond(graph, node, errors),
-        NodeKind::FuncAddr(_) => verify_funcaddr(graph, node, errors),
+        NodeKind::GlobalAddr(_) => verify_globaladdr_like(graph, node, errors),
+        NodeKind::FuncAddr(_) => verify_globaladdr_like(graph, node, errors),
         NodeKind::Call(func) => verify_call(module_metadata, graph, node, *func, errors),
         NodeKind::CallInd(sig) => verify_call_ind(func.body, node, *sig, errors),
     }
@@ -560,7 +561,7 @@ fn verify_call(
     }
 }
 
-fn verify_funcaddr(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
+fn verify_globaladdr_like(graph: &ValGraph, node: Node, errors: &mut Vec<FunctionVerifierError>) {
     let Ok([result]) = verify_node_arity(graph, node, 0, errors) else {
         return;
     };

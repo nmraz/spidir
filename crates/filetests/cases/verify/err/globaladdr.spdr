@@ -1,0 +1,31 @@
+# run: verify-err
+
+extglobal @global
+
+func @funcaddr_bad_input_count:ptr(i64) {
+    # check: function `funcaddr_bad_input_count`:
+    # unordered: `$val:ptr = globaladdr @global $val`: bad input count, expected 0
+
+    %0:ctrl, %1:i64 = entry
+    %2:ptr = globaladdr @global %1
+    return %0, %2
+}
+
+func @funcaddr_bad_output_count:ptr() {
+    # check: function `funcaddr_bad_output_count`:
+    # unordered: `$val:ptr, $val:i32 = globaladdr @global`: bad output count, expected 1
+
+    %0:ctrl = entry
+    %1:ptr, %2:i32 = globaladdr @global
+    return %0, %1
+}
+
+func @funcaddr_bad_output_kind() {
+    # check: function `funcaddr_bad_output_kind`:
+    # unordered: `$val:ctrl = globaladdr @global`: bad value kind for output 0, expected one of `ptr`, got `ctrl`
+
+    %0:ctrl = entry
+    %1:ctrl = globaladdr @global
+    %3:ctrl, %4:phisel = region %0, %1
+    return %3
+}

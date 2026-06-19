@@ -361,6 +361,7 @@ fn extract_special_node_kind(
             let align = parse_from_str(&inner.next().unwrap(), "invalid stack slot align")?;
             NodeKind::StackSlot { size, align }
         }
+        Rule::globaladdr_nodekind => extract_globaladdr_node(&mut inner, module_names)?,
         Rule::funcaddr_nodekind => {
             extract_funcref_node(&mut inner, module_names, NodeKind::FuncAddr)?
         }
@@ -375,6 +376,23 @@ fn extract_special_node_kind(
     };
 
     Ok(kind)
+}
+
+fn extract_globaladdr_node(
+    inner: &mut Pairs<'_, Rule>,
+    module_names: &ModuleNames<'_>,
+) -> Result<NodeKind, Box<Error<Rule>>> {
+    let name_span = inner.next().unwrap().as_span();
+    let name = name_from_span(&name_span);
+    let global = *module_names.global_names.get(&name).ok_or_else(|| {
+        Box::new(Error::new_from_span(
+            ErrorVariant::CustomError {
+                message: "undefined global".to_owned(),
+            },
+            name_span,
+        ))
+    })?;
+    Ok(NodeKind::GlobalAddr(global))
 }
 
 fn extract_funcref_node(
@@ -1181,6 +1199,33 @@ mod tests {
     }
 
     #[test]
+    fn parse_globaladdr() {
+        let module = parse_module(
+            "
+            extglobal @global
+
+            func @get_global:ptr() {
+                %0:ctrl = entry
+                %1:ptr = globaladdr @global
+                return %0, %1
+            }",
+        )
+        .unwrap();
+        check_module(
+            &module,
+            expect![[r#"
+                extglobal @global
+
+                func @get_global:ptr() {
+                    %0:ctrl = entry
+                    %1:ptr = globaladdr @global
+                    return %0, %1
+                }
+            "#]],
+        );
+    }
+
+    #[test]
     fn parse_extern_funcaddr() {
         let module = parse_module(
             "
@@ -1645,6 +1690,25 @@ mod tests {
                   |                                        ^----------^
                   |
                   = undefined function"#]],
+        );
+    }
+
+    #[test]
+    fn parse_undefined_global() {
+        check_parse_error(
+            "
+            func @get_global:ptr() {
+                %0:ctrl = entry
+                %1:ptr = globaladdr @global
+                return %0, %1
+            }",
+            expect![[r#"
+                 --> 4:37
+                  |
+                4 |                 %1:ptr = globaladdr @global
+                  |                                     ^-----^
+                  |
+                  = undefined global"#]],
         );
     }
 

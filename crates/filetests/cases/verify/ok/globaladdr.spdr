@@ -1,0 +1,11 @@
+# run: verify-ok
+
+# check: $()
+
+extglobal @global
+
+func @get_global:ptr() {
+    %0:ctrl = entry
+    %1:ptr = globaladdr @global
+    return %0, %1
+}

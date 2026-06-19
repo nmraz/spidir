@@ -35,19 +35,20 @@ icmpkind = { "eq" | "ne" | "slt" | "sle" | "ult" | "ule" }
 fcmpkind = { "oeq" | "one" | "olt" | "ole" | "ueq" | "une" | "ult" | "ule" }
 memsize  = { "1" | "2" | "4" | "8" }
 
-iconst_nodekind    =  { "iconst" ~ integer }
-fconst32_nodekind  =  { "fconst32" ~ float }
-fconst64_nodekind  =  { "fconst64" ~ float }
-sfill_nodekind     =  { "sfill" ~ integer }
-icmp_nodekind      =  { "icmp" ~ icmpkind }
-fcmp_nodekind      =  { "fcmp" ~ fcmpkind }
-load_nodekind      = ${ "load." ~ memsize }
-store_nodekind     = ${ "store." ~ memsize }
-stackslot_nodekind =  { "stackslot" ~ integer ~ ":" ~ integer }
-funcaddr_nodekind  =  { "funcaddr" ~ globalname }
-call_nodekind      =  { "call" ~ globalname }
-callind_nodekind   =  { "callind" ~ callind_signature }
-nodekind           =  {
+iconst_nodekind     =  { "iconst" ~ integer }
+fconst32_nodekind   =  { "fconst32" ~ float }
+fconst64_nodekind   =  { "fconst64" ~ float }
+sfill_nodekind      =  { "sfill" ~ integer }
+icmp_nodekind       =  { "icmp" ~ icmpkind }
+fcmp_nodekind       =  { "fcmp" ~ fcmpkind }
+load_nodekind       = ${ "load." ~ memsize }
+store_nodekind      = ${ "store." ~ memsize }
+stackslot_nodekind  =  { "stackslot" ~ integer ~ ":" ~ integer }
+globaladdr_nodekind =  { "globaladdr" ~ globalname }
+funcaddr_nodekind   =  { "funcaddr" ~ globalname }
+call_nodekind       =  { "call" ~ globalname }
+callind_nodekind    =  { "callind" ~ callind_signature }
+nodekind            =  {
     "entry"
   | "return"
   | "region"
@@ -94,6 +95,7 @@ nodekind           =  {
   | store_nodekind
   | stackslot_nodekind
   | "brcond"
+  | globaladdr_nodekind
   | funcaddr_nodekind
   | call_nodekind
   | callind_nodekind

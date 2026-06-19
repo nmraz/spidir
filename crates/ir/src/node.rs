@@ -7,7 +7,7 @@ use hexfloat2::HexFloat;
 
 use crate::{
     function::SignatureRef,
-    module::{ExternFunction, Function},
+    module::{ExternFunction, ExternGlobal, Function},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -256,6 +256,7 @@ pub enum NodeKind {
     Store(MemSize),
     StackSlot { size: u32, align: u32 },
     BrCond,
+    GlobalAddr(ExternGlobal),
     FuncAddr(FunctionRef),
     Call(FunctionRef),
     CallInd(SignatureRef),

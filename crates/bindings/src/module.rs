@@ -8,9 +8,9 @@ use frontend::FunctionBuilder;
 use ir::module::Module;
 
 use crate::types::{
-    ApiExternFunction, ApiFunction, ApiType, BuildFunctionCallback, DumpCallback,
-    SPIDIR_DUMP_CONTINUE, extern_function_to_api, function_from_api, function_to_api,
-    name_signature_from_api,
+    ApiExternFunction, ApiExternGlobal, ApiFunction, ApiType, BuildFunctionCallback, DumpCallback,
+    SPIDIR_DUMP_CONTINUE, extern_function_to_api, extern_global_to_api, function_from_api,
+    function_to_api, name_from_api, name_signature_from_api,
 };
 
 #[unsafe(no_mangle)]
@@ -23,6 +23,20 @@ extern "C" fn spidir_module_create() -> *mut Module {
 unsafe extern "C" fn spidir_module_destroy(module: *mut Module) {
     unsafe {
         drop(Box::from_raw(module));
+    }
+}
+
+#[unsafe(no_mangle)]
+unsafe extern "C" fn spidir_module_create_extern_global(
+    module: *mut Module,
+    name: *const c_char,
+) -> ApiExternGlobal {
+    unsafe {
+        let module = &mut *module;
+
+        let name = name_from_api(name);
+        let func = module.create_extern_global(name);
+        extern_global_to_api(func)
     }
 }
 

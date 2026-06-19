@@ -8,7 +8,7 @@ use codegen::code_buffer::{Reloc, RelocTarget};
 use frontend::{Block, FunctionBuilder};
 use ir::{
     function::Signature,
-    module::{ExternFunction, Function},
+    module::{ExternFunction, ExternGlobal, Function},
     node::{FcmpKind, FunctionRef, IcmpKind, MemSize, Type},
     valgraph::DepValue,
 };
@@ -22,6 +22,9 @@ pub struct ApiFunction(pub u32);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ApiExternFunction(pub u32);
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(C)]
+pub struct ApiExternGlobal(pub u32);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ApiFunctionRef(pub u64);
@@ -126,6 +129,16 @@ pub unsafe fn value_list_from_api(
 }
 
 #[track_caller]
+pub unsafe fn name_from_api(name: *const c_char) -> String {
+    unsafe {
+        CStr::from_ptr(name)
+            .to_str()
+            .expect("name not utf-8")
+            .to_owned()
+    }
+}
+
+#[track_caller]
 pub unsafe fn name_signature_from_api(
     name: *const c_char,
     ret_type: ApiType,
@@ -134,10 +147,7 @@ pub unsafe fn name_signature_from_api(
 ) -> (String, Signature) {
     unsafe {
         (
-            CStr::from_ptr(name)
-                .to_str()
-                .expect("function name not utf-8")
-                .to_owned(),
+            name_from_api(name),
             signature_from_api(ret_type, param_count, param_types),
         )
     }
@@ -181,6 +191,10 @@ pub fn opt_type_from_api(opt_type: ApiType) -> Option<Type> {
     } else {
         Some(type_from_api(opt_type))
     }
+}
+
+pub fn extern_global_to_api(global: ExternGlobal) -> ApiExternGlobal {
+    ApiExternGlobal(global.as_u32())
 }
 
 pub fn function_from_api(func: ApiFunction) -> Function {

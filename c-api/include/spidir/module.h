@@ -40,6 +40,14 @@ typedef struct spidir_extern_function {
     uint32_t id;
 } spidir_extern_function_t;
 
+/// An identifier referring to an external global variable within a module.
+///
+/// Values of this type are only guaranteed to be unique within the context of a
+/// module, and should not be mixed across different modules.
+typedef struct spidir_extern_global {
+    uint32_t id;
+} spidir_extern_global_t;
+
 /// The different kinds of function references that can exist within a module.
 typedef enum spidir_funcref_kind {
     /// A reference to an internal function (one created by
@@ -309,6 +317,18 @@ spidir_module_handle_t spidir_module_create(void);
 ///
 /// @param[in] module The module to destroy.
 void spidir_module_destroy(spidir_module_handle_t module);
+
+/// Adds a new external global variable with the specified name to the module.
+///
+/// External global variables can be referred to by other parts of the module
+/// but contain no data.
+///
+/// @param[in] module The module to which the function should be added.
+/// @param[in] name   The name to give the global. This name should not collide
+///                   with names given to other global variables in the module.
+spidir_extern_global_t
+spidir_module_create_extern_global(spidir_module_handle_t module,
+                                   const char* name);
 
 /// Adds a new function with the specified parameters to the module.
 ///

@@ -17,16 +17,17 @@ hexfloat      = @{
 }
 float         = _{ hexfloat | special_float }
 
-valname  = @{ "%" ~ ident }
-funcname = @{ "@" ~ ident }
+valname    = @{ "%" ~ ident }
+globalname = @{ "@" ~ ident }
 
 type = { "i32" | "i64" | "f32" | "f64" | "ptr" }
 
 param_types       = { (type ~ ("," ~ type)*)? }
-signature         = { funcname ~ (":" ~ type)? ~ "(" ~ param_types ~ ")" }
+signature         = { globalname ~ (":" ~ type)? ~ "(" ~ param_types ~ ")" }
 callind_signature = { type? ~ "(" ~ param_types ~ ")" }
 
-extfunc = { "extfunc" ~ signature }
+extfunc   = { "extfunc" ~ signature }
+extglobal = { "extglobal" ~ globalname }
 
 valkind = { "ctrl" | "phisel" | type }
 
@@ -43,8 +44,8 @@ fcmp_nodekind      =  { "fcmp" ~ fcmpkind }
 load_nodekind      = ${ "load." ~ memsize }
 store_nodekind     = ${ "store." ~ memsize }
 stackslot_nodekind =  { "stackslot" ~ integer ~ ":" ~ integer }
-funcaddr_nodekind  =  { "funcaddr" ~ funcname }
-call_nodekind      =  { "call" ~ funcname }
+funcaddr_nodekind  =  { "funcaddr" ~ globalname }
+call_nodekind      =  { "call" ~ globalname }
 callind_nodekind   =  { "callind" ~ callind_signature }
 nodekind           =  {
     "entry"
@@ -112,7 +113,7 @@ func = {
     "func" ~ signature ~ "{" ~ line_end ~ graph ~ "}"
 }
 
-module_item = _{ extfunc | func }
+module_item = _{ extfunc | func | extglobal }
 
 module = {
     SOI ~ line_end* ~ (module_item ~ (line_end+ ~ module_item)*)? ~ line_end* ~ EOI

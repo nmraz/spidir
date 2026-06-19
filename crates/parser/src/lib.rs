@@ -14,7 +14,7 @@ use fx_utils::FxHashMap;
 use hexfloat2::{HexFloat32, HexFloat64};
 use ir::{
     function::{FunctionBody, Signature},
-    module::{Function, Module},
+    module::{ExternGlobal, Function, Module},
     node::{
         BitwiseF32, BitwiseF64, DepValueKind, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind,
         Type,
@@ -50,7 +50,11 @@ struct ParsedFunction<'a> {
     graph_pair: Pair<'a, Rule>,
 }
 
-type FunctionNames<'a> = FxHashMap<Cow<'a, str>, FunctionRef>;
+#[derive(Default)]
+struct ModuleNames<'a> {
+    global_names: FxHashMap<Cow<'a, str>, ExternGlobal>,
+    func_names: FxHashMap<Cow<'a, str>, FunctionRef>,
+}
 
 struct PendingFunction<'a> {
     id: Function,
@@ -73,10 +77,30 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
 
     let mut module = Module::new();
     let mut pending_functions = Vec::new();
-    let mut function_names = FunctionNames::default();
+    let mut module_names = ModuleNames::default();
 
     for item in parsed.into_inner() {
         match item.as_rule() {
+            Rule::extglobal => {
+                let name_pair = item
+                    .into_inner()
+                    .next()
+                    .expect("external global should contain name");
+                assert!(name_pair.as_rule() == Rule::globalname);
+                let name_span = name_pair.as_span();
+                let name = name_from_span(&name_span);
+                if module_names.global_names.contains_key(&name) {
+                    return Err(Box::new(Error::new_from_span(
+                        ErrorVariant::CustomError {
+                            message: "global redefined".to_owned(),
+                        },
+                        name_span,
+                    )));
+                }
+
+                let global = module.create_extern_global(name.clone().into_owned());
+                module_names.global_names.insert(name, global);
+            }
             Rule::extfunc => {
                 let (name_span, sig) = extract_name_signature(
                     item.into_inner()
@@ -84,7 +108,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                         .expect("external function should contain signature"),
                 );
                 let name = name_from_span(&name_span);
-                if function_names.contains_key(&name) {
+                if module_names.func_names.contains_key(&name) {
                     return Err(Box::new(Error::new_from_span(
                         ErrorVariant::CustomError {
                             message: "function redefined".to_owned(),
@@ -94,12 +118,14 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 }
 
                 let function = module.create_extern_function(name.clone().into_owned(), sig);
-                function_names.insert(name, FunctionRef::External(function));
+                module_names
+                    .func_names
+                    .insert(name, FunctionRef::External(function));
             }
             Rule::func => {
                 let parsed = extract_function(item)?;
                 let name = name_from_span(&parsed.name_span);
-                if function_names.contains_key(&name) {
+                if module_names.func_names.contains_key(&name) {
                     return Err(Box::new(Error::new_from_span(
                         ErrorVariant::CustomError {
                             message: "function redefined".to_owned(),
@@ -111,7 +137,9 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
                 let function =
                     module.create_invalid_function(name.clone().into_owned(), parsed.sig);
 
-                function_names.insert(name, FunctionRef::Internal(function));
+                module_names
+                    .func_names
+                    .insert(name, FunctionRef::Internal(function));
                 pending_functions.push(PendingFunction {
                     id: function,
                     graph_pair: parsed.graph_pair,
@@ -124,7 +152,7 @@ pub fn parse_module(input: &str) -> Result<Module, Box<Error<Rule>>> {
 
     for func in pending_functions {
         let body = &mut module.function_bodies[func.id];
-        extract_body(func.graph_pair, &function_names, body)?;
+        extract_body(func.graph_pair, &module_names, body)?;
     }
 
     Ok(module)
@@ -147,7 +175,7 @@ fn extract_function(func_pair: Pair<'_, Rule>) -> Result<ParsedFunction<'_>, Box
 
 fn extract_body(
     graph_pair: Pair<'_, Rule>,
-    function_names: &FunctionNames<'_>,
+    module_names: &ModuleNames<'_>,
     body: &mut FunctionBody,
 ) -> Result<(), Box<Error<Rule>>> {
     let mut value_map = FxHashMap::<Cow<'_, str>, DepValue>::default();
@@ -155,7 +183,7 @@ fn extract_body(
     let graph_start = graph_pair.as_span().start_pos();
     let node_listings = graph_pair
         .into_inner()
-        .map(|pair| extract_node(pair, function_names, body))
+        .map(|pair| extract_node(pair, module_names, body))
         .collect::<Result<Vec<_>, _>>()?;
     let mut nodes = Vec::new();
 
@@ -223,7 +251,7 @@ fn extract_body(
 
 fn extract_node<'a>(
     node_pair: Pair<'a, Rule>,
-    function_names: &FunctionNames<'_>,
+    module_names: &ModuleNames<'_>,
     body: &mut FunctionBody,
 ) -> Result<NodeListing<'a>, Box<Error<Rule>>> {
     let mut inner = node_pair.into_inner().peekable();
@@ -234,7 +262,7 @@ fn extract_node<'a>(
 
     let kind = extract_node_kind(
         inner.next().expect("node should have kind"),
-        function_names,
+        module_names,
         body,
     )?;
 
@@ -250,7 +278,7 @@ fn extract_node<'a>(
 
 fn extract_node_kind(
     node_kind_pair: Pair<'_, Rule>,
-    function_names: &FunctionNames<'_>,
+    module_names: &ModuleNames<'_>,
     body: &mut FunctionBody,
 ) -> Result<NodeKind, Box<Error<Rule>>> {
     match node_kind_pair.as_str() {
@@ -291,13 +319,13 @@ fn extract_node_kind(
         "bitcast" => Ok(NodeKind::Bitcast),
         "select" => Ok(NodeKind::Select),
         "brcond" => Ok(NodeKind::BrCond),
-        _ => extract_special_node_kind(node_kind_pair, function_names, body),
+        _ => extract_special_node_kind(node_kind_pair, module_names, body),
     }
 }
 
 fn extract_special_node_kind(
     node_kind_pair: Pair<'_, Rule>,
-    function_names: &FunctionNames<'_>,
+    module_names: &ModuleNames<'_>,
     body: &mut FunctionBody,
 ) -> Result<NodeKind, Box<Error<Rule>>> {
     let special_pair = node_kind_pair
@@ -334,9 +362,9 @@ fn extract_special_node_kind(
             NodeKind::StackSlot { size, align }
         }
         Rule::funcaddr_nodekind => {
-            extract_funcref_node(&mut inner, function_names, NodeKind::FuncAddr)?
+            extract_funcref_node(&mut inner, module_names, NodeKind::FuncAddr)?
         }
-        Rule::call_nodekind => extract_funcref_node(&mut inner, function_names, NodeKind::Call)?,
+        Rule::call_nodekind => extract_funcref_node(&mut inner, module_names, NodeKind::Call)?,
         Rule::callind_nodekind => {
             let sig_pair = inner.next().unwrap();
             let sig = extract_callind_signature(sig_pair);
@@ -351,12 +379,12 @@ fn extract_special_node_kind(
 
 fn extract_funcref_node(
     inner: &mut Pairs<'_, Rule>,
-    function_names: &FunctionNames<'_>,
+    module_names: &ModuleNames<'_>,
     ctor: impl FnOnce(FunctionRef) -> NodeKind,
 ) -> Result<NodeKind, Box<Error<Rule>>> {
     let name_span = inner.next().unwrap().as_span();
     let name = name_from_span(&name_span);
-    let funcref = *function_names.get(&name).ok_or_else(|| {
+    let funcref = *module_names.func_names.get(&name).ok_or_else(|| {
         Box::new(Error::new_from_span(
             ErrorVariant::CustomError {
                 message: "undefined function".to_owned(),
@@ -423,7 +451,7 @@ fn extract_name_signature(sig_pair: Pair<'_, Rule>) -> (Span<'_>, Signature) {
     let mut inner = sig_pair.into_inner();
 
     let name_pair = inner.next().expect("parsed signature should have name");
-    assert!(name_pair.as_rule() == Rule::funcname);
+    assert!(name_pair.as_rule() == Rule::globalname);
     let name = name_pair.as_span();
     let sig = extract_signature(inner);
 
@@ -523,6 +551,25 @@ mod tests {
     }
 
     #[test]
+    fn parse_extern_global() {
+        let module = parse_module(
+            "
+            extglobal @global1
+            extglobal @global2",
+        )
+        .unwrap();
+
+        check_module(
+            &module,
+            expect![[r#"
+                extglobal @global1
+                extglobal @global2
+
+            "#]],
+        );
+    }
+
+    #[test]
     fn parse_extfunc_signature() {
         let module = parse_module(
             "
@@ -542,6 +589,26 @@ mod tests {
                 extfunc @func3()
                 extfunc @func4:ptr()
                 extfunc @func5:i32(i32, i64)
+
+            "#]],
+        );
+    }
+
+    #[test]
+    fn parse_duplicate_global_extfunc() {
+        let module = parse_module(
+            "
+            extglobal @myname
+            extfunc @myname:i32(i64)",
+        )
+        .unwrap();
+
+        check_module(
+            &module,
+            expect![[r#"
+                extglobal @myname
+
+                extfunc @myname:i32(i64)
 
             "#]],
         );
@@ -1482,6 +1549,23 @@ mod tests {
                   |                     ^---
                   |
                   = expected signature"#]],
+        );
+    }
+
+    #[test]
+    fn parse_dumplicate_extern_globals() {
+        check_parse_error(
+            "
+            extglobal @global
+            extglobal @global
+            ",
+            expect![[r#"
+                 --> 3:23
+                  |
+                3 |             extglobal @global
+                  |                       ^-----^
+                  |
+                  = global redefined"#]],
         );
     }
 

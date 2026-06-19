@@ -3,6 +3,7 @@ use core::mem;
 use alloc::vec::Vec;
 
 use ir::{
+    module::ExternGlobal,
     node::{BitwiseF32, BitwiseF64, FcmpKind, FunctionRef, IcmpKind, MemSize, NodeKind, Type},
     valgraph::{DepValue, Node},
 };
@@ -11,7 +12,7 @@ use valmatch::match_value;
 
 use crate::{
     cfg::Block,
-    code_buffer::CallTarget,
+    code_buffer::{BufferRelocTarget, CallTarget},
     isel::{IselContext, MachineIselError, ParamLoc},
     lir::{
         DefOperand, DefOperandConstraint, OperandPos, PhysReg, PhysRegSet, RegClass, UseOperand,
@@ -269,6 +270,7 @@ impl MachineLower for X64Machine {
                     );
                 }
             },
+            &NodeKind::GlobalAddr(global) => emit_globaladdr(self, ctx, node, global),
             &NodeKind::FuncAddr(func) => emit_funcaddr(self, ctx, node, func),
             &NodeKind::Call(func) => emit_call(
                 self,
@@ -1001,6 +1003,25 @@ fn emit_simple_flag_test_sequence(
             );
         }
     }
+}
+
+fn emit_globaladdr(
+    machine: &X64Machine,
+    ctx: &mut IselContext<'_, '_, X64Machine>,
+    node: Node,
+    global: ExternGlobal,
+) {
+    let [output] = ctx.node_outputs_exact(node);
+    let output = ctx.get_value_vreg(output);
+
+    let target = BufferRelocTarget::Global(global);
+
+    let instr = match machine.config.extern_code_model {
+        CodeModel::SmallPic => X64Instr::GlobalAddrRel(target),
+        CodeModel::LargeAbs => X64Instr::GlobalAddrAbs(target),
+    };
+
+    ctx.emit_instr(instr, &[DefOperand::any_reg(output)], &[]);
 }
 
 fn emit_funcaddr(

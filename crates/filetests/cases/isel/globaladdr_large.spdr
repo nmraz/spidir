@@ -1,0 +1,14 @@
+# run: isel[large-abs]
+
+extglobal @global
+
+func @get_global:ptr() {
+    # check: function `get_global`:
+    # nextln:       block0[]:
+    # nextln: 0000:      %0:gpr64(reg)[late] = GlobalAddrAbs(Global(extglobal0))
+    # nextln: 0001:      Ret %0($$rax)[early]
+
+    %0:ctrl = entry
+    %1:ptr = globaladdr @global
+    return %0, %1
+}

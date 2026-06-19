@@ -1,0 +1,16 @@
+# run: codegen[small-pic, large-abs]
+
+extglobal @global
+
+func @get_global:ptr() {
+    # check: function `get_global`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @global + 0
+    # nextln: 00000e: 5d                              pop rbp
+    # nextln: 00000f: c3                              ret
+
+    %0:ctrl = entry
+    %1:ptr = globaladdr @global
+    return %0, %1
+}

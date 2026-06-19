@@ -1,4 +1,4 @@
-# run: codegen[large-abs, small-pic]
+# run: codegen[(large-abs, small-pic)]
 
 extglobal @global
 

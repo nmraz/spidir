@@ -1,4 +1,4 @@
-# run: isel[small-pic, large-abs]
+# run: isel[(small-pic, large-abs)]
 
 extglobal @global
 

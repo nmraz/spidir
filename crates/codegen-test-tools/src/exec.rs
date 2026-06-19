@@ -193,6 +193,10 @@ fn relocate_buf(
                         )
                     })? as u64
                 }
+                RelocTarget::Global(global) => bail!(
+                    "global `{}` not supported",
+                    module.metadata.extern_globals()[global].name
+                ),
                 RelocTarget::LibCall(_) => bail!("unknown libcall kind"),
                 RelocTarget::ConstantPool => {
                     buf.as_ptr() as u64

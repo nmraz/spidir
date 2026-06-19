@@ -4,7 +4,7 @@ use alloc::vec::Vec;
 
 use cranelift_entity::{PrimaryMap, SecondaryMap, entity_impl, packed_option::PackedOption};
 use fx_utils::FxHashMap;
-use ir::node::FunctionRef;
+use ir::{module::ExternGlobal, node::FunctionRef};
 use smallvec::SmallVec;
 
 use crate::constpool::{Constant, ConstantPoolBuilder};
@@ -47,6 +47,7 @@ impl From<LibCallKind> for CallTarget {
 pub enum BufferRelocTarget {
     Function(FunctionRef),
     LibCall(LibCallKind),
+    Global(ExternGlobal),
     Constant(Constant),
 }
 
@@ -65,6 +66,7 @@ type BufferReloc = RawReloc<BufferRelocTarget>;
 pub enum RelocTarget {
     Function(FunctionRef),
     LibCall(LibCallKind),
+    Global(ExternGlobal),
     ConstantPool,
 }
 
@@ -309,6 +311,12 @@ impl<F: FixupKind> CodeBuffer<F> {
                     kind: reloc.kind,
                     offset: reloc.offset,
                     target: RelocTarget::LibCall(kind),
+                    addend: reloc.addend,
+                },
+                BufferRelocTarget::Global(global) => Reloc {
+                    kind: reloc.kind,
+                    offset: reloc.offset,
+                    target: RelocTarget::Global(global),
                     addend: reloc.addend,
                 },
                 BufferRelocTarget::Constant(constant) => {

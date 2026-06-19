@@ -297,6 +297,7 @@ pub fn reloc_to_api(reloc: &Reloc) -> ApiReloc {
             SPIDIR_RELOC_TARGET_LIBCALL,
             ApiRelocTarget { libcall: kind.0 },
         ),
+        RelocTarget::Global(_) => todo!(),
         RelocTarget::ConstantPool => (
             SPIDIR_RELOC_TARGET_CONSTPOOL,
             ApiRelocTarget {

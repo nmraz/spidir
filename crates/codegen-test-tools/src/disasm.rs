@@ -54,6 +54,9 @@ pub fn disasm_code(
                     quote_ident(&module_metadata.resolve_funcref(func).name)
                 }
                 RelocTarget::LibCall(kind) => libcall_name(kind).into(),
+                RelocTarget::Global(global) => {
+                    quote_ident(&module_metadata.extern_globals()[global].name)
+                }
                 RelocTarget::ConstantPool => "<CP>".into(),
             };
 

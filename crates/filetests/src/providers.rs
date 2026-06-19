@@ -53,14 +53,42 @@ fn parse_run_command(run_command: &str) -> Result<(&str, Vec<&str>)> {
     };
 
     let (command, params) = run_command.split_at(base_end);
-    ensure!(
-        params.find(']') == Some(params.len() - 1),
-        "invalid provider parameter string"
-    );
-    let params = params[1..params.len() - 1]
-        .split(',')
-        .map(|param| param.trim())
-        .collect();
+    ensure!(params.ends_with(']'), "invalid provider parameter string");
+    Ok((command, parse_params(&params[1..params.len() - 1])))
+}
 
-    Ok((command, params))
+fn parse_params(param_str: &str) -> Vec<&str> {
+    let mut params = Vec::new();
+
+    // Use simple depth counters to avoid splitting on commas in nested parenthesizations. We don't
+    // actually check that the nesting is balanced or well-formed.
+
+    let mut depth_round: usize = 0;
+    let mut depth_square: usize = 0;
+    let mut depth_curly: usize = 0;
+
+    let mut cur_param_start = 0;
+
+    for (i, c) in param_str.char_indices() {
+        match c {
+            '(' => depth_round += 1,
+            ')' => depth_round = depth_round.saturating_sub(1),
+            '[' => depth_square += 1,
+            ']' => depth_square = depth_square.saturating_sub(1),
+            '{' => depth_curly += 1,
+            '}' => depth_curly = depth_curly.saturating_sub(1),
+            ',' if depth_round == 0 && depth_square == 0 && depth_curly == 0 => {
+                params.push(param_str[cur_param_start..i].trim());
+                cur_param_start = i + 1;
+            }
+            _ => {}
+        }
+    }
+
+    // Handle the last parameter, if one exists.
+    if !param_str.is_empty() {
+        params.push(param_str[cur_param_start..].trim());
+    }
+
+    params
 }

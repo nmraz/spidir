@@ -7,7 +7,7 @@ use crate::{
     cache::NodeCache,
     function::{FunctionBody, FunctionBorrow, FunctionMetadata, Signature},
     node::FunctionRef,
-    write::write_module,
+    write::{write_global_metadata, write_module},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -25,6 +25,12 @@ entity_impl!(ExternGlobal, "extglobal");
 #[derive(Debug, Clone)]
 pub struct GlobalMetadata {
     pub name: String,
+}
+
+impl fmt::Display for GlobalMetadata {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_global_metadata(f, self)
+    }
 }
 
 #[derive(Clone)]

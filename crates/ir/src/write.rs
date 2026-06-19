@@ -4,7 +4,7 @@ use alloc::{borrow::Cow, format, vec::Vec};
 
 use crate::{
     function::{FunctionBody, FunctionBorrow, FunctionMetadata, Signature},
-    module::{ExternFunction, Function, Module, ModuleMetadata},
+    module::{ExternFunction, ExternGlobal, Function, GlobalMetadata, Module, ModuleMetadata},
     node::{FunctionRef, NodeKind},
     valgraph::{DepValue, Node, ValGraph},
 };
@@ -64,6 +64,15 @@ pub trait AnnotateModule<W: fmt::Write + ?Sized>: AnnotateGraph<W> {
         // `write_extern_function` to operate on type-erased writers.
         write_extern_function(&mut w, &module_metadata.extern_functions()[func])
     }
+
+    fn write_extern_global(
+        &mut self,
+        mut w: &mut W,
+        module_metadata: &ModuleMetadata,
+        global: ExternGlobal,
+    ) -> fmt::Result {
+        write_extern_global(&mut w, &module_metadata.extern_globals()[global])
+    }
 }
 
 struct DefaultAnnotator;
@@ -104,6 +113,14 @@ pub fn write_annotated_module<W: fmt::Write + ?Sized>(
     annotator: &mut (impl AnnotateModule<W> + ?Sized),
     module: &Module,
 ) -> fmt::Result {
+    let extern_globals = module.metadata.extern_globals();
+    if !extern_globals.is_empty() {
+        for global in extern_globals.keys() {
+            annotator.write_extern_global(w, &module.metadata, global)?;
+        }
+        w.write_str("\n")?;
+    }
+
     let extern_functions = module.metadata.extern_functions();
     if !extern_functions.is_empty() {
         for extern_func in extern_functions.keys() {
@@ -330,6 +347,11 @@ pub fn write_extern_function(w: &mut dyn fmt::Write, metadata: &FunctionMetadata
     writeln!(w)
 }
 
+pub fn write_extern_global(w: &mut dyn fmt::Write, metadata: &GlobalMetadata) -> fmt::Result {
+    write!(w, "extglobal {metadata}")?;
+    writeln!(w)
+}
+
 pub fn quote_ident(ident: &str) -> Cow<'_, str> {
     if ident.contains(|c| !is_unquoted_ident_char(c)) {
         format!(r#""{}""#, ident.replace('\"', "\\\"")).into()
@@ -341,6 +363,10 @@ pub fn quote_ident(ident: &str) -> Cow<'_, str> {
 pub fn write_function_metadata(w: &mut dyn fmt::Write, metadata: &FunctionMetadata) -> fmt::Result {
     write!(w, "@{}", quote_ident(&metadata.name))?;
     write_signature(w, &metadata.sig, true)
+}
+
+pub fn write_global_metadata(w: &mut dyn fmt::Write, metadata: &GlobalMetadata) -> fmt::Result {
+    write!(w, "@{}", quote_ident(&metadata.name))
 }
 
 fn write_signature(w: &mut dyn fmt::Write, sig: &Signature, after_name: bool) -> fmt::Result {
@@ -725,6 +751,7 @@ mod tests {
                 param_types: vec![Type::I64],
             },
         );
+        module.create_extern_global("my_ext_global".to_owned());
 
         let body = &mut module.function_bodies[func];
         let entry_ctrl = body.entry_ctrl();
@@ -742,6 +769,8 @@ mod tests {
         check_write_module(
             &module,
             expect![[r#"
+                extglobal @my_ext_global
+
                 extfunc @my_ext_func:i32(i64)
 
                 func @my_func:i32(i64) {

@@ -1,5 +1,5 @@
 use anyhow::{Ok, Result, bail, ensure};
-use codegen::target::x64::{CodeModel, X64Machine, X64MachineConfig};
+use codegen::target::x64::{CodeModel, X64CpuFeatures, X64Machine, X64MachineConfig};
 
 pub fn create_x64_machine(params: &[&str]) -> Result<X64Machine> {
     match params {
@@ -10,6 +10,15 @@ pub fn create_x64_machine(params: &[&str]) -> Result<X64Machine> {
                 internal_code_model,
                 extern_code_model,
                 ..Default::default()
+            }))
+        }
+        [code_models, cpu_features] => {
+            let (internal_code_model, extern_code_model) = parse_code_models(code_models)?;
+            let cpu_features = parse_cpu_features(cpu_features)?;
+            Ok(X64Machine::new(X64MachineConfig {
+                internal_code_model,
+                extern_code_model,
+                cpu_features,
             }))
         }
         _ => bail!("invalid parameter count for x64 backend provider"),
@@ -41,4 +50,26 @@ fn parse_code_model(code_model: &str) -> Result<CodeModel> {
         "large-abs" => Ok(CodeModel::LargeAbs),
         _ => bail!("unknown code model '{code_model}'"),
     }
+}
+
+fn parse_cpu_features(cpu_features: &str) -> Result<X64CpuFeatures> {
+    ensure!(
+        cpu_features.starts_with('{') && cpu_features.ends_with('}'),
+        "invalid CPU feature description"
+    );
+
+    let mut features = X64CpuFeatures::default();
+
+    let cpu_features = &cpu_features[1..cpu_features.len() - 1];
+    for feature in cpu_features.split(',') {
+        let feature = feature.trim();
+        match feature {
+            "popcnt" => {
+                features.popcnt = true;
+            }
+            _ => bail!("unknown CPU feature '{feature}'"),
+        }
+    }
+
+    Ok(features)
 }

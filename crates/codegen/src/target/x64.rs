@@ -4,7 +4,7 @@ use ir::node::FunctionRef;
 
 use crate::{
     cfg::Block,
-    code_buffer::{CallTarget, LibCallKind, RelocKind},
+    code_buffer::{BufferRelocTarget, CallTarget, LibCallKind, RelocKind},
     lir::{MemLayout, PhysReg, RegBank, RegClass, RegWidth, StackSlot},
     machine::{MachineCore, MachineRegalloc},
     regalloc::RematCost,
@@ -330,8 +330,8 @@ pub enum X64Instr {
     MovsRM(SseFpuPrecision, AddrMode),
     MovsMR(SseFpuPrecision, AddrMode),
     Ret,
-    FuncAddrRel(CallTarget),
-    FuncAddrAbs(CallTarget),
+    GlobalAddrRel(BufferRelocTarget),
+    GlobalAddrAbs(BufferRelocTarget),
     CallRel(CallTarget),
     CallRm,
     Jump(Block),
@@ -390,8 +390,8 @@ impl X64Instr {
             X64Instr::MovsRM(..) => false,
             X64Instr::MovsMR(..) => false,
             X64Instr::Ret => false,
-            X64Instr::FuncAddrRel(..) => false,
-            X64Instr::FuncAddrAbs(..) => false,
+            X64Instr::GlobalAddrRel(..) => false,
+            X64Instr::GlobalAddrAbs(..) => false,
             X64Instr::CallRel(..) => false,
             X64Instr::CallRm => false,
             X64Instr::Jump(..) => false,
@@ -450,8 +450,8 @@ impl X64Instr {
             X64Instr::MovsRM(..) => false,
             X64Instr::MovsMR(..) => false,
             X64Instr::Ret => false,
-            X64Instr::FuncAddrRel(..) => false,
-            X64Instr::FuncAddrAbs(..) => false,
+            X64Instr::GlobalAddrRel(..) => false,
+            X64Instr::GlobalAddrAbs(..) => false,
             X64Instr::CallRel(..) => false,
             X64Instr::CallRm => false,
             X64Instr::Jump(..) => false,
@@ -578,11 +578,11 @@ impl MachineRegalloc for X64Machine {
         match instr {
             X64Instr::MovRmS32(..)
             | X64Instr::MovRU32(..)
-            | X64Instr::FuncAddrRel(..)
+            | X64Instr::GlobalAddrRel(..)
             | X64Instr::StackAddr(..)
             | X64Instr::SseMovRZ => Some(RematCost::CheapAsCopy),
             X64Instr::MovRI64(..)
-            | X64Instr::FuncAddrAbs(..)
+            | X64Instr::GlobalAddrAbs(..)
             | X64Instr::MovRRbp { .. }
             | X64Instr::MovsRRbp { .. }
             | X64Instr::MovsdConstRel(..) => Some(RematCost::CheapAsLoad),

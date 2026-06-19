@@ -127,7 +127,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$r13:gpr64 = $$rdi
     # nextln: 0007:     Jump(block1)
     # nextln:       block1:
-    # nextln: 0008:     $$rcx = FuncAddrAbs(Function(External(extfunc6)))
+    # nextln: 0008:     $$rcx = GlobalAddrAbs(Function(External(extfunc6)))
     # nextln:           $$rax = MovRmS32(16)
     # nextln:           $$rdi = StackAddr(!1)
     # nextln:           $$rsi:gpr64 = $$rdx
@@ -137,12 +137,12 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:       block2:
     # nextln: 0011:     $$r14 = MovRI64(137576241302976)
     # nextln: 0012:     MovMR(S64, [!2 + 0]) $$r14
-    # nextln: 0013:     $$rax = FuncAddrAbs(Function(External(extfunc1)))
+    # nextln: 0013:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rdi = StackAddr(!2)
     # nextln: 0014:     $$rax = CallRm $$rax, $$rdi
     # nextln:           $$r15:gpr64 = $$rax
     # nextln: 0015:     MovMR(S64, [!3 + 0]) $$r14
-    # nextln: 0016:     $$rax = FuncAddrAbs(Function(External(extfunc1)))
+    # nextln: 0016:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rdi = StackAddr(!3)
     # nextln: 0017:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0018:     AluRRm(S64, Cmp) $$r15, $$rax
@@ -156,13 +156,13 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0020:     Jump(block5)
     # nextln:       block4:
     # nextln: 0023:     MovMR(S64, [!5 + 0]) $$r14
-    # nextln: 0024:     $$rax = FuncAddrAbs(Function(External(extfunc1)))
+    # nextln: 0024:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rdi = StackAddr(!5)
     # nextln: 0025:     $$rax = CallRm $$rax, $$rdi
     # nextln:           $$r15:gpr64 = $$rax
     # nextln: 0026:     $$rax = MovRI64(137576241302592)
     # nextln: 0027:     MovMR(S64, [!4 + 0]) $$rax
-    # nextln: 0028:     $$rax = FuncAddrAbs(Function(External(extfunc1)))
+    # nextln: 0028:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rdi = StackAddr(!4)
     # nextln: 0029:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0030:     $$rcx = MovRmS32(0)
@@ -175,16 +175,16 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0033:     Jump(block5)
     # nextln:       block5:
     # nextln: 0035:     $$rdi = MovzxRRm(S8) $$rcx
-    # nextln: 0036:     $$rax = FuncAddrAbs(Function(External(extfunc27)))
+    # nextln: 0036:     $$rax = GlobalAddrAbs(Function(External(extfunc27)))
     # nextln: 0037:     CallRm $$rax, $$rdi
-    # nextln: 0038:     $$rax = FuncAddrAbs(Function(External(extfunc22)))
+    # nextln: 0038:     $$rax = GlobalAddrAbs(Function(External(extfunc22)))
     # nextln:           $$rdi:gpr64 = $$r12
     # nextln: 0039:     CallRm $$rax, $$rdi
-    # nextln: 0040:     $$rax = FuncAddrAbs(Function(External(extfunc2)))
+    # nextln: 0040:     $$rax = GlobalAddrAbs(Function(External(extfunc2)))
     # nextln:           $$rdi:gpr64 = $$r12
     # nextln: 0041:     $$rax = CallRm $$rax, $$rdi
     # nextln:           $$r15:gpr64 = $$rax
-    # nextln: 0042:     $$rax = FuncAddrAbs(Function(External(extfunc6)))
+    # nextln: 0042:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
     # nextln:           $$r14:gpr64 = $$r13
     # nextln:           $$r13:gpr32 = $$rbx
     # nextln:           $$rbx = StackAddr(!0)
@@ -217,7 +217,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill9:gpr32 = $$rax
     # nextln: 0053:     Jump(block8)
     # nextln:       block8:
-    # nextln: 0054:     $$rax = FuncAddrAbs(Function(External(extfunc14)))
+    # nextln: 0054:     $$rax = GlobalAddrAbs(Function(External(extfunc14)))
     # nextln:           $$rdi:gpr64 = $$rbx
     # nextln: 0055:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$rcx = MovRmS32(0)
@@ -238,12 +238,12 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:       block9:
     # nextln: 0066:     Jump(block10)
     # nextln:       block10:
-    # nextln: 0067:     $$rax = FuncAddrAbs(Function(External(extfunc6)))
+    # nextln: 0067:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
     # nextln:           $$rdx = MovRmS32(16)
     # nextln:           $$rsi = StackAddr(!1)
     # nextln:           $$rdi = StackAddr(!6)
     # nextln: 0068:     $$rax = CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0069:     $$rax = FuncAddrAbs(Function(External(extfunc19)))
+    # nextln: 0069:     $$rax = GlobalAddrAbs(Function(External(extfunc19)))
     # nextln:           $$rdi = StackAddr(!6)
     # nextln: 0070:     $$rax = CallRm $$rax, $$rdi
     # nextln:           $$rdx:gpr64 = $$spill23
@@ -273,7 +273,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$rbx:gpr64 = $$rcx
     # nextln: 0071:     Jump(block11)
     # nextln:       block11:
-    # nextln: 0072:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0072:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0073:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0074:     AluRRm(S32, Cmp) $$rax, $$r12
@@ -387,7 +387,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0101:     AluRmI(S32, Cmp, 92) $$r9
     # nextln: 0102:     Jumpcc(Simple(E), block381, block382)
     # nextln:       block381:
-    # nextln: 0103:     $$rcx = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0103:     $$rcx = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$r15:gpr64 = $$rax
     # nextln:           $$r13:gpr32 = $$spill12
     # nextln:           $$rdi = StackAddr(!1)
@@ -642,7 +642,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill12:gpr32 = $$rdx
     # nextln: 0154:     Jump(block372)
     # nextln:       block372:
-    # nextln: 0155:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0155:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rbx:gpr32 = $$spill13
     # nextln:           $$r13:gpr32 = $$rcx
     # nextln:           $$r14:gpr32 = $$spill22
@@ -1113,7 +1113,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill3:gpr32 = $$r8
     # nextln: 0248:     Jump(block308)
     # nextln:       block308:
-    # nextln: 0249:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0249:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0250:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0251:     AluRRm(S32, Cmp) $$rax, $$r15
@@ -1139,7 +1139,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0261:     Jump(block312)
     # nextln:       block312:
     # nextln: 0262:     $$r13 = AddRI(S32, 1) $$r15
-    # nextln: 0263:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0263:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0264:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0265:     AluRRm(S32, Cmp) $$rax, $$r13
@@ -1207,7 +1207,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0294:     Jump(block329)
     # nextln:       block329:
     # nextln: 0295:     $$rbx = AddRI(S32, 1) $$rbx
-    # nextln: 0296:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0296:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0297:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0298:     AluRRm(S32, Cmp) $$rax, $$rbx
@@ -1526,7 +1526,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$rbx:gpr32 = $$r8
     # nextln: 0363:     Jump(block290)
     # nextln:       block290:
-    # nextln: 0364:     $$rax = FuncAddrAbs(Function(External(extfunc25)))
+    # nextln: 0364:     $$rax = GlobalAddrAbs(Function(External(extfunc25)))
     # nextln:           $$rdx:gpr32 = $$spill59
     # nextln:           $$rdi:gpr64 = $$r15
     # nextln: 0365:     CallRm $$rax, $$rdi, $$rsi, $$rdx
@@ -1538,12 +1538,12 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0371:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0372:     Jumpcc(Simple(Ne), block291, block292)
     # nextln:       block291:
-    # nextln: 0373:     $$rax = FuncAddrAbs(Function(External(extfunc6)))
+    # nextln: 0373:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
     # nextln:           $$rsi = StackAddr(!1)
     # nextln:           $$rdi = StackAddr(!7)
     # nextln:           $$rdx = MovRmS32(16)
     # nextln: 0374:     $$rax = CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0375:     $$rax = FuncAddrAbs(Function(External(extfunc14)))
+    # nextln: 0375:     $$rax = GlobalAddrAbs(Function(External(extfunc14)))
     # nextln:           $$rsi = MovRmS32(2)
     # nextln:           $$rdi = StackAddr(!7)
     # nextln: 0376:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -1714,20 +1714,20 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:       block44:
     # nextln: 0429:     $$r12 = MovzxRRm(S8) $$r14
     # nextln:           $$spill46:gpr32 = $$r14
-    # nextln: 0433:     $$rax = FuncAddrAbs(Function(External(extfunc16)))
+    # nextln: 0433:     $$rax = GlobalAddrAbs(Function(External(extfunc16)))
     # nextln:           $$rsi = MovRmS32(16)
     # nextln:           $$rdi = StackAddr(!9)
     # nextln: 0434:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0435:     $$rax = FuncAddrAbs(Function(External(extfunc30)))
+    # nextln: 0435:     $$rax = GlobalAddrAbs(Function(External(extfunc30)))
     # nextln:           $$rdi = StackAddr(!10)
     # nextln:           $$rsi = MovRmS32(16)
     # nextln: 0436:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0437:     $$rax = FuncAddrAbs(Function(External(extfunc7)))
+    # nextln: 0437:     $$rax = GlobalAddrAbs(Function(External(extfunc7)))
     # nextln:           $$rdx = MovRmS32(4)
     # nextln:           $$rsi = StackAddr(!9)
     # nextln:           $$rdi = StackAddr(!10)
     # nextln: 0438:     CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0439:     $$rax = FuncAddrAbs(Function(External(extfunc6)))
+    # nextln: 0439:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
     # nextln:           $$rsi = StackAddr(!10)
     # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rdx = MovRmS32(16)
@@ -1735,11 +1735,11 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0441:     AluRRm(S32, Test) $$r12, $$r12
     # nextln: 0442:     Jumpcc(Simple(Ne), block45, block46)
     # nextln:       block45:
-    # nextln: 0443:     $$rax = FuncAddrAbs(Function(External(extfunc18)))
+    # nextln: 0443:     $$rax = GlobalAddrAbs(Function(External(extfunc18)))
     # nextln:           $$r12:gpr64 = $$r15
     # nextln:           $$rdi:gpr64 = $$r12
     # nextln: 0444:     $$rax = CallRm $$rax, $$rdi
-    # nextln: 0445:     $$rcx = FuncAddrAbs(Function(External(extfunc12)))
+    # nextln: 0445:     $$rcx = GlobalAddrAbs(Function(External(extfunc12)))
     # nextln:           $$rdi:gpr64 = $$rax
     # nextln: 0446:     $$rax = CallRm $$rcx, $$rdi
     # nextln: 0447:     $$rcx = MovRmS32(0)
@@ -1807,7 +1807,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$rax:gpr32 = $$spill62
     # nextln: 0469:     Jump(block265)
     # nextln:       block287:
-    # nextln: 0470:     $$rax = FuncAddrAbs(Function(External(extfunc5)))
+    # nextln: 0470:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
     # nextln: 0471:     CallRm $$rax
     # nextln: 0472:     Ud2
     # nextln:       block264:
@@ -1924,7 +1924,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$rax:gpr32 = $$spill37
     # nextln: 0499:     $$rax = AddRI(S32, 1) $$rax
     # nextln:           $$spill37:gpr32 = $$rax
-    # nextln: 0500:     $$rax = FuncAddrAbs(Function(External(extfunc28)))
+    # nextln: 0500:     $$rax = GlobalAddrAbs(Function(External(extfunc28)))
     # nextln:           $$r13:gpr32 = $$spill37
     # nextln:           $$rdi = StackAddr(!8)
     # nextln: 0501:     $$rax = CallRm $$rax, $$rdi
@@ -1938,30 +1938,30 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0509:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0510:     Jumpcc(Simple(Ne), block278, block279)
     # nextln:       block278:
-    # nextln: 0511:     $$rax = FuncAddrAbs(Function(External(extfunc28)))
+    # nextln: 0511:     $$rax = GlobalAddrAbs(Function(External(extfunc28)))
     # nextln:           $$rdi = StackAddr(!8)
     # nextln: 0512:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0513:     $$rax = ImulRRmI(S32, 2) $$rax
     # nextln: 0514:     $$r14 = MovsxRRm(Ext32_64) $$rax
-    # nextln: 0515:     $$rax = FuncAddrAbs(Function(External(extfunc24)))
+    # nextln: 0515:     $$rax = GlobalAddrAbs(Function(External(extfunc24)))
     # nextln:           $$rdi = MovRI64(137576242762560)
     # nextln:           $$rsi:gpr64 = $$r14
     # nextln: 0516:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$r15:gpr64 = $$rax
     # nextln: 0517:     MovMR(S32, [reg + 16]) $$r14, $$r15
-    # nextln: 0518:     $$rax = FuncAddrAbs(Function(External(extfunc11)))
+    # nextln: 0518:     $$rax = GlobalAddrAbs(Function(External(extfunc11)))
     # nextln:           $$rsi = StackAddr(!12)
     # nextln:           $$rdi:gpr64 = $$r15
     # nextln: 0519:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0520:     $$rax = FuncAddrAbs(Function(External(extfunc21)))
+    # nextln: 0520:     $$rax = GlobalAddrAbs(Function(External(extfunc21)))
     # nextln:           $$rsi = StackAddr(!12)
     # nextln:           $$rdi = StackAddr(!8)
     # nextln: 0521:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0522:     $$rax = FuncAddrAbs(Function(External(extfunc11)))
+    # nextln: 0522:     $$rax = GlobalAddrAbs(Function(External(extfunc11)))
     # nextln:           $$rsi = StackAddr(!11)
     # nextln:           $$rdi:gpr64 = $$r15
     # nextln: 0523:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0524:     $$rax = FuncAddrAbs(Function(External(extfunc6)))
+    # nextln: 0524:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
     # nextln:           $$rsi = StackAddr(!11)
     # nextln:           $$rdx = MovRmS32(16)
     # nextln:           $$rdi = StackAddr(!8)
@@ -2010,7 +2010,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0530:     AluRRm(S32, Cmp) $$rcx, $$rax
     # nextln:           $$r12:gpr32 = $$spill26
     # nextln: 0531:     $$r14 = Setcc(L) $$r14
-    # nextln: 0532:     $$rax = FuncAddrAbs(Function(External(extfunc31)))
+    # nextln: 0532:     $$rax = GlobalAddrAbs(Function(External(extfunc31)))
     # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rsi:gpr32 = $$spill37
     # nextln: 0533:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -2046,7 +2046,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$rbx:gpr32 = $$spill49
     # nextln: 0547:     Jump(block283)
     # nextln:       block285:
-    # nextln: 0548:     $$rax = FuncAddrAbs(Function(External(extfunc5)))
+    # nextln: 0548:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
     # nextln: 0549:     CallRm $$rax
     # nextln: 0550:     Ud2
     # nextln:       block282:
@@ -2219,13 +2219,13 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0575:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0576:     Jumpcc(Simple(Ne), block52, block53)
     # nextln:       block52:
-    # nextln: 0578:     $$rax = FuncAddrAbs(Function(External(extfunc3)))
+    # nextln: 0578:     $$rax = GlobalAddrAbs(Function(External(extfunc3)))
     # nextln:           $$r15:gpr32 = $$r11
     # nextln:           $$r12:gpr32 = $$spill37
     # nextln:           $$rsi = StackAddr(!14)
     # nextln:           $$rdi:gpr64 = $$r13
     # nextln: 0579:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0580:     $$rax = FuncAddrAbs(Function(External(extfunc15)))
+    # nextln: 0580:     $$rax = GlobalAddrAbs(Function(External(extfunc15)))
     # nextln:           $$rsi = StackAddr(!14)
     # nextln:           $$rdi:gpr64 = $$r14
     # nextln: 0581:     CallRm $$rax, $$rdi, $$rsi
@@ -2237,12 +2237,12 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill44:gpr64 = $$r13
     # nextln: 0583:     Jump(block54)
     # nextln:       block54:
-    # nextln: 0584:     $$rax = FuncAddrAbs(Function(External(extfunc6)))
+    # nextln: 0584:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
     # nextln:           $$rdi = StackAddr(!13)
     # nextln:           $$rdx = MovRmS32(16)
     # nextln:           $$rsi = StackAddr(!1)
     # nextln: 0585:     $$rax = CallRm $$rax, $$rdi, $$rsi, $$rdx
-    # nextln: 0586:     $$rax = FuncAddrAbs(Function(External(extfunc19)))
+    # nextln: 0586:     $$rax = GlobalAddrAbs(Function(External(extfunc19)))
     # nextln:           $$rdi = StackAddr(!13)
     # nextln: 0587:     $$rax = CallRm $$rax, $$rdi
     # nextln:           $$rcx = MovRmS32(1)
@@ -2278,7 +2278,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$rax:gpr32 = $$spill62
     # nextln: 0595:     Jump(block55)
     # nextln:       block55:
-    # nextln: 0596:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0596:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$r14:gpr32 = $$r11
     # nextln:           $$r12:gpr32 = $$spill34
     # nextln:           $$rdi = StackAddr(!1)
@@ -2524,11 +2524,11 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0653:     Jump(block245)
     # nextln:       block245:
     # nextln: 0654:     $$rdi = MovzxRRm(S16) $$rax
-    # nextln: 0655:     $$rax = FuncAddrAbs(Function(External(extfunc17)))
+    # nextln: 0655:     $$rax = GlobalAddrAbs(Function(External(extfunc17)))
     # nextln:           $$r13:gpr64 = $$rsi
     # nextln: 0656:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0657:     $$rsi = MovzxRRm(S16) $$rax
-    # nextln: 0658:     $$rax = FuncAddrAbs(Function(External(extfunc29)))
+    # nextln: 0658:     $$rax = GlobalAddrAbs(Function(External(extfunc29)))
     # nextln:           $$rdi:gpr64 = $$spill40
     # nextln: 0659:     CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$rax:gpr32 = $$spill46
@@ -2557,7 +2557,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0675:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0676:     Jumpcc(Simple(Ne), block250, block251)
     # nextln:       block250:
-    # nextln: 0677:     $$rax = FuncAddrAbs(Function(External(extfunc31)))
+    # nextln: 0677:     $$rax = GlobalAddrAbs(Function(External(extfunc31)))
     # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rsi:gpr32 = $$r12
     # nextln: 0678:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -2571,11 +2571,11 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0686:     Jumpcc(Simple(Ne), block253, block254)
     # nextln:       block253:
     # nextln: 0687:     $$r12 = AluRmI(S32, Sub, 1) $$r12
-    # nextln: 0688:     $$rax = FuncAddrAbs(Function(External(extfunc10)))
+    # nextln: 0688:     $$rax = GlobalAddrAbs(Function(External(extfunc10)))
     # nextln:           $$rsi = StackAddr(!15)
     # nextln:           $$rdi:gpr64 = $$spill32
     # nextln: 0689:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0690:     $$rax = FuncAddrAbs(Function(External(extfunc15)))
+    # nextln: 0690:     $$rax = GlobalAddrAbs(Function(External(extfunc15)))
     # nextln:           $$rsi = StackAddr(!15)
     # nextln:           $$rdi:gpr64 = $$r13
     # nextln: 0691:     CallRm $$rax, $$rdi, $$rsi
@@ -2681,7 +2681,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0707:     AluRmI(S32, Cmp, 92) $$spill61
     # nextln: 0708:     Jumpcc(Simple(E), block216, block217)
     # nextln:       block216:
-    # nextln: 0709:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0709:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$r13:gpr32 = $$spill53
     # nextln:           $$r12:gpr32 = $$spill37
     # nextln:           $$rdi = StackAddr(!1)
@@ -2727,7 +2727,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill38:gpr64 = $$rdx
     # nextln: 0729:     $$rax = MovRM(S16, [reg + 0]) $$rcx
     # nextln: 0730:     $$rsi = MovzxRRm(S16) $$rax
-    # nextln: 0731:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0731:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr64 = $$r15
     # nextln: 0732:     CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$rcx:gpr32 = $$spill33
@@ -2843,12 +2843,12 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0741:     AluRmI(S32, Cmp, 8240) $$spill61
     # nextln: 0742:     Jumpcc(Simple(E), block222, block223)
     # nextln:       block222:
-    # nextln: 0743:     $$rax = FuncAddrAbs(Function(External(extfunc4)))
+    # nextln: 0743:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
     # nextln:           $$r12:gpr32 = $$spill45
     # nextln:           $$rsi = StackAddr(!16)
     # nextln:           $$rdi:gpr64 = $$rbx
     # nextln: 0744:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0745:     $$rax = FuncAddrAbs(Function(External(extfunc15)))
+    # nextln: 0745:     $$rax = GlobalAddrAbs(Function(External(extfunc15)))
     # nextln:           $$rsi = StackAddr(!16)
     # nextln:           $$rdi:gpr64 = $$r15
     # nextln: 0746:     CallRm $$rax, $$rdi, $$rsi
@@ -2934,11 +2934,11 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0761:     AluRmI(S32, Cmp, 3) $$rcx
     # nextln: 0762:     Jumpcc(Simple(E), block197, block198)
     # nextln:       block197:
-    # nextln: 0763:     $$rax = FuncAddrAbs(Function(External(extfunc20)))
+    # nextln: 0763:     $$rax = GlobalAddrAbs(Function(External(extfunc20)))
     # nextln:           $$rsi = StackAddr(!17)
     # nextln:           $$rdi:gpr64 = $$rbx
     # nextln: 0764:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0765:     $$rax = FuncAddrAbs(Function(External(extfunc15)))
+    # nextln: 0765:     $$rax = GlobalAddrAbs(Function(External(extfunc15)))
     # nextln:           $$rsi = StackAddr(!17)
     # nextln:           $$rdi:gpr64 = $$r15
     # nextln: 0766:     CallRm $$rax, $$rdi, $$rsi
@@ -3001,7 +3001,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill35:gpr32 = $$r11
     # nextln: 0772:     Jump(block201)
     # nextln:       block201:
-    # nextln: 0773:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0773:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0774:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0775:     AluRRm(S32, Cmp) $$rax, $$r15
@@ -3045,7 +3045,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0802:     $$rax = AddRR(S64) $$r14, $$rax
     # nextln: 0803:     $$rax = MovRM(S16, [reg + 0]) $$rax
     # nextln: 0804:     $$rsi = MovzxRRm(S16) $$rax
-    # nextln: 0805:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0805:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr64 = $$r13
     # nextln: 0806:     CallRm $$rax, $$rdi, $$rsi
     # nextln: 0807:     $$r15 = AddRI(S32, 1) $$r15
@@ -3055,7 +3055,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill58:gpr64 = $$rax
     # nextln:           $$spill41:gpr32 = $$r12
     # nextln:           $$spill40:gpr64 = $$r13
-    # nextln: 0809:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0809:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$r13:gpr32 = $$spill37
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0810:     $$rax = CallRm $$rax, $$rdi
@@ -3186,11 +3186,11 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0862:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0863:     Jumpcc(Simple(Ne), block187, block188)
     # nextln:       block187:
-    # nextln: 0864:     $$rax = FuncAddrAbs(Function(External(extfunc13)))
+    # nextln: 0864:     $$rax = GlobalAddrAbs(Function(External(extfunc13)))
     # nextln:           $$rsi = StackAddr(!19)
     # nextln:           $$rdi:gpr64 = $$spill32
     # nextln: 0865:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0866:     $$rax = FuncAddrAbs(Function(External(extfunc15)))
+    # nextln: 0866:     $$rax = GlobalAddrAbs(Function(External(extfunc15)))
     # nextln:           $$rsi = StackAddr(!19)
     # nextln:           $$rdi:gpr64 = $$spill40
     # nextln: 0867:     CallRm $$rax, $$rdi, $$rsi
@@ -3295,10 +3295,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0906:     Jumpcc(Simple(Ne), block161, block162)
     # nextln:       block161:
     # nextln: 0907:     $$rdi = MovzxRRm(S16) $$spill41
-    # nextln: 0908:     $$rax = FuncAddrAbs(Function(External(extfunc17)))
+    # nextln: 0908:     $$rax = GlobalAddrAbs(Function(External(extfunc17)))
     # nextln: 0909:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0910:     $$rsi = MovzxRRm(S16) $$rax
-    # nextln: 0911:     $$rax = FuncAddrAbs(Function(External(extfunc29)))
+    # nextln: 0911:     $$rax = GlobalAddrAbs(Function(External(extfunc29)))
     # nextln:           $$rdi:gpr64 = $$spill40
     # nextln: 0912:     CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$rax:gpr32 = $$spill46
@@ -3327,7 +3327,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0928:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0929:     Jumpcc(Simple(Ne), block168, block169)
     # nextln:       block168:
-    # nextln: 0930:     $$rax = FuncAddrAbs(Function(External(extfunc31)))
+    # nextln: 0930:     $$rax = GlobalAddrAbs(Function(External(extfunc31)))
     # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rsi:gpr32 = $$r13
     # nextln: 0931:     $$rax = CallRm $$rax, $$rdi, $$rsi
@@ -3342,11 +3342,11 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0939:     Jumpcc(Simple(Ne), block171, block172)
     # nextln:       block171:
     # nextln: 0940:     $$r13 = AluRmI(S32, Sub, 1) $$r13
-    # nextln: 0941:     $$rax = FuncAddrAbs(Function(External(extfunc10)))
+    # nextln: 0941:     $$rax = GlobalAddrAbs(Function(External(extfunc10)))
     # nextln:           $$rsi = StackAddr(!18)
     # nextln:           $$rdi:gpr64 = $$spill32
     # nextln: 0942:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0943:     $$rax = FuncAddrAbs(Function(External(extfunc15)))
+    # nextln: 0943:     $$rax = GlobalAddrAbs(Function(External(extfunc15)))
     # nextln:           $$rsi = StackAddr(!18)
     # nextln:           $$rdi:gpr64 = $$spill40
     # nextln: 0944:     CallRm $$rax, $$rdi, $$rsi
@@ -3385,7 +3385,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 0958:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0959:     Jumpcc(Simple(Ne), block91, block92)
     # nextln:       block91:
-    # nextln: 0960:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0960:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0961:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0962:     AluRRm(S32, Cmp) $$rax, $$rbx
@@ -3440,7 +3440,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill37:gpr32 = $$r13
     # nextln:           $$r13:gpr64 = $$spill40
     # nextln: 0978:     $$r12 = AddRI(S32, 1) $$r15
-    # nextln: 0979:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 0979:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 0980:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0981:     AluRRm(S32, Cmp) $$rax, $$r12
@@ -3514,7 +3514,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill40:gpr64 = $$rcx
     # nextln:           $$spill37:gpr32 = $$rax
     # nextln: 1005:     $$r13 = AddRI(S32, 1) $$r15
-    # nextln: 1006:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 1006:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 1007:     $$rax = CallRm $$rax, $$rdi
     # nextln: 1008:     AluRRm(S32, Cmp) $$rax, $$r13
@@ -3588,7 +3588,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:       block131:
     # nextln: 1033:     $$r12 = AddRI(S32, 1) $$r12
     # nextln:           $$rbx:gpr32 = $$r12
-    # nextln: 1034:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 1034:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 1035:     $$rax = CallRm $$rax, $$rdi
     # nextln: 1036:     AluRRm(S32, Cmp) $$rax, $$rbx
@@ -3754,7 +3754,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 1067:     $$r9 = MovzxRRm(S8) $$spill57
     # nextln: 1068:     $$rcx = MovzxRRm(S16) $$r8
     # nextln:           $$spill41:gpr32 = $$r8
-    # nextln: 1069:     $$rbx = FuncAddrAbs(Function(External(extfunc23)))
+    # nextln: 1069:     $$rbx = GlobalAddrAbs(Function(External(extfunc23)))
     # nextln:           $$r13:gpr64 = $$spill32
     # nextln:           $$r12:gpr32 = $$rax
     # nextln:           $$r8:gpr32 = $$spill56
@@ -3801,10 +3801,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$r15:gpr64 = $$r14
     # nextln:           $$r14:gpr64 = $$spill40
     # nextln: 1072:     $$rdi = MovzxRRm(S16) $$rax
-    # nextln: 1073:     $$rax = FuncAddrAbs(Function(External(extfunc17)))
+    # nextln: 1073:     $$rax = GlobalAddrAbs(Function(External(extfunc17)))
     # nextln: 1074:     $$rax = CallRm $$rax, $$rdi
     # nextln: 1075:     $$rsi = MovzxRRm(S16) $$rax
-    # nextln: 1076:     $$rax = FuncAddrAbs(Function(External(extfunc29)))
+    # nextln: 1076:     $$rax = GlobalAddrAbs(Function(External(extfunc29)))
     # nextln:           $$rdi:gpr64 = $$r14
     # nextln: 1077:     CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$spill43:gpr32 = $$r12
@@ -3821,13 +3821,13 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill37:gpr32 = $$r13
     # nextln:           $$rbx:gpr32 = $$spill47
     # nextln: 1079:     $$rdi = MovzxRRm(S16) $$spill41
-    # nextln: 1080:     $$rax = FuncAddrAbs(Function(External(extfunc17)))
+    # nextln: 1080:     $$rax = GlobalAddrAbs(Function(External(extfunc17)))
     # nextln: 1081:     $$rax = CallRm $$rax, $$rdi
     # nextln: 1082:     $$rsi = MovzxRRm(S16) $$rax
-    # nextln: 1083:     $$rax = FuncAddrAbs(Function(External(extfunc29)))
+    # nextln: 1083:     $$rax = GlobalAddrAbs(Function(External(extfunc29)))
     # nextln:           $$rdi:gpr64 = $$r14
     # nextln: 1084:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 1085:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 1085:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 1086:     $$rax = CallRm $$rax, $$rdi
     # nextln: 1087:     $$rcx = MovRmS32(0)
@@ -3868,7 +3868,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 1114:     $$rcx = AddRR(S64) $$r15, $$rcx
     # nextln: 1115:     $$rax = MovRM(S16, [reg + 0]) $$rcx
     # nextln: 1116:     $$rsi = MovzxRRm(S16) $$rax
-    # nextln: 1117:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 1117:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr64 = $$r14
     # nextln: 1118:     CallRm $$rax, $$rdi, $$rsi
     # nextln:           $$r11:gpr32 = $$spill34
@@ -3923,7 +3923,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$spill47:gpr32 = $$rcx
     # nextln: 1121:     Jump(block103)
     # nextln:       block103:
-    # nextln: 1122:     $$rax = FuncAddrAbs(Function(External(extfunc9)))
+    # nextln: 1122:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln: 1123:     $$rax = CallRm $$rax, $$rdi
     # nextln: 1124:     AluRRm(S32, Cmp) $$rax, $$r12
@@ -3953,7 +3953,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 1140:     $$rax = AddRR(S64) $$rbx, $$rax
     # nextln: 1141:     $$rax = MovRM(S16, [reg + 0]) $$rax
     # nextln: 1142:     $$rsi = MovzxRRm(S16) $$rax
-    # nextln: 1143:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 1143:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr64 = $$r13
     # nextln: 1144:     CallRm $$rax, $$rdi, $$rsi
     # nextln: 1145:     $$r12 = AddRI(S32, 1) $$r12
@@ -4046,7 +4046,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:       block89:
     # nextln: 1152:     $$rsi = MovzxRRm(S16) $$spill41
     # nextln:           $$r13:gpr32 = $$spill41
-    # nextln: 1153:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 1153:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$r12:gpr32 = $$rdx
     # nextln:           $$rdi:gpr64 = $$r14
     # nextln: 1154:     CallRm $$rax, $$rdi, $$rsi
@@ -4087,7 +4087,7 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln:           $$rbx:gpr64 = $$r14
     # nextln: 1166:     Jump(block66)
     # nextln:       block74:
-    # nextln: 1167:     $$rax = FuncAddrAbs(Function(External(extfunc26)))
+    # nextln: 1167:     $$rax = GlobalAddrAbs(Function(External(extfunc26)))
     # nextln:           $$rdi:gpr64 = $$r14
     # nextln: 1168:     $$rax = CallRm $$rax, $$rdi
     # nextln: 1169:     $$rcx = MovRmS32(0)
@@ -4108,10 +4108,10 @@ func @"System.Void System.Number::NumberToStringFormat[System.Char](System.Colle
     # nextln: 1176:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 1177:     Jumpcc(Simple(Ne), block68, block69)
     # nextln:       block68:
-    # nextln: 1179:     $$rax = FuncAddrAbs(Function(External(extfunc3)))
+    # nextln: 1179:     $$rax = GlobalAddrAbs(Function(External(extfunc3)))
     # nextln:           $$rsi = StackAddr(!20)
     # nextln: 1180:     CallRm $$rax, $$rdi, $$rsi
-    # nextln: 1181:     $$rax = FuncAddrAbs(Function(External(extfunc8)))
+    # nextln: 1181:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
     # nextln:           $$rdx = StackAddr(!20)
     # nextln:           $$rsi = MovRmS32(0)
     # nextln:           $$rdi:gpr64 = $$rbx

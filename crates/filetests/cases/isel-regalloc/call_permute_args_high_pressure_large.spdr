@@ -28,38 +28,38 @@ func @call_permute_args_high_pressure(i32, i32, i32, i32, i32, i32, ptr) {
     # nextln:           $$spill1:gpr32 = $$r10
     # nextln: 0009:     $$r9 = MovRM(S32, [reg + 0]) $$r9
     # nextln:           $$spill0:gpr32 = $$r9
-    # nextln: 0010:     $$r10 = FuncAddrAbs(Function(External(extfunc1)))
+    # nextln: 0010:     $$r10 = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$r9:gpr32 = $$rdi
     # nextln:           $$rdi:gpr32 = $$rsi
     # nextln:           $$rsi:gpr32 = $$rdx
     # nextln:           $$rdx:gpr32 = $$rcx
     # nextln:           $$rcx:gpr32 = $$rax
     # nextln: 0011:     CallRm $$r10, $$rdi, $$rsi, $$rdx, $$rcx, $$r8, $$r9
-    # nextln: 0012:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0012:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr32 = $$r14
     # nextln: 0013:     CallRm $$rax, $$rdi
-    # nextln: 0014:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0014:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr32 = $$r13
     # nextln: 0015:     CallRm $$rax, $$rdi
-    # nextln: 0016:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0016:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr32 = $$r12
     # nextln: 0017:     CallRm $$rax, $$rdi
-    # nextln: 0018:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0018:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr32 = $$rbx
     # nextln: 0019:     CallRm $$rax, $$rdi
-    # nextln: 0020:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0020:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr32 = $$r15
     # nextln: 0021:     CallRm $$rax, $$rdi
-    # nextln: 0022:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0022:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr32 = $$spill3
     # nextln: 0023:     CallRm $$rax, $$rdi
-    # nextln: 0024:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0024:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr32 = $$spill2
     # nextln: 0025:     CallRm $$rax, $$rdi
-    # nextln: 0026:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0026:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr32 = $$spill1
     # nextln: 0027:     CallRm $$rax, $$rdi
-    # nextln: 0028:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0028:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rdi:gpr32 = $$spill0
     # nextln: 0029:     CallRm $$rax, $$rdi
     # nextln: 0030:     Ret

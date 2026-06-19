@@ -8,7 +8,7 @@ func @gc_new:ptr(i32, i64) {
     # nextln: frame: size 0, align 0
     # nextln:       block0:
     # nextln:           $$rdi:gpr64 = $$rsi
-    # nextln: 0000:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0000:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln: 0001:     $$rax = CallRm $$rax, $$rdi
     # nextln: 0002:     Ret $$rax
 

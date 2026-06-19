@@ -93,7 +93,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0061:     Jump(block33)
     # nextln:       block33:
     # nextln: 0062:     $$rdi = ImulRR(S32) $$rdi, $$rax
-    # nextln: 0063:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0063:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln: 0064:     CallRm $$rax, $$rdi
     # nextln: 0065:     $$rax = MovRM(S32, [!1 + 0])
     # nextln: 0066:     $$rax = AddRI(S32, 2) $$rax
@@ -165,7 +165,7 @@ func @"System.Void Tests.Program::Test(System.Int32, System.Int32)"(i32, i32) {
     # nextln: 0117:     $$rdi = MovRM(S32, [!0 + 0])
     # nextln: 0118:     Jump(block15)
     # nextln:       block15:
-    # nextln: 0119:     $$rax = FuncAddrAbs(Function(External(extfunc0)))
+    # nextln: 0119:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln: 0120:     CallRm $$rax, $$rdi
     # nextln: 0121:     $$rax = MovRM(S32, [!5 + 0])
     # nextln: 0122:     $$rax = AddRI(S32, 1) $$rax

@@ -539,11 +539,11 @@ impl MachineEmit for X64Machine {
                 emit_push(buffer, uses[0].as_reg().unwrap());
                 state.sp_frame_offset += 8;
             }
-            &X64Instr::FuncAddrRel(target) => {
-                emit_lea_rip_reloc(buffer, defs[0].as_reg().unwrap(), target.into());
+            &X64Instr::GlobalAddrRel(target) => {
+                emit_lea_rip_reloc(buffer, defs[0].as_reg().unwrap(), target);
             }
-            &X64Instr::FuncAddrAbs(target) => {
-                emit_movabs_r_i_reloc(buffer, defs[0].as_reg().unwrap(), target.into());
+            &X64Instr::GlobalAddrAbs(target) => {
+                emit_movabs_r_i_reloc(buffer, defs[0].as_reg().unwrap(), target);
             }
             &X64Instr::CallRel(target) => {
                 emit_call_rel(buffer, target);

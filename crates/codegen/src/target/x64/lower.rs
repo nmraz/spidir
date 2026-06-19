@@ -1017,14 +1017,14 @@ fn emit_funcaddr(
     match machine.code_model_for_function(func) {
         CodeModel::SmallPic => {
             ctx.emit_instr(
-                X64Instr::FuncAddrRel(func),
+                X64Instr::GlobalAddrRel(func.into()),
                 &[DefOperand::any_reg(output)],
                 &[],
             );
         }
         CodeModel::LargeAbs => {
             ctx.emit_instr(
-                X64Instr::FuncAddrAbs(func),
+                X64Instr::GlobalAddrAbs(func.into()),
                 &[DefOperand::any_reg(output)],
                 &[],
             );
@@ -1070,7 +1070,7 @@ fn emit_call_abs(
     emit_call_wrapper(ctx, retval, args, |ctx, retvals, args| {
         let target = ctx.create_temp_vreg(RC_GPR64);
         ctx.emit_instr(
-            X64Instr::FuncAddrAbs(func),
+            X64Instr::GlobalAddrAbs(func.into()),
             &[DefOperand::any_reg(target)],
             &[],
         );

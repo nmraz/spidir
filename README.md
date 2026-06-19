@@ -58,6 +58,7 @@ If you're building for a hosted Rust target platform or need to link against oth
   - Basic control flow (conditional branches)
   - Internal/external/indirect calls
   - External functions
+  - External globals
   - Stack slots
 
 - Codegen:
@@ -80,7 +81,6 @@ Spidir's roadmap is most accurately described as "whatever TomatoDotNet needs ne
 
 - IR:
   - Memory operations (`memset`, `memcpy`, etc.)
-  - External globals
   - Cold block annotation
   - Unwinding support
   - Jump tables

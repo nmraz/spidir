@@ -13,7 +13,7 @@ extfunc @"System.Boolean Tests.BitTest::I8_BT_reg_reg(System.Int64, System.Int32
 
 func @"System.Boolean Tests.BitTest::Run()":i32() {
     # check: function `System.Boolean Tests.BitTest::Run()`:
-    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
+    # nextln: clobbers: rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11, r12, r13, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     # nextln: frame: size 33, align 8
     # nextln:     !0: 30
     # nextln:     !1: 31
@@ -26,7 +26,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln:     !8: 0
     # nextln:     !9: 8
     # nextln:       block0:
-    # nextln: 0002:     $$rax = MovRmS32(0)
+    # nextln: 0003:     $$rax = MovRmS32(0)
     # nextln: 0011:     $$rcx = MovRmS32(0)
     # nextln: 0012:     Jump(block1)
     # nextln:       block1:
@@ -42,273 +42,274 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0022:     MovMR(S64, [!9 + 0]) $$rcx
     # nextln: 0023:     Jump(block2)
     # nextln:       block2:
-    # nextln: 0026:     $$rax = MovRmS32(1)
-    # nextln: 0031:     $$rdx = MovRmS32(2)
-    # nextln: 0032:     $$rcx = MovsxRRm(Ext32_64) $$rax
-    # nextln: 0033:     $$rdi = MovsxRRm(Ext32_64) $$rdx
-    # nextln:           $$rsi = MovRU32(4294967168)
-    # nextln: 0036:     MovMR(S8, [!0 + 0]) $$rsi
-    # nextln: 0037:     MovMR(S8, [!1 + 0]) $$rax
-    # nextln: 0038:     MovMR(S8, [!2 + 0]) $$rdx
-    # nextln:           $$rsi = MovRU32(4294934528)
-    # nextln: 0039:     MovMR(S16, [!3 + 0]) $$rsi
-    # nextln: 0040:     MovMR(S16, [!4 + 0]) $$rax
-    # nextln: 0041:     MovMR(S16, [!5 + 0]) $$rdx
-    # nextln: 0042:     MovMR(S32, [!6 + 0]) $$rax
-    # nextln: 0043:     MovMR(S32, [!7 + 0]) $$rdx
-    # nextln: 0044:     MovMR(S64, [!8 + 0]) $$rcx
-    # nextln: 0045:     MovMR(S64, [!9 + 0]) $$rdi
+    # nextln:           $$rax = MovRU32(4294967168)
+    # nextln: 0025:     MovMR(S8, [!0 + 0]) $$rax
+    # nextln: 0026:     $$rcx = MovRmS32(1)
+    # nextln: 0027:     MovMR(S8, [!1 + 0]) $$rcx
+    # nextln: 0028:     $$rax = MovRmS32(2)
+    # nextln: 0029:     MovMR(S8, [!2 + 0]) $$rax
+    # nextln:           $$rdx = MovRU32(4294934528)
+    # nextln: 0031:     MovMR(S16, [!3 + 0]) $$rdx
+    # nextln: 0032:     $$rdx = MovsxRRm(Ext32_64) $$rcx
+    # nextln: 0033:     MovMR(S16, [!4 + 0]) $$rcx
+    # nextln: 0034:     MovMR(S16, [!5 + 0]) $$rax
+    # nextln: 0035:     MovMR(S32, [!6 + 0]) $$rcx
+    # nextln: 0036:     MovMR(S32, [!7 + 0]) $$rax
+    # nextln: 0037:     MovMR(S64, [!8 + 0]) $$rdx
+    # nextln: 0038:     $$rax = MovsxRRm(Ext32_64) $$rax
+    # nextln: 0039:     MovMR(S64, [!9 + 0]) $$rax
+    # nextln: 0040:     $$rax = MovRM(S8, [!0 + 0])
+    # nextln: 0041:     $$rdi = MovsxRRm(Ext8_32) $$rax
+    # nextln: 0043:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
+    # nextln:           $$rsi = MovRmS32(7)
+    # nextln: 0044:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln:           $$rbx = MovRmS32(1)
+    # nextln: 0045:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
     # nextln: 0046:     $$rax = MovRM(S8, [!0 + 0])
     # nextln: 0047:     $$rdi = MovsxRRm(Ext8_32) $$rax
-    # nextln: 0048:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
-    # nextln:           $$rsi = MovRmS32(7)
-    # nextln: 0049:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln:           $$rbx = MovRmS32(1)
-    # nextln: 0050:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0051:     $$rax = MovRM(S8, [!0 + 0])
-    # nextln: 0052:     $$rdi = MovsxRRm(Ext8_32) $$rax
-    # nextln: 0053:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
+    # nextln: 0049:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
     # nextln:           $$rsi = MovRmS32(8)
-    # nextln: 0054:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0055:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0056:     $$rax = MovRM(S8, [!1 + 0])
-    # nextln: 0057:     $$rdi = MovsxRRm(Ext8_32) $$rax
-    # nextln: 0058:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
+    # nextln: 0050:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0051:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0052:     $$rax = MovRM(S8, [!1 + 0])
+    # nextln: 0053:     $$rdi = MovsxRRm(Ext8_32) $$rax
+    # nextln: 0054:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0059:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0060:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0061:     $$rax = MovRM(S8, [!1 + 0])
-    # nextln: 0062:     $$rdi = MovsxRRm(Ext8_32) $$rax
-    # nextln: 0063:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
+    # nextln: 0055:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0056:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0057:     $$rax = MovRM(S8, [!1 + 0])
+    # nextln: 0058:     $$rdi = MovsxRRm(Ext8_32) $$rax
+    # nextln: 0059:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
     # nextln:           $$rsi = MovRmS32(8)
-    # nextln: 0064:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0065:     $$rcx = MovRmS32(0)
-    # nextln: 0066:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0067:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0068:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0069:     $$rax = MovRM(S8, [!1 + 0])
-    # nextln: 0070:     $$rdi = MovsxRRm(Ext8_32) $$rax
-    # nextln: 0071:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
+    # nextln: 0060:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0061:     $$rcx = MovRmS32(0)
+    # nextln: 0062:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0063:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0064:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0065:     $$rax = MovRM(S8, [!1 + 0])
+    # nextln: 0066:     $$rdi = MovsxRRm(Ext8_32) $$rax
+    # nextln: 0068:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
     # nextln:           $$rsi = MovRmS32(32)
-    # nextln: 0072:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0073:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0074:     $$rax = MovRM(S8, [!2 + 0])
-    # nextln: 0075:     $$rdi = MovsxRRm(Ext8_32) $$rax
-    # nextln: 0076:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
+    # nextln: 0069:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0070:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0071:     $$rax = MovRM(S8, [!2 + 0])
+    # nextln: 0072:     $$rdi = MovsxRRm(Ext8_32) $$rax
+    # nextln: 0073:     $$rax = GlobalAddrAbs(Function(External(extfunc5)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0077:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0078:     $$rcx = MovRmS32(0)
-    # nextln: 0079:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0080:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0081:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0082:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
+    # nextln: 0074:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0075:     $$rcx = MovRmS32(0)
+    # nextln: 0076:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0077:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0078:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0079:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
     # nextln:           $$rsi = MovRmS32(7)
     # nextln:           $$rdi = StackAddr(!0)
+    # nextln: 0080:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0081:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0082:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
+    # nextln:           $$rdi = StackAddr(!0)
+    # nextln:           $$rsi = MovRmS32(8)
     # nextln: 0083:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0084:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
     # nextln: 0085:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
-    # nextln:           $$rdi = StackAddr(!0)
-    # nextln:           $$rsi = MovRmS32(8)
+    # nextln:           $$rdi = StackAddr(!1)
+    # nextln:           $$rsi = MovRmS32(0)
     # nextln: 0086:     $$rax = CallRm $$rax, $$rdi, $$rsi
     # nextln: 0087:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
     # nextln: 0088:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
-    # nextln:           $$rdi = StackAddr(!1)
-    # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0089:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0090:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0091:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
     # nextln:           $$rsi = MovRmS32(8)
     # nextln:           $$rdi = StackAddr(!1)
-    # nextln: 0092:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0093:     $$rcx = MovRmS32(0)
-    # nextln: 0094:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0095:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0096:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0097:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
+    # nextln: 0089:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0090:     $$rcx = MovRmS32(0)
+    # nextln: 0091:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0092:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0093:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0094:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
     # nextln:           $$rdi = StackAddr(!1)
     # nextln:           $$rsi = MovRmS32(32)
-    # nextln: 0098:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0099:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0100:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
+    # nextln: 0095:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0096:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0097:     $$rax = GlobalAddrAbs(Function(External(extfunc8)))
     # nextln:           $$rdi = StackAddr(!2)
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0101:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0102:     $$rcx = MovRmS32(0)
-    # nextln: 0103:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0104:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0105:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0106:     $$rax = MovRM(S16, [!3 + 0])
-    # nextln: 0107:     $$rdi = MovsxRRm(Ext16_32) $$rax
-    # nextln: 0108:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
+    # nextln: 0098:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0099:     $$rcx = MovRmS32(0)
+    # nextln: 0100:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0101:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0102:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0103:     $$rax = MovRM(S16, [!3 + 0])
+    # nextln: 0104:     $$rdi = MovsxRRm(Ext16_32) $$rax
+    # nextln: 0106:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rsi = MovRmS32(15)
-    # nextln: 0109:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0110:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0111:     $$rax = MovRM(S16, [!3 + 0])
-    # nextln: 0112:     $$rdi = MovsxRRm(Ext16_32) $$rax
-    # nextln: 0113:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
+    # nextln: 0107:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0108:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0109:     $$rax = MovRM(S16, [!3 + 0])
+    # nextln: 0110:     $$rdi = MovsxRRm(Ext16_32) $$rax
+    # nextln: 0112:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rsi = MovRmS32(16)
-    # nextln: 0114:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0115:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0116:     $$rax = MovRM(S16, [!4 + 0])
-    # nextln: 0117:     $$rdi = MovsxRRm(Ext16_32) $$rax
-    # nextln: 0118:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
+    # nextln: 0113:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0114:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0115:     $$rax = MovRM(S16, [!4 + 0])
+    # nextln: 0116:     $$rdi = MovsxRRm(Ext16_32) $$rax
+    # nextln: 0117:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0119:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0120:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0121:     $$rax = MovRM(S16, [!4 + 0])
-    # nextln: 0122:     $$rdi = MovsxRRm(Ext16_32) $$rax
-    # nextln: 0123:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
+    # nextln: 0118:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0119:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0120:     $$rax = MovRM(S16, [!4 + 0])
+    # nextln: 0121:     $$rdi = MovsxRRm(Ext16_32) $$rax
+    # nextln: 0122:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rsi = MovRmS32(16)
-    # nextln: 0124:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0125:     $$rcx = MovRmS32(0)
-    # nextln: 0126:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0127:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0128:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0129:     $$rax = MovRM(S16, [!4 + 0])
-    # nextln: 0130:     $$rdi = MovsxRRm(Ext16_32) $$rax
-    # nextln: 0131:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
+    # nextln: 0123:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0124:     $$rcx = MovRmS32(0)
+    # nextln: 0125:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0126:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0127:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0128:     $$rax = MovRM(S16, [!4 + 0])
+    # nextln: 0129:     $$rdi = MovsxRRm(Ext16_32) $$rax
+    # nextln: 0130:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rsi = MovRmS32(32)
-    # nextln: 0132:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0133:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0134:     $$rax = MovRM(S16, [!5 + 0])
-    # nextln: 0135:     $$rdi = MovsxRRm(Ext16_32) $$rax
-    # nextln: 0136:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
+    # nextln: 0131:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0132:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0133:     $$rax = MovRM(S16, [!5 + 0])
+    # nextln: 0134:     $$rdi = MovsxRRm(Ext16_32) $$rax
+    # nextln: 0135:     $$rax = GlobalAddrAbs(Function(External(extfunc1)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0137:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0138:     $$rcx = MovRmS32(0)
-    # nextln: 0139:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0140:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0141:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0142:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
+    # nextln: 0136:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0137:     $$rcx = MovRmS32(0)
+    # nextln: 0138:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0139:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0140:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0141:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
     # nextln:           $$rsi = MovRmS32(15)
     # nextln:           $$rdi = StackAddr(!3)
-    # nextln: 0143:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0144:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0145:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
+    # nextln: 0142:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0143:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0144:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
     # nextln:           $$rdi = StackAddr(!3)
     # nextln:           $$rsi = MovRmS32(16)
-    # nextln: 0146:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0147:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0148:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
-    # nextln:           $$rdi = StackAddr(!4)
+    # nextln: 0145:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0146:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0147:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0149:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0150:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0151:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
+    # nextln:           $$rdi = StackAddr(!4)
+    # nextln: 0148:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0149:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0150:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
     # nextln:           $$rsi = MovRmS32(16)
     # nextln:           $$rdi = StackAddr(!4)
-    # nextln: 0152:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0153:     $$rcx = MovRmS32(0)
-    # nextln: 0154:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0155:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0156:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0157:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
+    # nextln: 0151:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0152:     $$rcx = MovRmS32(0)
+    # nextln: 0153:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0154:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0155:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0156:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
     # nextln:           $$rdi = StackAddr(!4)
     # nextln:           $$rsi = MovRmS32(32)
-    # nextln: 0158:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0159:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0160:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
+    # nextln: 0157:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0158:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0159:     $$rax = GlobalAddrAbs(Function(External(extfunc4)))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln:           $$rdi = StackAddr(!5)
-    # nextln: 0161:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0162:     $$rcx = MovRmS32(0)
-    # nextln: 0163:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0164:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0165:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0166:     $$rdi = MovRM(S32, [!6 + 0])
-    # nextln: 0167:     $$rax = GlobalAddrAbs(Function(External(extfunc7)))
+    # nextln: 0160:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0161:     $$rcx = MovRmS32(0)
+    # nextln: 0162:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0163:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0164:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0165:     $$rdi = MovRM(S32, [!6 + 0])
+    # nextln: 0166:     $$rax = GlobalAddrAbs(Function(External(extfunc7)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0168:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0169:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0170:     $$rdi = MovRM(S32, [!6 + 0])
-    # nextln: 0171:     $$rax = GlobalAddrAbs(Function(External(extfunc7)))
+    # nextln: 0167:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0168:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0169:     $$rdi = MovRM(S32, [!6 + 0])
+    # nextln: 0170:     $$rax = GlobalAddrAbs(Function(External(extfunc7)))
     # nextln:           $$rsi = MovRmS32(32)
-    # nextln: 0172:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0173:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0174:     $$rdi = MovRM(S32, [!7 + 0])
-    # nextln: 0175:     $$rax = GlobalAddrAbs(Function(External(extfunc7)))
+    # nextln: 0171:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0172:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0173:     $$rdi = MovRM(S32, [!7 + 0])
+    # nextln: 0174:     $$rax = GlobalAddrAbs(Function(External(extfunc7)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0176:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0177:     $$rcx = MovRmS32(0)
-    # nextln: 0178:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0179:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0180:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0181:     $$rdi = MovRM(S32, [!6 + 0])
-    # nextln: 0182:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
+    # nextln: 0175:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0176:     $$rcx = MovRmS32(0)
+    # nextln: 0177:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0178:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0179:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0180:     $$rdi = MovRM(S32, [!6 + 0])
+    # nextln: 0181:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0183:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0184:     $$rcx = MovRmS32(0)
-    # nextln: 0185:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0186:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0187:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0188:     $$rdi = MovRM(S32, [!6 + 0])
-    # nextln: 0189:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
+    # nextln: 0182:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0183:     $$rcx = MovRmS32(0)
+    # nextln: 0184:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0185:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0186:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0187:     $$rdi = MovRM(S32, [!6 + 0])
+    # nextln: 0188:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rsi = MovRmS32(32)
-    # nextln: 0190:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0191:     $$rcx = MovRmS32(0)
-    # nextln: 0192:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0193:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0194:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0195:     $$rdi = MovRM(S32, [!7 + 0])
-    # nextln: 0196:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
+    # nextln: 0189:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0190:     $$rcx = MovRmS32(0)
+    # nextln: 0191:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0192:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0193:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0194:     $$rdi = MovRM(S32, [!7 + 0])
+    # nextln: 0195:     $$rax = GlobalAddrAbs(Function(External(extfunc0)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0197:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0198:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0199:     $$rdi = MovRM(S32, [!6 + 0])
-    # nextln: 0200:     $$rax = GlobalAddrAbs(Function(External(extfunc3)))
+    # nextln: 0196:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0197:     $$r12 = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0198:     $$rdi = MovRM(S32, [!6 + 0])
+    # nextln: 0199:     $$rax = GlobalAddrAbs(Function(External(extfunc3)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0201:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0202:     $$rcx = MovRmS32(0)
-    # nextln: 0203:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0204:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0205:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0206:     $$rdi = MovRM(S32, [!6 + 0])
-    # nextln: 0207:     $$rax = GlobalAddrAbs(Function(External(extfunc3)))
+    # nextln: 0200:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0201:     $$rcx = MovRmS32(0)
+    # nextln: 0202:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0203:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0204:     $$r12 = AluCommRR(S32, And) $$r12, $$rcx
+    # nextln: 0205:     $$rdi = MovRM(S32, [!6 + 0])
+    # nextln: 0206:     $$rax = GlobalAddrAbs(Function(External(extfunc3)))
     # nextln:           $$rsi = MovRmS32(32)
-    # nextln: 0208:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0209:     $$rcx = MovRmS32(0)
-    # nextln: 0210:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0211:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0212:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0213:     $$rdi = MovRM(S32, [!7 + 0])
-    # nextln: 0214:     $$rax = GlobalAddrAbs(Function(External(extfunc3)))
+    # nextln: 0207:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln:           $$rbx:gpr32 = $$rax
+    # nextln: 0208:     $$rdi = MovRM(S32, [!7 + 0])
+    # nextln: 0209:     $$rax = GlobalAddrAbs(Function(External(extfunc3)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0215:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0216:     $$rcx = MovRmS32(0)
-    # nextln: 0217:     AluRmI(S32, Cmp, 3) $$rax
-    # nextln: 0218:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0219:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0220:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
+    # nextln: 0210:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0211:     $$rcx = MovRmS32(0)
+    # nextln: 0212:     AluRmI(S32, Cmp, 3) $$rax
+    # nextln: 0213:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0214:     $$rax = MovRmS32(0)
+    # nextln: 0215:     AluRRm(S32, Test) $$rbx, $$rbx
+    # nextln: 0216:     $$rax = Setcc(E) $$rax
+    # nextln: 0217:     $$rax = AluCommRR(S32, And) $$r12, $$rax
+    # nextln: 0218:     $$rbx = AluCommRR(S32, And) $$rax, $$rcx
+    # nextln: 0219:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln:           $$rdi = StackAddr(!6)
-    # nextln: 0221:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0222:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0223:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
+    # nextln: 0220:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0221:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0222:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
     # nextln:           $$rsi = MovRmS32(32)
     # nextln:           $$rdi = StackAddr(!6)
-    # nextln: 0224:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0225:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0226:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
+    # nextln: 0223:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0224:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0225:     $$rax = GlobalAddrAbs(Function(External(extfunc6)))
     # nextln:           $$rsi = MovRmS32(0)
     # nextln:           $$rdi = StackAddr(!7)
-    # nextln: 0227:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0228:     $$rcx = MovRmS32(0)
-    # nextln: 0229:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0230:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0231:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0232:     $$rdi = MovRM(S64, [!8 + 0])
-    # nextln: 0233:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
+    # nextln: 0226:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0227:     $$rcx = MovRmS32(0)
+    # nextln: 0228:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0229:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0230:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0231:     $$rdi = MovRM(S64, [!8 + 0])
+    # nextln: 0232:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0234:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0235:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0236:     $$rdi = MovRM(S64, [!8 + 0])
-    # nextln: 0237:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
+    # nextln: 0233:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0234:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0235:     $$rdi = MovRM(S64, [!8 + 0])
+    # nextln: 0236:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rsi = MovRmS32(32)
-    # nextln: 0238:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0239:     $$rcx = MovRmS32(0)
-    # nextln: 0240:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0241:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0242:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0237:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0238:     $$rcx = MovRmS32(0)
+    # nextln: 0239:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0240:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0241:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
     # nextln: 0243:     $$rdi = MovRM(S64, [!8 + 0])
     # nextln: 0244:     $$rax = GlobalAddrAbs(Function(External(extfunc9)))
     # nextln:           $$rsi = MovRmS32(64)
@@ -323,33 +324,34 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 0252:     $$rcx = Setcc(E) $$rcx
     # nextln: 0253:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
     # nextln: 0254:     $$rax = GlobalAddrAbs(Function(External(extfunc2)))
-    # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rsi = MovRmS32(0)
+    # nextln:           $$rdi = StackAddr(!8)
     # nextln: 0255:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0256:     $$r12 = AluCommRR(S32, And) $$rbx, $$rax
+    # nextln: 0256:     $$r13 = AluCommRR(S32, And) $$rbx, $$rax
     # nextln: 0257:     $$rax = GlobalAddrAbs(Function(External(extfunc2)))
     # nextln:           $$rdi = StackAddr(!8)
     # nextln:           $$rsi = MovRmS32(32)
     # nextln: 0258:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln:           $$rbx:gpr32 = $$rax
+    # nextln:           $$r12:gpr32 = $$rax
     # nextln: 0259:     $$rax = GlobalAddrAbs(Function(External(extfunc2)))
     # nextln:           $$rsi = MovRmS32(64)
     # nextln:           $$rdi = StackAddr(!8)
     # nextln: 0260:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0261:     $$rcx = MovRmS32(0)
-    # nextln: 0262:     AluRRm(S32, Test) $$rbx, $$rbx
-    # nextln: 0263:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0264:     $$rbx = AluCommRR(S32, And) $$r12, $$rcx
-    # nextln: 0265:     $$rbx = AluCommRR(S32, And) $$rbx, $$rax
-    # nextln: 0266:     $$rax = GlobalAddrAbs(Function(External(extfunc2)))
-    # nextln:           $$rdi = StackAddr(!9)
+    # nextln:           $$rbx:gpr32 = $$rax
+    # nextln: 0261:     $$rax = MovRmS32(0)
+    # nextln: 0262:     AluRRm(S32, Test) $$r12, $$r12
+    # nextln: 0263:     $$rax = Setcc(E) $$rax
+    # nextln: 0264:     $$r13 = AluCommRR(S32, And) $$r13, $$rax
+    # nextln: 0265:     $$rax = GlobalAddrAbs(Function(External(extfunc2)))
     # nextln:           $$rsi = MovRmS32(0)
-    # nextln: 0267:     $$rax = CallRm $$rax, $$rdi, $$rsi
-    # nextln: 0268:     $$rcx = MovRmS32(0)
-    # nextln: 0269:     AluRRm(S32, Test) $$rax, $$rax
-    # nextln: 0270:     $$rcx = Setcc(E) $$rcx
-    # nextln: 0271:     $$rbx = AluCommRR(S32, And) $$rbx, $$rcx
-    # nextln: 0272:     AluRRm(S32, Test) $$rbx, $$rbx
+    # nextln:           $$rdi = StackAddr(!9)
+    # nextln: 0266:     $$rax = CallRm $$rax, $$rdi, $$rsi
+    # nextln: 0267:     $$rcx = MovRmS32(0)
+    # nextln: 0268:     AluRRm(S32, Test) $$rax, $$rax
+    # nextln: 0269:     $$rcx = Setcc(E) $$rcx
+    # nextln: 0270:     $$rbx = AluCommRR(S32, And) $$r13, $$rbx
+    # nextln: 0271:     $$rcx = AluCommRR(S32, And) $$rbx, $$rcx
+    # nextln: 0272:     AluRRm(S32, Test) $$rcx, $$rcx
     # nextln: 0273:     Jumpcc(Simple(Ne), block3, block4)
     # nextln:       block3:
     # nextln:           $$rax = MovRmS32(1)

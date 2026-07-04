@@ -149,13 +149,13 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 000203: 0f b6 c0                        movzx eax, al
     # nextln: 000206: 85 c0                           test eax, eax
     # nextln: 000208: 0f 84 3f 00 00 00               je 0x24d
-    # nextln: 00020e: 44 89 e8                        mov eax, r13d
-    # nextln: 000211: 2b c3                           sub eax, ebx
-    # nextln: 000213: 44 8b 62 10                     mov r12d, dword ptr [rdx + 0x10]
-    # nextln: 000217: 33 c9                           xor ecx, ecx
-    # nextln: 000219: 41 3b c4                        cmp eax, r12d
-    # nextln: 00021c: 0f 9c c1                        setl cl
-    # nextln: 00021f: 0f b6 c1                        movzx eax, cl
+    # nextln: 00020e: 44 8b 62 10                     mov r12d, dword ptr [rdx + 0x10]
+    # nextln: 000212: 44 89 e9                        mov ecx, r13d
+    # nextln: 000215: 2b cb                           sub ecx, ebx
+    # nextln: 000217: 33 c0                           xor eax, eax
+    # nextln: 000219: 41 3b cc                        cmp ecx, r12d
+    # nextln: 00021c: 0f 9c c0                        setl al
+    # nextln: 00021f: 0f b6 c0                        movzx eax, al
     # nextln: 000222: 85 c0                           test eax, eax
     # nextln: 000224: 0f 85 19 00 00 00               jne 0x243
     # nextln: 00022a: 48 b8 00 00 00 00 00 00 00 00   movabs rax, 0  # RELOC_ABS64 -> @"System.Void System.String::CopyStringContent(System.String, System.Int32, System.String)" + 0

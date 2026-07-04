@@ -9,11 +9,11 @@ func @cmp9:i32(f32, f32, f32, f32, f32, f32, f32, f32, f32) {
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: f3 44 0f 10 45 10               movss xmm8, dword ptr [rbp + 0x10]
-    # nextln: 00000a: f3 0f c2 c8 00                  cmpeqss xmm1, xmm0
-    # nextln: 00000f: 66 48 0f 7e c8                  movq rax, xmm1
+    # nextln: 00000a: f3 0f c2 d0 00                  cmpeqss xmm2, xmm0
+    # nextln: 00000f: 66 48 0f 7e d0                  movq rax, xmm2
     # nextln: 000014: 83 e0 01                        and eax, 1
-    # nextln: 000017: f3 0f c2 d0 00                  cmpeqss xmm2, xmm0
-    # nextln: 00001c: 66 48 0f 7e d1                  movq rcx, xmm2
+    # nextln: 000017: f3 0f c2 c8 00                  cmpeqss xmm1, xmm0
+    # nextln: 00001c: 66 48 0f 7e c9                  movq rcx, xmm1
     # nextln: 000021: 83 e1 01                        and ecx, 1
     # nextln: 000024: 03 c1                           add eax, ecx
     # nextln: 000026: f3 0f c2 d8 00                  cmpeqss xmm3, xmm0

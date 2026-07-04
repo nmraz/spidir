@@ -6,15 +6,17 @@ func @func00000001:i64(i32) {
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: b8 01 00 00 00                  mov eax, 1
     # nextln: 000009: 85 ff                           test edi, edi
-    # nextln: 00000b: 0f 8e 17 00 00 00               jle 0x28
+    # nextln: 00000b: 0f 8e 1f 00 00 00               jle 0x30
     # nextln: 000011: 83 c7 01                        add edi, 1
-    # nextln: 000014: 48 89 c1                        mov rcx, rax
-    # nextln: 000017: 48 0f af c1                     imul rax, rcx
-    # nextln: 00001b: 48 83 c1 01                     add rcx, 1
+    # nextln: 000014: 48 89 c2                        mov rdx, rax
+    # nextln: 000017: 48 8d 4a 01                     lea rcx, [rdx + 1]
+    # nextln: 00001b: 48 0f af c2                     imul rax, rdx
     # nextln: 00001f: 48 3b f9                        cmp rdi, rcx
-    # nextln: 000022: 0f 85 ef ff ff ff               jne 0x17
-    # nextln: 000028: 5d                              pop rbp
-    # nextln: 000029: c3                              ret
+    # nextln: 000022: 0f 84 08 00 00 00               je 0x30
+    # nextln: 000028: 48 89 ca                        mov rdx, rcx
+    # nextln: 00002b: e9 e7 ff ff ff                  jmp 0x17
+    # nextln: 000030: 5d                              pop rbp
+    # nextln: 000031: c3                              ret
 
     %0:ctrl, %1:i32 = entry
     %23:i64 = iconst 1

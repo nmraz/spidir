@@ -188,13 +188,13 @@ func @"System.String System.String::Concat(System.String[])":ptr(ptr) {
     # nextln: 0133:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0134:     Jumpcc(Simple(Ne), block27, block28)
     # nextln:       block27:
-    # nextln:           $$rax:gpr32 = $$r13
-    # nextln: 0135:     $$rax = AluRRm(S32, Sub) $$rax, $$rbx
-    # nextln: 0136:     $$r12 = MovRM(S32, [reg + 16]) $$rdx
-    # nextln: 0137:     $$rcx = MovRmS32(0)
-    # nextln: 0138:     AluRRm(S32, Cmp) $$rax, $$r12
-    # nextln: 0139:     $$rcx = Setcc(L) $$rcx
-    # nextln: 0140:     $$rax = MovzxRRm(S8) $$rcx
+    # nextln: 0135:     $$r12 = MovRM(S32, [reg + 16]) $$rdx
+    # nextln:           $$rcx:gpr32 = $$r13
+    # nextln: 0136:     $$rcx = AluRRm(S32, Sub) $$rcx, $$rbx
+    # nextln: 0137:     $$rax = MovRmS32(0)
+    # nextln: 0138:     AluRRm(S32, Cmp) $$rcx, $$r12
+    # nextln: 0139:     $$rax = Setcc(L) $$rax
+    # nextln: 0140:     $$rax = MovzxRRm(S8) $$rax
     # nextln: 0141:     AluRRm(S32, Test) $$rax, $$rax
     # nextln: 0142:     Jumpcc(Simple(Ne), block30, block31)
     # nextln:       block31:

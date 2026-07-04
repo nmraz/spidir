@@ -225,9 +225,12 @@ impl<'a> Scheduler<'a> {
 
     fn schedule_intra_block(&mut self, graph: &ValGraph) {
         let mut block_scheduler =
-            BlockScheduler::new(graph, &self.node_data, &self.indvar_update_nodes);
+            ReverseBlockScheduler::new(graph, &self.node_data, &self.indvar_update_nodes);
 
-        for &block in &self.cfg_ctx.block_order {
+        // Walk the blocks in reverse because we assume they've been scheduled in an order
+        // respecting dominance. Walking the blocks in dominance postorder guarantees correct
+        // liveness estimates except on backedge phi inputs.
+        for &block in self.cfg_ctx.block_order.iter().rev() {
             trace!("scheduling {block}");
 
             let nodes = &mut self.schedule.block_data[block].scheduled_nodes;
@@ -238,9 +241,12 @@ impl<'a> Scheduler<'a> {
 
             // Schedule all interior nodes in the block.
             nodes.clear(&mut self.schedule.node_list_pool);
-            block_scheduler.schedule(|node| {
+            block_scheduler.schedule_rev(|node| {
                 nodes.push(node, &mut self.schedule.node_list_pool);
             });
+            nodes
+                .as_mut_slice(&mut self.schedule.node_list_pool)
+                .reverse();
 
             debug_assert_eq!(nodes.len(&self.schedule.node_list_pool), orig_len);
 
@@ -662,35 +668,27 @@ impl PartialEq for ReadyNode {
 
 /// Holds auxiliary data for block-local scheduling of nodes.
 struct BlockNodeData {
-    /// The number of block-local predecessors of this node that have not yet been scheduled.
-    unscheduled_preds: u32,
-    /// The number of live ranges forward execution of this instruction is expected to add. May be
-    /// negative if the instruction terminates more live ranges than it creates.
-    live_range_delta: i32,
+    /// The number of block-local successors of this node that have not yet been scheduled.
+    unscheduled_succs: u32,
     /// A deduplicated list of all data inputs to this node.
     unique_inputs: EntityList<DepValue>,
 }
 
-#[derive(Default)]
-struct BlockValueData {
-    users: EntityList<Node>,
-    outstanding_uses: u32,
-}
-
-struct BlockScheduler<'a> {
+struct ReverseBlockScheduler<'a> {
     graph: &'a ValGraph,
     node_data: &'a SecondaryMap<Node, NodeSchedulerData>,
     indvar_update_nodes: &'a DenseEntitySet<Node>,
     scheduled: DenseEntitySet<Node>,
     block: Block,
     block_node_data: FxHashMap<Node, BlockNodeData>,
-    block_value_data: FxHashMap<DepValue, BlockValueData>,
     unique_input_pool: ListPool<DepValue>,
+    live_values: DenseEntitySet<DepValue>,
+    value_users: FxHashMap<DepValue, EntityList<Node>>,
     value_use_pool: ListPool<Node>,
     ready_nodes: BinaryHeap<ReadyNode>,
 }
 
-impl<'a> BlockScheduler<'a> {
+impl<'a> ReverseBlockScheduler<'a> {
     fn new(
         graph: &'a ValGraph,
         node_data: &'a SecondaryMap<Node, NodeSchedulerData>,
@@ -703,8 +701,9 @@ impl<'a> BlockScheduler<'a> {
             scheduled: DenseEntitySet::new(),
             block: Block::reserved_value(),
             block_node_data: FxHashMap::default(),
-            block_value_data: FxHashMap::default(),
             unique_input_pool: ListPool::new(),
+            live_values: DenseEntitySet::default(),
+            value_users: FxHashMap::default(),
             value_use_pool: ListPool::new(),
             ready_nodes: BinaryHeap::new(),
         }
@@ -713,18 +712,20 @@ impl<'a> BlockScheduler<'a> {
     fn reset(&mut self, block: Block, nodes: &[Node]) {
         self.block_node_data.clear();
         self.unique_input_pool.clear();
-        self.block_value_data.clear();
+
+        // Note: we explicitly *do not* clear `live_values` here. This makes our liveness estimates
+        // more accurate for values that are live-out, especially if the blocks are traversed in a
+        // dominance post-order.
 
         self.block = block;
 
-        // Start by recording every node's inputs and counting outstanding uses.
+        // Prepare and enqueue all of the block's nodes.
         for &node in nodes {
-            let unscheduled_preds = self.count_unscheduled_preds(node);
+            let unscheduled_succs = self.count_unscheduled_succs(node);
 
             let node_data = match self.block_node_data.entry(node) {
                 Entry::Vacant(entry) => entry.insert(BlockNodeData {
-                    unscheduled_preds,
-                    live_range_delta: 0,
+                    unscheduled_succs,
                     unique_inputs: EntityList::from_iter(
                         dataflow_inputs(self.graph, node),
                         &mut self.unique_input_pool,
@@ -737,34 +738,20 @@ impl<'a> BlockScheduler<'a> {
 
             // Record outstanding uses for all incoming values.
             for &input in node_data.unique_inputs.as_slice(&self.unique_input_pool) {
-                let value_data = self.block_value_data.entry(input).or_default();
-                value_data.users.push(node, &mut self.value_use_pool);
-                value_data.outstanding_uses += 1;
+                let value_users = self.value_users.entry(input).or_default();
+                value_users.push(node, &mut self.value_use_pool);
             }
-        }
 
-        // Now that all outstanding uses across the block have been counted, compute live range
-        // deltas and enqueue nodes.
-        for &node in nodes {
-            let node_data = self.block_node_data.get_mut(&node).unwrap();
-
-            node_data.live_range_delta = dataflow_outputs(self.graph, node).count() as i32;
-
-            for &input in node_data.unique_inputs.as_slice(&self.unique_input_pool) {
-                if self.block_value_data[&input].outstanding_uses == 1 {
-                    // This node is the only use of the input in the block, so it terminates the
-                    // input's live range.
-                    node_data.live_range_delta -= 1;
-                }
-            }
+            // Now that we can count the node's unique inputs, we can correctly estimate its upward
+            // live range delta and enqueue it.
             self.enqueue_if_ready(node);
         }
     }
 
-    fn schedule(&mut self, mut f: impl FnMut(Node)) {
+    fn schedule_rev(&mut self, mut f: impl FnMut(Node)) {
         self.scheduled.clear();
 
-        let mut updated_last_users = SmallVec::<[Node; 4]>::new();
+        let mut lrg_delta_decreases = SmallVec::<[Node; 4]>::new();
         while let Some(ready_node) = self.ready_nodes.pop() {
             let node = ready_node.node;
             if self.scheduled.contains(node) {
@@ -775,88 +762,68 @@ impl<'a> BlockScheduler<'a> {
             }
 
             trace!(
-                "    place: node {} [{}, lrg delta {}, cp {}]",
+                "    place: node {} [{}, lrg delta {}, cp {}, prio {:#x}]",
                 node.as_u32(),
                 if self.indvar_update_nodes.contains(node) {
                     "indvar"
                 } else {
                     "non-indvar"
                 },
-                self.block_node_data[&node].live_range_delta,
+                self.live_range_delta(node),
                 self.node_data[node].cp_length,
+                ready_node.prio
             );
 
             self.scheduled.insert(node);
             f(node);
 
-            updated_last_users.clear();
-            self.gather_updated_last_users(node, &mut updated_last_users);
-            for node in updated_last_users.drain(..) {
+            // Now that we've placed the node, mark its inputs as live and re-enqueue any nodes
+            // whose live range delta has changed.
+            lrg_delta_decreases.clear();
+            self.mark_inputs_live(node, &mut lrg_delta_decreases);
+            for node in lrg_delta_decreases.drain(..) {
                 self.enqueue_if_ready(node);
             }
 
-            self.enqeue_ready_succs(node);
+            self.enqueue_ready_preds(node);
         }
     }
 
-    fn enqeue_ready_succs(&mut self, node: Node) {
-        for (succ, _use_idx) in raw_def_use_succs(self.graph, node) {
-            if !self.is_block_interior_node(succ) {
+    fn enqueue_ready_preds(&mut self, node: Node) {
+        for pred in def_use_preds(self.graph, node) {
+            if !self.is_block_interior_node(pred) {
                 continue;
             }
 
-            let succ_data = self.block_node_data.get_mut(&succ).unwrap();
-            debug_assert!(succ_data.unscheduled_preds > 0);
+            let pred_data = self.block_node_data.get_mut(&pred).unwrap();
+            debug_assert!(pred_data.unscheduled_succs > 0);
 
-            succ_data.unscheduled_preds -= 1;
-            self.enqueue_if_ready(succ);
+            pred_data.unscheduled_succs -= 1;
+            self.enqueue_if_ready(pred);
         }
     }
 
-    fn gather_updated_last_users(
-        &mut self,
-        node: Node,
-        updated_last_users: &mut SmallVec<[Node; 4]>,
-    ) {
+    fn mark_inputs_live(&mut self, node: Node, lrg_delta_decreases: &mut SmallVec<[Node; 4]>) {
         for &input in self.block_node_data[&node]
             .unique_inputs
             .as_slice(&self.unique_input_pool)
         {
-            // This input should always have an existing outstanding use count.
-            let value_data = self.block_value_data.get_mut(&input).unwrap();
-            debug_assert!(value_data.outstanding_uses > 0);
-            value_data.outstanding_uses -= 1;
-            if value_data.outstanding_uses == 1 {
-                // The remaining user of this value is now the last in the block, so adjust its live
-                // range delta and report it to the caller.
+            if !self.live_values.contains(input) {
+                self.live_values.insert(input);
 
-                // This search happens at most once per value during scheduling of the block (and
-                // only walks edges leading into the block), so the total complexity here is still
-                // linear.
-                let last_user = *value_data
-                    .users
-                    .as_slice(&self.value_use_pool)
-                    .iter()
-                    .find(|&&user| !self.scheduled.contains(user))
-                    .expect("value should have outstanding user");
-
-                // Don't even bother with nodes that have already been scheduled. This can
-                // happen if `last_user` actually uses a value defined outside the block.
-                if !self.scheduled.contains(last_user) {
-                    self.block_node_data
-                        .get_mut(&last_user)
-                        .unwrap()
-                        .live_range_delta -= 1;
-                    // Note: this node may be pushed multiple times if several of its inputs are
-                    // last users.
-                    updated_last_users.push(last_user);
+                for &user in self.value_users[&input].as_slice(&self.value_use_pool) {
+                    if !self.scheduled.contains(user) {
+                        // Any other nodes consuming this input will no longer create a new live
+                        // range when doing so.
+                        lrg_delta_decreases.push(user);
+                    }
                 }
             }
         }
     }
 
     fn enqueue_if_ready(&mut self, node: Node) {
-        if self.block_node_data[&node].unscheduled_preds == 0 {
+        if self.block_node_data[&node].unscheduled_succs == 0 {
             debug_assert!(!self.scheduled.contains(node));
             trace!("    ready: node {}", node.as_u32());
             self.ready_nodes.push(ReadyNode {
@@ -866,27 +833,44 @@ impl<'a> BlockScheduler<'a> {
         }
     }
 
-    fn count_unscheduled_preds(&self, node: Node) -> u32 {
-        let preds =
-            def_use_preds(self.graph, node).filter(|&pred| self.is_block_interior_node(pred));
-        preds.count() as u32
+    fn count_unscheduled_succs(&self, node: Node) -> u32 {
+        let succs = raw_def_use_succs(self.graph, node)
+            .filter(|&(succ, _)| self.is_block_interior_node(succ));
+        succs.count() as u32
     }
 
     fn node_prio(&self, node: Node) -> u64 {
+        // Nodes with a higher priority here will be scheduled nearer to the end of the block as we
+        // traverse it bottom-up.
+
         // We want lower `live_range_delta` values to have higher priority, so we need an unsigned
         // value that increases when `live_range_delta` decreases. Accomplish this by centering
         // `-live_range_delta` around the middle of the 31-bit unsigned range.
-        let biased_delta =
-            (1u32 << 30).wrapping_sub(self.block_node_data[&node].live_range_delta as u32);
+        let biased_delta = (1u32 << 30).wrapping_sub(self.live_range_delta(node) as u32);
 
         let is_indvar_update = self.indvar_update_nodes.contains(node);
 
-        // Prefer to place non-induction-variable-updates first (to avoid introducing copies on
-        // split backedges), then prefer reducing live ranges, and finally fall back to CP length
-        // when tied.
-        ((!is_indvar_update as u64) << 63)
+        // Prefer to place induction-variable-updates later (to avoid introducing copies on
+        // split backedges), then prefer reducing live ranges, and finally prefer a lower CP length
+        // when everything else is tied.
+        ((is_indvar_update as u64) << 63)
             | ((biased_delta as u64) << 32)
-            | self.node_data[node].cp_length as u64
+            | (!self.node_data[node].cp_length as u64)
+    }
+
+    fn live_range_delta(&self, node: Node) -> i32 {
+        // As we walk upward, every one of of the node's outputs must kill a live range (because
+        // we're in SSA), but inputs only spawn a new live range when the input value isn't already
+        // live.
+        let generated = self.block_node_data[&node]
+            .unique_inputs
+            .as_slice(&self.unique_input_pool)
+            .iter()
+            .filter(|&&input| !self.live_values.contains(input))
+            .count() as i32;
+        let killed = dataflow_outputs(self.graph, node).count() as i32;
+
+        generated - killed
     }
 
     fn is_block_interior_node(&self, node: Node) -> bool {

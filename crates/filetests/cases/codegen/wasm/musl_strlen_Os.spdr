@@ -4,9 +4,9 @@ func @func00000001:i32(i32) {
     # check: function `func00000001`:
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
-    # nextln: 000004: 33 c9                           xor ecx, ecx
-    # nextln: 000006: 89 fe                           mov esi, edi
-    # nextln: 000008: 83 e6 03                        and esi, 3
+    # nextln: 000004: 89 fe                           mov esi, edi
+    # nextln: 000006: 83 e6 03                        and esi, 3
+    # nextln: 000009: 33 c9                           xor ecx, ecx
     # nextln: 00000b: 85 f6                           test esi, esi
     # nextln: 00000d: 0f 85 07 00 00 00               jne 0x1a
     # nextln: 000013: 89 fe                           mov esi, edi

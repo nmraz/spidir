@@ -10,21 +10,21 @@ func @"System.Int32 Tests.CodeGenBringUpTests::JTrueGeInt1(System.Int32)":i32(i3
     # nextln: 000010: 0f 9c c0                        setl al
     # nextln: 000013: 33 c9                           xor ecx, ecx
     # nextln: 000015: 89 4c 24 04                     mov dword ptr [rsp + 4], ecx
-    # nextln: 000019: 88 4c 24 0a                     mov byte ptr [rsp + 0xa], cl
-    # nextln: 00001d: 88 4c 24 09                     mov byte ptr [rsp + 9], cl
-    # nextln: 000021: 88 4c 24 0d                     mov byte ptr [rsp + 0xd], cl
-    # nextln: 000025: 88 4c 24 0e                     mov byte ptr [rsp + 0xe], cl
-    # nextln: 000029: 88 4c 24 0b                     mov byte ptr [rsp + 0xb], cl
-    # nextln: 00002d: 88 4c 24 08                     mov byte ptr [rsp + 8], cl
-    # nextln: 000031: 88 4c 24 0c                     mov byte ptr [rsp + 0xc], cl
+    # nextln: 000019: 88 4c 24 0d                     mov byte ptr [rsp + 0xd], cl
+    # nextln: 00001d: 88 4c 24 0c                     mov byte ptr [rsp + 0xc], cl
+    # nextln: 000021: 88 4c 24 09                     mov byte ptr [rsp + 9], cl
+    # nextln: 000025: 88 4c 24 08                     mov byte ptr [rsp + 8], cl
+    # nextln: 000029: 88 4c 24 0e                     mov byte ptr [rsp + 0xe], cl
+    # nextln: 00002d: 88 4c 24 0b                     mov byte ptr [rsp + 0xb], cl
+    # nextln: 000031: 88 4c 24 0a                     mov byte ptr [rsp + 0xa], cl
     # nextln: 000035: 89 0c 24                        mov dword ptr [rsp], ecx
-    # nextln: 000038: b9 ff ff ff ff                  mov ecx, 0xffffffff
-    # nextln: 00003d: 89 4c 24 04                     mov dword ptr [rsp + 4], ecx
-    # nextln: 000041: 33 c9                           xor ecx, ecx
-    # nextln: 000043: 85 c0                           test eax, eax
-    # nextln: 000045: 0f 94 c1                        sete cl
-    # nextln: 000048: 88 4c 24 0a                     mov byte ptr [rsp + 0xa], cl
-    # nextln: 00004c: 0f b6 44 24 0a                  movzx eax, byte ptr [rsp + 0xa]
+    # nextln: 000038: 33 c9                           xor ecx, ecx
+    # nextln: 00003a: 85 c0                           test eax, eax
+    # nextln: 00003c: 0f 94 c1                        sete cl
+    # nextln: 00003f: b8 ff ff ff ff                  mov eax, 0xffffffff
+    # nextln: 000044: 89 44 24 04                     mov dword ptr [rsp + 4], eax
+    # nextln: 000048: 88 4c 24 0d                     mov byte ptr [rsp + 0xd], cl
+    # nextln: 00004c: 0f b6 44 24 0d                  movzx eax, byte ptr [rsp + 0xd]
     # nextln: 000051: 85 c0                           test eax, eax
     # nextln: 000053: 0f 84 0e 00 00 00               je 0x67
     # nextln: 000059: b8 07 00 00 00                  mov eax, 7
@@ -36,8 +36,8 @@ func @"System.Int32 Tests.CodeGenBringUpTests::JTrueGeInt1(System.Int32)":i32(i3
     # nextln: 00006f: 33 c9                           xor ecx, ecx
     # nextln: 000071: 85 c0                           test eax, eax
     # nextln: 000073: 0f 94 c1                        sete cl
-    # nextln: 000076: 88 4c 24 09                     mov byte ptr [rsp + 9], cl
-    # nextln: 00007a: 0f b6 44 24 09                  movzx eax, byte ptr [rsp + 9]
+    # nextln: 000076: 88 4c 24 0c                     mov byte ptr [rsp + 0xc], cl
+    # nextln: 00007a: 0f b6 44 24 0c                  movzx eax, byte ptr [rsp + 0xc]
     # nextln: 00007f: 85 c0                           test eax, eax
     # nextln: 000081: 0f 84 0e 00 00 00               je 0x95
     # nextln: 000087: b8 06 00 00 00                  mov eax, 6
@@ -49,8 +49,8 @@ func @"System.Int32 Tests.CodeGenBringUpTests::JTrueGeInt1(System.Int32)":i32(i3
     # nextln: 00009c: 33 c9                           xor ecx, ecx
     # nextln: 00009e: 85 c0                           test eax, eax
     # nextln: 0000a0: 0f 94 c1                        sete cl
-    # nextln: 0000a3: 88 4c 24 0d                     mov byte ptr [rsp + 0xd], cl
-    # nextln: 0000a7: 0f b6 44 24 0d                  movzx eax, byte ptr [rsp + 0xd]
+    # nextln: 0000a3: 88 4c 24 09                     mov byte ptr [rsp + 9], cl
+    # nextln: 0000a7: 0f b6 44 24 09                  movzx eax, byte ptr [rsp + 9]
     # nextln: 0000ac: 85 c0                           test eax, eax
     # nextln: 0000ae: 0f 84 0e 00 00 00               je 0xc2
     # nextln: 0000b4: b8 05 00 00 00                  mov eax, 5
@@ -62,8 +62,8 @@ func @"System.Int32 Tests.CodeGenBringUpTests::JTrueGeInt1(System.Int32)":i32(i3
     # nextln: 0000c9: 33 c9                           xor ecx, ecx
     # nextln: 0000cb: 85 c0                           test eax, eax
     # nextln: 0000cd: 0f 94 c1                        sete cl
-    # nextln: 0000d0: 88 4c 24 0e                     mov byte ptr [rsp + 0xe], cl
-    # nextln: 0000d4: 0f b6 44 24 0e                  movzx eax, byte ptr [rsp + 0xe]
+    # nextln: 0000d0: 88 4c 24 08                     mov byte ptr [rsp + 8], cl
+    # nextln: 0000d4: 0f b6 44 24 08                  movzx eax, byte ptr [rsp + 8]
     # nextln: 0000d9: 85 c0                           test eax, eax
     # nextln: 0000db: 0f 84 0e 00 00 00               je 0xef
     # nextln: 0000e1: b8 04 00 00 00                  mov eax, 4
@@ -75,8 +75,8 @@ func @"System.Int32 Tests.CodeGenBringUpTests::JTrueGeInt1(System.Int32)":i32(i3
     # nextln: 0000f7: 33 c9                           xor ecx, ecx
     # nextln: 0000f9: 85 c0                           test eax, eax
     # nextln: 0000fb: 0f 94 c1                        sete cl
-    # nextln: 0000fe: 88 4c 24 0b                     mov byte ptr [rsp + 0xb], cl
-    # nextln: 000102: 0f b6 44 24 0b                  movzx eax, byte ptr [rsp + 0xb]
+    # nextln: 0000fe: 88 4c 24 0e                     mov byte ptr [rsp + 0xe], cl
+    # nextln: 000102: 0f b6 44 24 0e                  movzx eax, byte ptr [rsp + 0xe]
     # nextln: 000107: 85 c0                           test eax, eax
     # nextln: 000109: 0f 84 0e 00 00 00               je 0x11d
     # nextln: 00010f: b8 03 00 00 00                  mov eax, 3
@@ -88,8 +88,8 @@ func @"System.Int32 Tests.CodeGenBringUpTests::JTrueGeInt1(System.Int32)":i32(i3
     # nextln: 000128: 33 c9                           xor ecx, ecx
     # nextln: 00012a: 85 c0                           test eax, eax
     # nextln: 00012c: 0f 94 c1                        sete cl
-    # nextln: 00012f: 88 4c 24 08                     mov byte ptr [rsp + 8], cl
-    # nextln: 000133: 0f b6 44 24 08                  movzx eax, byte ptr [rsp + 8]
+    # nextln: 00012f: 88 4c 24 0b                     mov byte ptr [rsp + 0xb], cl
+    # nextln: 000133: 0f b6 44 24 0b                  movzx eax, byte ptr [rsp + 0xb]
     # nextln: 000138: 85 c0                           test eax, eax
     # nextln: 00013a: 0f 84 0e 00 00 00               je 0x14e
     # nextln: 000140: b8 02 00 00 00                  mov eax, 2
@@ -101,8 +101,8 @@ func @"System.Int32 Tests.CodeGenBringUpTests::JTrueGeInt1(System.Int32)":i32(i3
     # nextln: 000159: 33 c9                           xor ecx, ecx
     # nextln: 00015b: 85 c0                           test eax, eax
     # nextln: 00015d: 0f 94 c1                        sete cl
-    # nextln: 000160: 88 4c 24 0c                     mov byte ptr [rsp + 0xc], cl
-    # nextln: 000164: 0f b6 44 24 0c                  movzx eax, byte ptr [rsp + 0xc]
+    # nextln: 000160: 88 4c 24 0a                     mov byte ptr [rsp + 0xa], cl
+    # nextln: 000164: 0f b6 44 24 0a                  movzx eax, byte ptr [rsp + 0xa]
     # nextln: 000169: 85 c0                           test eax, eax
     # nextln: 00016b: 0f 84 09 00 00 00               je 0x17a
     # nextln: 000171: b8 01 00 00 00                  mov eax, 1

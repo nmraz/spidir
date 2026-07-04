@@ -69,13 +69,13 @@ func @use_many_stackslots:i32(i64) {
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 48 83 ec 20                     sub rsp, 0x20
-    # nextln: 000008: 48 89 7c 24 08                  mov qword ptr [rsp + 8], rdi
-    # nextln: 00000d: 48 89 3c 24                     mov qword ptr [rsp], rdi
+    # nextln: 000008: 48 89 3c 24                     mov qword ptr [rsp], rdi
+    # nextln: 00000c: 48 89 7c 24 08                  mov qword ptr [rsp + 8], rdi
     # nextln: 000011: 89 7c 24 10                     mov dword ptr [rsp + 0x10], edi
-    # nextln: 000015: 0f b7 04 24                     movzx eax, word ptr [rsp]
-    # nextln: 000019: 48 83 c4 20                     add rsp, 0x20
-    # nextln: 00001d: 5d                              pop rbp
-    # nextln: 00001e: c3                              ret
+    # nextln: 000015: 0f b7 44 24 08                  movzx eax, word ptr [rsp + 8]
+    # nextln: 00001a: 48 83 c4 20                     add rsp, 0x20
+    # nextln: 00001e: 5d                              pop rbp
+    # nextln: 00001f: c3                              ret
 
     %0:ctrl, %1:i64 = entry
     %s0:ptr = stackslot 8:8

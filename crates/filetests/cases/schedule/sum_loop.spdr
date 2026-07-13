@@ -17,8 +17,8 @@ func @sum_to_n:i32(i32) {
     # nextln:     $(phi0=$val):i32 = phi $(region0=$val), $iconst0, $(iadd0=$val)
     # nextln:     $(phi1=$val):i32 = phi $region0, $entry1, $(isub0=$val)
     # nextln:     $isub0:i32 = isub $phi1, $iconst1
-    # nextln:     $(icmp1=$val):i32 = icmp eq $isub0, $iconst0
     # nextln:     $iadd0:i32 = iadd $phi0, $phi1
+    # nextln:     $(icmp1=$val):i32 = icmp eq $isub0, $iconst0
     # nextln:     $(brcond2=$val):ctrl, $(brcond3=$val):ctrl = brcond $(region1=$val), $icmp1
     # nextln: => block5, block6
     # nextln: block6:

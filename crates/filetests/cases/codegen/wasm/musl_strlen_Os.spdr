@@ -36,13 +36,13 @@ func @func00000001:i32(i32) {
     # nextln: 00005d: 8d 56 fc                        lea edx, [rsi - 4]
     # nextln: 000060: 8d 46 fb                        lea eax, [rsi - 5]
     # nextln: 000063: 83 c2 04                        add edx, 4
-    # nextln: 000066: 48 8d 34 11                     lea rsi, [rcx + rdx]
-    # nextln: 00006a: 8b 36                           mov esi, dword ptr [rsi]
-    # nextln: 00006c: 41 b8 00 01 01 01               mov r8d, 0x1010100
-    # nextln: 000072: 44 2b c6                        sub r8d, esi
-    # nextln: 000075: 41 0b f0                        or esi, r8d
-    # nextln: 000078: 81 e6 80 80 80 80               and esi, 0x80808080
-    # nextln: 00007e: 83 c0 04                        add eax, 4
+    # nextln: 000066: 83 c0 04                        add eax, 4
+    # nextln: 000069: 48 8d 34 11                     lea rsi, [rcx + rdx]
+    # nextln: 00006d: 8b 36                           mov esi, dword ptr [rsi]
+    # nextln: 00006f: 41 b8 00 01 01 01               mov r8d, 0x1010100
+    # nextln: 000075: 44 2b c6                        sub r8d, esi
+    # nextln: 000078: 41 0b f0                        or esi, r8d
+    # nextln: 00007b: 81 e6 80 80 80 80               and esi, 0x80808080
     # nextln: 000081: 81 fe 80 80 80 80               cmp esi, 0x80808080
     # nextln: 000087: 0f 84 d6 ff ff ff               je 0x63
     # nextln: 00008d: 8b f2                           mov esi, edx

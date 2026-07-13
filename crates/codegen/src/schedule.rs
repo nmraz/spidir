@@ -1,6 +1,6 @@
 use core::cmp::Ordering;
 
-use alloc::collections::BinaryHeap;
+use alloc::{collections::BinaryHeap, vec::Vec};
 
 use cranelift_entity::{
     EntityList, ListPool, SecondaryMap,
@@ -29,7 +29,8 @@ pub use display::Display;
 use smallvec::SmallVec;
 
 use crate::cfg::{
-    Block, BlockCfg, BlockDepthMap, BlockDomTree, BlockPostDomTree, CfgContext, FunctionBlockMap,
+    Block, BlockCfg, BlockDepthMap, BlockDomTree, BlockDomTreeNode, BlockLoop, BlockLoopForest,
+    BlockPostDomTree, CfgContext, FunctionBlockMap,
 };
 
 pub struct Schedule {
@@ -58,7 +59,7 @@ impl Schedule {
             node_data: SecondaryMap::new(),
             block_data: SecondaryMap::new(),
             tethered_values: DenseEntitySet::new(),
-            indvar_update_nodes: DenseEntitySet::new(),
+            indvar_update_node_loops: FxHashMap::default(),
             schedule: &mut schedule,
         };
 
@@ -130,7 +131,7 @@ struct Scheduler<'a> {
     node_data: SecondaryMap<Node, NodeSchedulerData>,
     block_data: SecondaryMap<Block, BlockSchedulerData>,
     tethered_values: DenseEntitySet<DepValue>,
-    indvar_update_nodes: DenseEntitySet<Node>,
+    indvar_update_node_loops: FxHashMap<Node, BlockLoop>,
     schedule: &'a mut Schedule,
 }
 
@@ -160,10 +161,14 @@ impl<'a> Scheduler<'a> {
         let mut visited = DenseEntitySet::new();
         let graph = DefUseSuccs::new(ctx.graph, ctx.live_nodes());
 
-        // Walk nodes in postorder so we can compute critical path lengths. As we visit each node,
-        // we also determine whether it is a loop induction variable update.
+        let mut full_postorder = Vec::new();
+
+        // Walk nodes in postorder so we can compute critical path lengths. Keep the order in which
+        // we visit around so we can do an RPO walk below.
 
         while let Some(node) = scratch_postorder.next(graph, &mut visited) {
+            full_postorder.push(node);
+
             let cp_length = dataflow_succs(ctx.graph, ctx.live_nodes(), node)
                 // Note: this value will already have been computed for all nodes dominated by this
                 // one because we are walking in postorder. For dataflow cycles involving phi nodes,
@@ -174,9 +179,16 @@ impl<'a> Scheduler<'a> {
                 // exiting the node have length 0.
                 .map_or(0, |succ_cp_length| succ_cp_length + 1);
             self.node_data[node].cp_length = cp_length;
+        }
 
-            if self.is_loop_indvar_update(ctx, node) {
-                self.indvar_update_nodes.insert(node);
+        // Now, follow an RPO and determine which nodes (transitively) depend on induction variable
+        // updates.
+        for &node in full_postorder.iter().rev() {
+            if let Some(indvar_update_loop) = self.compute_transitive_indvar_update_loop(ctx, node)
+            {
+                trace!("indvar: node {} -> {indvar_update_loop}", node.as_u32());
+                self.indvar_update_node_loops
+                    .insert(node, indvar_update_loop);
             }
         }
     }
@@ -225,7 +237,7 @@ impl<'a> Scheduler<'a> {
 
     fn schedule_intra_block(&mut self, graph: &ValGraph) {
         let mut block_scheduler =
-            ReverseBlockScheduler::new(graph, &self.node_data, &self.indvar_update_nodes);
+            ReverseBlockScheduler::new(graph, &self.node_data, &self.indvar_update_node_loops);
 
         // Walk the blocks in reverse because we assume they've been scheduled in an order
         // respecting dominance. Walking the blocks in dominance postorder guarantees correct
@@ -233,11 +245,19 @@ impl<'a> Scheduler<'a> {
         for &block in self.cfg_ctx.block_order.iter().rev() {
             trace!("scheduling {block}");
 
+            let containing_loop = self
+                .loop_forest()
+                .containing_loop(self.domtree().get_tree_node(block).unwrap());
+
             let nodes = &mut self.schedule.block_data[block].scheduled_nodes;
             let orig_len = nodes.len(&self.schedule.node_list_pool);
 
             // Set up our local scheduler for this block.
-            block_scheduler.reset(block, nodes.as_slice(&self.schedule.node_list_pool));
+            block_scheduler.reset(
+                block,
+                containing_loop,
+                nodes.as_slice(&self.schedule.node_list_pool),
+            );
 
             // Schedule all interior nodes in the block.
             nodes.clear(&mut self.schedule.node_list_pool);
@@ -373,7 +393,7 @@ impl<'a> Scheduler<'a> {
         // Don't hoist loop induction variable updates, because they may cause copies to be inserted
         // on split loop backedges if they aren't the last use of the previous induction variable
         // value.
-        if self.indvar_update_nodes.contains(node) {
+        if self.is_indvar_update_in(node, best_tree_loc) {
             return false;
         }
 
@@ -551,6 +571,13 @@ impl<'a> Scheduler<'a> {
         }
     }
 
+    fn is_indvar_update_in(&self, node: Node, block: BlockDomTreeNode) -> bool {
+        match self.loop_forest().containing_loop(block) {
+            Some(l) => self.indvar_update_node_loops.get(&node).copied() == Some(l),
+            None => false,
+        }
+    }
+
     fn is_split_loop_backedge(&self, block: Block) -> bool {
         let cfg = self.cfg();
 
@@ -585,12 +612,62 @@ impl<'a> Scheduler<'a> {
         added - terminated
     }
 
-    fn is_loop_indvar_update(&self, ctx: &ScheduleContext<'_>, node: Node) -> bool {
+    fn compute_transitive_indvar_update_loop(
+        &self,
+        ctx: &ScheduleContext<'_>,
+        node: Node,
+    ) -> Option<BlockLoop> {
+        match self.compute_indvar_update_loop(ctx, node) {
+            Some(update_loop) => Some(update_loop),
+            None => {
+                // Note that we intentionally skip any phis because we don't want to pick up any
+                // backedges by accident. The only thing we care about is forward dependence on
+                // induction variable updates.
+                if !matches!(ctx.graph.node_kind(node), NodeKind::Phi) {
+                    let loop_forest = self.loop_forest();
+                    let depth_map = self.depth_map();
+
+                    let mut update_loop = None;
+
+                    for pred in dataflow_preds(ctx.graph, node) {
+                        if let Some(&pred_update_loop) = self.indvar_update_node_loops.get(&pred) {
+                            let pred_loop_header = loop_forest.loop_header(pred_update_loop);
+                            let pred_loop_depth = depth_map.loop_depth(pred_loop_header);
+
+                            let found_new_loop = match update_loop {
+                                Some((_, loop_depth)) => {
+                                    // If we depend on multiple induction variable updates, pick the
+                                    // outermost one; we can't be scheduled in the inner loop
+                                    // anyway.
+                                    pred_loop_depth < loop_depth
+                                }
+                                None => true,
+                            };
+
+                            if found_new_loop {
+                                update_loop = Some((pred_update_loop, pred_loop_depth));
+                            }
+                        }
+                    }
+
+                    return update_loop.map(|(l, _)| l);
+                }
+
+                None
+            }
+        }
+    }
+
+    fn compute_indvar_update_loop(
+        &self,
+        ctx: &ScheduleContext<'_>,
+        node: Node,
+    ) -> Option<BlockLoop> {
         let graph = ctx.graph;
         let domtree = self.domtree();
         let block_map = self.block_map;
 
-        dataflow_succs(graph, ctx.live_nodes(), node).any(|(succ, idx)| {
+        for (succ, idx) in dataflow_succs(graph, ctx.live_nodes(), node) {
             if matches!(graph.node_kind(succ), NodeKind::Phi) {
                 // Consider this node an induction variable update if it feeds into a phi along a
                 // natural loop backedge.
@@ -603,17 +680,19 @@ impl<'a> Scheduler<'a> {
                 // We know that `region` be live (and thus exist in the block map) because its
                 // attached phi is live.
                 let region = block_map.containing_block(region).unwrap();
+                let region = domtree.get_tree_node(region).unwrap();
 
                 // By contrast, the CFG predecessor corresponding to this phi input may be dead, so
-                // be careful here.
-                if let Some(cfg_pred) = block_map.containing_block(cfg_pred) {
-                    // Is the edge `cfg_pred -> region` a natural loop backedge?
-                    return domtree.cfg_dominates(region, cfg_pred);
+                // be careful here. Is the edge `cfg_pred -> region` a natural loop backedge?
+                if let Some(cfg_pred) = block_map.containing_block(cfg_pred)
+                    && domtree.dominates(region, domtree.get_tree_node(cfg_pred).unwrap())
+                {
+                    return self.cfg_ctx.loop_forest.containing_loop(region);
                 }
             }
+        }
 
-            false
-        })
+        None
     }
 
     fn domtree_lca(&self, a: Block, b: Block) -> Block {
@@ -635,6 +714,10 @@ impl<'a> Scheduler<'a> {
 
     fn postdomtree(&self) -> &'a BlockPostDomTree {
         &self.cfg_ctx.postdomtree
+    }
+
+    fn loop_forest(&self) -> &'a BlockLoopForest {
+        &self.cfg_ctx.loop_forest
     }
 
     fn depth_map(&self) -> &'a BlockDepthMap {
@@ -677,9 +760,10 @@ struct BlockNodeData {
 struct ReverseBlockScheduler<'a> {
     graph: &'a ValGraph,
     node_data: &'a SecondaryMap<Node, NodeSchedulerData>,
-    indvar_update_nodes: &'a DenseEntitySet<Node>,
+    indvar_update_node_loops: &'a FxHashMap<Node, BlockLoop>,
     scheduled: DenseEntitySet<Node>,
     block: Block,
+    containing_loop: Option<BlockLoop>,
     block_node_data: FxHashMap<Node, BlockNodeData>,
     unique_input_pool: ListPool<DepValue>,
     live_values: DenseEntitySet<DepValue>,
@@ -692,14 +776,15 @@ impl<'a> ReverseBlockScheduler<'a> {
     fn new(
         graph: &'a ValGraph,
         node_data: &'a SecondaryMap<Node, NodeSchedulerData>,
-        indvar_update_nodes: &'a DenseEntitySet<Node>,
+        indvar_update_node_loops: &'a FxHashMap<Node, BlockLoop>,
     ) -> Self {
         Self {
             graph,
             node_data,
-            indvar_update_nodes,
+            indvar_update_node_loops,
             scheduled: DenseEntitySet::new(),
             block: Block::reserved_value(),
+            containing_loop: None,
             block_node_data: FxHashMap::default(),
             unique_input_pool: ListPool::new(),
             live_values: DenseEntitySet::default(),
@@ -709,7 +794,7 @@ impl<'a> ReverseBlockScheduler<'a> {
         }
     }
 
-    fn reset(&mut self, block: Block, nodes: &[Node]) {
+    fn reset(&mut self, block: Block, containing_loop: Option<BlockLoop>, nodes: &[Node]) {
         self.block_node_data.clear();
         self.unique_input_pool.clear();
 
@@ -718,6 +803,7 @@ impl<'a> ReverseBlockScheduler<'a> {
         // dominance post-order.
 
         self.block = block;
+        self.containing_loop = containing_loop;
 
         // Prepare and enqueue all of the block's nodes.
         for &node in nodes {
@@ -764,7 +850,7 @@ impl<'a> ReverseBlockScheduler<'a> {
             trace!(
                 "    place: node {} [{}, lrg delta {}, cp {}, prio {:#x}]",
                 node.as_u32(),
-                if self.indvar_update_nodes.contains(node) {
+                if self.is_indvar_update(node) {
                     "indvar"
                 } else {
                     "non-indvar"
@@ -848,7 +934,7 @@ impl<'a> ReverseBlockScheduler<'a> {
         // `-live_range_delta` around the middle of the 31-bit unsigned range.
         let biased_delta = (1u32 << 30).wrapping_sub(self.live_range_delta(node) as u32);
 
-        let is_indvar_update = self.indvar_update_nodes.contains(node);
+        let is_indvar_update = self.is_indvar_update(node);
 
         // Prefer to place induction-variable-updates later (to avoid introducing copies on
         // split backedges), then prefer reducing live ranges, and finally prefer a lower CP length
@@ -856,6 +942,15 @@ impl<'a> ReverseBlockScheduler<'a> {
         ((is_indvar_update as u64) << 63)
             | ((biased_delta as u64) << 32)
             | (!self.node_data[node].cp_length as u64)
+    }
+
+    fn is_indvar_update(&self, node: Node) -> bool {
+        match self.containing_loop {
+            Some(containing_loop) => {
+                self.indvar_update_node_loops.get(&node).copied() == Some(containing_loop)
+            }
+            None => false,
+        }
     }
 
     fn live_range_delta(&self, node: Node) -> i32 {

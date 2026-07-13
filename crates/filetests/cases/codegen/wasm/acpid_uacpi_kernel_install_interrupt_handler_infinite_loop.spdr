@@ -1,0 +1,284 @@
+# run: codegen[small-pic]
+
+extfunc @__wasi_fd_write:i32(ptr, ptr, i32, i32, i32, i32)
+extfunc @wasmato_irq_create_ioapic:i32(ptr, ptr, i32)
+extfunc @close:i32(ptr, ptr, i32)
+extfunc @__pthread_create:i32(ptr, ptr, i32, i32, i32, i32)
+extfunc @malloc:i32(ptr, ptr, i32)
+extfunc @printf:i32(ptr, ptr, i32, i32)
+
+
+# This function contains a conditional branch after the `__pthread_create` call skipping just past
+# a tight infinite loop:
+#
+#     0071:     AluRRm(S32, Test) $rax, $rax
+#     0072:     Jumpcc(Simple(E), block6, block8)
+#           block6:
+#     0073:     Jump(block7)
+#           block7:
+#     0074:     Jump(block7)
+#           block8:
+#
+# This currently triggers a bug in the branch folder that causes the entire loop (and the
+# conditional branch guarding it) to be removed.
+
+func @uacpi_kernel_install_interrupt_handler:i32(ptr, ptr, i32, i32, i32, i32) {
+    # check: function `uacpi_kernel_install_interrupt_handler`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 41 57                           push r15
+    # nextln: 000006: 41 56                           push r14
+    # nextln: 000008: 41 55                           push r13
+    # nextln: 00000a: 41 54                           push r12
+    # nextln: 00000c: 53                              push rbx
+    # nextln: 00000d: 48 83 ec 28                     sub rsp, 0x28
+    # nextln: 000011: 48 89 f3                        mov rbx, rsi
+    # nextln: 000014: 49 89 fd                        mov r13, rdi
+    # nextln: 000017: 44 8b 23                        mov r12d, dword ptr [rbx]
+    # nextln: 00001a: 41 83 ec 30                     sub r12d, 0x30
+    # nextln: 00001e: 44 89 23                        mov dword ptr [rbx], r12d
+    # nextln: 000021: 4d 8d 74 24 18                  lea r14, [r12 + 0x18]
+    # nextln: 000026: 4d 03 f5                        add r14, r13
+    # nextln: 000029: 4d 8d 7c 24 28                  lea r15, [r12 + 0x28]
+    # nextln: 00002e: 49 8d 44 24 2c                  lea rax, [r12 + 0x2c]
+    # nextln: 000033: 4d 03 fd                        add r15, r13
+    # nextln: 000036: 41 89 17                        mov dword ptr [r15], edx
+    # nextln: 000039: 49 8d 74 24 24                  lea rsi, [r12 + 0x24]
+    # nextln: 00003e: 49 8d 7c 24 20                  lea rdi, [r12 + 0x20]
+    # nextln: 000043: 49 8d 54 24 1c                  lea rdx, [r12 + 0x1c]
+    # nextln: 000048: 49 03 f5                        add rsi, r13
+    # nextln: 00004b: 89 0e                           mov dword ptr [rsi], ecx
+    # nextln: 00004d: 48 89 74 24 10                  mov qword ptr [rsp + 0x10], rsi
+    # nextln: 000052: 49 03 fd                        add rdi, r13
+    # nextln: 000055: 44 89 07                        mov dword ptr [rdi], r8d
+    # nextln: 000058: 48 89 7c 24 08                  mov qword ptr [rsp + 8], rdi
+    # nextln: 00005d: 49 03 c5                        add rax, r13
+    # nextln: 000060: 48 89 04 24                     mov qword ptr [rsp], rax
+    # nextln: 000064: 49 03 d5                        add rdx, r13
+    # nextln: 000067: 44 89 0a                        mov dword ptr [rdx], r9d
+    # nextln: 00006a: 41 8b 17                        mov edx, dword ptr [r15]
+    # nextln: 00006d: 48 89 de                        mov rsi, rbx
+    # nextln: 000070: 4c 89 ef                        mov rdi, r13
+    # nextln: 000073: e8 00 00 00 00                  call 0x78  # RELOC_PC32 -> @wasmato_irq_create_ioapic + -4
+    # nextln: 000078: 41 89 06                        mov dword ptr [r14], eax
+    # nextln: 00007b: 41 8b 0e                        mov ecx, dword ptr [r14]
+    # nextln: 00007e: 33 c0                           xor eax, eax
+    # nextln: 000080: 85 c9                           test ecx, ecx
+    # nextln: 000082: 0f 98 c0                        sets al
+    # nextln: 000085: 83 e0 01                        and eax, 1
+    # nextln: 000088: 85 c0                           test eax, eax
+    # nextln: 00008a: 0f 85 ea 00 00 00               jne 0x17a
+    # nextln: 000090: 4d 8d 7c 24 14                  lea r15, [r12 + 0x14]
+    # nextln: 000095: 4d 03 fd                        add r15, r13
+    # nextln: 000098: ba 10 00 00 00                  mov edx, 0x10
+    # nextln: 00009d: 4c 89 ef                        mov rdi, r13
+    # nextln: 0000a0: 48 89 de                        mov rsi, rbx
+    # nextln: 0000a3: e8 00 00 00 00                  call 0xa8  # RELOC_PC32 -> @malloc + -4
+    # nextln: 0000a8: 41 89 07                        mov dword ptr [r15], eax
+    # nextln: 0000ab: 41 8b 0f                        mov ecx, dword ptr [r15]
+    # nextln: 0000ae: 33 c0                           xor eax, eax
+    # nextln: 0000b0: 85 c9                           test ecx, ecx
+    # nextln: 0000b2: 0f 94 c0                        sete al
+    # nextln: 0000b5: 83 e0 01                        and eax, 1
+    # nextln: 0000b8: 85 c0                           test eax, eax
+    # nextln: 0000ba: 0f 85 97 00 00 00               jne 0x157
+    # nextln: 0000c0: 41 8b 07                        mov eax, dword ptr [r15]
+    # nextln: 0000c3: 48 8b 4c 24 10                  mov rcx, qword ptr [rsp + 0x10]
+    # nextln: 0000c8: 8b 09                           mov ecx, dword ptr [rcx]
+    # nextln: 0000ca: 49 03 c5                        add rax, r13
+    # nextln: 0000cd: 89 08                           mov dword ptr [rax], ecx
+    # nextln: 0000cf: 41 8b 07                        mov eax, dword ptr [r15]
+    # nextln: 0000d2: 48 83 c0 04                     add rax, 4
+    # nextln: 0000d6: 48 8b 4c 24 08                  mov rcx, qword ptr [rsp + 8]
+    # nextln: 0000db: 8b 09                           mov ecx, dword ptr [rcx]
+    # nextln: 0000dd: 49 03 c5                        add rax, r13
+    # nextln: 0000e0: 89 08                           mov dword ptr [rax], ecx
+    # nextln: 0000e2: 41 8b 0f                        mov ecx, dword ptr [r15]
+    # nextln: 0000e5: 41 8b 06                        mov eax, dword ptr [r14]
+    # nextln: 0000e8: 48 83 c1 0c                     add rcx, 0xc
+    # nextln: 0000ec: 49 03 cd                        add rcx, r13
+    # nextln: 0000ef: 89 01                           mov dword ptr [rcx], eax
+    # nextln: 0000f1: 41 8b 85 7c 00 01 00            mov eax, dword ptr [r13 + 0x1007c]
+    # nextln: 0000f8: 48 83 c0 44                     add rax, 0x44
+    # nextln: 0000fc: 49 03 c5                        add rax, r13
+    # nextln: 0000ff: 8b 10                           mov edx, dword ptr [rax]
+    # nextln: 000101: 33 c9                           xor ecx, ecx
+    # nextln: 000103: 41 89 c9                        mov r9d, ecx
+    # nextln: 000106: 41 89 c8                        mov r8d, ecx
+    # nextln: 000109: 4c 89 ef                        mov rdi, r13
+    # nextln: 00010c: 48 89 de                        mov rsi, rbx
+    # nextln: 00010f: e8 00 00 00 00                  call 0x114  # RELOC_PC32 -> @__wasi_fd_write + -4
+    # nextln: 000114: 41 8b 17                        mov edx, dword ptr [r15]
+    # nextln: 000117: 83 c2 08                        add edx, 8
+    # nextln: 00011a: 45 8b 0f                        mov r9d, dword ptr [r15]
+    # nextln: 00011d: 41 b8 06 00 00 00               mov r8d, 6
+    # nextln: 000123: 33 c9                           xor ecx, ecx
+    # nextln: 000125: 4c 89 ef                        mov rdi, r13
+    # nextln: 000128: 48 89 de                        mov rsi, rbx
+    # nextln: 00012b: e8 00 00 00 00                  call 0x130  # RELOC_PC32 -> @__pthread_create + -4
+    # nextln: 000130: 85 c0                           test eax, eax
+    # nextln: 000132: 49 89 de                        mov r14, rbx
+    # nextln: 000135: 48 8b 1c 24                     mov rbx, qword ptr [rsp]
+    # nextln: 000139: ba dd 42 01 00                  mov edx, 0x142dd
+    # nextln: 00013e: 33 c9                           xor ecx, ecx
+    # nextln: 000140: 4c 89 ef                        mov rdi, r13
+    # nextln: 000143: 4c 89 f6                        mov rsi, r14
+    # nextln: 000146: e8 00 00 00 00                  call 0x14b  # RELOC_PC32 -> @printf + -4
+    # nextln: 00014b: b8 0a 00 00 00                  mov eax, 0xa
+    # nextln: 000150: 89 03                           mov dword ptr [rbx], eax
+    # nextln: 000152: e9 5d 00 00 00                  jmp 0x1b4
+    # nextln: 000157: 4c 89 f0                        mov rax, r14
+    # nextln: 00015a: 49 89 de                        mov r14, rbx
+    # nextln: 00015d: 48 8b 1c 24                     mov rbx, qword ptr [rsp]
+    # nextln: 000161: 8b 10                           mov edx, dword ptr [rax]
+    # nextln: 000163: 4c 89 ef                        mov rdi, r13
+    # nextln: 000166: 4c 89 f6                        mov rsi, r14
+    # nextln: 000169: e8 00 00 00 00                  call 0x16e  # RELOC_PC32 -> @close + -4
+    # nextln: 00016e: b8 02 00 00 00                  mov eax, 2
+    # nextln: 000173: 89 03                           mov dword ptr [rbx], eax
+    # nextln: 000175: e9 3a 00 00 00                  jmp 0x1b4
+    # nextln: 00017a: 4c 89 f0                        mov rax, r14
+    # nextln: 00017d: 49 89 de                        mov r14, rbx
+    # nextln: 000180: 48 8b 1c 24                     mov rbx, qword ptr [rsp]
+    # nextln: 000184: 49 8d 7c 24 04                  lea rdi, [r12 + 4]
+    # nextln: 000189: 41 8b 0f                        mov ecx, dword ptr [r15]
+    # nextln: 00018c: 4b 8d 54 25 00                  lea rdx, [r13 + r12]
+    # nextln: 000191: 49 03 fd                        add rdi, r13
+    # nextln: 000194: 8b 00                           mov eax, dword ptr [rax]
+    # nextln: 000196: 89 07                           mov dword ptr [rdi], eax
+    # nextln: 000198: 89 0a                           mov dword ptr [rdx], ecx
+    # nextln: 00019a: ba e5 45 01 00                  mov edx, 0x145e5
+    # nextln: 00019f: 4c 89 ef                        mov rdi, r13
+    # nextln: 0001a2: 44 89 e1                        mov ecx, r12d
+    # nextln: 0001a5: 4c 89 f6                        mov rsi, r14
+    # nextln: 0001a8: e8 00 00 00 00                  call 0x1ad  # RELOC_PC32 -> @printf + -4
+    # nextln: 0001ad: b8 0a 00 00 00                  mov eax, 0xa
+    # nextln: 0001b2: 89 03                           mov dword ptr [rbx], eax
+    # nextln: 0001b4: 41 83 c4 30                     add r12d, 0x30
+    # nextln: 0001b8: 8b 03                           mov eax, dword ptr [rbx]
+    # nextln: 0001ba: 45 89 26                        mov dword ptr [r14], r12d
+    # nextln: 0001bd: 48 83 c4 28                     add rsp, 0x28
+    # nextln: 0001c1: 5b                              pop rbx
+    # nextln: 0001c2: 41 5c                           pop r12
+    # nextln: 0001c4: 41 5d                           pop r13
+    # nextln: 0001c6: 41 5e                           pop r14
+    # nextln: 0001c8: 41 5f                           pop r15
+    # nextln: 0001ca: 5d                              pop rbp
+    # nextln: 0001cb: c3                              ret
+
+    %0:ctrl, %1:ptr, %2:ptr, %3:i32, %4:i32, %5:i32, %6:i32 = entry
+    %7:ctrl, %8:i32 = load.4 %0, %2
+    %9:i32 = iconst 48
+    %10:i32 = isub %8, %9
+    %13:ctrl = store.4 %7, %10, %2
+    %12:i64 = iext %10
+    %11:i32 = iadd %10, %9
+    %14:i64 = iconst 44
+    %15:i64 = iconst 4294967295
+    %16:i64 = and %12, %15
+    %19:ptr = ptroff %1, %16
+    %17:i64 = iadd %16, %14
+    %18:ptr = ptroff %1, %17
+    %20:i32 = iconst 10
+    %21:i32 = iconst 0
+    %22:i32 = iconst 82653
+    %23:i64 = iconst 20
+    %24:i64 = iadd %16, %23
+    %25:ptr = ptroff %1, %24
+    %26:i64 = iconst 68
+    %27:i64 = iconst 65660
+    %28:ptr = ptroff %1, %27
+    %29:i64 = iconst 12
+    %30:i64 = iconst 24
+    %31:i64 = iadd %16, %30
+    %32:ptr = ptroff %1, %31
+    %33:i64 = iconst 4
+    %34:i64 = iadd %16, %33
+    %35:ptr = ptroff %1, %34
+    %36:i64 = iconst 32
+    %37:i64 = iadd %16, %36
+    %38:ptr = ptroff %1, %37
+    %39:i64 = iconst 36
+    %40:i64 = iadd %16, %39
+    %41:ptr = ptroff %1, %40
+    %42:i32 = iconst 2
+    %43:i32 = iconst 1
+    %44:i32 = iconst 16
+    %45:i32 = iconst 6
+    %46:i32 = iconst 8
+    %47:i32 = iconst 83429
+    %48:i64 = iconst 40
+    %49:i64 = iadd %16, %48
+    %50:ptr = ptroff %1, %49
+    %51:ctrl = store.4 %13, %3, %50
+    %52:ctrl = store.4 %51, %4, %41
+    %53:ctrl = store.4 %52, %5, %38
+    %54:i64 = iconst 28
+    %55:i64 = iadd %16, %54
+    %56:ptr = ptroff %1, %55
+    %57:ctrl = store.4 %53, %6, %56
+    %58:ctrl, %59:i32 = load.4 %57, %50
+    %60:ctrl, %61:i32 = call @wasmato_irq_create_ioapic %58, %1, %2, %59
+    %62:ctrl = store.4 %60, %61, %32
+    %63:ctrl, %64:i32 = load.4 %62, %32
+    %65:i32 = icmp slt %64, %21
+    %66:i32 = and %65, %43
+    %67:i32 = icmp eq %66, %21
+    %68:ctrl, %69:ctrl = brcond %63, %67
+    %70:ctrl, %71:i32 = call @malloc %68, %1, %2, %44
+    %72:ctrl = store.4 %70, %71, %25
+    %73:ctrl, %74:i32 = load.4 %72, %25
+    %75:i32 = icmp eq %74, %21
+    %76:i32 = and %75, %43
+    %77:i32 = icmp eq %76, %21
+    %78:ctrl, %79:ctrl = brcond %73, %77
+    %80:ctrl, %81:i32 = load.4 %78, %25
+    %82:ctrl, %83:i32 = load.4 %80, %41
+    %84:i64 = iext %81
+    %85:i64 = and %84, %15
+    %86:ptr = ptroff %1, %85
+    %87:ctrl = store.4 %82, %83, %86
+    %88:ctrl, %89:i32 = load.4 %87, %25
+    %90:ctrl, %91:i32 = load.4 %88, %38
+    %92:i64 = iext %89
+    %93:i64 = and %92, %15
+    %94:i64 = iadd %93, %33
+    %95:ptr = ptroff %1, %94
+    %96:ctrl = store.4 %90, %91, %95
+    %97:ctrl, %98:i32 = load.4 %96, %25
+    %99:ctrl, %100:i32 = load.4 %97, %32
+    %101:i64 = iext %98
+    %102:i64 = and %101, %15
+    %103:i64 = iadd %102, %29
+    %104:ptr = ptroff %1, %103
+    %105:ctrl = store.4 %99, %100, %104
+    %106:ctrl, %107:i32 = load.4 %105, %28
+    %108:i64 = iext %107
+    %109:i64 = and %108, %15
+    %110:i64 = iadd %109, %26
+    %111:ptr = ptroff %1, %110
+    %112:ctrl, %113:i32 = load.4 %106, %111
+    %114:ctrl, %115:i32 = call @__wasi_fd_write %112, %1, %2, %113, %21, %21, %21
+    %116:ctrl, %117:i32 = load.4 %114, %25
+    %118:ctrl, %119:i32 = load.4 %116, %25
+    %120:i32 = iadd %117, %46
+    %121:ctrl, %122:i32 = call @__pthread_create %118, %1, %2, %120, %21, %45, %119
+    %123:i32 = icmp eq %122, %21
+    %124:ctrl, %125:ctrl = brcond %121, %123
+    %126:ctrl, %127:phisel = region %124, %126
+    %128:ctrl, %129:i32 = call @printf %125, %1, %2, %22, %21
+    %130:ctrl = store.4 %128, %20, %18
+    %131:ctrl, %132:i32 = load.4 %79, %32
+    %133:ctrl, %134:i32 = call @close %131, %1, %2, %132
+    %135:ctrl = store.4 %133, %42, %18
+    %136:ctrl, %137:i32 = load.4 %69, %50
+    %138:ctrl, %139:i32 = load.4 %136, %32
+    %140:ctrl = store.4 %138, %139, %35
+    %141:ctrl = store.4 %140, %137, %19
+    %142:ctrl, %143:i32 = call @printf %141, %1, %2, %47, %10
+    %144:ctrl = store.4 %142, %20, %18
+    %145:ctrl, %146:phisel = region %144, %135, %130
+    %147:ctrl, %148:i32 = load.4 %145, %18
+    %149:ctrl = store.4 %147, %11, %2
+    return %149, %148
+}

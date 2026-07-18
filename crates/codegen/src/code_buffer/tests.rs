@@ -678,6 +678,87 @@ fn tight_loop_after_pruned_branches() {
 }
 
 #[test]
+fn cond_branch_over_tight_loop() {
+    check_emitted_code(
+        |buffer| {
+            // Mimic the following branch sequence:
+            //
+            //      0072:     Jumpcc(Simple(E), block6, block8)
+            //            block6:
+            //      0073:     Jump(block7)
+            //            block7:
+            //      0074:     Jump(block7)
+            //            block8:
+            //                ...
+
+            let split_edge_block = buffer.create_label();
+            let loop_block = buffer.create_label();
+            let after_block = buffer.create_label();
+
+            // Jumpcc
+            emit_cond_branch(buffer, split_edge_block);
+            emit_uncond_branch(buffer, after_block);
+
+            buffer.bind_label(split_edge_block);
+
+            // Jump (split critical edge)
+            emit_uncond_branch(buffer, loop_block);
+
+            buffer.bind_label(loop_block);
+
+            // Jump (loop backedge)
+            emit_uncond_branch(buffer, loop_block);
+
+            buffer.bind_label(after_block);
+
+            // Flush all branch tracking with a non-branch instruction.
+            emit_instr(buffer, 0x1);
+        },
+        expect!["d2 b0 01"],
+    );
+}
+
+#[test]
+fn cond_branches_over_larger_infinite_loop() {
+    check_emitted_code(
+        |buffer| {
+            // Emit the following sequence:
+            //
+            //         c check2
+            //     loop1:
+            //         b loop2
+            //     check2:
+            //         c done
+            //     loop2:
+            //         b loop1
+            //     done:
+            //
+            // We want to make sure that conditional branch inversion doesn't completely eliminate
+            // both branch pairs, because the two unconditional branches actually form an infinite
+            // loop together.
+
+            let loop1 = buffer.create_label();
+            let check2 = buffer.create_label();
+            let loop2 = buffer.create_label();
+            let done = buffer.create_label();
+
+            emit_cond_branch(buffer, check2);
+            buffer.bind_label(loop1);
+            emit_uncond_branch(buffer, loop2);
+            buffer.bind_label(check2);
+            emit_cond_branch(buffer, done);
+            buffer.bind_label(loop2);
+            emit_uncond_branch(buffer, loop1);
+            buffer.bind_label(done);
+
+            // Flush all branch tracking with a non-branch instruction.
+            emit_instr(buffer, 0x1);
+        },
+        expect!["d2 c2 b0 01"],
+    );
+}
+
+#[test]
 fn cond_loop_after_pruned_branches() {
     check_emitted_code(
         |buffer| {

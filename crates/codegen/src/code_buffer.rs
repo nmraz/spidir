@@ -117,7 +117,7 @@ struct Fixup<F> {
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum LastBranchKind {
-    Uncond,
+    Uncond { threaded_all_labels: bool },
     Cond { reversed_start: u32 },
 }
 
@@ -238,7 +238,7 @@ impl<F: FixupKind> CodeBuffer<F> {
         let last_branch_was_uncond = self
             .last_branches
             .last()
-            .is_some_and(|last_branch| last_branch.kind == LastBranchKind::Uncond);
+            .is_some_and(|last_branch| matches!(last_branch.kind, LastBranchKind::Uncond { .. }));
 
         // Redirect any labels bound here to `target`, regardless of whether we end up being able to
         // remove the branch entirely.
@@ -251,7 +251,14 @@ impl<F: FixupKind> CodeBuffer<F> {
             return;
         }
 
-        self.branch_raw(LastBranchKind::Uncond, target, fixup_kind, f);
+        self.branch_raw(
+            LastBranchKind::Uncond {
+                threaded_all_labels,
+            },
+            target,
+            fixup_kind,
+            f,
+        );
     }
 
     pub fn create_label(&mut self) -> Label {
@@ -409,16 +416,23 @@ impl<F: FixupKind> CodeBuffer<F> {
             //    L2:  U Lx  <--
             //    L3: .....
             //
-            // where C is a conditional branch and U is an unconditional branch. When we do, we can
-            // simplify it to:
+            // where C is a conditional branch and U is an unconditional branch that isn't targeted
+            // by any other branches. When we do, we can simplify it to
             //
             //    L1: !C Lx  <--
             //    L3: .....
             //
             // where !C has its condition reversed relative to C.
 
-            if last_branch_kind != LastBranchKind::Uncond {
-                // We need an unconditional branch last...
+            // Start by enforcing that we have an unconditional branch here. We also need to make
+            // sure that all labels targeting it have been threaded successfully, because we want to
+            // completely remove it.
+            if !matches!(
+                last_branch_kind,
+                LastBranchKind::Uncond {
+                    threaded_all_labels: true,
+                },
+            ) {
                 break;
             }
 

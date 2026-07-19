@@ -19,8 +19,8 @@ extfunc @printf:i32(ptr, ptr, i32, i32)
 #     0074:     Jump(block7)
 #           block8:
 #
-# This currently triggers a bug in the branch folder that causes the entire loop (and the
-# conditional branch guarding it) to be removed.
+# This used to trigger a bug in the branch folder that caused the entire loop (and the conditional
+# branch guarding it) to be removed.
 
 func @uacpi_kernel_install_interrupt_handler:i32(ptr, ptr, i32, i32, i32, i32) {
     # check: function `uacpi_kernel_install_interrupt_handler`:

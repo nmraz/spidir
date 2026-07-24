@@ -1,0 +1,116 @@
+# run: codegen
+
+# This test case exists to make sure we don't schedule all pointer arithmetic before all stores and
+# cause massive spilling.
+
+func @__wasi_init_tp(ptr, ptr) {
+    # check: function `__wasi_init_tp`:
+    # nextln: 000000: 55                              push rbp
+    # nextln: 000001: 48 89 e5                        mov rbp, rsp
+    # nextln: 000004: 8b 46 04                        mov eax, dword ptr [rsi + 4]
+    # nextln: 000007: 48 8d 0c 07                     lea rcx, [rdi + rax]
+    # nextln: 00000b: 89 01                           mov dword ptr [rcx], eax
+    # nextln: 00000d: 48 8d 48 1c                     lea rcx, [rax + 0x1c]
+    # nextln: 000011: 48 03 cf                        add rcx, rdi
+    # nextln: 000014: ba 02 00 00 00                  mov edx, 2
+    # nextln: 000019: 89 11                           mov dword ptr [rcx], edx
+    # nextln: 00001b: 48 8d 48 38                     lea rcx, [rax + 0x38]
+    # nextln: 00001f: 48 03 cf                        add rcx, rdi
+    # nextln: 000022: 33 d2                           xor edx, edx
+    # nextln: 000024: 89 11                           mov dword ptr [rcx], edx
+    # nextln: 000026: 48 8d 50 34                     lea rdx, [rax + 0x34]
+    # nextln: 00002a: 48 03 d7                        add rdx, rdi
+    # nextln: 00002d: b9 00 00 01 00                  mov ecx, 0x10000
+    # nextln: 000032: 89 0a                           mov dword ptr [rdx], ecx
+    # nextln: 000034: 48 8d 50 30                     lea rdx, [rax + 0x30]
+    # nextln: 000038: 48 03 d7                        add rdx, rdi
+    # nextln: 00003b: 89 0a                           mov dword ptr [rdx], ecx
+    # nextln: 00003d: 48 8d 50 5c                     lea rdx, [rax + 0x5c]
+    # nextln: 000041: 48 03 d7                        add rdx, rdi
+    # nextln: 000044: be 8c 00 01 00                  mov esi, 0x1008c
+    # nextln: 000049: 89 32                           mov dword ptr [rdx], esi
+    # nextln: 00004b: 48 8d 50 14                     lea rdx, [rax + 0x14]
+    # nextln: 00004f: 48 03 d7                        add rdx, rdi
+    # nextln: 000052: be ff ff ff 3f                  mov esi, 0x3fffffff
+    # nextln: 000057: 89 32                           mov dword ptr [rdx], esi
+    # nextln: 000059: 48 8d 50 48                     lea rdx, [rax + 0x48]
+    # nextln: 00005d: 48 03 d7                        add rdx, rdi
+    # nextln: 000060: 8d 70 48                        lea esi, [rax + 0x48]
+    # nextln: 000063: 89 32                           mov dword ptr [rdx], esi
+    # nextln: 000065: 48 8d 50 0c                     lea rdx, [rax + 0xc]
+    # nextln: 000069: 48 03 d7                        add rdx, rdi
+    # nextln: 00006c: 8b b7 80 00 01 00               mov esi, dword ptr [rdi + 0x10080]
+    # nextln: 000072: 89 32                           mov dword ptr [rdx], esi
+    # nextln: 000074: 89 8f 74 00 01 00               mov dword ptr [rdi + 0x10074], ecx
+    # nextln: 00007a: 48 8d 48 08                     lea rcx, [rax + 8]
+    # nextln: 00007e: 48 8d 50 04                     lea rdx, [rax + 4]
+    # nextln: 000082: 48 03 cf                        add rcx, rdi
+    # nextln: 000085: 48 03 d7                        add rdx, rdi
+    # nextln: 000088: 89 01                           mov dword ptr [rcx], eax
+    # nextln: 00008a: 89 02                           mov dword ptr [rdx], eax
+    # nextln: 00008c: 5d                              pop rbp
+    # nextln: 00008d: c3                              ret
+
+    %0:ctrl, %1:ptr, %2:ptr = entry
+    %3:i64 = iconst 4
+    %4:ptr = ptroff %2, %3
+    %5:ctrl, %6:i32 = load.4 %0, %4
+    %7:i64 = iext %6
+    %8:i64 = iconst 4294967295
+    %9:i64 = and %7, %8
+    %12:ptr = ptroff %1, %9
+    %13:ctrl = store.4 %5, %6, %12
+    %10:i64 = iadd %9, %3
+    %11:ptr = ptroff %1, %10
+    %14:i64 = iconst 8
+    %15:i64 = iadd %9, %14
+    %16:ptr = ptroff %1, %15
+    %17:i64 = iconst 65652
+    %18:ptr = ptroff %1, %17
+    %19:i32 = iconst 65536
+    %20:i64 = iconst 12
+    %21:i64 = iadd %9, %20
+    %22:ptr = ptroff %1, %21
+    %23:i64 = iconst 65664
+    %24:ptr = ptroff %1, %23
+    %25:i64 = iconst 72
+    %26:i64 = iadd %9, %25
+    %27:ptr = ptroff %1, %26
+    %28:i32 = iconst 72
+    %29:i32 = iadd %6, %28
+    %30:i64 = iconst 20
+    %31:i64 = iadd %9, %30
+    %32:ptr = ptroff %1, %31
+    %33:i32 = iconst 1073741823
+    %34:i64 = iconst 92
+    %35:i64 = iadd %9, %34
+    %36:ptr = ptroff %1, %35
+    %37:i32 = iconst 65676
+    %38:i64 = iconst 48
+    %39:i64 = iadd %9, %38
+    %40:ptr = ptroff %1, %39
+    %41:i64 = iconst 52
+    %42:i64 = iadd %9, %41
+    %43:ptr = ptroff %1, %42
+    %44:i64 = iconst 56
+    %45:i64 = iadd %9, %44
+    %46:ptr = ptroff %1, %45
+    %47:i32 = iconst 0
+    %48:i64 = iconst 28
+    %49:i64 = iadd %9, %48
+    %50:ptr = ptroff %1, %49
+    %51:i32 = iconst 2
+    %52:ctrl = store.4 %13, %51, %50
+    %53:ctrl = store.4 %52, %47, %46
+    %54:ctrl = store.4 %53, %19, %43
+    %55:ctrl = store.4 %54, %19, %40
+    %56:ctrl = store.4 %55, %37, %36
+    %57:ctrl = store.4 %56, %33, %32
+    %58:ctrl = store.4 %57, %29, %27
+    %59:ctrl, %60:i32 = load.4 %58, %24
+    %61:ctrl = store.4 %59, %60, %22
+    %62:ctrl = store.4 %61, %19, %18
+    %63:ctrl = store.4 %62, %6, %16
+    %64:ctrl = store.4 %63, %6, %11
+    return %64
+}

@@ -144,6 +144,8 @@ impl MachineEmit for X64Machine {
                 FrameRealign::AlignTo(full_frame_layout.align.try_into().unwrap()),
             )
         } else {
+            // Note that we only count saved registers here, because the return address and frame
+            // pointer consume 16 bytes together.
             let saved_reg_size = saved_regs.len() as u32 * 8;
 
             // This is the total size required for both the registers saved on entry and any

@@ -12,7 +12,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 000004: 41 55                           push r13
     # nextln: 000006: 41 54                           push r12
     # nextln: 000008: 53                              push rbx
-    # nextln: 000009: 48 83 ec 38                     sub rsp, 0x38
+    # nextln: 000009: 48 83 ec 28                     sub rsp, 0x28
     # nextln: 00000d: 33 c0                           xor eax, eax
     # nextln: 00000f: 89 44 24 18                     mov dword ptr [rsp + 0x18], eax
     # nextln: 000013: 89 44 24 1c                     mov dword ptr [rsp + 0x1c], eax
@@ -3861,7 +3861,7 @@ func @"System.Int32 Tests.Bool_No_Op::Sub_Funclet_0()":i32() {
     # nextln: 003c2d: d1 e0                           shl eax, 1
     # nextln: 003c2f: 8b 4c 24 1c                     mov ecx, dword ptr [rsp + 0x1c]
     # nextln: 003c33: 2b c1                           sub eax, ecx
-    # nextln: 003c35: 48 83 c4 38                     add rsp, 0x38
+    # nextln: 003c35: 48 83 c4 28                     add rsp, 0x28
     # nextln: 003c39: 5b                              pop rbx
     # nextln: 003c3a: 41 5c                           pop r12
     # nextln: 003c3c: 41 5d                           pop r13

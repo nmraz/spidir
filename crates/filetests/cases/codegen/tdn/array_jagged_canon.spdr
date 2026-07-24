@@ -35,70 +35,70 @@ func @"System.Int32 Tests.CodeGenBringUpTests::ArrayJagged(System.Int32)":i32(i3
     # nextln: 000004: 41 55                           push r13
     # nextln: 000006: 41 54                           push r12
     # nextln: 000008: 53                              push rbx
-    # nextln: 000009: 48 83 ec 18                     sub rsp, 0x18
-    # nextln: 00000d: 89 fb                           mov ebx, edi
-    # nextln: 00000f: 33 c0                           xor eax, eax
-    # nextln: 000011: 48 89 04 24                     mov qword ptr [rsp], rax
-    # nextln: 000015: be 28 00 00 00                  mov esi, 0x28
-    # nextln: 00001a: bf ab 00 00 00                  mov edi, 0xab
-    # nextln: 00001f: e8 00 00 00 00                  call 0x24  # RELOC_PC32 -> @gc_new + -4
-    # nextln: 000024: 41 bc 02 00 00 00               mov r12d, 2
-    # nextln: 00002a: 44 89 60 10                     mov dword ptr [rax + 0x10], r12d
-    # nextln: 00002e: 48 89 04 24                     mov qword ptr [rsp], rax
-    # nextln: 000032: 4c 8b 2c 24                     mov r13, qword ptr [rsp]
-    # nextln: 000036: be 1c 00 00 00                  mov esi, 0x1c
-    # nextln: 00003b: bf aa 00 00 00                  mov edi, 0xaa
-    # nextln: 000040: e8 00 00 00 00                  call 0x45  # RELOC_PC32 -> @gc_new + -4
-    # nextln: 000045: 44 89 60 10                     mov dword ptr [rax + 0x10], r12d
-    # nextln: 000049: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
-    # nextln: 00004c: 48 83 f9 01                     cmp rcx, 1
-    # nextln: 000050: 0f 8e a7 00 00 00               jle 0xfd
-    # nextln: 000056: b9 01 00 00 00                  mov ecx, 1
-    # nextln: 00005b: 89 48 18                        mov dword ptr [rax + 0x18], ecx
-    # nextln: 00005e: 41 8b 4d 10                     mov ecx, dword ptr [r13 + 0x10]
-    # nextln: 000062: 48 85 c9                        test rcx, rcx
-    # nextln: 000065: 0f 8e 92 00 00 00               jle 0xfd
-    # nextln: 00006b: 49 89 45 18                     mov qword ptr [r13 + 0x18], rax
-    # nextln: 00006f: 4c 8b 2c 24                     mov r13, qword ptr [rsp]
-    # nextln: 000073: be 1c 00 00 00                  mov esi, 0x1c
-    # nextln: 000078: bf aa 00 00 00                  mov edi, 0xaa
-    # nextln: 00007d: e8 00 00 00 00                  call 0x82  # RELOC_PC32 -> @gc_new + -4
-    # nextln: 000082: 44 89 60 10                     mov dword ptr [rax + 0x10], r12d
-    # nextln: 000086: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
-    # nextln: 000089: 48 85 c9                        test rcx, rcx
-    # nextln: 00008c: 0f 8e 6b 00 00 00               jle 0xfd
-    # nextln: 000092: b9 02 00 00 00                  mov ecx, 2
-    # nextln: 000097: 89 48 14                        mov dword ptr [rax + 0x14], ecx
-    # nextln: 00009a: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
-    # nextln: 00009d: 48 83 f9 01                     cmp rcx, 1
-    # nextln: 0000a1: 0f 8e 56 00 00 00               jle 0xfd
-    # nextln: 0000a7: b9 03 00 00 00                  mov ecx, 3
-    # nextln: 0000ac: 89 48 18                        mov dword ptr [rax + 0x18], ecx
-    # nextln: 0000af: 41 8b 4d 10                     mov ecx, dword ptr [r13 + 0x10]
-    # nextln: 0000b3: 48 83 f9 01                     cmp rcx, 1
-    # nextln: 0000b7: 0f 8e 40 00 00 00               jle 0xfd
-    # nextln: 0000bd: 49 89 45 20                     mov qword ptr [r13 + 0x20], rax
-    # nextln: 0000c1: 48 8b 04 24                     mov rax, qword ptr [rsp]
-    # nextln: 0000c5: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
-    # nextln: 0000c8: 48 83 f9 01                     cmp rcx, 1
-    # nextln: 0000cc: 0f 8e 2b 00 00 00               jle 0xfd
-    # nextln: 0000d2: 48 63 cb                        movsxd rcx, ebx
-    # nextln: 0000d5: 48 8b 40 20                     mov rax, qword ptr [rax + 0x20]
-    # nextln: 0000d9: 8b 50 10                        mov edx, dword ptr [rax + 0x10]
-    # nextln: 0000dc: 48 3b ca                        cmp rcx, rdx
-    # nextln: 0000df: 0f 8d 18 00 00 00               jge 0xfd
-    # nextln: 0000e5: 48 c1 e1 02                     shl rcx, 2
-    # nextln: 0000e9: 48 83 c1 14                     add rcx, 0x14
-    # nextln: 0000ed: 48 03 c1                        add rax, rcx
-    # nextln: 0000f0: 8b 00                           mov eax, dword ptr [rax]
-    # nextln: 0000f2: 48 83 c4 18                     add rsp, 0x18
-    # nextln: 0000f6: 5b                              pop rbx
-    # nextln: 0000f7: 41 5c                           pop r12
-    # nextln: 0000f9: 41 5d                           pop r13
-    # nextln: 0000fb: 5d                              pop rbp
-    # nextln: 0000fc: c3                              ret
-    # nextln: 0000fd: e8 00 00 00 00                  call 0x102  # RELOC_PC32 -> @throw_index_out_of_range_exception + -4
-    # nextln: 000102: 0f 0b                           ud2
+    # nextln: 000009: 50                              push rax
+    # nextln: 00000a: 89 fb                           mov ebx, edi
+    # nextln: 00000c: 33 c0                           xor eax, eax
+    # nextln: 00000e: 48 89 04 24                     mov qword ptr [rsp], rax
+    # nextln: 000012: be 28 00 00 00                  mov esi, 0x28
+    # nextln: 000017: bf ab 00 00 00                  mov edi, 0xab
+    # nextln: 00001c: e8 00 00 00 00                  call 0x21  # RELOC_PC32 -> @gc_new + -4
+    # nextln: 000021: 41 bc 02 00 00 00               mov r12d, 2
+    # nextln: 000027: 44 89 60 10                     mov dword ptr [rax + 0x10], r12d
+    # nextln: 00002b: 48 89 04 24                     mov qword ptr [rsp], rax
+    # nextln: 00002f: 4c 8b 2c 24                     mov r13, qword ptr [rsp]
+    # nextln: 000033: be 1c 00 00 00                  mov esi, 0x1c
+    # nextln: 000038: bf aa 00 00 00                  mov edi, 0xaa
+    # nextln: 00003d: e8 00 00 00 00                  call 0x42  # RELOC_PC32 -> @gc_new + -4
+    # nextln: 000042: 44 89 60 10                     mov dword ptr [rax + 0x10], r12d
+    # nextln: 000046: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
+    # nextln: 000049: 48 83 f9 01                     cmp rcx, 1
+    # nextln: 00004d: 0f 8e a7 00 00 00               jle 0xfa
+    # nextln: 000053: b9 01 00 00 00                  mov ecx, 1
+    # nextln: 000058: 89 48 18                        mov dword ptr [rax + 0x18], ecx
+    # nextln: 00005b: 41 8b 4d 10                     mov ecx, dword ptr [r13 + 0x10]
+    # nextln: 00005f: 48 85 c9                        test rcx, rcx
+    # nextln: 000062: 0f 8e 92 00 00 00               jle 0xfa
+    # nextln: 000068: 49 89 45 18                     mov qword ptr [r13 + 0x18], rax
+    # nextln: 00006c: 4c 8b 2c 24                     mov r13, qword ptr [rsp]
+    # nextln: 000070: be 1c 00 00 00                  mov esi, 0x1c
+    # nextln: 000075: bf aa 00 00 00                  mov edi, 0xaa
+    # nextln: 00007a: e8 00 00 00 00                  call 0x7f  # RELOC_PC32 -> @gc_new + -4
+    # nextln: 00007f: 44 89 60 10                     mov dword ptr [rax + 0x10], r12d
+    # nextln: 000083: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
+    # nextln: 000086: 48 85 c9                        test rcx, rcx
+    # nextln: 000089: 0f 8e 6b 00 00 00               jle 0xfa
+    # nextln: 00008f: b9 02 00 00 00                  mov ecx, 2
+    # nextln: 000094: 89 48 14                        mov dword ptr [rax + 0x14], ecx
+    # nextln: 000097: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
+    # nextln: 00009a: 48 83 f9 01                     cmp rcx, 1
+    # nextln: 00009e: 0f 8e 56 00 00 00               jle 0xfa
+    # nextln: 0000a4: b9 03 00 00 00                  mov ecx, 3
+    # nextln: 0000a9: 89 48 18                        mov dword ptr [rax + 0x18], ecx
+    # nextln: 0000ac: 41 8b 4d 10                     mov ecx, dword ptr [r13 + 0x10]
+    # nextln: 0000b0: 48 83 f9 01                     cmp rcx, 1
+    # nextln: 0000b4: 0f 8e 40 00 00 00               jle 0xfa
+    # nextln: 0000ba: 49 89 45 20                     mov qword ptr [r13 + 0x20], rax
+    # nextln: 0000be: 48 8b 04 24                     mov rax, qword ptr [rsp]
+    # nextln: 0000c2: 8b 48 10                        mov ecx, dword ptr [rax + 0x10]
+    # nextln: 0000c5: 48 83 f9 01                     cmp rcx, 1
+    # nextln: 0000c9: 0f 8e 2b 00 00 00               jle 0xfa
+    # nextln: 0000cf: 48 63 cb                        movsxd rcx, ebx
+    # nextln: 0000d2: 48 8b 40 20                     mov rax, qword ptr [rax + 0x20]
+    # nextln: 0000d6: 8b 50 10                        mov edx, dword ptr [rax + 0x10]
+    # nextln: 0000d9: 48 3b ca                        cmp rcx, rdx
+    # nextln: 0000dc: 0f 8d 18 00 00 00               jge 0xfa
+    # nextln: 0000e2: 48 c1 e1 02                     shl rcx, 2
+    # nextln: 0000e6: 48 83 c1 14                     add rcx, 0x14
+    # nextln: 0000ea: 48 03 c1                        add rax, rcx
+    # nextln: 0000ed: 8b 00                           mov eax, dword ptr [rax]
+    # nextln: 0000ef: 48 83 c4 08                     add rsp, 8
+    # nextln: 0000f3: 5b                              pop rbx
+    # nextln: 0000f4: 41 5c                           pop r12
+    # nextln: 0000f6: 41 5d                           pop r13
+    # nextln: 0000f8: 5d                              pop rbp
+    # nextln: 0000f9: c3                              ret
+    # nextln: 0000fa: e8 00 00 00 00                  call 0xff  # RELOC_PC32 -> @throw_index_out_of_range_exception + -4
+    # nextln: 0000ff: 0f 0b                           ud2
 
     %0:ctrl, %1:i32 = entry
     %20:ptr = stackslot 8:8

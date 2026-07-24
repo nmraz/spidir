@@ -31,7 +31,7 @@ func @uacpi_kernel_install_interrupt_handler:i32(ptr, ptr, i32, i32, i32, i32) {
     # nextln: 000008: 41 55                           push r13
     # nextln: 00000a: 41 54                           push r12
     # nextln: 00000c: 53                              push rbx
-    # nextln: 00000d: 48 83 ec 28                     sub rsp, 0x28
+    # nextln: 00000d: 48 83 ec 18                     sub rsp, 0x18
     # nextln: 000011: 48 89 f3                        mov rbx, rsi
     # nextln: 000014: 49 89 fd                        mov r13, rdi
     # nextln: 000017: 44 8b 23                        mov r12d, dword ptr [rbx]
@@ -156,7 +156,7 @@ func @uacpi_kernel_install_interrupt_handler:i32(ptr, ptr, i32, i32, i32, i32) {
     # nextln: 0001b7: 41 83 c4 30                     add r12d, 0x30
     # nextln: 0001bb: 8b 03                           mov eax, dword ptr [rbx]
     # nextln: 0001bd: 45 89 26                        mov dword ptr [r14], r12d
-    # nextln: 0001c0: 48 83 c4 28                     add rsp, 0x28
+    # nextln: 0001c0: 48 83 c4 18                     add rsp, 0x18
     # nextln: 0001c4: 5b                              pop rbx
     # nextln: 0001c5: 41 5c                           pop r12
     # nextln: 0001c7: 41 5d                           pop r13

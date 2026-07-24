@@ -18,7 +18,7 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 000004: 41 55                           push r13
     # nextln: 000006: 41 54                           push r12
     # nextln: 000008: 53                              push rbx
-    # nextln: 000009: 48 83 ec 38                     sub rsp, 0x38
+    # nextln: 000009: 48 83 ec 28                     sub rsp, 0x28
     # nextln: 00000d: 33 c0                           xor eax, eax
     # nextln: 00000f: 33 c9                           xor ecx, ecx
     # nextln: 000011: 88 44 24 1e                     mov byte ptr [rsp + 0x1e], al
@@ -346,14 +346,14 @@ func @"System.Boolean Tests.BitTest::Run()":i32() {
     # nextln: 00051a: 85 c9                           test ecx, ecx
     # nextln: 00051c: 0f 84 10 00 00 00               je 0x532
     # nextln: 000522: b8 01 00 00 00                  mov eax, 1
-    # nextln: 000527: 48 83 c4 38                     add rsp, 0x38
+    # nextln: 000527: 48 83 c4 28                     add rsp, 0x28
     # nextln: 00052b: 5b                              pop rbx
     # nextln: 00052c: 41 5c                           pop r12
     # nextln: 00052e: 41 5d                           pop r13
     # nextln: 000530: 5d                              pop rbp
     # nextln: 000531: c3                              ret
     # nextln: 000532: 33 c0                           xor eax, eax
-    # nextln: 000534: 48 83 c4 38                     add rsp, 0x38
+    # nextln: 000534: 48 83 c4 28                     add rsp, 0x28
     # nextln: 000538: 5b                              pop rbx
     # nextln: 000539: 41 5c                           pop r12
     # nextln: 00053b: 41 5d                           pop r13

@@ -5,7 +5,7 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 000000: 55                              push rbp
     # nextln: 000001: 48 89 e5                        mov rbp, rsp
     # nextln: 000004: 53                              push rbx
-    # nextln: 000005: 48 83 ec 78                     sub rsp, 0x78
+    # nextln: 000005: 48 83 ec 68                     sub rsp, 0x68
     # nextln: 000009: 33 c9                           xor ecx, ecx
     # nextln: 00000b: 89 0c 24                        mov dword ptr [rsp], ecx
     # nextln: 00000e: 89 4c 24 04                     mov dword ptr [rsp + 4], ecx
@@ -317,7 +317,7 @@ func @"System.Int32 Tests.Program::Test(System.Int32)":i32(i32) {
     # nextln: 000418: 8b 44 24 3c                     mov eax, dword ptr [rsp + 0x3c]
     # nextln: 00041c: 89 44 24 58                     mov dword ptr [rsp + 0x58], eax
     # nextln: 000420: 8b 44 24 58                     mov eax, dword ptr [rsp + 0x58]
-    # nextln: 000424: 48 83 c4 78                     add rsp, 0x78
+    # nextln: 000424: 48 83 c4 68                     add rsp, 0x68
     # nextln: 000428: 5b                              pop rbx
     # nextln: 000429: 5d                              pop rbp
     # nextln: 00042a: c3                              ret

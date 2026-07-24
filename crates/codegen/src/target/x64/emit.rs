@@ -137,17 +137,21 @@ impl MachineEmit for X64Machine {
             & &PhysRegSet::from_iter(CALLEE_SAVED_REGS);
 
         let full_frame_layout = frame_layout.full_layout;
-        let mut raw_frame_size = align_up(full_frame_layout.size, DEFAULT_FRAME_ALIGN);
 
-        let realign = if full_frame_layout.align > DEFAULT_FRAME_ALIGN {
-            FrameRealign::AlignTo(full_frame_layout.align.try_into().unwrap())
+        let (raw_frame_size, realign) = if full_frame_layout.align > DEFAULT_FRAME_ALIGN {
+            (
+                full_frame_layout.size,
+                FrameRealign::AlignTo(full_frame_layout.align.try_into().unwrap()),
+            )
         } else {
-            if !saved_regs.len().is_multiple_of(2) {
-                // The stack will be 8 bytes off from 16 after all registers are saved, so fix it as
-                // part of the frame.
-                raw_frame_size += 8;
-            }
-            FrameRealign::None
+            let saved_reg_size = saved_regs.len() as u32 * 8;
+
+            // This is the total size required for both the registers saved on entry and any
+            // spills/stack slots, after realignment.
+            let aligned_full_frame_size =
+                align_up(saved_reg_size + full_frame_layout.size, DEFAULT_FRAME_ALIGN);
+
+            (aligned_full_frame_size - saved_reg_size, FrameRealign::None)
         };
 
         let raw_frame_size = raw_frame_size.try_into().unwrap();
